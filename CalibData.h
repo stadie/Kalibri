@@ -73,7 +73,7 @@ public:
 };
 
 //data class for data providing one truth and multiple messurements, 
-//e.g. gamma-jet
+//e.g. gamma-jet or track-cluster
 class TData_TruthMultMess : public TData_TruthMess
 {
 public:
@@ -84,6 +84,7 @@ public:
       for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	   it!=_vecmess.end(); ++it)
 	delete *it;
+      _vecmess.clear();	
     }
   void   AddMess(TData_TruthMess * m){_vecmess.push_back(m);};
   double * GetMess(){//used only for plotting
@@ -127,28 +128,32 @@ protected:
 };
 
 //data class for data providing only multiple messurements, no truth 
-//e.g. jet-jet
-class TData_MessMess : public TData
+//e.g. jet-jet, jet-jet-jet, toptop, etc..
+class TData_MessMess : public TData_TruthMultMess
 {
 public:
-  TData_MessMess(unsigned short int index, double * mess, double error, double * par, unsigned short int n_par,
+    TData_MessMess(unsigned short int index, double truth, double error, double * par, unsigned short int n_par,
         double(*func)(double*,double*),double(*err)(double*)):
-     TData(index, mess,0,error,par,n_par,func,err){_m2=0;_type=TypeJetJet;};
-  TData_MessMess(unsigned short int index, double * mess, double error, double * par, unsigned short int n_par,
-        double(*func)(double*,double*), double(*err)(double*), TData_MessMess * m2):
-     TData(index, mess,0,error,par,n_par,func,err){_m2=m2;_type=TypeJetJet;};
-
-  TData_MessMess * GetMess2Ref(){return _m2;};
-  void   SetMess2Ref(TData_MessMess * m2){_m2=m2;};
-
-  virtual std::vector<TData*> GetRef(){ 
-    std::vector<TData*> result;
-    result.push_back(this);
-    return result;
-  };
+    TData_TruthMultMess(index, truth, error, par, n_par, func, err){_type=TypeJetJet;};
+    virtual ~TData_MessMess() {
+      for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	   it!=_vecmess.end(); ++it)
+	delete *it;
+      _vecmess.clear();	
+      for (std::vector<TData_TruthMultMess*>::const_iterator it=_m2.begin();
+	   it!=_m2.end(); ++it)
+	(*it)->~TData_TruthMultMess();
+      _m2.clear();	
+    }
+    void AddNewMultMess(TData_TruthMultMess * m2 ){_m2.push_back(m2);};
+    double * GetMess(){ return combine(this,&_m2); };
 
 protected:
-  TData_MessMess * _m2;
+  std::vector<TData_TruthMultMess*> _m2;
+  double* (*combine)(TData_TruthMultMess*,std::vector<TData_TruthMultMess*>*);  
 };
+
+double *PtBalance(TData_TruthMultMess* frst,std::vector<TData_TruthMultMess*>* scnd);
+double *InvariantMass(TData_TruthMultMess* frst,std::vector<TData_TruthMultMess*>* scnd);
 
 #endif

@@ -120,3 +120,17 @@ double TData_TruthMultMess::chi2_fast(){
 
   return new_chi2;
 };
+
+double * PtBalance(TData_TruthMultMess* frst,std::vector<TData_TruthMultMess*>* scnd)
+{
+  double result[4];
+  return result;
+}
+
+double * InvariantMass(TData_TruthMultMess* frst,std::vector<TData_TruthMultMess*>* scnd)
+{
+  double result[4];
+  return result;
+}
+
+

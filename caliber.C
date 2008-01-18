@@ -303,7 +303,6 @@ void TCaliber::Run_Lvmini()
 {
   int naux = 100000, niter=1000, iflag, iret;
   int mvec = 2;
-  //  int mvec = 29;
   double aux[naux], fsum, fopt, fedm, dummy;
 
   int npar = p->GetNumberOfParameters();
@@ -323,10 +322,11 @@ void TCaliber::Run_Lvmini()
   float wlf2=0.9;
   lvmeps_(eps,wlf1,wlf2);
 
+  //Set errors per default to 0 //@@ doesn't seem to work...
   int error_index=2;
   error_index = lvmind_(error_index);
-  //std::memcpy(aux+error_index,p->e,npar*sizeof(double));
-  for (int n=0; n<naux; ++n) aux[n]=0.0; 
+  std::memcpy(aux+error_index,p->e,npar*sizeof(double));
+  //for (int n=0; n<naux; ++n) aux[n]=0.0; 
 
   //outlier rejection before first iteration
   {
@@ -377,6 +377,7 @@ void TCaliber::Run_Lvmini()
       data.erase(beg,data.end());
     }
   }
+  //Copy Parameter errors from aux array to the TParameter::e array
   error_index=2;
   error_index = lvmind_(error_index);
   std::memcpy(p->e,aux+error_index,npar*sizeof(double));
