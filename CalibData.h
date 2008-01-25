@@ -34,7 +34,7 @@ public:
   virtual short unsigned int GetType(){return _type;};
   virtual void SetType(short unsigned int type){_type=type;};
   unsigned short int GetIndex(){return _index;};
-  virtual std::vector<TData*> GetRef() = 0;
+  virtual const std::vector<TData*>& GetRef() = 0;
   virtual double chi2() = 0;
   virtual double chi2_fast() = 0;
   virtual double * GetPar(){return _par;};
@@ -63,10 +63,11 @@ public:
         double(*func)(double*,double*),double(*err)(double*)):
     TData(index, mess, truth, error, par, n_par, func, err){_type=TypeTrackTower;};
 
-  std::vector<TData*> GetRef(){ 
-    std::vector<TData*> result;
-    result.push_back( this );
-    return result;
+  virtual const std::vector<TData*>& GetRef() { 
+    //std::vector<TData*> result;
+    resultcache.clear();	
+    resultcache.push_back( this );
+    return resultcache;
   };
   virtual double chi2(){ 
     double new_mess  = GetParametrizedMess();
@@ -74,7 +75,11 @@ public:
     return (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
   };
   virtual double chi2_fast();
+  
+  private:
+  	static std::vector<TData*> resultcache;
 };
+
 
 //data class for data providing one truth and multiple messurements, 
 //e.g. gamma-jet or track-cluster
@@ -125,7 +130,7 @@ public:
     return (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
   };
   virtual double chi2_fast();
-  virtual std::vector<TData*> GetRef(){return _vecmess;};
+  virtual const std::vector<TData*>& GetRef() {return _vecmess;};
 
 protected:  
   std::vector<TData*> _vecmess;

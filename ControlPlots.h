@@ -14,10 +14,10 @@ class TData;
 class TControlPlots {
 public:
   //TControlPlots(){this->ReadConfigFile("config/calibration.cfg");};
-  //TControlPlots(std::string config, std::vector<TData*> * d, TStepParameters * pars)
-  //              {this->ReadConfigFile(config); data=d; p=pars;};
-  TControlPlots(std::string config, std::vector<TData*> * d, TStepEfracParameters * pars)
+  TControlPlots(std::string config, std::vector<TData*> * d, TStepParameters * pars)
                 {this->ReadConfigFile(config); data=d; p=pars;};
+  //TControlPlots(std::string config, std::vector<TData*> * d, TStepEfracParameters * pars)
+  //              {this->ReadConfigFile(config); data=d; p=pars;};
   ~TControlPlots(){};
   
   void GammaJetControlPlots();
@@ -27,8 +27,8 @@ public:
   void FitControlPlots();
 
   //Hard coded, has to be changed in several places
-  TStepEfracParameters * p;
-  //TStepParameters * p;
+  //TStepEfracParameters * p;
+  TStepParameters * p;
 
 private:  
   void ReadConfigFile(std::string config);

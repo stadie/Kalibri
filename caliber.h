@@ -72,8 +72,8 @@ private:
   double OutlierChi2Cut, OutlierChi2CutPresel;
 
   //Hard coded, has to be changed in several places
-  TStepEfracParameters * p;    //fit parameters, depend on number of bins & geometry
-  //TStepParameters * p;    //fit parameters, depend on number of bins & geometry
+  //TStepEfracParameters * p;    //fit parameters, depend on number of bins & geometry
+  TStepParameters * p;    //fit parameters, depend on number of bins & geometry
 
   TControlPlots * plots;  //the control plots
 };

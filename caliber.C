@@ -161,7 +161,8 @@ void TCaliber::Run_GammaJet()
          p->tower_parametrization,                                   //function//
 	 p->tower_error_parametrization                              //function//
        ));
-     }  
+     } 
+ 
      data.push_back( gj_data ); 
    
      if (n_gammajet_events>=0 && i==n_gammajet_events-1)
@@ -321,7 +322,7 @@ void TCaliber::Run_JetJet()
      //Create an jet/Jet TData event
      TData_PtBalance * jj_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
                             direction1,             //p_T direction of this jet
-			    jetjet.ScndJetPt,				    //truth//
+			    0.0,				    //truth//
 			    sqrt(pow(0.5,2)+pow(0.10*jetjet.ScndJetPt,2)), //error//
         		    p->GetJetParRef( jet_index ),                   //params
 			    p->free_pars_per_bin_jet,                       //number of free jet param. p. bin
@@ -359,7 +360,6 @@ void TCaliber::Run_JetJet()
        ));
      }  
 
-
      //--------------
      //   2. Jet
      //--------------
@@ -384,7 +384,7 @@ void TCaliber::Run_JetJet()
      //Create an jet/Jet TData event
      TData_PtBalance * jj2_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
                             direction2,
-			    jetjet.FirstJetPt,				    //truth//
+			    0.0,				    //truth//
 			    sqrt(pow(0.5,2)+pow(0.10*jetjet.ScndJetPt,2)), //error//
         		    p->GetJetParRef( jet_index ),                   //params
 			    p->free_pars_per_bin_jet,                       //number of free jet param. p. bin
@@ -417,11 +417,10 @@ void TCaliber::Run_JetJet()
   	 sqrt(pow(0.5,2)+pow(0.1*jetjet.FirstJetPt*relativEt,2)), //error//
 	 p->GetTowerParRef( index ),                              //parameter//
          p->free_pars_per_bin,                                    //number of free tower param. p. bin//
-         p->tower_parametrization,                                   //function//
-	 p->tower_error_parametrization                              //function//
+         p->tower_parametrization,                                //function//
+	 p->tower_error_parametrization                           //function//
        ));
-     }  
- 
+     }
      jj_data->AddNewMultMess( jj2_data );
      data.push_back( jj_data ); 
 
@@ -449,7 +448,7 @@ void TCaliber::Run_Lvmini()
 {
   int naux = 1000000, niter=1000, iflag=0, iret=0;
   //int mvec = 6;
-  int mvec = 29;
+  int mvec = 2;
   double aux[naux], fsum;
 
   int npar = p->GetNumberOfParameters();
@@ -581,9 +580,8 @@ void TCaliber::Init(string file)
   string param_class = config.read<string>("Parametrization Class","TParameters");
 
   //This is hard coded, no change of parametrization by config file possible
-  if      (param_class=="TStepEfracParameters") p = new TStepEfracParameters( file );
-
-//  if      (param_class=="TStepParameters") p = new TStepParameters( file );
+//  if      (param_class=="TStepEfracParameters") p = new TStepEfracParameters( file );
+  if      (param_class=="TStepParameters") p = new TStepParameters( file );
 //  else if (param_class=="TMyParameters")   p = new TMyParameters( file );
 //  else                                     p = new TParameters( file );
 
