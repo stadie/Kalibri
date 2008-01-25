@@ -87,9 +87,9 @@ class TStepParameters: public TParameters {
   free_pars_per_bin=12;free_pars_per_bin_jet=2;ReadConfigFile(config);};
   
   static double tower_parametrization(double *x,double *par) {
-    double result;
+    double result = 0;
 
-    if      (x[2]>0.0   && x[2]<=1.0)  result = x[1]+x[3] + par[0]*x[2];
+    if      (x[2]>=0.0  && x[2]<=1.0)  result = x[1]+x[3] + par[0]*x[2];
     else if (x[2]>1.0   && x[2]<=2.0)  result = x[1]+x[3] + par[1]*x[2];
     else if (x[2]>2.0   && x[2]<=5.0)  result = x[1]+x[3] + par[2]*x[2];
     else if (x[2]>5.0   && x[2]<=10.0)  result = x[1]+x[3] + par[3]*x[2];

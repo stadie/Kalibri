@@ -22,6 +22,7 @@
 #include "GammaJetSel.h"
 #include "TrackTowerSel.h"
 #include "TrackClusterSel.h"
+#include "JetJetSel.h"
 
 class TCaliber {
 public :
@@ -38,6 +39,7 @@ protected:
   GammaJetSel     gammajet;
   TrackTowerSel   tracktower;
   TrackClusterSel trackcluster;
+  JetJetSel       jetjet;
 
   //internal functions
   void Run_Lvmini();
@@ -46,6 +48,7 @@ protected:
   void Run_GammaJet();
   void Run_TrackTower();
   void Run_TrackCluster();
+  void Run_JetJet();
 
 private:
   void static global_fit(int &npar, double *gin, double &f, 
@@ -59,7 +62,7 @@ private:
 
   //internal variables
   int fit_method, n_gammajet_events, n_tracktower_events, 
-      n_trackcluster_events;
+      n_trackcluster_events, n_jetjet_events;
   std::string configfile, output_file;              //input/output
   int use_GammaJetTowerMethod,use_DisplayMethod;    //plots
   double Et_cut_on_jet, Et_cut_on_gamma,            //kin. cuts

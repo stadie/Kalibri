@@ -426,10 +426,13 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
 
       plot[0]->Draw("pe");//average
       plot[3]->SetLineColor(3);
+      plot[3]->SetMarkerColor(3);
       plot[3]->Draw("pe,same");//track-cluster
       plot[2]->SetLineColor(2);//gamma-jet
+      plot[2]->SetMarkerColor(2);
       plot[2]->Draw("pe,same");
       plot[1]->SetLineColor(4);
+      plot[1]->SetMarkerColor(4);
       plot[1]->Draw("pe,same");//track-tower
 
       k[0]->SetLineColor(1);
@@ -497,10 +500,13 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       plot_had[0]->SetMinimum(0.0);
       plot_had[0]->Draw("pe");//average
       plot_had[3]->SetLineColor(3);
+      plot_had[3]->SetMarkerColor(3);
       plot_had[3]->Draw("pe,same");//track-cluster
       plot_had[2]->SetLineColor(2);//gamma-jet
+      plot_had[2]->SetMarkerColor(2);
       plot_had[2]->Draw("pe,same");
       plot_had[1]->SetLineColor(4);
+      plot_had[1]->SetMarkerColor(4);
       plot_had[1]->Draw("pe,same");//track-tower
 
       khad[0]->SetLineColor(1);

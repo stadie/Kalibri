@@ -2,7 +2,7 @@ C=g++
 LD=g++
 F77=g77
 #O2 for optimization, g for debugging
-SPECIALFLAGS=-O2 -Wall #-g
+SPECIALFLAGS=-g -Wall#-O2
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 
@@ -13,21 +13,13 @@ LFLAGS = $(SPECIALFLAGS) -L../../lib/$(SRT_SUBDIR)/ -lz -m32 -lg2c
 RCXX=$(CFLAGS) $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS)
 
-SRC=caliber.C GammaJetSel.C TrackTowerSel.C TrackClusterSel.C ConfigFile.C CalibData.C Parameters.C ControlPlots.C
+SRC=caliber.C GammaJetSel.C TrackTowerSel.C TrackClusterSel.C JetJetSel.C ConfigFile.C CalibData.C Parameters.C ControlPlots.C
 
 %.o: %.C
 		$(C) $(RCXX) -c $<
 
 all: runjunk
 
-test.o: test.C test.h
-		$(C) $(RCXX) -c test.C
-
-straightLineFit.o: straightLineFit.F
-		$(F77) -fno-automatic -fno-backslash -m32 -O -c straightLineFit.F
-
-test.x: test.o lbfgs.o straightLineFit.o test.h
-		$(LD) test.o lbfgs.o straightLineFit.o $(RLXX) $(JCORR) -o test.x
 lbfgs.o: lbfgs.F
 		$(F77) -fno-automatic -fno-backslash -m32 -O -c lbfgs.F
 
@@ -42,6 +34,9 @@ TrackTowerSel.o: TrackTowerSel.C TrackTowerSel.h
 
 TrackClusterSel.o: TrackClusterSel.C TrackClusterSel.h
 		$(C) $(RCXX) -c TrackClusterSel.C
+
+JetJetSel.o: JetJetSel.C JetJetSel.h
+		$(C) $(RCXX) -c JetJetSel.C
 
 CalibData.o: CalibData.C CalibData.h
 		$(C) $(RCXX) -c CalibData.C

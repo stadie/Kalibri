@@ -12,27 +12,31 @@
 #define TypeGammaJet     2
 #define TypeTrackCluster 3
 #define TypeJetJet       4
+#define TypePtBalance    5
 
 //virtual data base class -> not directly used!
 class TData
 {
 public:
-  TData(){};
+  TData(){_mess=0; _par=0;};
   TData(unsigned short int index, double * mess, double truth, double error, double * par, unsigned short int n_par,
         double(*func)(double*,double*), double(*err)(double*)){
     _index=index;_mess=mess;_truth=truth;_error=error;_par=par;_n_par=n_par;_func=func;_err=err;};
-  virtual ~TData(){};
+  virtual ~TData(){
+    //if (_mess) delete [] _mess;
+  };
   virtual double * GetMess(){  return _mess;};//used only for plotting
-  virtual double GetParametrizedMess(){ return _func(_mess,_par);};
-  virtual double GetParametrizedErr(double *_paramess){ return _err(_paramess);};
+  virtual double GetParametrizedMess(){ 
+	       return _func(_mess,_par);}
+  virtual double GetParametrizedErr(double *paramess){ return _err(paramess);};
   virtual double GetTruth(){ return _truth;};
   virtual double GetError(){ return _error;};
   virtual short unsigned int GetType(){return _type;};
   virtual void SetType(short unsigned int type){_type=type;};
   unsigned short int GetIndex(){return _index;};
-  virtual std::vector<TData*> GetRef()=0;
-  virtual double chi2()=0;
-  virtual double chi2_fast()=0;
+  virtual std::vector<TData*> GetRef() = 0;
+  virtual double chi2() = 0;
+  virtual double chi2_fast() = 0;
   virtual double * GetPar(){return _par;};
   unsigned short int GetNumberOfPars() {return _n_par;};
   void  AddToPar(unsigned short int const i, double const e){_par[i]+=e;};
@@ -59,17 +63,17 @@ public:
         double(*func)(double*,double*),double(*err)(double*)):
     TData(index, mess, truth, error, par, n_par, func, err){_type=TypeTrackTower;};
 
-  virtual std::vector<TData*> GetRef(){ 
+  std::vector<TData*> GetRef(){ 
     std::vector<TData*> result;
     result.push_back( this );
     return result;
   };
-  double chi2(){ 
+  virtual double chi2(){ 
     double new_mess  = GetParametrizedMess();
     double new_error = GetParametrizedErr(&new_mess);
     return (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
   };
-  double chi2_fast();
+  virtual double chi2_fast();
 };
 
 //data class for data providing one truth and multiple messurements, 
@@ -80,14 +84,14 @@ public:
   TData_TruthMultMess(unsigned short int index, double truth, double error, double * par, unsigned short int n_par,
         double(*func)(double*,double*),double(*err)(double*)):
     TData_TruthMess(index, 0, truth, error, par, n_par, func, err){_type=TypeGammaJet;};
-    virtual ~TData_TruthMultMess() {
+  virtual ~TData_TruthMultMess() {
       for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	   it!=_vecmess.end(); ++it)
 	delete *it;
       _vecmess.clear();	
-    }
+  };
   void   AddMess(TData_TruthMess * m){_vecmess.push_back(m);};
-  double * GetMess(){//used only for plotting
+  virtual double * GetMess(){//used only for plotting
     double *dummy, *result=new double[4];
     result[0]=0.0;result[1]=0.0;result[2]=0.0;result[3]=0.0;
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
@@ -98,7 +102,7 @@ public:
     }	 
     return result;	  
   };
-  double GetParametrizedMess(){
+  virtual double GetParametrizedMess(){
     double result=0.0;
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
   	 it!=_vecmess.end(); ++it){
@@ -107,7 +111,7 @@ public:
     return _func(&result, _par);	  
   };
 
-  double chi2(){ 
+  virtual double chi2(){ 
     double sum_mess=0.0, sum_error2=0.0, new_error, new_mess;
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
          it!=_vecmess.end(); ++it) {
@@ -120,7 +124,7 @@ public:
     new_error = _err(  &new_mess );
     return (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
   };
-  double chi2_fast();
+  virtual double chi2_fast();
   virtual std::vector<TData*> GetRef(){return _vecmess;};
 
 protected:  
@@ -132,28 +136,57 @@ protected:
 class TData_MessMess : public TData_TruthMultMess
 {
 public:
-    TData_MessMess(unsigned short int index, double truth, double error, double * par, unsigned short int n_par,
-        double(*func)(double*,double*),double(*err)(double*)):
-    TData_TruthMultMess(index, truth, error, par, n_par, func, err){_type=TypeJetJet;};
+    TData_MessMess(unsigned short int index, double * dir, double truth, double error, 
+                   double * par, unsigned short int n_par,
+        double(*func)(double*,double*),	double(*err)(double*)):
+    TData_TruthMultMess(index, truth, error, par, n_par, func, err){
+      _direction=dir; _type=TypeJetJet;};
     virtual ~TData_MessMess() {
       for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	   it!=_vecmess.end(); ++it)
 	delete *it;
       _vecmess.clear();	
-      for (std::vector<TData_TruthMultMess*>::const_iterator it=_m2.begin();
+      for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
 	   it!=_m2.end(); ++it)
-	(*it)->~TData_TruthMultMess();
-      _m2.clear();	
-    }
-    void AddNewMultMess(TData_TruthMultMess * m2 ){_m2.push_back(m2);};
-    double * GetMess(){ return combine(this,&_m2); };
+	(*it)->~TData_MessMess();
+      _m2.clear();
+      delete [] _direction;	
+    };
+    virtual void AddNewMultMess(TData_MessMess * m2 ){_m2.push_back(m2);};
+    virtual double GetMessCombination(){ return combine(); };
+    virtual double * GetDirection(){ return _direction; };
+    virtual double chi2(){ 
+      double sum_error2=0.0, new_error, new_mess;
+      for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
+           it!=_m2.end(); ++it) {
+	 new_mess    = (*it)->GetParametrizedMess();	 
+  	 new_error   = (*it)->GetParametrizedErr(&new_mess);
+	 sum_error2 += new_error * new_error;
+      }
+      //new_mess  = _func( _mess, _par);  
+      new_mess  = GetParametrizedMess();
+      new_error = _err(  &new_mess );
+      new_mess  = GetMessCombination();  
+      return (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+    };
 
 protected:
-  std::vector<TData_TruthMultMess*> _m2;
-  double* (*combine)(TData_TruthMultMess*,std::vector<TData_TruthMultMess*>*);  
+  virtual double combine() = 0;  
+  std::vector<TData_MessMess*> _m2;
+  double * _direction;
 };
 
-double *PtBalance(TData_TruthMultMess* frst,std::vector<TData_TruthMultMess*>* scnd);
-double *InvariantMass(TData_TruthMultMess* frst,std::vector<TData_TruthMultMess*>* scnd);
+//e.g. jet-jet, jet-jet-jet, etc..
+class TData_PtBalance : public TData_MessMess
+{
+public:
+    TData_PtBalance(unsigned short int index, double * dir, double truth, double error, double * par, unsigned short int n_par,
+        double(*func)(double*,double*),	double(*err)(double*)):
+    TData_MessMess(index, dir, truth, error, par, n_par, func, err){_type=TypePtBalance;};
+    virtual ~TData_PtBalance(){};
+    virtual double chi2_fast();
+protected:
+    virtual double combine();  
+};
 
 #endif

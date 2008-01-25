@@ -191,7 +191,7 @@ void TParameters::Read_Calibration(std::string const& configFile) {
     }
   }
 
-  delete dummy;
+  delete[] dummy;
 }
 
 int TParameters::GetEtaBin(int const eta_id) const
