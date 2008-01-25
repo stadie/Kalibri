@@ -459,16 +459,36 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
     
 
       sprintf(name, "h_k_hadonly_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
-      TH1F * khadonly = new TH1F(name,";k vs. had. E_{T} with EMF=OUF=0   [GeV];",100,0.5,100.);    
-      testmess[1] = 0.0;
+      TH1F * khadonly = new TH1F(name,";k vs. had. E_{T} with EMF=OUF=0     [GeV];",100,0.5,100.);    
+      sprintf(name, "h_k_Efrac02_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
+      TH1F * kEfrac02 = new TH1F(name,";k vs. had. E_{T} with EMF=0.2 OUF=0 [GeV];",100,0.5,100.);    
+      sprintf(name, "h_k_Efrac05_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
+      TH1F * kEfrac05 = new TH1F(name,";k vs. had. E_{T} with EMF=0.5 OUF=0 [GeV];",100,0.5,100.);    
       testmess[3] = 0.0;
       for (int b=1; b<=100; ++b){
 	testmess[0] = (double)b;
+	testmess[1] = 0.0;
 	testmess[2] = (double)b;
-        khadonly->SetBinContent(khadonly->GetXaxis()->FindBin(b), 
+	khadonly->SetBinContent(khadonly->GetXaxis()->FindBin(b), 
+	                        p->plot_parametrization(testmess,val) );       
+	testmess[1] = (double)b*0.2;
+	testmess[2] = (double)b*0.8;
+	kEfrac02->SetBinContent(kEfrac02->GetXaxis()->FindBin(b), 
+	                        p->plot_parametrization(testmess,val) );       
+	testmess[1] = (double)b*0.5;
+	testmess[2] = (double)b*0.5;
+	kEfrac05->SetBinContent(kEfrac05->GetXaxis()->FindBin(b), 
 	                        p->plot_parametrization(testmess,val) );       
       }
       khadonly->Draw("l"); 
+      c1->Draw(); 
+      ps.NewPage();
+
+      kEfrac02->Draw("l"); 
+      c1->Draw(); 
+      ps.NewPage();
+
+      kEfrac05->Draw("l"); 
       c1->Draw(); 
       ps.NewPage();
 

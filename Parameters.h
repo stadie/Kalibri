@@ -80,8 +80,7 @@ private :
   std::string input_calibration;
 };
 
-
-
+// Parametrization of hadronic response by a step function
 class TStepParameters: public TParameters {
   public:
   TStepParameters(std::string config){
@@ -115,8 +114,71 @@ class TStepParameters: public TParameters {
 
 };
 
+// Parametrization of hadronic response by a step function
+// 3 Sets of Parameters for different EM fraction
+class TStepEfracParameters: public TParameters {
+  public:
+  TStepEfracParameters(std::string config){
+    free_pars_per_bin=36;free_pars_per_bin_jet=2;ReadConfigFile(config);};
+  
+  static double tower_parametrization(double *x,double *par) {
+    double result;
+    
+    double Efrac = x[1]/(x[2]+x[3]);
+    if (Efrac<0.1) {
+      if      (x[2]>0.0   && x[2]<=1.0)    result = x[1]+x[3] + par[0]*x[2];
+      else if (x[2]>1.0   && x[2]<=2.0)    result = x[1]+x[3] + par[1]*x[2];
+      else if (x[2]>2.0   && x[2]<=5.0)    result = x[1]+x[3] + par[2]*x[2];
+      else if (x[2]>5.0   && x[2]<=10.0)   result = x[1]+x[3] + par[3]*x[2];
+      else if (x[2]>10.0  && x[2]<=20.0)   result = x[1]+x[3] + par[4]*x[2];
+      else if (x[2]>20.0  && x[2]<=40.0)   result = x[1]+x[3] + par[5]*x[2];
+      else if (x[2]>40.0  && x[2]<=80.0)   result = x[1]+x[3] + par[6]*x[2];
+      else if (x[2]>80.0  && x[2]<=160.0)  result = x[1]+x[3] + par[7]*x[2];
+      else if (x[2]>160.0 && x[2]<=300.0)  result = x[1]+x[3] + par[8]*x[2];
+      else if (x[2]>300.0 && x[2]<=600.0)  result = x[1]+x[3] + par[9]*x[2];
+      else if (x[2]>600.0 && x[2]<=1000.0) result = x[1]+x[3] + par[10]*x[2];
+      else if (x[2]>1000.0 )               result = x[1]+x[3] + par[11]*x[2];
+    } else if (Efrac<0.3) {
+      if      (x[2]>0.0   && x[2]<=1.0)    result = x[1]+x[3] + par[12]*x[2];
+      else if (x[2]>1.0   && x[2]<=2.0)    result = x[1]+x[3] + par[13]*x[2];
+      else if (x[2]>2.0   && x[2]<=5.0)    result = x[1]+x[3] + par[14]*x[2];
+      else if (x[2]>5.0   && x[2]<=10.0)   result = x[1]+x[3] + par[15]*x[2];
+      else if (x[2]>10.0  && x[2]<=20.0)   result = x[1]+x[3] + par[16]*x[2];
+      else if (x[2]>20.0  && x[2]<=40.0)   result = x[1]+x[3] + par[17]*x[2];
+      else if (x[2]>40.0  && x[2]<=80.0)   result = x[1]+x[3] + par[18]*x[2];
+      else if (x[2]>80.0  && x[2]<=160.0)  result = x[1]+x[3] + par[19]*x[2];
+      else if (x[2]>160.0 && x[2]<=300.0)  result = x[1]+x[3] + par[20]*x[2];
+      else if (x[2]>300.0 && x[2]<=600.0)  result = x[1]+x[3] + par[21]*x[2];
+      else if (x[2]>600.0 && x[2]<=1000.0) result = x[1]+x[3] + par[22]*x[2];
+      else if (x[2]>1000.0 )               result = x[1]+x[3] + par[23]*x[2];
+    } else {
+      if      (x[2]>0.0   && x[2]<=1.0)    result = x[1]+x[3] + par[24]*x[2];
+      else if (x[2]>1.0   && x[2]<=2.0)    result = x[1]+x[3] + par[25]*x[2];
+      else if (x[2]>2.0   && x[2]<=5.0)    result = x[1]+x[3] + par[26]*x[2];
+      else if (x[2]>5.0   && x[2]<=10.0)   result = x[1]+x[3] + par[27]*x[2];
+      else if (x[2]>10.0  && x[2]<=20.0)   result = x[1]+x[3] + par[28]*x[2];
+      else if (x[2]>20.0  && x[2]<=40.0)   result = x[1]+x[3] + par[29]*x[2];
+      else if (x[2]>40.0  && x[2]<=80.0)   result = x[1]+x[3] + par[30]*x[2];
+      else if (x[2]>80.0  && x[2]<=160.0)  result = x[1]+x[3] + par[31]*x[2];
+      else if (x[2]>160.0 && x[2]<=300.0)  result = x[1]+x[3] + par[32]*x[2];
+      else if (x[2]>300.0 && x[2]<=600.0)  result = x[1]+x[3] + par[33]*x[2];
+      else if (x[2]>600.0 && x[2]<=1000.0) result = x[1]+x[3] + par[34]*x[2];
+      else if (x[2]>1000.0 )               result = x[1]+x[3] + par[35]*x[2];
+    }
+    return result;};
+  
+  static double jet_parametrization(double *x,double *par) {
+    return  par[0]*x[0] + par[1];};
 
+  static double plot_parametrization(double * x,double *par) {
+    return tower_parametrization(x,par)/x[0]; }
 
+  static double jes_plot_parametrization(double * x,double *par) {
+    return jet_parametrization(x,par)/x[0]; }
+
+};
+
+// Parametrization of response by some "clever" function
 class TMyParameters: public TParameters {
   public:
   TMyParameters(std::string config){

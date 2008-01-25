@@ -301,8 +301,9 @@ void TCaliber::Run()
 
 void TCaliber::Run_Lvmini()
 {
-  int naux = 100000, niter=1000, iflag, iret;
-  int mvec = 2;
+  int naux = 1000000, niter=1000, iflag, iret;
+  //int mvec = 6;
+  int mvec = 29;
   double aux[naux], fsum, fopt, fedm, dummy;
 
   int npar = p->GetNumberOfParameters();
@@ -431,7 +432,11 @@ void TCaliber::Init(string file)
 
   //init parameter and plot classes
   string param_class = config.read<string>("Parametrization Class","TParameters");
-  if      (param_class=="TStepParameters") p = new TStepParameters( file );
+
+  //This is hard coded, no change of parametrization by config file possible
+  if      (param_class=="TStepEfracParameters") p = new TStepEfracParameters( file );
+
+//  if      (param_class=="TStepParameters") p = new TStepParameters( file );
 //  else if (param_class=="TMyParameters")   p = new TMyParameters( file );
 //  else                                     p = new TParameters( file );
 
