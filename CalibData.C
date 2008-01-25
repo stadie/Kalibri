@@ -17,19 +17,11 @@ double TData_TruthMess::chi2_fast(){
   
   double dmess_dp, derror_dp;
   unsigned idx = _index*_n_par; //_index==bin; idx==bin*Free_parameters_per_bin
-<<<<<<< CalibData.C
   for (unsigned i=0; i<idx; ++i){
-=======
-  for (unsigned int i=0; i<idx; ++i){
->>>>>>> 1.3
     temp_derivative2[i]+=new_chi2;
     temp_derivative1[i]+=new_chi2;
   }
-<<<<<<< CalibData.C
   for (unsigned i=idx; i<idx+_n_par; ++i){
-=======
-  for (unsigned int i=idx; i<idx+_n_par; ++i){
->>>>>>> 1.3
     _par[i-idx]  += epsilon;
     dmess_dp  = GetParametrizedMess();
     derror_dp = GetParametrizedErr(&dmess_dp);
@@ -41,11 +33,7 @@ double TData_TruthMess::chi2_fast(){
     temp_derivative1[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
     _par[i-idx]  += epsilon;
   }
-<<<<<<< CalibData.C
   for (unsigned i=idx+_n_par; i< total_n_pars; ++i){
-=======
-  for (unsigned int i=idx+_n_par; i< total_n_pars; ++i){
->>>>>>> 1.3
     temp_derivative2[i]+=new_chi2;
     temp_derivative1[i]+=new_chi2;
   }
