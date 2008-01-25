@@ -17,11 +17,11 @@ double TData_TruthMess::chi2_fast(){
   
   double dmess_dp, derror_dp;
   unsigned idx = _index*_n_par; //_index==bin; idx==bin*Free_parameters_per_bin
-  for (int i=0; i<idx; ++i){
+  for (unsigned int i=0; i<idx; ++i){
     temp_derivative2[i]+=new_chi2;
     temp_derivative1[i]+=new_chi2;
   }
-  for (int i=idx; i<idx+_n_par; ++i){
+  for (unsigned int i=idx; i<idx+_n_par; ++i){
     _par[i-idx]  += epsilon;
     dmess_dp  = GetParametrizedMess();
     derror_dp = GetParametrizedErr(&dmess_dp);
@@ -33,7 +33,7 @@ double TData_TruthMess::chi2_fast(){
     temp_derivative1[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
     _par[i-idx]  += epsilon;
   }
-  for (int i=idx+_n_par; i< total_n_pars; ++i){
+  for (unsigned int i=idx+_n_par; i< total_n_pars; ++i){
     temp_derivative2[i]+=new_chi2;
     temp_derivative1[i]+=new_chi2;
   }
@@ -87,7 +87,7 @@ double TData_TruthMultMess::chi2_fast(){
   new_chi2  = (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
 
   idx = _index; //@@to be fixed -> introduce a eta-phi binning for JES
-  for (int i=0; i<total_n_pars; ++i){
+  for (unsigned int i=0; i<total_n_pars; ++i){
     if (i>=idx && i<idx+_n_par) continue;//considered below
     new_mess  = sm2[i];  //the measurement with modified parameter "i"
     dmess_dp  = _func(&new_mess,_par);//calc. the jet's energy
@@ -102,7 +102,7 @@ double TData_TruthMultMess::chi2_fast(){
     temp_derivative1[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
   }
   	
-  for (int i=idx; i<idx+_n_par; ++i){
+  for (unsigned int i=idx; i<idx+_n_par; ++i){
     //ok, we have to change the jet's parametrization:
     _par[i-idx]  += epsilon;
     dmess_dp  = _func(&sum_mess,_par);

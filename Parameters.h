@@ -16,7 +16,7 @@ public :
   TParameters(){};
   TParameters(std::string config):free_pars_per_bin(3),free_pars_per_bin_jet(2){
   this->ReadConfigFile(config);};
-  ~TParameters(){};
+  virtual ~TParameters(){};
   friend std::ostream& operator<<( std::ostream& os, const TParameters& c );
 
   int GetEtaBin(int const eta_id) const;
@@ -122,7 +122,7 @@ class TStepEfracParameters: public TParameters {
     free_pars_per_bin=36;free_pars_per_bin_jet=2;ReadConfigFile(config);};
   
   static double tower_parametrization(double *x,double *par) {
-    double result;
+    double result=0;
     
     double Efrac = x[1]/(x[2]+x[3]);
     if (Efrac<0.1) {

@@ -30,9 +30,9 @@ public:
   virtual short unsigned int GetType(){return _type;};
   virtual void SetType(short unsigned int type){_type=type;};
   unsigned short int GetIndex(){return _index;};
-  virtual std::vector<TData*> GetRef(){};
-  virtual double chi2(){};
-  virtual double chi2_fast(){};
+  virtual std::vector<TData*> GetRef()=0;
+  virtual double chi2()=0;
+  virtual double chi2_fast()=0;
   virtual double * GetPar(){return _par;};
   unsigned short int GetNumberOfPars() {return _n_par;};
   void  AddToPar(unsigned short int const i, double const e){_par[i]+=e;};

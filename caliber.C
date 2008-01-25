@@ -108,7 +108,7 @@ void TCaliber::Run_GammaJet()
      if (gammajet.PhotonPt<Et_cut_on_gamma || gammajet.JetCalPt<Et_cut_on_jet) continue;
      
      //Find the jets eta & phi index using the leading (ET) tower:
-     int jet_index;
+     int jet_index=0;
      double max_tower_et = 0.0;
      for (int n=0; n<gammajet.NobjTowCal; ++n){
        if (gammajet.TowEt[n]>max_tower_et) {
@@ -133,7 +133,6 @@ void TCaliber::Run_GammaJet()
      );
 
      //Add the jet's towers to "gj_data":
-     double control_sum=0.0;
      for (int n=0; n<gammajet.NobjTowCal; ++n){
        //if (gammajet.TowEt[n]<0.01) continue;
 
@@ -141,8 +140,7 @@ void TCaliber::Run_GammaJet()
 	                       p->GetPhiBin(gammajet.TowId_phi[n]));
        if (index<0){ cerr<<"WARNING: towewer_index = " << index << endl; continue; }
 
-       double dR = deltaR(gammajet.JetCalEta, gammajet.JetCalPhi, 
-                          gammajet.TowEta[n], gammajet.TowPhi[n]);
+       //double dR = deltaR(gammajet.JetCalEta, gammajet.JetCalPhi, gammajet.TowEta[n], gammajet.TowPhi[n]);
 	      
        double relativEt = gammajet.TowEt[n]/gammajet.JetCalEt;  
        //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
@@ -301,10 +299,10 @@ void TCaliber::Run()
 
 void TCaliber::Run_Lvmini()
 {
-  int naux = 1000000, niter=1000, iflag, iret;
+  int naux = 1000000, niter=1000, iflag=0, iret=0;
   //int mvec = 6;
   int mvec = 29;
-  double aux[naux], fsum, fopt, fedm, dummy;
+  double aux[naux], fsum;
 
   int npar = p->GetNumberOfParameters();
 

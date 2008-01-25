@@ -59,15 +59,15 @@ void TParameters::ReadConfigFile(string const file)
   k = new double[GetNumberOfParameters()];
   e = new double[GetNumberOfParameters()];
 
-  for (int bin=0; bin<eta_granularity*phi_granularity; ++bin){
-    for (int tp=0; tp<free_pars_per_bin; ++tp){
+  for (unsigned int bin=0; bin<eta_granularity*phi_granularity; ++bin){
+    for (unsigned int tp=0; tp<free_pars_per_bin; ++tp){
       //step[ bin*free_pars_per_bin + tp ]   = step_sizes[ tp ];
       k[ bin*free_pars_per_bin + tp ] = start_values[ tp ];
       e[ bin*free_pars_per_bin + tp ] = 0.0;
     }
   }
-  for (int bin=0; bin<eta_granularity_jet*phi_granularity_jet; ++bin){
-    for (int jp=0; jp<free_pars_per_bin_jet; ++jp){
+  for (unsigned int bin=0; bin<eta_granularity_jet*phi_granularity_jet; ++bin){
+    for (unsigned int jp=0; jp<free_pars_per_bin_jet; ++jp){
       int i = GetNumberOfTowerParameters() + bin*free_pars_per_bin_jet + jp;   
       k[i] = jet_start_values[jp];
       e[i] = 0.0;
@@ -90,7 +90,7 @@ std::string TParameters::trim(std::string const& source, char const* delims) {
     result.erase();
   
   //replace all "," by " "  :
-  int pos = result.find(",");
+  unsigned int pos = result.find(",");
   while (pos!=string::npos) {
     result.replace(pos,1," ");
     pos = result.find(",",pos);
@@ -203,7 +203,7 @@ int TParameters::GetEtaBin(int const eta_id) const
   if (eta_granularity<=1) return 0;
 
   //check if tower is within wanted etarange:
-  if ( eta_symmetry && abs(eta_id)*2>eta_ntwr_used)   return -2; 
+  if ( eta_symmetry && abs(eta_id)*2>(int)eta_ntwr_used)   return -2; 
   
   //calculate an index:
   unsigned index=(unsigned)(41+eta_id);
@@ -263,7 +263,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   //1. ieta
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
-    for (int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+    for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
       if (ieta!=-41 || iphi!=1)
         os << ", " << ieta;
       else
@@ -275,7 +275,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   //2. iphi
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
-    for (int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+    for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
       if (ieta!= -41 || iphi!=1)
         os << ", " << iphi;
       else
@@ -285,11 +285,11 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   os << " }"<<endl;
 
   //3. the Tower Calibration Constants
-  for (int n=0; n<cal.free_pars_per_bin; ++n) {
+  for (unsigned int n=0; n<cal.free_pars_per_bin; ++n) {
     os << "    untracked vdouble TowerParam"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
-      for (int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+      for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
         int index = cal.GetBin(cal.GetEtaBin(ieta),cal.GetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
@@ -302,11 +302,11 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   }
 
   //4. the Calibration Constants Errors
-  for (int n=0; n<cal.free_pars_per_bin; ++n) {
+  for (unsigned int n=0; n<cal.free_pars_per_bin; ++n) {
     os << "    untracked vdouble TowerError"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
-      for (int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+      for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
         int index = cal.GetBin(cal.GetEtaBin(ieta),cal.GetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
@@ -326,7 +326,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   //5. ieta
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
-    for (int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+    for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
       if (ieta!=-41 || iphi!=1)
         os << ", " << ieta;
       else
@@ -338,7 +338,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   //6. iphi
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
-    for (int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+    for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
       if (ieta!= -41 || iphi!=1)
         os << ", " << iphi;
       else
@@ -348,11 +348,11 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   os << " }"<<endl;
 
   //7. the Jet Calibration Constants
-  for (int n=0; n<cal.free_pars_per_bin_jet; ++n) {
+  for (unsigned int n=0; n<cal.free_pars_per_bin_jet; ++n) {
     os << "    untracked vdouble JetParam"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
-      for (int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+      for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
 	int index = cal.GetJetBin(cal.GetJetEtaBin(ieta),cal.GetJetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
@@ -364,11 +364,11 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
     os << " }" << endl; 
   }
   //8. the Calibration Constants Errors
-  for (int n=0; n<cal.free_pars_per_bin_jet; ++n) {
+  for (unsigned int n=0; n<cal.free_pars_per_bin_jet; ++n) {
     os << "    untracked vdouble JetError"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
-      for (int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+      for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
 	int index = cal.GetBin(cal.GetJetEtaBin(ieta),cal.GetJetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
