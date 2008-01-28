@@ -83,6 +83,7 @@ private :
 // Parametrization of hadronic response by a step function
 class TStepParameters: public TParameters {
   public:
+  TStepParameters(){};
   TStepParameters(std::string config){
   free_pars_per_bin=12;free_pars_per_bin_jet=2;ReadConfigFile(config);};
   
