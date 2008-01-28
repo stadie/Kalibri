@@ -255,11 +255,10 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   timeinfo = localtime ( &rawtime );
   strftime (buffer,80," # Hamburg Calorimeter Calibration Tool, created %c",timeinfo);
   struct passwd* pw = getpwuid(getuid());	
-  os << buffer << " by " << pw->pw_name << "." << std::endl 
-     << " module ccctm = CalibratedCaloTowerMaker {" <<std::endl
+  os << buffer << " by " << pw->pw_name << "." << endl 
+     << " module calibTowerMaker = CalibTowerMaker {" << endl
      << "    untracked vint32 mapEta       = { ";
   
-
   //1. ieta
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
@@ -282,11 +281,13 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
         os << iphi;
     }
   }
-  os << " }"<<endl;
+  os << " }"<< endl;
+  os << endl;
 
-  //3. the Tower Calibration Constants
+  //3. tower calibration constants
+  os << "    untracked  int32  TowerParam       = " << cal.GetNumberOfTowerParametersPerBin() << endl;
   for (unsigned int n=0; n<cal.free_pars_per_bin; ++n) {
-    os << "    untracked vdouble TowerParam"<<n<<" = { ";
+    os << "    untracked vdouble TowerParam"<< n <<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
       for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
@@ -301,7 +302,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
     os << " }" << endl; 
   }
 
-  //4. the Calibration Constants Errors
+  //4. calibration constants errors
   for (unsigned int n=0; n<cal.free_pars_per_bin; ++n) {
     os << "    untracked vdouble TowerError"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
@@ -320,7 +321,10 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   os << " }" << endl; 
   //--------------------------------------------------------------------
   os << endl
-     << " module cccjm = CalibratedJetMaker {" <<std::endl
+     << " module calibJetMaker = CalibJetMaker {" << endl
+     << "    InputTag Jets    = " << endl
+     << "    string CalibJets = \"\" " << endl
+     << endl
      << "    untracked vint32 mapEta     = { ";
   
   //5. ieta
@@ -345,11 +349,13 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
         os << iphi;
     }
   }
-  os << " }"<<endl;
+  os << " }" << endl;
+  os << endl;
 
-  //7. the Jet Calibration Constants
+  //7. jet calibration constants
+  os << "    untracked  int32 JetParam   = " << cal.GetNumberOfJetParametersPerBin() << endl;
   for (unsigned int n=0; n<cal.free_pars_per_bin_jet; ++n) {
-    os << "    untracked vdouble JetParam"<<n<<" = { ";
+    os << "    untracked vdouble  JetParam"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
       for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
@@ -363,7 +369,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
     }
     os << " }" << endl; 
   }
-  //8. the Calibration Constants Errors
+  //8. calibration constants errors
   for (unsigned int n=0; n<cal.free_pars_per_bin_jet; ++n) {
     os << "    untracked vdouble JetError"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){

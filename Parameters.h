@@ -32,6 +32,9 @@ public :
   virtual int GetNumberOfJetParameters()const{return   free_pars_per_bin_jet*eta_granularity_jet*phi_granularity_jet;};
   virtual int GetNumberOfParameters()const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters();};
 
+  int GetNumberOfTowerParametersPerBin()const {return free_pars_per_bin;};
+  int GetNumberOfJetParametersPerBin()const {return free_pars_per_bin_jet;};
+
   double * GetTowerParRef(int const bin){return &k[bin*free_pars_per_bin]; };
   double * GetJetParRef(  int const jetbin){return &k[GetNumberOfTowerParameters()+jetbin*free_pars_per_bin_jet];};
   double * k; //all fit-parameters
