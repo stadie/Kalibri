@@ -146,7 +146,7 @@ void TCaliber::Run_GammaJet()
        //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
        //This relativeE is used *only* for plotting! Therefore no cuts on this var!
        //create array with multidimensional measurement
-       double * mess = new double[4];
+       double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
        mess[0] = double(gammajet.TowEt[n]);
        double scale = gammajet.TowEt[n]/gammajet.TowE[n];
        mess[1] = double(gammajet.TowEm[n]*scale);
@@ -192,7 +192,7 @@ void TCaliber::Run_TrackTower()
 	 continue;
        }
        //create array with multidimensional measurement
-       double * mess = new double[4];
+       double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
        mess[0] = double(tracktower.TowEt[n]);
        double scale = tracktower.TowEt[n]/tracktower.TowE[n];
        mess[1] = double(tracktower.TowEm[n])*scale;
@@ -257,7 +257,7 @@ void TCaliber::Run_TrackCluster()
 	 continue;
        }
        //create array with multidimensional measurement
-       double * mess = new double[4];
+       double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
        mess[0] = double(trackcluster.TowEt[n]);
        double scale = trackcluster.TowEt[n]/trackcluster.TowE[n];
        mess[1] = double(trackcluster.TowEm[n]*scale);
@@ -343,7 +343,7 @@ void TCaliber::Run_JetJet()
        //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
        //This relativeE is used *only* for plotting! Therefore no cuts on this var!
        //create array with multidimensional measurement
-       double * mess = new double[4];
+       double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
        mess[0] = double(jetjet.TowJ1Et[n]);
        double scale = jetjet.TowJ1Et[n]/jetjet.TowJ1E[n];
        mess[1] = double(jetjet.TowJ1Em[n]*scale);
@@ -509,8 +509,8 @@ void TCaliber::Run_Lvmini()
          aux[param]           = (TData::temp_derivative2[param]-TData::temp_derivative1[param])/(2.0*TData::epsilon);
          aux[param+abs(npar)] = (TData::temp_derivative2[param]+TData::temp_derivative1[param]-2*fsum)/(TData::epsilon*TData::epsilon);
       	}
+	
       lvmfun_(p->k,fsum,iret,aux);
-      
     }
     while (iret<0);
     //lvmprt_(2,aux,2); //Has any effect?
@@ -584,6 +584,7 @@ void TCaliber::Init(string file)
   if      (param_class=="TStepParameters") p = new TStepParameters( file );
 //  else if (param_class=="TMyParameters")   p = new TMyParameters( file );
 //  else                                     p = new TParameters( file );
+  p->SetFitFunc(this->global_fit_fast);
 
   plots = new TControlPlots(file, &data, p);
 

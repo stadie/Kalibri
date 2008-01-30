@@ -5,14 +5,19 @@
 #include <vector> 
 #include <map> 
 #include <utility> //pair
-//#include <cmath>
+#include <cmath>
+
+#define __DimensionMeasurement 4
 
 #define TypeDefault      0
 #define TypeTrackTower   1
 #define TypeGammaJet     2
 #define TypeTrackCluster 3
-#define TypeJetJet       4
+#define TypeMessMess     4
 #define TypePtBalance    5
+#define TypeInvMass      6
+
+//#define __FastErrorCalculation
 
 //virtual data base class -> not directly used!
 class TData
@@ -25,9 +30,8 @@ public:
   virtual ~TData(){
     //if (_mess) delete [] _mess;
   };
-  virtual double * GetMess(){  return _mess;};//used only for plotting
-  virtual double GetParametrizedMess(){ 
-	       return _func(_mess,_par);}
+  virtual double * GetMess(){ return _mess;};//used only for plotting
+  virtual double GetParametrizedMess(){return _func(_mess,_par);}
   virtual double GetParametrizedErr(double *paramess){ return _err(paramess);};
   virtual double GetTruth(){ return _truth;};
   virtual double GetError(){ return _error;};
@@ -64,7 +68,6 @@ public:
     TData(index, mess, truth, error, par, n_par, func, err){_type=TypeTrackTower;};
 
   virtual const std::vector<TData*>& GetRef() { 
-    //std::vector<TData*> result;
     resultcache.clear();	
     resultcache.push_back( this );
     return resultcache;
@@ -76,8 +79,8 @@ public:
   };
   virtual double chi2_fast();
   
-  private:
-  	static std::vector<TData*> resultcache;
+private:
+  static std::vector<TData*> resultcache;
 };
 
 
@@ -97,12 +100,12 @@ public:
   };
   void   AddMess(TData_TruthMess * m){_vecmess.push_back(m);};
   virtual double * GetMess(){//used only for plotting
-    double *dummy, *result=new double[4];
-    result[0]=0.0;result[1]=0.0;result[2]=0.0;result[3]=0.0;
+    double *dummy, *result=new double[__DimensionMeasurement];
+    for (unsigned i=0; i<__DimensionMeasurement; ++i) result[i]=0.0;
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
   	 it!=_vecmess.end(); ++it){
 	 dummy = (*it)->GetMess();
-       for (int i=0; i<4; ++i)	 
+       for (int i=0; i<__DimensionMeasurement; ++i)	 
          result[i]+=dummy[i];
     }	 
     return result;	  
@@ -136,8 +139,8 @@ protected:
   std::vector<TData*> _vecmess;
 };
 
-//data class for data providing only multiple messurements, no truth 
-//e.g. jet-jet, jet-jet-jet, toptop, etc..
+//virtual data class for data providing only multiple messurements
+//NOT DIRECTLY USED, SINCE "combine" FUNCTION IS NOT YET DEFINED HERE!
 class TData_MessMess : public TData_TruthMultMess
 {
 public:
@@ -145,7 +148,7 @@ public:
                    double * par, unsigned short int n_par,
         double(*func)(double*,double*),	double(*err)(double*)):
     TData_TruthMultMess(index, truth, error, par, n_par, func, err){
-      _direction=dir; _type=TypeJetJet;};
+      _direction=dir; _type=TypeMessMess;};
     virtual ~TData_MessMess() {
       for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	   it!=_vecmess.end(); ++it)
@@ -168,15 +171,15 @@ public:
   	 new_error   = (*it)->GetParametrizedErr(&new_mess);
 	 sum_error2 += new_error * new_error;
       }
-      //new_mess  = _func( _mess, _par);  
       new_mess  = GetParametrizedMess();
-      new_error = _err(  &new_mess );
+      new_error = _err( &new_mess );
       new_mess  = GetMessCombination();  
       return (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
     };
+    virtual double chi2_fast();
 
 protected:
-  virtual double combine() = 0;  
+  virtual double combine() = 0;
   std::vector<TData_MessMess*> _m2;
   double * _direction;
 };
@@ -187,9 +190,22 @@ class TData_PtBalance : public TData_MessMess
 public:
     TData_PtBalance(unsigned short int index, double * dir, double truth, double error, double * par, unsigned short int n_par,
         double(*func)(double*,double*),	double(*err)(double*)):
-    TData_MessMess(index, dir, truth, error, par, n_par, func, err){_type=TypePtBalance;};
+    TData_MessMess(index, dir, truth*truth, error, par, n_par, func, err){_type=TypePtBalance;};
     virtual ~TData_PtBalance(){};
-    virtual double chi2_fast();
+    virtual double GetTruth(){ return sqrt(_truth);};
+protected:
+    virtual double combine();  
+};
+
+//e.g. top-Mass, W-mass, etc..
+class TData_InvMass : public TData_MessMess
+{
+public:
+    TData_InvMass(unsigned short int index, double * dir, double truth, double error, double * par, unsigned short int n_par,
+        double(*func)(double*,double*),	double(*err)(double*)):
+    TData_MessMess(index, dir, truth*truth, error, par, n_par, func, err){_type=TypeInvMass;};
+    virtual ~TData_InvMass(){};
+    virtual double GetTruth(){ return sqrt(_truth);};
 protected:
     virtual double combine();  
 };

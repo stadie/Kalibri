@@ -381,7 +381,7 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
 	case TypeTrackCluster://track-cluster
 	  if (mess != 0.0) chi2[2]->Fill( (*data_it)->chi2() ); 
 	  break;
-	case TypeJetJet://jet-jet
+	case TypePtBalance://jet-jet
 	  if (mess != 0.0) chi2[3]->Fill( (*data_it)->chi2() ); break;
 	}
       }

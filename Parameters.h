@@ -16,7 +16,10 @@ public :
   TParameters(){};
   TParameters(std::string config):free_pars_per_bin(3),free_pars_per_bin_jet(2){
   this->ReadConfigFile(config);};
-  virtual ~TParameters(){};
+  virtual ~TParameters(){
+    if (k) delete [] k;
+    if (e) delete [] e;
+  };
   friend std::ostream& operator<<( std::ostream& os, const TParameters& c );
 
   int GetEtaBin(int const eta_id) const;
@@ -34,6 +37,9 @@ public :
 
   int GetNumberOfTowerParametersPerBin()const {return free_pars_per_bin;};
   int GetNumberOfJetParametersPerBin()const {return free_pars_per_bin_jet;};
+
+  void SetFitFunc( void (*func)(int &npar, double *gin, double &f, double *allpar, int iflag) )
+  { fitfunction = func; };
 
   double * GetTowerParRef(int const bin){return &k[bin*free_pars_per_bin]; };
   double * GetJetParRef(  int const jetbin){return &k[GetNumberOfTowerParameters()+jetbin*free_pars_per_bin_jet];};
@@ -81,6 +87,8 @@ private :
   void Read_Calibration(const std::string& file);
   std::string trim(std::string const& source, char const* delims = " {}\t\r\n");
   std::string input_calibration;
+  
+  void (*fitfunction)(int &npar, double *gin, double &f, double *allpar, int iflag);
 };
 
 // Parametrization of hadronic response by a step function
