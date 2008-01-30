@@ -2,7 +2,7 @@ C=g++
 LD=g++
 F77=g77
 #O2 for optimization, g for debugging
-SPECIALFLAGS=-g -Wall#-O2
+SPECIALFLAGS=-Wall -O4
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 

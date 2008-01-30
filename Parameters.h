@@ -130,7 +130,7 @@ class TStepEfracParameters: public TParameters {
     
     double Efrac = x[1]/(x[2]+x[3]);
     if (Efrac<0.1) {
-      if      (x[2]>0.0   && x[2]<=1.0)    result = x[1]+x[3] + par[0]*x[2];
+      if      (x[2]>=0.0   && x[2]<=1.0)   result = x[1]+x[3] + par[0]*x[2];
       else if (x[2]>1.0   && x[2]<=2.0)    result = x[1]+x[3] + par[1]*x[2];
       else if (x[2]>2.0   && x[2]<=5.0)    result = x[1]+x[3] + par[2]*x[2];
       else if (x[2]>5.0   && x[2]<=10.0)   result = x[1]+x[3] + par[3]*x[2];
@@ -143,7 +143,7 @@ class TStepEfracParameters: public TParameters {
       else if (x[2]>600.0 && x[2]<=1000.0) result = x[1]+x[3] + par[10]*x[2];
       else if (x[2]>1000.0 )               result = x[1]+x[3] + par[11]*x[2];
     } else if (Efrac<0.3) {
-      if      (x[2]>0.0   && x[2]<=1.0)    result = x[1]+x[3] + par[12]*x[2];
+      if      (x[2]>=0.0   && x[2]<=1.0)   result = x[1]+x[3] + par[12]*x[2];
       else if (x[2]>1.0   && x[2]<=2.0)    result = x[1]+x[3] + par[13]*x[2];
       else if (x[2]>2.0   && x[2]<=5.0)    result = x[1]+x[3] + par[14]*x[2];
       else if (x[2]>5.0   && x[2]<=10.0)   result = x[1]+x[3] + par[15]*x[2];
@@ -156,7 +156,7 @@ class TStepEfracParameters: public TParameters {
       else if (x[2]>600.0 && x[2]<=1000.0) result = x[1]+x[3] + par[22]*x[2];
       else if (x[2]>1000.0 )               result = x[1]+x[3] + par[23]*x[2];
     } else {
-      if      (x[2]>0.0   && x[2]<=1.0)    result = x[1]+x[3] + par[24]*x[2];
+      if      (x[2]>=0.0   && x[2]<=1.0)   result = x[1]+x[3] + par[24]*x[2];
       else if (x[2]>1.0   && x[2]<=2.0)    result = x[1]+x[3] + par[25]*x[2];
       else if (x[2]>2.0   && x[2]<=5.0)    result = x[1]+x[3] + par[26]*x[2];
       else if (x[2]>5.0   && x[2]<=10.0)   result = x[1]+x[3] + par[27]*x[2];

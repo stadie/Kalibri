@@ -36,6 +36,7 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
   std::vector<TData*>::const_iterator data_it,it;
   TLatex latex;
   latex.SetTextSize(0.035);
+  TH2F * constants = new TH2F("calib_constants","Calibration constants vs. Et and eta-bin with EMF=OUF=0",100,0.5,100.,p->eta_granularity,1,p->eta_granularity);    
   double * testmess = new double[4];
   //int d = 0;
   for (int eta=0; eta<p->eta_granularity;++eta){
@@ -99,7 +100,6 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       sprintf(name, "autc%d_eta%d_phi%d",i,eta+1,phi+1);
       au[3] = new TH1F(name,"",100,0.5,100.);    
 
-
       TH1F * khad[4];
       sprintf(name, "khad%d_eta%d_phi%d",i,eta+1,phi+1);
       khad[0] = new TH1F(name,";uncalibrated tower E_{T} [GeV];k-factor",100,0.5,100.);    
@@ -146,9 +146,6 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       sprintf(name, "norm_vs_hadtc%d_eta%d_phi%d",i,eta+1,phi+1);
       norm_vs_had[3] = new TH1F(name,"",100,0.5,100.);    
 
-
-
-      
       TH1F * norm[4];
       sprintf(name, "hnorm%d",i);
       norm[0] = new TH1F(name,"",100,0.5,100.);    
@@ -473,7 +470,9 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
 	testmess[1] = 0.0;
 	testmess[2] = (double)b;
 	khadonly->SetBinContent(khadonly->GetXaxis()->FindBin(b), 
-	                        p->plot_parametrization(testmess,val) );       
+	                        p->plot_parametrization(testmess,val) );
+	constants->SetBinContent(constants->GetXaxis()->FindBin(b),constants->GetYaxis()->FindBin(eta+1),
+				 p->plot_parametrization(testmess,val));
 	testmess[1] = (double)b*0.2;
 	testmess[2] = (double)b*0.8;
 	kEfrac02->SetBinContent(kEfrac02->GetXaxis()->FindBin(b), 
@@ -582,6 +581,12 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       ps.NewPage();
     }
   }
+  gStyle->SetPalette(1);
+  constants->GetXaxis()->SetTitle("Et [GeV]");
+  constants->GetYaxis()->SetTitle("Eta bin");
+  constants->Draw("COLZ"); 
+  c1->Draw(); 
+  ps.NewPage();
   
   ps.Close();
 }
