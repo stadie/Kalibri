@@ -1,3 +1,8 @@
+//
+// Original Author:  Christian Autermann
+//         Created:  Wed Jul 18 13:54:50 CEST 2007
+// $Id: CalibData.h,v 1.6 2008/01/29 10:58:59 auterman Exp $
+//
 #ifndef CalibData_h
 #define CalibData_h
 

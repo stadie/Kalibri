@@ -1,3 +1,8 @@
+//
+// Original Author:  Christian Autermann
+//         Created:  Wed Jul 18 13:54:50 CEST 2007
+// $Id: Parameters.h,v 1.8 2008/01/29 10:58:59 auterman Exp $
+//
 #ifndef TParameters_h
 #define TParameters_h
 
@@ -136,8 +141,8 @@ class TStepEfracParameters: public TParameters {
   static double tower_parametrization(double *x,double *par) {
     double result=0;
     
-    double Efrac = x[1]/(x[2]+x[3]);
-    if (Efrac<0.1) {
+    //double Efrac = x[1]/(x[2]+x[3]);
+    if (x[1]<0.1*(x[2]+x[3])) {
       if      (x[2]>=0.0   && x[2]<=1.0)   result = x[1]+x[3] + par[0]*x[2];
       else if (x[2]>1.0   && x[2]<=2.0)    result = x[1]+x[3] + par[1]*x[2];
       else if (x[2]>2.0   && x[2]<=5.0)    result = x[1]+x[3] + par[2]*x[2];
@@ -150,7 +155,7 @@ class TStepEfracParameters: public TParameters {
       else if (x[2]>300.0 && x[2]<=600.0)  result = x[1]+x[3] + par[9]*x[2];
       else if (x[2]>600.0 && x[2]<=1000.0) result = x[1]+x[3] + par[10]*x[2];
       else if (x[2]>1000.0 )               result = x[1]+x[3] + par[11]*x[2];
-    } else if (Efrac<0.3) {
+    } else if (x[1]<0.3*(x[2]+x[3])) {
       if      (x[2]>=0.0   && x[2]<=1.0)   result = x[1]+x[3] + par[12]*x[2];
       else if (x[2]>1.0   && x[2]<=2.0)    result = x[1]+x[3] + par[13]*x[2];
       else if (x[2]>2.0   && x[2]<=5.0)    result = x[1]+x[3] + par[14]*x[2];

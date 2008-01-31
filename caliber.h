@@ -1,3 +1,8 @@
+//
+// Original Author:  Christian Autermann
+//         Created:  Wed Jul 18 13:54:50 CEST 2007
+// $Id: caliber.h,v 1.4 2008/01/29 10:58:59 auterman Exp $
+//
 #ifndef caliber_h
 #define caliber_h
 //C++ libs

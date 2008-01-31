@@ -1,3 +1,8 @@
+//
+// Original Author:  Christian Autermann
+//         Created:  Wed Jul 18 13:54:50 CEST 2007
+// $Id: CalibData.C,v 1.7 2008/01/29 10:58:59 auterman Exp $
+//
 #include "CalibData.h"
 #include "map"
 //#include <iostream>//cout
@@ -15,12 +20,12 @@ std::vector<TData*> TData_TruthMess::resultcache = std::vector<TData*>(1);
 
 double TData_TruthMess::chi2_fast(){ 
   double new_mess  = GetParametrizedMess();
-//#ifndef __FastErrorCalculation
+#ifndef __FastErrorCalculation
   double new_error = GetParametrizedErr(&new_mess);
-//#else
-//  double new_error = _error;
-//  if (GetMess()[0]!=0.) new_error = _error*new_mess/GetMess()[0];
-//#endif   
+#else
+  double new_error = _error;
+  if (GetMess()[0]!=0.) new_error = _error*new_mess/GetMess()[0];
+#endif   
   double new_chi2  = (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
   
   double dmess_dp, derror_dp;
@@ -32,22 +37,22 @@ double TData_TruthMess::chi2_fast(){
   for (unsigned i=idx; i<idx+_n_par; ++i){
     _par[i-idx]  += epsilon;
     dmess_dp  = GetParametrizedMess();
-//#ifndef __FastErrorCalculation
+#ifndef __FastErrorCalculation
     derror_dp = GetParametrizedErr(&dmess_dp);
-//#else
-//    if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
-//    else derror_dp = _error;
-//#endif   
+#else
+    if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
+    else derror_dp = _error;
+#endif   
     temp_derivative2[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
 
     _par[i-idx]  -= 2.0*epsilon;
     dmess_dp  = GetParametrizedMess();
-//#ifndef __FastErrorCalculation
+#ifndef __FastErrorCalculation
     derror_dp = GetParametrizedErr(&dmess_dp);
-//#else
-//    if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
-//    else derror_dp = _error;
-//#endif   
+#else
+    if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
+    else derror_dp = _error;
+#endif   
     temp_derivative1[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
     _par[i-idx]  += epsilon;
   }

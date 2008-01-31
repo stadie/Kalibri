@@ -466,18 +466,18 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       TH1F * kEfrac05 = new TH1F(name,";k vs. had. E_{T} with EMF=0.5 OUF=0 [GeV];",100,0.5,100.);    
       testmess[3] = 0.0;
       for (int b=1; b<=100; ++b){
-	testmess[0] = (double)b;
+	testmess[0] = (double)b; // -> EMFrac = 0.0
 	testmess[1] = 0.0;
 	testmess[2] = (double)b;
 	khadonly->SetBinContent(khadonly->GetXaxis()->FindBin(b), 
 	                        p->plot_parametrization(testmess,val) );
 	constants->SetBinContent(constants->GetXaxis()->FindBin(b),constants->GetYaxis()->FindBin(eta+1),
 				 p->plot_parametrization(testmess,val));
-	testmess[1] = (double)b*0.2;
+	testmess[1] = (double)b*0.2; // -> EMFrac = 0.25
 	testmess[2] = (double)b*0.8;
 	kEfrac02->SetBinContent(kEfrac02->GetXaxis()->FindBin(b), 
 	                        p->plot_parametrization(testmess,val) );       
-	testmess[1] = (double)b*0.5;
+	testmess[1] = (double)b*0.5; // -> EMFrac = 1.0
 	testmess[2] = (double)b*0.5;
 	kEfrac05->SetBinContent(kEfrac05->GetXaxis()->FindBin(b), 
 	                        p->plot_parametrization(testmess,val) );       
