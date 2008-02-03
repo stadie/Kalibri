@@ -296,7 +296,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   os << endl;
 
   //3. tower calibration constants
-  os << "    untracked  int32  TowerParam       = " << cal.GetNumberOfTowerParametersPerBin() << endl;
+  os << "    untracked  int32  TowerParam  = " << cal.GetNumberOfTowerParametersPerBin() << endl;
   for (unsigned int n=0; n<cal.free_pars_per_bin; ++n) {
     os << "    untracked vdouble TowerParam"<< n <<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
@@ -333,8 +333,8 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   //--------------------------------------------------------------------
   os << endl
      << " module calibJetMaker = CalibJetMaker {" << endl
-     << "    InputTag Jets    = " << endl
-     << "    string CalibJets = \"\" " << endl
+     << "    InputTag Jets    = MyFavoriteJetAlgorithm" << endl
+     << "    string CalibJets = \"MyFavoriteJetAlgorithm\" " << endl
      << endl
      << "    untracked vint32 mapEta     = { ";
   
@@ -364,9 +364,9 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   os << endl;
 
   //7. jet calibration constants
-  os << "    untracked  int32 JetParam   = " << cal.GetNumberOfJetParametersPerBin() << endl;
+  os << "    untracked  int32  JetParam  = " << cal.GetNumberOfJetParametersPerBin() << endl;
   for (unsigned int n=0; n<cal.free_pars_per_bin_jet; ++n) {
-    os << "    untracked vdouble  JetParam"<<n<<" = { ";
+    os << "    untracked vdouble JetParam"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
       for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
