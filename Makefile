@@ -2,11 +2,7 @@ C=g++
 LD=g++
 F77=g77
 #O2 for optimization, g for debugging
-<<<<<<< Makefile
 SPECIALFLAGS=-O2 #-g -Wall#-O2
-=======
-SPECIALFLAGS=-Wall -O4
->>>>>>> 1.4
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 

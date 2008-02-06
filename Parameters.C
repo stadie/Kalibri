@@ -73,7 +73,6 @@ void TParameters::ReadConfigFile(string const file)
       e[i] = 0.0;
     }
   }
-
   Read_Calibration(input_calibration);
 }
 

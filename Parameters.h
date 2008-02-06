@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.8 2008/01/29 10:58:59 auterman Exp $
+// $Id: Parameters.h,v 1.9 2008/01/31 16:21:03 auterman Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -99,7 +99,6 @@ private :
 // Parametrization of hadronic response by a step function
 class TStepParameters: public TParameters {
   public:
-  TStepParameters(){};
   TStepParameters(std::string config){
   free_pars_per_bin=12;free_pars_per_bin_jet=2;ReadConfigFile(config);};
   
