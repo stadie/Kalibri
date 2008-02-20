@@ -1,10 +1,12 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.4 2008/01/29 10:58:59 auterman Exp $
+// $Id: caliber.h,v 1.5 2008/01/31 16:21:03 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
+
+
 //C++ libs
 #include <stddef.h>
 #include <stdio.h>
@@ -60,7 +62,11 @@ private:
                          double *allpar, int iflag); 
   void static global_fit_fast(int &npar, double *gin, double &f, 
                          double *allpar, int iflag); 
-  double global_fit_deriv(int &npar, double *allpar, int index);
+
+  void static global_fit_threading(int &npar, double *gin, double &f, 
+                         double *allpar, int iflag); 
+  double static global_fit(std::vector<TData*> d); 
+
   double numeric_derivate( void (*func)(int&,double*,double&,double*,int),
                            double * pars, int npar, int index);
   double analytic_derivate( double * pars, int npar, int index);
@@ -81,6 +87,7 @@ private:
   TStepParameters * p;    //fit parameters, depend on number of bins & geometry
 
   TControlPlots * plots;  //the control plots
+  
 };
 
 #endif

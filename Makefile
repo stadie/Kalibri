@@ -2,16 +2,16 @@ C=g++
 LD=g++
 F77=g77
 #O2 for optimization, g for debugging
-SPECIALFLAGS=-O2 #-g -Wall#-O2
+SPECIALFLAGS=#-O2 #-g -Wall#-O2
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 
-CFLAGS = $(SPECIALFLAGS) -I. -I./include -I$(SRT_PUBLIC_CONTEXT)/include -I$(ROOTSYS)/include -Wno-deprecated -m32 -Wa,--32
-LFLAGS = $(SPECIALFLAGS) -L../../lib/$(SRT_SUBDIR)/ -lz -m32 -lg2c
+CFLAGS = $(SPECIALFLAGS) -I. -I./include -I$(SRT_PUBLIC_CONTEXT)/include -I$(ROOTSYS)/include -Wno-deprecated -Wa
+LFLAGS = $(SPECIALFLAGS) -L../../lib/$(SRT_SUBDIR)/ -lz -lg2c
 
 
-RCXX=$(CFLAGS) $(ROOTCFLAGS)
-RLXX=$(LFLAGS) $(ROOTLIBS)
+RCXX=$(CFLAGS) $(ROOTCFLAGS) -I/usr/include/boost
+RLXX=$(LFLAGS) $(ROOTLIBS)  -I/usr/include/boost -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
 SRC=caliber.C GammaJetSel.C TrackTowerSel.C TrackClusterSel.C JetJetSel.C ConfigFile.C CalibData.C Parameters.C ControlPlots.C
 
@@ -21,7 +21,7 @@ SRC=caliber.C GammaJetSel.C TrackTowerSel.C TrackClusterSel.C JetJetSel.C Config
 all: runjunk
 
 lbfgs.o: lbfgs.F
-		$(F77) -fno-automatic -fno-backslash -m32 -O -c lbfgs.F
+		$(F77) -fno-automatic -fno-backslash -O -c lbfgs.F
 
 ConfigFile.o: ConfigFile.C ConfigFile.h
 		$(C) $(RCXX) -c ConfigFile.C
@@ -64,7 +64,7 @@ clean:
 		@rm -f junk
 		@rm -f *.ps
 		@rm -f *.eps
-#		@rm -f *.cfi
+		@rm -f *.cfi
 		@rm -f fort.*
 		@rm -f .#*
 

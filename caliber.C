@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.7 2008/01/29 10:58:59 auterman Exp $
+// $Id: caliber.C,v 1.8 2008/01/31 16:21:03 auterman Exp $
 //
 #include "caliber.h"
 
@@ -13,17 +13,25 @@
 #include "TTree.h"
 #include "TChain.h"
 #include "TStyle.h"
+//Boost
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+boost::mutex io_mutex;
 // User
 #include "CalibMath.h"
 #include "CalibData.h"
 #include "external.h"
+
+#define NTHREADS 4 //1..n (where n is smaller than the number of cores)
 using namespace std;
 
 //Global defined function; necessary for TMinuit
 void (*fitfunction)(int &npar, double *gin, double &f, double *allpar, int iflag);
 
 //The data (needs to be global, since it's used in the static member function
-//          global fit. Thats needed for TMinuit.)
+//          global fit. Thats needed for TMinuit. For multi-threading, too.)
+
+typedef std::vector<TData*>::iterator DataIter;
 std::vector<TData*> data;
 
 //Outlier Rejection
@@ -33,10 +41,66 @@ struct OutlierRejection {
    double _cut;
 };
 
+double threading_results[NTHREADS];
+struct calc_chi2_on
+{
+  calc_chi2_on(int id, DataIter beg, DataIter end) : id(id), beg(beg), end(end){ }
+
+  void operator()()
+  {
+     boost::mutex::scoped_lock
+     lock(io_mutex);
+     //std::cout << "Thread with Process ID " << id << std::endl;
+     double chisq=0.0;
+     for (DataIter it=beg; it!=end; ++it){
+       chisq += (*it)->chi2_fast();  //caches derivatives ->fast
+     }
+     threading_results[(unsigned)id]=chisq;
+  }
+  int id;
+  DataIter beg, end;
+};
 
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //--v-TCaliber class-v------------------------------------------------------------------------
+/*
+pt_addr_t TCaliber::global_fit(pt_addr_t arg) 
+{  //simply loop over d and return sum of chi2
+   double chisq = 0.0;
+   std::vector<TData*>::const_iterator it = data.begin() + (int)arg*(data.size() / NTHREADS);
+   std::vector<TData*>::const_iterator it_end = it + (data.size() / NTHREADS); 
+   for (; it!=it_end; ++it){
+     chisq += (*it)->chi2_fast();  //caches derivatives ->fast
+   }
+   threading_results[(unsigned)arg]=chisq;
+   return arg;
+}
+*/
+void TCaliber::global_fit_threading(int &npar, double *gin, double &f, double *allpar, int iflag) 
+{
+  double result = 0.0;
+  //set storage for temporary derivative storage to zero
+  for (unsigned param=0; param<abs(npar); ++param) {
+    TData::temp_derivative1[param]=0.0;
+    TData::temp_derivative2[param]=0.0;
+  }
+
+  boost::thread * thrd[NTHREADS];
+  for (unsigned ithreads=0; ithreads<NTHREADS; ++ithreads){
+    threading_results[ithreads] = 0.0;
+    DataIter beg = data.begin() + ithreads*(data.size() / NTHREADS);
+    DataIter end = beg + (data.size() / NTHREADS); 
+    thrd[ithreads] = new boost::thread(calc_chi2_on(ithreads, beg, end ));
+  }
+  for (unsigned ithreads=0; ithreads<NTHREADS; ++ithreads)
+    thrd[ithreads]->join();
+  for (unsigned ithreads=0; ithreads<NTHREADS; ++ithreads){
+    result += threading_results[ithreads];
+    delete thrd[ithreads];
+  } 
+  f = result; 
+}
 
 void TCaliber::global_fit_fast(int &npar, double *gin, double &f, double *allpar, int iflag) 
 {
@@ -467,7 +531,8 @@ void TCaliber::Run_Lvmini()
        << p->GetNumberOfJetParameters() << " in total with LVMINI.\n" 
        << "Using " << data.size() << " total events." << endl;
 
-  fitfunction    = this->global_fit_fast;
+  //fitfunction    = this->global_fit_fast;
+  fitfunction    = this->global_fit_threading;
 
   float eps =float(1.E-3*data.size());
   float wlf1=1.E-4;
