@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.11 2008/02/21 13:32:15 stadie Exp $
+// $Id: Parameters.h,v 1.12 2008/02/21 14:52:16 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -121,7 +121,20 @@ private:
 
   void (*fitfunction)(int &npar, double *gin, double &f, double *allpar, int iflag);
 
-  static TParameters *instance;
+  static TParameters *instance; 
+  class Cleaner
+  {
+  public:
+    Cleaner() {}
+    ~Cleaner()
+    {
+      if(TParameters::instance) {
+        delete TParameters::instance;
+        TParameters::instance = 0;
+      }
+    }
+  };
+  friend class Cleaner;
 };
 
 // Parametrization of hadronic response by a step function

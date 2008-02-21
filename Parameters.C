@@ -13,6 +13,7 @@ TParameters* TParameters::instance = 0;
 
 TParameters* TParameters::CreateParameters(const std::string& configfile) 
 {
+  static Cleaner cleanup;
   assert(instance == 0);
  
   ConfigFile config( configfile.c_str() );
