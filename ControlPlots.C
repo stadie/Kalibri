@@ -18,6 +18,7 @@
 #include "TH2F.h"
 #include "TF1.h"
 #include "TLegend.h"
+#include "TProfile.h"
 
 using namespace std;
 
@@ -36,11 +37,11 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
   std::vector<TData*>::const_iterator data_it,it;
   TLatex latex;
   latex.SetTextSize(0.035);
-  TH2F * constants = new TH2F("calib_constants","Calibration constants vs. Et and eta-bin with EMF=OUF=0",100,0.5,100.,p->eta_granularity,1,p->eta_granularity);    
+  TH2F * constants = new TH2F("calib_constants","Calibration constants vs. Et and eta-bin with EMF=OUF=0",100,0.5,100.,p->GetEtaGranularity(),1,p->GetEtaGranularity());    
   double * testmess = new double[4];
   //int d = 0;
-  for (int eta=0; eta<p->eta_granularity;++eta){
-    for (int phi=0; phi<p->phi_granularity;++phi){
+  for (int eta=0; eta<p->GetEtaGranularity();++eta){
+    for (int phi=0; phi<p->GetPhiGranularity();++phi){
       int i = p->GetBin(eta,phi);
       double * val = p->GetTowerParRef(i);
       char * name = new char[100];
@@ -599,8 +600,8 @@ void TControlPlots::GammaJetControlPlots()  // Gamma-Jet Control Histograms
   std::vector<TData*>::const_iterator data_it,it;
   TLatex latex;
   latex.SetTextSize(0.035);
-  for (int eta=0; eta<p->eta_granularity;++eta){
-    for (int phi=0; phi<p->phi_granularity;++phi){
+  for (int eta=0; eta<p->GetEtaGranularity();++eta){
+    for (int phi=0; phi<p->GetPhiGranularity();++phi){
       int i = p->GetBin(eta,phi);
       char * name = new char[100];
       sprintf(name, "hjes_gj%d_eta%d_phi%d",i,eta+1,phi+1);
@@ -709,8 +710,8 @@ void TControlPlots::GammaJetControlPlotsJetBin()  // Gamma-Jet Control Histogram
   TLatex latex;
   latex.SetTextSize(0.035);
   //one plot per *JET* bin!
-  for (int eta=0; eta<p->eta_granularity_jet;++eta){
-    for (int phi=0; phi<p->phi_granularity_jet;++phi){
+  for (int eta=0; eta<p->GetEtaGranularityJet();++eta){
+    for (int phi=0; phi<p->GetPhiGranularityJet();++phi){
       int i = p->GetJetBin(eta,phi) + p->GetNumberOfTowerParameters();
       char * name = new char[100];
       sprintf(name, "h2jes_gj%d_eta%d_phi%d",i,eta+1,phi+1);
@@ -805,8 +806,8 @@ void TControlPlots::TrackTowerControlPlots()  // Track-Tower Control Histograms
   TLatex latex;
   latex.SetTextSize(0.035);
 //int d = 0;
-  for (int eta=0; eta<p->eta_granularity;++eta){
-    for (int phi=0; phi<p->phi_granularity;++phi){
+  for (int eta=0; eta<p->GetEtaGranularity();++eta){
+    for (int phi=0; phi<p->GetPhiGranularity();++phi){
       int i = p->GetBin(eta,phi);
       char * name = new char[100];
       TH1F * plot_tt, * norm_tt;
@@ -923,9 +924,9 @@ void TControlPlots::TrackTowerControlPlots()  // Track-Tower Control Histograms
   const static unsigned ptbins = 20;
   const static double   maxpt  = 400;
   int events = 0;
-  for (int eta=0; eta<p->eta_granularity;++eta){
-    for (int phi=0; phi<p->phi_granularity;++phi){
-      int i = eta*p->phi_granularity*p->free_pars_per_bin+phi*p->free_pars_per_bin;
+  for (int eta=0; eta<p->GetEtaGranularity();++eta){
+    for (int phi=0; phi<p->GetPhiGranularity();++phi){
+      int i = eta*p->GetPhiGranularity()*p->free_pars_per_bin+phi*p->free_pars_per_bin;
       char * name = new char[100];
       TH1F * plota[ ptbins ];
       TH1F * plotb[ ptbins ];
@@ -1019,8 +1020,8 @@ void TControlPlots::TrackClusterControlPlots()  // Track-Cluster Control Histogr
   std::vector<TData*>::const_iterator data_it,it;
   TLatex latex;
   latex.SetTextSize(0.035);
-  for (int eta=0; eta<p->eta_granularity;++eta){
-    for (int phi=0; phi<p->phi_granularity;++phi){
+  for (int eta=0; eta<p->GetEtaGranularity();++eta){
+    for (int phi=0; phi<p->GetPhiGranularity();++phi){
       int i = p->GetBin(eta,phi);
       char * name = new char[100];
       sprintf(name, "hjes_tc%d_eta%d_phi%d",i,eta+1,phi+1);
@@ -1093,4 +1094,138 @@ void TControlPlots::TrackClusterControlPlots()  // Track-Cluster Control Histogr
     }
   }
   ps.Close();
+}
+
+
+void TControlPlots::GammaJetControlPlotsJetJEC()
+{
+  TCanvas * c1 = new TCanvas("gj3","",600,600);
+  TPostScript ps("gammajet_plots_ala_JEC.ps",111);
+
+  //book hists
+  TProfile* heta = new TProfile("heta","#gamma-jet",100,-5,5,0.2,1.8);
+  heta->SetXTitle("#eta");
+  //heta->SetYTitle("< #frac{p_{T,jet}}{E_{T,#gamma}}>");
+  TProfile* hetacor = new TProfile("hetacor","#eta dependence",100,-5,5,0.2,1.8);
+  hetacor->SetXTitle("#eta_{jet}^{cal}");
+  //hetacor->SetYTitle("< #frac{p_{T,jet}}{E_{T,#gamma}}>");
+  TProfile* hetapar = new TProfile("hetapar","#eta dependence",100,-5,5,0.2,1.8);
+  hetapar->SetXTitle("#eta_{jet}^{cal}");
+  //hetapar->SetYTitle("< #frac{p_{T,jet}}{E_{T,cor. jet}}>");
+
+  TProfile* hpt = new TProfile("hpt","#gamma-jet",100,20,220,0.2,1.8);
+  hpt->SetXTitle("p_{T} [GeV]");
+  //hpt->SetYTitle("< #frac{p_{T,jet}}{E_{T,#gamma}}>");
+  TProfile* hptcor = new TProfile("hptcor","#p_{T} dependence",100,20,220,0.2,1.8);
+  hptcor->SetXTitle("p_{T}");
+  //hptcor->SetYTitle("< #frac{p_{T,jet}}{E_{T,#gamma}}>");
+  TProfile* hptpar = new TProfile("hptpar","p_{T} dependence",100,20,220,0.2,1.8);
+  hptpar->SetXTitle("p_{T}");
+  //hptpar->SetYTitle("< #frac{p_{T,jet}}{E_{T,cor. jet}}>");
+ 
+  double bins[101];
+  for(int i = 0; i < 101 ; ++i) {
+    bins[i] = pow(10,(i+32)/40.0);
+  }
+  TProfile* hptlog = new TProfile("hptlog","#gamma-jet",100,bins,0,4);
+  hptlog->SetXTitle("p_{T} [GeV]");
+  //hptlog->SetYTitle("< #frac{p_{T,jet}}{E_{T,#gamma}}>");
+  TProfile* hptlogcor = new TProfile("hptlogcor","#p_{T} dependence",100,bins,0,4);
+  hptlogcor->SetXTitle("p_{T}");
+  //hptlogcor->SetYTitle("< #frac{p_{T,jet}}{E_{T,#gamma}}>");
+  TProfile* hptlogpar = new TProfile("hptlogpar","p_{T} dependence",100,bins,0,4);
+  hptlogpar->SetXTitle("p_{T}");
+  //hptlogpar->SetYTitle("< #frac{p_{T,jet}}{E_{T,cor. jet}}>");
+  
+  //loop over all fit-events
+  for ( std::vector<TData*>::iterator i = data->begin() ; i != data->end() ; ++i )  {
+    TData* jg = *i;
+    if( jg->GetType() != TypeGammaJet ) continue;
+    double etjet = jg->GetMess()[0];
+    double etjetcor = jg->GetParametrizedMess();
+    double etajet = jg->GetMess()[1];
+    //double phijet = jg->GetMess()[2];
+    heta->Fill(etajet,etjet/ jg->GetTruth());
+    hetacor->Fill(etajet,etjetcor/ jg->GetTruth());
+    hetapar->Fill(etajet,etjet/etjetcor);
+    hpt->Fill(jg->GetTruth(),etjet/ jg->GetTruth());
+    hptcor->Fill(jg->GetTruth(),etjetcor/jg->GetTruth());
+    hptpar->Fill(etjetcor,etjet/etjetcor);    
+    hptlog->Fill(jg->GetTruth(),etjet/ jg->GetTruth());
+    hptlogcor->Fill(jg->GetTruth(),etjetcor/jg->GetTruth());
+    hptlogpar->Fill(etjetcor,etjet/etjetcor);
+  }
+  heta->SetMarkerStyle(20);
+  heta->SetMarkerColor(1);
+  heta->SetMinimum(0.5);
+  heta->SetMaximum(1.2);
+  hetacor->SetMarkerStyle(4);
+  hetacor->SetMarkerColor(4);  
+  hetapar->SetMarkerStyle(22);
+  hetapar->SetMarkerColor(2);
+  heta->Draw();
+  heta->SetStats(0);
+  hetacor->Draw("SAME");
+  hetapar->Draw("SAME");
+  TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
+  leg->AddEntry(heta,"< p^{jet}_{T}/ E_{T}^{#gamma}>","p");
+  leg->AddEntry(hetacor,"<p_{T}^{jet}/p_{T}^{cor. jet}>","p");
+  leg->AddEntry(hetapar,"<p_{T}^{cor. jet}/E_{T}^{#gamma}>","p");
+  leg->Draw();
+  c1->SetGrid();
+  c1->Draw(); 
+  ps.NewPage();
+  delete leg;
+  hpt->SetMarkerStyle(20);
+  hpt->SetMarkerColor(1);
+  hpt->SetMinimum(0.2);
+  hpt->SetMaximum(1.8);
+  hptcor->SetMarkerStyle(4);
+  hptcor->SetMarkerColor(4);  
+  hptpar->SetMarkerStyle(22);
+  hptpar->SetMarkerColor(2);
+  hpt->Draw();
+  hpt->SetStats(0);
+  hptcor->Draw("SAME");
+  hptpar->Draw("SAME"); 
+  leg = new TLegend(0.7,0.96,0.96,0.72);
+  leg->AddEntry(hpt,"< p^{jet}_{T}/ E_{T}^{#gamma}>","p");
+  leg->AddEntry(hptcor,"<p_{T}^{jet}/p_{T}^{cor. jet}>","p");
+  leg->AddEntry(hptpar,"<p_{T}^{cor. jet}/E_{T}^{#gamma}>","p");
+  leg->Draw();
+  c1->SetGrid();
+  c1->Draw();   
+  ps.NewPage(); 
+  delete leg;
+  hptlog->SetMarkerStyle(20);
+  hptlog->SetMarkerColor(1);
+  hptlog->SetMinimum(0.2);
+  hptlog->SetMaximum(1.8);
+  hptlogcor->SetMarkerStyle(4);
+  hptlogcor->SetMarkerColor(4);  
+  hptlogpar->SetMarkerStyle(22);
+  hptlogpar->SetMarkerColor(2);
+  hptlog->Draw();
+  hptlog->SetStats(0);
+  hptlogcor->Draw("SAME");
+  hptlogpar->Draw("SAME");
+  c1->SetLogx(1);  
+  c1->SetGrid();
+  leg = new TLegend(0.7,0.96,0.96,0.72);
+  leg->AddEntry(hptlog,"< p^{jet}_{T}/ E_{T}^{#gamma}>","p");
+  leg->AddEntry(hptlogcor,"<p_{T}^{jet}/p_{T}^{cor. jet}>","p");
+  leg->AddEntry(hptlogpar,"<p_{T}^{cor. jet}/E_{T}^{#gamma}>","p");
+  leg->Draw();
+  c1->Draw(); 
+  ps.Close();
+  delete leg;
+  delete heta;
+  delete hetacor;
+  delete hetapar;
+  delete hpt;
+  delete hptcor;
+  delete hptpar;
+  delete hptlog;
+  delete hptlogcor;
+  delete hptlogpar;
 }

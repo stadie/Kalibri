@@ -22,6 +22,7 @@ public:
   
   void GammaJetControlPlots();
   void GammaJetControlPlotsJetBin();
+  void GammaJetControlPlotsJetJEC();
   void TrackTowerControlPlots();
   void TrackClusterControlPlots();
   void FitControlPlots();

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.8 2008/01/31 16:21:03 auterman Exp $
+// $Id: caliber.C,v 1.9 2008/02/20 09:45:44 auterman Exp $
 //
 #include "caliber.h"
 
@@ -23,6 +23,7 @@ boost::mutex io_mutex;
 #include "external.h"
 
 #define NTHREADS 4 //1..n (where n is smaller than the number of cores)
+
 using namespace std;
 
 //Global defined function; necessary for TMinuit
@@ -31,14 +32,14 @@ void (*fitfunction)(int &npar, double *gin, double &f, double *allpar, int iflag
 //The data (needs to be global, since it's used in the static member function
 //          global fit. Thats needed for TMinuit. For multi-threading, too.)
 
-typedef std::vector<TData*>::iterator DataIter;
+typedef std::vector<TData*>::const_iterator DataIter;
 std::vector<TData*> data;
 
 //Outlier Rejection
 struct OutlierRejection {
-   OutlierRejection(double cut):_cut(cut){};
-   bool operator()(TData *d){return d->chi2()<_cut;}
-   double _cut;
+  OutlierRejection(double cut):_cut(cut){};
+  bool operator()(TData *d){return d->chi2()<_cut;}
+  double _cut;
 };
 
 double threading_results[NTHREADS];
@@ -48,15 +49,20 @@ struct calc_chi2_on
 
   void operator()()
   {
-     boost::mutex::scoped_lock
-     lock(io_mutex);
-     //std::cout << "Thread with Process ID " << id << std::endl;
-     double chisq=0.0;
-     for (DataIter it=beg; it!=end; ++it){
-       chisq += (*it)->chi2_fast();  //caches derivatives ->fast
-     }
-     threading_results[(unsigned)id]=chisq;
+    //{
+    //  boost::mutex::scoped_lock lock(io_mutex);
+    //  std::cout << "start Thread with Process ID " << id << std::endl; 
+    //}
+    double chisq=0.0;
+    for (DataIter it=beg; it!=end; ++it){ 
+      boost::mutex::scoped_lock lock(io_mutex);
+      chisq += (*it)->chi2_fast();  //caches derivatives ->fast
+    }    
+    threading_results[id]=chisq;
+    //boost::mutex::scoped_lock lock(io_mutex);
+    //std::cout << "stop Thread with Process ID " << id << std::endl;
   }
+private:
   int id;
   DataIter beg, end;
 };
@@ -65,17 +71,17 @@ struct calc_chi2_on
 //--------------------------------------------------------------------------------------------
 //--v-TCaliber class-v------------------------------------------------------------------------
 /*
-pt_addr_t TCaliber::global_fit(pt_addr_t arg) 
-{  //simply loop over d and return sum of chi2
-   double chisq = 0.0;
-   std::vector<TData*>::const_iterator it = data.begin() + (int)arg*(data.size() / NTHREADS);
-   std::vector<TData*>::const_iterator it_end = it + (data.size() / NTHREADS); 
-   for (; it!=it_end; ++it){
-     chisq += (*it)->chi2_fast();  //caches derivatives ->fast
-   }
-   threading_results[(unsigned)arg]=chisq;
-   return arg;
-}
+  pt_addr_t TCaliber::global_fit(pt_addr_t arg) 
+  {  //simply loop over d and return sum of chi2
+  double chisq = 0.0;
+  std::vector<TData*>::const_iterator it = data.begin() + (int)arg*(data.size() / NTHREADS);
+  std::vector<TData*>::const_iterator it_end = it + (data.size() / NTHREADS); 
+  for (; it!=it_end; ++it){
+  chisq += (*it)->chi2_fast();  //caches derivatives ->fast
+  }
+  threading_results[(unsigned)arg]=chisq;
+  return arg;
+  }
 */
 void TCaliber::global_fit_threading(int &npar, double *gin, double &f, double *allpar, int iflag) 
 {
@@ -88,9 +94,9 @@ void TCaliber::global_fit_threading(int &npar, double *gin, double &f, double *a
 
   boost::thread * thrd[NTHREADS];
   for (unsigned ithreads=0; ithreads<NTHREADS; ++ithreads){
-    threading_results[ithreads] = 0.0;
+    threading_results[ithreads] = 0.0;    
     DataIter beg = data.begin() + ithreads*(data.size() / NTHREADS);
-    DataIter end = beg + (data.size() / NTHREADS); 
+    DataIter end = beg + (data.size() / NTHREADS);
     thrd[ithreads] = new boost::thread(calc_chi2_on(ithreads, beg, end ));
   }
   for (unsigned ithreads=0; ithreads<NTHREADS; ++ithreads)
@@ -104,18 +110,18 @@ void TCaliber::global_fit_threading(int &npar, double *gin, double &f, double *a
 
 void TCaliber::global_fit_fast(int &npar, double *gin, double &f, double *allpar, int iflag) 
 {
-   //set storage for temporary derivative storage to zero
-   for (unsigned param=0; param<abs(npar); ++param) {
-     TData::temp_derivative1[param]=0.0;
-     TData::temp_derivative2[param]=0.0;
-   }
+  //set storage for temporary derivative storage to zero
+  for (unsigned param=0; param<abs(npar); ++param) {
+    TData::temp_derivative1[param]=0.0;
+    TData::temp_derivative2[param]=0.0;
+  }
 
-   double chisq = 0.0;
-   std::vector<TData*>::const_iterator data_it, it;
-   for (data_it=data.begin(); data_it!=data.end(); ++data_it){
-     chisq += (*data_it)->chi2_fast();  //caches derivatives ->fast
-   }
-   f = chisq;
+  double chisq = 0.0;
+  std::vector<TData*>::const_iterator data_it, it;
+  for (data_it=data.begin(); data_it!=data.end(); ++data_it){
+    chisq += (*data_it)->chi2_fast();  //caches derivatives ->fast
+  }
+  f = chisq;
 }
 
 void TCaliber::global_fit(int &npar, double *gin, double &f, double *allpar, int iflag) 
@@ -123,11 +129,11 @@ void TCaliber::global_fit(int &npar, double *gin, double &f, double *allpar, int
 //This function can be used for fitting with Minuit which does derivatives 
 //first or for plotting.
 {
-   double chisq = 0.0;
-   std::vector<TData*>::const_iterator data_it, it;
-   for (data_it=data.begin(); data_it!=data.end(); ++data_it)
-     chisq += (*data_it)->chi2();     //standard
-   f = chisq;
+  double chisq = 0.0;
+  std::vector<TData*>::const_iterator data_it, it;
+  for (data_it=data.begin(); data_it!=data.end(); ++data_it)
+    chisq += (*data_it)->chi2();     //standard
+  f = chisq;
 }
 
 double TCaliber::numeric_derivate( void (*func)(int&,double*,double&,double*,int), 
@@ -165,77 +171,82 @@ void TCaliber::Run_GammaJet()
   //Run Gamma-Jet stuff  
   int nevent = gammajet.fChain->GetEntries();
   for (int i=0;i<nevent;i++) {
-     if(i%1000==0) cout<<"Gamma-Jet Event: "<<i<<endl;
-     gammajet.fChain->GetEvent(i); 
-     if (gammajet.NobjTowCal>200) {
-       cerr<<"ERROR: Increase array sizes in GammaJetSelector; NobjTowCal="
-           <<gammajet.NobjTowCal<<"!"<<endl;
-       exit(8);
-     }
+    if(i%1000==0) cout<<"Gamma-Jet Event: "<<i<<endl;
+    gammajet.fChain->GetEvent(i); 
+    if (gammajet.NobjTowCal>200) {
+      cerr<<"ERROR: Increase array sizes in GammaJetSelector; NobjTowCal="
+	  <<gammajet.NobjTowCal<<"!"<<endl;
+      exit(8);
+    }
  
-     //trivial cuts
-     if (gammajet.PhotonPt<Et_cut_on_gamma || gammajet.JetCalPt<Et_cut_on_jet) continue;
+    //trivial cuts
+    if (gammajet.PhotonPt<Et_cut_on_gamma || gammajet.JetCalPt<Et_cut_on_jet) continue;
      
-     //Find the jets eta & phi index using the leading (ET) tower:
-     int jet_index=0;
-     double max_tower_et = 0.0;
-     for (int n=0; n<gammajet.NobjTowCal; ++n){
-       if (gammajet.TowEt[n]>max_tower_et) {
-         jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[n]),
-	                          p->GetJetPhiBin(gammajet.TowId_phi[n]));
-         max_tower_et = gammajet.TowEt[n];
-       }
-     }
-     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
+    //Find the jets eta & phi index using the leading (ET) tower:
+    int jet_index=0;
+    double max_tower_et = 0.0;
+    for (int n=0; n<gammajet.NobjTowCal; ++n){
+      if (gammajet.TowEt[n]>max_tower_et) {
+	jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[n]),
+				 p->GetJetPhiBin(gammajet.TowId_phi[n]));
+	max_tower_et = gammajet.TowEt[n];
+      }
+    }
+    if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
      
-     //jet_index: p->eta_granularity*p->phi_granularity*p->free_pars_per_bin
-     //           has to be added for a correct reference to k[...].
-     
-     //Create an Gamma/Jet TData event
-     TData_TruthMultMess * gj_data = new TData_TruthMultMess( jet_index + p->GetNumberOfTowerParameters(),
-			    gammajet.PhotonEt,				    //truth//
-			    sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)), //error//
-        		    p->GetJetParRef( jet_index ),                   //params
-			    p->free_pars_per_bin_jet,                       //number of free jet param. p. bin
-			    p->jet_parametrization,                            //function
-			    p->jet_error_parametrization                       //function
-     );
+    //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
+    //           has to be added for a correct reference to k[...].
+    double* jetp  = new double[3];
+    jetp[0] = gammajet.JetCalEt;
+    jetp[1] = gammajet.JetCalEta;
+    jetp[2] = gammajet.JetCalPhi;
+    //Create an Gamma/Jet TData event
+    TData_TruthMultMess * gj_data = new 
+      TData_TruthMultMess(jet_index + p->GetNumberOfTowerParameters(),
+			  gammajet.PhotonEt,				    //truth//
+			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)), //error//
+			  p->GetJetParRef( jet_index ),                   //params
+			  p->GetNumberOfJetParametersPerBin(),                       //number of free jet param. p. bin
+			  p->jet_parametrization,                            //function
+			  p->jet_error_parametrization,                       //function
+			  jetp
+			  );
 
-     //Add the jet's towers to "gj_data":
-     for (int n=0; n<gammajet.NobjTowCal; ++n){
-       //if (gammajet.TowEt[n]<0.01) continue;
+    //Add the jet's towers to "gj_data":
+    for (int n=0; n<gammajet.NobjTowCal; ++n){
+      //if (gammajet.TowEt[n]<0.01) continue;
 
-       int index = p->GetBin(p->GetEtaBin(gammajet.TowId_eta[n]),
-	                       p->GetPhiBin(gammajet.TowId_phi[n]));
-       if (index<0){ cerr<<"WARNING: towewer_index = " << index << endl; continue; }
+      int index = p->GetBin(p->GetEtaBin(gammajet.TowId_eta[n]),
+			    p->GetPhiBin(gammajet.TowId_phi[n]));
+      if (index<0){ cerr<<"WARNING: towewer_index = " << index << endl; continue; }
 
-       //double dR = deltaR(gammajet.JetCalEta, gammajet.JetCalPhi, gammajet.TowEta[n], gammajet.TowPhi[n]);
+      //double dR = deltaR(gammajet.JetCalEta, gammajet.JetCalPhi, gammajet.TowEta[n], gammajet.TowPhi[n]);
 	      
-       double relativEt = gammajet.TowEt[n]/gammajet.JetCalEt;  
-       //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
-       //This relativeE is used *only* for plotting! Therefore no cuts on this var!
-       //create array with multidimensional measurement
-       double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-       mess[0] = double(gammajet.TowEt[n]);
-       double scale = gammajet.TowEt[n]/gammajet.TowE[n];
-       mess[1] = double(gammajet.TowEm[n]*scale);
-       mess[2] = double(gammajet.TowHad[n]*scale);
-       mess[3] = double(gammajet.TowOE[n]*scale);
-       gj_data->AddMess(new TData_TruthMess(index,
-	 mess,                                                    //mess//
- 	 gammajet.PhotonEt * relativEt,                           //truth//
-  	 sqrt(pow(0.5,2)+pow(0.1*gammajet.PhotonEt*relativEt,2)), //error//
-	 p->GetTowerParRef( index ),                              //parameter//
-         p->free_pars_per_bin,                                    //number of free tower param. p. bin//
-         p->tower_parametrization,                                   //function//
-	 p->tower_error_parametrization                              //function//
-       ));
-     } 
+      double relativEt = gammajet.TowEt[n]/gammajet.JetCalEt;  
+      //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
+      //This relativeE is used *only* for plotting! Therefore no cuts on this var!
+      //create array with multidimensional measurement
+      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
+      mess[0] = double(gammajet.TowEt[n]);
+      double scale = gammajet.TowEt[n]/gammajet.TowE[n];
+      mess[1] = double(gammajet.TowEm[n]*scale);
+      mess[2] = double(gammajet.TowHad[n]*scale);
+      mess[3] = double(gammajet.TowOE[n]*scale);
+      gj_data->AddMess(new TData_TruthMess(index,
+					   mess,                                                    //mess//
+					   gammajet.PhotonEt * relativEt,                           //truth//
+					   sqrt(pow(0.5,2)+pow(0.1*gammajet.PhotonEt*relativEt,2)), //error//
+					   p->GetTowerParRef( index ),                              //parameter//
+					   p->GetNumberOfTowerParametersPerBin(),                                    //number of free tower param. p. bin//
+					   p->tower_parametrization,                                   //function//
+					   p->tower_error_parametrization                              //function//
+					   ));
+    } 
  
-     data.push_back( gj_data ); 
+    data.push_back( gj_data ); 
    
-     if (n_gammajet_events>=0 && i==n_gammajet_events-1)
-       break;
+    if (n_gammajet_events>=0 && i==n_gammajet_events-1)
+      break;
   }
 }
 
@@ -245,41 +256,41 @@ void TCaliber::Run_TrackTower()
   int nevent = tracktower.fChain->GetEntries();
   int evt=0;
   for (int i=0;i<nevent;i++) {
-     tracktower.GetEntry(i); 
-     if (tracktower.NobjTowCal>10000 || tracktower.NobjTrackCal>10000)
-       cerr<<"ERROR: Increase array sizes in TrackTowerSelector; NobjTowCal="
-           <<tracktower.NobjTowCal<<", NobjTrackCal="<<tracktower.NobjTrackCal<<"!"<<endl;
+    tracktower.GetEntry(i); 
+    if (tracktower.NobjTowCal>10000 || tracktower.NobjTrackCal>10000)
+      cerr<<"ERROR: Increase array sizes in TrackTowerSelector; NobjTowCal="
+	  <<tracktower.NobjTowCal<<", NobjTrackCal="<<tracktower.NobjTrackCal<<"!"<<endl;
 
-     for (int n=0; n<tracktower.NobjTowCal && n<tracktower.NobjTrackCal; ++n){
-       if (tracktower.TrackEt[n]<Et_cut_on_track ||
-           tracktower.TowEt[n]<Et_cut_on_tower)
-         continue;
+    for (int n=0; n<tracktower.NobjTowCal && n<tracktower.NobjTrackCal; ++n){
+      if (tracktower.TrackEt[n]<Et_cut_on_track ||
+	  tracktower.TowEt[n]<Et_cut_on_tower)
+	continue;
 
-       int index=p->GetBin(p->GetEtaBin(tracktower.TowId_eta[n]),p->GetPhiBin(tracktower.TowId_phi[n]));
-       if (index<0) {
-         cerr << "INDEX = "<< index << endl;
-	 continue;
-       }
-       //create array with multidimensional measurement
-       double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-       mess[0] = double(tracktower.TowEt[n]);
-       double scale = tracktower.TowEt[n]/tracktower.TowE[n];
-       mess[1] = double(tracktower.TowEm[n])*scale;
-       mess[2] = double(tracktower.TowHad[n]*scale);
-       mess[3] = double(tracktower.TowOE[n])*scale;
-       data.push_back(new TData_TruthMess(index,
-			 mess,                                                //mess//
-			 tracktower.TrackEt[n],                               //truth//
-		       //tracktower.TrackEterr[n],                            //error//
-  		         sqrt(pow(0.5,2)+ pow(0.1*tracktower.TrackEt[n] ,2)), //error//
-			 p->GetTowerParRef( index ),                          //parameter//
-	                 p->free_pars_per_bin,                                //number of free tower param. p. bin//
-					  p->tower_parametrization,                               //function//
-					  p->tower_error_parametrization                          //function//
-	               ) );
-       if((evt++)%1000==0) cout<<"Track-Tower Event: "<<evt<<endl;
-       break;//use only one track-tower per event! ->bug in the producer
-     }  
+      int index=p->GetBin(p->GetEtaBin(tracktower.TowId_eta[n]),p->GetPhiBin(tracktower.TowId_phi[n]));
+      if (index<0) {
+	cerr << "INDEX = "<< index << endl;
+	continue;
+      }
+      //create array with multidimensional measurement
+      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
+      mess[0] = double(tracktower.TowEt[n]);
+      double scale = tracktower.TowEt[n]/tracktower.TowE[n];
+      mess[1] = double(tracktower.TowEm[n])*scale;
+      mess[2] = double(tracktower.TowHad[n]*scale);
+      mess[3] = double(tracktower.TowOE[n])*scale;
+      data.push_back(new TData_TruthMess(index,
+					 mess,                                                //mess//
+					 tracktower.TrackEt[n],                               //truth//
+					 //tracktower.TrackEterr[n],                            //error//
+					 sqrt(pow(0.5,2)+ pow(0.1*tracktower.TrackEt[n] ,2)), //error//
+					 p->GetTowerParRef( index ),                          //parameter//
+					 p->GetNumberOfTowerParametersPerBin(),                                //number of free tower param. p. bin//
+					 p->tower_parametrization,                               //function//
+					 p->tower_error_parametrization                          //function//
+					 ) );
+      if((evt++)%1000==0) cout<<"Track-Tower Event: "<<evt<<endl;
+      break;//use only one track-tower per event! ->bug in the producer
+    }  
  
     if (n_tracktower_events>=0 && evt==n_tracktower_events)
       break;
@@ -293,64 +304,64 @@ void TCaliber::Run_TrackCluster()
   int nevent = trackcluster.fChain->GetEntries();
   int evt=0;
   for (int i=0;i<nevent;i++) {
-     trackcluster.GetEntry(i); 
-     if (trackcluster.NobjTowCal>200)
-       cerr<<"ERROR: Increase array sizes in TrackClusterSelector; NobjTowCal="
-           <<trackcluster.NobjTowCal<<"!"<<endl;
+    trackcluster.GetEntry(i); 
+    if (trackcluster.NobjTowCal>200)
+      cerr<<"ERROR: Increase array sizes in TrackClusterSelector; NobjTowCal="
+	  <<trackcluster.NobjTowCal<<"!"<<endl;
      
-     //Calculate cluster energy (needed for plotting)
-     double cluster_energy = 0.0;	   
-     for (int n=0; n<trackcluster.NobjTowCal; ++n)
-        cluster_energy += trackcluster.TowEt[n];
+    //Calculate cluster energy (needed for plotting)
+    double cluster_energy = 0.0;	   
+    for (int n=0; n<trackcluster.NobjTowCal; ++n)
+      cluster_energy += trackcluster.TowEt[n];
 
-     if (trackcluster.TrackEt < Et_cut_on_track || cluster_energy < Et_cut_on_cluster) continue;
+    if (trackcluster.TrackEt < Et_cut_on_track || cluster_energy < Et_cut_on_cluster) continue;
  
-     //Define Track-Cluster event	
-     TData_TruthMultMess * tc = new TData_TruthMultMess( 0,
-       trackcluster.TrackEt,  			          //truth//
-       sqrt(pow(0.5,2)+pow(0.10*trackcluster.TrackEt,2)), //error//
-       0,                                                 //params
-       0,                                                 //number of free jet param. p. bin
-							 p->dummy_parametrization,                             //function
-							 p->jet_error_parametrization                          //function
-     );
-     tc->SetType( TypeTrackCluster );
-     //Add the towers to the event
-     for (int n=0; n<trackcluster.NobjTowCal; ++n){
-       //if (trackcluster.TrackEt[n]<Et_cut_on_track)
-       //   continue;
+    //Define Track-Cluster event	
+    TData_TruthMultMess * tc = new TData_TruthMultMess( 0,
+							trackcluster.TrackEt,  			          //truth//
+							sqrt(pow(0.5,2)+pow(0.10*trackcluster.TrackEt,2)), //error//
+							0,                                                 //params
+							0,                                                 //number of free jet param. p. bin
+							p->dummy_parametrization,                             //function
+							p->jet_error_parametrization                          //function
+							);
+    tc->SetType( TypeTrackCluster );
+    //Add the towers to the event
+    for (int n=0; n<trackcluster.NobjTowCal; ++n){
+      //if (trackcluster.TrackEt[n]<Et_cut_on_track)
+      //   continue;
 
-       int index=p->GetBin(p->GetEtaBin(trackcluster.TowId_eta[n]),p->GetPhiBin(trackcluster.TowId_phi[n]));
-       if (index<0) {
-         cerr << "INDEX = "<< index << endl;
-	 continue;
-       }
-       //create array with multidimensional measurement
-       double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-       mess[0] = double(trackcluster.TowEt[n]);
-       double scale = trackcluster.TowEt[n]/trackcluster.TowE[n];
-       mess[1] = double(trackcluster.TowEm[n]*scale);
-       mess[2] = double(trackcluster.TowHad[n]*scale);
-       mess[3] = double(trackcluster.TowOE[n]*scale);
-       TData_TruthMess * tower = new TData_TruthMess(index,
-			 mess,                                                      //mess//
-			 trackcluster.TrackEt*trackcluster.TowEt[n]/cluster_energy, //"truth" for plotting only!//
-		         //trackcluster.TrackEterr[n],                              //error//
-  		         sqrt(pow(0.5,2)+ pow(0.1*trackcluster.TrackEt ,2)),        //error//
-			 p->GetTowerParRef( index ),                                //parameter//
-	                 p->free_pars_per_bin,                                      //number of free cluster param. p. bin//
-						     p->tower_parametrization,                                     //function//
-						     p->tower_error_parametrization                                //function//
-	               );
-       tc->AddMess( tower );
-     } 
+      int index=p->GetBin(p->GetEtaBin(trackcluster.TowId_eta[n]),p->GetPhiBin(trackcluster.TowId_phi[n]));
+      if (index<0) {
+	cerr << "INDEX = "<< index << endl;
+	continue;
+      }
+      //create array with multidimensional measurement
+      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
+      mess[0] = double(trackcluster.TowEt[n]);
+      double scale = trackcluster.TowEt[n]/trackcluster.TowE[n];
+      mess[1] = double(trackcluster.TowEm[n]*scale);
+      mess[2] = double(trackcluster.TowHad[n]*scale);
+      mess[3] = double(trackcluster.TowOE[n]*scale);
+      TData_TruthMess * tower = new TData_TruthMess(index,
+						    mess,                                                      //mess//
+						    trackcluster.TrackEt*trackcluster.TowEt[n]/cluster_energy, //"truth" for plotting only!//
+						    //trackcluster.TrackEterr[n],                              //error//
+						    sqrt(pow(0.5,2)+ pow(0.1*trackcluster.TrackEt ,2)),        //error//
+						    p->GetTowerParRef( index ),                                //parameter//
+						    p->GetNumberOfTowerParametersPerBin(),                                      //number of free cluster param. p. bin//
+						    p->tower_parametrization,                                     //function//
+						    p->tower_error_parametrization                                //function//
+						    );
+      tc->AddMess( tower );
+    } 
      
-     //Save event
-     data.push_back( tc ); 
+    //Save event
+    data.push_back( tc ); 
 
-     if((evt++)%1000==0) cout<<"Track-Cluster Event: "<<evt<<endl;
-     if (n_trackcluster_events>=0 && evt==n_trackcluster_events)
-        break;
+    if((evt++)%1000==0) cout<<"Track-Cluster Event: "<<evt<<endl;
+    if (n_trackcluster_events>=0 && evt==n_trackcluster_events)
+      break;
   }
 }
 
@@ -359,142 +370,142 @@ void TCaliber::Run_JetJet()
   //Run jet-Jet stuff  
   int nevent = jetjet.fChain->GetEntries();
   for (int i=0;i<nevent;i++) {
-     if(i%1000==0) cout<<"Jet-Jet Event: "<<i<<endl;
-     jetjet.fChain->GetEvent(i); 
-     if (jetjet.NobjTowJ1Cal>200 || jetjet.NobjTowJ2Cal>200) {
-       cerr<<"ERROR: Increase array sizes in JetJetSelector; NobjTowJ1Cal="
-           <<jetjet.NobjTowJ1Cal<<", NobjTowJ2Cal="<<jetjet.NobjTowJ2Cal<<"!"<<endl;
-       exit(9);
-     }
-     //--------------
-     //   1. Jet
-     //--------------
-     //Find the jets eta & phi index using the leading (ET) tower:
-     int jet_index;
-     double max_tower_et = 0.0;
-     for (int n=0; n<jetjet.NobjTowJ1Cal; ++n){
-       if (jetjet.TowJ1Et[n]>max_tower_et) {
-         jet_index = p->GetJetBin(p->GetJetEtaBin(jetjet.TowJ1Id_eta[n]),
-	                          p->GetJetPhiBin(jetjet.TowJ1Id_phi[n]));
-         max_tower_et = jetjet.TowJ1Et[n];
-       }
-     }
-     if (jet_index<0){ cerr<<"WARNING: JJ jet1_index = " << jet_index << endl; continue; }
+    if(i%1000==0) cout<<"Jet-Jet Event: "<<i<<endl;
+    jetjet.fChain->GetEvent(i); 
+    if (jetjet.NobjTowJ1Cal>200 || jetjet.NobjTowJ2Cal>200) {
+      cerr << "ERROR: Increase array sizes in JetJetSelector; NobjTowJ1Cal="
+	   << jetjet.NobjTowJ1Cal<<", NobjTowJ2Cal="<<jetjet.NobjTowJ2Cal<<"!"<<endl;
+      exit(9);
+    }
+    //--------------
+    //   1. Jet
+    //--------------
+    //Find the jets eta & phi index using the leading (ET) tower:
+    int jet_index;
+    double max_tower_et = 0.0;
+    for (int n=0; n<jetjet.NobjTowJ1Cal; ++n){
+      if (jetjet.TowJ1Et[n]>max_tower_et) {
+	jet_index = p->GetJetBin(p->GetJetEtaBin(jetjet.TowJ1Id_eta[n]),
+				 p->GetJetPhiBin(jetjet.TowJ1Id_phi[n]));
+	max_tower_et = jetjet.TowJ1Et[n];
+      }
+    }
+    if (jet_index<0){ cerr<<"WARNING: JJ jet1_index = " << jet_index << endl; continue; }
      
-     //jet_index: p->eta_granularity*p->phi_granularity*p->free_pars_per_bin
-     //           has to be added for a correct reference to k[...].
+    //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
+    //           has to be added for a correct reference to k[...].
 
-     double * direction1 = new double[2];
-     direction1[0] = sin(jetjet.FirstJetPhi);
-     direction1[1] = cos(jetjet.FirstJetPhi);
+    double * direction1 = new double[2];
+    direction1[0] = sin(jetjet.FirstJetPhi);
+    direction1[1] = cos(jetjet.FirstJetPhi);
      
-     //Create an jet/Jet TData event
-     TData_PtBalance * jj_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
-                            direction1,             //p_T direction of this jet
-			    0.0,				    //truth//
-			    sqrt(pow(0.5,2)+pow(0.10*jetjet.ScndJetPt,2)), //error//
-        		    p->GetJetParRef( jet_index ),                   //params
-			    p->free_pars_per_bin_jet,                       //number of free jet param. p. bin
-			    p->jet_parametrization,                            //function
-			    p->jet_error_parametrization                       //function
-     );
+    //Create an jet/Jet TData event
+    TData_PtBalance * jj_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
+						     direction1,             //p_T direction of this jet
+						     0.0,				    //truth//
+						     sqrt(pow(0.5,2)+pow(0.10*jetjet.ScndJetPt,2)), //error//
+						     p->GetJetParRef( jet_index ),                   //params
+						     p->GetNumberOfJetParametersPerBin(),                       //number of free jet param. p. bin
+						     p->jet_parametrization,                            //function
+						     p->jet_error_parametrization                       //function
+						     );
 
-     //Add the jet's towers to "jj_data":
-     double control_sum=0.0;
-     for (int n=0; n<jetjet.NobjTowJ1Cal; ++n){
-       //if (jetjet.TowJ1Et[n]<0.01) continue;
+    //Add the jet's towers to "jj_data":
+    double control_sum=0.0;
+    for (int n=0; n<jetjet.NobjTowJ1Cal; ++n){
+      //if (jetjet.TowJ1Et[n]<0.01) continue;
 
-       int index = p->GetBin(p->GetEtaBin(jetjet.TowJ1Id_eta[n]),
-	                       p->GetPhiBin(jetjet.TowJ1Id_phi[n]));
-       if (index<0){ cerr<<"WARNING: JJ towerj1_index = " << index << endl; continue; }
+      int index = p->GetBin(p->GetEtaBin(jetjet.TowJ1Id_eta[n]),
+			    p->GetPhiBin(jetjet.TowJ1Id_phi[n]));
+      if (index<0){ cerr<<"WARNING: JJ towerj1_index = " << index << endl; continue; }
 
-       double relativEt = jetjet.TowJ1Et[n]/jetjet.FirstJetEt;  
-       //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
-       //This relativeE is used *only* for plotting! Therefore no cuts on this var!
-       //create array with multidimensional measurement
-       double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-       mess[0] = double(jetjet.TowJ1Et[n]);
-       double scale = jetjet.TowJ1Et[n]/jetjet.TowJ1E[n];
-       mess[1] = double(jetjet.TowJ1Em[n]*scale);
-       mess[2] = double(jetjet.TowJ1Had[n]*scale);
-       mess[3] = double(jetjet.TowJ1OE[n]*scale);
-       jj_data->AddMess(new TData_TruthMess(index,
-	 mess,                                                    //mess//
- 	 jetjet.ScndJetPt * relativEt,                           //truth//
-  	 sqrt(pow(0.5,2)+pow(0.1*jetjet.ScndJetPt*relativEt,2)), //error//
-	 p->GetTowerParRef( index ),                              //parameter//
-         p->free_pars_per_bin,                                    //number of free tower param. p. bin//
-         p->tower_parametrization,                                   //function//
-	 p->tower_error_parametrization                              //function//
-       ));
-     }  
+      double relativEt = jetjet.TowJ1Et[n]/jetjet.FirstJetEt;  
+      //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
+      //This relativeE is used *only* for plotting! Therefore no cuts on this var!
+      //create array with multidimensional measurement
+      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
+      mess[0] = double(jetjet.TowJ1Et[n]);
+      double scale = jetjet.TowJ1Et[n]/jetjet.TowJ1E[n];
+      mess[1] = double(jetjet.TowJ1Em[n]*scale);
+      mess[2] = double(jetjet.TowJ1Had[n]*scale);
+      mess[3] = double(jetjet.TowJ1OE[n]*scale);
+      jj_data->AddMess(new TData_TruthMess(index,
+					   mess,                                                    //mess//
+					   jetjet.ScndJetPt * relativEt,                           //truth//
+					   sqrt(pow(0.5,2)+pow(0.1*jetjet.ScndJetPt*relativEt,2)), //error//
+					   p->GetTowerParRef( index ),                              //parameter//
+					   p->GetNumberOfTowerParametersPerBin(),                                    //number of free tower param. p. bin//
+					   p->tower_parametrization,                                   //function//
+					   p->tower_error_parametrization                              //function//
+					   ));
+    }  
 
-     //--------------
-     //   2. Jet
-     //--------------
-     //Find the jets eta & phi index using the leading (ET) tower:
-     max_tower_et = 0.0;
-     for (int n=0; n<jetjet.NobjTowJ2Cal; ++n){
-       if (jetjet.TowJ2Et[n]>max_tower_et) {
-         jet_index = p->GetJetBin(p->GetJetEtaBin(jetjet.TowJ2Id_eta[n]),
-	                          p->GetJetPhiBin(jetjet.TowJ2Id_phi[n]));
-         max_tower_et = jetjet.TowJ2Et[n];
-       }
-     }
-     if (jet_index<0){ cerr<<"WARNING: JJ jet2_index = " << jet_index << endl; continue; }
+    //--------------
+    //   2. Jet
+    //--------------
+    //Find the jets eta & phi index using the leading (ET) tower:
+    max_tower_et = 0.0;
+    for (int n=0; n<jetjet.NobjTowJ2Cal; ++n){
+      if (jetjet.TowJ2Et[n]>max_tower_et) {
+	jet_index = p->GetJetBin(p->GetJetEtaBin(jetjet.TowJ2Id_eta[n]),
+				 p->GetJetPhiBin(jetjet.TowJ2Id_phi[n]));
+	max_tower_et = jetjet.TowJ2Et[n];
+      }
+    }
+    if (jet_index<0){ cerr<<"WARNING: JJ jet2_index = " << jet_index << endl; continue; }
      
-     //jet_index: p->eta_granularity*p->phi_granularity*p->free_pars_per_bin
-     //           has to be added for a correct reference to k[...].
+    //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
+    //           has to be added for a correct reference to k[...].
 
-     double * direction2 = new double[2];
-     direction2[0] = sin(jetjet.ScndJetPhi);
-     direction2[1] = cos(jetjet.ScndJetPhi);
+    double * direction2 = new double[2];
+    direction2[0] = sin(jetjet.ScndJetPhi);
+    direction2[1] = cos(jetjet.ScndJetPhi);
      
-     //Create an jet/Jet TData event
-     TData_PtBalance * jj2_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
-                            direction2,
-			    0.0,				    //truth//
-			    sqrt(pow(0.5,2)+pow(0.10*jetjet.ScndJetPt,2)), //error//
-        		    p->GetJetParRef( jet_index ),                   //params
-			    p->free_pars_per_bin_jet,                       //number of free jet param. p. bin
-			    p->jet_parametrization,                            //function
-			    p->jet_error_parametrization                       //function
-     );
+    //Create an jet/Jet TData event
+    TData_PtBalance * jj2_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
+						      direction2,
+						      0.0,				    //truth//
+						      sqrt(pow(0.5,2)+pow(0.10*jetjet.ScndJetPt,2)), //error//
+						      p->GetJetParRef( jet_index ),                   //params
+						      p->GetNumberOfJetParametersPerBin(),                       //number of free jet param. p. bin
+						      p->jet_parametrization,                            //function
+						      p->jet_error_parametrization                       //function
+						      );
 
-     //Add the jet's towers to "jj_data":
-     control_sum=0.0;
-     for (int n=0; n<jetjet.NobjTowJ2Cal; ++n){
-       //if (jetjet.TowJ2Et[n]<0.01) continue;
+    //Add the jet's towers to "jj_data":
+    control_sum=0.0;
+    for (int n=0; n<jetjet.NobjTowJ2Cal; ++n){
+      //if (jetjet.TowJ2Et[n]<0.01) continue;
 
-       int index = p->GetBin(p->GetEtaBin(jetjet.TowJ2Id_eta[n]),
-	                       p->GetPhiBin(jetjet.TowJ2Id_phi[n]));
-       if (index<0){ cerr<<"WARNING: JJ towerj1_index = " << index << endl; continue; }
+      int index = p->GetBin(p->GetEtaBin(jetjet.TowJ2Id_eta[n]),
+			    p->GetPhiBin(jetjet.TowJ2Id_phi[n]));
+      if (index<0){ cerr<<"WARNING: JJ towerj1_index = " << index << endl; continue; }
 
-       double relativEt = jetjet.TowJ2Et[n]/jetjet.ScndJetEt;  
-       //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
-       //This relativeE is used *only* for plotting! Therefore no cuts on this var!
-       //create array with multidimensional measurement
-       double * mess = new double[4];
-       mess[0] = double(jetjet.TowJ2Et[n]);
-       double scale = jetjet.TowJ2Et[n]/jetjet.TowJ2E[n];
-       mess[1] = double(jetjet.TowJ2Em[n]*scale);
-       mess[2] = double(jetjet.TowJ2Had[n]*scale);
-       mess[3] = double(jetjet.TowJ2OE[n]*scale);
-       jj2_data->AddMess(new TData_TruthMess(index,
-	 mess,                                                    //mess//
- 	 jetjet.FirstJetPt * relativEt,                           //truth//
-  	 sqrt(pow(0.5,2)+pow(0.1*jetjet.FirstJetPt*relativEt,2)), //error//
-	 p->GetTowerParRef( index ),                              //parameter//
-         p->free_pars_per_bin,                                    //number of free tower param. p. bin//
-         p->tower_parametrization,                                //function//
-	 p->tower_error_parametrization                           //function//
-       ));
-     }
-     jj_data->AddNewMultMess( jj2_data );
-     data.push_back( jj_data ); 
+      double relativEt = jetjet.TowJ2Et[n]/jetjet.ScndJetEt;  
+      //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
+      //This relativeE is used *only* for plotting! Therefore no cuts on this var!
+      //create array with multidimensional measurement
+      double * mess = new double[4];
+      mess[0] = double(jetjet.TowJ2Et[n]);
+      double scale = jetjet.TowJ2Et[n]/jetjet.TowJ2E[n];
+      mess[1] = double(jetjet.TowJ2Em[n]*scale);
+      mess[2] = double(jetjet.TowJ2Had[n]*scale);
+      mess[3] = double(jetjet.TowJ2OE[n]*scale);
+      jj2_data->AddMess(new TData_TruthMess(index,
+					    mess, //mess
+					    jetjet.FirstJetPt * relativEt,                           //truth//
+					    sqrt(pow(0.5,2)+pow(0.1*jetjet.FirstJetPt*relativEt,2)), //error//
+					    p->GetTowerParRef( index ),                              //parameter//
+					    p->GetNumberOfTowerParametersPerBin(),                                    //number of free tower param. p. bin//
+					    p->tower_parametrization,                                //function//
+					    p->tower_error_parametrization                           //function//
+					    ));
+    }
+    jj_data->AddNewMultMess( jj2_data );
+    data.push_back( jj_data ); 
 
-     if (n_jetjet_events>=0 && i==n_jetjet_events-1)
-       break;
+    if (n_jetjet_events>=0 && i==n_jetjet_events-1)
+      break;
   }
 }
 
@@ -522,17 +533,12 @@ void TCaliber::Run_Lvmini()
 
   int npar = p->GetNumberOfParameters();
 
-  cout << "\nFitting " << npar << " parameters; \n" 
-       << p->eta_granularity << " x " << p->phi_granularity << " tower bins with " 
-       << p->free_pars_per_bin << " free parameters each, or " 
-       << p->GetNumberOfTowerParameters() << " in total, and\n"
-       << p->eta_granularity_jet << " x " << p->phi_granularity_jet << " JES bins with " 
-       << p->free_pars_per_bin_jet << " free parameters each, or " 
-       << p->GetNumberOfJetParameters() << " in total with LVMINI.\n" 
-       << "Using " << data.size() << " total events." << endl;
+  cout << "\nFitting " << npar << " parameters; \n";
+  p->Print();
+  cout << " with LVMINI.\n" << "Using " << data.size() << " total events." << endl;
 
-  //fitfunction    = this->global_fit_fast;
-  fitfunction    = this->global_fit_threading;
+  fitfunction    = this->global_fit_fast;
+  //fitfunction    = this->global_fit_threading;
 
   float eps =float(1.E-3*data.size());
   float wlf1=1.E-4;
@@ -542,7 +548,7 @@ void TCaliber::Run_Lvmini()
   //Set errors per default to 0 //@@ doesn't seem to work...
   int error_index=2;
   error_index = lvmind_(error_index);
-  std::memcpy(aux+error_index,p->e,npar*sizeof(double));
+  p->FillErrors(aux+error_index);
   //for (int n=0; n<naux; ++n) aux[n]=0.0; 
 
   //outlier rejection before first iteration
@@ -560,8 +566,7 @@ void TCaliber::Run_Lvmini()
     lvmini_( npar, mvec, niter, aux);
     npar=abs(npar);
     do {
-      fitfunction(npar, aux, fsum, p->k, iflag);  
-
+      fitfunction(npar, aux, fsum, p->GetPars(), iflag);  
       ////classic derivative calculation: (inadvisable !)
       //for (unsigned param=0; param<abs(npar); ++param) {
       ////first numeric derivative of fitfunction w.r.t. par[p]     
@@ -576,11 +581,11 @@ void TCaliber::Run_Lvmini()
 
       //fast derivative calculation:
       for (unsigned param=0; param<abs(npar); ++param) {
-         aux[param]           = (TData::temp_derivative2[param]-TData::temp_derivative1[param])/(2.0*TData::epsilon);
-         aux[param+abs(npar)] = (TData::temp_derivative2[param]+TData::temp_derivative1[param]-2*fsum)/(TData::epsilon*TData::epsilon);
-      	}
+	aux[param]           = (TData::temp_derivative2[param]-TData::temp_derivative1[param])/(2.0*TData::epsilon);
+	aux[param+abs(npar)] = (TData::temp_derivative2[param]+TData::temp_derivative1[param]-2*fsum)/(TData::epsilon*TData::epsilon);
+      }
 	
-      lvmfun_(p->k,fsum,iret,aux);
+      lvmfun_(p->GetPars(),fsum,iret,aux);
     }
     while (iret<0);
     //lvmprt_(2,aux,2); //Has any effect?
@@ -597,7 +602,7 @@ void TCaliber::Run_Lvmini()
   //Copy Parameter errors from aux array to the TParameter::e array
   error_index=2;
   error_index = lvmind_(error_index);
-  std::memcpy(p->e,aux+error_index,npar*sizeof(double));
+  p->SetErrors(aux+error_index);
 }
 //--------------------------------------------------------------------------------------------
 
@@ -615,6 +620,7 @@ void TCaliber::Done()
   plots->FitControlPlots();
   plots->GammaJetControlPlots();
   plots->GammaJetControlPlotsJetBin();
+  plots->GammaJetControlPlotsJetJEC();
   plots->TrackTowerControlPlots();
   plots->TrackClusterControlPlots();
   
@@ -650,10 +656,10 @@ void TCaliber::Init(string file)
   string param_class = config.read<string>("Parametrization Class","TParameters");
 
   //This is hard coded, no change of parametrization by config file possible
-//  if      (param_class=="TStepEfracParameters") p = new TStepEfracParameters( file );
+  //  if      (param_class=="TStepEfracParameters") p = new TStepEfracParameters( file );
   if      (param_class=="TStepParameters") p = new TStepParameters( file );
-//  else if (param_class=="TMyParameters")   p = new TMyParameters( file );
-//  else                                     p = new TParameters( file );
+  //  else if (param_class=="TMyParameters")   p = new TMyParameters( file );
+  //  else                                     p = new TParameters( file );
   p->SetFitFunc(this->global_fit_fast);
 
   plots = new TControlPlots(file, &data, p);
@@ -689,7 +695,7 @@ void TCaliber::Init(string file)
   string treename_gammajet = config.read<string>( "Gamma-Jet tree", default_tree_name );
   TChain * tchain_gammajet = new TChain( treename_gammajet.c_str() );
   vector<string> input_gammajet = bag_of_string( 
-                 config.read<string>( "Gamma-Jet input file", "input/gammajet.root" ) );
+						config.read<string>( "Gamma-Jet input file", "input/gammajet.root" ) );
   for (bag_of_string::const_iterator it = input_gammajet.begin(); it!=input_gammajet.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Gamma-Jet analysis." << endl;
     tchain_gammajet->Add( it->c_str() );
@@ -700,7 +706,7 @@ void TCaliber::Init(string file)
   string treename_tracktower    = config.read<string>( "Track-Tower tree", default_tree_name );
   TChain * tchain_tracktower = new TChain( treename_tracktower.c_str() );
   vector<string> input_tracktower = bag_of_string( 
-                 config.read<string>( "Track-Tower input file", "input/tracktower.root" ) );
+						  config.read<string>( "Track-Tower input file", "input/tracktower.root" ) );
   for (bag_of_string::const_iterator it = input_tracktower.begin(); it!=input_tracktower.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Track-Tower analysis." << endl;
     tchain_tracktower->Add( it->c_str() );
@@ -711,7 +717,7 @@ void TCaliber::Init(string file)
   string treename_trackcluster    = config.read<string>( "Track-Cluster tree", default_tree_name );
   TChain * tchain_trackcluster = new TChain( treename_trackcluster.c_str() );
   vector<string> input_trackcluster = bag_of_string( 
-                 config.read<string>( "Track-Cluster input file", "input/trackcluster.root" ) );
+						    config.read<string>( "Track-Cluster input file", "input/trackcluster.root" ) );
   for (bag_of_string::const_iterator it = input_trackcluster.begin(); it!=input_trackcluster.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Track-Cluster analysis." << endl;
     tchain_trackcluster->Add( it->c_str() );
@@ -722,7 +728,7 @@ void TCaliber::Init(string file)
   string treename_jetjet    = config.read<string>( "Jet-Jet tree", default_tree_name );
   TChain * tchain_jetjet = new TChain( treename_jetjet.c_str() );
   vector<string> input_jetjet = bag_of_string( 
-                 config.read<string>( "Jet-Jet input file", "input/jetjet.root" ) );
+					      config.read<string>( "Jet-Jet input file", "input/jetjet.root" ) );
   for (bag_of_string::const_iterator it = input_jetjet.begin(); it!=input_jetjet.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Jet-Jet analysis." << endl;
     tchain_jetjet->Add( it->c_str() );
@@ -767,3 +773,4 @@ int main(int argc, char *argv[])
   }
   return caliber(argc, argv);
 }
+

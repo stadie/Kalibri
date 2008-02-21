@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.6 2008/01/29 10:58:59 auterman Exp $
+// $Id: CalibData.h,v 1.7 2008/01/31 16:21:03 auterman Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -40,8 +40,8 @@ public:
   virtual double GetParametrizedErr(double *paramess){ return _err(paramess);};
   virtual double GetTruth(){ return _truth;};
   virtual double GetError(){ return _error;};
-  virtual short unsigned int GetType(){return _type;};
-  virtual void SetType(short unsigned int type){_type=type;};
+  virtual short unsigned int GetType() {return _type;};
+  virtual void SetType(short unsigned int type) {_type=type;};
   unsigned short int GetIndex(){return _index;};
   virtual const std::vector<TData*>& GetRef() = 0;
   virtual double chi2() = 0;
@@ -94,27 +94,28 @@ private:
 class TData_TruthMultMess : public TData_TruthMess
 {
 public:
-  TData_TruthMultMess(unsigned short int index, double truth, double error, double * par, unsigned short int n_par,
-        double(*func)(double*,double*),double(*err)(double*)):
-    TData_TruthMess(index, 0, truth, error, par, n_par, func, err){_type=TypeGammaJet;};
+  TData_TruthMultMess(unsigned short int index, double truth, double error, double * par, 
+		      unsigned short int n_par,double(*func)(double*,double*),
+		      double(*err)(double*), double *mess= 0) :
+    TData_TruthMess(index, mess, truth, error, par, n_par, func, err){_type=TypeGammaJet;};
   virtual ~TData_TruthMultMess() {
-      for (std::vector<TData*>::const_iterator it=_vecmess.begin();
-	   it!=_vecmess.end(); ++it)
-	delete *it;
-      _vecmess.clear();	
+    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	 it!=_vecmess.end(); ++it)
+      delete *it;
+    _vecmess.clear();	
   };
   void   AddMess(TData_TruthMess * m){_vecmess.push_back(m);};
-  virtual double * GetMess(){//used only for plotting
-    double *dummy, *result=new double[__DimensionMeasurement];
-    for (unsigned i=0; i<__DimensionMeasurement; ++i) result[i]=0.0;
-    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
-  	 it!=_vecmess.end(); ++it){
-	 dummy = (*it)->GetMess();
-       for (int i=0; i<__DimensionMeasurement; ++i)	 
-         result[i]+=dummy[i];
-    }	 
-    return result;	  
-  };
+//   virtual double * GetMess(){//used only for plotting
+//     double *dummy, *result=new double[__DimensionMeasurement];
+//     for (unsigned i=0; i<__DimensionMeasurement; ++i) result[i]=0.0;
+//     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+//   	 it!=_vecmess.end(); ++it){
+// 	 dummy = (*it)->GetMess();
+//        for (int i=0; i<__DimensionMeasurement; ++i)	 
+//          result[i]+=dummy[i];
+//     }	 
+//     return result;	  
+//   };
   virtual double GetParametrizedMess(){
     double result=0.0;
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
@@ -152,7 +153,7 @@ public:
     TData_MessMess(unsigned short int index, double * dir, double truth, double error, 
                    double * par, unsigned short int n_par,
         double(*func)(double*,double*),	double(*err)(double*)):
-    TData_TruthMultMess(index, truth, error, par, n_par, func, err){
+      TData_TruthMultMess(index, truth, error, par, n_par, func, err){
       _direction=dir; _type=TypeMessMess;};
     virtual ~TData_MessMess() {
       for (std::vector<TData*>::const_iterator it=_vecmess.begin();

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.9 2008/01/31 16:21:03 auterman Exp $
+// $Id: Parameters.h,v 1.10 2008/02/06 14:42:50 rwolf Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -17,13 +17,10 @@
 
 class TParameters {  
 
-public :
-  TParameters(){};
-  TParameters(std::string config):free_pars_per_bin(3),free_pars_per_bin_jet(2){
-  this->ReadConfigFile(config);};
+ public :
   virtual ~TParameters(){
-    if (k) delete [] k;
-    if (e) delete [] e;
+    delete [] k;
+    delete [] e;
   };
   friend std::ostream& operator<<( std::ostream& os, const TParameters& c );
 
@@ -36,32 +33,35 @@ public :
   int GetBin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity + phibin;};
   //int GetJetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return eta_granularity*phi_granularity*free_pars_per_bin+etabin*phi_granularity_jet + phibin;};
   int GetJetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return etabin*phi_granularity_jet + phibin;};
-  virtual int GetNumberOfTowerParameters()const{return free_pars_per_bin*eta_granularity*phi_granularity;};
-  virtual int GetNumberOfJetParameters()const{return   free_pars_per_bin_jet*eta_granularity_jet*phi_granularity_jet;};
-  virtual int GetNumberOfParameters()const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters();};
-
-  int GetNumberOfTowerParametersPerBin()const {return free_pars_per_bin;};
-  int GetNumberOfJetParametersPerBin()const {return free_pars_per_bin_jet;};
+ 
+  int GetNumberOfTowerParameters() const{return free_pars_per_bin*eta_granularity*phi_granularity;};
+  int GetNumberOfJetParameters() const{return   free_pars_per_bin_jet*eta_granularity_jet*phi_granularity_jet;};
+  int GetNumberOfParameters() const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters();};
+  int GetNumberOfTowerParametersPerBin() const {return free_pars_per_bin;};
+  int GetNumberOfJetParametersPerBin() const {return free_pars_per_bin_jet;};
+  int GetEtaGranularity() const { return eta_granularity;}
+  int GetPhiGranularity() const { return phi_granularity;}
+  int GetEtaGranularityJet() const { return eta_granularity_jet;}
+  int GetPhiGranularityJet() const { return phi_granularity_jet;}
 
   void SetFitFunc( void (*func)(int &npar, double *gin, double &f, double *allpar, int iflag) )
   { fitfunction = func; };
 
-  double * GetTowerParRef(int const bin){return &k[bin*free_pars_per_bin]; };
-  double * GetJetParRef(  int const jetbin){return &k[GetNumberOfTowerParameters()+jetbin*free_pars_per_bin_jet];};
-  double * k; //all fit-parameters
-  double * e; //all fit-parameter errors
   
-  unsigned eta_granularity, phi_granularity,
-           eta_granularity_jet, phi_granularity_jet;
-  std::vector<double> start_values, jet_start_values;
+  double* GetTowerParRef(int bin) { return k + bin*free_pars_per_bin; };
+  double* GetJetParRef(int jetbin)  { return k + GetNumberOfTowerParameters()+jetbin*free_pars_per_bin_jet;};
+  void SetErrors(double *ne) { std::memcpy(e,ne,GetNumberOfParameters()*sizeof(double));} 
+  void FillErrors(double* copy) const {
+    std::memcpy(copy,e,GetNumberOfParameters()*sizeof(double));
+  }
+  double* GetPars() {return k;}
 
-  //The parametrization functions:
-  unsigned free_pars_per_bin, free_pars_per_bin_jet;
+  void Print() const;
 
-//  static double tower_parametrization(double *x,double *par) {
-//    return x[1] + par[0]*x[2] + par[1]*log(x[0]) + par[2] +x[3];};
-//  static double jet_parametrization(double *x,double *par) {
-//    return par[0]*x[0] + par[1];};
+  //  static double tower_parametrization(double *x,double *par) {
+  //    return x[1] + par[0]*x[2] + par[1]*log(x[0]) + par[2] +x[3];};
+  //  static double jet_parametrization(double *x,double *par) {
+  //    return par[0]*x[0] + par[1];};
   static double dummy_parametrization(double *x,double *par) {
     return x[0];};
 
@@ -72,23 +72,34 @@ public :
     return (x[0]>0. ? 0.05*x[0] + 1.0*sqrt( x[0]) + 0.:
 	    0.05*x[0] - 1.0*sqrt(-x[0]) + 0.); };
 
-//  static double plot_parametrization(double * x,double *par) {
-//    return tower_parametrization(x,par)/x[0]; }
+  //  static double plot_parametrization(double * x,double *par) {
+  //    return tower_parametrization(x,par)/x[0]; }
 
-//  static double jes_plot_parametrization(double * x,double *par) {
-//    return jet_parametrization(x,par)/x[0]; }
+  //  static double jes_plot_parametrization(double * x,double *par) {
+  //    return jet_parametrization(x,par)/x[0]; }
 
 
-protected:
-  void ReadConfigFile(std::string file);
-
-private :
+ protected:
+  TParameters(int fppb, int fppbj,const std::string& config) 
+    : free_pars_per_bin(fppb),free_pars_per_bin_jet(fppbj) {
+      ReadConfigFile(config);
+  };
+ 
+ private :
   //Towers in Eta-, Phi- direction (according to PTDR Vol I, p.201)
   unsigned const static eta_ntwr=82, phi_ntwr=72;
   unsigned eta_ntwr_used;
   bool eta_symmetry;
+  unsigned int eta_granularity, phi_granularity,eta_granularity_jet, phi_granularity_jet;
+  std::vector<double> start_values, jet_start_values;
+  //The parametrization functions:
+  unsigned free_pars_per_bin, free_pars_per_bin_jet;
+
+  double * k; //all fit-parameters
+  double * e; //all fit-parameter errors
 
   //private functions
+  void ReadConfigFile(const std::string& file);
   void Read_Calibration(const std::string& file);
   std::string trim(std::string const& source, char const* delims = " {}\t\r\n");
   std::string input_calibration;
@@ -98,9 +109,8 @@ private :
 
 // Parametrization of hadronic response by a step function
 class TStepParameters: public TParameters {
-  public:
-  TStepParameters(std::string config){
-  free_pars_per_bin=12;free_pars_per_bin_jet=2;ReadConfigFile(config);};
+ public:
+  TStepParameters(const std::string& config) : TParameters(12,2,config) {}
   
   static double tower_parametrization(double *x,double *par) {
     double result = 0;
@@ -133,9 +143,9 @@ class TStepParameters: public TParameters {
 // Parametrization of hadronic response by a step function
 // 3 Sets of Parameters for different EM fraction
 class TStepEfracParameters: public TParameters {
-  public:
-  TStepEfracParameters(std::string config){
-    free_pars_per_bin=36;free_pars_per_bin_jet=2;ReadConfigFile(config);};
+ public:
+  TStepEfracParameters(const std::string& config) : TParameters(36,2, config) {}    
+
   
   static double tower_parametrization(double *x,double *par) {
     double result=0;
@@ -196,9 +206,8 @@ class TStepEfracParameters: public TParameters {
 
 // Parametrization of response by some "clever" function
 class TMyParameters: public TParameters {
-  public:
-  TMyParameters(std::string config){
-    free_pars_per_bin=3;free_pars_per_bin_jet=2;ReadConfigFile(config);};
+ public:
+  TMyParameters(const std::string& config) : TParameters(3,2,config) {}
 
   static double tower_parametrization(double *x,double *par) {
     return x[1] + par[0]*x[2] + par[1]*log(x[0]) + par[2];};
@@ -222,6 +231,5 @@ class TMyParameters: public TParameters {
     return jet_parametrization(x,par)/x[0]; }
 
 };
-
 
 #endif

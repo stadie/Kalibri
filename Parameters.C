@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void TParameters::ReadConfigFile(string const file)
+void TParameters::ReadConfigFile(const string& file)
 {
   ConfigFile config( file.c_str() );
   
@@ -89,8 +89,8 @@ std::string TParameters::trim(std::string const& source, char const* delims) {
     result.erase();
   
   //replace all "," by " "  :
-  unsigned int pos = result.find(",");
-  while (pos!=string::npos) {
+  std::string::size_type  pos = result.find(",");
+  while(pos != string::npos) {
     result.replace(pos,1," ");
     pos = result.find(",",pos);
   }
@@ -244,7 +244,15 @@ int TParameters::GetPhiBin(int const phi_id) const
   return (phi_id-1)*phi_granularity/phi_ntwr;
 }
 
-
+void TParameters::Print() const
+{
+  std::cout  << eta_granularity << " x " << phi_granularity << " tower bins with " 
+	     << GetNumberOfTowerParametersPerBin() << " free parameters each, or " 
+	     << GetNumberOfTowerParameters() << " in total, and\n"
+	     << eta_granularity_jet << " x " << phi_granularity_jet << " JES bins with " 
+	     << GetNumberOfJetParametersPerBin() << " free parameters each, or " 
+	     << GetNumberOfJetParameters() << " in total \n";
+}
 
 std::ostream& operator<<( std::ostream& os, const TParameters& cal )
 {
