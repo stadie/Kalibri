@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.9 2008/02/20 09:45:44 auterman Exp $
+// $Id: caliber.C,v 1.10 2008/02/21 13:32:15 stadie Exp $
 //
 #include "caliber.h"
 
@@ -626,7 +626,6 @@ void TCaliber::Done()
   
   //Clean-up
   cout << "Done, cleaning up."<<endl;
-  delete p;
   delete plots;
 }
 
@@ -650,16 +649,10 @@ void TCaliber::Init(string file)
   gStyle->SetStatH(0.2);              
 
 
+  
   ConfigFile config( file.c_str() );
 
-  //init parameter and plot classes
-  string param_class = config.read<string>("Parametrization Class","TParameters");
-
-  //This is hard coded, no change of parametrization by config file possible
-  //  if      (param_class=="TStepEfracParameters") p = new TStepEfracParameters( file );
-  if      (param_class=="TStepParameters") p = new TStepParameters( file );
-  //  else if (param_class=="TMyParameters")   p = new TMyParameters( file );
-  //  else                                     p = new TParameters( file );
+  p = TParameters::CreateParameters(file);
   p->SetFitFunc(this->global_fit_fast);
 
   plots = new TControlPlots(file, &data, p);

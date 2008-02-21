@@ -14,7 +14,7 @@ class TData;
 class TControlPlots {
 public:
   //TControlPlots(){this->ReadConfigFile("config/calibration.cfg");};
-  TControlPlots(std::string config, std::vector<TData*> * d, TStepParameters * pars)
+  TControlPlots(std::string config, std::vector<TData*> * d, TParameters * pars)
                 {this->ReadConfigFile(config); data=d; p=pars;};
   //TControlPlots(std::string config, std::vector<TData*> * d, TStepEfracParameters * pars)
   //              {this->ReadConfigFile(config); data=d; p=pars;};
@@ -27,15 +27,12 @@ public:
   void TrackClusterControlPlots();
   void FitControlPlots();
 
-  //Hard coded, has to be changed in several places
-  //TStepEfracParameters * p;
-  TStepParameters * p;
-
 private:  
   void ReadConfigFile(std::string config);
 
   std::vector<TData*> * data;
- 
+  TParameters * p;
+
   bool _doPlots;
   //... bins, pt ranges, etc...
   

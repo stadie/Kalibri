@@ -9,10 +9,33 @@
 
 using namespace std;
 
-void TParameters::ReadConfigFile(const string& file)
+TParameters* TParameters::instance = 0;
+
+TParameters* TParameters::CreateParameters(const std::string& configfile) 
 {
-  ConfigFile config( file.c_str() );
+  assert(instance == 0);
+ 
+  ConfigFile config( configfile.c_str() );
   
+  string parclass = config.read<string>("Parametrization Class","");
+  //create Parameters
+  if(parclass == "TStepParameters") {
+    instance = new TStepParameters();
+  } else if(parclass == "TMyParameters") {
+    instance = new TMyParameters();
+  } else if(parclass == "TStepEfracParameters") {
+    instance = new TStepEfracParameters();
+  }
+  if(!instance) {
+    cerr << "TParameters::CreateParameters: could not instantiate class " << parclass << '\n';
+    exit(1);
+  }
+  instance->Init(config);
+  return instance;
+}
+
+void TParameters::Init(const ConfigFile& config)
+{
   eta_ntwr_used   = config.read<unsigned>("maximum eta twr used",82); 
   eta_granularity = config.read<unsigned>("granularity in eta",1); 
   phi_granularity = config.read<unsigned>("granularity in phi",1); 

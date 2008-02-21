@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.5 2008/01/31 16:21:03 auterman Exp $
+// $Id: caliber.h,v 1.6 2008/02/20 09:45:44 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -82,9 +82,7 @@ private:
   int    OutlierIterationSteps;                     //outlier rejection
   double OutlierChi2Cut, OutlierChi2CutPresel;
 
-  //Hard coded, has to be changed in several places
-  //TStepEfracParameters * p;    //fit parameters, depend on number of bins & geometry
-  TStepParameters * p;    //fit parameters, depend on number of bins & geometry
+  TParameters * p;    //fit parameters, depend on number of bins & geometry
 
   TControlPlots * plots;  //the control plots
   
