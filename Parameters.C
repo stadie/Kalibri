@@ -289,13 +289,13 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   strftime (buffer,80," # Hamburg Calorimeter Calibration Tool, created %c",timeinfo);
   struct passwd* pw = getpwuid(getuid());	
   
-  double aux[10000], fsum;
-  int npar = cal.GetNumberOfParameters(), iflag=0;
-  cal.fitfunction(npar, aux, fsum, cal.k, iflag);  
- 
+  //double aux[10000], fsum;
+  //int npar = cal.GetNumberOfParameters(), iflag=0;
+  //cal.fitfunction(npar, aux, fsum, cal.k, iflag);  
+
   os << buffer << " by " << pw->pw_name << "." << endl 
      << " module calibTowerMaker = CalibTowerMaker {" << endl
-     << "    untracked vdouble chi2 = " << fsum << endl
+     << "    untracked vdouble chi2 = " << cal.GetFitChi2() << endl
      << "    untracked vint32 NTowerParamsPerBin = " << cal.GetNumberOfTowerParametersPerBin() << endl
      << "    untracked vint32 NJetParamsPerBin = " << cal.GetNumberOfJetParametersPerBin() << endl
      << "    untracked vint32 NEtaBins = " << cal.eta_granularity << endl

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.13 2008/02/25 10:07:45 stadie Exp $
+// $Id: caliber.C,v 1.14 2008/02/25 10:58:31 csander Exp $
 //
 #include "caliber.h"
 
@@ -18,26 +18,16 @@
 #include <boost/thread/mutex.hpp>
 boost::mutex io_mutex;
 // User
+#include "ConfigFile.h"
+#include "Parameters.h"
+#include "ControlPlots.h"
 #include "CalibMath.h"
 #include "CalibData.h"
 #include "external.h"
 
-#define NTHREADS 4 //1..n (where n is smaller than the number of cores)
-
 using namespace std;
 
-//Global defined function; necessary for TMinuit
-void (*fitfunction)(int &npar, double *gin, double &f, double *allpar, int iflag);
-
-//The data (needs to be global, since it's used in the static member function
-//          global fit. Thats needed for TMinuit. For multi-threading, too.)
-
 typedef std::vector<TData*>::iterator DataIter;
-std::vector<TData*> data;
-double * temp_derivative1;
-double * temp_derivative2;
-double  epsilon;
-
 //Outlier Rejection
 struct OutlierRejection {
   OutlierRejection(double cut):_cut(cut){};
@@ -53,6 +43,9 @@ private:
   double * td1;
   double * td2;
   double *parorig, *mypar;
+  double *temp_derivative1;
+  double *temp_derivative2;
+  double epsilon;
   std::vector<TData*> data;
   struct calc_chi2_on
   {
@@ -73,12 +66,12 @@ private:
       }
       parent->chi2 =0.0;   
       for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it) {
-	parent->chi2 += (*it)->chi2_fast(parent->td1,parent->td2,epsilon); 
+	parent->chi2 += (*it)->chi2_fast(parent->td1,parent->td2,parent->epsilon); 
       } 
       boost::mutex::scoped_lock lock(io_mutex);
       for (int param=0; param< parent->npar ; ++param) {
-	temp_derivative1[param] += parent->td1[param];
-	temp_derivative2[param] += parent->td2[param];
+	parent->temp_derivative1[param] += parent->td1[param];
+	parent->temp_derivative2[param] += parent->td2[param];
       }
       //std::cout << "stop Thread with for " << parent << std::endl;
     }
@@ -86,8 +79,11 @@ private:
   boost::thread *thread;
   friend class calc_chi2_on;
 public:
-  ComputeThread(int npar,double *par) : npar(npar), td1(new double[npar]),
-      td2(new double[npar]), parorig(par),mypar(new double[npar]) {}
+  ComputeThread(int npar,double *par, double *temp_derivative1, double *temp_derivative2,
+                            double epsilon) : npar(npar), td1(new double[npar]),
+	            td2(new double[npar]), parorig(par),mypar(new double[npar]),
+	            temp_derivative1(temp_derivative1), temp_derivative2(temp_derivative2), 
+                            epsilon(epsilon) {}
   ~ComputeThread() {
     ClearData();
     delete [] td1;
@@ -111,64 +107,6 @@ public:
   double Chi2() const { return chi2;}
 };
 
-//--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
-//--v-TCaliber class-v------------------------------------------------------------------------
-/*
-  pt_addr_t TCaliber::global_fit(pt_addr_t arg) 
-  {  //simply loop over d and return sum of chi2
-  double chisq = 0.0;
-  std::vector<TData*>::const_iterator it = data.begin() + (int)arg*(data.size() / NTHREADS);
-  std::vector<TData*>::const_iterator it_end = it + (data.size() / NTHREADS); 
-  for (; it!=it_end; ++it){
-  chisq += (*it)->chi2_fast();  //caches derivatives ->fast
-  }
-  threading_results[(unsigned)arg]=chisq;
-  return arg;
-  }
-*/
-void TCaliber::global_fit_threading(int &npar, double *gin, double &f, double *allpar, int iflag) 
-{
-  double result = 0.0;
-  //set storage for temporary derivative storage to zero
-  for (int param=0; param< npar ; ++param) {
-    temp_derivative1[param]=0.0;
-    temp_derivative2[param]=0.0;
-  }
-  ComputeThread *t[NTHREADS];
-  for (int ithreads=0; ithreads<NTHREADS; ++ithreads){
-    t[ithreads] = new ComputeThread(npar, allpar);
-  }
-  int n = 0;
-  for(DataIter i = data.begin()  ; i < data.end() ; ++i) {
-    t[n]->AddData(*i);
-    n++;
-    if(n == NTHREADS) n = 0;
-  }  
-  for (int  ithreads=0; ithreads<NTHREADS; ++ithreads) t[ithreads]->Start();
-  for (int ithreads=0; ithreads<NTHREADS; ++ithreads){
-    if(t[ithreads]->IsDone()) result += t[ithreads]->Chi2();
-    delete t[ithreads];
-  }
-  f = result; 
-}
-
-void TCaliber::global_fit_fast(int &npar, double *gin, double &f, double *allpar, int iflag) 
-{
-  //set storage for temporary derivative storage to zero
-  for (unsigned param=0; param<abs(npar); ++param) {
-    temp_derivative1[param]=0.0;
-    temp_derivative2[param]=0.0;
-  }
-
-  double chisq = 0.0;
-  std::vector<TData*>::const_iterator data_it, it;
-  for (data_it=data.begin(); data_it!=data.end(); ++data_it){
-    chisq += (*data_it)->chi2_fast(temp_derivative1,temp_derivative2,epsilon);  //caches derivatives ->fast
-  }
-  f = chisq;
-}
-
 void TCaliber::global_fit(int &npar, double *gin, double &f, double *allpar, int iflag) 
 //usage inadvisable -> derivative will be cached if chi2_fast() is used.
 //This function can be used for fitting with Minuit which does derivatives 
@@ -189,7 +127,7 @@ double TCaliber::numeric_derivate( void (*func)(int&,double*,double&,double*,int
   double * gin=0;
   int i=0;
   double x, x0, x1, result=0.0;
-
+  double epsilon = 1e-03;
   if (index<npar){//first derivative
     pars[index]+=epsilon;
     func(npar,gin,x1,pars,i);
@@ -434,7 +372,7 @@ void TCaliber::Run_JetJet()
     //   1. Jet
     //--------------
     //Find the jets eta & phi index using the leading (ET) tower:
-    int jet_index;
+    int jet_index = -1;
     double max_tower_et = 0.0;
     for (int n=0; n<jetjet.NobjTowJ1Cal; ++n){
       if (jetjet.TowJ1Et[n]>max_tower_et) {
@@ -585,20 +523,26 @@ void TCaliber::Run()
 
 void TCaliber::Run_Lvmini()
 {
-  int naux = 1000000, niter=1000, iflag=0, iret=0;
+  int naux = 1000000, niter=1000, iret=0;
   //int mvec = 29;
   int mvec = 6;
   //int mvec = 2;
-  double aux[naux], fsum;
+  double aux[naux], fsum = 0;
 
   int npar = p->GetNumberOfParameters();
+  double *temp_derivative1 = new double[npar];
+  double *temp_derivative2 = new double[npar];
+  double epsilon = 1.E-3;
 
   cout << "\nFitting " << npar << " parameters; \n";
   p->Print();
-  cout << " with LVMINI.\n" << "Using " << data.size() << " total events." << endl;
-
-  //fitfunction    = global_fit_fast;
-  fitfunction    = global_fit_threading;
+  cout << " with LVMINI.\n" << "Using " << data.size() << " total events and ";
+  cout << nthreads << " threads.\n";
+  
+  ComputeThread *t[nthreads];
+  for (int ithreads=0; ithreads<nthreads; ++ithreads){
+    t[ithreads] = new ComputeThread(npar, p->GetPars(),temp_derivative1,temp_derivative2,epsilon);
+  }
 
   float eps =float(1.E-3*data.size());
   float wlf1=1.E-4;
@@ -613,11 +557,11 @@ void TCaliber::Run_Lvmini()
 
   //outlier rejection before first iteration
   {
-    std::vector<TData*>::iterator beg =  partition(data.begin(), data.end(), OutlierRejection(OutlierChi2CutPresel));
-    for(std::vector<TData*>::iterator i = beg ; i != data.end() ; ++i) {
+    DataIter beg =  partition(data.begin(), data.end(), OutlierRejection(OutlierChi2CutPresel));
+    for(DataIter i = beg ; i != data.end() ; ++i) {
       delete *i;
     }
-    data.erase(beg,data.end());
+    data.erase(beg,data.end());  
   }
   for (int i=0; i<OutlierIterationSteps; ++i) {
     cout << i+1 << "th of "<<OutlierIterationSteps<<" iteration using " << data.size() << " events (chi2 terms)." << endl;
@@ -625,20 +569,25 @@ void TCaliber::Run_Lvmini()
     //initialization
     lvmini_( npar, mvec, niter, aux);
     npar=abs(npar);
-    do {
-      fitfunction(npar, aux, fsum, p->GetPars(), iflag);  
-      ////classic derivative calculation: (inadvisable !)
-      //for (unsigned param=0; param<abs(npar); ++param) {
-      ////first numeric derivative of fitfunction w.r.t. par[p]     
-      //aux[param] = numeric_derivate(fitfunction, p->k, npar, param); 
-      //
-      ////first analytic derivative of fitfunction w.r.t. par[p]     
-      ////aux[p] = analytic_derivate(p->k, npar, p); 
-      //
-      ////second numeric derivative of fitfunction w.r.t. par[p]     
-      //	aux[param+npar] = numeric_derivate(fitfunction, p->k, npar, param+npar); 
-      //}
 
+    int n = 0;
+    for(DataIter it = data.begin()  ; it < data.end() ; ++it) {
+      t[n]->AddData(*it);
+      n++;
+      if(n == nthreads) n = 0;
+    }  
+    do {
+      //set storage for temporary derivative storage to zero
+      for (int param=0; param< npar ; ++param) {
+	temp_derivative1[param]=0.0;
+	temp_derivative2[param]=0.0;
+      }  
+      fsum = 0;
+      for (int  ithreads=0; ithreads<nthreads; ++ithreads) t[ithreads]->Start();
+      for (int ithreads=0; ithreads<nthreads; ++ithreads){
+	if(t[ithreads]->IsDone()) fsum += t[ithreads]->Chi2();
+      }
+      
       //fast derivative calculation:
       for (unsigned param=0; param<abs(npar); ++param) {
 	aux[param]           = (temp_derivative2[param]-temp_derivative1[param])/(2.0*epsilon);
@@ -649,8 +598,10 @@ void TCaliber::Run_Lvmini()
     }
     while (iret<0);
     //lvmprt_(2,aux,2); //Has any effect?
-
     //outlier rejection
+    for (int ithreads=0; ithreads<nthreads; ++ithreads){
+      t[ithreads]->ClearData();
+    }
     if (i+1!=OutlierIterationSteps)  {
       std::vector<TData*>::iterator beg =  partition(data.begin(), data.end(), OutlierRejection(OutlierChi2Cut));
       for(std::vector<TData*>::iterator i = beg ; i != data.end() ; ++i) {
@@ -662,7 +613,13 @@ void TCaliber::Run_Lvmini()
   //Copy Parameter errors from aux array to the TParameter::e array
   error_index=2;
   error_index = lvmind_(error_index);
-  p->SetErrors(aux+error_index);
+  p->SetErrors(aux+error_index); 
+  p->SetFitChi2(fsum);
+  for (int ithreads=0; ithreads<nthreads; ++ithreads){
+    delete t[ithreads];
+  }
+  delete []  temp_derivative1;
+  delete []  temp_derivative2;
 }
 //--------------------------------------------------------------------------------------------
 
@@ -691,9 +648,11 @@ void TCaliber::Done()
     plots->TrackClusterControlPlots();
   }
   //Clean-up
-  delete plots;
-  delete []  temp_derivative1;
-  delete []  temp_derivative2;
+  delete plots; 
+  for(DataIter i = data.begin() ; i != data.end() ; ++i) {
+    delete *i;
+  }
+  data.clear();
   cout << "Done, cleaning up."<<endl;
 }
 
@@ -721,19 +680,16 @@ void TCaliber::Init(string file)
   ConfigFile config( file.c_str() );
 
   p = TParameters::CreateParameters(file);
-  p->SetFitFunc(this->global_fit_fast);
 
   if(config.read<bool>("create plots",1)) {
     plots = new TControlPlots(file, &data, p);
   }
   //initialize temp arrays for fast derivative calculation
   TData::total_n_pars     = p->GetNumberOfParameters();
-  temp_derivative1 = new double[p->GetNumberOfParameters()];
-  temp_derivative2 = new double[p->GetNumberOfParameters()];
-  epsilon = 1.E-3;
   //--------------------------------------------------------------------------
   //read config file
-  fit_method = config.read<int>("Fit method",1); 
+  fit_method = config.read<int>("Fit method",1);
+  nthreads = config.read<int>("Number of Threads",1);
   //last minute kinematic cuts
   Et_cut_on_jet   = config.read<double>("Et cut on jet",5.0); 
   Et_cut_on_gamma = config.read<double>("Et cut on gamma",20.0); 
@@ -815,10 +771,6 @@ int caliber(int argc, char *argv[])
   Calibration->Done(); //Do Plots & Write Calibration to file
   
   delete Calibration;    
-  for(std::vector<TData*>::iterator i = data.begin() ; i < data.end() ; ++i) {
-    delete *i;
-  }
-  data.clear();
   return 0;
 }
 

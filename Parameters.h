@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.12 2008/02/21 14:52:16 stadie Exp $
+// $Id: Parameters.h,v 1.13 2008/02/21 15:42:20 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -42,14 +42,11 @@ public :
   int GetEtaGranularityJet() const { return eta_granularity_jet;}
   int GetPhiGranularityJet() const { return phi_granularity_jet;}
 
-  void SetFitFunc( void (*func)(int &npar, double *gin, double &f, double *allpar, int iflag) ) { 
-    fitfunction = func; 
-  }
-
-  
   double* GetTowerParRef(int bin) { return k + bin*free_pars_per_bin; }
   double* GetJetParRef(int jetbin)  { return k + GetNumberOfTowerParameters()+jetbin*free_pars_per_bin_jet;}
-  void SetErrors(double *ne) { std::memcpy(e,ne,GetNumberOfParameters()*sizeof(double));} 
+  void SetErrors(double *ne) { std::memcpy(e,ne,GetNumberOfParameters()*sizeof(double));}
+  void SetFitChi2(double chi2) { fitchi2 = chi2;}
+  double GetFitChi2() const { return fitchi2;}
   void FillErrors(double* copy) const {
     std::memcpy(copy,e,GetNumberOfParameters()*sizeof(double));
   }
@@ -109,7 +106,7 @@ private:
 
   double * k; //all fit-parameters
   double * e; //all fit-parameter errors
-
+  double fitchi2;
   //private functions
   void Init(const ConfigFile& config);
   void Read_Calibration(const std::string& file);
@@ -118,8 +115,6 @@ private:
   
   virtual double my_tower_parametrization(double *x,double *par) = 0;
   virtual double my_jet_parametrization(double *x,double *par) = 0;
-
-  void (*fitfunction)(int &npar, double *gin, double &f, double *allpar, int iflag);
 
   static TParameters *instance; 
   class Cleaner

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.7 2008/02/21 14:52:16 stadie Exp $
+// $Id: caliber.h,v 1.8 2008/02/25 10:07:45 stadie Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -22,14 +22,17 @@
 #include <cmath>
 //Root
 #include "TMinuit.h"
+
+
 //User libs
-#include "ConfigFile.h"
-#include "Parameters.h"
-#include "ControlPlots.h"
 #include "GammaJetSel.h"
 #include "TrackTowerSel.h"
 #include "TrackClusterSel.h"
 #include "JetJetSel.h"
+
+class TParameters;
+class TControlPlots;
+class TData;
 
 class TCaliber {
 public :
@@ -58,15 +61,8 @@ protected:
   void Run_JetJet();
 
 private:
-  void static global_fit(int &npar, double *gin, double &f, 
+  void global_fit(int &npar, double *gin, double &f, 
                          double *allpar, int iflag); 
-  void static global_fit_fast(int &npar, double *gin, double &f, 
-                         double *allpar, int iflag); 
-
-  void static global_fit_threading(int &npar, double *gin, double &f, 
-                         double *allpar, int iflag); 
-  double static global_fit(std::vector<TData*> d); 
-
   double numeric_derivate( void (*func)(int&,double*,double&,double*,int),
                            double * pars, int npar, int index);
   double analytic_derivate( double * pars, int npar, int index);
@@ -80,8 +76,10 @@ private:
          Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster;
 
   int    OutlierIterationSteps;                     //outlier rejection
+  int nthreads;
   double OutlierChi2Cut, OutlierChi2CutPresel;
-
+  std::vector<TData*> data;
+  
   TParameters * p;    //fit parameters, depend on number of bins & geometry
 
   TControlPlots * plots;  //the control plots
