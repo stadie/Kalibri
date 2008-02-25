@@ -63,6 +63,8 @@ public :
    Float_t         MetCal;
    Float_t         MetCalPhi;
    Float_t         MetCalSum;
+   Int_t           ProcessID;
+   Float_t         EventWeight;   
 
    // List of branches
    TBranch        *b_NobjTowJ1Cal;   //!
@@ -110,6 +112,8 @@ public :
    TBranch        *b_MetCal;   //!
    TBranch        *b_MetCalPhi;   //!
    TBranch        *b_MetCalSum;   //!
+   TBranch        *b_ProcessID;   //!
+   TBranch        *b_EventWeight;   //!
 
    JetJetSel(TTree * /*tree*/ =0) { }
    virtual ~JetJetSel() { }
@@ -193,6 +197,8 @@ void JetJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("MetCal", &MetCal, &b_MetCal);
    fChain->SetBranchAddress("MetCalPhi", &MetCalPhi, &b_MetCalPhi);
    fChain->SetBranchAddress("MetCalSum", &MetCalSum, &b_MetCalSum);
+   fChain->SetBranchAddress("ProcessID", &ProcessID, &b_ProcessID);
+   fChain->SetBranchAddress("EventWeight", &EventWeight, &b_EventWeight);
 }
 
 Bool_t JetJetSel::Notify()

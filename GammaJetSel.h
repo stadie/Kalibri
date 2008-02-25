@@ -43,6 +43,8 @@ public :
    Float_t         PhotonEta;
    Float_t         PhotonEt;
    Float_t         PhotonE;
+   Int_t           ProcessID;
+   Float_t         EventWeight;   
 
    // List of branches
    TBranch        *b_NobjTowCal;   //!
@@ -69,6 +71,8 @@ public :
    TBranch        *b_PhotonEta;   //!
    TBranch        *b_PhtonEt;   //!
    TBranch        *b_PhotonE;   //!
+   TBranch        *b_ProcessID;   //!
+   TBranch        *b_EventWeight;   //!
 
    GammaJetSel(TTree * /*tree*/ =0) { }
    virtual ~GammaJetSel() { }
@@ -132,6 +136,8 @@ void GammaJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("PhotonEta", &PhotonEta, &b_PhotonEta);
    fChain->SetBranchAddress("PhotonEt", &PhotonEt, &b_PhtonEt);
    fChain->SetBranchAddress("PhotonE", &PhotonE, &b_PhotonE);
+   fChain->SetBranchAddress("ProcessID", &ProcessID, &b_ProcessID);
+   fChain->SetBranchAddress("EventWeight", &EventWeight, &b_EventWeight);
 }
 
 Bool_t GammaJetSel::Notify()

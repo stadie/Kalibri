@@ -34,6 +34,8 @@ public :
    Float_t         TrackEta;
    Float_t         TrackPhi;
    Float_t         TrackE;
+   Int_t           ProcessID;
+   Float_t         EventWeight;   
 
    // List of branches
    TBranch        *b_NobjTowCal;   //!
@@ -52,6 +54,8 @@ public :
    TBranch        *b_TrackEta;   //!
    TBranch        *b_TrackPhi;   //!
    TBranch        *b_TrackE;   //!
+   TBranch        *b_ProcessID;   //!
+   TBranch        *b_EventWeight;   //!
 
    TrackClusterSel(TTree * /*tree*/ =0) { }
    virtual ~TrackClusterSel() { }
@@ -105,6 +109,8 @@ void TrackClusterSel::Init(TTree *tree)
    fChain->SetBranchAddress("TrackEta", &TrackEta, &b_TrackEta);
    fChain->SetBranchAddress("TrackPhi", &TrackPhi, &b_TrackPhi);
    fChain->SetBranchAddress("TrackE", &TrackE, &b_TrackE);
+   fChain->SetBranchAddress("ProcessID", &ProcessID, &b_ProcessID);
+   fChain->SetBranchAddress("EventWeight", &EventWeight, &b_EventWeight);
 }
 
 Bool_t TrackClusterSel::Notify()

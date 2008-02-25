@@ -297,8 +297,8 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
      << "    untracked vint32 NTowerParamsPerBin = " << cal.GetNumberOfTowerParametersPerBin() << endl
      << "    untracked vint32 NJetParamsPerBin = " << cal.GetNumberOfJetParametersPerBin() << endl
      << "    untracked vint32 NEtaBins = " << cal.eta_granularity << endl
-     << "    untracked vint32 NPhiBins = " << cal.eta_granularity << endl
-     << "    untracked vbool   EtaSymmetry = " << cal.eta_symmetry << endl << endl
+     << "    untracked vint32 NPhiBins = " << cal.phi_granularity << endl
+     << "    untracked vbool  EtaSymmetry = " << cal.eta_symmetry << endl << endl
      << "    untracked vint32 mapEta       = { ";
   
   //1. ieta

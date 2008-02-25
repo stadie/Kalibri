@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.C,v 1.7 2008/01/29 10:58:59 auterman Exp $
+// $Id: CalibData.C,v 1.8 2008/01/31 16:21:03 auterman Exp $
 //
 #include "CalibData.h"
 #include "map"
@@ -26,7 +26,8 @@ double TData_TruthMess::chi2_fast(){
   double new_error = _error;
   if (GetMess()[0]!=0.) new_error = _error*new_mess/GetMess()[0];
 #endif   
-  double new_chi2  = (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
+  double weight = GetWeight();
+  double new_chi2  = weight*(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
   
   double dmess_dp, derror_dp;
   unsigned idx = _index*_n_par; //_index==bin; idx==bin*Free_parameters_per_bin
@@ -43,7 +44,7 @@ double TData_TruthMess::chi2_fast(){
     if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
     else derror_dp = _error;
 #endif   
-    temp_derivative2[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
+    temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
 
     _par[i-idx]  -= 2.0*epsilon;
     dmess_dp  = GetParametrizedMess();
@@ -53,7 +54,7 @@ double TData_TruthMess::chi2_fast(){
     if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
     else derror_dp = _error;
 #endif   
-    temp_derivative1[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
+    temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
     _par[i-idx]  += epsilon;
   }
   for (unsigned i=idx+_n_par; i< total_n_pars; ++i){
@@ -67,6 +68,7 @@ double TData_TruthMultMess::chi2_fast(){
   double sum_mess=0.0, sum_error2=0.0, new_error, new_error2, new_mess, new_chi2,
          dmess_dp, derror_dp;
   double sm1[total_n_pars],sm2[total_n_pars],se1[total_n_pars],se2[total_n_pars];//store sum_m & sum_e2 for df/dp_i
+  double weight = GetWeight();
   for (unsigned i=0; i<total_n_pars; ++i){
     sm1[i] = 0.0;
     sm2[i] = 0.0;
@@ -126,7 +128,7 @@ double TData_TruthMultMess::chi2_fast(){
 //  if (_mess!=0) if (_mess[0]!=0.) new_error = _error*new_mess/_mess[0];
 //  else new_error = _error;
 //#endif   
-  new_chi2  = (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+  new_chi2  = weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
 
   idx = _index; //@@to be fixed -> introduce a eta-phi binning for JES
   for (unsigned i=0; i<total_n_pars; ++i){
@@ -139,7 +141,7 @@ double TData_TruthMultMess::chi2_fast(){
 //    if (new_mess!=0.) derror_dp = _error*dmess_dp/new_mess;
 //    else derror_dp = _error;
 //#endif   
-    temp_derivative2[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
+    temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
     // same for p_i-epsilon:
     new_mess  = sm1[i];  
     dmess_dp  = _func(&new_mess,_par);
@@ -150,7 +152,7 @@ double TData_TruthMultMess::chi2_fast(){
 //    else derror_dp = _error;
 //#endif   
     derror_dp = _err(&dmess_dp);
-    temp_derivative1[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
+    temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
   }
   	
   for (unsigned i=idx; i<idx+_n_par; ++i){
@@ -163,7 +165,7 @@ double TData_TruthMultMess::chi2_fast(){
 //    if (sum_mess!=0.) derror_dp = _error*dmess_dp/sum_mess;
 //    else derror_dp = _error;
 //#endif
-    temp_derivative2[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
+    temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
 
     _par[i-idx]  -= 2.0*epsilon;
     dmess_dp  = _func(&sum_mess,_par);
@@ -173,7 +175,7 @@ double TData_TruthMultMess::chi2_fast(){
 //    if (sum_mess!=0.) derror_dp = _error*dmess_dp/sum_mess;
 //    else derror_dp = _error;
 //#endif
-    temp_derivative1[i]+= (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
+    temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
     _par[i-idx]  += epsilon;
   }
 
@@ -185,6 +187,8 @@ double TData_TruthMultMess::chi2_fast(){
 double TData_MessMess::chi2_fast()
 {
   double new_chi2, new_mess, new_error, sum_error2=0.0;
+
+  double weight = GetWeight();
 
   //Get all tower parameter used in this event:  
   std::map<int,double*> tpars;
@@ -238,7 +242,7 @@ double TData_MessMess::chi2_fast()
 //       new_error = _error;
 //#endif
        new_mess  = GetMessCombination();  
-       temp_derivative2[ i ]+=(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+       temp_derivative2[ i ]+=weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
        sum_error2 = 0.0;
 
        *tpars[i] -= 2.*epsilon;
@@ -260,7 +264,7 @@ double TData_MessMess::chi2_fast()
 //       new_error = _error;
 //#endif
        new_mess  = GetMessCombination();  
-       temp_derivative1[ i ]+=(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+       temp_derivative1[ i ]+=weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
        *tpars[i] += epsilon;
     }
     else 

@@ -376,14 +376,14 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
 
 	switch ( (*data_it)->GetType()) {
 	case TypeTrackTower://track-tower
-	  if (mess != 0.0) chi2[0]->Fill( (*data_it)->chi2() ); break;
+	  if (mess != 0.0) chi2[0]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); break;
 	case TypeGammaJet://gamma-jet
-	  if (mess != 0.0) chi2[1]->Fill( (*data_it)->chi2() ); break;
+	  if (mess != 0.0) chi2[1]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); break;
 	case TypeTrackCluster://track-cluster
-	  if (mess != 0.0) chi2[2]->Fill( (*data_it)->chi2() ); 
+	  if (mess != 0.0) chi2[2]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); 
 	  break;
 	case TypePtBalance://jet-jet
-	  if (mess != 0.0) chi2[3]->Fill( (*data_it)->chi2() ); break;
+	  if (mess != 0.0) chi2[3]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); break;
 	}
       }
       if (norm[0]->GetEntries()==0) continue;
@@ -1123,6 +1123,12 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   hptpar->SetXTitle("p_{T}");
   //hptpar->SetYTitle("< #frac{p_{T,jet}}{E_{T,cor. jet}}>");
  
+  TH1F* hptGamma = new TH1F("hptGamma","#gamma-jet",100,20,220);
+  hptGamma->SetXTitle("p_{T} [GeV]");
+  TH1F* hptGammaW = new TH1F("hptGammaW","#gamma-jet",100,20,220);
+  hptGammaW->SetXTitle("p_{T} [GeV]");
+  
+
   double bins[101];
   for(int i = 0; i < 101 ; ++i) {
     bins[i] = pow(10,(i+32)/40.0);
@@ -1145,15 +1151,17 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     double etjetcor = jg->GetParametrizedMess();
     double etajet = jg->GetMess()[1];
     //double phijet = jg->GetMess()[2];
-    heta->Fill(etajet,etjet/ jg->GetTruth());
-    hetacor->Fill(etajet,etjetcor/ jg->GetTruth());
-    hetapar->Fill(etajet,etjet/etjetcor);
-    hpt->Fill(jg->GetTruth(),etjet/ jg->GetTruth());
-    hptcor->Fill(jg->GetTruth(),etjetcor/jg->GetTruth());
-    hptpar->Fill(etjetcor,etjet/etjetcor);    
-    hptlog->Fill(jg->GetTruth(),etjet/ jg->GetTruth());
-    hptlogcor->Fill(jg->GetTruth(),etjetcor/jg->GetTruth());
-    hptlogpar->Fill(etjetcor,etjet/etjetcor);
+    heta->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
+    hetacor->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
+    hetapar->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+    hpt->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
+    hptcor->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
+    hptpar->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());    
+    hptlog->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
+    hptlogcor->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
+    hptlogpar->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());
+    hptGamma->Fill(jg->GetTruth());
+    hptGammaW->Fill(jg->GetTruth(),jg->GetWeight());
   }
   heta->SetMarkerStyle(20);
   heta->SetMarkerColor(1);
@@ -1217,6 +1225,23 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   leg->AddEntry(hptlogcor,"<p_{T}^{cor. jet}/E_{T}^{#gamma}>","p");
   leg->Draw();
   c1->Draw(); 
+  ps.NewPage(); 
+  delete leg;
+  hptGamma->SetMarkerStyle(20);
+  hptGamma->SetMarkerColor(1);
+  hptGammaW->SetMarkerStyle(22);
+  hptGammaW->SetMarkerColor(2);
+  hptGammaW->Draw("p");
+  hptGammaW->SetStats(0);
+  hptGamma->Draw("pSAME");
+  c1->SetLogx(0);  
+  c1->SetLogy(1);  
+  c1->SetGrid();
+  leg = new TLegend(0.7,0.96,0.96,0.72);
+  leg->AddEntry(hptGamma,"no weights","p");
+  leg->AddEntry(hptGammaW,"with weights","p");
+  leg->Draw();
+  c1->Draw(); 
   ps.Close();
   delete leg;
   delete heta;
@@ -1228,4 +1253,6 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   delete hptlog;
   delete hptlogcor;
   delete hptlogpar;
+  delete hptGamma;
+  delete hptGammaW;
 }

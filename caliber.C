@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.10 2008/02/21 13:32:15 stadie Exp $
+// $Id: caliber.C,v 1.11 2008/02/21 14:52:16 stadie Exp $
 //
 #include "caliber.h"
 
@@ -38,7 +38,7 @@ std::vector<TData*> data;
 //Outlier Rejection
 struct OutlierRejection {
   OutlierRejection(double cut):_cut(cut){};
-  bool operator()(TData *d){return d->chi2()<_cut;}
+  bool operator()(TData *d){return (d->chi2()/d->GetWeight())<_cut;}
   double _cut;
 };
 
@@ -132,7 +132,7 @@ void TCaliber::global_fit(int &npar, double *gin, double &f, double *allpar, int
   double chisq = 0.0;
   std::vector<TData*>::const_iterator data_it, it;
   for (data_it=data.begin(); data_it!=data.end(); ++data_it)
-    chisq += (*data_it)->chi2();     //standard
+    chisq += (*data_it)->GetWeight()*(*data_it)->chi2();     //standard
   f = chisq;
 }
 
@@ -204,11 +204,12 @@ void TCaliber::Run_GammaJet()
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index + p->GetNumberOfTowerParameters(),
 			  gammajet.PhotonEt,				    //truth//
-			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)), //error//
-			  p->GetJetParRef( jet_index ),                   //params
-			  p->GetNumberOfJetParametersPerBin(),                       //number of free jet param. p. bin
-			  p->jet_parametrization,                            //function
-			  p->jet_error_parametrization,                       //function
+			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
+			  gammajet.EventWeight,                             //weight//
+			  p->GetJetParRef( jet_index ),                     //params
+			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
+			  p->jet_parametrization,                           //function
+			  p->jet_error_parametrization,                     //function
 			  jetp
 			  );
 
@@ -236,10 +237,11 @@ void TCaliber::Run_GammaJet()
 					   mess,                                                    //mess//
 					   gammajet.PhotonEt * relativEt,                           //truth//
 					   sqrt(pow(0.5,2)+pow(0.1*gammajet.PhotonEt*relativEt,2)), //error//
+					   1.,                                                      //weight//
 					   p->GetTowerParRef( index ),                              //parameter//
-					   p->GetNumberOfTowerParametersPerBin(),                                    //number of free tower param. p. bin//
-					   p->tower_parametrization,                                   //function//
-					   p->tower_error_parametrization                              //function//
+					   p->GetNumberOfTowerParametersPerBin(),                   //number of free tower param. p. bin//
+					   p->tower_parametrization,                                //function//
+					   p->tower_error_parametrization                           //function//
 					   ));
     } 
  
@@ -281,12 +283,14 @@ void TCaliber::Run_TrackTower()
       data.push_back(new TData_TruthMess(index,
 					 mess,                                                //mess//
 					 tracktower.TrackEt[n],                               //truth//
-					 //tracktower.TrackEterr[n],                            //error//
+					 //tracktower.TrackEterr[n],                          //error//
 					 sqrt(pow(0.5,2)+ pow(0.1*tracktower.TrackEt[n] ,2)), //error//
+					 //tracktower.EventWeight,                            //weight//
+					 1.,                                                  //weight//
 					 p->GetTowerParRef( index ),                          //parameter//
-					 p->GetNumberOfTowerParametersPerBin(),                                //number of free tower param. p. bin//
-					 p->tower_parametrization,                               //function//
-					 p->tower_error_parametrization                          //function//
+					 p->GetNumberOfTowerParametersPerBin(),               //number of free tower param. p. bin//
+					 p->tower_parametrization,                            //function//
+					 p->tower_error_parametrization                       //function//
 					 ) );
       if((evt++)%1000==0) cout<<"Track-Tower Event: "<<evt<<endl;
       break;//use only one track-tower per event! ->bug in the producer
@@ -318,12 +322,14 @@ void TCaliber::Run_TrackCluster()
  
     //Define Track-Cluster event	
     TData_TruthMultMess * tc = new TData_TruthMultMess( 0,
-							trackcluster.TrackEt,  			          //truth//
+							trackcluster.TrackEt,  			           //truth//
 							sqrt(pow(0.5,2)+pow(0.10*trackcluster.TrackEt,2)), //error//
+							//trackcluster.EventWeight,                        //weight//
+							1.,                                                //weight//
 							0,                                                 //params
 							0,                                                 //number of free jet param. p. bin
-							p->dummy_parametrization,                             //function
-							p->jet_error_parametrization                          //function
+							p->dummy_parametrization,                          //function
+							p->jet_error_parametrization                       //function
 							);
     tc->SetType( TypeTrackCluster );
     //Add the towers to the event
@@ -348,10 +354,11 @@ void TCaliber::Run_TrackCluster()
 						    trackcluster.TrackEt*trackcluster.TowEt[n]/cluster_energy, //"truth" for plotting only!//
 						    //trackcluster.TrackEterr[n],                              //error//
 						    sqrt(pow(0.5,2)+ pow(0.1*trackcluster.TrackEt ,2)),        //error//
+						    1.,                                                        //weight//
 						    p->GetTowerParRef( index ),                                //parameter//
-						    p->GetNumberOfTowerParametersPerBin(),                                      //number of free cluster param. p. bin//
-						    p->tower_parametrization,                                     //function//
-						    p->tower_error_parametrization                                //function//
+						    p->GetNumberOfTowerParametersPerBin(),                     //number of free cluster param. p. bin//
+						    p->tower_parametrization,                                  //function//
+						    p->tower_error_parametrization                             //function//
 						    );
       tc->AddMess( tower );
     } 
@@ -401,13 +408,15 @@ void TCaliber::Run_JetJet()
      
     //Create an jet/Jet TData event
     TData_PtBalance * jj_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
-						     direction1,             //p_T direction of this jet
-						     0.0,				    //truth//
+						     direction1,                                    //p_T direction of this jet
+						     0.0,                                           //truth//
 						     sqrt(pow(0.5,2)+pow(0.10*jetjet.ScndJetPt,2)), //error//
-						     p->GetJetParRef( jet_index ),                   //params
-						     p->GetNumberOfJetParametersPerBin(),                       //number of free jet param. p. bin
-						     p->jet_parametrization,                            //function
-						     p->jet_error_parametrization                       //function
+						     //jetjet.EventWeight,                          //weight//
+						     1.,                                            //weight//
+						     p->GetJetParRef( jet_index ),                  //params
+						     p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
+						     p->jet_parametrization,                        //function
+						     p->jet_error_parametrization                   //function
 						     );
 
     //Add the jet's towers to "jj_data":
@@ -430,13 +439,14 @@ void TCaliber::Run_JetJet()
       mess[2] = double(jetjet.TowJ1Had[n]*scale);
       mess[3] = double(jetjet.TowJ1OE[n]*scale);
       jj_data->AddMess(new TData_TruthMess(index,
-					   mess,                                                    //mess//
+					   mess,                                                   //mess//
 					   jetjet.ScndJetPt * relativEt,                           //truth//
 					   sqrt(pow(0.5,2)+pow(0.1*jetjet.ScndJetPt*relativEt,2)), //error//
-					   p->GetTowerParRef( index ),                              //parameter//
-					   p->GetNumberOfTowerParametersPerBin(),                                    //number of free tower param. p. bin//
-					   p->tower_parametrization,                                   //function//
-					   p->tower_error_parametrization                              //function//
+                                           1.,                                                     //weight//
+					   p->GetTowerParRef( index ),                             //parameter//
+					   p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
+					   p->tower_parametrization,                               //function//
+					   p->tower_error_parametrization                          //function//
 					   ));
     }  
 
@@ -464,12 +474,14 @@ void TCaliber::Run_JetJet()
     //Create an jet/Jet TData event
     TData_PtBalance * jj2_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
 						      direction2,
-						      0.0,				    //truth//
+						      0.0,				             //truth//
 						      sqrt(pow(0.5,2)+pow(0.10*jetjet.ScndJetPt,2)), //error//
-						      p->GetJetParRef( jet_index ),                   //params
-						      p->GetNumberOfJetParametersPerBin(),                       //number of free jet param. p. bin
-						      p->jet_parametrization,                            //function
-						      p->jet_error_parametrization                       //function
+                                                      //jetjet.EventWeight,                          //weight//
+                                                      1.,                                            //weight//
+						      p->GetJetParRef( jet_index ),                  //params
+						      p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
+						      p->jet_parametrization,                        //function
+						      p->jet_error_parametrization                   //function
 						      );
 
     //Add the jet's towers to "jj_data":
@@ -495,8 +507,9 @@ void TCaliber::Run_JetJet()
 					    mess, //mess
 					    jetjet.FirstJetPt * relativEt,                           //truth//
 					    sqrt(pow(0.5,2)+pow(0.1*jetjet.FirstJetPt*relativEt,2)), //error//
+					    1.,                                                      //weight//
 					    p->GetTowerParRef( index ),                              //parameter//
-					    p->GetNumberOfTowerParametersPerBin(),                                    //number of free tower param. p. bin//
+					    p->GetNumberOfTowerParametersPerBin(),                   //number of free tower param. p. bin//
 					    p->tower_parametrization,                                //function//
 					    p->tower_error_parametrization                           //function//
 					    ));
@@ -527,8 +540,9 @@ void TCaliber::Run()
 void TCaliber::Run_Lvmini()
 {
   int naux = 1000000, niter=1000, iflag=0, iret=0;
-  //int mvec = 6;
-  int mvec = 2;
+  //int mvec = 29;
+  int mvec = 6;
+  //int mvec = 2;
   double aux[naux], fsum;
 
   int npar = p->GetNumberOfParameters();
@@ -616,12 +630,17 @@ void TCaliber::Done()
   outfile.close();
   
   //Do Plots
-  cout << "Creating control plots,"<<endl;
+  cout << "Creating tower control plots,"<<endl;
   plots->FitControlPlots();
+  cout << "Creating gamma jet (tower bin) control plots,"<<endl;
   plots->GammaJetControlPlots();
+  cout << "Creating gamma jet (jet bin) control plots,"<<endl;
   plots->GammaJetControlPlotsJetBin();
+  cout << "Creating more gamma jet control plots,"<<endl;
   plots->GammaJetControlPlotsJetJEC();
+  cout << "Creating track tower control plots,"<<endl;
   plots->TrackTowerControlPlots();
+  cout << "Creating track cluster control plots,"<<endl;
   plots->TrackClusterControlPlots();
   
   //Clean-up
