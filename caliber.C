@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.12 2008/02/25 07:15:54 csander Exp $
+// $Id: caliber.C,v 1.13 2008/02/25 10:07:45 stadie Exp $
 //
 #include "caliber.h"
 
@@ -250,7 +250,8 @@ void TCaliber::Run_GammaJet()
       TData_TruthMultMess(jet_index + p->GetNumberOfTowerParameters(),
 			  gammajet.PhotonEt,				    //truth//
 			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
-			  gammajet.EventWeight,                             //weight//
+			  //gammajet.EventWeight,                           //weight//
+			  1.0,                                              //weight//
 			  p->GetJetParRef( jet_index ),                     //params
 			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
 			  p->jet_parametrization,                           //function

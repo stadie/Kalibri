@@ -138,7 +138,8 @@ void TParameters::Read_Calibration(std::string const& configFile) {
     if( line.find("#") != string::npos) continue;
 
     //Read Tower Calibration: ---------------------------------------------------
-    if ( line.find("module ccctm = CalibratedCaloTowerMaker") != string::npos ) {
+    //if ( line.find("module ccctm = CalibratedCaloTowerMaker") != string::npos ) {
+    if ( line.find("module calibTowerMaker = CalibTowerMaker") != string::npos ) {
       while (std::getline(file,line)) {
         if( line.find("module") != string::npos) break;
 	posEqual=line.find('=');
@@ -158,7 +159,8 @@ void TParameters::Read_Calibration(std::string const& configFile) {
       }
     }
     //Read Jet Calibration --------------------------------------------------------
-    if ( line.find("module cccjm = CalibratedJetMaker") != string::npos ) {
+    //if ( line.find("module cccjm = CalibratedJetMaker") != string::npos ) {
+    if ( line.find("module calibJetMaker = CalibJetMaker") != string::npos ) {
       while (std::getline(file,line)) {
         if( line.find("module") != string::npos) break;
 	posEqual=line.find('=');
