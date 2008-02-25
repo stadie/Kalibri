@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.9 2008/02/25 07:15:53 csander Exp $
+// $Id: CalibData.h,v 1.10 2008/02/25 10:07:45 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -35,21 +35,20 @@ public:
   virtual ~TData(){
     delete [] _mess;
   };
-  virtual double * GetMess(){ return _mess;};//used only for plotting
+  double *GetMess(){ return _mess;};//used only for plotting
   virtual double GetParametrizedMess(){return _func(_mess,_par);}
   virtual double GetParametrizedErr(double *paramess){ return _err(paramess);};
-  virtual double GetTruth(){ return _truth;};
-  virtual double GetError(){ return _error;};
-  virtual double GetWeight(){ return _weight;};
-  virtual short unsigned int GetType() {return _type;};
-  virtual void SetType(short unsigned int type) {_type=type;};
+  double GetTruth(){ return _truth;};
+  double GetError(){ return _error;};
+  double GetWeight(){ return _weight;};
+  short unsigned int GetType() {return _type;};
+  void SetType(short unsigned int type) {_type=type;};
   unsigned short int GetIndex(){return _index;};
   virtual const std::vector<TData*>& GetRef() = 0;
   virtual double chi2() = 0;
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon) = 0;
-  virtual double * GetPar(){return _par;};
+  double * GetPar(){return _par;};
   unsigned short int GetNumberOfPars() {return _n_par;};
-  void  AddToPar(unsigned short int const i, double const e){_par[i]+=e;};
   virtual void ChangeParAddress(double* oldpar, double* newpar) { _par += newpar - oldpar;}
   static unsigned int total_n_pars;
 protected:
