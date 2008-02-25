@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.11 2008/02/21 14:52:16 stadie Exp $
+// $Id: caliber.C,v 1.12 2008/02/25 07:15:54 csander Exp $
 //
 #include "caliber.h"
 
@@ -32,8 +32,11 @@ void (*fitfunction)(int &npar, double *gin, double &f, double *allpar, int iflag
 //The data (needs to be global, since it's used in the static member function
 //          global fit. Thats needed for TMinuit. For multi-threading, too.)
 
-typedef std::vector<TData*>::const_iterator DataIter;
+typedef std::vector<TData*>::iterator DataIter;
 std::vector<TData*> data;
+double * temp_derivative1;
+double * temp_derivative2;
+double  epsilon;
 
 //Outlier Rejection
 struct OutlierRejection {
@@ -42,29 +45,70 @@ struct OutlierRejection {
   double _cut;
 };
 
-double threading_results[NTHREADS];
-struct calc_chi2_on
-{
-  calc_chi2_on(int id, DataIter beg, DataIter end) : id(id), beg(beg), end(end){ }
 
-  void operator()()
-  {
-    //{
-    //  boost::mutex::scoped_lock lock(io_mutex);
-    //  std::cout << "start Thread with Process ID " << id << std::endl; 
-    //}
-    double chisq=0.0;
-    for (DataIter it=beg; it!=end; ++it){ 
-      boost::mutex::scoped_lock lock(io_mutex);
-      chisq += (*it)->chi2_fast();  //caches derivatives ->fast
-    }    
-    threading_results[id]=chisq;
-    //boost::mutex::scoped_lock lock(io_mutex);
-    //std::cout << "stop Thread with Process ID " << id << std::endl;
-  }
+class ComputeThread {
 private:
-  int id;
-  DataIter beg, end;
+  int npar;
+  double chi2;
+  double * td1;
+  double * td2;
+  double *parorig, *mypar;
+  std::vector<TData*> data;
+  struct calc_chi2_on
+  {
+  private:
+    ComputeThread *parent;
+  public:
+    calc_chi2_on(ComputeThread *parent) : parent(parent) {}
+    void operator()()
+    {
+//       {
+// 	boost::mutex::scoped_lock lock(io_mutex);
+// 	std::cout << "start Thread for " << parent << std::endl; 
+//       }   
+      for (int param=0; param< parent->npar ; ++param) {
+	parent->td1[param]= 0.0;
+	parent->td2[param]= 0.0;
+	parent->mypar[param] = parent->parorig[param];
+      }
+      parent->chi2 =0.0;   
+      for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it) {
+	parent->chi2 += (*it)->chi2_fast(parent->td1,parent->td2,epsilon); 
+      } 
+      boost::mutex::scoped_lock lock(io_mutex);
+      for (int param=0; param< parent->npar ; ++param) {
+	temp_derivative1[param] += parent->td1[param];
+	temp_derivative2[param] += parent->td2[param];
+      }
+      //std::cout << "stop Thread with for " << parent << std::endl;
+    }
+  };
+  boost::thread *thread;
+  friend class calc_chi2_on;
+public:
+  ComputeThread(int npar,double *par) : npar(npar), td1(new double[npar]),
+      td2(new double[npar]), parorig(par),mypar(new double[npar]) {}
+  ~ComputeThread() {
+    ClearData();
+    delete [] td1;
+    delete [] td2;
+    delete [] mypar;
+  }
+  void AddData(TData* d) { 
+    d->ChangeParAddress(parorig, mypar);
+    data.push_back(d);
+  }
+  void ClearData() {   
+    for (DataIter it= data.begin() ; it!= data.end() ; ++it)  
+      (*it)->ChangeParAddress(mypar,parorig);
+    data.clear();
+  }
+  void Start() { thread = new boost::thread(calc_chi2_on(this)); }
+  bool IsDone() { thread->join(); delete thread; return true;}
+  void SyncParameters() {
+    for (int param=0; param< npar ; ++param) mypar[param] = parorig[param];
+  }
+  double Chi2() const { return chi2;}
 };
 
 //--------------------------------------------------------------------------------------------
@@ -87,24 +131,25 @@ void TCaliber::global_fit_threading(int &npar, double *gin, double &f, double *a
 {
   double result = 0.0;
   //set storage for temporary derivative storage to zero
-  for (unsigned param=0; param<abs(npar); ++param) {
-    TData::temp_derivative1[param]=0.0;
-    TData::temp_derivative2[param]=0.0;
+  for (int param=0; param< npar ; ++param) {
+    temp_derivative1[param]=0.0;
+    temp_derivative2[param]=0.0;
   }
-
-  boost::thread * thrd[NTHREADS];
-  for (unsigned ithreads=0; ithreads<NTHREADS; ++ithreads){
-    threading_results[ithreads] = 0.0;    
-    DataIter beg = data.begin() + ithreads*(data.size() / NTHREADS);
-    DataIter end = beg + (data.size() / NTHREADS);
-    thrd[ithreads] = new boost::thread(calc_chi2_on(ithreads, beg, end ));
+  ComputeThread *t[NTHREADS];
+  for (int ithreads=0; ithreads<NTHREADS; ++ithreads){
+    t[ithreads] = new ComputeThread(npar, allpar);
   }
-  for (unsigned ithreads=0; ithreads<NTHREADS; ++ithreads)
-    thrd[ithreads]->join();
-  for (unsigned ithreads=0; ithreads<NTHREADS; ++ithreads){
-    result += threading_results[ithreads];
-    delete thrd[ithreads];
-  } 
+  int n = 0;
+  for(DataIter i = data.begin()  ; i < data.end() ; ++i) {
+    t[n]->AddData(*i);
+    n++;
+    if(n == NTHREADS) n = 0;
+  }  
+  for (int  ithreads=0; ithreads<NTHREADS; ++ithreads) t[ithreads]->Start();
+  for (int ithreads=0; ithreads<NTHREADS; ++ithreads){
+    if(t[ithreads]->IsDone()) result += t[ithreads]->Chi2();
+    delete t[ithreads];
+  }
   f = result; 
 }
 
@@ -112,14 +157,14 @@ void TCaliber::global_fit_fast(int &npar, double *gin, double &f, double *allpar
 {
   //set storage for temporary derivative storage to zero
   for (unsigned param=0; param<abs(npar); ++param) {
-    TData::temp_derivative1[param]=0.0;
-    TData::temp_derivative2[param]=0.0;
+    temp_derivative1[param]=0.0;
+    temp_derivative2[param]=0.0;
   }
 
   double chisq = 0.0;
   std::vector<TData*>::const_iterator data_it, it;
   for (data_it=data.begin(); data_it!=data.end(); ++data_it){
-    chisq += (*data_it)->chi2_fast();  //caches derivatives ->fast
+    chisq += (*data_it)->chi2_fast(temp_derivative1,temp_derivative2,epsilon);  //caches derivatives ->fast
   }
   f = chisq;
 }
@@ -146,20 +191,20 @@ double TCaliber::numeric_derivate( void (*func)(int&,double*,double&,double*,int
   double x, x0, x1, result=0.0;
 
   if (index<npar){//first derivative
-    pars[index]+=TData::epsilon;
+    pars[index]+=epsilon;
     func(npar,gin,x1,pars,i);
-    pars[index]-=2*TData::epsilon;
+    pars[index]-=2*epsilon;
     func(npar,gin,x0,pars,i);
-    pars[index]+=TData::epsilon;
-    result = (x1-x0)/(2.0*TData::epsilon);
+    pars[index]+=epsilon;
+    result = (x1-x0)/(2.0*epsilon);
   } else if (npar<=index && index<2*npar){//second derivative
-    pars[index-npar]+=TData::epsilon;
+    pars[index-npar]+=epsilon;
     func(npar,gin,x1,pars,i);
-    pars[index-npar]-=2*TData::epsilon;
+    pars[index-npar]-=2*epsilon;
     func(npar,gin,x0,pars,i);
-    pars[index-npar]+=TData::epsilon;
+    pars[index-npar]+=epsilon;
     func(npar,gin,x,pars,i);
-    result = (x0+x1-2*x)/(TData::epsilon*TData::epsilon);
+    result = (x0+x1-2*x)/(epsilon*epsilon);
   } 
   return result;
 }
@@ -551,8 +596,8 @@ void TCaliber::Run_Lvmini()
   p->Print();
   cout << " with LVMINI.\n" << "Using " << data.size() << " total events." << endl;
 
-  fitfunction    = this->global_fit_fast;
-  //fitfunction    = this->global_fit_threading;
+  //fitfunction    = global_fit_fast;
+  fitfunction    = global_fit_threading;
 
   float eps =float(1.E-3*data.size());
   float wlf1=1.E-4;
@@ -595,8 +640,8 @@ void TCaliber::Run_Lvmini()
 
       //fast derivative calculation:
       for (unsigned param=0; param<abs(npar); ++param) {
-	aux[param]           = (TData::temp_derivative2[param]-TData::temp_derivative1[param])/(2.0*TData::epsilon);
-	aux[param+abs(npar)] = (TData::temp_derivative2[param]+TData::temp_derivative1[param]-2*fsum)/(TData::epsilon*TData::epsilon);
+	aux[param]           = (temp_derivative2[param]-temp_derivative1[param])/(2.0*epsilon);
+	aux[param+abs(npar)] = (temp_derivative2[param]+temp_derivative1[param]-2*fsum)/(epsilon*epsilon);
       }
 	
       lvmfun_(p->GetPars(),fsum,iret,aux);
@@ -630,22 +675,25 @@ void TCaliber::Done()
   outfile.close();
   
   //Do Plots
-  cout << "Creating tower control plots,"<<endl;
-  plots->FitControlPlots();
-  cout << "Creating gamma jet (tower bin) control plots,"<<endl;
-  plots->GammaJetControlPlots();
-  cout << "Creating gamma jet (jet bin) control plots,"<<endl;
-  plots->GammaJetControlPlotsJetBin();
-  cout << "Creating more gamma jet control plots,"<<endl;
-  plots->GammaJetControlPlotsJetJEC();
-  cout << "Creating track tower control plots,"<<endl;
-  plots->TrackTowerControlPlots();
-  cout << "Creating track cluster control plots,"<<endl;
-  plots->TrackClusterControlPlots();
-  
+  if(plots) {
+    cout << "Creating tower control plots,"<<endl;
+    plots->FitControlPlots();
+    cout << "Creating gamma jet (tower bin) control plots,"<<endl;
+    plots->GammaJetControlPlots();
+    cout << "Creating gamma jet (jet bin) control plots,"<<endl;
+    plots->GammaJetControlPlotsJetBin();
+    cout << "Creating more gamma jet control plots,"<<endl;
+    plots->GammaJetControlPlotsJetJEC();
+    cout << "Creating track tower control plots,"<<endl;
+    plots->TrackTowerControlPlots();
+    cout << "Creating track cluster control plots,"<<endl;
+    plots->TrackClusterControlPlots();
+  }
   //Clean-up
-  cout << "Done, cleaning up."<<endl;
   delete plots;
+  delete []  temp_derivative1;
+  delete []  temp_derivative2;
+  cout << "Done, cleaning up."<<endl;
 }
 
 
@@ -674,13 +722,14 @@ void TCaliber::Init(string file)
   p = TParameters::CreateParameters(file);
   p->SetFitFunc(this->global_fit_fast);
 
-  plots = new TControlPlots(file, &data, p);
-
+  if(config.read<bool>("create plots",1)) {
+    plots = new TControlPlots(file, &data, p);
+  }
   //initialize temp arrays for fast derivative calculation
   TData::total_n_pars     = p->GetNumberOfParameters();
-  TData::temp_derivative1 = new double[p->GetNumberOfParameters()];
-  TData::temp_derivative2 = new double[p->GetNumberOfParameters()];
-
+  temp_derivative1 = new double[p->GetNumberOfParameters()];
+  temp_derivative2 = new double[p->GetNumberOfParameters()];
+  epsilon = 1.E-3;
   //--------------------------------------------------------------------------
   //read config file
   fit_method = config.read<int>("Fit method",1); 

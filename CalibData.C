@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.C,v 1.8 2008/01/31 16:21:03 auterman Exp $
+// $Id: CalibData.C,v 1.9 2008/02/25 07:15:52 csander Exp $
 //
 #include "CalibData.h"
 #include "map"
@@ -12,13 +12,11 @@ unsigned int TData::total_n_pars = 0;
 //unsigned int TData::total_tower_pars = 0;
 //unsigned int TData::total_jet_pars = 0;
 
-double * TData::temp_derivative1 = 0;
-double * TData::temp_derivative2 = 0;
-double const TData::epsilon = 1.E-3;
-
 std::vector<TData*> TData_TruthMess::resultcache = std::vector<TData*>(1);
 
-double TData_TruthMess::chi2_fast(){ 
+double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_derivative2, 
+			        double epsilon)
+{ 
   double new_mess  = GetParametrizedMess();
 #ifndef __FastErrorCalculation
   double new_error = GetParametrizedErr(&new_mess);
@@ -64,7 +62,8 @@ double TData_TruthMess::chi2_fast(){
   return new_chi2;
 };
 
-double TData_TruthMultMess::chi2_fast(){
+double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_derivative2,
+				      double epsilon) {
   double sum_mess=0.0, sum_error2=0.0, new_error, new_error2, new_mess, new_chi2,
          dmess_dp, derror_dp;
   double sm1[total_n_pars],sm2[total_n_pars],se1[total_n_pars],se2[total_n_pars];//store sum_m & sum_e2 for df/dp_i
@@ -184,7 +183,8 @@ double TData_TruthMultMess::chi2_fast(){
 
 //#include <iostream>
 
-double TData_MessMess::chi2_fast()
+double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_derivative2, 
+			        double epsilon)
 {
   double new_chi2, new_mess, new_error, sum_error2=0.0;
 

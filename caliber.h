@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.6 2008/02/20 09:45:44 auterman Exp $
+// $Id: caliber.h,v 1.7 2008/02/21 14:52:16 stadie Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -33,7 +33,7 @@
 
 class TCaliber {
 public :
-  TCaliber(){};
+  TCaliber() : plots(0) {};
   ~TCaliber(){};
 
   void Init(std::string f);
@@ -85,7 +85,6 @@ private:
   TParameters * p;    //fit parameters, depend on number of bins & geometry
 
   TControlPlots * plots;  //the control plots
-  
 };
 
 #endif

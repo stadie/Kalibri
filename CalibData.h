@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.8 2008/02/21 13:32:15 stadie Exp $
+// $Id: CalibData.h,v 1.9 2008/02/25 07:15:53 csander Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -33,7 +33,7 @@ public:
         double(*func)(double*,double*), double(*err)(double*)){
     _index=index;_mess=mess;_truth=truth;_error=error;_par=par;_n_par=n_par;_func=func;_err=err;_weight=weight;};
   virtual ~TData(){
-    //if (_mess) delete [] _mess;
+    delete [] _mess;
   };
   virtual double * GetMess(){ return _mess;};//used only for plotting
   virtual double GetParametrizedMess(){return _func(_mess,_par);}
@@ -46,16 +46,12 @@ public:
   unsigned short int GetIndex(){return _index;};
   virtual const std::vector<TData*>& GetRef() = 0;
   virtual double chi2() = 0;
-  virtual double chi2_fast() = 0;
+  virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon) = 0;
   virtual double * GetPar(){return _par;};
   unsigned short int GetNumberOfPars() {return _n_par;};
   void  AddToPar(unsigned short int const i, double const e){_par[i]+=e;};
-
+  virtual void ChangeParAddress(double* oldpar, double* newpar) { _par += newpar - oldpar;}
   static unsigned int total_n_pars;
-  double static * temp_derivative1;
-  double static * temp_derivative2;
-  double const static epsilon;
-
 protected:
   unsigned short int _index, _n_par, _type; //limited from 0 to 65535
   double _truth, _error, _paramess, _weight;
@@ -84,7 +80,7 @@ public:
     double weight = GetWeight();
     return weight*(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
   };
-  virtual double chi2_fast();
+  virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
   
 private:
   static std::vector<TData*> resultcache;
@@ -141,9 +137,13 @@ public:
     new_error = _err(  &new_mess );
     return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
   };
-  virtual double chi2_fast();
+  virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
   virtual const std::vector<TData*>& GetRef() {return _vecmess;};
-
+  virtual void ChangeParAddress(double* oldpar, double* newpar) { 
+    TData::ChangeParAddress(oldpar,newpar);
+    for (std::vector<TData*>::iterator it=_vecmess.begin();
+         it !=_vecmess.end(); ++it) { (*it)->ChangeParAddress(oldpar,newpar);}
+  }
 protected:  
   std::vector<TData*> _vecmess;
 };
@@ -186,8 +186,14 @@ public:
       new_mess  = GetMessCombination();  
       return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
     };
-    virtual double chi2_fast();
-
+    virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
+    virtual void ChangeParAddress(double* oldpar, double* newpar) { 
+      TData::ChangeParAddress(oldpar,newpar);
+      for (std::vector<TData*>::iterator it=_vecmess.begin();  it !=_vecmess.end(); ++it) 
+	(*it)->ChangeParAddress(oldpar,newpar);
+      for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin(); it!=_m2.end(); ++it)
+	(*it)->ChangeParAddress(oldpar,newpar);
+    }
 protected:
   virtual double combine() = 0;
   std::vector<TData_MessMess*> _m2;
