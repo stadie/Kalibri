@@ -10,7 +10,8 @@
 #include <iostream>
 
 class TData;
-  
+class TH2F;
+class TH1F;
 class TControlPlots {
 public:
   //TControlPlots(){this->ReadConfigFile("config/calibration.cfg");};
@@ -29,6 +30,7 @@ public:
 
 private:  
   void ReadConfigFile(std::string config);
+  void Fit2D(TH2F* hist, TH1F* hresults[6]);
 
   std::vector<TData*> * data;
   TParameters * p;
