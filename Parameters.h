@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.13 2008/02/21 15:42:20 stadie Exp $
+// $Id: Parameters.h,v 1.14 2008/02/25 13:04:43 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -236,4 +236,24 @@ private:
   }
 };
 
+// Parametrization of response with some ideas from the JetMET group
+class TJetMETParameters: public TParameters {
+public:
+  TJetMETParameters() : TParameters(2,5) {}
+  
+
+private:
+  double my_tower_parametrization(double *x,double *par) {
+    return par[1] * (x[1] + x[2] + x[3]) + par[0];
+  }
+  double my_jet_parametrization(double *x,double *par) {
+    double logx = log(x[0]);
+    if(logx < 0) logx = 0;
+    if(par[1] < 0) par[1] *= 1;
+    if(par[2] < 0) par[2] *= 1;
+    if(par[3] < 0) par[3] *= 1;
+    if(par[4] < 0) par[4] *= 1;
+    return (par[0] - par[1]/(pow(logx,par[2]) + par[3]) + par[4]/x[0]) * x[0];  
+  }
+};
 #endif

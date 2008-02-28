@@ -26,6 +26,8 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     instance = new TMyParameters();
   } else if(parclass == "TStepEfracParameters") {
     instance = new TStepEfracParameters();
+  }  else if(parclass == "TJetMETParameters") {
+    instance = new TJetMETParameters();
   }
   if(!instance) {
     cerr << "TParameters::CreateParameters: could not instantiate class " << parclass << '\n';
