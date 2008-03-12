@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.14 2008/02/25 13:04:43 stadie Exp $
+// $Id: Parameters.h,v 1.15 2008/02/28 18:18:52 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -21,7 +21,6 @@ class TParameters {
 public :
   
   static TParameters* CreateParameters(const std::string& configfile);
-  
   
   int GetEtaBin(int const eta_id) const;
   int GetPhiBin(int const phi_id) const; 
@@ -44,7 +43,8 @@ public :
 
   double* GetTowerParRef(int bin) { return k + bin*free_pars_per_bin; }
   double* GetJetParRef(int jetbin)  { return k + GetNumberOfTowerParameters()+jetbin*free_pars_per_bin_jet;}
-  void SetErrors(double *ne) { std::memcpy(e,ne,GetNumberOfParameters()*sizeof(double));}
+  void SetErrors(double *ne) { std::memcpy(e,ne,GetNumberOfParameters()*sizeof(double));}  
+  void SetParameters(double *np) { std::memcpy(k,np,GetNumberOfParameters()*sizeof(double));}
   void SetFitChi2(double chi2) { fitchi2 = chi2;}
   double GetFitChi2() const { return fitchi2;}
   void FillErrors(double* copy) const {
@@ -117,15 +117,16 @@ private:
   virtual double my_jet_parametrization(double *x,double *par) = 0;
 
   static TParameters *instance; 
+
   class Cleaner
   {
   public:
     Cleaner() {}
     ~Cleaner()
     {
-      if(TParameters::instance) {
-        delete TParameters::instance;
-        TParameters::instance = 0;
+      if(TParameters::instance) { 
+	delete TParameters::instance; 
+	TParameters::instance = 0; 
       }
     }
   };
@@ -134,10 +135,10 @@ private:
 
 // Parametrization of hadronic response by a step function
 class TStepParameters: public TParameters { 
-public:
+ public:
   TStepParameters() : TParameters(12,2) {}
   
-private:
+ public :
   double my_tower_parametrization(double *x,double *par) {
     double result = 0;
     
@@ -239,12 +240,12 @@ private:
 // Parametrization of response with some ideas from the JetMET group
 class TJetMETParameters: public TParameters {
 public:
-  TJetMETParameters() : TParameters(2,5) {}
+  TJetMETParameters() : TParameters(3,5) {}
   
 
 private:
   double my_tower_parametrization(double *x,double *par) {
-    return par[1] * (x[1] + x[2] + x[3]) + par[0];
+    return par[1] * x[2] + par[2] * x[1] + x[3] + par[0];
   }
   double my_jet_parametrization(double *x,double *par) {
     double logx = log(x[0]);
@@ -256,4 +257,6 @@ private:
     return (par[0] - par[1]/(pow(logx,par[2]) + par[3]) + par[4]/x[0]) * x[0];  
   }
 };
+
+
 #endif
