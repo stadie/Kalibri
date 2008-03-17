@@ -188,7 +188,7 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       for (; data_it != data->end();++data_it){
         //if one fit event is composed of multiple towers, than loop over all
 	mess=0.0; error=0.0;
-	std::vector<TData*> data_ref = (*data_it)->GetRef();
+	const std::vector<TData*>& data_ref = (*data_it)->GetRef();
 	double JetCorr = (*data_it)->GetParametrizedMess();
 	double Jet=0.;
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
@@ -287,7 +287,7 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       for (data_it = data->begin(); data_it != data->end();++data_it){
         //if one fit event is composed of multiple towers, than loop over all
 	mess=0.0; error=0.0;
-	std::vector<TData*> data_ref = (*data_it)->GetRef();
+	const std::vector<TData*>& data_ref = (*data_it)->GetRef();
 	double JetCorr = (*data_it)->GetParametrizedMess();
 	double Jet=0.;
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
@@ -627,7 +627,7 @@ void TControlPlots::GammaJetControlPlots()  // Gamma-Jet Control Histograms
 	double Etmax=0, calib_tower_sum=0.0;
 	double tower_sum = 0.0; //is equivalent to (*data_it)->GetMess(),
 	                        //but since we need the index too, this is faster
-	std::vector<TData*> data_ref = (*data_it)->GetRef();
+	const std::vector<TData*>& data_ref = (*data_it)->GetRef();
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
 	  double * tow_et = (*it)->GetMess();
 	  if (tow_et[0]>Etmax){
@@ -735,7 +735,7 @@ void TControlPlots::GammaJetControlPlotsJetBin()  // Gamma-Jet Control Histogram
         double JetCorr = (*data_it)->GetParametrizedMess();
 
 	double tower_sum = 0.0; //is equivalent to (*data_it)->GetMess(),
-	std::vector<TData*> data_ref = (*data_it)->GetRef();
+	const std::vector<TData*>& data_ref = (*data_it)->GetRef();
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
 	  tower_sum += (*it)->GetMess()[0];
 	  calib_tower_sum += (*it)->GetParametrizedMess();
@@ -828,7 +828,7 @@ void TControlPlots::TrackTowerControlPlots()  // Track-Tower Control Histograms
       for (; data_it != data->end();++data_it){
         //if one fit event is composed of multiple towers, than loop over all
 	mess=0.0; error=0.0;
-	std::vector<TData*> data_ref = (*data_it)->GetRef();
+	const std::vector<TData*>& data_ref = (*data_it)->GetRef();
 	double JetCorr = (*data_it)->GetParametrizedMess();
 	double Jet=0.;
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
@@ -1042,7 +1042,7 @@ void TControlPlots::TrackClusterControlPlots()  // Track-Cluster Control Histogr
 	double Etmax=0, calib_tower_sum=0.0;
 	double tower_sum = 0.0; //is equivalent to (*data_it)->GetMess(),
 	                        //but since we need the index too, this is faster
-	std::vector<TData*> data_ref = (*data_it)->GetRef();
+	const  std::vector<TData*>& data_ref = (*data_it)->GetRef();
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
 	  double tow_et = (*it)->GetMess()[0];
 	  if (tow_et>Etmax){
@@ -1104,15 +1104,22 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   TPostScript ps("controlplots.ps",111);
 
   //book hists
-  TH2F* heta[3];
+  TH2F* heta[12];
   heta[0] = new TH2F("heta","#gamma-jet;#eta",100,-5,5,100,0,4);
-  heta[1] = (TH2F*)heta[0]->Clone();
-  heta[2] = (TH2F*)heta[0]->Clone();
+  for(int i = 1 ; i < 12 ; ++i) heta[i] = (TH2F*)heta[0]->Clone();
+  heta[3]->SetTitle("#gamma-jet 10 < E_{T}^{#gamma} < 35 GeV;#eta");
+  heta[6]->SetTitle("#gamma-jet 35 < E_{T}^{#gamma} < 90 GeV;#eta");
+  heta[9]->SetTitle("#gamma-jet 90 < E_{T}^{#gamma} < 300 GeV;#eta");
 
   TH2F* hpt[3];
   hpt[0] = new TH2F("hpt","#gamma-jet;p_{T} [GeV]",100,20,220,100,0,4);
   hpt[1] = (TH2F*)hpt[0]->Clone();
   hpt[2] = (TH2F*)hpt[0]->Clone();
+  
+  TH2F* hemf[3];
+  hemf[0] = new TH2F("hemf","#gamma-jet;EMF",100,0,1,100,0,4);
+  hemf[1] = (TH2F*)hemf[0]->Clone();
+  hemf[2] = (TH2F*)hemf[0]->Clone();
  
   TH1F* hptGamma = new TH1F("hptGamma","#gamma-jet",100,20,220);
   hptGamma->SetXTitle("p_{T} [GeV]");
@@ -1140,6 +1147,19 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     heta[0]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
     heta[1]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
     heta[2]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+    if (jg->GetTruth() > 10 && jg->GetTruth() < 35) {
+      heta[3]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
+      heta[4]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
+      heta[5]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+    } else if (jg->GetTruth() > 35 && jg->GetTruth() < 90) {
+      heta[6]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
+      heta[7]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
+      heta[8]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+    } else if (jg->GetTruth() > 90 && jg->GetTruth() < 300) {
+      heta[9]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
+      heta[10]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
+      heta[11]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+    } 
     hpt[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
     hpt[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
     hpt[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());    
@@ -1148,26 +1168,91 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     hptlog[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());
     hptGamma->Fill(jg->GetTruth());
     hptGammaW->Fill(jg->GetTruth(),jg->GetWeight());
+    //em fraction plots     
+    double em = 0;
+    double had = 0;
+    for(std::vector<TData*>::const_iterator t = jg->GetRef().begin(); t != jg->GetRef().end(); ++t) {
+      TData* tt = *t;
+      em  += tt->GetMess()[1];
+      had += tt->GetMess()[2];
+      had += tt->GetMess()[3];
+    }
+    hemf[0]->Fill(em/(em+had),etjet/jg->GetTruth(),jg->GetWeight());
+    hemf[1]->Fill(em/(em+had),etjetcor/jg->GetTruth(),jg->GetWeight());
+    hemf[2]->Fill(em/(em+had),etjet/etjetcor,jg->GetWeight());
   } 
-  TH1F* hists[3][6];
-  heta[0]->SetMarkerStyle(20);
-  heta[0]->SetMarkerColor(1);
-  heta[0]->SetMinimum(0.5);
-  heta[0]->SetMaximum(1.2);
-  heta[2]->SetMarkerStyle(4);
-  heta[2]->SetMarkerColor(4);  
-  heta[1]->SetMarkerStyle(22);
-  heta[1]->SetMarkerColor(2);
-  heta[0]->SetMinimum(0.5);
-  heta[0]->SetMaximum(1.2);
+  TH1F* hists[12][6];
   TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
   leg->AddEntry(heta[0],"p^{jet}_{T}/ E_{T}^{#gamma}","p");
-  leg->AddEntry(heta[2],"p_{T}^{jet}/p_{T}^{cor. jet}","p");
-  leg->AddEntry(heta[1],"p_{T}^{cor. jet}/E_{T}^{#gamma}","p");
-  leg->Draw();
-  Fit2D(heta[0],hists[0]);
-  Fit2D(heta[1],hists[1]);
-  Fit2D(heta[2],hists[2]);
+  leg->AddEntry(heta[1],"p_{T}^{jet}/p_{T}^{cor. jet}","p");
+  leg->AddEntry(heta[2],"p_{T}^{cor. jet}/E_{T}^{#gamma}","p");
+  for(int i = 0 ; i < 12 ; i+= 3) {
+    heta[i]->SetMarkerStyle(20);
+    heta[i]->SetMarkerColor(1);
+    heta[i]->SetMinimum(0.5);
+    heta[i]->SetMaximum(1.2);
+    heta[i+2]->SetMarkerStyle(4);
+    heta[i+2]->SetMarkerColor(4);  
+    heta[i+1]->SetMarkerStyle(22);
+    heta[i+1]->SetMarkerColor(2);
+    heta[i]->SetMinimum(0.5);
+    heta[i]->SetMaximum(1.2);
+    leg->Draw();
+    Fit2D(heta[i],hists[i]);
+    Fit2D(heta[i+1],hists[i+1]);
+    Fit2D(heta[i+2],hists[i+2]);
+    for(int j = 0 ; j < 6 ; ++j) {
+      hists[i][j]->Draw();
+      hists[i][j]->SetStats(0);
+      hists[i+1][j]->Draw("SAME");
+      hists[i+2][j]->Draw("SAME");
+      leg->Draw();
+      c1->SetGrid();
+      c1->Draw();   
+      ps.NewPage(); 
+    }
+  } 
+  TLegend* leg2 = new TLegend(0.7,0.96,0.96,0.72);
+  leg2->AddEntry(hists[3][2],"10 < E_{T}^{#gamma} < 35 GeV","p");
+  leg2->AddEntry(hists[6][2],"35 < E_{T}^{#gamma} < 90 GeV","p");
+  leg2->AddEntry(hists[9][2],"90 < E_{T}^{#gamma} < 300 GeV","p");
+  hists[3][2]->SetTitle("p^{jet}_{T}/ E_{T}^{#gamma}   mean;#eta");
+  hists[3][3]->SetTitle("p^{jet}_{T}/ E_{T}^{#gamma}   rel. width;#eta");
+  hists[4][2]->SetTitle("p^{cor. jet}_{T}/ E_{T}^{#gamma}   mean;#eta");
+  hists[4][3]->SetTitle("p^{cor. jet}_{T}/ E_{T}^{#gamma}    rel. width;#eta");
+  for(int j = 3 ; j < 5 ; ++j) {
+    for(int i = 2 ; i < 4 ; ++i) {
+      hists[j][i]->SetMarkerStyle(20);
+      hists[j][i]->SetMarkerColor(1);
+      hists[j+3][i]->SetMarkerStyle(4);
+      hists[j+3][i]->SetMarkerColor(4);  
+      hists[j+6][i]->SetMarkerStyle(22);
+      hists[j+6][i]->SetMarkerColor(2);
+      hists[j][i]->Draw();
+      hists[j][i]->SetStats(0);
+      hists[j+3][i]->Draw("SAME");
+      hists[j+6][i]->Draw("SAME");
+      leg2->Draw();
+      c1->SetGrid();
+      c1->Draw();   
+      ps.NewPage();
+    }
+  }
+  delete leg2;
+  for(int i = 0 ; i < 12 ; ++i) {
+    for(int j = 0 ; j < 6 ; ++j) {
+      delete hists[i][j];
+    }	
+  }
+  hpt[0]->SetMarkerStyle(20);
+  hpt[0]->SetMarkerColor(1);
+  hpt[2]->SetMarkerStyle(4);
+  hpt[2]->SetMarkerColor(4);  
+  hpt[1]->SetMarkerStyle(22);
+  hpt[1]->SetMarkerColor(2);
+  Fit2D(hpt[0],hists[0]);
+  Fit2D(hpt[1],hists[1]);
+  Fit2D(hpt[2],hists[2]);
   for(int i = 0 ; i < 6 ; ++i) {
     hists[0][i]->Draw();
     hists[0][i]->SetStats(0);
@@ -1183,15 +1268,15 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     delete hists[1][i];
     delete hists[2][i];
   }
-  hpt[0]->SetMarkerStyle(20);
-  hpt[0]->SetMarkerColor(1);
-  hpt[2]->SetMarkerStyle(4);
-  hpt[2]->SetMarkerColor(4);  
-  hpt[1]->SetMarkerStyle(22);
-  hpt[1]->SetMarkerColor(2);
-  Fit2D(hpt[0],hists[0]);
-  Fit2D(hpt[1],hists[1]);
-  Fit2D(hpt[2],hists[2]);
+  hemf[0]->SetMarkerStyle(20);
+  hemf[0]->SetMarkerColor(1);
+  hemf[2]->SetMarkerStyle(4);
+  hemf[2]->SetMarkerColor(4);  
+  hemf[1]->SetMarkerStyle(22);
+  hemf[1]->SetMarkerColor(2);
+  Fit2D(hemf[0],hists[0]);
+  Fit2D(hemf[1],hists[1]);
+  Fit2D(hemf[2],hists[2]);
   for(int i = 0 ; i < 6 ; ++i) {
     hists[0][i]->Draw();
     hists[0][i]->SetStats(0);
@@ -1252,11 +1337,9 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   leg->AddEntry(hptGammaW,"with weights","p");
   leg->Draw();
   c1->Draw(); 
-  ps.Close();
+  ps.NewPage(); 
   delete leg;
-  delete heta[0];
-  delete heta[1];
-  delete heta[2];
+  for(int i = 0 ; i < 12 ; ++i) delete heta[i];
   delete hpt[0];
   delete hpt[1];
   delete hpt[2];
@@ -1264,7 +1347,48 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   delete hptlog[1];
   delete hptlog[2];
   delete hptGamma;
-  delete hptGammaW;
+  delete hptGammaW;  
+  c1->SetLogx(0);  
+  c1->SetLogy(0);   
+  c1->SetGrid(0);
+  //tower plots
+  TH1F* htow[3];
+  htow[0] = new TH1F("htow0","tower response;id_{#eta}",82,0,82);
+  htow[1] = (TH1F*)htow[0]->Clone();
+  htow[2] = (TH1F*)htow[0]->Clone();
+  for (int eta=-41; eta < 41;++eta){
+    int i = p->GetEtaBin(eta >= 0 ? eta +1 : eta);
+    double x[4] = {0,0,0,0};
+    double* par = p->GetTowerParRef(p->GetBin(i,0));
+    htow[0]->Fill(eta + 41,TParameters::tower_parametrization(x,par));
+    x[2] = 5;
+    htow[1]->Fill(eta + 41,TParameters::tower_parametrization(x,par));
+    x[2] = 50;
+    htow[2]->Fill(eta + 41,TParameters::tower_parametrization(x,par));
+  }
+  htow[0]->SetMinimum(-5);
+  htow[0]->SetMaximum(80);
+  htow[0]->SetStats(0);  
+  htow[0]->SetMarkerStyle(20);
+  htow[0]->SetMarkerColor(1);
+  htow[1]->SetMarkerStyle(22);
+  htow[1]->SetMarkerColor(2);
+  htow[2]->SetMarkerStyle(24);
+  htow[2]->SetMarkerColor(4);
+  htow[0]->Draw("p");
+  htow[1]->Draw("p SAME");
+  htow[2]->Draw("p SAME"); 
+  leg = new TLegend(0.4,0.96,0.66,0.72);
+  leg->AddEntry(htow[0]," 0 GeV","p");
+  leg->AddEntry(htow[1]," 5 GeV","p");
+  leg->AddEntry(htow[2],"50 GeV","p");
+  leg->Draw();
+  c1->Draw(); 
+  ps.Close();
+  delete htow[0];
+  delete htow[1];
+  delete htow[2];
+  delete leg;
 }
 
 void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6]) 
@@ -1308,7 +1432,7 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6])
   const int nq = 2;
   double yq[2],xq[2];
   xq[0] = 0.5;
-  xq[1] = 0.99;
+  xq[1] = 0.90;
   for(int i = 1 ; i <= hist->GetNbinsX() ; ++i) {
     htemp->Reset();
     for(int j = 1 ; j <= hist->GetNbinsY() ; ++j) {
