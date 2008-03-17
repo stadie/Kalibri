@@ -1184,8 +1184,8 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   TH1F* hists[12][6];
   TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
   leg->AddEntry(heta[0],"p^{jet}_{T}/ E_{T}^{#gamma}","p");
-  leg->AddEntry(heta[1],"p_{T}^{jet}/p_{T}^{cor. jet}","p");
-  leg->AddEntry(heta[2],"p_{T}^{cor. jet}/E_{T}^{#gamma}","p");
+  leg->AddEntry(heta[2],"p_{T}^{jet}/p_{T}^{cor. jet}","p");
+  leg->AddEntry(heta[1],"p_{T}^{cor. jet}/E_{T}^{#gamma}","p");
   for(int i = 0 ; i < 12 ; i+= 3) {
     heta[i]->SetMarkerStyle(20);
     heta[i]->SetMarkerColor(1);
