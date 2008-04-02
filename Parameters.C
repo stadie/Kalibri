@@ -22,12 +22,16 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
   //create Parameters
   if(parclass == "TStepParameters") {
     instance = new TStepParameters();
+    instance->name=parclass;
   } else if(parclass == "TMyParameters") {
     instance = new TMyParameters();
+    instance->name=parclass;
   } else if(parclass == "TStepEfracParameters") {
     instance = new TStepEfracParameters();
+    instance->name=parclass;
   }  else if(parclass == "TJetMETParameters") {
     instance = new TJetMETParameters();
+    instance->name=parclass;
   }
   if(!instance) {
     cerr << "TParameters::CreateParameters: could not instantiate class " << parclass << '\n';
@@ -296,15 +300,19 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   //cal.fitfunction(npar, aux, fsum, cal.k, iflag);  
 
   os << buffer << " by " << pw->pw_name << "." << endl 
-     << " module calibTowerMaker = CalibTowerMaker {" << endl
-     << "    untracked vdouble chi2 = " << cal.GetFitChi2() << endl
-     << "    untracked vint32 NTowerParamsPerBin = " << cal.GetNumberOfTowerParametersPerBin() << endl
-     << "    untracked vint32 NJetParamsPerBin = " << cal.GetNumberOfJetParametersPerBin() << endl
-     << "    untracked vint32 NEtaBins = " << cal.eta_granularity << endl
-     << "    untracked vint32 NPhiBins = " << cal.phi_granularity << endl
-     << "    untracked vbool  EtaSymmetry = " << cal.eta_symmetry << endl << endl
+     << " block CalibParameters {" << endl
+     << "    untracked string  Parametrization    = " << cal.GetName() << endl
+     << "    untracked vint32  NTowerParamsPerBin = " << cal.GetNumberOfTowerParametersPerBin() << endl
+     << "    untracked vint32  NJetParamsPerBin   = " << cal.GetNumberOfJetParametersPerBin() << endl
+     << "    untracked vint32  NEtaBins           = " << cal.eta_granularity << endl
+     << "    untracked vint32  NPhiBins           = " << cal.phi_granularity << endl
+     << "    untracked vbool   EtaSymmetryUsed    = " << cal.eta_symmetry << endl
+     << "    untracked vdouble FitChi2            = " << cal.GetFitChi2() << endl
+     << " }";
+  //--------------------------------------------------------------------
+  os << endl
+     << " block TowerCalibConstants {" << endl
      << "    untracked vint32 mapEta       = { ";
-  
   //1. ieta
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
@@ -367,9 +375,9 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   os << " }" << endl; 
   //--------------------------------------------------------------------
   os << endl
-     << " module calibJetMaker = CalibJetMaker {" << endl
+     << " block JetCalibConstants {" << endl
      << "    InputTag Jets    = MyFavoriteJetAlgorithm" << endl
-     << "    string CalibJets = \"MyFavoriteJetAlgorithm\" " << endl
+     << "    string CalibJets = \"\" " << endl
      << endl
      << "    untracked vint32 mapEta     = { ";
   

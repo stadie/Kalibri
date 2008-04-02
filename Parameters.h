@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.15 2008/02/28 18:18:52 stadie Exp $
+// $Id: Parameters.h,v 1.16 2008/03/12 15:38:21 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -21,7 +21,8 @@ class TParameters {
 public :
   
   static TParameters* CreateParameters(const std::string& configfile);
-  
+
+  std::string GetName() const;
   int GetEtaBin(int const eta_id) const;
   int GetPhiBin(int const phi_id) const; 
   int GetJetEtaBin(int const eta_id) const {return (abs(eta_id)-1)*2*eta_granularity_jet/eta_ntwr;}
@@ -95,6 +96,7 @@ private:
   TParameters();
   TParameters(const TParameters&) {}
 
+  std::string name;
   //Towers in Eta-, Phi- direction (according to PTDR Vol I, p.201)
   unsigned const static eta_ntwr=82, phi_ntwr=72;
   unsigned eta_ntwr_used;
