@@ -302,12 +302,12 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   os << buffer << " by " << pw->pw_name << "." << endl 
      << " block CalibParameters {" << endl
      << "    untracked string  Parametrization    = " << cal.GetName() << endl
-     << "    untracked vint32  NTowerParamsPerBin = " << cal.GetNumberOfTowerParametersPerBin() << endl
-     << "    untracked vint32  NJetParamsPerBin   = " << cal.GetNumberOfJetParametersPerBin() << endl
-     << "    untracked vint32  NEtaBins           = " << cal.eta_granularity << endl
-     << "    untracked vint32  NPhiBins           = " << cal.phi_granularity << endl
-     << "    untracked vbool   EtaSymmetryUsed    = " << cal.eta_symmetry << endl
-     << "    untracked vdouble FitChi2            = " << cal.GetFitChi2() << endl
+     << "    untracked int32   NTowerParamsPerBin = " << cal.GetNumberOfTowerParametersPerBin() << endl
+     << "    untracked int32   NJetParamsPerBin   = " << cal.GetNumberOfJetParametersPerBin() << endl
+     << "    untracked int32   NEtaBins           = " << cal.eta_granularity << endl
+     << "    untracked int32   NPhiBins           = " << cal.phi_granularity << endl
+     << "    untracked bool    EtaSymmetryUsed    = " << cal.eta_symmetry << endl
+     << "    untracked double  FitChi2            = " << cal.GetFitChi2() << endl
      << " }";
   //--------------------------------------------------------------------
   os << endl
