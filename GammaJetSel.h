@@ -34,7 +34,12 @@ public :
    Float_t         JetCalPhi;
    Float_t         JetCalEta;
    Float_t         JetCalEt;
-   Float_t         JetCalE;
+   Float_t         JetCalE; 
+   Float_t         JetGenPt;
+   Float_t         JetGenPhi;
+   Float_t         JetGenEta;
+   Float_t         JetGenEt;
+   Float_t         JetGenE;
    Float_t         MetCal;
    Float_t         MetCalPhi;
    Float_t         MetCalSum;
@@ -62,7 +67,12 @@ public :
    TBranch        *b_JetCalPhi;   //!
    TBranch        *b_JetCalEta;   //!
    TBranch        *b_JetCalEt;   //!
-   TBranch        *b_JetCalE;   //!
+   TBranch        *b_JetCalE;   //!  
+   TBranch        *b_JetGenPt;   //!
+   TBranch        *b_JetGenPhi;   //!
+   TBranch        *b_JetGenEta;   //!
+   TBranch        *b_JetGenEt;   //!
+   TBranch        *b_JetGenE;   //!
    TBranch        *b_MetCal;   //!
    TBranch        *b_MetCalPhi;   //!
    TBranch        *b_MetCalSum;   //!
@@ -127,7 +137,12 @@ void GammaJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetCalPhi", &JetCalPhi, &b_JetCalPhi);
    fChain->SetBranchAddress("JetCalEta", &JetCalEta, &b_JetCalEta);
    fChain->SetBranchAddress("JetCalEt", &JetCalEt, &b_JetCalEt);
-   fChain->SetBranchAddress("JetCalE", &JetCalE, &b_JetCalE);
+   fChain->SetBranchAddress("JetCalE", &JetCalE, &b_JetCalE); 
+   fChain->SetBranchAddress("JetGenPt", &JetGenPt, &b_JetGenPt);
+   fChain->SetBranchAddress("JetGenPhi", &JetGenPhi, &b_JetGenPhi);
+   fChain->SetBranchAddress("JetGenEta", &JetGenEta, &b_JetGenEta);
+   fChain->SetBranchAddress("JetGenEt", &JetGenEt, &b_JetGenEt);
+   fChain->SetBranchAddress("JetGenE", &JetGenE, &b_JetGenE);
    fChain->SetBranchAddress("MetCal", &MetCal, &b_MetCal);
    fChain->SetBranchAddress("MetCalPhi", &MetCalPhi, &b_MetCalPhi);
    fChain->SetBranchAddress("MetCalSum", &MetCalSum, &b_MetCalSum);
