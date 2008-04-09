@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.14 2008/02/25 10:58:31 csander Exp $
+// $Id: caliber.C,v 1.15 2008/02/25 13:04:43 stadie Exp $
 //
 #include "caliber.h"
 
@@ -168,7 +168,9 @@ void TCaliber::Run_GammaJet()
     //Find the jets eta & phi index using the leading (ET) tower:
     int jet_index=0;
     double max_tower_et = 0.0;
+    double em = 0;
     for (int n=0; n<gammajet.NobjTowCal; ++n){
+      em += gammajet.TowEm[n];
       if (gammajet.TowEt[n]>max_tower_et) {
 	jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[n]),
 				 p->GetJetPhiBin(gammajet.TowId_phi[n]));
@@ -176,7 +178,7 @@ void TCaliber::Run_GammaJet()
       }
     }
     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
-     
+    if(em == 0) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
     double* jetp  = new double[3];
@@ -186,7 +188,8 @@ void TCaliber::Run_GammaJet()
     //Create an Gamma/Jet TData event
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index + p->GetNumberOfTowerParameters(),
-			  gammajet.PhotonEt,				    //truth//
+			  // gammajet.PhotonEt,				    //truth//
+			  gammajet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
 			  //gammajet.EventWeight,                           //weight//
 			  1.0,                                              //weight//
@@ -200,7 +203,7 @@ void TCaliber::Run_GammaJet()
     //Add the jet's towers to "gj_data":
     for (int n=0; n<gammajet.NobjTowCal; ++n){
       //if (gammajet.TowEt[n]<0.01) continue;
-
+   
       int index = p->GetBin(p->GetEtaBin(gammajet.TowId_eta[n]),
 			    p->GetPhiBin(gammajet.TowId_phi[n]));
       if (index<0){ cerr<<"WARNING: towewer_index = " << index << endl; continue; }
@@ -595,13 +598,18 @@ void TCaliber::Run_Lvmini()
       }
 	
       lvmfun_(p->GetPars(),fsum,iret,aux);
+      //p->SetParameters(aux + par_index); 
+      lvmprt_(2,aux,2); //Has any effect?
     }
     while (iret<0);
-    //lvmprt_(2,aux,2); //Has any effect?
+    lvmprt_(2,aux,2); //Has any effect?
     //outlier rejection
     for (int ithreads=0; ithreads<nthreads; ++ithreads){
       t[ithreads]->ClearData();
-    }
+    }  
+    int par_index = 1;
+    par_index = lvmind_(par_index);
+    p->SetParameters(aux + par_index);
     if (i+1!=OutlierIterationSteps)  {
       std::vector<TData*>::iterator beg =  partition(data.begin(), data.end(), OutlierRejection(OutlierChi2Cut));
       for(std::vector<TData*>::iterator i = beg ; i != data.end() ; ++i) {

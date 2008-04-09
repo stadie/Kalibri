@@ -11,6 +11,19 @@ using namespace std;
 
 TParameters* TParameters::instance = 0;
 
+Parametrization* TParameters::CreateParametrization(const std::string& name) {
+  if(name == "StepParametrization") {
+    return new StepParametrization();
+  } else if(name == "MyParametrization") {
+    return new MyParametrization();
+  } else if(name == "StepEfracParametrization") {
+    return new StepEfracParametrization();
+  }  else if(name == "JetMETParametrization") {
+    return new JetMETParametrization();
+  }
+  return 0;
+}
+
 TParameters* TParameters::CreateParameters(const std::string& configfile) 
 {
   static Cleaner cleanup;
@@ -21,22 +34,20 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
   string parclass = config.read<string>("Parametrization Class","");
   //create Parameters
   if(parclass == "TStepParameters") {
-    instance = new TStepParameters();
-    instance->name=parclass;
+    parclass = "StepParametrization";
   } else if(parclass == "TMyParameters") {
-    instance = new TMyParameters();
-    instance->name=parclass;
+    parclass = "MyParametrization";
   } else if(parclass == "TStepEfracParameters") {
-    instance = new TStepEfracParameters();
-    instance->name=parclass;
+    parclass = "StepEfracParametrization";
   }  else if(parclass == "TJetMETParameters") {
-    instance = new TJetMETParameters();
-    instance->name=parclass;
+    parclass = "JetMETParametrization";
   }
-  if(!instance) {
+  Parametrization *param = CreateParametrization(parclass);
+  if(! param) {
     cerr << "TParameters::CreateParameters: could not instantiate class " << parclass << '\n';
     exit(1);
   }
+  instance = new TParameters(param);
   instance->Init(config);
   return instance;
 }
@@ -74,15 +85,15 @@ void TParameters::Init(const ConfigFile& config)
   }
 
   start_values = bag_of<double>(config.read<string>("start values","3.8 -0.7  0.04")); 
-  if ( start_values.size()<free_pars_per_bin){
+  if ( start_values.size()< p->nTowerPars()){
     cerr<< "ERROR: Number of start values and free parameters does not match!"<<endl
-        << "       There must be at least " << free_pars_per_bin << " parameters!" << endl;
+        << "       There must be at least " << p->nTowerPars() << " parameters!" << endl;
     exit(2);    
   }
   jet_start_values = bag_of<double>(config.read<string>("jet start values","3.8 -0.7  0.04")); 
-  if ( jet_start_values.size()<free_pars_per_bin_jet){
+  if ( jet_start_values.size()< p->nJetPars()){
     cerr<< "ERROR: Number of jet start values and free jet parameters does not match!"<<endl
-        << "       There must be at least " << free_pars_per_bin_jet << " parameters!" << endl;
+        << "       There must be at least " << p->nJetPars() << " parameters!" << endl;
     exit(3);
   }
   
@@ -90,15 +101,15 @@ void TParameters::Init(const ConfigFile& config)
   e = new double[GetNumberOfParameters()];
 
   for (unsigned int bin=0; bin<eta_granularity*phi_granularity; ++bin){
-    for (unsigned int tp=0; tp<free_pars_per_bin; ++tp){
+    for (unsigned int tp=0; tp < p->nTowerPars(); ++tp){
       //step[ bin*free_pars_per_bin + tp ]   = step_sizes[ tp ];
-      k[ bin*free_pars_per_bin + tp ] = start_values[ tp ];
-      e[ bin*free_pars_per_bin + tp ] = 0.0;
+      k[ bin*p->nTowerPars() + tp ] = start_values[ tp ];
+      e[ bin*p->nTowerPars() + tp ] = 0.0;
     }
   }
   for (unsigned int bin=0; bin<eta_granularity_jet*phi_granularity_jet; ++bin){
-    for (unsigned int jp=0; jp<free_pars_per_bin_jet; ++jp){
-      int i = GetNumberOfTowerParameters() + bin*free_pars_per_bin_jet + jp;   
+    for (unsigned int jp=0; jp < p->nJetPars(); ++jp){
+      int i = GetNumberOfTowerParameters() + bin*p->nTowerPars() + jp;   
       k[i] = jet_start_values[jp];
       e[i] = 0.0;
     }
@@ -134,9 +145,9 @@ void TParameters::Read_Calibration(std::string const& configFile) {
   std::string line, name;
   char * dummy = new char[28];
   std::vector<int> eta, phi;
-  std::vector<double> param[free_pars_per_bin], error[free_pars_per_bin];
+  std::vector<double> param[p->nTowerPars()], error[p->nTowerPars()];
   std::vector<int> eta_jet, phi_jet;
-  std::vector<double> param_jet[free_pars_per_bin_jet], error_jet[free_pars_per_bin_jet];
+  std::vector<double> param_jet[p->nJetPars()], error_jet[p->nJetPars()];
   int posEqual;
   while (std::getline(file,line)) {
 
@@ -154,7 +165,7 @@ void TParameters::Read_Calibration(std::string const& configFile) {
   	  eta = bag_of<int>(trim(line.substr(posEqual+1)));
         if( name.find("mapPhi") != string::npos) 
   	  phi = bag_of<int>(trim(line.substr(posEqual+1)));
-        for (unsigned i=0; i<free_pars_per_bin; ++i){
+        for (unsigned i=0; i<p->nTowerPars(); ++i){
 	  sprintf(dummy,"TowerParam%d",i);
           if( name.find(dummy) != string::npos) 
   	    param[i] = bag_of<double>(trim(line.substr(posEqual+1)));
@@ -175,7 +186,7 @@ void TParameters::Read_Calibration(std::string const& configFile) {
   	  eta_jet = bag_of<int>(trim(line.substr(posEqual+1)));
         if( name.find("mapPhi") != string::npos) 
   	  phi_jet = bag_of<int>(trim(line.substr(posEqual+1)));
-        for (unsigned i=0; i<free_pars_per_bin_jet; ++i){
+        for (unsigned i=0; i<p->nJetPars(); ++i){
 	  sprintf(dummy,"JetParam%d",i);
           if( name.find(dummy) != string::npos) 
   	    param_jet[i] = bag_of<double>(trim(line.substr(posEqual+1)));
@@ -188,7 +199,7 @@ void TParameters::Read_Calibration(std::string const& configFile) {
   }
   //check if the read calibration is ok:
   bool ok=eta.size()==phi.size();
-  for (unsigned i=0; i<free_pars_per_bin; ++i){
+  for (unsigned i=0; i < p->nTowerPars(); ++i){
     ok *= eta.size()==param[i].size();
     ok *= eta.size()==error[i].size();
   }
@@ -197,16 +208,16 @@ void TParameters::Read_Calibration(std::string const& configFile) {
     for (unsigned i=0; i<eta.size(); ++i){
       int index = GetBin(GetEtaBin(eta[i]),GetPhiBin(phi[i]));
       if (index<0) continue;
-      for (unsigned n=0; n<free_pars_per_bin; ++n) {
-        k[index*free_pars_per_bin+n] = param[n][i];
-        e[index*free_pars_per_bin+n] = error[n][i];
+      for (unsigned n=0; n< p->nTowerPars(); ++n) {
+        k[index*p->nTowerPars()+n] = param[n][i];
+        e[index*p->nTowerPars()+n] = error[n][i];
       }
     }
   }
 
   //check if the read calibration is ok:
   ok=eta_jet.size()==phi_jet.size();
-  for (unsigned i=0; i<free_pars_per_bin_jet; ++i){
+  for (unsigned i=0; i<p->nJetPars(); ++i){
     ok *= eta_jet.size()==param_jet[i].size();
     ok *= eta_jet.size()==error_jet[i].size();
   }
@@ -215,9 +226,9 @@ void TParameters::Read_Calibration(std::string const& configFile) {
     for (unsigned i=0; i<eta_jet.size(); ++i){
       int index = GetJetBin(GetJetEtaBin(eta_jet[i]),GetJetPhiBin(phi_jet[i]));
       if (index<0) continue;
-      for (unsigned n=0; n<free_pars_per_bin_jet; ++n) {
-        k[GetNumberOfTowerParameters() + index*free_pars_per_bin_jet+n] = param_jet[n][i];
-        e[GetNumberOfTowerParameters() + index*free_pars_per_bin_jet+n] = error_jet[n][i];
+      for (unsigned n=0; n<p->nJetPars(); ++n) {
+        k[GetNumberOfTowerParameters() + index*p->nJetPars()+n] = param_jet[n][i];
+        e[GetNumberOfTowerParameters() + index*p->nJetPars()+n] = error_jet[n][i];
       }
     }
   }
@@ -278,12 +289,13 @@ int TParameters::GetPhiBin(int const phi_id) const
 
 void TParameters::Print() const
 {
-  std::cout  << eta_granularity << " x " << phi_granularity << " tower bins with " 
-	     << GetNumberOfTowerParametersPerBin() << " free parameters each, or " 
-	     << GetNumberOfTowerParameters() << " in total, and\n"
-	     << eta_granularity_jet << " x " << phi_granularity_jet << " JES bins with " 
-	     << GetNumberOfJetParametersPerBin() << " free parameters each, or " 
-	     << GetNumberOfJetParameters() << " in total \n";
+  std::cout  << p->name() << " resulting in:\n "
+    << eta_granularity << " x " << phi_granularity << " tower bins with " 
+    << GetNumberOfTowerParametersPerBin() << " free parameters each, or " 
+    << GetNumberOfTowerParameters() << " in total, and\n"
+    << eta_granularity_jet << " x " << phi_granularity_jet << " JES bins with " 
+    << GetNumberOfJetParametersPerBin() << " free parameters each, or " 
+    << GetNumberOfJetParameters() << " in total \n";
 }
 
 std::ostream& operator<<( std::ostream& os, const TParameters& cal )
@@ -300,18 +312,18 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   //cal.fitfunction(npar, aux, fsum, cal.k, iflag);  
 
   os << buffer << " by " << pw->pw_name << "." << endl 
-     << " block CalibParameters {" << endl
-     << "    untracked string  Parametrization    = " << cal.GetName() << endl
-     << "    untracked int32   NTowerParamsPerBin = " << cal.GetNumberOfTowerParametersPerBin() << endl
-     << "    untracked int32   NJetParamsPerBin   = " << cal.GetNumberOfJetParametersPerBin() << endl
-     << "    untracked int32   NEtaBins           = " << cal.eta_granularity << endl
-     << "    untracked int32   NPhiBins           = " << cal.phi_granularity << endl
-     << "    untracked bool    EtaSymmetryUsed    = " << cal.eta_symmetry << endl
-     << "    untracked double  FitChi2            = " << cal.GetFitChi2() << endl
+     << " block CalibParameters = {" << endl
+     << "    untracked string  Parametrization    = " << '\"' << cal.p->name() << '\"' <<  endl
+     << "    untracked  int32  NTowerParamsPerBin = " << cal.GetNumberOfTowerParametersPerBin() << endl
+     << "    untracked int32  NJetParamsPerBin   = " << cal.GetNumberOfJetParametersPerBin() << endl
+     << "    untracked int32  NEtaBins           = " << cal.eta_granularity << endl
+     << "    untracked int32  NPhiBins           = " << cal.phi_granularity << endl
+     << "    untracked bool   EtaSymmetryUsed    = " << cal.eta_symmetry << endl
+     << "    untracked double FitChi2            = " << cal.GetFitChi2() << endl
      << " }";
   //--------------------------------------------------------------------
   os << endl
-     << " block TowerCalibConstants {" << endl
+     << " block TowerCalibConstants = {" << endl
      << "    untracked vint32 mapEta       = { ";
   //1. ieta
   for (int ieta= -41; ieta<=41; ++ieta){
@@ -340,7 +352,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
 
   //3. tower calibration constants
   os << "    untracked  int32  TowerParam  = " << cal.GetNumberOfTowerParametersPerBin() << endl;
-  for (unsigned int n=0; n<cal.free_pars_per_bin; ++n) {
+  for (unsigned int n=0; n<cal.p->nTowerPars(); ++n) {
     os << "    untracked vdouble TowerParam"<< n <<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
@@ -348,16 +360,16 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
         int index = cal.GetBin(cal.GetEtaBin(ieta),cal.GetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
-          os << ", " << cal.k[index*cal.free_pars_per_bin+n];
+          os << ", " << cal.k[index*cal.p->nTowerPars()+n];
 	else
-          os << cal.k[index*cal.free_pars_per_bin+n];;
+          os << cal.k[index*cal.p->nTowerPars()+n];;
       }
     }
     os << " }" << endl; 
   }
 
   //4. calibration constants errors
-  for (unsigned int n=0; n<cal.free_pars_per_bin; ++n) {
+  for (unsigned int n=0; n<cal.p->nTowerPars(); ++n) {
     os << "    untracked vdouble TowerError"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
@@ -365,9 +377,9 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
         int index = cal.GetBin(cal.GetEtaBin(ieta),cal.GetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
-          os << ", " << cal.e[index*cal.free_pars_per_bin+n];
+          os << ", " << cal.e[index*cal.p->nTowerPars()+n];
 	else
-          os << cal.e[index*cal.free_pars_per_bin+n];;
+          os << cal.e[index*cal.p->nTowerPars()+n];;
       }
     }
     os << " }" << endl; 
@@ -375,7 +387,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   os << " }" << endl; 
   //--------------------------------------------------------------------
   os << endl
-     << " block JetCalibConstants {" << endl
+     << " block JetCalibConstants = {" << endl
      << "    InputTag Jets    = MyFavoriteJetAlgorithm" << endl
      << "    string CalibJets = \"\" " << endl
      << endl
@@ -408,7 +420,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
 
   //7. jet calibration constants
   os << "    untracked  int32  JetParam  = " << cal.GetNumberOfJetParametersPerBin() << endl;
-  for (unsigned int n=0; n<cal.free_pars_per_bin_jet; ++n) {
+  for (unsigned int n=0; n<cal.p->nJetPars(); ++n) {
     os << "    untracked vdouble JetParam"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
@@ -416,7 +428,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
 	int index = cal.GetJetBin(cal.GetJetEtaBin(ieta),cal.GetJetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
-          os << ", " << cal.k[cal.GetNumberOfTowerParameters() + index*cal.free_pars_per_bin_jet+n];
+          os << ", " << cal.k[cal.GetNumberOfTowerParameters() + index*cal.p->nJetPars()+n];
 	else
           os << cal.k[cal.GetNumberOfTowerParameters() + index+n];
       }
@@ -424,7 +436,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
     os << " }" << endl; 
   }
   //8. calibration constants errors
-  for (unsigned int n=0; n<cal.free_pars_per_bin_jet; ++n) {
+  for (unsigned int n=0; n<cal.p->nJetPars(); ++n) {
     os << "    untracked vdouble JetError"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
@@ -432,7 +444,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
 	int index = cal.GetBin(cal.GetJetEtaBin(ieta),cal.GetJetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
-          os << ", " << cal.e[cal.GetNumberOfTowerParameters() + index*cal.free_pars_per_bin_jet+n];
+          os << ", " << cal.e[cal.GetNumberOfTowerParameters() + index*cal.p->nJetPars()+n];
 	else
           os << cal.e[cal.GetNumberOfTowerParameters() + index+n];
       }
