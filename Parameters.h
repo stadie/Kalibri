@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.17 2008/04/02 10:03:58 rwolf Exp $
+// $Id: Parameters.h,v 1.18 2008/04/09 17:10:57 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -87,7 +87,7 @@ public :
 
 protected:
   TParameters(Parametrization* p) 
-    : p(p),k(0),e(0) {
+    : p(p),k(0),e(0),fitchi2(0) {
   };
   virtual ~TParameters() {
     delete p;

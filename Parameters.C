@@ -150,48 +150,47 @@ void TParameters::Read_Calibration(std::string const& configFile) {
   std::vector<double> param_jet[p->nJetPars()], error_jet[p->nJetPars()];
   int posEqual;
   while (std::getline(file,line)) {
-
     if (! line.length()) continue;
     if( line.find("#") != string::npos) continue;
-
+    
     //Read Tower Calibration: ---------------------------------------------------
     //if ( line.find("module ccctm = CalibratedCaloTowerMaker") != string::npos ) {
-    if ( line.find("module calibTowerMaker = CalibTowerMaker") != string::npos ) {
-      while (std::getline(file,line)) {
-        if( line.find("module") != string::npos) break;
+    if ( line.find("block TowerCalibConstants = {") != string::npos ) {
+      while( std::getline(file,line) ) {
+	if( line.find("block") != string::npos) break;
 	posEqual=line.find('=');
-	name  = trim(line.substr(0,posEqual));
-        if( name.find("mapEta") != string::npos) 
+	name  = line.substr(0,posEqual);
+	if( name.find("mapEta") != string::npos) 
   	  eta = bag_of<int>(trim(line.substr(posEqual+1)));
-        if( name.find("mapPhi") != string::npos) 
+	if( name.find("mapPhi") != string::npos) 
   	  phi = bag_of<int>(trim(line.substr(posEqual+1)));
-        for (unsigned i=0; i<p->nTowerPars(); ++i){
-	  sprintf(dummy,"TowerParam%d",i);
-          if( name.find(dummy) != string::npos) 
+	for (unsigned i=0; i < p->nTowerPars() ; ++i) {
+	  sprintf(dummy,"TowerParam%d ",i);
+	  if( name.find(dummy) != string::npos) 
   	    param[i] = bag_of<double>(trim(line.substr(posEqual+1)));
-	  sprintf(dummy,"TowerError%d",i);
-          if( name.find(dummy) != string::npos) 
+	  sprintf(dummy,"TowerError%d ",i);
+	  if( name.find(dummy) != string::npos) 
   	    error[i] = bag_of<double>(trim(line.substr(posEqual+1)));
 	}
       }
     }
     //Read Jet Calibration --------------------------------------------------------
-    //if ( line.find("module cccjm = CalibratedJetMaker") != string::npos ) {
-    if ( line.find("module calibJetMaker = CalibJetMaker") != string::npos ) {
+    if ( line.find("block JetCalibConstants = {") != string::npos ) {
       while (std::getline(file,line)) {
-        if( line.find("module") != string::npos) break;
+	if( line.find("block") != string::npos) break;
 	posEqual=line.find('=');
-	name  = trim(line.substr(0,posEqual));
-        if( name.find("mapEta") != string::npos) 
-  	  eta_jet = bag_of<int>(trim(line.substr(posEqual+1)));
-        if( name.find("mapPhi") != string::npos) 
+	name  = line.substr(0,posEqual);
+	std::cout << name << ".\n";
+	if( name.find("mapEta") != string::npos) 
+	  eta_jet = bag_of<int>(trim(line.substr(posEqual+1)));
+	if( name.find("mapPhi") != string::npos) 
   	  phi_jet = bag_of<int>(trim(line.substr(posEqual+1)));
-        for (unsigned i=0; i<p->nJetPars(); ++i){
-	  sprintf(dummy,"JetParam%d",i);
-          if( name.find(dummy) != string::npos) 
+	for (unsigned i=0; i<p->nJetPars(); ++i) {
+	  sprintf(dummy,"JetParam%d ",i);
+	  if( name.find(dummy) != string::npos) 
   	    param_jet[i] = bag_of<double>(trim(line.substr(posEqual+1)));
-	  sprintf(dummy,"JetError%d",i);
-          if( name.find(dummy) != string::npos) 
+	  sprintf(dummy,"JetError%d ",i);
+	  if( name.find(dummy) != string::npos) 
   	    error_jet[i] = bag_of<double>(trim(line.substr(posEqual+1)));
 	}
       }
@@ -200,8 +199,8 @@ void TParameters::Read_Calibration(std::string const& configFile) {
   //check if the read calibration is ok:
   bool ok=eta.size()==phi.size();
   for (unsigned i=0; i < p->nTowerPars(); ++i){
-    ok *= eta.size()==param[i].size();
-    ok *= eta.size()==error[i].size();
+    ok &= eta.size()==param[i].size();
+    ok &= eta.size()==error[i].size();
   }
   //fill tower parameters and errors:  
   if (ok) {
@@ -218,9 +217,9 @@ void TParameters::Read_Calibration(std::string const& configFile) {
   //check if the read calibration is ok:
   ok=eta_jet.size()==phi_jet.size();
   for (unsigned i=0; i<p->nJetPars(); ++i){
-    ok *= eta_jet.size()==param_jet[i].size();
-    ok *= eta_jet.size()==error_jet[i].size();
-  }
+    ok &= eta_jet.size()==param_jet[i].size();
+    ok &= eta_jet.size()==error_jet[i].size();
+  } 
   //fill Jet parameters and errors:  
   if (ok) {
     for (unsigned i=0; i<eta_jet.size(); ++i){
