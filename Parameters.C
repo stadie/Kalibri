@@ -160,9 +160,9 @@ void TParameters::Read_Calibration(std::string const& configFile) {
 	if( line.find("block") != string::npos) break;
 	posEqual=line.find('=');
 	name  = line.substr(0,posEqual);
-	if( name.find("mapEta") != string::npos) 
+	if( name.find("TowMapEta") != string::npos) 
   	  eta = bag_of<int>(trim(line.substr(posEqual+1)));
-	if( name.find("mapPhi") != string::npos) 
+	if( name.find("TowMapPhi") != string::npos) 
   	  phi = bag_of<int>(trim(line.substr(posEqual+1)));
 	for (unsigned i=0; i < p->nTowerPars() ; ++i) {
 	  sprintf(dummy,"TowerParam%d ",i);
@@ -181,9 +181,9 @@ void TParameters::Read_Calibration(std::string const& configFile) {
 	posEqual=line.find('=');
 	name  = line.substr(0,posEqual);
 	std::cout << name << ".\n";
-	if( name.find("mapEta") != string::npos) 
+	if( name.find("JetMapEta") != string::npos) 
 	  eta_jet = bag_of<int>(trim(line.substr(posEqual+1)));
-	if( name.find("mapPhi") != string::npos) 
+	if( name.find("JetMapPhi") != string::npos) 
   	  phi_jet = bag_of<int>(trim(line.substr(posEqual+1)));
 	for (unsigned i=0; i<p->nJetPars(); ++i) {
 	  sprintf(dummy,"JetParam%d ",i);
@@ -323,7 +323,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   //--------------------------------------------------------------------
   os << endl
      << " block TowerCalibConstants = {" << endl
-     << "    untracked vint32 mapEta       = { ";
+     << "    untracked vint32 TowMapEta       = { ";
   //1. ieta
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
@@ -334,7 +334,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
         os << ieta;	
     }
   }
-  os << " }" << endl << "    untracked vint32 mapPhi       = { ";
+  os << " }" << endl << "    untracked vint32 TowMapPhi       = { ";
 
   //2. iphi
   for (int ieta= -41; ieta<=41; ++ieta){
@@ -390,7 +390,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
      << "    InputTag Jets    = MyFavoriteJetAlgorithm" << endl
      << "    string CalibJets = \"\" " << endl
      << endl
-     << "    untracked vint32 mapEta     = { ";
+     << "    untracked vint32 JetMapEta     = { ";
   
   //5. ieta
   for (int ieta= -41; ieta<=41; ++ieta){
@@ -402,7 +402,7 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
         os << ieta;	
     }
   }
-  os << " }" << endl << "    untracked vint32 mapPhi     = { ";
+  os << " }" << endl << "    untracked vint32 JetMapPhi     = { ";
 
   //6. iphi
   for (int ieta= -41; ieta<=41; ++ieta){
