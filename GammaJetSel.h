@@ -48,7 +48,12 @@ public :
    Float_t         PhotonEta;
    Float_t         PhotonEt;
    Float_t         PhotonE;
-   Int_t           ProcessID;
+   Float_t         GenPhotonPt;
+   Float_t         GenPhotonPhi;
+   Float_t         GenPhotonEta;
+   Float_t         GenPhotonEt;
+   Float_t         GenPhotonE;
+   //Int_t           ProcessID;
    Float_t         EventWeight;   
 
    // List of branches
@@ -81,10 +86,16 @@ public :
    TBranch        *b_PhotonEta;   //!
    TBranch        *b_PhtonEt;   //!
    TBranch        *b_PhotonE;   //!
-   TBranch        *b_ProcessID;   //!
+   TBranch        *b_GenPhotonPt;   //!
+   TBranch        *b_GenPhotonPhi;   //!
+   TBranch        *b_GenPhotonEta;   //!
+   TBranch        *b_GenPhtonEt;   //!
+   TBranch        *b_GenPhotonE;   //!
+   //TBranch        *b_ProcessID;   //!
    TBranch        *b_EventWeight;   //!
 
-  GammaJetSel(TTree * /*tree*/ =0) : ProcessID(-1), EventWeight(1) { }
+   //GammaJetSel(TTree * /*tree*/ =0) : ProcessID(-1), EventWeight(1) { }
+   GammaJetSel(TTree * /*tree*/ =0) : EventWeight(1) { }
    virtual ~GammaJetSel() { }
    virtual Int_t   Version() const { return 2; }
    virtual void    Begin(TTree *tree);
@@ -151,7 +162,12 @@ void GammaJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("PhotonEta", &PhotonEta, &b_PhotonEta);
    fChain->SetBranchAddress("PhotonEt", &PhotonEt, &b_PhtonEt);
    fChain->SetBranchAddress("PhotonE", &PhotonE, &b_PhotonE);
-   fChain->SetBranchAddress("ProcessID", &ProcessID, &b_ProcessID);
+   fChain->SetBranchAddress("GenPhotonPt", &GenPhotonPt, &b_GenPhotonPt);
+   fChain->SetBranchAddress("GenPhotonPhi", &GenPhotonPhi, &b_GenPhotonPhi);
+   fChain->SetBranchAddress("GenPhotonEta", &GenPhotonEta, &b_GenPhotonEta);
+   fChain->SetBranchAddress("GenPhotonEt", &GenPhotonEt, &b_GenPhtonEt);
+   fChain->SetBranchAddress("GenPhotonE", &GenPhotonE, &b_GenPhotonE);
+   //fChain->SetBranchAddress("ProcessID", &ProcessID, &b_ProcessID);
    fChain->SetBranchAddress("EventWeight", &EventWeight, &b_EventWeight);
 }
 
