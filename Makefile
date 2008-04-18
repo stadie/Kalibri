@@ -13,7 +13,7 @@ LFLAGS = $(SPECIALFLAGS) -L../../lib/$(SRT_SUBDIR)/ -lz -lg2c
 RCXX=$(CFLAGS) $(ROOTCFLAGS) -I/usr/include/boost
 RLXX=$(LFLAGS) $(ROOTLIBS)  -I/usr/include/boost -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
-SRC=caliber.C GammaJetSel.C TrackTowerSel.C TrackClusterSel.C JetJetSel.C ConfigFile.C CalibData.C Parameters.C ControlPlots.C
+SRC=caliber.C GammaJetSel.C ZJetSel.C TrackTowerSel.C TrackClusterSel.C JetJetSel.C ConfigFile.C CalibData.C Parameters.C ControlPlots.C
 
 %.o: %.C
 		$(C) $(RCXX) -c $<
@@ -28,6 +28,9 @@ ConfigFile.o: ConfigFile.C ConfigFile.h
 
 GammaJetSel.o: GammaJetSel.C GammaJetSel.h
 		$(C) $(RCXX) -c GammaJetSel.C
+
+ZJetSel.o: ZJetSel.C ZJetSel.h
+		$(C) $(RCXX) -c ZJetSel.C
 
 TrackTowerSel.o: TrackTowerSel.C TrackTowerSel.h
 		$(C) $(RCXX) -c TrackTowerSel.C

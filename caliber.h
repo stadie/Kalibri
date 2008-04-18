@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.8 2008/02/25 10:07:45 stadie Exp $
+// $Id: caliber.h,v 1.9 2008/02/25 13:04:43 stadie Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -29,6 +29,7 @@
 #include "TrackTowerSel.h"
 #include "TrackClusterSel.h"
 #include "JetJetSel.h"
+#include "ZJetSel.h"
 
 class TParameters;
 class TControlPlots;
@@ -50,6 +51,7 @@ protected:
   TrackTowerSel   tracktower;
   TrackClusterSel trackcluster;
   JetJetSel       jetjet;
+  ZJetSel         zjet;
 
   //internal functions
   void Run_Lvmini();
@@ -59,6 +61,7 @@ protected:
   void Run_TrackTower();
   void Run_TrackCluster();
   void Run_JetJet();
+  void Run_ZJet();
 
 private:
   void global_fit(int &npar, double *gin, double &f, 
@@ -69,11 +72,11 @@ private:
 
   //internal variables
   int fit_method, n_gammajet_events, n_tracktower_events, 
-      n_trackcluster_events, n_jetjet_events;
+      n_trackcluster_events, n_jetjet_events, n_zjet_events;
   std::string configfile, output_file;              //input/output
   int use_GammaJetTowerMethod,use_DisplayMethod;    //plots
   double Et_cut_on_jet, Et_cut_on_gamma,            //kin. cuts
-         Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster;
+         Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster, Et_cut_on_Z;
 
   int    OutlierIterationSteps;                     //outlier rejection
   int nthreads;

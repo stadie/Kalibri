@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.15 2008/02/25 13:04:43 stadie Exp $
+// $Id: caliber.C,v 1.16 2008/04/09 17:10:57 stadie Exp $
 //
 #include "caliber.h"
 
@@ -238,6 +238,100 @@ void TCaliber::Run_GammaJet()
       break;
   }
 }
+
+
+void TCaliber::Run_ZJet()
+//calculates from Z energy a truth value for one calo tower of the jet.
+{
+  //Run Z-Jet stuff  
+  int nevent = zjet.fChain->GetEntries();
+  for (int i=0;i<nevent;i++) {
+    if(i%1000==0) cout<<"Z-Jet Event: "<<i<<endl;
+    zjet.fChain->GetEvent(i); 
+    if (zjet.NobjTowCal>200) {
+      cerr<<"ERROR: Increase array sizes in ZJetSelector; NobjTowCal="
+	  <<zjet.NobjTowCal<<"!"<<endl;
+      exit(8);
+    }
+ 
+    //trivial cuts
+    if (zjet.ZPt<Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
+     
+    //Find the jets eta & phi index using the leading (ET) tower:
+    int jet_index=0;
+    double max_tower_et = 0.0;
+    double em = 0;
+    for (int n=0; n<zjet.NobjTowCal; ++n){
+      em += zjet.TowEm[n];
+      if (zjet.TowEt[n]>max_tower_et) {
+	jet_index = p->GetJetBin(p->GetJetEtaBin(zjet.TowId_eta[n]),
+				 p->GetJetPhiBin(zjet.TowId_phi[n]));
+	max_tower_et = zjet.TowEt[n];
+      }
+    }
+    if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
+    if(em == 0) { continue;}
+    //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
+    //           has to be added for a correct reference to k[...].
+    double* jetp  = new double[3];
+    jetp[0] = zjet.JetCalEt;
+    jetp[1] = zjet.JetCalEta;
+    jetp[2] = zjet.JetCalPhi;
+    //Create an Z/Jet TData event
+    TData_TruthMultMess * gj_data = new 
+      TData_TruthMultMess(jet_index + p->GetNumberOfTowerParameters(),
+			  // zjet.ZEt,				    //truth//
+			  zjet.JetGenPt,
+			  sqrt(pow(0.5,2)+pow(0.10*zjet.ZEt,2)),   //error//
+			  //zjet.EventWeight,                           //weight//
+			  1.0,                                              //weight//
+			  p->GetJetParRef( jet_index ),                     //params
+			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
+			  p->jet_parametrization,                           //function
+			  p->jet_error_parametrization,                     //function
+			  jetp
+			  );
+
+    //Add the jet's towers to "gj_data":
+    for (int n=0; n<zjet.NobjTowCal; ++n){
+      //if (zjet.TowEt[n]<0.01) continue;
+   
+      int index = p->GetBin(p->GetEtaBin(zjet.TowId_eta[n]),
+			    p->GetPhiBin(zjet.TowId_phi[n]));
+      if (index<0){ cerr<<"WARNING: towewer_index = " << index << endl; continue; }
+
+      //double dR = deltaR(zjet.JetCalEta, zjet.JetCalPhi, zjet.TowEta[n], zjet.TowPhi[n]);
+	      
+      double relativEt = zjet.TowEt[n]/zjet.JetCalEt;  
+      //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
+      //This relativeE is used *only* for plotting! Therefore no cuts on this var!
+      //create array with multidimensional measurement
+      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
+      mess[0] = double(zjet.TowEt[n]);
+      double scale = zjet.TowEt[n]/zjet.TowE[n];
+      mess[1] = double(zjet.TowEm[n]*scale);
+      mess[2] = double(zjet.TowHad[n]*scale);
+      mess[3] = double(zjet.TowOE[n]*scale);
+      gj_data->AddMess(new TData_TruthMess(index,
+					   mess,                                                    //mess//
+					   zjet.ZEt * relativEt,                           //truth//
+					   sqrt(pow(0.5,2)+pow(0.1*zjet.ZEt*relativEt,2)), //error//
+					   1.,                                                      //weight//
+					   p->GetTowerParRef( index ),                              //parameter//
+					   p->GetNumberOfTowerParametersPerBin(),                   //number of free tower param. p. bin//
+					   p->tower_parametrization,                                //function//
+					   p->tower_error_parametrization                           //function//
+					   ));
+    } 
+ 
+    data.push_back( gj_data ); 
+   
+    if (n_zjet_events>=0 && i==n_zjet_events-1)
+      break;
+  }
+}
+
+
 
 void TCaliber::Run_TrackTower()
 {
@@ -518,6 +612,7 @@ void TCaliber::Run()
     if (n_tracktower_events!=0)   Run_TrackTower();
     if (n_trackcluster_events!=0) Run_TrackCluster();
     if (n_jetjet_events!=0)       Run_JetJet();
+    if (n_zjet_events!=0)         Run_ZJet();
 
     if (fit_method==1) Run_Lvmini();
   } 
@@ -699,17 +794,19 @@ void TCaliber::Init(string file)
   fit_method = config.read<int>("Fit method",1);
   nthreads = config.read<int>("Number of Threads",1);
   //last minute kinematic cuts
-  Et_cut_on_jet   = config.read<double>("Et cut on jet",5.0); 
-  Et_cut_on_gamma = config.read<double>("Et cut on gamma",20.0); 
-  Et_cut_on_track = config.read<double>("Et cut on track",4.0); 
-  Et_cut_on_tower = config.read<double>("Et cut on tower",1.0);
-  Et_cut_on_cluster = config.read<double>("Et cut on cluster",1.0);
+  Et_cut_on_jet   = config.read<double>("Et cut on jet",0.0); 
+  Et_cut_on_gamma = config.read<double>("Et cut on gamma",0.0); 
+  Et_cut_on_Z     = config.read<double>("Et cut on Z",0.0); 
+  Et_cut_on_track = config.read<double>("Et cut on track",0.0); 
+  Et_cut_on_tower = config.read<double>("Et cut on tower",0.0);
+  Et_cut_on_cluster = config.read<double>("Et cut on cluster",0.0);
   //outlier rejection
   OutlierIterationSteps = config.read<int>("Outlier Iteration Steps",3);
   OutlierChi2Cut        = config.read<double>("Outlier Cut on Chi2",100.0);
   OutlierChi2CutPresel  = config.read<double>("Outlier Cut on Chi2 presel",400.0);
   //input/output
   n_gammajet_events     = config.read<int>("use Gamma-Jet events",-1);
+  n_zjet_events         = config.read<int>("use Z-Jet events",-1);
   n_tracktower_events   = config.read<int>("use Track-Tower events",-1);
   n_trackcluster_events = config.read<int>("use Track-Cluster events",-1);
   n_jetjet_events       = config.read<int>("use Jet-Jet events",-1);
@@ -760,6 +857,17 @@ void TCaliber::Init(string file)
     tchain_jetjet->Add( it->c_str() );
   }  
   jetjet.Init( tchain_jetjet );
+
+  //Read Z-Jet Tree:
+  string treename_zjet      = config.read<string>( "Z-Jet tree", default_tree_name );
+  TChain * tchain_zjet      = new TChain( treename_zjet.c_str() );
+  vector<string> input_zjet = bag_of_string( 
+					      config.read<string>( "Z-Jet input file", "input/zjet.root" ) );
+  for (bag_of_string::const_iterator it = input_zjet.begin(); it!=input_zjet.end(); ++it){
+    cout << "...opening root-file " << (*it) << " for Z-Jet analysis." << endl;
+    tchain_zjet->Add( it->c_str() );
+  }  
+  zjet.Init( tchain_zjet );
 }
 
 //--^-TCaliber class-^------------------------------------------------------------------------
