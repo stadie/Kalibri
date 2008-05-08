@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.18 2008/04/09 17:10:57 stadie Exp $
+// $Id: Parameters.h,v 1.19 2008/04/11 16:59:19 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -15,7 +15,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "Parametrization.hh"
+#include "Parametrization.h"
 
 class ConfigFile;
 class TParameters {  

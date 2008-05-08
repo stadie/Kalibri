@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.9 2008/02/25 13:04:43 stadie Exp $
+// $Id: caliber.h,v 1.10 2008/04/18 10:26:18 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -28,7 +28,7 @@
 #include "GammaJetSel.h"
 #include "TrackTowerSel.h"
 #include "TrackClusterSel.h"
-#include "JetJetSel.h"
+#include "NJetSel.h"
 #include "ZJetSel.h"
 
 class TParameters;
@@ -50,7 +50,8 @@ protected:
   GammaJetSel     gammajet;
   TrackTowerSel   tracktower;
   TrackClusterSel trackcluster;
-  JetJetSel       jetjet;
+  NJetSel         dijet;
+  NJetSel         trijet;
   ZJetSel         zjet;
 
   //internal functions
@@ -60,7 +61,7 @@ protected:
   void Run_GammaJet();
   void Run_TrackTower();
   void Run_TrackCluster();
-  void Run_JetJet();
+  void Run_NJet(NJetSel & njet);
   void Run_ZJet();
 
 private:
@@ -72,7 +73,7 @@ private:
 
   //internal variables
   int fit_method, n_gammajet_events, n_tracktower_events, 
-      n_trackcluster_events, n_jetjet_events, n_zjet_events;
+      n_trackcluster_events, n_dijet_events, n_trijet_events, n_zjet_events;
   std::string configfile, output_file;              //input/output
   int use_GammaJetTowerMethod,use_DisplayMethod;    //plots
   double Et_cut_on_jet, Et_cut_on_gamma,            //kin. cuts

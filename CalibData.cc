@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.C,v 1.10 2008/02/25 10:07:45 stadie Exp $
+// $Id: CalibData.C,v 1.11 2008/02/25 13:10:18 stadie Exp $
 //
 #include "CalibData.h"
 #include "map"

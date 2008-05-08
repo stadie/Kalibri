@@ -13,9 +13,9 @@ LFLAGS = $(SPECIALFLAGS) -L../../lib/$(SRT_SUBDIR)/ -lz -lg2c
 RCXX=$(CFLAGS) $(ROOTCFLAGS) -I/usr/include/boost
 RLXX=$(LFLAGS) $(ROOTLIBS)  -I/usr/include/boost -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
-SRC=caliber.C GammaJetSel.C ZJetSel.C TrackTowerSel.C TrackClusterSel.C JetJetSel.C ConfigFile.C CalibData.C Parameters.C ControlPlots.C
+SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackTowerSel.cc TrackClusterSel.cc NJetSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc
 
-%.o: %.C
+%.o: %.cc
 		$(C) $(RCXX) -c $<
 
 all: runjunk
@@ -23,38 +23,38 @@ all: runjunk
 lbfgs.o: lbfgs.F
 		$(F77) -fno-automatic -fno-backslash -O -c lbfgs.F
 
-ConfigFile.o: ConfigFile.C ConfigFile.h
-		$(C) $(RCXX) -c ConfigFile.C
+ConfigFile.o: ConfigFile.cc ConfigFile.h
+		$(C) $(RCXX) -c ConfigFile.cc
 
-GammaJetSel.o: GammaJetSel.C GammaJetSel.h
-		$(C) $(RCXX) -c GammaJetSel.C
+GammaJetSel.o: GammaJetSel.cc GammaJetSel.h
+		$(C) $(RCXX) -c GammaJetSel.cc
 
-ZJetSel.o: ZJetSel.C ZJetSel.h
-		$(C) $(RCXX) -c ZJetSel.C
+ZJetSel.o: ZJetSel.cc ZJetSel.h
+		$(C) $(RCXX) -c ZJetSel.cc
 
-TrackTowerSel.o: TrackTowerSel.C TrackTowerSel.h
-		$(C) $(RCXX) -c TrackTowerSel.C
+TrackTowerSel.o: TrackTowerSel.cc TrackTowerSel.h
+		$(C) $(RCXX) -c TrackTowerSel.cc
 
-TrackClusterSel.o: TrackClusterSel.C TrackClusterSel.h
-		$(C) $(RCXX) -c TrackClusterSel.C
+TrackClusterSel.o: TrackClusterSel.cc TrackClusterSel.h
+		$(C) $(RCXX) -c TrackClusterSel.cc
 
-JetJetSel.o: JetJetSel.C JetJetSel.h
-		$(C) $(RCXX) -c JetJetSel.C
+NJetSel.o: NJetSel.cc NJetSel.h
+		$(C) $(RCXX) -c NJetSel.cc
 
-CalibData.o: CalibData.C CalibData.h
-		$(C) $(RCXX) -c CalibData.C
+CalibData.o: CalibData.cc CalibData.h
+		$(C) $(RCXX) -c CalibData.cc
 
-Parameters.o: Parameters.C Parameters.h
-		$(C) $(RCXX) -c Parameters.C
+Parameters.o: Parameters.cc Parameters.h
+		$(C) $(RCXX) -c Parameters.cc
 
-ControlPlots.o: ControlPlots.C ControlPlots.h
-		$(C) $(RCXX) -c ControlPlots.C
+ControlPlots.o: ControlPlots.cc ControlPlots.h
+		$(C) $(RCXX) -c ControlPlots.cc
 
-caliber.o: caliber.C caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h
-		$(C) $(RCXX) -c caliber.C 
+caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h
+		$(C) $(RCXX) -c caliber.cc 
 
-runjunk: $(SRC:.C=.o) lbfgs.o
-		$(LD) $(SRC:.C=.o) lbfgs.o $(RLXX) $(JCORR) -o junk
+runjunk: $(SRC:.cc=.o) lbfgs.o
+		$(LD) $(SRC:.cc=.o) lbfgs.o $(RLXX) $(JCORR) -o junk
 		@echo '-> Calibration executable created.'
 
 clean:
