@@ -1,10 +1,10 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parameters.h,v 1.17 2008/04/02 10:03:58 rwolf Exp $
+// $Id: Parametrization.hh,v 1.1 2008/04/09 17:10:57 stadie Exp $
 //
-#ifndef CALIBCORE_PARAMETRIZATION_HH
-#define CALIBCORE_PARAMETRIZATION_HH
+#ifndef CALIBCORE_PARAMETRIZATION_H
+#define CALIBCORE_PARAMETRIZATION_H
 
 #include <cmath>
 
