@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.10 2008/04/18 10:26:18 auterman Exp $
+// $Id: caliber.h,v 1.11 2008/05/08 17:13:17 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -63,6 +63,8 @@ protected:
   void Run_TrackCluster();
   void Run_NJet(NJetSel & njet);
   void Run_ZJet();
+
+  void TCaliber::FlattenSpectra();
 
 private:
   void global_fit(int &npar, double *gin, double &f, 

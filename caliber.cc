@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.C,v 1.17 2008/04/18 10:26:18 auterman Exp $
+// $Id: caliber.cc,v 1.1 2008/05/08 17:13:17 auterman Exp $
 //
 #include "caliber.h"
 
@@ -28,6 +28,7 @@ boost::mutex io_mutex;
 using namespace std;
 
 typedef std::vector<TData*>::iterator DataIter;
+typedef std::vector<TData*>::const_iterator DataConstIter;
 //Outlier Rejection
 struct OutlierRejection {
   OutlierRejection(double cut):_cut(cut){};
@@ -145,6 +146,45 @@ double TCaliber::numeric_derivate( void (*func)(int&,double*,double&,double*,int
     result = (x0+x1-2*x)/(epsilon*epsilon);
   } 
   return result;
+}
+
+
+void TCaliber::FlattenSpectra()
+{
+  for (int type=0; type<7; ++type){
+    if (type==TypeDefault) continue; //types are defined in CalibData.h
+    if (type==TypeMessMess) continue;
+    //if (type==TypePtBalance) continue;
+
+    int bins = 1000;
+    double min=0.;
+    double max=1000.;
+    map<int,double> weights;
+    double tot=0.;
+
+    for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
+      if ((*it)->GetType()!=type) continue;
+      int bin;
+      double truth = (*it)->GetScale();
+      
+      if      (truth<min) bin=0;
+      else if (truth>max) bin=bins+1;
+      else                bin=(int)(((truth-min)/max)*(double)bins);
+      weights[bin]+=(*it)->GetWeight();
+      tot+=(*it)->GetWeight();
+    }
+    if (tot!=0.)
+    for (DataIter it = data.begin(); it!=data.end(); ++it) {
+      if ((*it)->GetType()!=type) continue;
+      int bin;
+      double truth = (*it)->GetScale();
+
+      if      (truth<min) bin=0;
+      else if (truth>max) bin=bins+1;
+      else                bin=(int)(((truth-min)/max)*(double)bins);
+      (*it)->SetWeight(1./weights[bin]);
+    }
+  } 
 }
 
 
@@ -501,9 +541,9 @@ void TCaliber::Run_NJet(NJetSel & njet)
       //Create an jet/Jet TData event
       jj_data[ij] = new TData_PtBalance( 
           jet_index + p->GetNumberOfTowerParameters(),
-	  direction,                                    //p_T direction of this jet
+	  direction,                                     //p_T direction of this jet
 	  0.0,                                           //truth//
-	  sqrt(pow(0.5,2)+pow(0.10*njet.JetPt[ij],2)), //error//
+	  sqrt(pow(0.5,2)+pow(0.10*njet.JetPt[ij],2)),   //error//
 	  1.,                                            //weight//
 	  p->GetJetParRef( jet_index ),                  //params
 	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
@@ -550,159 +590,6 @@ void TCaliber::Run_NJet(NJetSel & njet)
 }
 
 
-
-/*
-void TCaliber::Run_NJet()
-{
-  //Run jet-Jet stuff  
-  int nevent = njet.fChain->GetEntries();
-  for (int i=0;i<nevent;i++) {
-    if(i%1000==0) cout<<"Jet-Jet Event: "<<i<<endl;
-    njet.fChain->GetEvent(i); 
-    if (njet.NobjTowJ1Cal>200 || njet.NobjTowJ2Cal>200) {
-      cerr << "ERROR: Increase array sizes in NJetSelector; NobjTowJ1Cal="
-	   << njet.NobjTowJ1Cal<<", NobjTowJ2Cal="<<njet.NobjTowJ2Cal<<"!"<<endl;
-      exit(9);
-    }
-    //--------------
-    //   1. Jet
-    //--------------
-    //Find the jets eta & phi index using the leading (ET) tower:
-    int jet_index = -1;
-    double max_tower_et = 0.0;
-    for (int n=0; n<njet.NobjTowJ1Cal; ++n){
-      if (njet.TowJ1Et[n]>max_tower_et) {
-	jet_index = p->GetJetBin(p->GetJetEtaBin(njet.TowJ1Id_eta[n]),
-				 p->GetJetPhiBin(njet.TowJ1Id_phi[n]));
-	max_tower_et = njet.TowJ1Et[n];
-      }
-    }
-    if (jet_index<0){ 
-       cerr<<"WARNING: JJ jet1_index = " << jet_index << endl; 
-       continue; 
-    }
-     
-    double * direction1 = new double[2];
-    direction1[0] = sin(njet.FirstJetPhi);
-    direction1[1] = cos(njet.FirstJetPhi);
-     
-    //Create an jet/Jet TData event
-    TData_PtBalance * jj_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
-						     direction1,                                    //p_T direction of this jet
-						     0.0,                                           //truth//
-						     sqrt(pow(0.5,2)+pow(0.10*njet.ScndJetPt,2)), //error//
-						     //njet.EventWeight,                          //weight//
-						     1.,                                            //weight//
-						     p->GetJetParRef( jet_index ),                  //params
-						     p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-						     p->jet_parametrization,                        //function
-						     p->jet_error_parametrization                   //function
-						     );
-
-    //Add the jet's towers to "jj_data":
-    double control_sum=0.0;
-    for (int n=0; n<njet.NobjTowJ1Cal; ++n){
-      //if (njet.TowJ1Et[n]<0.01) continue;
-
-      int index = p->GetBin(p->GetEtaBin(njet.TowJ1Id_eta[n]),
-			    p->GetPhiBin(njet.TowJ1Id_phi[n]));
-      if (index<0){ cerr<<"WARNING: JJ towerj1_index = " << index << endl; continue; }
-
-      double relativEt = njet.TowJ1Et[n]/njet.FirstJetEt;  
-      //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
-      //This relativeE is used *only* for plotting! Therefore no cuts on this var!
-      //create array with multidimensional measurement
-      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-      mess[0] = double(njet.TowJ1Et[n]);
-      double scale = njet.TowJ1Et[n]/njet.TowJ1E[n];
-      mess[1] = double(njet.TowJ1Em[n]*scale);
-      mess[2] = double(njet.TowJ1Had[n]*scale);
-      mess[3] = double(njet.TowJ1OE[n]*scale);
-      jj_data->AddMess(new TData_TruthMess(index,
-					   mess,                                                   //mess//
-					   njet.ScndJetPt * relativEt,                           //truth//
-					   sqrt(pow(0.5,2)+pow(0.1*njet.ScndJetPt*relativEt,2)), //error//
-                                           1.,                                                     //weight//
-					   p->GetTowerParRef( index ),                             //parameter//
-					   p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
-					   p->tower_parametrization,                               //function//
-					   p->tower_error_parametrization                          //function//
-					   ));
-    }  
-
-    //--------------
-    //   2. Jet
-    //--------------
-    //Find the jets eta & phi index using the leading (ET) tower:
-    max_tower_et = 0.0;
-    for (int n=0; n<njet.NobjTowJ2Cal; ++n){
-      if (njet.TowJ2Et[n]>max_tower_et) {
-	jet_index = p->GetJetBin(p->GetJetEtaBin(njet.TowJ2Id_eta[n]),
-				 p->GetJetPhiBin(njet.TowJ2Id_phi[n]));
-	max_tower_et = njet.TowJ2Et[n];
-      }
-    }
-    if (jet_index<0){ cerr<<"WARNING: JJ jet2_index = " << jet_index << endl; continue; }
-     
-    //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
-    //           has to be added for a correct reference to k[...].
-
-    double * direction2 = new double[2];
-    direction2[0] = sin(njet.ScndJetPhi);
-    direction2[1] = cos(njet.ScndJetPhi);
-     
-    //Create an jet/Jet TData event
-    TData_PtBalance * jj2_data = new TData_PtBalance( jet_index + p->GetNumberOfTowerParameters(),
-						      direction2,
-						      0.0,				             //truth//
-						      sqrt(pow(0.5,2)+pow(0.10*njet.ScndJetPt,2)), //error//
-                                                      //njet.EventWeight,                          //weight//
-                                                      1.,                                            //weight//
-						      p->GetJetParRef( jet_index ),                  //params
-						      p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-						      p->jet_parametrization,                        //function
-						      p->jet_error_parametrization                   //function
-						      );
-
-    //Add the jet's towers to "jj_data":
-    control_sum=0.0;
-    for (int n=0; n<njet.NobjTowJ2Cal; ++n){
-      //if (njet.TowJ2Et[n]<0.01) continue;
-
-      int index = p->GetBin(p->GetEtaBin(njet.TowJ2Id_eta[n]),
-			    p->GetPhiBin(njet.TowJ2Id_phi[n]));
-      if (index<0){ cerr<<"WARNING: JJ towerj1_index = " << index << endl; continue; }
-
-      double relativEt = njet.TowJ2Et[n]/njet.ScndJetEt;  
-      //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
-      //This relativeE is used *only* for plotting! Therefore no cuts on this var!
-      //create array with multidimensional measurement
-      double * mess = new double[4];
-      mess[0] = double(njet.TowJ2Et[n]);
-      double scale = njet.TowJ2Et[n]/njet.TowJ2E[n];
-      mess[1] = double(njet.TowJ2Em[n]*scale);
-      mess[2] = double(njet.TowJ2Had[n]*scale);
-      mess[3] = double(njet.TowJ2OE[n]*scale);
-      jj2_data->AddMess(new TData_TruthMess(index,
-					    mess, //mess
-					    njet.FirstJetPt * relativEt,                           //truth//
-					    sqrt(pow(0.5,2)+pow(0.1*njet.FirstJetPt*relativEt,2)), //error//
-					    1.,                                                      //weight//
-					    p->GetTowerParRef( index ),                              //parameter//
-					    p->GetNumberOfTowerParametersPerBin(),                   //number of free tower param. p. bin//
-					    p->tower_parametrization,                                //function//
-					    p->tower_error_parametrization                           //function//
-					    ));
-    }
-    jj_data->AddNewMultMess( jj2_data );
-    data.push_back( jj_data ); 
-
-    if (n_njet_events>=0 && i==n_njet_events-1)
-      break;
-  }
-}
-*/
-
 //--------------------------------------------------------------------------------------------
 void TCaliber::Run()
 {
@@ -713,6 +600,8 @@ void TCaliber::Run()
     if (n_dijet_events!=0)        Run_NJet( dijet);
     if (n_trijet_events!=0)       Run_NJet( trijet);
     if (n_zjet_events!=0)         Run_ZJet();
+
+    //FlattenSpectra();
 
     if (fit_method==1) Run_Lvmini();
   } 

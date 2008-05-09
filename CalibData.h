@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.10 2008/02/25 10:07:45 stadie Exp $
+// $Id: CalibData.h,v 1.11 2008/02/25 13:10:18 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -39,8 +39,10 @@ public:
   virtual double GetParametrizedMess(){return _func(_mess,_par);}
   virtual double GetParametrizedErr(double *paramess){ return _err(paramess);};
   double GetTruth(){ return _truth;};
+  virtual double GetScale(){return GetTruth();};//flatten spectrum w.r.t. this
   double GetError(){ return _error;};
   double GetWeight(){ return _weight;};
+  void   SetWeight(double weight){ _weight=weight;};
   short unsigned int GetType() {return _type;};
   void SetType(short unsigned int type) {_type=type;};
   unsigned short int GetIndex(){return _index;};
@@ -192,6 +194,16 @@ public:
 	(*it)->ChangeParAddress(oldpar,newpar);
       for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin(); it!=_m2.end(); ++it)
 	(*it)->ChangeParAddress(oldpar,newpar);
+    }
+    virtual double GetScale(){
+      double sum=0.;
+      if (_m2.size()>1){
+      for (std::vector<TData_MessMess*>::const_iterator it=1+_m2.begin();
+           it<_m2.end(); ++it)
+	 sum+=(*it)->GetMess()[0];
+       sum = (sum+_m2.front()->GetMess()[0])/2.;	 
+      }
+      return sum;
     }
 protected:
   virtual double combine() = 0;
