@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.hh,v 1.1 2008/04/09 17:10:57 stadie Exp $
+// $Id: Parametrization.h,v 1.1 2008/05/08 17:16:20 auterman Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -51,6 +51,10 @@ public:
   const char* name() const { return "StepParametrization";}
 
   double correctedTowerEt(double *x,double *par) const {
+std::cerr << "x: " << x[0] << ", "
+           << x[1] << ", "<< x[2] << ", "<< x[3] << std::endl;
+std::cerr << "par: " << par[0] << ", "
+           << par[1] << ", "<< par[2] << ", "<< par[3] << std::endl;
     double result = 0;
     
     if(x[2]>=0.0  && x[2]<=1.0)  result = x[1]+x[3] + par[0]*x[2];
