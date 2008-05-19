@@ -168,7 +168,7 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       sprintf(name, "h2dtc%d_eta%d_phi%d",i,eta+1,phi+1);
       TH2F * plot2dtc = new TH2F(name,";uncalibrated tower E [GeV];k-factor",100,0.5,100.,100,0.0,5.0);    
       TH1F * chi2[4];
-      TH1F * chi2red[4];
+      //TH1F * chi2red[4];
       sprintf(name, "hgj_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
       chi2[0] = new TH1F(name,";chi^{2};N",100,0.0,50.);    
       sprintf(name, "htt_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
@@ -183,13 +183,13 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       double mess, error;
       //double p[p->free_pars_per_bin];
       //int    index = -999, ndof=0;
-      int thisIndexJet;
+      int thisIndexJet=0;
       //loop over all fit-events
       for (; data_it != data->end();++data_it){
         //if one fit event is composed of multiple towers, than loop over all
 	mess=0.0; error=0.0;
 	const std::vector<TData*>& data_ref = (*data_it)->GetRef();
-	double JetCorr = (*data_it)->GetParametrizedMess();
+	//double JetCorr = (*data_it)->GetParametrizedMess();
 	double Jet=0.;
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
           Jet += (*it)->GetParametrizedMess();
@@ -623,7 +623,7 @@ void TControlPlots::GammaJetControlPlots()  // Gamma-Jet Control Histograms
       for (; data_it != data->end();++data_it){
         if ( (*data_it)->GetType()!=TypeGammaJet) continue;
 
-	int indexTower;
+	int indexTower=0;
 	double Etmax=0, calib_tower_sum=0.0;
 	double tower_sum = 0.0; //is equivalent to (*data_it)->GetMess(),
 	                        //but since we need the index too, this is faster
@@ -888,7 +888,7 @@ void TControlPlots::TrackTowerControlPlots()  // Track-Tower Control Histograms
       res1_tt->Draw("same"); 
       
       //Check if fit values are equal to the start values, in that case use red text color
-      int r=1;
+//      int r=1;
 //      vector<double>::const_iterator st = start_values.begin();
 //      for (CalibVal::const_iterator it = val.begin(); it!=val.end(), 
 //           st!=start_values.end(); ++it, ++st)
@@ -1026,7 +1026,7 @@ void TControlPlots::TrackClusterControlPlots()  // Track-Cluster Control Histogr
       int i = p->GetBin(eta,phi);
       char * name = new char[100];
       sprintf(name, "hjes_tc%d_eta%d_phi%d",i,eta+1,phi+1);
-      TH1F * plot_jes = new TH1F(name,";#sum calibrated tower E_{T} [GeV]; JES: ( E_{T}^{#gamma} / #sum E_{T}^{calib. tower})",100,0.0,400.);    
+//      TH1F * plot_jes = new TH1F(name,";#sum calibrated tower E_{T} [GeV]; JES: ( E_{T}^{#gamma} / #sum E_{T}^{calib. tower})",100,0.0,400.);    
       sprintf(name, "h_tc%d_eta%d_phi%d",i,eta+1,phi+1);
       TH1F * plot = new TH1F(name,";uncalibrated jet E_{T} [GeV];average of ( E_{T}^{#gamma} / E_{T}^{uncalib. jet})",100,0.0,400.);    
       sprintf(name, "tc_fit%d",i);
@@ -1038,7 +1038,7 @@ void TControlPlots::TrackClusterControlPlots()  // Track-Cluster Control Histogr
       for (; data_it != data->end();++data_it){
         if ( (*data_it)->GetType()!=TypeTrackCluster) continue;
 
-	int indexJet;
+	int indexJet=0;
 	double Etmax=0, calib_tower_sum=0.0;
 	double tower_sum = 0.0; //is equivalent to (*data_it)->GetMess(),
 	                        //but since we need the index too, this is faster
