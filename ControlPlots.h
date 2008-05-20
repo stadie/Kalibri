@@ -16,7 +16,7 @@ class TControlPlots {
 public:
   //TControlPlots(){this->ReadConfigFile("config/calibration.cfg");};
   TControlPlots(std::string config, std::vector<TData*> * d, TParameters * pars)
-                {this->ReadConfigFile(config); data=d; p=pars;};
+                {this->ReadConfigFile(config); data=d; p=pars; iplot=0;};
   //TControlPlots(std::string config, std::vector<TData*> * d, TStepEfracParameters * pars)
   //              {this->ReadConfigFile(config); data=d; p=pars;};
   ~TControlPlots(){};
@@ -34,6 +34,7 @@ private:
 
   std::vector<TData*> * data;
   TParameters * p;
+  int iplot;
 
   bool _doPlots;
   //... bins, pt ranges, etc...

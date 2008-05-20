@@ -1121,10 +1121,14 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   hemf[1] = (TH2F*)hemf[0]->Clone();
   hemf[2] = (TH2F*)hemf[0]->Clone();
  
-  TH1F* hptGamma = new TH1F("hptGamma","#gamma-jet",100,20,220);
-  hptGamma->SetXTitle("p_{T} [GeV]");
-  TH1F* hptGammaW = new TH1F("hptGammaW","#gamma-jet",100,20,220);
-  hptGammaW->SetXTitle("p_{T} [GeV]");
+  TH1F* hptGamma[3];
+  TH1F* hptGammaW[3];
+  hptGamma[0]  = new TH1F("hptGamma","#gamma-jet;p_{T} [GeV]",100,20,220);
+  hptGammaW[0] = new TH1F("hptGammaW","#gamma-jet;p_{T} [GeV]",100,20,220);
+  hptGamma[1]  = new TH1F("hetaGamma","#gamma-jet;#eta",100,-5,5);
+  hptGammaW[1] = new TH1F("hetaGammaW","#gamma-jet;#eta",100,-5,5);
+  hptGamma[2]  = new TH1F("hemfGamma","#gamma-jet;EMF",100,0,1);
+  hptGammaW[2] = new TH1F("hemfGammaW","#gamma-jet;EMF",100,0,1);
   
 
   double bins[101];
@@ -1166,8 +1170,6 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     hptlog[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
     hptlog[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
     hptlog[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());
-    hptGamma->Fill(jg->GetTruth());
-    hptGammaW->Fill(jg->GetTruth(),jg->GetWeight());
     //em fraction plots     
     double em = 0;
     double had = 0;
@@ -1180,6 +1182,12 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     hemf[0]->Fill(em/(em+had),etjet/jg->GetTruth(),jg->GetWeight());
     hemf[1]->Fill(em/(em+had),etjetcor/jg->GetTruth(),jg->GetWeight());
     hemf[2]->Fill(em/(em+had),etjet/etjetcor,jg->GetWeight());
+    hptGamma[0]->Fill(jg->GetTruth());
+    hptGammaW[0]->Fill(jg->GetTruth(),jg->GetWeight());
+    hptGamma[1]->Fill(etajet);
+    hptGammaW[1]->Fill(etajet,jg->GetWeight());
+    hptGamma[2]->Fill(em/(em+had));
+    hptGammaW[2]->Fill(em/(em+had),jg->GetWeight());
   } 
   TH1F* hists[12][6];
   TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
@@ -1322,21 +1330,26 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   }
   ps.NewPage(); 
   delete leg;
-  hptGamma->SetMarkerStyle(20);
-  hptGamma->SetMarkerColor(1);
-  hptGammaW->SetMarkerStyle(22);
-  hptGammaW->SetMarkerColor(2);
-  hptGammaW->Draw("p");
-  hptGammaW->SetStats(0);
-  hptGamma->Draw("pSAME");
-  c1->SetLogx(0);  
-  c1->SetLogy(1);  
-  c1->SetGrid();
-  leg = new TLegend(0.7,0.96,0.96,0.72);
-  leg->AddEntry(hptGamma,"no weights","p");
-  leg->AddEntry(hptGammaW,"with weights","p");
-  leg->Draw();
-  c1->Draw(); 
+  for(int i = 0 ; i < 3 ; ++i) {
+    hptGamma[i]->SetMarkerStyle(20);
+    hptGamma[i]->SetMarkerColor(1);
+    hptGammaW[i]->SetMarkerStyle(22);
+    hptGammaW[i]->SetMarkerColor(2);
+    if (hptGamma[i]->GetMaximum()>hptGammaW[i]->GetMaximum())
+      hptGammaW[i]->SetMaximum( hptGamma[i]->GetMaximum() );
+
+    hptGammaW[i]->Draw("p");
+    hptGammaW[i]->SetStats(0);
+    hptGamma[i]->Draw("pSAME");
+    c1->SetLogx(0);  
+    c1->SetLogy(1);  
+    c1->SetGrid();
+    leg = new TLegend(0.7,0.96,0.96,0.72);
+    leg->AddEntry(hptGamma[i],"no weights","p");
+    leg->AddEntry(hptGammaW[i],"with weights","p");
+    leg->Draw();
+    c1->Draw(); 
+  }
   ps.NewPage(); 
   delete leg;
   for(int i = 0 ; i < 12 ; ++i) delete heta[i];
@@ -1346,8 +1359,12 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   delete hptlog[0];
   delete hptlog[1];
   delete hptlog[2];
-  delete hptGamma;
-  delete hptGammaW;  
+  delete hptGamma[0];
+  delete hptGammaW[0];  
+  delete hptGamma[1];
+  delete hptGammaW[1];  
+  delete hptGamma[2];
+  delete hptGammaW[2];  
   c1->SetLogx(0);  
   c1->SetLogy(0);   
   c1->SetGrid(0);
@@ -1396,6 +1413,7 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6])
   //book hists
   TString s(hist->GetName());
   s.Append("_res");
+  s.Append(iplot++);
   if( hist->GetXaxis()->GetXbins()->GetSize() == hist->GetNbinsX() +1) {
     hresults[0] = new TH1F(s,hist->GetTitle(),hist->GetNbinsX(),hist->GetXaxis()->GetXbins()->GetArray());
   } else {

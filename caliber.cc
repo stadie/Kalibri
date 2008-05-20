@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.1 2008/05/08 17:13:17 auterman Exp $
+// $Id: caliber.cc,v 1.2 2008/05/09 13:43:01 auterman Exp $
 //
 #include "caliber.h"
 
@@ -149,6 +149,33 @@ double TCaliber::numeric_derivate( void (*func)(int&,double*,double&,double*,int
 }
 
 
+int TCaliber::GetSpectraBin(double m1, double m2=0., double m3=0.)
+{
+   //pt
+   int bin1, bins1 = 7000;
+   double min1    = 0.;
+   double max1    = 7000.;
+   if      (m1<min1) bin1=0;
+   else if (m1>max1) bin1=bins1+1;
+   else              bin1=(int)(((m1-min1)/max1)*(double)bins1);
+   //eta
+   int bin2=0, bins2 = p->GetEtaGranularityJet()*p->GetPhiGranularityJet();
+   double min2    = 0.;
+   double max2    = 82.;
+   if      (m2<min2) bin2=0;
+   else if (m2>max2) bin2=bins2;
+   else              bin2=(int)(((m2-min2)/max2)*(double)bins2);
+   //EMF
+   int bin3=0, bins3 = 100;
+   double min3    = 0.;
+   double max3    = 1.;
+   if      (m3<min3) bin3=0;
+   else if (m3>max3) bin3=bins3;
+   else              bin3=(int)(((m3-min3)/max3)*(double)bins3);
+
+   return bin1 *bins2*bins3 + bin2 *bins3 + bin3;
+}
+
 void TCaliber::FlattenSpectra()
 {
   for (int type=0; type<7; ++type){
@@ -156,33 +183,36 @@ void TCaliber::FlattenSpectra()
     if (type==TypeMessMess) continue;
     //if (type==TypePtBalance) continue;
 
-    int bins = 1000;
-    double min=0.;
-    double max=1000.;
     map<int,double> weights;
     double tot=0.;
 
     for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
       if ((*it)->GetType()!=type) continue;
-      int bin;
-      double truth = (*it)->GetScale();
-      
-      if      (truth<min) bin=0;
-      else if (truth>max) bin=bins+1;
-      else                bin=(int)(((truth-min)/max)*(double)bins);
+      double em = 0;
+      double had = 0;
+      for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+	em  += (*t)->GetMess()[1];
+	had += (*t)->GetMess()[2];
+	had += (*t)->GetMess()[3];
+      }
+      int bin = GetSpectraBin( (*it)->GetScale(), (*it)->GetIndex(), em/(em+had)  );
       weights[bin]+=(*it)->GetWeight();
       tot+=(*it)->GetWeight();
     }
     if (tot!=0.)
     for (DataIter it = data.begin(); it!=data.end(); ++it) {
       if ((*it)->GetType()!=type) continue;
-      int bin;
-      double truth = (*it)->GetScale();
 
-      if      (truth<min) bin=0;
-      else if (truth>max) bin=bins+1;
-      else                bin=(int)(((truth-min)/max)*(double)bins);
-      (*it)->SetWeight(1./weights[bin]);
+      double em = 0;
+      double had = 0;
+      for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+	em  += (*t)->GetMess()[1];
+	had += (*t)->GetMess()[2];
+	had += (*t)->GetMess()[3];
+      }
+
+      int bin = GetSpectraBin( (*it)->GetScale(), (*it)->GetIndex(), em/(em+had) );
+      (*it)->SetWeight((*it)->GetWeight()/weights[bin]);
     }
   } 
 }
@@ -601,7 +631,7 @@ void TCaliber::Run()
     if (n_trijet_events!=0)       Run_NJet( trijet);
     if (n_zjet_events!=0)         Run_ZJet();
 
-    //FlattenSpectra();
+    FlattenSpectra();
 
     if (fit_method==1) Run_Lvmini();
   } 

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.11 2008/05/08 17:13:17 auterman Exp $
+// $Id: caliber.h,v 1.12 2008/05/09 13:43:01 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -72,7 +72,8 @@ private:
   double numeric_derivate( void (*func)(int&,double*,double&,double*,int),
                            double * pars, int npar, int index);
   double analytic_derivate( double * pars, int npar, int index);
-
+  int GetSpectraBin(double m1, double m2, double m3);
+  
   //internal variables
   int fit_method, n_gammajet_events, n_tracktower_events, 
       n_trackcluster_events, n_dijet_events, n_trijet_events, n_zjet_events;
