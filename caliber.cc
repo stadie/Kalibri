@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.2 2008/05/09 13:43:01 auterman Exp $
+// $Id: caliber.cc,v 1.3 2008/05/20 17:06:14 auterman Exp $
 //
 #include "caliber.h"
 
@@ -32,7 +32,10 @@ typedef std::vector<TData*>::const_iterator DataConstIter;
 //Outlier Rejection
 struct OutlierRejection {
   OutlierRejection(double cut):_cut(cut){};
-  bool operator()(TData *d){return (d->chi2()/d->GetWeight())<_cut;}
+  bool operator()(TData *d){
+    if(d->GetType()==TypeTowerConstraint) return true;
+    return (d->chi2()/d->GetWeight())<_cut;
+  }
   double _cut;
 };
 
@@ -522,6 +525,52 @@ void TCaliber::Run_TrackCluster()
       break;
   }
 }
+void TCaliber::AddTowerConstraint()
+{
+  //constrain average tower response
+  int ntowers= (tower_constraint_maxeta - tower_constraint_mineta) * 72;
+  double etsum = tower_constraint_hadet + tower_constraint_emet;
+
+  TData_TruthMultMess * tc = new TData_TruthMultMess( 0,
+						      etsum * ntowers, //truth
+						      sqrt(pow(0.5,2)+ pow(0.1*etsum * ntowers,2)), //error
+						      tower_constraint_weight, //weight
+						      0, //params
+						      0, //number of free jet param. p. bin
+						      p->dummy_parametrization, // function
+						      p->jet_error_parametrization // function
+						      );
+  tc->SetType(TypeTowerConstraint);
+  //Add the towers to the event
+  for(int ideta = tower_constraint_mineta ; ideta <= tower_constraint_maxeta  ; ++ideta) {
+    if(ideta == 0) ideta = 1;
+    for(int idphi = 1 ; idphi <= 72  ; ++idphi) {
+      int index=p->GetBin(p->GetEtaBin(ideta),p->GetPhiBin(idphi));
+      if (index<0) {
+	cerr << "INDEX = "<< index << endl;
+	continue;
+      }
+      //create array with multidimensional measurement
+      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
+      mess[0] = etsum;
+      mess[1] = tower_constraint_emet;
+      mess[2] = tower_constraint_hadet;
+      mess[3] = 0;
+      TData_TruthMess *tower = new TData_TruthMess(index,
+						   mess, //mess
+						   etsum, //"truth" for plotting only
+						   sqrt(pow(0.5,2)+ pow(0.1*etsum,2)), //error
+						   1., //weight ???
+						   p->GetTowerParRef(index), //parameter
+						   p->GetNumberOfTowerParametersPerBin(), //number of free cluster param. p. bin
+						   p->tower_parametrization, //function
+						   p->tower_error_parametrization //function
+						   );
+      tc->AddMess(tower);
+    } 
+  } 
+  data.push_back( tc ); 
+}
 
 void TCaliber::Run_NJet(NJetSel & njet)
 {
@@ -630,8 +679,8 @@ void TCaliber::Run()
     if (n_dijet_events!=0)        Run_NJet( dijet);
     if (n_trijet_events!=0)       Run_NJet( trijet);
     if (n_zjet_events!=0)         Run_ZJet();
-
-    FlattenSpectra();
+    if (tower_constraint_weight)  AddTowerConstraint();
+    //FlattenSpectra();
 
     if (fit_method==1) Run_Lvmini();
   } 
@@ -819,6 +868,17 @@ void TCaliber::Init(string file)
   Et_cut_on_track = config.read<double>("Et cut on track",0.0); 
   Et_cut_on_tower = config.read<double>("Et cut on tower",0.0);
   Et_cut_on_cluster = config.read<double>("Et cut on cluster",0.0);
+  //specify constraints
+  vector<double> tower_constraint = bag_of<double>(config.read<string>( "Tower Constraint",""));
+  if(tower_constraint.size() == 5) { 
+    tower_constraint_weight = tower_constraint[0];
+    tower_constraint_maxeta=  (int)tower_constraint[1];
+    tower_constraint_mineta= (int)tower_constraint[2];;
+    tower_constraint_hadet = tower_constraint[3];
+    tower_constraint_emet = tower_constraint[4];
+  } else {
+    tower_constraint_weight = 0;
+  }
   //outlier rejection
   OutlierIterationSteps = config.read<int>("Outlier Iteration Steps",3);
   OutlierChi2Cut        = config.read<double>("Outlier Cut on Chi2",100.0);

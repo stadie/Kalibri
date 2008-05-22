@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.12 2008/05/09 13:43:01 auterman Exp $
+// $Id: caliber.h,v 1.13 2008/05/20 17:06:14 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -63,8 +63,8 @@ protected:
   void Run_TrackCluster();
   void Run_NJet(NJetSel & njet);
   void Run_ZJet();
-
-  void TCaliber::FlattenSpectra();
+  void AddTowerConstraint();
+  void FlattenSpectra();
 
 private:
   void global_fit(int &npar, double *gin, double &f, 
@@ -85,6 +85,9 @@ private:
   int    OutlierIterationSteps;                     //outlier rejection
   int nthreads;
   double OutlierChi2Cut, OutlierChi2CutPresel;
+  int tower_constraint_maxeta,tower_constraint_mineta;
+  double tower_constraint_hadet,tower_constraint_emet;
+  double tower_constraint_weight;
   std::vector<TData*> data;
   
   TParameters * p;    //fit parameters, depend on number of bins & geometry

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.11 2008/02/25 13:10:18 stadie Exp $
+// $Id: CalibData.h,v 1.12 2008/05/09 13:43:01 auterman Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -21,7 +21,7 @@
 #define TypeMessMess     4
 #define TypePtBalance    5
 #define TypeInvMass      6
-
+#define TypeTowerConstraint 7
 //#define __FastErrorCalculation
 
 //virtual data base class -> not directly used!
