@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.12 2008/05/09 13:43:01 auterman Exp $
+// $Id: CalibData.h,v 1.13 2008/05/22 16:54:38 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -160,13 +160,9 @@ public:
       TData_TruthMultMess(index, truth, error, weight, par, n_par, func, err){
       _direction=dir; _type=TypeMessMess;};
     virtual ~TData_MessMess() {
-      for (std::vector<TData*>::const_iterator it=_vecmess.begin();
-	   it!=_vecmess.end(); ++it)
-	delete *it;
-      _vecmess.clear();	
       for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
 	   it!=_m2.end(); ++it)
-	(*it)->~TData_MessMess();
+	delete *it;
       _m2.clear();
       delete [] _direction;	
     };
