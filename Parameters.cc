@@ -242,6 +242,7 @@ int TParameters::GetEtaBin(int const eta_id) const
   //Case 1 bin:
 //cout << "eta="<<eta_id<<", eta_granularity:"<< eta_granularity<< ", eta_ntwr_used:"<< eta_ntwr_used<<endl;
   if (eta_granularity<=1) return 0;
+  if (eta_granularity==2) return (eta_id < 0) ? 0 : 1;
 
   //check if tower is within wanted etarange:
   if ( eta_symmetry && abs(eta_id)*2>(int)eta_ntwr_used)   return -2; 
