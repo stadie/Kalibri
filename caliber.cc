@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.3 2008/05/20 17:06:14 auterman Exp $
+// $Id: caliber.cc,v 1.4 2008/05/22 16:54:38 stadie Exp $
 //
 #include "caliber.h"
 
@@ -84,10 +84,10 @@ private:
   friend class calc_chi2_on;
 public:
   ComputeThread(int npar,double *par, double *temp_derivative1, double *temp_derivative2,
-                            double epsilon) : npar(npar), td1(new double[npar]),
-	            td2(new double[npar]), parorig(par),mypar(new double[npar]),
-	            temp_derivative1(temp_derivative1), temp_derivative2(temp_derivative2), 
-                            epsilon(epsilon) {}
+		double epsilon) 
+    : npar(npar), td1(new double[npar]), td2(new double[npar]), parorig(par),
+      mypar(new double[npar]), temp_derivative1(temp_derivative1),
+      temp_derivative2(temp_derivative2), epsilon(epsilon) {}
   ~ComputeThread() {
     ClearData();
     delete [] td1;
@@ -572,7 +572,7 @@ void TCaliber::AddTowerConstraint()
   data.push_back( tc ); 
 }
 
-void TCaliber::Run_NJet(NJetSel & njet)
+void TCaliber::Run_NJet(NJetSel& njet)
 {
   //@@ TODO: CHECK ERROR CALCULATION!!!
   
@@ -580,7 +580,7 @@ void TCaliber::Run_NJet(NJetSel & njet)
   //Run jet-Jet stuff  
   int nevent = njet.fChain->GetEntries();
   for (int i=0;i<nevent;i++) {
-    if(i%1==0) cout<<"Jet-Jet Event: "<<i<<endl;
+    if(i%1000==0) cout<<"Jet-Jet Event: "<<i<<endl;
     njet.fChain->GetEvent(i); 
     if (njet.NobjTow>10000 || njet.NobjJet>100) {
       cerr << "ERROR: Increase array sizes in NJetSelector; NobjTow="
@@ -591,6 +591,8 @@ void TCaliber::Run_NJet(NJetSel & njet)
     //  n - Jet
     //--------------
     TData_PtBalance * jj_data[ njet.NobjJet ];
+    jj_data[0] = 0;
+    //std::cout << "reading " << njet.NobjJet << " jets\n";
     for (unsigned int ij = 0; (int)ij<njet.NobjJet; ++ij){
       //Find the jets eta & phi index using the leading (ET) tower:
       int jet_index = -1;
@@ -660,11 +662,11 @@ void TCaliber::Run_NJet(NJetSel & njet)
 	    p->tower_parametrization,                               //function//
 	    p->tower_error_parametrization                          //function//
 	  ));
-	if (ij>0) 
-  	  jj_data[0]->AddNewMultMess( jj_data[ij] );
-      }  
+      }
+      if (ij>0) 
+      	jj_data[0]->AddNewMultMess( jj_data[ij] );
     }//loop over all n-jets
-    data.push_back( jj_data[0] ); 
+    if(jj_data[0]) data.push_back( jj_data[0] ); 
   }
 }
 
