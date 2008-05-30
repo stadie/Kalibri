@@ -1,7 +1,9 @@
 #include <fstream>
+#include <cassert>
 #include <pwd.h>
 #include <unistd.h>
-#include <time.h>
+#include <ctime>
+
 
 #include "Parameters.h"
 #include "ConfigFile.h"
