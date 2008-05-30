@@ -1112,7 +1112,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   heta[9]->SetTitle("#gamma-jet 90 < E_{T}^{#gamma} < 300 GeV;#eta");
 
   TH2F* hpt[3];
-  hpt[0] = new TH2F("hpt","#gamma-jet;p_{T} [GeV]",100,20,220,100,0,4);
+  hpt[0] = new TH2F("hpt","#gamma-jet;p_{T} [GeV]",400,0,400,100,0,4);
   hpt[1] = (TH2F*)hpt[0]->Clone();
   hpt[2] = (TH2F*)hpt[0]->Clone();
   
@@ -1123,12 +1123,14 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
  
   TH1F* hptGamma[3];
   TH1F* hptGammaW[3];
-  hptGamma[0]  = new TH1F("hptGamma","#gamma-jet;p_{T} [GeV]",100,20,220);
-  hptGammaW[0] = new TH1F("hptGammaW","#gamma-jet;p_{T} [GeV]",100,20,220);
+  hptGamma[0]  = new TH1F("hptGamma","#gamma-jet;p_{T} [GeV]",100,0,400);
+  hptGammaW[0] = new TH1F("hptGammaW","#gamma-jet;p_{T} [GeV]",100,0,400);
   hptGamma[1]  = new TH1F("hetaGamma","#gamma-jet;#eta",100,-5,5);
   hptGammaW[1] = new TH1F("hetaGammaW","#gamma-jet;#eta",100,-5,5);
   hptGamma[2]  = new TH1F("hemfGamma","#gamma-jet;EMF",100,0,1);
   hptGammaW[2] = new TH1F("hemfGammaW","#gamma-jet;EMF",100,0,1);
+  TH2F* hptGamma2D = new TH2F("hGamma2D","#gamma-jet;p_{T};EMF",500,0,500,100,0,1);
+  TH2F* hptGamma2DW = new TH2F("hGamma2DW","#gamma-jet weights;p_{T};EMF",500,0,500,100,0,1);
   
 
   double bins[101];
@@ -1170,6 +1172,14 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     hptlog[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
     hptlog[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
     hptlog[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());
+/*
+    hpt[0]->Fill(jg->GetMess()[0],etjet/ jg->GetTruth(),jg->GetWeight());
+    hpt[1]->Fill(jg->GetMess()[0],etjetcor/jg->GetTruth(),jg->GetWeight());
+    hpt[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());    
+    hptlog[0]->Fill(jg->GetMess()[0],etjet/ jg->GetTruth(),jg->GetWeight());
+    hptlog[1]->Fill(jg->GetMess()[0],etjetcor/jg->GetTruth(),jg->GetWeight());
+    hptlog[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());
+*/
     //em fraction plots     
     double em = 0;
     double had = 0;
@@ -1188,6 +1198,8 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     hptGammaW[1]->Fill(etajet,jg->GetWeight());
     hptGamma[2]->Fill(em/(em+had));
     hptGammaW[2]->Fill(em/(em+had),jg->GetWeight());
+    hptGamma2D->Fill(jg->GetTruth(),em/(em+had));
+    hptGamma2DW->Fill(jg->GetTruth(),em/(em+had),jg->GetWeight());
   } 
   TH1F* hists[12][6];
   TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
@@ -1350,6 +1362,16 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     leg->Draw();
     c1->Draw(); 
   }
+  c1->SetLogx(0);  
+  c1->SetLogy(0);   
+  c1->SetGrid(0);
+  hptGamma2D->Draw("hist");
+  c1->Draw(); 
+   ps.NewPage(); 
+   
+  hptGamma2DW->Draw("hist");
+  c1->Draw(); 
+  
   ps.NewPage(); 
   delete leg;
   for(int i = 0 ; i < 12 ; ++i) delete heta[i];

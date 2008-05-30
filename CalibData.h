@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.13 2008/05/22 16:54:38 stadie Exp $
+// $Id: CalibData.h,v 1.14 2008/05/22 17:53:53 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -193,11 +193,11 @@ public:
     }
     virtual double GetScale(){
       double sum=0.;
-      if (_m2.size()>1){
-      for (std::vector<TData_MessMess*>::const_iterator it=1+_m2.begin();
-           it<_m2.end(); ++it)
-	 sum+=(*it)->GetMess()[0];
-       sum = (sum+_m2.front()->GetMess()[0])/2.;	 
+      if (_m2.size()>0){
+	std::vector<TData_MessMess*>::const_iterator it=1+_m2.begin();
+	for (; it!=_m2.end(); ++it)
+	   sum+=(*it)->GetMess()[0];
+	 sum = (sum+_m2.front()->GetMess()[0])/2.;	 
       }
       return sum;
     }

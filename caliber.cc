@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.4 2008/05/22 16:54:38 stadie Exp $
+// $Id: caliber.cc,v 1.5 2008/05/22 17:55:34 stadie Exp $
 //
 #include "caliber.h"
 
@@ -35,6 +35,14 @@ struct OutlierRejection {
   bool operator()(TData *d){
     if(d->GetType()==TypeTowerConstraint) return true;
     return (d->chi2()/d->GetWeight())<_cut;
+  }
+  double _cut;
+};
+//ControlCut Selection
+struct ControlCutSelection {
+  ControlCutSelection(double cut):_cut(cut){};
+  bool operator()(TData *d){
+    return d->GetTruth()>_cut;
   }
   double _cut;
 };
@@ -193,14 +201,21 @@ void TCaliber::FlattenSpectra()
       if ((*it)->GetType()!=type) continue;
       double em = 0;
       double had = 0;
+      int index=0;
+      double ptmax=0;
       for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
 	em  += (*t)->GetMess()[1];
 	had += (*t)->GetMess()[2];
 	had += (*t)->GetMess()[3];
+	if ((*t)->GetMess()[1]>ptmax) {
+	  ptmax=(*t)->GetMess()[1];
+	  index=(*t)->GetIndex();
+	}
       }
-      int bin = GetSpectraBin( (*it)->GetScale(), (*it)->GetIndex(), em/(em+had)  );
-      weights[bin]+=(*it)->GetWeight();
-      tot+=(*it)->GetWeight();
+      //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
+      int bin = GetSpectraBin( (*it)->GetScale(), index );
+      weights[bin]+=1.; //(*it)->GetWeight();
+      tot+=1.; //(*it)->GetWeight();
     }
     if (tot!=0.)
     for (DataIter it = data.begin(); it!=data.end(); ++it) {
@@ -208,14 +223,21 @@ void TCaliber::FlattenSpectra()
 
       double em = 0;
       double had = 0;
+      int index=0;
+      double ptmax=0;
       for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
 	em  += (*t)->GetMess()[1];
 	had += (*t)->GetMess()[2];
 	had += (*t)->GetMess()[3];
+	if ((*t)->GetMess()[1]>ptmax) {
+	  ptmax=(*t)->GetMess()[1];
+	  index=(*t)->GetIndex();
+	}
       }
 
-      int bin = GetSpectraBin( (*it)->GetScale(), (*it)->GetIndex(), em/(em+had) );
-      (*it)->SetWeight((*it)->GetWeight()/weights[bin]);
+      //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
+      int bin = GetSpectraBin( (*it)->GetScale(), index );
+      (*it)->SetWeight(1./weights[bin]);
     }
   } 
 }
@@ -236,7 +258,9 @@ void TCaliber::Run_GammaJet()
     }
  
     //trivial cuts
-    if (gammajet.PhotonPt<Et_cut_on_gamma || gammajet.JetCalPt<Et_cut_on_jet) continue;
+    if (//gammajet.PhotonPt<Et_cut_on_gamma || 
+        gammajet.JetGenPt<Et_cut_on_gamma || 
+        gammajet.JetCalPt<Et_cut_on_jet) continue;
      
     //Find the jets eta & phi index using the leading (ET) tower:
     int jet_index=0;
@@ -273,6 +297,7 @@ void TCaliber::Run_GammaJet()
 			  jetp
 			  );
 
+    double EM=0.,F=0.;
     //Add the jet's towers to "gj_data":
     for (int n=0; n<gammajet.NobjTowCal; ++n){
       //if (gammajet.TowEt[n]<0.01) continue;
@@ -293,6 +318,8 @@ void TCaliber::Run_GammaJet()
       mess[1] = double(gammajet.TowEm[n]*scale);
       mess[2] = double(gammajet.TowHad[n]*scale);
       mess[3] = double(gammajet.TowOE[n]*scale);
+      EM+=mess[1];
+      F+=mess[0];
       gj_data->AddMess(new TData_TruthMess(index,
 					   mess,                                                    //mess//
 					   gammajet.PhotonEt * relativEt,                           //truth//
@@ -304,7 +331,8 @@ void TCaliber::Run_GammaJet()
 					   p->tower_error_parametrization                           //function//
 					   ));
     } 
- 
+    if (EM/F<0.05 || EM/F>0.95) continue;
+  
     data.push_back( gj_data ); 
    
     if (n_gammajet_events>=0 && i==n_gammajet_events-1)
@@ -572,15 +600,16 @@ void TCaliber::AddTowerConstraint()
   data.push_back( tc ); 
 }
 
-void TCaliber::Run_NJet(NJetSel& njet)
+void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 {
   //@@ TODO: CHECK ERROR CALCULATION!!!
   
   
   //Run jet-Jet stuff  
   int nevent = njet.fChain->GetEntries();
+  int evt=0;
   for (int i=0;i<nevent;i++) {
-    if(i%1000==0) cout<<"Jet-Jet Event: "<<i<<endl;
+    if((i+1)%10000==0) cout<<injet<<"-Jet Event: "<<i+1<<endl;
     njet.fChain->GetEvent(i); 
     if (njet.NobjTow>10000 || njet.NobjJet>100) {
       cerr << "ERROR: Increase array sizes in NJetSelector; NobjTow="
@@ -666,7 +695,11 @@ void TCaliber::Run_NJet(NJetSel& njet)
       if (ij>0) 
       	jj_data[0]->AddNewMultMess( jj_data[ij] );
     }//loop over all n-jets
-    if(jj_data[0]) data.push_back( jj_data[0] ); 
+    data.push_back( jj_data[0] ); 
+    ++evt;
+    if ((injet==2 && n_dijet_events>=0  && evt>=n_dijet_events) ||
+        (injet==3 && n_trijet_events>=0 && evt>=n_trijet_events))
+      break;
   }
 }
 
@@ -678,9 +711,10 @@ void TCaliber::Run()
     if (n_gammajet_events!=0)     Run_GammaJet();
     if (n_tracktower_events!=0)   Run_TrackTower();
     if (n_trackcluster_events!=0) Run_TrackCluster();
-    if (n_dijet_events!=0)        Run_NJet( dijet);
-    if (n_trijet_events!=0)       Run_NJet( trijet);
+    if (n_dijet_events!=0)        Run_NJet( dijet, 2);
+    if (n_trijet_events!=0)       Run_NJet( trijet, 3);
     if (n_zjet_events!=0)         Run_ZJet();
+
     if (tower_constraint_weight)  AddTowerConstraint();
     //FlattenSpectra();
 
@@ -788,6 +822,7 @@ void TCaliber::Run_Lvmini()
   error_index = lvmind_(error_index);
   p->SetErrors(aux+error_index); 
   p->SetFitChi2(fsum);
+  
   for (int ithreads=0; ithreads<nthreads; ++ithreads){
     delete t[ithreads];
   }
@@ -804,6 +839,16 @@ void TCaliber::Done()
   ofstream outfile (this->GetOutputFile(),ofstream::binary);
   outfile << (*p);
   outfile.close();
+
+  //Apply cuts before control plots are created
+  {
+    DataIter beg =  partition(data.begin(), data.end(), ControlCutSelection(20.));
+    for(DataIter i = beg ; i != data.end() ; ++i) {
+      delete *i;
+    }
+    data.erase(beg,data.end());  
+  }
+
   
   //Do Plots
   if(plots) {
