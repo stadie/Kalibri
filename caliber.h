@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.14 2008/05/22 16:54:38 stadie Exp $
+// $Id: caliber.h,v 1.15 2008/05/30 12:58:52 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -86,9 +86,18 @@ private:
   int    OutlierIterationSteps;                     //outlier rejection
   int nthreads;
   double OutlierChi2Cut, OutlierChi2CutPresel;
-  int tower_constraint_maxeta,tower_constraint_mineta;
-  double tower_constraint_hadet,tower_constraint_emet;
-  double tower_constraint_weight;
+  class TowerConstraint {
+  public:
+    int mineta;
+    int maxeta;
+    double hadEt;
+    double emEt;
+    double weight;
+    TowerConstraint(int mineta,int maxeta,double hadEt, double emEt, double weight) :
+      mineta(mineta),maxeta(maxeta),hadEt(hadEt),emEt(emEt),weight(weight) {}
+  };
+  std::vector<TowerConstraint> tower_constraints;
+  bool flatten_spectra;
   std::vector<TData*> data;
   
   TParameters * p;    //fit parameters, depend on number of bins & geometry

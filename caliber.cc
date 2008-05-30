@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.5 2008/05/22 17:55:34 stadie Exp $
+// $Id: caliber.cc,v 1.6 2008/05/30 12:58:52 auterman Exp $
 //
 #include "caliber.h"
 
@@ -266,8 +266,10 @@ void TCaliber::Run_GammaJet()
     int jet_index=0;
     double max_tower_et = 0.0;
     double em = 0;
+    double had = 0;
     for (int n=0; n<gammajet.NobjTowCal; ++n){
       em += gammajet.TowEm[n];
+      had +=  gammajet.TowHad[n];
       if (gammajet.TowEt[n]>max_tower_et) {
 	jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[n]),
 				 p->GetJetPhiBin(gammajet.TowId_phi[n]));
@@ -275,7 +277,8 @@ void TCaliber::Run_GammaJet()
       }
     }
     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
-    if(em == 0) { continue;}
+    if(had/(had + em) < 0.07) { continue;}
+    if(had/(had + em) > 0.92) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
     double* jetp  = new double[3];
@@ -288,8 +291,8 @@ void TCaliber::Run_GammaJet()
 			  // gammajet.PhotonEt,				    //truth//
 			  gammajet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
-			  //gammajet.EventWeight,                           //weight//
-			  1.0,                                              //weight//
+			  gammajet.EventWeight,                           //weight//
+			  //1.0,                                              //weight//
 			  p->GetJetParRef( jet_index ),                     //params
 			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
 			  p->jet_parametrization,                           //function
@@ -555,49 +558,56 @@ void TCaliber::Run_TrackCluster()
 }
 void TCaliber::AddTowerConstraint()
 {
-  //constrain average tower response
-  int ntowers= (tower_constraint_maxeta - tower_constraint_mineta) * 72;
-  double etsum = tower_constraint_hadet + tower_constraint_emet;
 
-  TData_TruthMultMess * tc = new TData_TruthMultMess( 0,
-						      etsum * ntowers, //truth
-						      sqrt(pow(0.5,2)+ pow(0.1*etsum * ntowers,2)), //error
-						      tower_constraint_weight, //weight
-						      0, //params
-						      0, //number of free jet param. p. bin
-						      p->dummy_parametrization, // function
-						      p->jet_error_parametrization // function
-						      );
-  tc->SetType(TypeTowerConstraint);
-  //Add the towers to the event
-  for(int ideta = tower_constraint_mineta ; ideta <= tower_constraint_maxeta  ; ++ideta) {
-    if(ideta == 0) ideta = 1;
-    for(int idphi = 1 ; idphi <= 72  ; ++idphi) {
-      int index=p->GetBin(p->GetEtaBin(ideta),p->GetPhiBin(idphi));
-      if (index<0) {
-	cerr << "INDEX = "<< index << endl;
-	continue;
-      }
-      //create array with multidimensional measurement
-      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-      mess[0] = etsum;
-      mess[1] = tower_constraint_emet;
-      mess[2] = tower_constraint_hadet;
-      mess[3] = 0;
-      TData_TruthMess *tower = new TData_TruthMess(index,
-						   mess, //mess
-						   etsum, //"truth" for plotting only
-						   sqrt(pow(0.5,2)+ pow(0.1*etsum,2)), //error
-						   1., //weight ???
-						   p->GetTowerParRef(index), //parameter
-						   p->GetNumberOfTowerParametersPerBin(), //number of free cluster param. p. bin
-						   p->tower_parametrization, //function
-						   p->tower_error_parametrization //function
-						   );
-      tc->AddMess(tower);
+  for(std::vector<TowerConstraint>::const_iterator ic = tower_constraints.begin() ;
+      ic != tower_constraints.end() ; ++ic) {
+    std::cout << "adding constraint for towers " << ic->mineta << " to " << ic->maxeta
+	      << " for em Et=" << ic->emEt << " and had Et=" << ic->hadEt 
+	      << " with weight w=" << ic->weight << "\n";
+    //constrain average tower response
+    int ntowers= (ic->maxeta - ic->mineta + 1) * 72;
+    if((ic->maxeta  > 0) && (ic->mineta < 0)) ntowers -= 72;
+    double etsum = ic->hadEt + ic->emEt;
+    TData_TruthMultMess * tc = new TData_TruthMultMess(0,
+						       etsum * ntowers, //truth
+						       sqrt(pow(0.5,2)+ pow(0.1*etsum * ntowers,2)), //error
+						       ic->weight, //weight
+						       0, //params
+						       0, //number of free jet param. p. bin
+						       p->dummy_parametrization, // function
+						       p->const_error<10000> // function
+						       );
+    tc->SetType(TypeTowerConstraint);
+    //Add the towers to the event
+    for(int ideta = ic->mineta ; ideta <= ic->maxeta  ; ++ideta) {
+      if(ideta == 0) ideta = 1;
+      for(int idphi = 1 ; idphi <= 72  ; ++idphi) {
+	int index=p->GetBin(p->GetEtaBin(ideta),p->GetPhiBin(idphi));
+	if (index<0) {
+	  cerr << "INDEX = "<< index << endl;
+	  continue;
+	}
+	//create array with multidimensional measurement
+	double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
+	mess[0] = etsum;
+	mess[1] = ic->emEt;
+	mess[2] = ic->hadEt;
+	mess[3] = 0;
+	TData_TruthMess *tower = new TData_TruthMess(index,
+						     mess, //mess
+						     etsum, //"truth" for plotting only
+						     sqrt(pow(0.5,2)+ pow(0.1*etsum,2)), //error
+						     1.0, //weight ???
+						     p->GetTowerParRef(index), //parameter
+						     p->GetNumberOfTowerParametersPerBin(), //number of free cluster param. p. bin
+						     p->tower_parametrization, //function
+						     p->const_error<10> //function
+						     );
+	tc->AddMess(tower);
+      } 
     } 
+    data.push_back(tc);
   } 
-  data.push_back( tc ); 
 }
 
 void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
@@ -619,13 +629,15 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
     //--------------
     //  n - Jet
     //--------------
-    TData_PtBalance * jj_data[ njet.NobjJet ];
+    TData_PtBalance * jj_data[njet.NobjJet];
     jj_data[0] = 0;
     //std::cout << "reading " << njet.NobjJet << " jets\n";
+    int nstoredjets = 0;
     for (unsigned int ij = 0; (int)ij<njet.NobjJet; ++ij){
       //Find the jets eta & phi index using the leading (ET) tower:
       int jet_index = -1;
       double max_tower_et = 0.0;
+      if(njet.JetPt[ij] < 10.0) continue;
       for (int n=0; n<njet.NobjTow; ++n){
         if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
 //cout << ij<<". jet, "<<n<<". tow with ieta="<<njet.TowId_eta[n]
@@ -649,7 +661,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       direction[1] = cos(njet.JetPhi[ij]);
 
       //Create an jet/Jet TData event
-      jj_data[ij] = new TData_PtBalance( 
+      jj_data[nstoredjets] = new TData_PtBalance( 
           jet_index + p->GetNumberOfTowerParameters(),
 	  direction,                                     //p_T direction of this jet
 	  0.0,                                           //truth//
@@ -660,7 +672,6 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	  p->jet_parametrization,                        //function
 	  p->jet_error_parametrization                   //function
         );
-
       //Add the jet's towers to "jj_data":
       for (int n=0; n<njet.NobjTow; ++n){
         if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
@@ -680,7 +691,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	mess[1] = double(njet.TowEm[n]*scale);
 	mess[2] = double(njet.TowHad[n]*scale);
 	mess[3] = double(njet.TowOE[n]*scale);
-	jj_data[ij]->AddMess(new TData_TruthMess(
+	jj_data[nstoredjets]->AddMess(new TData_TruthMess(
 	    index,
 	    mess,                                                   //mess//
 	    njet.JetPt[ij] * relativEt,                           //truth//
@@ -692,11 +703,16 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	    p->tower_error_parametrization                          //function//
 	  ));
       }
-      if (ij>0) 
-      	jj_data[0]->AddNewMultMess( jj_data[ij] );
+      if(nstoredjets> 0) 
+      	jj_data[0]->AddNewMultMess( jj_data[nstoredjets] );
+      ++nstoredjets;
     }//loop over all n-jets
-    data.push_back( jj_data[0] ); 
-    ++evt;
+    if(jj_data[0] && nstoredjets == injet && jj_data[0]->GetScale() > 15.0) {
+      data.push_back( jj_data[0] ); 
+      ++evt;
+    } else {
+      delete jj_data[0];
+    }
     if ((injet==2 && n_dijet_events>=0  && evt>=n_dijet_events) ||
         (injet==3 && n_trijet_events>=0 && evt>=n_trijet_events))
       break;
@@ -708,15 +724,15 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 void TCaliber::Run()
 {
   if (fit_method!=3){
-    if (n_gammajet_events!=0)     Run_GammaJet();
-    if (n_tracktower_events!=0)   Run_TrackTower();
-    if (n_trackcluster_events!=0) Run_TrackCluster();
-    if (n_dijet_events!=0)        Run_NJet( dijet, 2);
-    if (n_trijet_events!=0)       Run_NJet( trijet, 3);
-    if (n_zjet_events!=0)         Run_ZJet();
 
-    if (tower_constraint_weight)  AddTowerConstraint();
-    //FlattenSpectra();
+    if (n_gammajet_events!=0)         Run_GammaJet();
+    if (n_tracktower_events!=0)       Run_TrackTower();
+    if (n_trackcluster_events!=0)     Run_TrackCluster();
+    if (n_dijet_events!=0)            Run_NJet( dijet, 2);
+    if (n_trijet_events!=0)           Run_NJet( trijet, 3);
+    if (n_zjet_events!=0)             Run_ZJet();
+    if (flatten_spectra)              FlattenSpectra();
+    if (! tower_constraints.empty())  AddTowerConstraint();
 
     if (fit_method==1) Run_Lvmini();
   } 
@@ -908,6 +924,7 @@ void TCaliber::Init(string file)
   //read config file
   fit_method = config.read<int>("Fit method",1);
   nthreads = config.read<int>("Number of Threads",1);
+  flatten_spectra = config.read<int>("Flatten Spectra",1);
   //last minute kinematic cuts
   Et_cut_on_jet   = config.read<double>("Et cut on jet",0.0); 
   Et_cut_on_gamma = config.read<double>("Et cut on gamma",0.0); 
@@ -917,14 +934,14 @@ void TCaliber::Init(string file)
   Et_cut_on_cluster = config.read<double>("Et cut on cluster",0.0);
   //specify constraints
   vector<double> tower_constraint = bag_of<double>(config.read<string>( "Tower Constraint",""));
-  if(tower_constraint.size() == 5) { 
-    tower_constraint_weight = tower_constraint[0];
-    tower_constraint_maxeta=  (int)tower_constraint[1];
-    tower_constraint_mineta= (int)tower_constraint[2];;
-    tower_constraint_hadet = tower_constraint[3];
-    tower_constraint_emet = tower_constraint[4];
+  if(tower_constraint.size() % 5 == 0) {
+    for(unsigned int i = 0 ; i < tower_constraint.size() ; i += 5) {
+      tower_constraints.push_back(TowerConstraint((int)tower_constraint[i],(int)tower_constraint[i+1],
+						  tower_constraint[i+2],tower_constraint[i+3],
+						  tower_constraint[i+4]));
+    } 
   } else {
-    tower_constraint_weight = 0;
+    std::cout << "wrong number of arguments for tower constraint:" << tower_constraint.size() << '\n';
   }
   //outlier rejection
   OutlierIterationSteps = config.read<int>("Outlier Iteration Steps",3);
