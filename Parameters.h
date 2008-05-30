@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.19 2008/04/11 16:59:19 stadie Exp $
+// $Id: Parameters.h,v 1.20 2008/05/08 17:13:17 auterman Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -65,6 +65,10 @@ public :
   }
   static double dummy_parametrization(double *x,double *par) {
     return x[0];
+  }
+
+  template<int Et> static double const_error(double * x) {
+    return Et;
   }
   
   static double tower_error_parametrization(double * x) {
@@ -135,6 +139,5 @@ private:
   };
   friend class Cleaner;
 };
-
 
 #endif
