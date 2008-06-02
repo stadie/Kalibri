@@ -6,6 +6,7 @@
 #include <cmath>
 //User
 #include "Parameters.h"
+#include "TF1.h"
 
 #include <iostream>
 
@@ -30,7 +31,7 @@ public:
 
 private:  
   void ReadConfigFile(std::string config);
-  void Fit2D(TH2F* hist, TH1F* hresults[6]);
+  void Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4]);
 
   std::vector<TData*> * data;
   TParameters * p;
