@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.C,v 1.11 2008/02/25 13:10:18 stadie Exp $
+// $Id: CalibData.cc,v 1.1 2008/05/08 17:13:16 auterman Exp $
 //
 #include "CalibData.h"
 #include "map"
@@ -196,27 +196,30 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
   //Get all tower parameter used in this event:  
   std::map<int,double*> tpars;
   for (std::vector<TData*>::const_iterator it=_vecmess.begin();
-       it!=_vecmess.end(); ++it) 
-     for (unsigned i=(*it)->GetIndex(); i<(*it)->GetIndex()+(*it)->GetNumberOfPars(); ++i)
-	 tpars[ i ]= &((*it)->GetPar()[i]);
+       it!=_vecmess.end(); ++it) {
+    for (unsigned i= 0 ; i < (*it)->GetNumberOfPars(); ++i) {
+      tpars[ (*it)->GetIndex() * (*it)->GetNumberOfPars() + i ] = &((*it)->GetPar()[i]);
+    }
+  }
   for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
-       mit!=_m2.end();++mit){
-     std::vector<TData*>::const_iterator mitend=(*mit)->GetRef().end();  
-     for (std::vector<TData*>::const_iterator it=(*mit)->GetRef().begin();
-	it!=mitend; ++it) {
-       for (unsigned i=(*it)->GetIndex(); i<(*it)->GetIndex()+(*it)->GetNumberOfPars(); ++i)
-	   tpars[ i ]= &((*it)->GetPar()[i]);
-       }
-     }  
+       mit!=_m2.end();++mit) {
+    std::vector<TData*>::const_iterator mitend=(*mit)->GetRef().end();  
+    for (std::vector<TData*>::const_iterator it=(*mit)->GetRef().begin();
+	 it!=mitend; ++it) { 
+      for (unsigned i= 0 ; i < (*it)->GetNumberOfPars(); ++i) {
+	tpars[ (*it)->GetIndex() * (*it)->GetNumberOfPars() + i ] = &((*it)->GetPar()[i]);
+      }
+    }  
+  }
   //Add all jet parameters in this event:
   for (unsigned i=0; i<_n_par; ++i)
     tpars[ i+_index ]= &(_par[i]);
   for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
        mit!=_m2.end();++mit)
-    for (unsigned i=0; i<(*mit)->GetNumberOfPars(); ++i)
-	{tpars[ i+(*mit)->GetIndex() ]= &((*mit)->GetPar()[i]);
-	}
-
+    for (unsigned i=0; i<(*mit)->GetNumberOfPars(); ++i) {
+      tpars[ i+(*mit)->GetIndex() ]= &((*mit)->GetPar()[i]);
+    }
+  
   //This event's chi^2 for the current (unchanged) parameters:
   new_chi2 = chi2();
 
@@ -288,11 +291,11 @@ double TData_PtBalance::combine(){
   y = dummy * _direction[1];
   for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
        it!=_m2.end();++it){
-    dummy = (*it)->GetParametrizedMess();
+    dummy = (*it)->GetParametrizedMess(); 
     x += dummy * (*it)->GetDirection()[0];
     y += dummy * (*it)->GetDirection()[1];  
   }
-  return x*x+y*y;     
+  return sqrt(x*x+y*y);     
 };
 
 double TData_InvMass::combine(){
@@ -316,5 +319,5 @@ double TData_InvMass::combine(){
     z += tz;
     e += sqrt( tx*tx + ty*ty + tz*tz );
   }
-  return e*e - x*x - y*y - z*z;     
+  return sqrt(e*e - x*x - y*y - z*z);     
 };

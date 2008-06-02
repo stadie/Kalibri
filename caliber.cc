@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.6 2008/05/30 12:58:52 auterman Exp $
+// $Id: caliber.cc,v 1.7 2008/05/30 15:35:21 stadie Exp $
 //
 #include "caliber.h"
 
@@ -504,7 +504,10 @@ void TCaliber::Run_TrackCluster()
       cluster_energy += trackcluster.TowEt[n];
 
     if (trackcluster.TrackEt < Et_cut_on_track || cluster_energy < Et_cut_on_cluster) continue;
- 
+    double* clusterp  = new double[3];
+    clusterp[0] = cluster_energy;
+    clusterp[1] = trackcluster.TrackEta;
+    clusterp[2] = trackcluster.TrackPhi;
     //Define Track-Cluster event	
     TData_TruthMultMess * tc = new TData_TruthMultMess( 0,
 							trackcluster.TrackEt,  			           //truth//
@@ -514,8 +517,8 @@ void TCaliber::Run_TrackCluster()
 							0,                                                 //params
 							0,                                                 //number of free jet param. p. bin
 							p->dummy_parametrization,                          //function
-							p->jet_error_parametrization                       //function
-							);
+							p->jet_error_parametrization,                       //function
+							clusterp);
     tc->SetType( TypeTrackCluster );
     //Add the towers to the event
     for (int n=0; n<trackcluster.NobjTowCal; ++n){
@@ -568,6 +571,10 @@ void TCaliber::AddTowerConstraint()
     int ntowers= (ic->maxeta - ic->mineta + 1) * 72;
     if((ic->maxeta  > 0) && (ic->mineta < 0)) ntowers -= 72;
     double etsum = ic->hadEt + ic->emEt;
+    double constraintp[3];
+    constraintp[0] = etsum;
+    constraintp[1] = 0;
+    constraintp[2] = 0;
     TData_TruthMultMess * tc = new TData_TruthMultMess(0,
 						       etsum * ntowers, //truth
 						       sqrt(pow(0.5,2)+ pow(0.1*etsum * ntowers,2)), //error
@@ -575,8 +582,8 @@ void TCaliber::AddTowerConstraint()
 						       0, //params
 						       0, //number of free jet param. p. bin
 						       p->dummy_parametrization, // function
-						       p->const_error<10000> // function
-						       );
+						       p->const_error<10000>, // function
+						       constraintp);
     tc->SetType(TypeTowerConstraint);
     //Add the towers to the event
     for(int ideta = ic->mineta ; ideta <= ic->maxeta  ; ++ideta) {
@@ -612,9 +619,6 @@ void TCaliber::AddTowerConstraint()
 
 void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 {
-  //@@ TODO: CHECK ERROR CALCULATION!!!
-  
-  
   //Run jet-Jet stuff  
   int nevent = njet.fChain->GetEntries();
   int evt=0;
@@ -640,11 +644,11 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       if(njet.JetPt[ij] < 10.0) continue;
       for (int n=0; n<njet.NobjTow; ++n){
         if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
-//cout << ij<<". jet, "<<n<<". tow with ieta="<<njet.TowId_eta[n]
-//     <<", iphi="<<njet.TowId_phi[n]
-//     <<",  jetidx = " << p->GetJetBin(p->GetJetEtaBin(njet.TowId_eta[n]),
-//				 p->GetJetPhiBin(njet.TowId_phi[n]))
-//     <<endl;
+	//	cout << ij<<". jet, "<<n<<". tow with ieta="<<njet.TowId_eta[n]
+	//	     <<", iphi="<<njet.TowId_phi[n]
+	//     <<",  jetidx = " << p->GetJetBin(p->GetJetEtaBin(njet.TowId_eta[n]),
+	//				 p->GetJetPhiBin(njet.TowId_phi[n]))
+	//     <<endl;
 	if (njet.TowEt[n]>max_tower_et) {
 	  jet_index = p->GetJetBin(p->GetJetEtaBin(njet.TowId_eta[n]),
 				   p->GetJetPhiBin(njet.TowId_phi[n]));
@@ -659,18 +663,23 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       double * direction = new double[2];
       direction[0] = sin(njet.JetPhi[ij]);
       direction[1] = cos(njet.JetPhi[ij]);
-
+      double* jetp  = new double[3];
+      jetp[0] = njet.JetEt[ij];
+      jetp[1] = njet.JetEta[ij];
+      jetp[2] = njet.JetPhi[ij];
       //Create an jet/Jet TData event
       jj_data[nstoredjets] = new TData_PtBalance( 
-          jet_index + p->GetNumberOfTowerParameters(),
+          jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
 	  direction,                                     //p_T direction of this jet
 	  0.0,                                           //truth//
 	  sqrt(pow(0.5,2)+pow(0.10*njet.JetPt[ij],2)),   //error//
 	  1.,                                            //weight//
 	  p->GetJetParRef( jet_index ),                  //params
 	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-	  p->jet_parametrization,                        //function
-	  p->jet_error_parametrization                   //function
+	  //p->jet_parametrization,                      //function
+	  p->dummy_parametrization,
+	  p->jet_error_parametrization,                  //function
+	  jetp                                           //jet momentum for plotting and scale
         );
       //Add the jet's towers to "jj_data":
       for (int n=0; n<njet.NobjTow; ++n){
@@ -679,6 +688,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 
 	int index = p->GetBin(p->GetEtaBin(njet.TowId_eta[n]),
 			      p->GetPhiBin(njet.TowId_phi[n]));
+	//std::cout << "jet:" << ij << "bin index:" << index << "\n";
 	if (index<0){ cerr<<"WARNING: JJ tower_index = " << index << endl; continue; }
 
 	double relativEt = njet.TowEt[n]/njet.JetEt[ij];  

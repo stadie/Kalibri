@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.15 2008/05/30 12:58:52 auterman Exp $
+// $Id: CalibData.h,v 1.16 2008/05/30 15:32:15 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -93,9 +93,9 @@ private:
 class TData_TruthMultMess : public TData_TruthMess
 {
 public:
-  TData_TruthMultMess(unsigned short int index, double truth, double error, double weight, double * par, 
-		      unsigned short int n_par,double(*func)(double*,double*),
-		      double(*err)(double*), double *mess= 0) :
+  TData_TruthMultMess(unsigned short int index, double truth, double error, 
+		      double weight, double * par, unsigned short int n_par,
+		      double(*func)(double*,double*), double(*err)(double*), double *mess) :
     TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=TypeGammaJet;};
   virtual ~TData_TruthMultMess() {
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
@@ -104,17 +104,18 @@ public:
     _vecmess.clear();	
   };
   void AddMess(TData_TruthMess * m){_vecmess.push_back(m);};
-  virtual double * GetMess(){//used only for plotting
-    double *dummy, *result=new double[__DimensionMeasurement];
-    for (unsigned i=0; i<__DimensionMeasurement; ++i) result[i]=0.0;
-    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
-   	 it!=_vecmess.end(); ++it){
-      dummy = (*it)->GetMess();
-      for (int i=0; i<__DimensionMeasurement; ++i)	 
-	result[i]+=dummy[i];
-    }	 
-    return result;	  
-  };
+  // use GetMess from base class
+/*   virtual double * GetMess(){//used only for plotting */
+/*     double *dummy, *result=new double[__DimensionMeasurement]; */
+/*     for (unsigned i=0; i<__DimensionMeasurement; ++i) result[i]=0.0; */
+/*     for (std::vector<TData*>::const_iterator it=_vecmess.begin(); */
+/*    	 it!=_vecmess.end(); ++it){ */
+/*       dummy = (*it)->GetMess(); */
+/*       for (int i=0; i<__DimensionMeasurement; ++i)	  */
+/* 	result[i]+=dummy[i]; */
+/*     }	  */
+/*     return result;	   */
+/*   }; */
   virtual double GetParametrizedMess(){
     double result=0.0;
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
@@ -156,8 +157,8 @@ class TData_MessMess : public TData_TruthMultMess
 public:
     TData_MessMess(unsigned short int index, double * dir, double truth, double error, 
                    double weight, double * par, unsigned short int n_par,
-        double(*func)(double*,double*),	double(*err)(double*)):
-      TData_TruthMultMess(index, truth, error, weight, par, n_par, func, err){
+		   double(*func)(double*,double*), double(*err)(double*), double *mess):
+      TData_TruthMultMess(index, truth, error, weight, par, n_par, func, err, mess){
       _direction=dir; _type=TypeMessMess;};
     virtual ~TData_MessMess() {
       for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
@@ -180,7 +181,9 @@ public:
       }
       new_mess  = GetParametrizedMess();
       new_error = _err( &new_mess );
-      new_mess  = GetMessCombination();  
+      new_mess  = GetMessCombination();
+      //std::cout << "new_mess:" << new_mess << " error:" << new_error << " and " << sqrt(sum_error2) 
+      //		<< '\n';
       return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
     };
     virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
@@ -209,28 +212,32 @@ protected:
 class TData_PtBalance : public TData_MessMess
 {
 public:
-    TData_PtBalance(unsigned short int index, double * dir, double truth, double error, 
-	double weight, double * par, unsigned short int n_par,
-        double(*func)(double*,double*),	double(*err)(double*)):
-    TData_MessMess(index, dir, truth*truth, error, weight, par, n_par, func, err){_type=TypePtBalance;};
-    virtual ~TData_PtBalance(){};
-    virtual double GetTruth(){ return sqrt(_truth);};
+  TData_PtBalance(unsigned short int index, double * dir, double truth, double error, 
+		  double weight, double * par, unsigned short int n_par,
+		  double(*func)(double*,double*),	double(*err)(double*), double *mess) 
+    : TData_MessMess(index, dir, truth*truth, error, weight, par, n_par, func, err, mess) {
+    _type=TypePtBalance;
+  };
+  virtual ~TData_PtBalance(){};
+  virtual double GetTruth(){ return sqrt(_truth);};
 protected:
-    virtual double combine();  
+  virtual double combine();  
 };
 
 //e.g. top-Mass, W-mass, etc..
 class TData_InvMass : public TData_MessMess
 {
 public:
-    TData_InvMass(unsigned short int index, double * dir, double truth, double error, double weight,
-        double * par, unsigned short int n_par,
-        double(*func)(double*,double*),	double(*err)(double*)):
-    TData_MessMess(index, dir, truth*truth, error, weight, par, n_par, func, err){_type=TypeInvMass;};
-    virtual ~TData_InvMass(){};
-    virtual double GetTruth(){ return sqrt(_truth);};
-protected:
-    virtual double combine();  
+  TData_InvMass(unsigned short int index, double * dir, double truth, double error, double weight,
+		double * par, unsigned short int n_par,
+		double(*func)(double*,double*),	double(*err)(double*), double *mess) 
+    : TData_MessMess(index, dir, truth*truth, error, weight, par, n_par, func, err, mess) {
+    _type=TypeInvMass;
+  };
+  virtual ~TData_InvMass(){};
+  virtual double GetTruth(){ return sqrt(_truth);};
+ protected:
+  virtual double combine();  
 };
 
 #endif
