@@ -1609,6 +1609,12 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF
   TH1F* htemp = new TH1F("htemp","",hist->GetNbinsY(),hist->GetYaxis()->GetXmin(),
 		          hist->GetYaxis()->GetXmax());
   htemp->Sumw2();
+  for(int i=0;i<3;++i) 
+    {
+      gaussplots[i] = (TH1F*)htemp->Clone("hnew");
+      gf[i] = new TF1("dummy","0",0,1);
+    }
+
   const int nq = 2;
   double yq[2],xq[2];
   xq[0] = 0.5;
@@ -1620,6 +1626,7 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF
       //htemp->Fill(htemp->GetBinCenter(j),hist->GetBinContent(hist->GetBin(i,j)));
       htemp->SetBinError(j,hist->GetBinError(i,j));
     }  
+
     if(htemp->GetSumOfWeights() <= 0) continue;
     htemp->Fit("gaus","LLQNO","");
     TF1 *f = (TF1*)gROOT->GetFunction("gaus")->Clone();
