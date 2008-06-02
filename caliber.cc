@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.8 2008/06/02 11:51:34 stadie Exp $
+// $Id: caliber.cc,v 1.9 2008/06/02 14:17:22 stadie Exp $
 //
 #include "caliber.h"
 
@@ -237,7 +237,8 @@ void TCaliber::FlattenSpectra()
 
       //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
       int bin = GetSpectraBin( (*it)->GetScale(), index );
-      (*it)->SetWeight(1./weights[bin]);
+      //(*it)->SetWeight(1./weights[bin]);
+      (*it)->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
     }
   } 
 }
