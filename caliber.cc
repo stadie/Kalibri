@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.7 2008/05/30 15:35:21 stadie Exp $
+// $Id: caliber.cc,v 1.8 2008/06/02 11:51:34 stadie Exp $
 //
 #include "caliber.h"
 
@@ -571,7 +571,7 @@ void TCaliber::AddTowerConstraint()
     int ntowers= (ic->maxeta - ic->mineta + 1) * 72;
     if((ic->maxeta  > 0) && (ic->mineta < 0)) ntowers -= 72;
     double etsum = ic->hadEt + ic->emEt;
-    double constraintp[3];
+    double* constraintp = new double[3];
     constraintp[0] = etsum;
     constraintp[1] = 0;
     constraintp[2] = 0;
