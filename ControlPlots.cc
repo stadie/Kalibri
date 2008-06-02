@@ -16,7 +16,7 @@
 #include "TStyle.h"
 #include "TH1.h"
 #include "TH2F.h"
-#include "TF1.h"
+//#include "TF1.h"
 #include "TLegend.h"
 #include "TProfile.h"
 #include "TROOT.h"
@@ -1101,6 +1101,8 @@ void TControlPlots::TrackClusterControlPlots()  // Track-Cluster Control Histogr
 void TControlPlots::GammaJetControlPlotsJetJEC()
 {
   TCanvas * c1 = new TCanvas("controlplots","",600,600);
+  TCanvas * c2 = new TCanvas("controlplotsGauss","",600,600);
+  c2->Divide(1,3);
   TPostScript ps("controlplots.ps",111);
 
   //book hists
@@ -1131,7 +1133,6 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   hptGammaW[2] = new TH1F("hemfGammaW","#gamma-jet;EMF",100,0,1);
   TH2F* hptGamma2D = new TH2F("hGamma2D","#gamma-jet;p_{T};EMF",500,0,500,100,0,1);
   TH2F* hptGamma2DW = new TH2F("hGamma2DW","#gamma-jet weights;p_{T};EMF",500,0,500,100,0,1);
-  
 
   double bins[101];
   for(int i = 0; i < 101 ; ++i) {
@@ -1145,6 +1146,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   //loop over all fit-events
   for ( std::vector<TData*>::iterator i = data->begin() ; i != data->end() ; ++i )  {
     TData* jg = *i;
+
     if( jg->GetType() != TypeGammaJet ) continue;
     double etjet = jg->GetMess()[0];
     double etjetcor = jg->GetParametrizedMess();
@@ -1201,7 +1203,21 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     hptGamma2D->Fill(jg->GetTruth(),em/(em+had));
     hptGamma2DW->Fill(jg->GetTruth(),em/(em+had),jg->GetWeight());
   } 
-  TH1F* hists[12][6];
+  TH1F* hists[12][8];
+
+  for(int i=0; i<3;++i)
+    {
+	  heta[4*i]->Sumw2();
+	  heta[4*i+1]->Sumw2();
+	  heta[4*i+2]->Sumw2();
+	  heta[4*i+3]->Sumw2();
+	  hpt[i]->Sumw2();
+	  hemf[i]->Sumw2();
+	  hptlog[i]->Sumw2();
+    }
+  TH1F* gaussplots[3][4];  
+  TF1* gf[3][4];          
+
   TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
   leg->AddEntry(heta[0],"p^{jet}_{T}/ E_{T}^{#gamma}","p");
   leg->AddEntry(heta[2],"p_{T}^{jet}/p_{T}^{cor. jet}","p");
@@ -1218,10 +1234,44 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     heta[i]->SetMinimum(0.5);
     heta[i]->SetMaximum(1.2);
     leg->Draw();
-    Fit2D(heta[i],hists[i]);
-    Fit2D(heta[i+1],hists[i+1]);
-    Fit2D(heta[i+2],hists[i+2]);
-    for(int j = 0 ; j < 6 ; ++j) {
+
+    Fit2D(heta[i],hists[i],gaussplots[0], gf[0]);
+    Fit2D(heta[i+1],hists[i+1],gaussplots[1], gf[1]);
+    Fit2D(heta[i+2],hists[i+2],gaussplots[2], gf[2]);
+
+  for(int k=0;k<3;++k)
+    {
+    gaussplots[0][k]->SetMarkerStyle(20);
+    gaussplots[0][k]->SetMarkerColor(1);
+    gaussplots[1][k]->SetMarkerStyle(22);
+    gaussplots[1][k]->SetMarkerColor(2);
+    gaussplots[2][k]->SetMarkerStyle(4);
+    gaussplots[2][k]->SetMarkerColor(4);
+    }
+
+  for(int a=0; a<1;++a) // 1: pt(jet)/Et(gamma), 2: pt(jet)/pt(corJet), 3: pt(corJet)/Et(gamma)
+      {
+	for(int b=0;b<3;++b) 
+	  {
+	    if(i==0)    
+	      gaussplots[a][b]->SetTitle("#gamma-jet full energy range;#eta");
+	    if(i==3)    
+	      gaussplots[a][b]->SetTitle("#gamma-jet 10 < E_{T}^{#gamma} < 35 GeV;#eta");
+	    if(i==6)    
+	      gaussplots[a][b]->SetTitle("#gamma-jet 35 < E_{T}^{#gamma} < 90 GeV;#eta");
+	    if(i==9)    
+	      gaussplots[a][b]->SetTitle("#gamma-jet 90 < E_{T}^{#gamma} < 300 GeV;#eta");
+	    c2->cd(b);
+	    gaussplots[a][b]->Draw();
+	    gf[a][b]->Draw("same");
+	    c2->Update();
+	  }
+	c2->Draw();
+	ps.NewPage();
+      }
+    c1->cd();
+
+    for(int j = 0 ; j < 8 ; ++j) {
       hists[i][j]->Draw();
       hists[i][j]->SetStats(0);
       hists[i+1][j]->Draw("SAME");
@@ -1241,7 +1291,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   hists[4][2]->SetTitle("p^{cor. jet}_{T}/ E_{T}^{#gamma}   mean;#eta");
   hists[4][3]->SetTitle("p^{cor. jet}_{T}/ E_{T}^{#gamma}    rel. width;#eta");
   for(int j = 3 ; j < 5 ; ++j) {
-    for(int i = 2 ; i < 4 ; ++i) {
+    for(int i = 2 ; i < 8 ; ++i) {
       hists[j][i]->SetMarkerStyle(20);
       hists[j][i]->SetMarkerColor(1);
       hists[j+3][i]->SetMarkerStyle(4);
@@ -1260,7 +1310,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   }
   delete leg2;
   for(int i = 0 ; i < 12 ; ++i) {
-    for(int j = 0 ; j < 6 ; ++j) {
+    for(int j = 0 ; j < 8 ; ++j) {
       delete hists[i][j];
     }	
   }
@@ -1270,10 +1320,36 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   hpt[2]->SetMarkerColor(4);  
   hpt[1]->SetMarkerStyle(22);
   hpt[1]->SetMarkerColor(2);
-  Fit2D(hpt[0],hists[0]);
-  Fit2D(hpt[1],hists[1]);
-  Fit2D(hpt[2],hists[2]);
-  for(int i = 0 ; i < 6 ; ++i) {
+  Fit2D(hpt[0],hists[0],gaussplots[0], gf[0]);
+  Fit2D(hpt[1],hists[1],gaussplots[1], gf[1]);
+  Fit2D(hpt[2],hists[2],gaussplots[2], gf[2]);
+  for(int k=0;k<3;++k)
+    {
+    gaussplots[0][k]->SetMarkerStyle(20);
+    gaussplots[0][k]->SetMarkerColor(1);
+    gaussplots[1][k]->SetMarkerStyle(22);
+    gaussplots[1][k]->SetMarkerColor(2);
+    gaussplots[2][k]->SetMarkerStyle(4);
+    gaussplots[2][k]->SetMarkerColor(4);
+    }
+    for(int a=0; a<1;++a)
+      {
+	for(int b=0;b<3;++b)
+	  { 
+	    gaussplots[a][b]->SetTitle("#gamma-jet;p_{T} [GeV]");
+	    c2->cd(b);
+	    gaussplots[a][b]->Draw();
+	    gf[a][b]->Draw("same");
+	    c2->Update();
+	  }
+      }
+    c2->Draw();
+    ps.NewPage();
+    c1->cd();
+
+
+
+  for(int i = 0 ; i < 8 ; ++i) {
     hists[0][i]->Draw();
     hists[0][i]->SetStats(0);
     hists[1][i]->Draw("SAME");
@@ -1283,7 +1359,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     c1->Draw();   
     ps.NewPage(); 
   }
-  for(int i = 0 ; i < 6 ; ++i) {
+  for(int i = 0 ; i < 8 ; ++i) {
     delete hists[0][i];
     delete hists[1][i];
     delete hists[2][i];
@@ -1294,10 +1370,34 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   hemf[2]->SetMarkerColor(4);  
   hemf[1]->SetMarkerStyle(22);
   hemf[1]->SetMarkerColor(2);
-  Fit2D(hemf[0],hists[0]);
-  Fit2D(hemf[1],hists[1]);
-  Fit2D(hemf[2],hists[2]);
-  for(int i = 0 ; i < 6 ; ++i) {
+  Fit2D(hemf[0],hists[0],gaussplots[0], gf[0]);
+  Fit2D(hemf[1],hists[1],gaussplots[1], gf[1]);
+  Fit2D(hemf[2],hists[2],gaussplots[2], gf[2]);
+  for(int k=0;k<3;++k)
+    {
+    gaussplots[0][k]->SetMarkerStyle(20);
+    gaussplots[0][k]->SetMarkerColor(1);
+    gaussplots[1][k]->SetMarkerStyle(22);
+    gaussplots[1][k]->SetMarkerColor(2);
+    gaussplots[2][k]->SetMarkerStyle(4);
+    gaussplots[2][k]->SetMarkerColor(4);
+    }
+    for(int a=0; a<1;++a) 
+      {
+	for(int b=0;b<3;++b)
+	  {
+	    gaussplots[a][b]->SetTitle("#gamma-jet;EMF");
+	    c2->cd(b);
+	    gaussplots[a][b]->Draw();
+	    gf[a][b]->Draw("same");
+	    c2->Update();
+	  }
+      }
+    c2->Draw();
+    ps.NewPage();
+    c1->cd();
+
+  for(int i = 0 ; i < 8 ; ++i) {
     hists[0][i]->Draw();
     hists[0][i]->SetStats(0);
     hists[1][i]->Draw("SAME");
@@ -1307,13 +1407,12 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     c1->Draw();   
     ps.NewPage(); 
   }
-  for(int i = 0 ; i < 6 ; ++i) {
+  for(int i = 0 ; i < 8 ; ++i) {
     delete hists[0][i];
     delete hists[1][i];
     delete hists[2][i];
   }
-  
-  hptlog[0]->SetMarkerStyle(20);
+    hptlog[0]->SetMarkerStyle(20);
   hptlog[0]->SetMarkerColor(1);
   hptlog[0]->SetMinimum(0.2);
   hptlog[0]->SetMaximum(1.8);
@@ -1321,10 +1420,43 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   hptlog[2]->SetMarkerColor(4);  
   hptlog[1]->SetMarkerStyle(22);
   hptlog[1]->SetMarkerColor(2);  
-  Fit2D(hptlog[0],hists[0]);
-  Fit2D(hptlog[1],hists[1]);
-  Fit2D(hptlog[2],hists[2]);
-  for(int i = 0 ; i < 6 ; ++i) {
+  Fit2D(hptlog[0],hists[0],gaussplots[0], gf[0]);
+  Fit2D(hptlog[1],hists[1],gaussplots[1], gf[1]);
+  Fit2D(hptlog[2],hists[2],gaussplots[2], gf[2]);
+  for(int k=0;k<3;++k)
+    {
+    gaussplots[0][k]->SetMarkerStyle(20);
+    gaussplots[0][k]->SetMarkerColor(1);
+    gaussplots[1][k]->SetMarkerStyle(22);
+    gaussplots[1][k]->SetMarkerColor(2);
+    gaussplots[2][k]->SetMarkerStyle(4);
+    gaussplots[2][k]->SetMarkerColor(4);
+    }
+    for(int a=0; a<1;++a)
+      {
+	for(int b=0;b<3;++b) 
+	  {
+	    gaussplots[a][b]->SetTitle("#gamma-jet;p_{T} (log)[GeV]");
+	    c2->cd(b);
+	    gaussplots[a][b]->Draw();
+	    gf[a][b]->Draw("same");
+	    c2->Update();
+	  }
+      }
+    c2->Draw();
+    ps.NewPage();
+    c1->cd();
+
+    for(int i = 0 ; i < 3 ; ++i) 
+      {
+	for(int j=0; j<3;++j)
+	  {
+	    delete gaussplots[i][j];
+	    delete gf[i][j];
+	  }
+      }
+
+  for(int i = 0 ; i < 8 ; ++i) {
     hists[0][i]->Draw();
     hists[0][i]->SetStats(0);
     hists[1][i]->Draw("SAME");
@@ -1335,7 +1467,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     c1->Draw();   
     ps.NewPage(); 
   }
-  for(int i = 0 ; i < 6 ; ++i) {
+  for(int i = 0 ; i < 8 ; ++i) {
     delete hists[0][i];
     delete hists[1][i];
     delete hists[2][i];
@@ -1430,7 +1562,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   delete leg;
 }
 
-void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6]) 
+void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) 
 {
   //book hists
   TString s(hist->GetName());
@@ -1446,7 +1578,7 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6])
   hresults[0]->SetMarkerStyle(hist->GetMarkerStyle());
   hresults[0]->SetMarkerColor(hist->GetMarkerColor());
   hresults[0]->SetMarkerSize(hist->GetMarkerSize());
-  for(int i = 1; i < 6 ; ++i) {
+  for(int i = 1; i < 8 ; ++i) {
     hresults[i] = (TH1F*)hresults[0]->Clone();
   }
   s = hist->GetTitle();
@@ -1458,7 +1590,11 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6])
   s = hist->GetTitle();
   hresults[3]->SetTitle(s.Append(" width of Gauss fit"));
   s = hist->GetTitle();
-  hresults[4]->SetTitle(s.Append(" median"));    \
+  hresults[4]->SetTitle(s.Append(" median"));  
+  s = hist->GetTitle();
+  hresults[5]->SetTitle(s.Append(" chisquared / no. free parameters")); 
+  s = hist->GetTitle();
+  hresults[6]->SetTitle(s.Append(" probability"));    
   for(int i = 0 ; i < 6 ; ++i) {
     hresults[i]->SetMinimum(0.2);
     hresults[i]->SetMaximum(1.8);
@@ -1466,6 +1602,10 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6])
     hresults[i]->SetMinimum(0.0);
     hresults[i]->SetMaximum(0.3);
   }
+    hresults[5]->SetMinimum(0.0);
+    hresults[5]->SetMaximum(100);
+    hresults[6]->SetMinimum(0.0);
+    hresults[6]->SetMaximum(1.05);
   TH1F* htemp = new TH1F("htemp","",hist->GetNbinsY(),hist->GetYaxis()->GetXmin(),
 		          hist->GetYaxis()->GetXmax());
   htemp->Sumw2();
@@ -1476,7 +1616,9 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6])
   for(int i = 1 ; i <= hist->GetNbinsX() ; ++i) {
     htemp->Reset();
     for(int j = 1 ; j <= hist->GetNbinsY() ; ++j) {
-      htemp->Fill(htemp->GetBinCenter(j),hist->GetBinContent(hist->GetBin(i,j)));
+      htemp->SetBinContent(j,hist->GetBinContent(hist->GetBin(i,j)));
+      //htemp->Fill(htemp->GetBinCenter(j),hist->GetBinContent(hist->GetBin(i,j)));
+      htemp->SetBinError(j,hist->GetBinError(i,j));
     }  
     if(htemp->GetSumOfWeights() <= 0) continue;
     htemp->Fit("gaus","LLQNO","");
@@ -1485,7 +1627,7 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6])
     double meanerror = f->GetParError(1);
     double width = f->GetParameter(2);
     if(width < 0.2) width = 0.2;
-    if( (htemp->Fit(f,"LLQNO","goff",mean - 2 * width, mean + 2 * width) == 0) && (f->GetProb() > 0.01)) {
+    if( (htemp->Fit(f,"LLQNO","goff",mean - 2 * width, mean + 2 * width) == 0) && (f->GetProb() > 0.01)) {}
       mean = f->GetParameter(1);
       meanerror = f->GetParError(1);
       width = f->GetParameter(2);
@@ -1493,7 +1635,27 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6])
       hresults[2]->SetBinError(i,meanerror);
       hresults[3]->SetBinContent(i,width/mean);
       hresults[3]->SetBinError(i, f->GetParError(2));
-    }
+      hresults[5]->SetBinContent(i, f->GetChisquare() / f->GetNumberFreeParameters());
+      hresults[5]->SetBinError(i, 0.01);
+      hresults[6]->SetBinContent(i, f->GetProb());
+      hresults[6]->SetBinError(i, 0.01);
+    if(i ==  int(hist->GetNbinsX()/6))
+      {
+	gaussplots[0] = (TH1F*)htemp->Clone("hnew"); 
+	gf[0] = (TF1*)f->Clone();
+      }
+
+    if(i == int(hist->GetNbinsX()/3))
+      {
+	gaussplots[1] = (TH1F*)htemp->Clone("hnew"); 
+	gf[1] = (TF1*)f->Clone();
+      }
+
+    if(i == int(hist->GetNbinsX()/2))
+      {
+	gaussplots[2] = (TH1F*)htemp->Clone("hnew"); 
+	gf[2] = (TF1*)f->Clone();
+      }
     mean = htemp->GetMean();
     meanerror = htemp->GetMeanError();
     width = htemp->GetRMS();
@@ -1504,8 +1666,8 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[6])
     htemp->GetQuantiles(nq,yq,xq);
     hresults[4]->SetBinContent(i,yq[0]);
     hresults[4]->SetBinError(i,0.0001);
-    hresults[5]->SetBinContent(i,yq[1]/yq[0]-1);
-    hresults[5]->SetBinError(i,0.0001);
+    hresults[7]->SetBinContent(i,yq[1]/yq[0]-1);
+    hresults[7]->SetBinError(i,0.0001);
     delete f;
   }
   delete htemp;
