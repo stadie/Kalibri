@@ -1103,7 +1103,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   TCanvas * c1 = new TCanvas("controlplots","",600,600);
   TCanvas * c2 = new TCanvas("controlplotsGauss","",600,600);
   c2->Divide(1,3);
-  TPostScript ps("controlplots.ps",111);
+  TPostScript ps("controlplotsGJ.ps",111);
 
   //book hists
   TH2F* heta[12];
@@ -1561,6 +1561,72 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   delete htow[2];
   delete leg;
 }
+
+
+
+void TControlPlots::DiJetControlPlots()
+{
+  TCanvas * c1 = new TCanvas("controlplots","",600,600);
+  TPostScript ps("controlplotsDJ.ps",111);
+
+  //book hists
+  TH2F* difmean[5];
+  TH1F* eta;
+  eta = new TH1F("eta","#eta;#eta",100,-5,5);
+  difmean[0] = new TH2F("DiJet","di-jet controlplot;mean Pt;Pt difference",100,0,2000,100,0,200);
+  for(int i=1;i<5;++i)
+    {
+      difmean[i] =  (TH2F*)difmean[0]->Clone();
+    }
+  difmean[1]->SetTitle("abs(#eta) < 1");
+  difmean[2]->SetTitle("1 < abs(#eta) < 2");
+  difmean[3]->SetTitle("2 < abs(#eta) < 3");
+  difmean[4]->SetTitle("3 < abs(#eta) < 4");
+  //difmean->SetMarkerStyle(20);
+  //difmean->SetMarkerColor(1);
+
+  //TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
+  //leg->AddEntry(difmean,"Difference Vs. mean Pt","p");
+  
+  //loop over all fit-events
+  for ( std::vector<TData*>::iterator i = data->begin() ; i != data->end() ; ++i )  
+    {
+      TData* jj = *i;
+      if(jj->GetType() != TypePtBalance) continue;
+      double etmean = jj->GetScale();
+      double etajet = jj->GetMess()[1];
+      TData_MessMess* jm = (TData_MessMess*) jj;
+      double etjetdif = jm->GetMessCombination();
+      //difmean->Fill(etmean, etjetdif, jj->GetWeight());
+      eta->Fill(etajet);
+      difmean[0]->Fill(etmean, etjetdif);
+      for(int i=0;i<4;++i)
+	{
+	  if((abs(etajet) > i) && (abs(etajet) < i+1)) 
+	    difmean[i+1]->Fill(etmean, etjetdif);
+	}
+    }
+  eta->Draw();
+  c1->Draw();
+  ps.NewPage(); 
+  TF1* line = new TF1("line","x",0,200);
+  for(int i=0;i<5;++i)
+    {
+      difmean[i]->Draw("Box");
+      line->Draw("same");
+      c1->Draw();   
+      ps.NewPage();
+    }
+  ps.Close();
+  for(int i=0;i<5;++i)
+    {
+      delete difmean[i];
+    }
+  delete line;
+}
+
+
+
 
 void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) 
 {

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.9 2008/06/02 14:17:22 stadie Exp $
+// $Id: caliber.cc,v 1.10 2008/06/02 16:00:13 thomsen Exp $
 //
 #include "caliber.h"
 
@@ -868,25 +868,33 @@ void TCaliber::Done()
   outfile.close();
 
   //Apply cuts before control plots are created
-  {
+  /* {
     DataIter beg =  partition(data.begin(), data.end(), ControlCutSelection(20.));
     for(DataIter i = beg ; i != data.end() ; ++i) {
       delete *i;
     }
     data.erase(beg,data.end());  
-  }
+    }*/
 
   
   //Do Plots
   if(plots) {
     cout << "Creating tower control plots,"<<endl;
     plots->FitControlPlots();
-    cout << "Creating gamma jet (tower bin) control plots,"<<endl;
-    plots->GammaJetControlPlots();
-    cout << "Creating gamma jet (jet bin) control plots,"<<endl;
-    plots->GammaJetControlPlotsJetBin();
-    cout << "Creating more gamma jet control plots,"<<endl;
-    plots->GammaJetControlPlotsJetJEC();
+    if(n_gammajet_events!=0)
+      {
+	cout << "Creating gamma jet (tower bin) control plots,"<<endl;
+	plots->GammaJetControlPlots();
+	cout << "Creating gamma jet (jet bin) control plots,"<<endl;
+	plots->GammaJetControlPlotsJetBin();
+	cout << "Creating more gamma jet control plots,"<<endl;
+	plots->GammaJetControlPlotsJetJEC();
+      }
+    if (n_dijet_events!=0)   
+      {
+	cout << "Creating di-jet  control plots,"<<endl;
+	plots->DiJetControlPlots();
+      }
     cout << "Creating track tower control plots,"<<endl;
     plots->TrackTowerControlPlots();
     cout << "Creating track cluster control plots,"<<endl;
