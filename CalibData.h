@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.16 2008/05/30 15:32:15 stadie Exp $
+// $Id: CalibData.h,v 1.17 2008/06/02 11:51:34 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -168,6 +168,14 @@ public:
       delete [] _direction;	
     };
     virtual void AddNewMultMess(TData_MessMess * m2 ){_m2.push_back(m2);};
+    virtual double GetMultParametrizedMess(int i) {
+      if(i == 0) return GetParametrizedMess();
+      return _m2[i-1]->GetParametrizedMess();
+    }
+    virtual double* GetMultMess(int i) {
+      if(i == 0) return GetMess();
+      return _m2[i-1]->GetMess();
+    }
     virtual double GetMessCombination(){ return combine(); };
     virtual double * GetDirection(){ return _direction; };
     virtual double chi2(){ 
