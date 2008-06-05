@@ -1146,7 +1146,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   //loop over all fit-events
   for ( std::vector<TData*>::iterator i = data->begin() ; i != data->end() ; ++i )  {
     TData* jg = *i;
-
+    
     if( jg->GetType() != TypeGammaJet ) continue;
     double etjet = jg->GetMess()[0];
     double etjetcor = jg->GetParametrizedMess();
@@ -1237,7 +1237,18 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
 
     Fit2D(heta[i],hists[i],gaussplots[0], gf[0]);
     Fit2D(heta[i+1],hists[i+1],gaussplots[1], gf[1]);
-    Fit2D(heta[i+2],hists[i+2],gaussplots[2], gf[2]);
+    Fit2D(heta[i+2],hists[i+2],gaussplots[2], gf[2]); 
+    for(int a = 0; a<3;++a)
+      {
+	for(int b = 0 ; b < 4 ; ++b) {
+	  hists[a+i][b]->SetMinimum(0.2);
+	  hists[a+i][b]->SetMaximum(1.8);
+	  ++b;
+	  hists[a+i][b]->SetMinimum(0.0);
+	  hists[a+i][b]->SetMaximum(0.5);
+	}
+      }
+
 
   for(int k=0;k<3;++k)
     {
@@ -1323,6 +1334,16 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   Fit2D(hpt[0],hists[0],gaussplots[0], gf[0]);
   Fit2D(hpt[1],hists[1],gaussplots[1], gf[1]);
   Fit2D(hpt[2],hists[2],gaussplots[2], gf[2]);
+    for(int a = 0; a<3;++a)
+      {
+	for(int b = 0 ; b < 4 ; ++b) {
+	  hists[a][b]->SetMinimum(0.2);
+	  hists[a][b]->SetMaximum(1.8);
+	  ++b;
+	  hists[a][b]->SetMinimum(0.0);
+	  hists[a][b]->SetMaximum(0.5);
+	}
+      }
   for(int k=0;k<3;++k)
     {
     gaussplots[0][k]->SetMarkerStyle(20);
@@ -1373,6 +1394,16 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   Fit2D(hemf[0],hists[0],gaussplots[0], gf[0]);
   Fit2D(hemf[1],hists[1],gaussplots[1], gf[1]);
   Fit2D(hemf[2],hists[2],gaussplots[2], gf[2]);
+    for(int a = 0; a<3;++a)
+      {
+	for(int b = 0 ; b < 4 ; ++b) {
+	  hists[a][b]->SetMinimum(0.2);
+	  hists[a][b]->SetMaximum(1.8);
+	  ++b;
+	  hists[a][b]->SetMinimum(0.0);
+	  hists[a][b]->SetMaximum(0.5);
+	}
+      }
   for(int k=0;k<3;++k)
     {
     gaussplots[0][k]->SetMarkerStyle(20);
@@ -1412,7 +1443,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     delete hists[1][i];
     delete hists[2][i];
   }
-    hptlog[0]->SetMarkerStyle(20);
+  hptlog[0]->SetMarkerStyle(20);
   hptlog[0]->SetMarkerColor(1);
   hptlog[0]->SetMinimum(0.2);
   hptlog[0]->SetMaximum(1.8);
@@ -1423,6 +1454,16 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   Fit2D(hptlog[0],hists[0],gaussplots[0], gf[0]);
   Fit2D(hptlog[1],hists[1],gaussplots[1], gf[1]);
   Fit2D(hptlog[2],hists[2],gaussplots[2], gf[2]);
+    for(int a = 0; a<3;++a)
+      {
+	for(int b = 0 ; b < 4 ; ++b) {
+	  hists[a][b]->SetMinimum(0.2);
+	  hists[a][b]->SetMaximum(1.8);
+	  ++b;
+	  hists[a][b]->SetMinimum(0.0);
+	  hists[a][b]->SetMaximum(0.5);
+	}
+      }
   for(int k=0;k<3;++k)
     {
     gaussplots[0][k]->SetMarkerStyle(20);
@@ -1567,49 +1608,437 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
 void TControlPlots::DiJetControlPlots()
 {
   TCanvas * c1 = new TCanvas("controlplots","",600,600);
+  TCanvas * c2 = new TCanvas("controlplotsGauss","",600,600);
+  c2->Divide(1,3);
   TPostScript ps("controlplotsDJ.ps",111);
 
   //book hists
+  TH2F* combmean[5];
   TH2F* difmean[5];
-  TH1F* eta;
-  eta = new TH1F("eta","#eta;#eta",100,-5,5);
-  difmean[0] = new TH2F("DiJet","di-jet controlplot;mean Pt;Pt difference",100,0,2000,100,0,200);
+  TH1F* eta[2];
+  TH1F* ptspec[2];
+
+  
+  ptspec[0] = new TH1F("Pt spectrum probe jet","Pt spectrum probe jet;Pt",300,0,2000);
+  ptspec[1] = new TH1F("Pt spectrum barrel jet","Pt spectrum barrel jet;Pt",300,0,2000);
+  eta[0] = new TH1F("eta probe jet","#eta probe jet;#eta",100,-5,5);
+  eta[1] = new TH1F("eta barrel jet","#eta barrel jet;#eta",100,-5,5);
+  combmean[0] = new TH2F("DiJet","di-jet controlplot;scale (Pt);Pt of combined jet",100,0,2000,100,0,200);
+  difmean[0] = new TH2F("DiJet difference","di-jet controlplot;scale (Pt);abs. difference in Pt",100,0,2000,100,0,200);
   for(int i=1;i<5;++i)
     {
+      combmean[i] =  (TH2F*)combmean[0]->Clone();
       difmean[i] =  (TH2F*)difmean[0]->Clone();
     }
+  combmean[1]->SetTitle("abs(#eta) < 1");
+  combmean[2]->SetTitle("1 < abs(#eta) < 2");
+  combmean[3]->SetTitle("2 < abs(#eta) < 3");
+  combmean[4]->SetTitle("3 < abs(#eta) < 4");
   difmean[1]->SetTitle("abs(#eta) < 1");
   difmean[2]->SetTitle("1 < abs(#eta) < 2");
   difmean[3]->SetTitle("2 < abs(#eta) < 3");
   difmean[4]->SetTitle("3 < abs(#eta) < 4");
-  //difmean->SetMarkerStyle(20);
-  //difmean->SetMarkerColor(1);
+  //combmean->SetMarkerStyle(20);
+  //combmean->SetMarkerColor(1);
 
   //TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
-  //leg->AddEntry(difmean,"Difference Vs. mean Pt","p");
+  //leg->AddEntry(combmean,"Difference Vs. mean Pt","p");
+
+
+  //book hists
+  TH2F* Beta[8];
+  Beta[0] = new TH2F("Beta","di-jet;#eta",100,-5,5,100,-1,1);
+  for(int i = 1 ; i < 8 ; ++i) Beta[i] = (TH2F*)Beta[0]->Clone();
+  Beta[2]->SetTitle("di-jet 10 < E_{T}^{barrel jet} < 35 GeV;#eta");
+  Beta[4]->SetTitle("di-jet 35 < E_{T}^{barrel jet} < 90 GeV;#eta");
+  Beta[6]->SetTitle("di-jet 90 < E_{T}^{barrel jet} < 300 GeV;#eta");
+
+  TH2F* Bpt[2];
+  Bpt[0] = new TH2F("Bpt","di-jet;p_{T} [GeV]",400,0,400,100,-1,1);
+  Bpt[1] = (TH2F*)Bpt[0]->Clone();
   
+  TH2F* Bemf[2];
+  Bemf[0] = new TH2F("Bemf","di-jet;EMF (probe jet)",100,0,1,100,-1,1);
+  Bemf[1] = (TH2F*)Bemf[0]->Clone();
+
+  double bins[101];
+  for(int i = 0; i < 101 ; ++i) {
+    bins[i] = pow(10,(i+32)/40.0);
+  }
+
+  TH2F* Bptlog[2];
+  Bptlog[0] = new TH2F("Bptlog","di-jet;p_{T} [GeV]",100,bins,100,-1,1); 
+  Bptlog[1] = (TH2F*)Bptlog[0]->Clone();
+
+
+
   //loop over all fit-events
   for ( std::vector<TData*>::iterator i = data->begin() ; i != data->end() ; ++i )  
     {
       TData* jj = *i;
       if(jj->GetType() != TypePtBalance) continue;
-      double etmean = jj->GetScale();
-      double etajet = jj->GetMess()[1];
       TData_MessMess* jm = (TData_MessMess*) jj;
-      double etjetdif = jm->GetMessCombination();
-      //difmean->Fill(etmean, etjetdif, jj->GetWeight());
-      eta->Fill(etajet);
-      difmean[0]->Fill(etmean, etjetdif);
+      double etscale = jm->GetScale();
+      double etajet1 = jm->GetMultMess(0)[1];
+      double etajet2 = jm->GetMultMess(1)[1];
+      double etjetcomb = jm->GetMessCombination();
+      double etjet1 = jm->GetMultParametrizedMess(0);      //Probe
+      double etjet2 = jm->GetMultParametrizedMess(1);      //Barrel
+      double etjet1uncor = jm->GetMultMess(0)[0];      //Probe
+      double etjet2uncor = jm->GetMultMess(1)[0];      //Barrel
+
+      double B = (etjet1 - etjet2) / etscale;
+      double Buncor = (etjet1uncor - etjet2uncor) * 2 / (etjet1uncor + etjet2uncor);
+      //combmean->Fill(etmean, etjetdif, jj->GetWeight());
+      //ptspec[0]
+      ptspec[0]->Fill(etjet1);
+      ptspec[1]->Fill(etjet2);
+      eta[0]->Fill(etajet1);
+      eta[1]->Fill(etajet2);
+      combmean[0]->Fill(etscale, etjetcomb);
+      difmean[0]->Fill(etscale, fabs(etjet1 - etjet2));
+
+      Beta[0]->Fill(etajet1, B,jj->GetWeight());
+      Beta[1]->Fill(etajet1, Buncor,jj->GetWeight());
+      if (etscale > 10 && etscale < 35) {
+      Beta[2]->Fill(etajet1, B,jj->GetWeight());
+      Beta[3]->Fill(etajet1, Buncor,jj->GetWeight());
+      } else if (etscale > 35 && etscale < 90) {
+      Beta[4]->Fill(etajet1, B,jj->GetWeight());
+      Beta[5]->Fill(etajet1, Buncor,jj->GetWeight());
+      } else if (etscale > 90 && etscale < 300) {
+      Beta[6]->Fill(etajet1, B,jj->GetWeight());
+      Beta[7]->Fill(etajet1, Buncor,jj->GetWeight());
+      } 
+      Bpt[0]->Fill(etscale,B,jj->GetWeight());
+      Bpt[1]->Fill(etscale,Buncor,jj->GetWeight());
+      Bptlog[0]->Fill(etscale,B,jj->GetWeight());
+      Bptlog[1]->Fill(etscale,Buncor,jj->GetWeight());
+
+
+      //em fraction plots     
+      double em = 0;
+      double had = 0;
+      for(std::vector<TData*>::const_iterator t = jj->GetRef().begin(); t != jj->GetRef().end(); ++t) {
+	TData* tt = *t;
+	em  += tt->GetMess()[1];
+	had += tt->GetMess()[2];
+	had += tt->GetMess()[3];
+      }
+      Bemf[0]->Fill(em/(em+had),B,jj->GetWeight());
+      Bemf[1]->Fill(em/(em+had),Buncor,jj->GetWeight());
+            
+      
       for(int i=0;i<4;++i)
 	{
-	  if((abs(etajet) > i) && (abs(etajet) < i+1)) 
-	    difmean[i+1]->Fill(etmean, etjetdif);
+	  if((fabs(etajet1) > i) && (fabs(etajet1) < i+1)) 
+	    {
+	      combmean[i+1]->Fill(etscale, etjetcomb);
+	      difmean[i+1]->Fill(etscale, fabs(etjet1 - etjet2));
+	    }
 	}
     }
-  eta->Draw();
-  c1->Draw();
-  ps.NewPage(); 
+
+
+  c1->cd();
+  for(int i=0;i<2;++i)
+    {
+      ptspec[i]->Draw();
+      c1->Draw();
+      ps.NewPage(); 
+    }
+  for(int i=0;i<2;++i)
+    {
+      eta[i]->Draw();
+      c1->Draw();
+      ps.NewPage(); 
+    }
+
+
+
+  TH1F* hists[8][8];
+
+  for(int i=0; i<2;++i)
+    {
+      Beta[4*i]->Sumw2();
+      Beta[4*i+1]->Sumw2();
+      Beta[4*i+2]->Sumw2();
+      Beta[4*i+3]->Sumw2();
+      Bpt[i]->Sumw2();
+      Bemf[i]->Sumw2();
+      Bptlog[i]->Sumw2();
+    }
+  
+  TH1F* gaussplots[2][4];  
+  TF1* gf[2][4];     
+
+  TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
+  leg->AddEntry(Beta[0],"B = Pt^{probe} - Pt^{barrel} / scale");
+  leg->AddEntry(Beta[1],"B before fit");
+  for(int i = 0 ; i < 8 ; i+=2) {
+    Beta[i]->SetMarkerStyle(20);
+    Beta[i]->SetMarkerColor(1);
+    Beta[i+1]->SetMarkerStyle(22);
+    Beta[i+1]->SetMarkerColor(2);
+    leg->Draw();
+
+    Fit2D(Beta[i],hists[i],gaussplots[0], gf[0]);
+    Fit2D(Beta[i+1],hists[i+1],gaussplots[1], gf[1]);
+    for(int a = 0; a<2;++a)
+      {
+	for(int b = 0 ; b < 4 ; ++b) {
+	  hists[a+i][b]->SetMinimum(-1.);
+	  hists[a+i][b]->SetMaximum(1.);
+	  ++b;
+	  hists[a+i][b]->SetMinimum(0.0);
+	  hists[a+i][b]->SetMaximum(1.);
+	}
+      }
+    
+    for(int k=0;k<3;++k)
+      {
+	gf[1][k]->SetLineColor(2);
+	gaussplots[0][k]->SetMarkerStyle(20);
+	gaussplots[0][k]->SetMarkerColor(1);
+	gaussplots[1][k]->SetMarkerStyle(22);
+	gaussplots[1][k]->SetMarkerColor(2);
+      }
+    
+    for(int b=0;b<3;++b) 
+      {
+	for(int a=0; a<2;++a) // 1: B after correction, 2: B before correction
+	  {
+	    if(i==0)    
+	      gaussplots[a][b]->SetTitle("di-jet full energy range;#eta");
+	    if(i==2)    
+	      gaussplots[a][b]->SetTitle("di-jet 10 < P_{T}^{scale} < 35 GeV;#eta");
+	    if(i==4)    
+	      gaussplots[a][b]->SetTitle("di-jet 35 < P_{T}^{scale} < 90 GeV;#eta");
+	    if(i==6)    
+	      gaussplots[a][b]->SetTitle("di-jet 90 < P_{T}^{scale} < 300 GeV;#eta");
+	    c2->cd(b);
+	    if(a==0)	    gaussplots[a][b]->Draw();
+	    else            gaussplots[a][b]->Draw("same");
+	    gf[a][b]->Draw("same");
+	  }
+	c2->Update();
+	c2->Draw();
+	ps.NewPage();
+      }
+    c1->cd();
+
+    for(int j = 0 ; j < 8 ; ++j) 
+      {
+	hists[i][j]->Draw();
+	hists[i][j]->SetStats(0);
+	hists[i+1][j]->Draw("SAME");
+	leg->Draw();
+	c1->SetGrid();
+	c1->Draw();   
+	ps.NewPage(); 
+      }
+  } 
+
+  for(int i = 0 ; i < 8 ; ++i) {
+    for(int j = 0 ; j < 8 ; ++j) {
+      delete hists[i][j];
+    }	
+  }
+  
+  Bpt[0]->SetMarkerStyle(20);
+  Bpt[0]->SetMarkerColor(1);
+  Bpt[1]->SetMarkerStyle(22);
+  Bpt[1]->SetMarkerColor(2);
+  Fit2D(Bpt[0],hists[0],gaussplots[0], gf[0]);
+  Fit2D(Bpt[1],hists[1],gaussplots[1], gf[1]);
+    for(int a = 0; a<2;++a)
+      {
+	for(int b = 0 ; b < 4 ; ++b) {
+	  hists[a][b]->SetMinimum(-1.);
+	  hists[a][b]->SetMaximum(1.);
+	  ++b;
+	  hists[a][b]->SetMinimum(0.0);
+	  hists[a][b]->SetMaximum(1.);
+	}
+      }
+
+  for(int k=0;k<3;++k)
+    {
+      gf[1][k]->SetLineColor(2);
+      gaussplots[0][k]->SetMarkerStyle(20);
+      gaussplots[0][k]->SetMarkerColor(1);
+      gaussplots[1][k]->SetMarkerStyle(22);
+      gaussplots[1][k]->SetMarkerColor(2);
+    }
+  for(int b=0;b<3;++b)
+    { 
+      for(int a=0; a<2;++a)
+	{
+	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
+	  c2->cd(b);
+	  if(a==0)	    gaussplots[a][b]->Draw();
+	  else            gaussplots[a][b]->Draw("same");
+	  gf[a][b]->Draw("same");
+	}
+      c2->Update();
+      c2->Draw();
+      ps.NewPage();
+    }
+  c1->cd();
+    
+  for(int i = 0 ; i < 8 ; ++i) {
+    hists[0][i]->Draw();
+    hists[0][i]->SetStats(0);
+    hists[1][i]->Draw("same");
+    leg->Draw();
+    c1->SetGrid();
+    c1->Draw();   
+    ps.NewPage(); 
+  }
+  for(int i = 0 ; i < 8 ; ++i) {
+    delete hists[0][i];
+    delete hists[1][i];
+  }
+  Bemf[0]->SetMarkerStyle(20);
+  Bemf[0]->SetMarkerColor(1);
+  Bemf[1]->SetMarkerStyle(22);
+  Bemf[1]->SetMarkerColor(2);
+  Fit2D(Bemf[0],hists[0],gaussplots[0], gf[0]);
+  Fit2D(Bemf[1],hists[1],gaussplots[1], gf[1]);
+
+    for(int a = 0; a<2;++a)
+      {
+	for(int b = 0 ; b < 4 ; ++b) {
+	  hists[a][b]->SetMinimum(-1.);
+	  hists[a][b]->SetMaximum(1.);
+	  ++b;
+	  hists[a][b]->SetMinimum(0.0);
+	  hists[a][b]->SetMaximum(1.);
+	}
+      }
+  for(int k=0;k<3;++k)
+    {
+      gf[1][k]->SetLineColor(2);
+      gaussplots[0][k]->SetMarkerStyle(20);
+      gaussplots[0][k]->SetMarkerColor(1);
+      gaussplots[1][k]->SetMarkerStyle(22);
+      gaussplots[1][k]->SetMarkerColor(2);
+    }
+  for(int b=0;b<3;++b)
+    { 
+      for(int a=0; a<2;++a) 
+	{
+	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
+	  c2->cd(b);
+	  if(a==0)	    gaussplots[a][b]->Draw();
+	  else            gaussplots[a][b]->Draw("same");
+	  gf[a][b]->Draw("same");
+	}
+      c2->Update();
+      c2->Draw();
+      ps.NewPage();
+    }
+  c1->cd();
+
+  for(int i = 0 ; i < 8 ; ++i) {
+    hists[0][i]->Draw();
+    hists[0][i]->SetStats(0);
+    hists[1][i]->Draw("SAME");
+    leg->Draw();
+    c1->SetGrid();
+    c1->Draw();   
+    ps.NewPage(); 
+  }
+  for(int i = 0 ; i < 8 ; ++i) {
+    delete hists[0][i];
+    delete hists[1][i];
+  }
+  Bptlog[0]->SetMarkerStyle(20);
+  Bptlog[0]->SetMarkerColor(1);
+  Bptlog[0]->SetMinimum(0.2);
+  Bptlog[0]->SetMaximum(1.8);
+  Bptlog[1]->SetMarkerStyle(22);
+  Bptlog[1]->SetMarkerColor(2);  
+  Fit2D(Bptlog[0],hists[0],gaussplots[0], gf[0]);
+  Fit2D(Bptlog[1],hists[1],gaussplots[1], gf[1]);
+
+    for(int a = 0; a<2;++a)
+      {
+	for(int b = 0 ; b < 4 ; ++b) {
+	  hists[a][b]->SetMinimum(-1.);
+	  hists[a][b]->SetMaximum(1.);
+	  ++b;
+	  hists[a][b]->SetMinimum(0.0);
+	  hists[a][b]->SetMaximum(1.);
+	}
+      }
+  for(int k=0;k<3;++k)
+    {
+      gf[1][k]->SetLineColor(2);
+      gaussplots[0][k]->SetMarkerStyle(20);
+      gaussplots[0][k]->SetMarkerColor(1);
+      gaussplots[1][k]->SetMarkerStyle(22);
+      gaussplots[1][k]->SetMarkerColor(2);
+    }
+  for(int b=0;b<3;++b)
+    { 
+      for(int a=0; a<2;++a)
+	{
+	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
+	  c2->cd(b);
+	  if(a==0)	    gaussplots[a][b]->Draw();
+	  else            gaussplots[a][b]->Draw("same");
+	  gf[a][b]->Draw("same");
+	}
+      c2->Update();
+      c2->Draw();
+      ps.NewPage();
+    }
+  c1->cd();
+
+  for(int i = 0 ; i < 2 ; ++i) 
+    {
+      for(int j=0; j<3;++j)
+	{
+	  delete gaussplots[i][j];
+	  delete gf[i][j];
+	}
+    }
+
+  for(int i = 0 ; i < 8 ; ++i) {
+    hists[0][i]->Draw();
+    hists[0][i]->SetStats(0);
+    hists[1][i]->Draw("SAME");
+    c1->SetLogx(1);
+    c1->SetGrid(); 
+    leg->Draw();
+    c1->SetGrid();
+    c1->Draw();   
+    ps.NewPage(); 
+  }
+  for(int i = 0 ; i < 8 ; ++i) {
+    delete hists[0][i];
+    delete hists[1][i];
+  }
+  ps.NewPage();
+  delete leg;
+  for(int i = 0 ; i < 8 ; ++i)  delete Beta[i];
+  for(int i = 0 ; i < 2 ; ++i){
+    delete Bpt[i];
+    delete Bptlog[i];
+    delete Bemf[i];
+  }
+  
+  
+  c1->SetLogx(0);
   TF1* line = new TF1("line","x",0,200);
+  for(int i=0;i<5;++i)
+    {
+      combmean[i]->Draw("Box");
+      line->Draw("same");
+      c1->Draw();   
+      ps.NewPage();
+    }
   for(int i=0;i<5;++i)
     {
       difmean[i]->Draw("Box");
@@ -1618,10 +2047,16 @@ void TControlPlots::DiJetControlPlots()
       ps.NewPage();
     }
   ps.Close();
+
   for(int i=0;i<5;++i)
     {
+      delete combmean[i];
       delete difmean[i];
     }
+  delete eta[0];
+  delete eta[1];
+  delete ptspec[0];
+  delete ptspec[1];
   delete line;
 }
 
@@ -1661,13 +2096,14 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF
   hresults[5]->SetTitle(s.Append(" chisquared / no. free parameters")); 
   s = hist->GetTitle();
   hresults[6]->SetTitle(s.Append(" probability"));    
-  for(int i = 0 ; i < 6 ; ++i) {
+  /* for(int i = 0 ; i < 6 ; ++i) {
     hresults[i]->SetMinimum(0.2);
     hresults[i]->SetMaximum(1.8);
     ++i;
     hresults[i]->SetMinimum(0.0);
     hresults[i]->SetMaximum(0.3);
-  }
+    }
+*/
     hresults[5]->SetMinimum(0.0);
     hresults[5]->SetMaximum(100);
     hresults[6]->SetMinimum(0.0);
