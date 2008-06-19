@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.10 2008/06/02 16:00:13 thomsen Exp $
+// $Id: caliber.cc,v 1.11 2008/06/03 15:52:31 thomsen Exp $
 //
 #include "caliber.h"
 
@@ -288,12 +288,12 @@ void TCaliber::Run_GammaJet()
     jetp[2] = gammajet.JetCalPhi;
     //Create an Gamma/Jet TData event
     TData_TruthMultMess * gj_data = new 
-      TData_TruthMultMess(jet_index + p->GetNumberOfTowerParameters(),
-			  // gammajet.PhotonEt,				    //truth//
-			  gammajet.JetGenPt,
+      TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+			  gammajet.PhotonEt,				    //truth//
+			  //gammajet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
-			  gammajet.EventWeight,                           //weight//
-			  //1.0,                                              //weight//
+			  //gammajet.EventWeight,                           //weight//
+			  1.0,                                              //weight//
 			  p->GetJetParRef( jet_index ),                     //params
 			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
 			  p->jet_parametrization,                           //function
@@ -384,7 +384,7 @@ void TCaliber::Run_ZJet()
     jetp[2] = zjet.JetCalPhi;
     //Create an Z/Jet TData event
     TData_TruthMultMess * gj_data = new 
-      TData_TruthMultMess(jet_index + p->GetNumberOfTowerParameters(),
+      TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
 			  // zjet.ZEt,				    //truth//
 			  zjet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*zjet.ZEt,2)),   //error//

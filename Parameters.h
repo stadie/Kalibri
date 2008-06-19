@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.20 2008/05/08 17:13:17 auterman Exp $
+// $Id: Parameters.h,v 1.21 2008/05/30 15:33:22 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -24,12 +24,11 @@ public :
   static TParameters* CreateParameters(const std::string& configfile);
 
   std::string GetName() const;
-  int GetEtaBin(int const eta_id) const;
-  int GetPhiBin(int const phi_id) const; 
-  int GetJetEtaBin(int const eta_id) const {return (abs(eta_id)-1)*2*eta_granularity_jet/eta_ntwr;}
-  int GetJetPhiBin(int const phi_id) const {return (phi_id-1)*phi_granularity_jet/phi_ntwr;}
-  //int GetJetEtaBin(double const eta_id) const {return fabs(eta_id)*eta_granularity_jet/4.0}
-  //int GetJetPhiBin(double const phi_id) const {return phi_id*phi_granularity_jet/6.3;} 
+  
+  int GetEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity, phi_granularity, eta_symmetry);}
+  int GetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity);}
+  int GetJetEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity_jet, phi_granularity_jet, eta_symmetry);}
+  int GetJetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity_jet);}
   int GetBin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity + phibin;}
   //int GetJetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return eta_granularity*phi_granularity*free_pars_per_bin+etabin*phi_granularity_jet + phibin;}
   int GetJetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return etabin*phi_granularity_jet + phibin;}
@@ -101,6 +100,9 @@ protected:
 private:
   TParameters();
   TParameters(const TParameters&) {}
+  int GetEtaBin(int phi_id, int etagranu, int phigranu, bool etasym) const;
+  int GetPhiBin(int phi_id, int phigranu) const;
+  
 
   //Towers in Eta-, Phi- direction (according to PTDR Vol I, p.201)
   unsigned const static eta_ntwr=82, phi_ntwr=72;

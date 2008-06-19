@@ -111,7 +111,7 @@ void TParameters::Init(const ConfigFile& config)
   }
   for (unsigned int bin=0; bin<eta_granularity_jet*phi_granularity_jet; ++bin){
     for (unsigned int jp=0; jp < p->nJetPars(); ++jp){
-      int i = GetNumberOfTowerParameters() + bin*p->nTowerPars() + jp;   
+      int i = GetNumberOfTowerParameters() + bin*p->nJetPars() + jp;   
       k[i] = jet_start_values[jp];
       e[i] = 0.0;
     }
@@ -237,18 +237,17 @@ void TParameters::Read_Calibration(std::string const& configFile) {
   delete[] dummy;
 }
 
-int TParameters::GetEtaBin(int const eta_id) const
+int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) const
 {
 //This function knows the number of wanted eta-bins and returns 
 //in which eta-bin the tower with eta-ID "eta_id" is located.
   //Case 1 bin:
-//cout << "eta="<<eta_id<<", eta_granularity:"<< eta_granularity<< ", eta_ntwr_used:"<< eta_ntwr_used<<endl;
-  if (eta_granularity<=1) return 0;
-  if (eta_granularity==2) return (eta_id < 0) ? 0 : 1;
+//cout << "eta="<<eta_id<<", etagranu:"<< etagranu<< ", eta_ntwr_used:"<< eta_ntwr_used<<endl;
+  if (etagranu<=1) return 0;
+  if (etagranu==2) return (eta_id < 0) ? 0 : 1;
 
   //check if tower is within wanted etarange:
   if ( eta_symmetry && abs(eta_id)*2>(int)eta_ntwr_used)   return -2; 
-  
   //calculate an index:
   unsigned index=(unsigned)(41+eta_id);
   if (eta_id>0) --index;
@@ -264,29 +263,29 @@ int TParameters::GetEtaBin(int const eta_id) const
   unsigned ts_11[41]={ 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9,10,10};
   unsigned ts_5[41]= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4};
   unsigned ts_3[41]= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2};
-  if (!eta_symmetry){
-    if (eta_granularity==82) return index;
-    else if (eta_granularity==42) return ta_42[index];
-    else if (eta_granularity==22) return ta_22[index];
-    else if (eta_granularity==10) return ta_10[index];
-    else if (eta_granularity==6) return ta_6[index];
+  if (!etasym){
+    if (etagranu==82) return index;
+    else if (etagranu==42) return ta_42[index];
+    else if (etagranu==22) return ta_22[index];
+    else if (etagranu==10) return ta_10[index];
+    else if (etagranu==6) return ta_6[index];
   } else {
-    if (eta_granularity==41) return abs(eta_id)-1;
-    else if (eta_granularity==21) return ts_21[abs(eta_id)-1];
-    else if (eta_granularity==11) return ts_11[abs(eta_id)-1];
-    else if (eta_granularity== 5) return ts_5[ abs(eta_id)-1];
-    else if (eta_granularity== 3) return ts_3[ abs(eta_id)-1];
+    if (etagranu==41) return abs(eta_id)-1;
+    else if (etagranu==21) return ts_21[abs(eta_id)-1];
+    else if (etagranu==11) return ts_11[abs(eta_id)-1];
+    else if (etagranu== 5) return ts_5[ abs(eta_id)-1];
+    else if (etagranu== 3) return ts_3[ abs(eta_id)-1];
   }
   
   //Default value, should never be returned!
   return -4;
 }
 
-int TParameters::GetPhiBin(int const phi_id) const
+int TParameters::GetPhiBin(int phi_id, int phigranu) const
 //This function knows the number of wanted phi-bins and returns 
 //in which phi-bin the tower with eta-ID "phi_id" is located.
 {
-  return (phi_id-1)*phi_granularity/phi_ntwr;
+  return (phi_id-1)*phigranu/phi_ntwr;
 }
 
 void TParameters::Print() const
