@@ -3,6 +3,7 @@
 #include "ControlPlots.h"
 #include "ConfigFile.h"
 #include "CalibData.h"
+#include "CalibMath.h"
 //C++ libs
 #include <iostream>
 #include <cmath>
@@ -1103,9 +1104,70 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   TCanvas * c1 = new TCanvas("controlplots","",600,600);
   TCanvas * c2 = new TCanvas("controlplotsGauss","",600,600);
   c2->Divide(1,3);
-  TPostScript ps("controlplotsGJ.ps",111);
+  TPostScript ps("controlplotsGammaJet.ps",111);
+  //int phi_granularity = p->GetPhiGranularity();
 
   //book hists
+  TH1I* towerinjet[4];
+  towerinjet[0]= new TH1I("No. Tower in Jet","No. Tower in Jet",40,0,40);
+  for(int i =1;i<4;++i)   towerinjet[i] = (TH1I*) towerinjet[0]->Clone();
+  towerinjet[1]->SetTitle("#gamma-jet 10 < E_{T}^{#gamma} < 35 GeV;No. Tower in Jet");
+  towerinjet[2]->SetTitle("#gamma-jet 35 < E_{T}^{#gamma} < 90 GeV;No. Tower in Jet");
+  towerinjet[3]->SetTitle("#gamma-jet 90 < E_{T}^{#gamma} < 300 GeV;No. Tower in Jet");
+  TH2F* respvstet[4];
+  respvstet[0] = new TH2F("Response vs. Tower Et","Response vs. Tower Et;raw tower Et;Correction factor",100,0,100,100,-4,10);
+  for(int i = 1 ; i < 4 ; ++i) respvstet[i] = (TH2F*)respvstet[0]->Clone();
+  respvstet[1]->SetTitle("Response vs. Tower Et (leading Tower);raw tower Et;Correction factor");
+  respvstet[2]->SetTitle("Response vs. Tower Et (neighbouring leading Tower);raw tower Et;Correction factor");
+  respvstet[3]->SetTitle("Response vs. Tower Et (2 towers next to leading Tower);raw tower Et;Correction factor");
+
+
+  TH2F* testNegResponse[4];
+  testNegResponse[0] = new TH2F("Response vs. Hadronic Fraction","Response vs. Hadronic Fraction; Had/EM+Had; Response",120,-0.1,1.1,100,-4,12);
+  testNegResponse[1] = new TH2F("Response vs. Hadronic Fraction eta>3","Response vs. Hadronic Fraction #eta > 3; Had/EM+Had; Response",120,-0.1,1.1,100,-4,12);
+  testNegResponse[2] = new TH2F("Response vs. Eta(jet)","Response vs. #eta(Jet);#eta(jet); Respone",100,-5,5,100,-4,12);
+  testNegResponse[3] = new TH2F("Response vs. Eta_index","Response vs. #eta indx;#eta index; Respone",45,0,45,100,-4,12);
+ 
+  int bining_plot = 9;
+  TH1F* leadToNext[32];  //0+1 rings,2-12 eta dependence ,13+14 Relrings, 15-25 eta dependence, 26-31 Pt depend (not rel)
+  leadToNext[0] = new  TH1F("ET in ring","ET in ring;#Delta R;Ring Et",bining_plot,0,0.6);
+  leadToNext[1] = (TH1F*) leadToNext[0]->Clone();   //raw tower
+  leadToNext[2] = new  TH1F("Sum*(ET in ring)/Sum(ET in ring(raw))","Sum(ET in ring) / Sum(ET in ring(raw));#Delta R;Ring Et / Ring Et(raw)",bining_plot,0,0.6);
+  for(int i=3;i<32;++i)
+    {
+      leadToNext[i] = (TH1F*) leadToNext[2]->Clone();
+    }
+  leadToNext[3]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) abs#eta < 0.5");
+  leadToNext[4]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 0.5 < abs#eta < 1.0");
+  leadToNext[5]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 1.0 < abs#eta < 1.5");
+  leadToNext[6]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 1.5 < abs#eta < 2.0");
+  leadToNext[7]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 2.0 < abs#eta < 2.5");
+  leadToNext[8]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 2.5 < abs#eta < 3.0");
+  leadToNext[9]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 3.0 < abs#eta < 3.5");
+  leadToNext[10]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 3.5 < abs#eta < 4.0");
+  leadToNext[11]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 4.0 < abs#eta < 4.5");
+  leadToNext[12]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 4.5 < abs#eta < 5.0");
+
+  leadToNext[13]->SetTitle("Rel ET in ring;#Delta R;Rel Et in Ring");
+
+  leadToNext[15]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw))");
+  leadToNext[16]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) abs#eta < 0.5");
+  leadToNext[17]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 0.5 < abs#eta < 1.0");
+  leadToNext[18]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 1.0 < abs#eta < 1.5");
+  leadToNext[19]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 1.5 < abs#eta < 2.0");
+  leadToNext[20]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 2.0 < abs#eta < 2.5");
+  leadToNext[21]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 2.5 < abs#eta < 3.0");
+  leadToNext[22]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 3.0 < abs#eta < 3.5");
+  leadToNext[23]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 3.5 < abs#eta < 4.0");
+  leadToNext[24]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 4.0 < abs#eta < 4.5");
+  leadToNext[25]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 4.5 < abs#eta < 5.0"); 
+  leadToNext[26]->SetTitle("ET in ring 10 < P_{T}^{Jet} < 35 GeV;#Delta R;Ring Et");
+  leadToNext[28]->SetTitle("ET in ring 35 < P_{T}^{Jet} < 90 GeV;#Delta R;Ring Et");
+  leadToNext[30]->SetTitle("ET in ring 90 < P_{T}^{Jet} < 300 GeV;#Delta R;Ring Et");
+
+  TH2F* EtaPhiMap = new TH2F("Eta-Phi hit map","#eta-#Phi hit map;#eta;#Phi",200,-5,5,128,-3.2,3.2);
+
+
   TH2F* heta[12];
   heta[0] = new TH2F("heta","#gamma-jet;#eta",100,-5,5,100,0,4);
   for(int i = 1 ; i < 12 ; ++i) heta[i] = (TH2F*)heta[0]->Clone();
@@ -1142,6 +1204,33 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   hptlog[0] = new TH2F("hptlog","#gamma-jet;p_{T} [GeV]",100,bins,100,0,4);
   hptlog[1] = (TH2F*)hptlog[0]->Clone();
   hptlog[2] = (TH2F*)hptlog[0]->Clone();
+
+
+  for(int i=0; i<3;++i)
+    {
+	  heta[4*i]->Sumw2();
+	  heta[4*i+1]->Sumw2();
+	  heta[4*i+2]->Sumw2();
+	  heta[4*i+3]->Sumw2();
+	  hpt[i]->Sumw2();
+	  hemf[i]->Sumw2();
+	  hptlog[i]->Sumw2();
+    }
+
+  double ringsSum[11][bining_plot];
+  double ringsRawSum[11][bining_plot];
+  double ringsSumRel[11][bining_plot];
+  double ringsRawSumRel[11][bining_plot];
+    for(int b=0; b < 11; ++b)
+      {
+	for(int a=0; a < bining_plot; ++a)
+	  {
+	    ringsSum[b][a]=0;
+	    ringsRawSum[b][a]=0;
+	    ringsSumRel[b][a]=0;
+	    ringsRawSumRel[b][a]=0;
+	  }
+      }
   
   //loop over all fit-events
   for ( std::vector<TData*>::iterator i = data->begin() ; i != data->end() ; ++i )  {
@@ -1152,6 +1241,161 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     double etjetcor = jg->GetParametrizedMess();
     double etajet = jg->GetMess()[1];
     //double phijet = jg->GetMess()[2];
+    int noTower=0;
+    double maxTowerET=0;
+    double maxTowerETraw=0;
+    int thisIndexJet=0;
+    double maxTowerEta=0;
+    double maxTowerPhi=0;
+    const std::vector<TData*>& data_ref =(*i)->GetRef();
+    for(std::vector<TData*>::const_iterator it = data_ref.begin();it != data_ref.end(); ++it)
+      {
+	double * m = (*it)->GetMess();
+	double  pm = (*it)->GetParametrizedMess();
+	respvstet[0]->Fill(m[0],pm/m[0]);
+	int thisIndex = (*it)->GetIndex();
+	if (pm>maxTowerET) {
+	  thisIndexJet = thisIndex;
+	  maxTowerET = pm;
+	  maxTowerETraw = m[0];
+	  maxTowerEta = m[4];
+	  maxTowerPhi = m[5];
+	  }
+	testNegResponse[0]->Fill(m[2]/(m[1]+m[2]),pm/m[0]);
+	if(fabs(etajet) > 3)	testNegResponse[1]->Fill(m[2]/(m[1]+m[2]),pm/m[0]);
+	testNegResponse[2]->Fill(etajet,pm/m[0]);
+	testNegResponse[3]->Fill(thisIndex,pm/m[0]);
+
+	EtaPhiMap->Fill(m[4],m[5]);
+
+	++noTower;
+      }
+    respvstet[1]->Fill(maxTowerETraw,maxTowerET/maxTowerETraw);
+    double rings[bining_plot];
+    double ringsRaw[bining_plot];
+    for(int a=0; a < bining_plot; ++a)
+      {
+	rings[a]=0;
+	ringsRaw[a]=0;
+      }
+    //second loop
+    for(std::vector<TData*>::const_iterator it = data_ref.begin();it != data_ref.end(); ++it)
+      {
+	//next to leading towers:
+	double * m  = (*it)->GetMess();
+	double  pm = (*it)->GetParametrizedMess();
+	if(m[0] != 0)
+	  {
+	    for(int a=0; a < bining_plot; ++a)
+	      {
+		double DeltaR = sqrt((deltaPhi(maxTowerPhi,m[5]) * deltaPhi(maxTowerPhi,m[5])) + ((maxTowerEta - m[4]) * (maxTowerEta - m[4])));
+		if(DeltaR <= ((0.6 / bining_plot) * a))
+		  {
+		    //rings[a] += pm/maxTowerET;
+		    //ringsRaw[a] += m[0]/maxTowerETraw;
+		    rings[a] += pm;
+		    ringsRaw[a] += m[0];
+		  }
+	      }	    
+	    
+	    int index = (*it)->GetIndex();
+	    if((abs(index - thisIndexJet) == 1)      )// || (abs(index - thisIndexJet + phi_granularity) < 2)  || (abs(index - thisIndexJet - phi_granularity) < 2))
+	      respvstet[2]->Fill(m[0], (*it)->GetParametrizedMess()/m[0]);
+	    
+	    if(abs(index - thisIndexJet) == 2)  // different with proper Phi granularity
+	      respvstet[3]->Fill(m[0], (*it)->GetParametrizedMess()/m[0]);
+	  }
+      }
+
+    for(int a=0; a < bining_plot; ++a)
+      {
+	if(a == 0)
+	  {
+	    leadToNext[0]->Fill(a * (0.6 / bining_plot),rings[a]);
+	    leadToNext[1]->Fill(a * (0.6 / bining_plot),ringsRaw[a]);
+	    leadToNext[13]->Fill(a * (0.6 / bining_plot),1);
+	    leadToNext[14]->Fill(a * (0.6 / bining_plot),1);
+	    if((etjet > 10) && (etjet < 35))
+	      {
+		leadToNext[26]->Fill(a * (0.6 / bining_plot),rings[a]);
+		leadToNext[27]->Fill(a * (0.6 / bining_plot),ringsRaw[a]);
+	      }
+	    if((etjet > 35) && (etjet < 90))
+	      {
+		leadToNext[28]->Fill(a * (0.6 / bining_plot),rings[a]);
+		leadToNext[29]->Fill(a * (0.6 / bining_plot),ringsRaw[a]);
+	      }
+	    if((etjet > 90) && (etjet < 300))
+	      {
+		leadToNext[30]->Fill(a * (0.6 / bining_plot),rings[a]);
+		leadToNext[31]->Fill(a * (0.6 / bining_plot),ringsRaw[a]);
+	      }
+	  }
+	else
+	  {
+	    leadToNext[0]->Fill(a * (0.6 / bining_plot),rings[a]-rings[a-1]);
+	    leadToNext[1]->Fill(a * (0.6 / bining_plot),ringsRaw[a]-ringsRaw[a-1]);
+	    if((etjet > 10) && (etjet < 35))
+	      {
+		leadToNext[26]->Fill(a * (0.6 / bining_plot),rings[a]-rings[a-1]);
+		leadToNext[27]->Fill(a * (0.6 / bining_plot),ringsRaw[a]-ringsRaw[a-1]);
+	      }
+	    if((etjet > 35) && (etjet < 90))
+	      {
+		leadToNext[28]->Fill(a * (0.6 / bining_plot),rings[a]-rings[a-1]);
+		leadToNext[29]->Fill(a * (0.6 / bining_plot),ringsRaw[a]-ringsRaw[a-1]);
+	      }
+	    if((etjet > 90) && (etjet < 300))
+	      {
+		leadToNext[30]->Fill(a * (0.6 / bining_plot),rings[a]-rings[a-1]);
+		leadToNext[31]->Fill(a * (0.6 / bining_plot),ringsRaw[a]-ringsRaw[a-1]);
+	      }
+	    if(rings[0]!=0)
+	      {
+		leadToNext[13]->Fill(a * (0.6 / bining_plot),(rings[a]-rings[a-1])/rings[0]);
+		leadToNext[14]->Fill(a * (0.6 / bining_plot),(ringsRaw[a]-ringsRaw[a-1])/ringsRaw[0]);
+	      }
+	  }
+	ringsSum[0][0] +=rings[0];
+	ringsRawSum[0][0] +=ringsRaw[0];
+	ringsSumRel[0][0] += 1;
+	ringsRawSumRel[0][0] += 1;
+	for(int b=1;b<11;b++)
+	  {
+	    if((fabs(etajet) > (b-1)*0.5) && (fabs(etajet) < b*0.5))
+	      {
+		ringsSum[b][0] +=rings[0];
+		ringsRawSum[b][0] +=ringsRaw[0];
+		if(rings[0]!=0)
+		  ringsSumRel[b][0] += 1; //rings[0] / rings[0];
+		if(ringsRaw[0]!=0)
+		  ringsRawSumRel[b][0] += 1;//ringsRaw[0] / ringsRaw[0];
+	      }
+	  }
+	if(a>0)
+	  {
+	    ringsSum[0][a] +=rings[a] - rings[a-1];
+	    ringsRawSum[0][a] +=ringsRaw[a] - ringsRaw[a-1];
+	    if(rings[0]!=0)
+	      ringsSumRel[0][a] +=(rings[a] - rings[a-1]) / rings[0];
+	    if(ringsRaw[0]!=0)
+	      ringsRawSumRel[0][a] +=(ringsRaw[a] - ringsRaw[a-1])/ ringsRaw[0];
+	    for(int b=1;b<11;b++)
+	      {
+		if((fabs(etajet) > (b-1)*0.5) && (fabs(etajet) < b*0.5))
+		  {
+		    ringsSum[b][a] +=rings[a] - rings[a-1];
+		    ringsRawSum[b][a] +=ringsRaw[a] - ringsRaw[a-1];
+		    if(rings[0]!=0)
+		      ringsSumRel[b][a] +=(rings[a] - rings[a-1]) / rings[0];
+		    if(ringsRaw[0]!=0)
+		      ringsRawSumRel[b][a] +=(ringsRaw[a] - ringsRaw[a-1])/ ringsRaw[0];
+		  }
+	      }
+	  }
+      }
+    towerinjet[0]->Fill(noTower);
+    
     heta[0]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
     heta[1]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
     heta[2]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
@@ -1159,14 +1403,17 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
       heta[3]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
       heta[4]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
       heta[5]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+      towerinjet[1]->Fill(noTower);
     } else if (jg->GetTruth() > 35 && jg->GetTruth() < 90) {
       heta[6]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
       heta[7]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
       heta[8]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+      towerinjet[2]->Fill(noTower);
     } else if (jg->GetTruth() > 90 && jg->GetTruth() < 300) {
       heta[9]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
       heta[10]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
       heta[11]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+      towerinjet[3]->Fill(noTower);
     } 
     hpt[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
     hpt[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
@@ -1203,18 +1450,77 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     hptGamma2D->Fill(jg->GetTruth(),em/(em+had));
     hptGamma2DW->Fill(jg->GetTruth(),em/(em+had),jg->GetWeight());
   } 
-  TH1F* hists[12][8];
 
+  TH1F* hists[12][8];
+  c1->cd();
+  for(int i=0;i<4;++i)
+    {
+      towerinjet[i]->Draw();
+      c1->Draw();
+      ps.NewPage();
+    }
+  for(int i=0;i<4;++i)
+    {
+      respvstet[i]->Draw("Box");
+      c1->Draw();
+      ps.NewPage();
+    }
+  for(int i=0;i<3;++i)
+    {
+      testNegResponse[i]->Draw("Box");
+      c1->Draw();
+      ps.NewPage();
+    }
+  for(int b=0; b< 11; ++b)
+    {
+      for(int a=0; a < bining_plot; ++a)
+	{
+	  if(ringsRawSum[b][a] != 0)
+	    leadToNext[b+2]->Fill(a * (0.6 / bining_plot),ringsSum[b][a]/ringsRawSum[b][a]);
+	  if(ringsRawSumRel[b][a] != 0)
+	    leadToNext[b+15]->Fill(a * (0.6 / bining_plot),ringsSumRel[b][a]/ringsRawSumRel[b][a]);
+	}
+    }
+  leadToNext[0]->Draw();
+  leadToNext[1]->SetLineColor(2);
+  leadToNext[1]->Draw("same");
+  c1->Draw();
+  ps.NewPage();
+  for(int b=2; b< 26; ++b)
+    {
+      if(b==13)
+	{
+	  leadToNext[13]->Draw();
+	  leadToNext[14]->SetLineColor(2);
+	  leadToNext[14]->Draw("same");
+	  c1->Draw();
+	  ps.NewPage();
+	}
+      /*
+      if((b!=13) && (b!=14))
+	{
+	  leadToNext[b]->Draw();
+	  c1->Draw();
+	  ps.NewPage();
+	}
+      */
+    }
   for(int i=0; i<3;++i)
     {
-	  heta[4*i]->Sumw2();
-	  heta[4*i+1]->Sumw2();
-	  heta[4*i+2]->Sumw2();
-	  heta[4*i+3]->Sumw2();
-	  hpt[i]->Sumw2();
-	  hemf[i]->Sumw2();
-	  hptlog[i]->Sumw2();
+      leadToNext[26 + (2*i)]->Draw();
+      leadToNext[27 + (2*i)]->SetLineColor(2);
+      leadToNext[27 + (2*i)]->Draw("same");
+      c1->Draw();
+      ps.NewPage();
     }
+
+  EtaPhiMap->Draw("Col");//,Palette");
+  c1->Draw();
+  ps.NewPage();
+  EtaPhiMap->Draw("Palette");
+  c1->Draw();
+  ps.NewPage();
+
   TH1F* gaussplots[3][4];  
   TF1* gf[3][4];          
 
@@ -1610,19 +1916,36 @@ void TControlPlots::DiJetControlPlots()
   TCanvas * c1 = new TCanvas("controlplots","",600,600);
   TCanvas * c2 = new TCanvas("controlplotsGauss","",600,600);
   c2->Divide(1,3);
-  TPostScript ps("controlplotsDJ.ps",111);
+  TPostScript ps("controlplotsDiJet.ps",111);
 
   //book hists
   TH2F* combmean[5];
   TH2F* difmean[5];
+  TH2F* Bvsdphi;
+  TH2F* Difvscomb;
   TH1F* eta[2];
   TH1F* ptspec[2];
-
+  TH1F* dphi[11];
   
   ptspec[0] = new TH1F("Pt spectrum probe jet","Pt spectrum probe jet;Pt",300,0,2000);
   ptspec[1] = new TH1F("Pt spectrum barrel jet","Pt spectrum barrel jet;Pt",300,0,2000);
   eta[0] = new TH1F("eta probe jet","#eta probe jet;#eta",100,-5,5);
   eta[1] = new TH1F("eta barrel jet","#eta barrel jet;#eta",100,-5,5);
+  dphi[0] = new TH1F("Delta Phi","#Delta Phi;#Delta #Phi",70,2.8,3.5);
+  for(int i=1;i<5;++i)
+    dphi[i] = (TH1F*)dphi[0]->Clone();
+  dphi[1]->SetTitle("#Delta Phi (10-35 GeV);#Delta #Phi");
+  dphi[2]->SetTitle("#Delta Phi (35-90 GeV);#Delta #Phi");
+  dphi[3]->SetTitle("#Delta Phi (90-300 GeV);#Delta #Phi");
+  dphi[4]->SetTitle("#Delta Phi (300+ GeV);#Delta #Phi");
+  dphi[5] = new TH1F("Delta Phi off","#Delta Phi;#Delta #Phi",120,-3.4,3.4);
+  dphi[6] = new TH1F("Delta Phi off+","#Delta Phi;#Delta #Phi",120,2.8,3.4);
+  dphi[7] = new TH1F("abs Delta Phi off","#Delta Phi;#Delta #Phi",120,2.8,3.4);
+  dphi[8] = new TH1F("Delta Phi wo abs","#Delta Phi;#Delta #Phi",140,-3.5,3.5);
+  dphi[9] = new TH1F("Delta Phi wo abs +","#Delta Phi;#Delta #Phi",120,2.8,3.5);
+  dphi[10] = new TH1F("Delta Phi wo abs -","#Delta Phi;#Delta #Phi",120,-3.5,-2.8);
+  Bvsdphi = new TH2F("B vs DeltaPhi","B vs #Delta #Phi;#Delta#Phi;B",70,2.8,3.5,100,-1,1);
+  Difvscomb = new TH2F("Delta Et vs Combined Jet","#Delta Et vs. Combined Jet;Combined Jet;#Delta Et",100,0,100,100,0,100);
   combmean[0] = new TH2F("DiJet","di-jet controlplot;scale (Pt);Pt of combined jet",100,0,2000,100,0,200);
   difmean[0] = new TH2F("DiJet difference","di-jet controlplot;scale (Pt);abs. difference in Pt",100,0,2000,100,0,200);
   for(int i=1;i<5;++i)
@@ -1671,6 +1994,16 @@ void TControlPlots::DiJetControlPlots()
   Bptlog[1] = (TH2F*)Bptlog[0]->Clone();
 
 
+  for(int i=0; i<2;++i)
+    {
+	  Beta[4*i]->Sumw2();
+	  Beta[4*i+1]->Sumw2();
+	  Beta[4*i+2]->Sumw2();
+	  Beta[4*i+3]->Sumw2();
+	  Bpt[i]->Sumw2();
+	  Bemf[i]->Sumw2();
+	  Bptlog[i]->Sumw2();
+    }
 
   //loop over all fit-events
   for ( std::vector<TData*>::iterator i = data->begin() ; i != data->end() ; ++i )  
@@ -1686,30 +2019,65 @@ void TControlPlots::DiJetControlPlots()
       double etjet2 = jm->GetMultParametrizedMess(1);      //Barrel
       double etjet1uncor = jm->GetMultMess(0)[0];      //Probe
       double etjet2uncor = jm->GetMultMess(1)[0];      //Barrel
-
+      double phijet1 = jm->GetMultMess(0)[2];      //Probe
+      double phijet2 = jm->GetMultMess(1)[2];      //Barrel
       double B = (etjet1 - etjet2) / etscale;
       double Buncor = (etjet1uncor - etjet2uncor) * 2 / (etjet1uncor + etjet2uncor);
+      double etaprobe = etajet1;
+      double phiprobe = phijet1;
+      double etprobe = etjet1;
+      if(fabs(etajet1) < fabs(etajet2))  //unbias if both jets in barrel
+	{
+	  B *= -1;
+	  Buncor *= -1;
+	  etprobe = etjet2; 
+	  etjet2 = etjet1;  
+	  etaprobe = etajet2; 
+	  etajet2 = etajet1;  
+	  phiprobe = phijet2; 
+	  phijet2 = phijet1;  
+	}
+      double deltaphi = fabs(phiprobe - phijet2);
+      //double etjet3uncor = jm->GetMultMess(2)[0];
+      double deltaphioff = deltaPhi(phiprobe,phijet2);
+      //Test->Fill(etjet3uncor,deltaphi);
       //combmean->Fill(etmean, etjetdif, jj->GetWeight());
       //ptspec[0]
-      ptspec[0]->Fill(etjet1);
-      ptspec[1]->Fill(etjet2);
-      eta[0]->Fill(etajet1);
-      eta[1]->Fill(etajet2);
-      combmean[0]->Fill(etscale, etjetcomb);
-      difmean[0]->Fill(etscale, fabs(etjet1 - etjet2));
 
-      Beta[0]->Fill(etajet1, B,jj->GetWeight());
-      Beta[1]->Fill(etajet1, Buncor,jj->GetWeight());
+      ptspec[0]->Fill(etprobe);
+      ptspec[1]->Fill(etjet2);
+      eta[0]->Fill(etaprobe);
+      eta[1]->Fill(etajet2);
+      dphi[0]->Fill(deltaphi);
+      dphi[5]->Fill(deltaphioff);
+      dphi[6]->Fill(deltaphioff);
+      dphi[7]->Fill(fabs(deltaphioff));
+      dphi[8]->Fill(phiprobe - phijet2);             //
+      if((phiprobe - phijet2) > 0)
+	dphi[9]->Fill(phiprobe - phijet2);             //
+      else
+	dphi[10]->Fill(phiprobe - phijet2);             //
+      Bvsdphi->Fill(deltaphi,B); 
+      Difvscomb->Fill(fabs(etprobe - etjet2),etjetcomb);
+      combmean[0]->Fill(etscale, etjetcomb);
+      difmean[0]->Fill(etscale, fabs(etprobe - etjet2));
+
+      Beta[0]->Fill(etaprobe, B,jj->GetWeight());
+      Beta[1]->Fill(etaprobe, Buncor,jj->GetWeight());
       if (etscale > 10 && etscale < 35) {
-      Beta[2]->Fill(etajet1, B,jj->GetWeight());
-      Beta[3]->Fill(etajet1, Buncor,jj->GetWeight());
+      Beta[2]->Fill(etaprobe, B,jj->GetWeight());
+      Beta[3]->Fill(etaprobe, Buncor,jj->GetWeight());
+      dphi[1]->Fill(deltaphi);
       } else if (etscale > 35 && etscale < 90) {
-      Beta[4]->Fill(etajet1, B,jj->GetWeight());
-      Beta[5]->Fill(etajet1, Buncor,jj->GetWeight());
+      Beta[4]->Fill(etaprobe, B,jj->GetWeight());
+      Beta[5]->Fill(etaprobe, Buncor,jj->GetWeight());
+      dphi[2]->Fill(deltaphi);
       } else if (etscale > 90 && etscale < 300) {
-      Beta[6]->Fill(etajet1, B,jj->GetWeight());
-      Beta[7]->Fill(etajet1, Buncor,jj->GetWeight());
-      } 
+      Beta[6]->Fill(etaprobe, B,jj->GetWeight());
+      Beta[7]->Fill(etaprobe, Buncor,jj->GetWeight());
+      dphi[3]->Fill(deltaphi);
+      }  else if (etscale > 300)
+	dphi[4]->Fill(deltaphi);
       Bpt[0]->Fill(etscale,B,jj->GetWeight());
       Bpt[1]->Fill(etscale,Buncor,jj->GetWeight());
       Bptlog[0]->Fill(etscale,B,jj->GetWeight());
@@ -1731,10 +2099,10 @@ void TControlPlots::DiJetControlPlots()
       
       for(int i=0;i<4;++i)
 	{
-	  if((fabs(etajet1) > i) && (fabs(etajet1) < i+1)) 
+	  if((fabs(etaprobe) > i) && (fabs(etaprobe) < i+1)) 
 	    {
 	      combmean[i+1]->Fill(etscale, etjetcomb);
-	      difmean[i+1]->Fill(etscale, fabs(etjet1 - etjet2));
+	      difmean[i+1]->Fill(etscale, fabs(etprobe - etjet2));
 	    }
 	}
     }
@@ -1753,22 +2121,21 @@ void TControlPlots::DiJetControlPlots()
       c1->Draw();
       ps.NewPage(); 
     }
-
-
+  for(int i=0;i<11;++i)
+    {
+      dphi[i]->Draw();
+      c1->Draw();
+      ps.NewPage(); 
+    }
+  Bvsdphi->Draw();
+  c1->Draw();
+  ps.NewPage();  
+  Difvscomb->Draw();
+  c1->Draw();
+  ps.NewPage();  
 
   TH1F* hists[8][8];
 
-  for(int i=0; i<2;++i)
-    {
-      Beta[4*i]->Sumw2();
-      Beta[4*i+1]->Sumw2();
-      Beta[4*i+2]->Sumw2();
-      Beta[4*i+3]->Sumw2();
-      Bpt[i]->Sumw2();
-      Bemf[i]->Sumw2();
-      Bptlog[i]->Sumw2();
-    }
-  
   TH1F* gaussplots[2][4];  
   TF1* gf[2][4];     
 
@@ -2136,18 +2503,21 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF
     double meanerror = f->GetParError(1);
     double width = f->GetParameter(2);
     if(width < 0.2) width = 0.2;
-    if( (htemp->Fit(f,"LLQNO","goff",mean - 2 * width, mean + 2 * width) == 0) && (f->GetProb() > 0.01)) {}
-      mean = f->GetParameter(1);
-      meanerror = f->GetParError(1);
-      width = f->GetParameter(2);
-      hresults[2]->SetBinContent(i,mean);
-      hresults[2]->SetBinError(i,meanerror);
-      hresults[3]->SetBinContent(i,width/mean);
-      hresults[3]->SetBinError(i, f->GetParError(2));
-      hresults[5]->SetBinContent(i, f->GetChisquare() / f->GetNumberFreeParameters());
-      hresults[5]->SetBinError(i, 0.01);
-      hresults[6]->SetBinContent(i, f->GetProb());
-      hresults[6]->SetBinError(i, 0.01);
+    if( (htemp->Fit(f,"LLQNO","goff",mean - 2 * width, mean + 2 * width) == 0) && (f->GetProb() > 0.01)) 
+      {
+	mean = f->GetParameter(1);
+	meanerror = f->GetParError(1);
+	width = f->GetParameter(2);
+	hresults[2]->SetBinContent(i,mean);
+	hresults[2]->SetBinError(i,meanerror);
+	//hresults[3]->SetBinContent(i,width/mean);
+	hresults[3]->SetBinContent(i,width);
+	hresults[3]->SetBinError(i, f->GetParError(2));
+      }
+    hresults[5]->SetBinContent(i, f->GetChisquare() / f->GetNumberFreeParameters());
+    hresults[5]->SetBinError(i, 0.01);
+    hresults[6]->SetBinContent(i, f->GetProb());
+    hresults[6]->SetBinError(i, 0.01);
     if(i ==  int(hist->GetNbinsX()/6))
       {
 	gaussplots[0] = (TH1F*)htemp->Clone("hnew"); 
@@ -2170,7 +2540,8 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF
     width = htemp->GetRMS();
     hresults[0]->SetBinContent(i,mean);
     hresults[0]->SetBinError(i,meanerror);
-    hresults[1]->SetBinContent(i,width/mean); 
+    //hresults[1]->SetBinContent(i,width/mean); 
+    hresults[1]->SetBinContent(i,width); 
     hresults[1]->SetBinError(i,htemp->GetRMSError());
     htemp->GetQuantiles(nq,yq,xq);
     hresults[4]->SetBinContent(i,yq[0]);
