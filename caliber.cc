@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.11 2008/06/03 15:52:31 thomsen Exp $
+// $Id: caliber.cc,v 1.12 2008/06/19 15:32:39 stadie Exp $
 //
 #include "caliber.h"
 
@@ -163,7 +163,7 @@ double TCaliber::numeric_derivate( void (*func)(int&,double*,double&,double*,int
 int TCaliber::GetSpectraBin(double m1, double m2=0., double m3=0.)
 {
    //pt
-   int bin1, bins1 = 7000;
+  int bin1, bins1 = 7000; 
    double min1    = 0.;
    double max1    = 7000.;
    if      (m1<min1) bin1=0;
@@ -237,6 +237,7 @@ void TCaliber::FlattenSpectra()
 
       //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
       int bin = GetSpectraBin( (*it)->GetScale(), index );
+      //(*it)->SetWeight(1);
       //(*it)->SetWeight(1./weights[bin]);
       (*it)->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
     }
@@ -322,6 +323,8 @@ void TCaliber::Run_GammaJet()
       mess[1] = double(gammajet.TowEm[n]*scale);
       mess[2] = double(gammajet.TowHad[n]*scale);
       mess[3] = double(gammajet.TowOE[n]*scale);
+      mess[4] = double(gammajet.TowEta[n]);
+      mess[5] = double(gammajet.TowPhi[n]);
       EM+=mess[1];
       F+=mess[0];
       gj_data->AddMess(new TData_TruthMess(index,
@@ -339,7 +342,7 @@ void TCaliber::Run_GammaJet()
   
     data.push_back( gj_data ); 
    
-    if (n_gammajet_events>=0 && i==n_gammajet_events-1)
+    if (n_gammajet_events>=0 && i>=n_gammajet_events-1)
       break;
   }
 }
@@ -417,6 +420,8 @@ void TCaliber::Run_ZJet()
       mess[1] = double(zjet.TowEm[n]*scale);
       mess[2] = double(zjet.TowHad[n]*scale);
       mess[3] = double(zjet.TowOE[n]*scale);
+      mess[4] = double(zjet.TowEta[n]);
+      mess[5] = double(zjet.TowPhi[n]);
       gj_data->AddMess(new TData_TruthMess(index,
 					   mess,                                                    //mess//
 					   zjet.ZEt * relativEt,                           //truth//
@@ -431,7 +436,7 @@ void TCaliber::Run_ZJet()
  
     data.push_back( gj_data ); 
    
-    if (n_zjet_events>=0 && i==n_zjet_events-1)
+    if (n_zjet_events>=0 && i>=n_zjet_events-1)
       break;
   }
 }
@@ -466,6 +471,8 @@ void TCaliber::Run_TrackTower()
       mess[1] = double(tracktower.TowEm[n])*scale;
       mess[2] = double(tracktower.TowHad[n]*scale);
       mess[3] = double(tracktower.TowOE[n])*scale;
+      mess[4] = double(tracktower.TowEta[n]);
+      mess[5] = double(tracktower.TowPhi[n]);
       data.push_back(new TData_TruthMess(index,
 					 mess,                                                //mess//
 					 tracktower.TrackEt[n],                               //truth//
@@ -482,7 +489,7 @@ void TCaliber::Run_TrackTower()
       break;//use only one track-tower per event! ->bug in the producer
     }  
  
-    if (n_tracktower_events>=0 && evt==n_tracktower_events)
+    if (n_tracktower_events>=0 && evt>=n_tracktower_events)
       break;
   }
 }
@@ -538,6 +545,8 @@ void TCaliber::Run_TrackCluster()
       mess[1] = double(trackcluster.TowEm[n]*scale);
       mess[2] = double(trackcluster.TowHad[n]*scale);
       mess[3] = double(trackcluster.TowOE[n]*scale);
+      mess[4] = double(trackcluster.TowEta[n]);
+      mess[5] = double(trackcluster.TowPhi[n]);
       TData_TruthMess * tower = new TData_TruthMess(index,
 						    mess,                                                      //mess//
 						    trackcluster.TrackEt*trackcluster.TowEt[n]/cluster_energy, //"truth" for plotting only!//
@@ -556,7 +565,7 @@ void TCaliber::Run_TrackCluster()
     data.push_back( tc ); 
 
     if((evt++)%1000==0) cout<<"Track-Cluster Event: "<<evt<<endl;
-    if (n_trackcluster_events>=0 && evt==n_trackcluster_events)
+    if (n_trackcluster_events>=0 && evt>=n_trackcluster_events)
       break;
   }
 }
@@ -702,6 +711,8 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	mess[1] = double(njet.TowEm[n]*scale);
 	mess[2] = double(njet.TowHad[n]*scale);
 	mess[3] = double(njet.TowOE[n]*scale);
+	mess[4] = double(njet.TowEta[n]);
+	mess[5] = double(njet.TowPhi[n]);
 	jj_data[nstoredjets]->AddMess(new TData_TruthMess(
 	    index,
 	    mess,                                                   //mess//
@@ -719,8 +730,8 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       ++nstoredjets;
     }//loop over all n-jets
     if(jj_data[0] && nstoredjets == injet && jj_data[0]->GetScale() > 15.0) {
+      ++evt;    
       data.push_back( jj_data[0] ); 
-      ++evt;
     } else {
       delete jj_data[0];
     }
