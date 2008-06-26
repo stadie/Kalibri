@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.17 2008/06/02 11:51:34 stadie Exp $
+// $Id: CalibData.h,v 1.18 2008/06/03 16:09:01 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -12,7 +12,7 @@
 #include <utility> //pair
 #include <cmath>
 
-#define __DimensionMeasurement 4
+#define __DimensionMeasurement 6
 
 #define TypeDefault      0
 #define TypeTrackTower   1
@@ -190,6 +190,16 @@ public:
       new_mess  = GetParametrizedMess();
       new_error = _err( &new_mess );
       new_mess  = GetMessCombination();
+
+      //Combination -> B -> to response
+      /*
+      new_mess /= GetScale();
+      new_mess = (2+new_mess)/(2-new_mess);
+      new_error *= 4 / ( 4 - (4*new_mess) + (new_mess*new_mess));
+      sum_error2 += new_error * new_error;
+      */
+
+
       //std::cout << "new_mess:" << new_mess << " error:" << new_error << " and " << sqrt(sum_error2) 
       //		<< '\n';
       return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
