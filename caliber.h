@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.16 2008/05/30 15:35:21 stadie Exp $
+// $Id: caliber.h,v 1.17 2008/06/27 14:24:32 mschrode Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -76,7 +76,7 @@ private:
       n_trackcluster_events, n_dijet_events, n_trijet_events, n_zjet_events;
   std::string configfile, output_file;              //input/output
   int use_GammaJetTowerMethod,use_DisplayMethod;    //plots
-  double Et_cut_on_jet, Et_cut_on_gamma,            //kin. cuts
+  double Et_cut_on_jet, Et_cut_on_gamma, Et_cut_nplus1Jet,     //kin. cuts
          Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster, Et_cut_on_Z;
 
   std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals

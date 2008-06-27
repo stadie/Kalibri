@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.13 2008/06/25 13:40:52 thomsen Exp $
+// $Id: caliber.cc,v 1.14 2008/06/27 14:24:32 mschrode Exp $
 //
 #include "caliber.h"
 
@@ -110,7 +110,6 @@ public:
   }
   double Chi2() const { return chi2;}
 };
-
 
 
 int TCaliber::GetSpectraBin(double m1, double m2=0., double m3=0.)
@@ -604,7 +603,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       //Find the jets eta & phi index using the leading (ET) tower:
       int jet_index = -1;
       double max_tower_et = 0.0;
-      if(njet.JetPt[ij] < 10.0) continue;
+      if(njet.JetPt[ij] < Et_cut_nplus1Jet) continue;
       for (int n=0; n<njet.NobjTow; ++n){
         if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
 	//	cout << ij<<". jet, "<<n<<". tow with ieta="<<njet.TowId_eta[n]
@@ -928,6 +927,7 @@ void TCaliber::Init(string file)
   Et_cut_on_track = config.read<double>("Et cut on track",0.0); 
   Et_cut_on_tower = config.read<double>("Et cut on tower",0.0);
   Et_cut_on_cluster = config.read<double>("Et cut on cluster",0.0);
+  Et_cut_nplus1Jet = config.read<double>("Et cut on n+1 Jet",10.0);
   //specify constraints
   vector<double> tower_constraint = bag_of<double>(config.read<string>( "Tower Constraint",""));
   if(tower_constraint.size() % 5 == 0) {
