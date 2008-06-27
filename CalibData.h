@@ -1,10 +1,12 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.18 2008/06/03 16:09:01 stadie Exp $
+// $Id: CalibData.h,v 1.19 2008/06/26 11:48:24 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
+
+#include <TMath.h>
 
 #include <iostream>
 #include <vector> 
@@ -28,10 +30,10 @@
 class TData
 {
 public:
-  TData(){_mess=0; _par=0;};
+  TData(){_mess=0; _par=0; };
   TData(unsigned short int index, double * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
         double(*func)(double*,double*), double(*err)(double*)){
-    _index=index;_mess=mess;_truth=truth;_error=error;_par=par;_n_par=n_par;_func=func;_err=err;_weight=weight;};
+    _index=index;_mess=mess;_truth=truth;_error=error;_par=par;_n_par=n_par;_func=func;_err=err;_weight=weight; };
   virtual ~TData(){
     delete [] _mess;
   };
@@ -52,7 +54,14 @@ public:
   double * GetPar(){return _par;};
   unsigned short int GetNumberOfPars() {return _n_par;};
   virtual void ChangeParAddress(double* oldpar, double* newpar) { _par += newpar - oldpar;}
+
   static unsigned int total_n_pars;
+
+  static double (*ScaleResidual)(double z2);         // Set to one of the following functions to scale the normalized residual z2 = chi2/weight in chi2() or chi2_fast(): 
+  static double ScaleNone(double z2) { return z2; }  // No scaling of residuals in chi2() or chi2_fast() (default)
+  static double ScaleCauchy(double z2);	             // Scaling of residuals with Cauchy-Function in chi2() or chi2_fast()
+  static double ScaleHuber(double z2);               // Scaling of residuals with Huber-Function in chi2() or chi2_fast()
+
 protected:
   unsigned short int _index, _n_par, _type; //limited from 0 to 65535
   double _truth, _error, _paramess, _weight;
@@ -79,7 +88,8 @@ public:
     double new_mess  = GetParametrizedMess();
     double new_error = GetParametrizedErr(&new_mess);
     double weight = GetWeight();
-    return weight*(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
+    //-- return weight*(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
+    return weight * (*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error) );
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
   
@@ -103,7 +113,7 @@ public:
       delete *it;
     _vecmess.clear();	
   };
-  void AddMess(TData_TruthMess * m){_vecmess.push_back(m);};
+  void AddMess(TData_TruthMess * m){ _vecmess.push_back(m);};
   // use GetMess from base class
 /*   virtual double * GetMess(){//used only for plotting */
 /*     double *dummy, *result=new double[__DimensionMeasurement]; */
@@ -137,7 +147,8 @@ public:
     }
     new_mess  = _func( &sum_mess, _par);  
     new_error = _err(  &new_mess );
-    return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+    //-- return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+    return weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
   virtual const std::vector<TData*>& GetRef() {return _vecmess;};
@@ -202,7 +213,8 @@ public:
 
       //std::cout << "new_mess:" << new_mess << " error:" << new_error << " and " << sqrt(sum_error2) 
       //		<< '\n';
-      return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+      //-- return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+      return weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
     };
     virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
     virtual void ChangeParAddress(double* oldpar, double* newpar) { 

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.15 2008/05/30 12:58:52 auterman Exp $
+// $Id: caliber.h,v 1.16 2008/05/30 15:35:21 stadie Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -68,10 +68,6 @@ protected:
   void FlattenSpectra();
 
 private:
-  void global_fit(int &npar, double *gin, double &f, 
-                         double *allpar, int iflag); 
-  double numeric_derivate( void (*func)(int&,double*,double&,double*,int),
-                           double * pars, int npar, int index);
   double analytic_derivate( double * pars, int npar, int index);
   int GetSpectraBin(double m1, double m2, double m3);
   
@@ -83,9 +79,8 @@ private:
   double Et_cut_on_jet, Et_cut_on_gamma,            //kin. cuts
          Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster, Et_cut_on_Z;
 
-  int    OutlierIterationSteps;                     //outlier rejection
+  std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals
   int nthreads;
-  double OutlierChi2Cut, OutlierChi2CutPresel;
   class TowerConstraint {
   public:
     int mineta;

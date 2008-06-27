@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.1 2008/05/08 17:13:16 auterman Exp $
+// $Id: CalibData.cc,v 1.2 2008/06/02 11:51:34 stadie Exp $
 //
 #include "CalibData.h"
 #include "map"
@@ -9,6 +9,8 @@
 
 
 unsigned int TData::total_n_pars = 0;
+double (*TData::ScaleResidual)(double z2) = &TData::ScaleNone;
+
 //unsigned int TData::total_tower_pars = 0;
 //unsigned int TData::total_jet_pars = 0;
 
@@ -25,7 +27,9 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
   if (GetMess()[0]!=0.) new_error = _error*new_mess/GetMess()[0];
 #endif   
   double weight = GetWeight();
-  double new_chi2  = weight*(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
+  //-- double new_chi2  = weight*(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
+  double new_chi2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error) );
+
   
   double dmess_dp, derror_dp;
   unsigned idx = _index*_n_par; //_index==bin; idx==bin*Free_parameters_per_bin
@@ -43,7 +47,8 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
     if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
     else derror_dp = _error;
 #endif   
-    temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
+    //-- temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
+    temp_derivative2[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp) );
 
     _par[i-idx]  = oldpar - epsilon;
     dmess_dp  = GetParametrizedMess();
@@ -53,7 +58,9 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
     if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
     else derror_dp = _error;
 #endif   
-    temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
+    //-- temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
+    temp_derivative1[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp) );
+
     _par[i-idx]  = oldpar;
   }
   for (unsigned i=idx+_n_par; i< total_n_pars; ++i){
@@ -129,7 +136,9 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //  if (_mess!=0) if (_mess[0]!=0.) new_error = _error*new_mess/_mess[0];
 //  else new_error = _error;
 //#endif   
-  new_chi2  = weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+  //-- new_chi2  = weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+  new_chi2  = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+
 
   idx = _index; //@@to be fixed -> introduce a eta-phi binning for JES
   for (unsigned i=0; i<total_n_pars; ++i){
@@ -142,7 +151,9 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //    if (new_mess!=0.) derror_dp = _error*dmess_dp/new_mess;
 //    else derror_dp = _error;
 //#endif   
-    temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
+    //-- temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
+    temp_derivative2[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
+
     // same for p_i-epsilon:
     new_mess  = sm1[i];  
     dmess_dp  = _func(&new_mess,_par);
@@ -153,7 +164,8 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //    else derror_dp = _error;
 //#endif   
     derror_dp = _err(&dmess_dp);
-    temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
+    //-- temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
+    temp_derivative1[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
   }
   	
   for (unsigned i=idx; i<idx+_n_par; ++i){
@@ -167,7 +179,8 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //    if (sum_mess!=0.) derror_dp = _error*dmess_dp/sum_mess;
 //    else derror_dp = _error;
 //#endif
-    temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
+    //-- temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
+    temp_derivative2[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
 
     _par[i-idx]  = oldpar - epsilon;
     dmess_dp  = _func(&sum_mess,_par);
@@ -177,7 +190,9 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //    if (sum_mess!=0.) derror_dp = _error*dmess_dp/sum_mess;
 //    else derror_dp = _error;
 //#endif
-    temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
+    //-- temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
+    temp_derivative1[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
+
     _par[i-idx]  = oldpar;
   }
 
@@ -249,7 +264,8 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
 //       new_error = _error;
 //#endif
        new_mess  = GetMessCombination();  
-       temp_derivative2[ i ]+=weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+       //-- temp_derivative2[ i ]+=weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+       temp_derivative2[i] += weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
        sum_error2 = 0.0;
 
        *tpars[i] = oldpar - epsilon;
@@ -271,7 +287,8 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
 //       new_error = _error;
 //#endif
        new_mess  = GetMessCombination();  
-       temp_derivative1[ i ]+=weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+       //-- temp_derivative1[ i ]+=weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+       temp_derivative1[i] += weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
        *tpars[i] = oldpar;
     }
     else 
@@ -321,3 +338,27 @@ double TData_InvMass::combine(){
   }
   return sqrt(e*e - x*x - y*y - z*z);     
 };
+
+
+
+/*
+  Scale the normalized residual 'z^2 = chi^2/weight' using 
+  the Cauchy-Function:  z^2 --> c^2 * Ln( 1 + (z/c)^2 )
+*/
+double TData::ScaleCauchy(double z2)
+{
+  double c = 2.3849;
+  return c*c * TMath::Log( 1 + z2/(c*c) );
+}
+
+/*
+  Scale the normalized residual 'z^2 = chi^2/weight' using 
+  the Huber-Function   z^2 --> z                 for |z| <= c
+	                       c * ( 2*|z| - c ) for |z| > c
+*/
+double TData::ScaleHuber(double z2)
+{
+  double c = 1.345;
+  double z = TMath::Sqrt(z2);
+  return (  fabs(z) <= c  ?  z2  :  c*(2*fabs(z) - c)  );
+}

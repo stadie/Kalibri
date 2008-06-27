@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.12 2008/06/19 15:32:39 stadie Exp $
+// $Id: caliber.cc,v 1.13 2008/06/25 13:40:52 thomsen Exp $
 //
 #include "caliber.h"
 
@@ -29,15 +29,7 @@ using namespace std;
 
 typedef std::vector<TData*>::iterator DataIter;
 typedef std::vector<TData*>::const_iterator DataConstIter;
-//Outlier Rejection
-struct OutlierRejection {
-  OutlierRejection(double cut):_cut(cut){};
-  bool operator()(TData *d){
-    if(d->GetType()==TypeTowerConstraint) return true;
-    return (d->chi2()/d->GetWeight())<_cut;
-  }
-  double _cut;
-};
+
 //ControlCut Selection
 struct ControlCutSelection {
   ControlCutSelection(double cut):_cut(cut){};
@@ -78,7 +70,7 @@ private:
       }
       parent->chi2 =0.0;   
       for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it) {
-	parent->chi2 += (*it)->chi2_fast(parent->td1,parent->td2,parent->epsilon); 
+	parent->chi2 += (*it)->chi2_fast(parent->td1,parent->td2,parent->epsilon);
       } 
       boost::mutex::scoped_lock lock(io_mutex);
       for (int param=0; param< parent->npar ; ++param) {
@@ -119,45 +111,6 @@ public:
   double Chi2() const { return chi2;}
 };
 
-void TCaliber::global_fit(int &npar, double *gin, double &f, double *allpar, int iflag) 
-//usage inadvisable -> derivative will be cached if chi2_fast() is used.
-//This function can be used for fitting with Minuit which does derivatives 
-//first or for plotting.
-{
-  double chisq = 0.0;
-  std::vector<TData*>::const_iterator data_it, it;
-  for (data_it=data.begin(); data_it!=data.end(); ++data_it)
-    chisq += (*data_it)->GetWeight()*(*data_it)->chi2();     //standard
-  f = chisq;
-}
-
-double TCaliber::numeric_derivate( void (*func)(int&,double*,double&,double*,int), 
-                                   double * pars, int npar, int index)
-//usage inadvisable -> derivative will be cached if chi2_fast() is used
-{
-  //double const epsilon = 1.E-5;//defined in CalibData.h as global static
-  double * gin=0;
-  int i=0;
-  double x, x0, x1, result=0.0;
-  double epsilon = 1e-03;
-  if (index<npar){//first derivative
-    pars[index]+=epsilon;
-    func(npar,gin,x1,pars,i);
-    pars[index]-=2*epsilon;
-    func(npar,gin,x0,pars,i);
-    pars[index]+=epsilon;
-    result = (x1-x0)/(2.0*epsilon);
-  } else if (npar<=index && index<2*npar){//second derivative
-    pars[index-npar]+=epsilon;
-    func(npar,gin,x1,pars,i);
-    pars[index-npar]-=2*epsilon;
-    func(npar,gin,x0,pars,i);
-    pars[index-npar]+=epsilon;
-    func(npar,gin,x,pars,i);
-    result = (x0+x1-2*x)/(epsilon*epsilon);
-  } 
-  return result;
-}
 
 
 int TCaliber::GetSpectraBin(double m1, double m2=0., double m3=0.)
@@ -795,16 +748,32 @@ void TCaliber::Run_Lvmini()
   p->FillErrors(aux+error_index);
   //for (int n=0; n<naux; ++n) aux[n]=0.0; 
 
-  //outlier rejection before first iteration
-  {
-    DataIter beg =  partition(data.begin(), data.end(), OutlierRejection(OutlierChi2CutPresel));
-    for(DataIter i = beg ; i != data.end() ; ++i) {
-      delete *i;
+  for( int loop = 0; loop < static_cast<int>(_residualScalingScheme.size()); loop++ ) {
+
+    // Setting function to scale residuals in chi2 calculation
+    cout << loop+1 << flush;
+    if(  loop+1 == 1  ) cout << "st" << flush;
+    else if(  loop+1 == 2  ) cout << "nd" << flush;
+    else if(  loop+1 == 3  ) cout << "rd" << flush;
+    else cout << "th" << flush;
+    cout << " of " << _residualScalingScheme.size() <<" iteration(s): " << flush;
+    if(  _residualScalingScheme.at(loop) == 0  ) {
+	TData::ScaleResidual = &TData::ScaleNone;	
+	cout << "no scaling of residuals." << endl;
+      }
+    else if(  _residualScalingScheme.at(loop) == 1  ) {
+	TData::ScaleResidual = &TData::ScaleCauchy;	
+	cout << "scaling of residuals with Cauchy-Function." << endl;
+      }
+    else if(  _residualScalingScheme.at(loop) == 2  ) {
+	TData::ScaleResidual = &TData::ScaleHuber;	
+	cout << "scaling of residuals with Huber-Function." << endl;
+      }
+    else {
+      cout << endl << "ERROR: " << _residualScalingScheme.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
+      break;
     }
-    data.erase(beg,data.end());  
-  }
-  for (int i=0; i<OutlierIterationSteps; ++i) {
-    cout << i+1 << "th of "<<OutlierIterationSteps<<" iteration using " << data.size() << " events (chi2 terms)." << endl;
+
     if (npar>0) npar*=-1; //Show output
     //initialization
     lvmini_( npar, mvec, niter, aux);
@@ -847,13 +816,6 @@ void TCaliber::Run_Lvmini()
     int par_index = 1;
     par_index = lvmind_(par_index);
     p->SetParameters(aux + par_index);
-    if (i+1!=OutlierIterationSteps)  {
-      std::vector<TData*>::iterator beg =  partition(data.begin(), data.end(), OutlierRejection(OutlierChi2Cut));
-      for(std::vector<TData*>::iterator i = beg ; i != data.end() ; ++i) {
-	delete *i;
-      }
-      data.erase(beg,data.end());
-    }
   }
   //Copy Parameter errors from aux array to the TParameter::e array
   error_index=2;
@@ -910,6 +872,8 @@ void TCaliber::Done()
     plots->TrackTowerControlPlots();
     cout << "Creating track cluster control plots,"<<endl;
     plots->TrackClusterControlPlots();
+    cout << "Creating outlier control plots,"<<endl;
+    plots->OutlierControlPlots();
   }
   //Clean-up
   delete plots; 
@@ -938,6 +902,8 @@ void TCaliber::Init(string file)
   gStyle->SetStatY(0.89);              
   gStyle->SetStatW(0.2);              
   gStyle->SetStatH(0.2);              
+  gStyle->SetTitleXOffset(1.1);
+  gStyle->SetTitleYOffset(2.0);
 
 
   
@@ -973,10 +939,26 @@ void TCaliber::Init(string file)
   } else {
     std::cout << "wrong number of arguments for tower constraint:" << tower_constraint.size() << '\n';
   }
-  //outlier rejection
-  OutlierIterationSteps = config.read<int>("Outlier Iteration Steps",3);
-  OutlierChi2Cut        = config.read<double>("Outlier Cut on Chi2",100.0);
-  OutlierChi2CutPresel  = config.read<double>("Outlier Cut on Chi2 presel",400.0);
+
+  // Residual scaling
+  const char* resScheme = ( config.read<string>("Residual Scaling Scheme","221").c_str() );
+  while(  *resScheme != 0  )
+    {
+      int scheme = static_cast<int>(*resScheme - '0');
+      if(  scheme < 0  ||  scheme > 2  )
+	{
+	  cout << endl << "ERROR: " << scheme << " is not a valid scheme for resdiual scaling! Using default scheme 221." << endl << endl;
+	  _residualScalingScheme.clear();
+	  _residualScalingScheme.push_back(2);
+	  _residualScalingScheme.push_back(2);
+	  _residualScalingScheme.push_back(1);
+	  break;
+	}
+
+      _residualScalingScheme.push_back( static_cast<int>(*resScheme - '0') );
+      resScheme++;
+    }
+
   //input/output
   n_gammajet_events     = config.read<int>("use Gamma-Jet events",-1);
   n_zjet_events         = config.read<int>("use Z-Jet events",-1);
