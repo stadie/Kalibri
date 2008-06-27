@@ -2430,6 +2430,68 @@ void TControlPlots::DiJetControlPlots()
 
 
 
+void TControlPlots::OutlierControlPlots() const
+{
+  TCanvas * c1 = new TCanvas("outlierControlPlots","",600,600);
+
+  TPostScript ps("outlierControlPlots.ps",111);
+
+
+  // Distribution of chi2 summands (normalized residuals)
+  TH1F *h_chi2 = new TH1F("h_chi2","Normalized residuals",50,0,200);
+  h_chi2->SetXTitle("z^{2} = 1/w #chi^{2}_{event}");
+  h_chi2->SetYTitle("dN / dz^{2}");
+
+  // Distribution of Cauchy scaled normalized residuals
+  TH1F *h_cauchy = new TH1F("h_cauchy","Normalized residuals, Cauchy scaled",50,0,200);
+  h_cauchy->SetXTitle("C(z^{2})");
+  h_cauchy->SetYTitle("dN / dC(z^{2})");
+
+  // Distribution of Huber scaled normalized residuals
+  TH1F *h_huber = new TH1F("h_huber","Normalized residuals, Huber scaled",50,0,200);
+  h_huber->SetXTitle("H(z^{2})");
+  h_huber->SetYTitle("dN / dH(z^{2})");
+
+
+  for(  std::vector<TData*>::const_iterator it = data->begin();  it < data->end();  ++it )
+    {
+      double weight = (*it)->GetWeight();
+
+      TData::ScaleResidual = &TData::ScaleNone;
+      h_chi2->Fill(  ( (*it)->chi2() ) / weight  );
+
+      TData::ScaleResidual = &TData::ScaleCauchy;
+      h_cauchy->Fill(  ( (*it)->chi2() ) / weight  );
+
+      TData::ScaleResidual = &TData::ScaleHuber;
+      h_huber->Fill(  ( (*it)->chi2() ) / weight  );
+    }
+
+  c1->cd();
+
+  h_chi2->Draw();
+  c1->SetLogy(1);
+  c1->Draw();
+  ps.NewPage();
+
+  h_cauchy->Draw();
+  c1->SetLogy(1);
+  c1->Draw();
+  ps.NewPage();
+
+  h_huber->Draw();
+  c1->SetLogy(1);
+  c1->Draw();
+  ps.NewPage();
+
+  ps.Close();
+
+  delete h_chi2;
+}
+
+
+
+
 void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) 
 {
   //book hists

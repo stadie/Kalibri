@@ -29,6 +29,7 @@ public:
   void TrackTowerControlPlots();
   void TrackClusterControlPlots();
   void FitControlPlots();
+  void OutlierControlPlots() const;
 
 private:  
   void ReadConfigFile(std::string config);
