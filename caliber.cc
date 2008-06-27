@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.15 2008/06/27 14:58:01 thomsen Exp $
+// $Id: caliber.cc,v 1.16 2008/06/27 15:16:12 mschrode Exp $
 //
 #include "caliber.h"
 
@@ -889,8 +889,6 @@ void TCaliber::Done()
     plots->TrackTowerControlPlots();
     cout << "Creating track cluster control plots,"<<endl;
     plots->TrackClusterControlPlots();
-    cout << "Creating outlier control plots,"<<endl;
-    plots->OutlierControlPlots();
   }
   //Clean-up
   delete plots; 

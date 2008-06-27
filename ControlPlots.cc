@@ -590,11 +590,63 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
   constants->Draw("COLZ"); 
   c1->Draw(); 
   ps.NewPage();
+
+
+  // Distribution of chi2 summands (normalized residuals)
+  TH1F *h_chi2 = new TH1F("h_chi2","Scaled residuals z^{2} = 1/w #chi^{2};f(z^{2});dN / df(z^{2})",50,0,200);
+  h_chi2->SetLineColor(1);
+  h_chi2->SetLineStyle(3);
+
+  // Distribution of Cauchy scaled normalized residuals
+  TH1F *h_cauchy = static_cast<TH1F*>(h_chi2->Clone("h_cauchy"));
+  h_cauchy->SetLineColor(2);
+  h_cauchy->SetLineStyle(2);
+
+  // Distribution of Huber scaled normalized residuals
+  TH1F *h_huber = static_cast<TH1F*>(h_chi2->Clone("h_huber"));
+  h_huber->SetLineColor(4);
+  h_huber->SetLineStyle(1);
+
+  for(  std::vector<TData*>::const_iterator it = data->begin();  it < data->end();  ++it )
+    {
+      double weight = (*it)->GetWeight();
+
+      TData::ScaleResidual = &TData::ScaleNone;
+      h_chi2->Fill(  ( (*it)->chi2() ) / weight  );
+
+      TData::ScaleResidual = &TData::ScaleCauchy;
+      h_cauchy->Fill(  ( (*it)->chi2() ) / weight  );
+
+      TData::ScaleResidual = &TData::ScaleHuber;
+      h_huber->Fill(  ( (*it)->chi2() ) / weight  );
+    }
+
+  h_cauchy->Draw();
+  h_huber->Draw("same");
+  h_chi2->Draw("same");
+  c1->SetLogy(1);
+
+  TLegend *l_res = new TLegend(0.35,0.68,0.7,0.88);
+  l_res->SetFillColor(0);
+  l_res->SetBorderSize(0);
+  l_res->SetHeader("Scaling function f");
+  l_res->AddEntry(h_chi2,"None","L");
+  l_res->AddEntry(h_huber,"Huber","L");
+  l_res->AddEntry(h_cauchy,"Cauchy","L");
+  l_res->Draw("same");
+
+  c1->Draw();
+  ps.NewPage();
+
+  delete h_chi2;
+  delete h_cauchy;
+  delete h_huber;
+  delete l_res;
   
   ps.Close();
 }
   
-void TControlPlots::GammaJetControlPlots()  // Gamma-Jet Control Histograms
+void TControlPlots::GammaJetControlPlots() // Gamma-Jet Control Histograms
 {
   TCanvas * c1 = new TCanvas("gj1","",600,600);
   TPostScript ps("gammajet_plots_per_towerbin.ps",111);
@@ -800,7 +852,7 @@ void TControlPlots::GammaJetControlPlotsJetBin()  // Gamma-Jet Control Histogram
 }
 
   
-void TControlPlots::TrackTowerControlPlots()  // Track-Tower Control Histograms
+void TControlPlots::TrackTowerControlPlots() // Track-Tower Control Histograms
 {
   TCanvas * c1 = new TCanvas("c1","",600,600);
   TPostScript ps("tracktower_plots.ps",111);
@@ -1014,7 +1066,7 @@ void TControlPlots::TrackTowerControlPlots()  // Track-Tower Control Histograms
   */
 }
 
-void TControlPlots::TrackClusterControlPlots()  // Track-Cluster Control Histograms
+void TControlPlots::TrackClusterControlPlots() // Track-Cluster Control Histograms
 {
   TCanvas * c1 = new TCanvas("tc1","",600,600);
   TPostScript ps("trackcluster_plots.ps",111);
@@ -2428,71 +2480,7 @@ void TControlPlots::DiJetControlPlots()
 }
 
 
-
-
-void TControlPlots::OutlierControlPlots() const
-{
-  TCanvas * c1 = new TCanvas("outlierControlPlots","",600,600);
-
-  TPostScript ps("outlierControlPlots.ps",111);
-
-
-  // Distribution of chi2 summands (normalized residuals)
-  TH1F *h_chi2 = new TH1F("h_chi2","Normalized residuals",50,0,200);
-  h_chi2->SetXTitle("z^{2} = 1/w #chi^{2}_{event}");
-  h_chi2->SetYTitle("dN / dz^{2}");
-
-  // Distribution of Cauchy scaled normalized residuals
-  TH1F *h_cauchy = new TH1F("h_cauchy","Normalized residuals, Cauchy scaled",50,0,200);
-  h_cauchy->SetXTitle("C(z^{2})");
-  h_cauchy->SetYTitle("dN / dC(z^{2})");
-
-  // Distribution of Huber scaled normalized residuals
-  TH1F *h_huber = new TH1F("h_huber","Normalized residuals, Huber scaled",50,0,200);
-  h_huber->SetXTitle("H(z^{2})");
-  h_huber->SetYTitle("dN / dH(z^{2})");
-
-
-  for(  std::vector<TData*>::const_iterator it = data->begin();  it < data->end();  ++it )
-    {
-      double weight = (*it)->GetWeight();
-
-      TData::ScaleResidual = &TData::ScaleNone;
-      h_chi2->Fill(  ( (*it)->chi2() ) / weight  );
-
-      TData::ScaleResidual = &TData::ScaleCauchy;
-      h_cauchy->Fill(  ( (*it)->chi2() ) / weight  );
-
-      TData::ScaleResidual = &TData::ScaleHuber;
-      h_huber->Fill(  ( (*it)->chi2() ) / weight  );
-    }
-
-  c1->cd();
-
-  h_chi2->Draw();
-  c1->SetLogy(1);
-  c1->Draw();
-  ps.NewPage();
-
-  h_cauchy->Draw();
-  c1->SetLogy(1);
-  c1->Draw();
-  ps.NewPage();
-
-  h_huber->Draw();
-  c1->SetLogy(1);
-  c1->Draw();
-  ps.NewPage();
-
-  ps.Close();
-
-  delete h_chi2;
-}
-
-
-
-
-void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) 
+void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] )
 {
   //book hists
   TString s(hist->GetName());
