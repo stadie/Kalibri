@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.14 2008/06/27 14:24:32 mschrode Exp $
+// $Id: caliber.cc,v 1.15 2008/06/27 14:58:01 thomsen Exp $
 //
 #include "caliber.h"
 
@@ -29,6 +29,16 @@ using namespace std;
 
 typedef std::vector<TData*>::iterator DataIter;
 typedef std::vector<TData*>::const_iterator DataConstIter;
+
+//Outlier Rejection
+struct OutlierRejection {
+  OutlierRejection(double cut):_cut(cut){};
+  bool operator()(TData *d){
+    if(d->GetType()==TypeTowerConstraint) return true;
+    return (d->chi2()/d->GetWeight())<_cut;
+  }
+  double _cut;
+};
 
 //ControlCut Selection
 struct ControlCutSelection {
@@ -759,6 +769,14 @@ void TCaliber::Run_Lvmini()
     if(  _residualScalingScheme.at(loop) == 0  ) {
 	TData::ScaleResidual = &TData::ScaleNone;	
 	cout << "no scaling of residuals." << endl;
+
+	cout << "Rejecting outliers " << flush;
+	DataIter beg = partition(data.begin(), data.end(), OutlierRejection(OutlierChi2Cut));
+	for(DataIter i = beg ; i != data.end() ; ++i) {
+	  delete *i;
+	}
+	data.erase(beg,data.end());
+	cout << "and using " << data.size() << " events." << endl;
       }
     else if(  _residualScalingScheme.at(loop) == 1  ) {
 	TData::ScaleResidual = &TData::ScaleCauchy;	
@@ -958,6 +976,7 @@ void TCaliber::Init(string file)
       _residualScalingScheme.push_back( static_cast<int>(*resScheme - '0') );
       resScheme++;
     }
+  OutlierChi2Cut        = config.read<double>("Outlier Cut on Chi2",100.0);
 
   //input/output
   n_gammajet_events     = config.read<int>("use Gamma-Jet events",-1);

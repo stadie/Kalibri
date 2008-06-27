@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.17 2008/06/27 14:24:32 mschrode Exp $
+// $Id: caliber.h,v 1.18 2008/06/27 14:58:01 thomsen Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -80,6 +80,7 @@ private:
          Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster, Et_cut_on_Z;
 
   std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals
+  double OutlierChi2Cut;                            // Cut on outlier when no scaling is chosen
   int nthreads;
   class TowerConstraint {
   public:
