@@ -2,7 +2,7 @@ C=g++
 LD=g++
 F77=g77
 #O2 for optimization, g for debugging
-SPECIALFLAGS=-O2 #-g -Wall#-O2
+SPECIALFLAGS=-O2 -g -Wall#-O2
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 
@@ -50,7 +50,7 @@ Parameters.o: Parameters.cc Parameters.h
 ControlPlots.o: ControlPlots.cc ControlPlots.h
 		$(C) $(RCXX) -c ControlPlots.cc
 
-caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h
+caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ZJetSel.h NJetSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h
 		$(C) $(RCXX) -c caliber.cc 
 
 runjunk: $(SRC:.cc=.o) lbfgs.o
@@ -71,3 +71,6 @@ clean:
 		@rm -f fort.*
 		@rm -f .#*
 
+toy:	ToyMC.o
+	$(LD) ToyMC.o $(RLXX) -o toy
+	@echo '-> toy MC executable created.'
