@@ -77,11 +77,18 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
 }
 
 void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout) {
-  tem = 0.2 * e;
-  thad = 0.8 * e / mTowConst;
+  float emf = mRandom->Uniform(0.5);
+  tem = emf * e;
+  thad = (1-emf) * e / mTowConst;
   tout = 0;
   thad = mRandom->Gaus(1.0,sqrt(mResoStochastic * mResoStochastic/ thad + 
 				mResoNoise * mResoNoise)) * thad;
+//   double smear;
+//   do {
+//     smear =  mRandom->Landau(1,sqrt(mResoStochastic * mResoStochastic/ thad + mResoNoise * mResoNoise));
+//   } while((smear < 0) || (smear > 2));
+//   smear = 2 - smear;
+//  thad = smear * thad;
   if(thad < 0) thad = 0;
   te = tem + thad + tout;
 }
@@ -89,7 +96,7 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
 int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi) {
   typedef std::map<int,int> TowerMap;
 
-  const int nchunks = 1000;
+  const int nchunks = 200;
   TowerMap towers;
   double jphi = jet.Phi();
   if(jphi < 0) jphi += 2 * M_PI;
