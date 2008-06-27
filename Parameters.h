@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.21 2008/05/30 15:33:22 stadie Exp $
+// $Id: Parameters.h,v 1.22 2008/06/19 15:32:39 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -69,14 +69,21 @@ public :
   template<int Et> static double const_error(double * x) {
     return Et;
   }
-  
-  static double tower_error_parametrization(double * x) {
-    return (x[0]>0 ? 0.0*x[0] + 1.0*sqrt( x[0]) + 0. : 
-	    0.0*x[0] - 1.0*sqrt(-x[0]) + 0.); 
+  /*
+  static double tower_error_parametrization(double * x) {        
+    return (x[0]>0 ? 0.0*x[0] + 1.0*sqrt( x[0]) + 0. :     
+	    0.0*x[0] - 1.0*sqrt(-x[0]) + 0.);  
   }
   static double jet_error_parametrization(double * x) {
     return (x[0]>0. ? 0.05*x[0] + 1.0*sqrt( x[0]) + 0.:
 	    0.05*x[0] - 1.0*sqrt(-x[0]) + 0.); 
+  }
+  */
+  static double tower_error_parametrization(double * x) {        
+    return (x[0]>0 ?  1.25 * sqrt( x[0])   :   1.25 * sqrt(-x[0]) );  
+  }
+  static double jet_error_parametrization(double * x) {
+    return (x[0]>0. ? 0.033*x[0] + 5.6   :   0.03*(-x[0]) + 5.6); 
   }
   
   static double plot_parametrization(double * x,double *par) {
