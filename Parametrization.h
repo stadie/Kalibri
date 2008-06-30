@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.2 2008/05/09 09:41:35 auterman Exp $
+// $Id: Parametrization.h,v 1.3 2008/05/09 13:43:01 auterman Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -153,17 +153,32 @@ public:
   JetMETParametrization() : Parametrization(3,5) {}
   const char* name() const { return "JetMETParametrization";}
   double correctedTowerEt(double *x,double *par) const {
+    if(par[0] < -10) par[0] = -10;
+    if(par[1] < 0) par[1] = -par[1];
+    if(par[2] < 0) par[2] = -par[2];
     return par[1] * x[2] + par[2] * x[1] + x[3] + par[0];
   }
   double correctedJetEt(double *x,double *par) const {
     double logx = log(x[0]);
     if(logx < 0) logx = 0;
-    if(par[1] < 0) par[1] *= 1;
-    if(par[2] < 0) par[2] *= 1;
-    if(par[3] < 0) par[3] *= 1;
-    if(par[4] < 0) par[4] *= 1;
+    if(par[1] < 0) par[1] *= -1;
+    if(par[2] < 0) par[2] *= -1;
+    if(par[3] < 0) par[3] *= -1;
+    if(par[4] < 0) par[4] *= -1;
     return (par[0] - par[1]/(pow(logx,par[2]) + par[3]) + par[4]/x[0]) * x[0];  
   }
 };
 
+// Parametrization for toy MC
+class ToyParametrization: public Parametrization {
+public:
+  ToyParametrization() : Parametrization(3,0) {}
+  const char* name() const { return "ToyParametrization";}
+  double correctedTowerEt(double *x,double *par) const {
+    return par[0] * x[2] + par[1] * x[1] + x[3] + par[2];
+  }
+  double correctedJetEt(double *x,double *par) const {
+    return x[0];  
+  }
+};
 #endif

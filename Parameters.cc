@@ -22,7 +22,10 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new StepEfracParametrization();
   }  else if(name == "JetMETParametrization") {
     return new JetMETParametrization();
+  }  else if(name == "ToyParametrization") {
+    return new ToyParametrization();
   }
+  
   return 0;
 }
 
@@ -43,6 +46,8 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "StepEfracParametrization";
   }  else if(parclass == "TJetMETParameters") {
     parclass = "JetMETParametrization";
+  }  else if(parclass == "TToyParameters") {
+    parclass = "ToyParametrization";
   }
   Parametrization *param = CreateParametrization(parclass);
   if(! param) {
@@ -182,7 +187,7 @@ void TParameters::Read_Calibration(std::string const& configFile) {
 	if( line.find("block") != string::npos) break;
 	posEqual=line.find('=');
 	name  = line.substr(0,posEqual);
-	std::cout << name << ".\n";
+	//std::cout << name << ".\n";
 	if( name.find("JetMapEta") != string::npos) 
 	  eta_jet = bag_of<int>(trim(line.substr(posEqual+1)));
 	if( name.find("JetMapPhi") != string::npos) 
