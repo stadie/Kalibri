@@ -44,7 +44,7 @@ NJetSel.o: NJetSel.cc NJetSel.h
 CalibData.o: CalibData.cc CalibData.h
 		$(C) $(RCXX) -c CalibData.cc
 
-Parameters.o: Parameters.cc Parameters.h
+Parameters.o: Parameters.cc Parameters.h Parametrization.h
 		$(C) $(RCXX) -c Parameters.cc
 
 ControlPlots.o: ControlPlots.cc ControlPlots.h
@@ -71,6 +71,10 @@ clean:
 		@rm -f fort.*
 		@rm -f .#*
 
-toy:	ToyMC.o
-	$(LD) ToyMC.o $(RLXX) -o toy
+
+ToyMC.o: ToyMC.h ToyMC.cc
+	$(C) $(RCXX) -c ToyMC.cc
+
+toy:	ToyMC.o toy.o
+	$(LD) ToyMC.o toy.o $(RLXX) -o toy
 	@echo '-> toy MC executable created.'

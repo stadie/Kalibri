@@ -1,3 +1,10 @@
+//
+// Original Author:  Hartmut Stadie
+//         Created:  Mon Jun 30 11:00:00 CEST 2008
+// $Id: Parametrization.h,v 1.3 2008/05/09 13:43:01 auterman Exp $
+//
+#include "ToyMC.h"
+
 #include <cmath>
 #include <iostream>
 #include <map>
@@ -7,35 +14,13 @@
 #include "TRandom3.h"
 #include "TTree.h"
 #include "TFile.h"
-#include "TLorentzVector.h"
 
 
-class ToyMC {
-public:
-  double mMinEta, mMaxEta;
-  double mMinPt, mMaxPt;
-  double mTowConst;
-  double mResoStochastic,mResoNoise;
-  double mJetSpread;
-  bool   mNoOutOfCone;
-private: 
-  TRandom* mRandom;
-  TLorentzVector mPinput;
 
-  void genInput();
-  void calIds(float& eta, float &phi, int& ieta, int& iphi);
-  void smearTower(double e, float& te, float& tem, float& thad, float& tout);  
-  int splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi);
- public:
-  ToyMC();
-  ~ToyMC() {}
-  int makeTrackCluster(const char* filename, int nevents);
-  int makePhotonJet(const char* filename, int nevents);
-};
-
-ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400), mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpread(0.07),mNoOutOfCone(true)
+ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400), mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpread(0.07),mNoOutOfCone(true),mModel(Gauss),mChunks(200)
 {
-  mRandom = new TRandom3();;
+  mRandom = new TRandom3();
+  mRandom->SetSeed(0);
 }
 
 void ToyMC::genInput() { 
@@ -81,14 +66,17 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
   tem = emf * e;
   thad = (1-emf) * e / mTowConst;
   tout = 0;
-  thad = mRandom->Gaus(1.0,sqrt(mResoStochastic * mResoStochastic/ thad + 
-				mResoNoise * mResoNoise)) * thad;
-//   double smear;
-//   do {
-//     smear =  mRandom->Landau(1,sqrt(mResoStochastic * mResoStochastic/ thad + mResoNoise * mResoNoise));
-//   } while((smear < 0) || (smear > 2));
-//   smear = 2 - smear;
-//  thad = smear * thad;
+  if(mModel == Gauss) {
+    thad = mRandom->Gaus(1.0,sqrt(mResoStochastic * mResoStochastic/ thad + 
+				  mResoNoise * mResoNoise)) * thad;
+  }  else if(mModel == Landau) {
+    double smear;
+    do {
+      smear =  mRandom->Landau(1,sqrt(mResoStochastic * mResoStochastic/ thad + mResoNoise * mResoNoise));
+    } while((smear < 0) || (smear > 2));
+    smear = 2 - smear;
+    thad *= smear;
+  }
   if(thad < 0) thad = 0;
   te = tem + thad + tout;
 }
@@ -96,16 +84,15 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
 int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi) {
   typedef std::map<int,int> TowerMap;
 
-  const int nchunks = 200;
   TowerMap towers;
   double jphi = jet.Phi();
   if(jphi < 0) jphi += 2 * M_PI;
   //std::cout << "jet: Pt:" << jet.Pt() << " Phi:" << jet.Phi() << " Eta:" << jet.Eta() << '\n';
-  double de = jet.E() / nchunks;
+  double de = jet.E() / mChunks;
   int ntowers = 0;
   TLorentzVector rec(0,0,0,0);
   TLorentzVector tow;
-  for(int i = 0 ; i < nchunks ; ++i) {
+  for(int i = 0 ; i < mChunks ; ++i) {
     float teta = mRandom->Gaus(jet.Eta(), mJetSpread);
     float tphi = mRandom->Gaus(jet.Phi(), mJetSpread);
     if( tphi < 0) tphi += 2 * M_PI;
@@ -143,9 +130,8 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
   return ntowers;
 }
 
-int ToyMC::makeTrackCluster(const char* filename, int nevents) {
-  TFile* file = new TFile(filename,"recreate");
-  TTree* CalibTree = new TTree("TrackClusterTree","TrackClusterTre");
+int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents) 
+{
   //make tree
   const int kMaxTower = 1;
   int NobjTowCal;
@@ -200,17 +186,23 @@ int ToyMC::makeTrackCluster(const char* filename, int nevents) {
     smearTower(mPinput.E(),towen[0],towem[0],towhd[0],towoe[0]);
     towet[0] = towen[0]/mPinput.E() * mPinput.Pt();
     CalibTree->Fill();
-    if(i % 1000 == 0) std::cout << "writing event " << i << '\n';
+    if(i % 1000 == 0) std::cout << "generated event " << i << '\n';
   }
-  nevents = CalibTree->GetEntriesFast();
+  return CalibTree->GetEntriesFast(); 
+}
+
+int ToyMC::makeTrackCluster(const char* filename, int nevents) {
+  TFile* file = new TFile(filename,"recreate");
+  TTree* CalibTree = new TTree("TrackClusterTree","TrackClusterTre");
+ 
+  nevents = generateTrackClusterTree(CalibTree, nevents);
   file->Write();
   file->Close();
   return  nevents;
 }
 
-int ToyMC::makePhotonJet(const char* filename, int nevents) {
-  TFile* file = new TFile(filename,"recreate");
-  TTree* CalibTree = new TTree("GammaJetTree","GammaJetTree");
+int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
+{
   //make tree 
   const int kMaxTower = 1000;
   int NobjTowCal;
@@ -302,28 +294,16 @@ int ToyMC::makePhotonJet(const char* filename, int nevents) {
     CalibTree->Fill();
     if(i % 1000 == 0) std::cout << "writing event " << i << '\n';
   } 
-  nevents = CalibTree->GetEntriesFast();
+  return CalibTree->GetEntriesFast();
+}
+
+int ToyMC::makePhotonJet(const char* filename, int nevents) {
+  TFile* file = new TFile(filename,"recreate");
+  TTree* CalibTree = new TTree("GammaJetTree","GammaJetTree");
+
+  nevents = generatePhotonJetTree(CalibTree,nevents);
   //file->ls();
   file->Write();
   file->Close();
   return nevents;
 }
-
-int main() {
-  ToyMC* mc = new ToyMC();
-  mc->mMinEta         = -2.5;
-  mc->mMaxEta         =  2.5;
-  mc->mMinPt          = 30;
-  mc->mMaxPt          = 400;
-  mc->mTowConst       =  1.25;
-  mc->mResoStochastic =  1.20;
-  mc->mResoNoise      =  0.05;
-  mc->mJetSpread      =  0.10;
-  mc->mNoOutOfCone    =  true;
-
-  //mc->makeTrackCluster("trackcluster.root", 50000);
-  mc->makePhotonJet("input/toy_photonjet.root",10000);
-  
-  return 0;
-}
-
