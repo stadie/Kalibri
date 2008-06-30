@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.2 2008/06/02 11:51:34 stadie Exp $
+// $Id: CalibData.cc,v 1.3 2008/06/27 14:24:32 mschrode Exp $
 //
 #include "CalibData.h"
 #include "map"
@@ -19,9 +19,12 @@ std::vector<TData*> TData_TruthMess::resultcache = std::vector<TData*>(1);
 double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_derivative2, 
 			        double epsilon)
 { 
+  double *mess = GetMess();   
   double new_mess  = GetParametrizedMess();
 #ifndef __FastErrorCalculation
-  double new_error = GetParametrizedErr(&new_mess);
+  //double new_error = GetParametrizedErr(&new_mess);
+  double new_messE = new_mess * mess[6] / mess[0]; //Et->E    
+  double new_error = GetParametrizedErr(&new_messE) * mess[0] / mess[6];  
 #else
   double new_error = _error;
   if (GetMess()[0]!=0.) new_error = _error*new_mess/GetMess()[0];
@@ -31,7 +34,7 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
   double new_chi2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error) );
 
   
-  double dmess_dp, derror_dp;
+  double dmess_dp, dmess_dpE, derror_dp;   
   unsigned idx = _index*_n_par; //_index==bin; idx==bin*Free_parameters_per_bin
   for (unsigned i=0; i<idx; ++i){
     temp_derivative2[i]+=new_chi2;
@@ -42,7 +45,9 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
     _par[i-idx]  += epsilon;
     dmess_dp  = GetParametrizedMess();
 #ifndef __FastErrorCalculation
-    derror_dp = GetParametrizedErr(&dmess_dp);
+    //derror_dp = GetParametrizedErr(&dmess_dp);
+    dmess_dpE = dmess_dp * mess[6] / mess[0]; //Et->E     
+    derror_dp = GetParametrizedErr(&dmess_dpE) * mess[0] / mess[6];    
 #else
     if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
     else derror_dp = _error;
@@ -53,7 +58,9 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
     _par[i-idx]  = oldpar - epsilon;
     dmess_dp  = GetParametrizedMess();
 #ifndef __FastErrorCalculation
-    derror_dp = GetParametrizedErr(&dmess_dp);
+    //derror_dp = GetParametrizedErr(&dmess_dp);
+    dmess_dpE = dmess_dp * mess[6] / mess[0]; //Et->E     
+    derror_dp = GetParametrizedErr(&dmess_dpE) * mess[0] / mess[6];    
 #else
     if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
     else derror_dp = _error;
@@ -73,7 +80,7 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
 double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_derivative2,
 				      double epsilon) {
   double sum_mess=0.0, sum_error2=0.0, new_error, new_error2, new_mess, new_chi2,
-         dmess_dp, derror_dp;
+    dmess_dp, dmess_dpE, derror_dp;    
   double sm1[total_n_pars],sm2[total_n_pars],se1[total_n_pars],se2[total_n_pars];//store sum_m & sum_e2 for df/dp_i
   double weight = GetWeight();
   for (unsigned i=0; i<total_n_pars; ++i){
@@ -85,10 +92,17 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
   unsigned idx;
   for (std::vector<TData*>::const_iterator it=_vecmess.begin();
        it!=_vecmess.end(); ++it) {
+
+
+    double *mess = (*it)->GetMess(); 
+
     new_mess    = (*it)->GetParametrizedMess();	 
     sum_mess   += new_mess;
 //#ifndef __FastErrorCalculation
-    new_error   = (*it)->GetParametrizedErr(&new_mess);
+    //new_error   = (*it)->GetParametrizedErr(&new_mess);
+    double new_messE = new_mess * mess[6] / mess[0]; //Et->E   
+    new_error   = (*it)->GetParametrizedErr(&new_messE) * mess[0] / mess[6]; 
+
 //#else
 //    if ((*it)->GetMess()[0]!=0.) new_error = (*it)->GetError()*new_mess/(*it)->GetMess()[0];
 //    else new_error = (*it)->GetError();
@@ -103,7 +117,9 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 	dmess_dp  =(*it)->GetParametrizedMess();
 	sm2[i]   += dmess_dp;
 //#ifndef __FastErrorCalculation
-	new_error = (*it)->GetParametrizedErr(&dmess_dp);
+	//new_error = (*it)->GetParametrizedErr(&dmess_dp);
+	dmess_dpE = dmess_dp * mess[6] / mess[0]; //Et->E    
+	new_error = (*it)->GetParametrizedErr(&dmess_dpE) * mess[0] / mess[6];   
 //#else
 //        if ((*it)->GetMess()[0]!=0.) new_error = (*it)->GetError()*dmess_dp/(*it)->GetMess()[0];
 //	else new_error = (*it)->GetError();
@@ -114,7 +130,9 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 	dmess_dp  =(*it)->GetParametrizedMess();
 	sm1[i]   += dmess_dp;
 //#ifndef __FastErrorCalculation
-	new_error = (*it)->GetParametrizedErr(&dmess_dp);
+	//new_error = (*it)->GetParametrizedErr(&dmess_dp);
+	dmess_dpE = dmess_dp * mess[6] / mess[0]; //Et->E    
+	new_error = (*it)->GetParametrizedErr(&dmess_dpE) * mess[0] / mess[6];  
 //#else
 //        if ((*it)->GetMess()[0]!=0.) new_error = (*it)->GetError()*dmess_dp/(*it)->GetMess()[0];
 //	else new_error = (*it)->GetError();
@@ -204,7 +222,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_derivative2, 
 			        double epsilon)
 {
-  double new_chi2, new_mess, new_error, sum_error2=0.0;
+  double new_chi2, new_mess, new_messE, new_error, sum_error2=0.0;
 
   double weight = GetWeight();
 
@@ -250,7 +268,10 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
             mit!=_m2.end(); ++mit) {
 	  new_mess    = (*mit)->GetParametrizedMess();	 
 //#ifndef __FastErrorCalculation
-  	  new_error   = (*mit)->GetParametrizedErr(&new_mess);
+  	  //new_error   = (*mit)->GetParametrizedErr(&new_mess);
+	  double *mess = (*mit)->GetMess();       
+	  new_messE =  new_mess  * mess[6] / mess[0]; //Et->E   
+	  new_error = (*mit)->GetParametrizedErr(&new_messE) * mess[0] / mess[6];  
 //#else
 //  	  if ((*mit)->GetMess()) if ((*mit)->GetMess()[0]!=0.) new_error = (*mit)->GetError()*new_mess/(*mit)->GetMess()[0];
 //	  else new_error   = (*mit)->GetError();
@@ -274,6 +295,9 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
 	  new_mess    = (*mit)->GetParametrizedMess();	 
 //#ifndef __FastErrorCalculation
   	  new_error   = (*mit)->GetParametrizedErr(&new_mess);
+	  double *mess = (*mit)->GetMess();     
+	  new_messE =  new_mess  * mess[6] / mess[0]; //Et->E  
+	  new_error = (*mit)->GetParametrizedErr(&new_messE) * mess[0] / mess[6];  
 //#else
 //  	  if ((*mit)->GetMess()) if ((*mit)->GetMess()[0]!=0.) new_error = (*mit)->GetError()*new_mess/(*mit)->GetMess()[0];
 //	  else new_error   = (*mit)->GetError();

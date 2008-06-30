@@ -1,7 +1,7 @@
-//
+//s
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.19 2008/06/26 11:48:24 thomsen Exp $
+// $Id: CalibData.h,v 1.20 2008/06/27 14:24:32 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -14,7 +14,7 @@
 #include <utility> //pair
 #include <cmath>
 
-#define __DimensionMeasurement 6
+#define __DimensionMeasurement 7
 
 #define TypeDefault      0
 #define TypeTrackTower   1
@@ -86,7 +86,10 @@ public:
   };
   virtual double chi2(){ 
     double new_mess  = GetParametrizedMess();
-    double new_error = GetParametrizedErr(&new_mess);
+    double *mess = GetMess();
+    //double new_error = GetParametrizedErr(&new_mess);
+    double new_messE = new_mess * mess[6] / mess[0]; //Et->E  
+    double new_error = GetParametrizedErr(&new_messE) * mess[0] / mess[6]; 
     double weight = GetWeight();
     //-- return weight*(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
     return weight * (*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error) );
@@ -136,13 +139,17 @@ public:
   };
 
   virtual double chi2(){ 
-    double sum_mess=0.0, sum_error2=0.0, new_error, new_mess;
+    double sum_mess=0.0, sum_error2=0.0, new_error, new_mess, new_messE;
     double weight = GetWeight();
+    double *mess;
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
          it!=_vecmess.end(); ++it) {
-       new_mess    = (*it)->GetParametrizedMess();	 
+       new_mess    = (*it)->GetParametrizedMess();
+       mess = (*it)->GetMess();	 
        sum_mess   += new_mess;
-       new_error   = (*it)->GetParametrizedErr(&new_mess);
+       //new_error   = (*it)->GetParametrizedErr(&new_mess);
+       new_messE =  new_mess  * mess[6] / mess[0]; //Et->E  
+       new_error = (*it)->GetParametrizedErr(&new_messE) * mess[0] / mess[6];
        sum_error2 += new_error * new_error;
     }
     new_mess  = _func( &sum_mess, _par);  
@@ -190,12 +197,15 @@ public:
     virtual double GetMessCombination(){ return combine(); };
     virtual double * GetDirection(){ return _direction; };
     virtual double chi2(){ 
-      double sum_error2=0.0, new_error, new_mess;
+      double sum_error2=0.0, new_error, new_mess, new_messE; 
       double weight = GetWeight();
       for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
            it!=_m2.end(); ++it) {
 	 new_mess    = (*it)->GetParametrizedMess();	 
-  	 new_error   = (*it)->GetParametrizedErr(&new_mess);
+  	 //new_error   = (*it)->GetParametrizedErr(&new_mess);
+	 double *mess = (*it)->GetMess();
+	 new_messE =  new_mess  * mess[6] / mess[0]; //Et->E   
+	 new_error = (*it)->GetParametrizedErr(&new_messE) * mess[0] / mess[6];
 	 sum_error2 += new_error * new_error;
       }
       new_mess  = GetParametrizedMess();
