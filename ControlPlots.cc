@@ -1182,7 +1182,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
  
   int bining_plot = 9;
   TH1F* leadToNext[32];  //0+1 rings,2-12 eta dependence ,13+14 Relrings, 15-25 eta dependence, 26-31 Pt depend (not rel)
-  leadToNext[0] = new  TH1F("ET in ring","ET in ring;#Delta R;Ring Et",bining_plot,0,0.6);
+  leadToNext[0] = new  TH1F("Et in ring","Et in ring (raw = red);#Delta R;Ring Et",bining_plot,0,0.6);
   leadToNext[1] = (TH1F*) leadToNext[0]->Clone();   //raw tower
   leadToNext[2] = new  TH1F("Sum*(ET in ring)/Sum(ET in ring(raw))","Sum(ET in ring) / Sum(ET in ring(raw));#Delta R;Ring Et / Ring Et(raw)",bining_plot,0,0.6);
   for(int i=3;i<32;++i)
@@ -1200,7 +1200,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   leadToNext[11]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 4.0 < abs#eta < 4.5");
   leadToNext[12]->SetTitle("Sum*(ET in ring)/Sum(ET in ring(raw)) 4.5 < abs#eta < 5.0");
 
-  leadToNext[13]->SetTitle("Rel ET in ring;#Delta R;Rel Et in Ring");
+  leadToNext[13]->SetTitle("Rel Et (divided by leading tower Et) in ring (raw = red);#Delta R;Rel Et in Ring");
 
   leadToNext[15]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw))");
   leadToNext[16]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) abs#eta < 0.5");
@@ -1213,9 +1213,9 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   leadToNext[23]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 3.5 < abs#eta < 4.0");
   leadToNext[24]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 4.0 < abs#eta < 4.5");
   leadToNext[25]->SetTitle("RelSum*(ET in ring)/RelSum(ET in ring(raw)) 4.5 < abs#eta < 5.0"); 
-  leadToNext[26]->SetTitle("ET in ring 10 < P_{T}^{Jet} < 35 GeV;#Delta R;Ring Et");
-  leadToNext[28]->SetTitle("ET in ring 35 < P_{T}^{Jet} < 90 GeV;#Delta R;Ring Et");
-  leadToNext[30]->SetTitle("ET in ring 90 < P_{T}^{Jet} < 300 GeV;#Delta R;Ring Et");
+  leadToNext[26]->SetTitle("ET in ring 10 < P_{T}^{Jet} < 35 GeV (raw = red);#Delta R;Ring Et");
+  leadToNext[28]->SetTitle("ET in ring 35 < P_{T}^{Jet} < 90 GeV (raw = red);#Delta R;Ring Et");
+  leadToNext[30]->SetTitle("ET in ring 90 < P_{T}^{Jet} < 300 GeV (raw = red);#Delta R;Ring Et");
 
   TH2F* EtaPhiMap = new TH2F("Eta-Phi hit map","#eta-#Phi hit map;#eta;#Phi",200,-5,5,128,-3.2,3.2);
 
@@ -1363,24 +1363,24 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
       {
 	if(a == 0)
 	  {
-	    leadToNext[0]->Fill(a * (0.6 / bining_plot),rings[a]);
-	    leadToNext[1]->Fill(a * (0.6 / bining_plot),ringsRaw[a]);
+	    leadToNext[0]->Fill(a * (0.6 / bining_plot),rings[0]);
+	    leadToNext[1]->Fill(a * (0.6 / bining_plot),ringsRaw[0]);
 	    leadToNext[13]->Fill(a * (0.6 / bining_plot),1);
 	    leadToNext[14]->Fill(a * (0.6 / bining_plot),1);
 	    if((etjet > 10) && (etjet < 35))
 	      {
-		leadToNext[26]->Fill(a * (0.6 / bining_plot),rings[a]);
-		leadToNext[27]->Fill(a * (0.6 / bining_plot),ringsRaw[a]);
+		leadToNext[26]->Fill(a * (0.6 / bining_plot),rings[0]);
+		leadToNext[27]->Fill(a * (0.6 / bining_plot),ringsRaw[0]);
 	      }
 	    if((etjet > 35) && (etjet < 90))
 	      {
-		leadToNext[28]->Fill(a * (0.6 / bining_plot),rings[a]);
-		leadToNext[29]->Fill(a * (0.6 / bining_plot),ringsRaw[a]);
+		leadToNext[28]->Fill(a * (0.6 / bining_plot),rings[0]);
+		leadToNext[29]->Fill(a * (0.6 / bining_plot),ringsRaw[0]);
 	      }
 	    if((etjet > 90) && (etjet < 300))
 	      {
-		leadToNext[30]->Fill(a * (0.6 / bining_plot),rings[a]);
-		leadToNext[31]->Fill(a * (0.6 / bining_plot),ringsRaw[a]);
+		leadToNext[30]->Fill(a * (0.6 / bining_plot),rings[0]);
+		leadToNext[31]->Fill(a * (0.6 / bining_plot),ringsRaw[0]);
 	      }
 	  }
 	else
@@ -1511,18 +1511,22 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
       c1->Draw();
       ps.NewPage();
     }
+  /*
   for(int i=0;i<4;++i)
     {
       respvstet[i]->Draw("Box");
       c1->Draw();
       ps.NewPage();
     }
+  */
+  /*
   for(int i=0;i<3;++i)
     {
       testNegResponse[i]->Draw("Box");
       c1->Draw();
       ps.NewPage();
     }
+  */
   for(int b=0; b< 11; ++b)
     {
       for(int a=0; a < bining_plot; ++a)
@@ -1617,7 +1621,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     gaussplots[2][k]->SetMarkerStyle(4);
     gaussplots[2][k]->SetMarkerColor(4);
     }
-
+  /*
   for(int a=0; a<1;++a) // 1: pt(jet)/Et(gamma), 2: pt(jet)/pt(corJet), 3: pt(corJet)/Et(gamma)
       {
 	for(int b=0;b<3;++b) 
@@ -1639,7 +1643,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
 	ps.NewPage();
       }
     c1->cd();
-
+  */
     for(int j = 0 ; j < 8 ; ++j) {
       hists[i][j]->Draw();
       hists[i][j]->SetStats(0);
@@ -1711,6 +1715,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     gaussplots[2][k]->SetMarkerStyle(4);
     gaussplots[2][k]->SetMarkerColor(4);
     }
+  /*
     for(int a=0; a<1;++a)
       {
 	for(int b=0;b<3;++b)
@@ -1725,7 +1730,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     c2->Draw();
     ps.NewPage();
     c1->cd();
-
+  */
 
 
   for(int i = 0 ; i < 8 ; ++i) {
@@ -1771,6 +1776,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     gaussplots[2][k]->SetMarkerStyle(4);
     gaussplots[2][k]->SetMarkerColor(4);
     }
+  /*
     for(int a=0; a<1;++a) 
       {
 	for(int b=0;b<3;++b)
@@ -1785,6 +1791,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     c2->Draw();
     ps.NewPage();
     c1->cd();
+  */
 
   for(int i = 0 ; i < 8 ; ++i) {
     hists[0][i]->Draw();
@@ -1831,6 +1838,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     gaussplots[2][k]->SetMarkerStyle(4);
     gaussplots[2][k]->SetMarkerColor(4);
     }
+  /*
     for(int a=0; a<1;++a)
       {
 	for(int b=0;b<3;++b) 
@@ -1845,7 +1853,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     c2->Draw();
     ps.NewPage();
     c1->cd();
-
+  */
     for(int i = 0 ; i < 3 ; ++i) 
       {
 	for(int j=0; j<3;++j)
@@ -2222,7 +2230,7 @@ void TControlPlots::DiJetControlPlots()
 	gaussplots[1][k]->SetMarkerStyle(22);
 	gaussplots[1][k]->SetMarkerColor(2);
       }
-    
+    /*
     for(int b=0;b<3;++b) 
       {
 	for(int a=0; a<2;++a) // 1: B after correction, 2: B before correction
@@ -2245,7 +2253,7 @@ void TControlPlots::DiJetControlPlots()
 	ps.NewPage();
       }
     c1->cd();
-
+    */
     for(int j = 0 ; j < 8 ; ++j) 
       {
 	hists[i][j]->Draw();
@@ -2289,6 +2297,7 @@ void TControlPlots::DiJetControlPlots()
       gaussplots[1][k]->SetMarkerStyle(22);
       gaussplots[1][k]->SetMarkerColor(2);
     }
+  /*
   for(int b=0;b<3;++b)
     { 
       for(int a=0; a<2;++a)
@@ -2304,7 +2313,7 @@ void TControlPlots::DiJetControlPlots()
       ps.NewPage();
     }
   c1->cd();
-    
+  */
   for(int i = 0 ; i < 8 ; ++i) {
     hists[0][i]->Draw();
     hists[0][i]->SetStats(0);
@@ -2343,6 +2352,7 @@ void TControlPlots::DiJetControlPlots()
       gaussplots[1][k]->SetMarkerStyle(22);
       gaussplots[1][k]->SetMarkerColor(2);
     }
+  /*
   for(int b=0;b<3;++b)
     { 
       for(int a=0; a<2;++a) 
@@ -2358,6 +2368,7 @@ void TControlPlots::DiJetControlPlots()
       ps.NewPage();
     }
   c1->cd();
+  */
 
   for(int i = 0 ; i < 8 ; ++i) {
     hists[0][i]->Draw();
@@ -2399,6 +2410,7 @@ void TControlPlots::DiJetControlPlots()
       gaussplots[1][k]->SetMarkerStyle(22);
       gaussplots[1][k]->SetMarkerColor(2);
     }
+  /*
   for(int b=0;b<3;++b)
     { 
       for(int a=0; a<2;++a)
@@ -2414,7 +2426,7 @@ void TControlPlots::DiJetControlPlots()
       ps.NewPage();
     }
   c1->cd();
-
+  */
   for(int i = 0 ; i < 2 ; ++i) 
     {
       for(int j=0; j<3;++j)
