@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: Parametrization.h,v 1.3 2008/05/09 13:43:01 auterman Exp $
+// $Id: ToyMC.cc,v 1.3 2008/06/30 13:15:27 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -275,6 +275,8 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     jgene = jet.E();
     NobjTowCal = splitJet(jet,towet,toweta,towphi,towid_eta,towid_phi);
     jet.SetPtEtaPhiM(0,0,0,0);
+    double towmean = mTowConst;
+    if(mModel == Flat) mTowConst = 1/mRandom->Uniform(1.5);
     for(int j = 0; j < NobjTowCal ; ++j) {
       tower.SetPtEtaPhiM(towet[j],toweta[j],towphi[j],0);
       towen[j] = tower.E();
@@ -283,6 +285,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
       towet[j] = tower.Pt();
       jet += tower;
     }
+    mTowConst = towmean;
     jcalpt = jet.Pt();
     jcaleta = jet.Eta();
     jcalphi = jet.Phi();

@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: Parametrization.h,v 1.3 2008/05/09 13:43:01 auterman Exp $
+// $Id: ToyMC.h,v 1.1 2008/06/30 13:15:27 stadie Exp $
 //
 #ifndef TOYMC_H
 #define TOYMC_H
@@ -13,7 +13,7 @@ class TTree;
 
 class ToyMC {
 public:
-  enum Model { Gauss, Landau };
+  enum Model { Gauss, Landau, Flat };
   double mMinEta, mMaxEta;
   double mMinPt, mMaxPt;
   double mTowConst;
