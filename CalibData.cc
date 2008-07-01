@@ -1,11 +1,11 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.3 2008/06/27 14:24:32 mschrode Exp $
+// $Id: CalibData.cc,v 1.4 2008/06/30 15:25:15 thomsen Exp $
 //
 #include "CalibData.h"
 #include "map"
-//#include <iostream>//cout
+#include <iostream>//cout
 
 
 unsigned int TData::total_n_pars = 0;
@@ -16,8 +16,7 @@ double (*TData::ScaleResidual)(double z2) = &TData::ScaleNone;
 
 std::vector<TData*> TData_TruthMess::resultcache = std::vector<TData*>(1);
 
-double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_derivative2, 
-			        double epsilon)
+double TData_TruthMess::chi2_fast(double *temp_derivative1, double *temp_derivative2, double epsilon)
 { 
   double *mess = GetMess();   
   double new_mess  = GetParametrizedMess();
@@ -30,17 +29,16 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
   if (GetMess()[0]!=0.) new_error = _error*new_mess/GetMess()[0];
 #endif   
   double weight = GetWeight();
-  //-- double new_chi2  = weight*(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
   double new_chi2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error) );
 
+  double temp1 = 0.;		// Value of chi2 at par+epsilon
+  double temp2 = 0.;		// Value of chi2 at par-epsilon
   
   double dmess_dp, dmess_dpE, derror_dp;   
   unsigned idx = _index*_n_par; //_index==bin; idx==bin*Free_parameters_per_bin
-  for (unsigned i=0; i<idx; ++i){
-    temp_derivative2[i]+=new_chi2;
-    temp_derivative1[i]+=new_chi2;
-  }
   for (unsigned i=idx; i<idx+_n_par; ++i){
+    temp1 = 0.;
+    temp2 = 0.;
     double oldpar = _par[i-idx];
     _par[i-idx]  += epsilon;
     dmess_dp  = GetParametrizedMess();
@@ -52,8 +50,8 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
     if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
     else derror_dp = _error;
 #endif   
-    //-- temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
-    temp_derivative2[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp) );
+    temp2 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp) );
+
 
     _par[i-idx]  = oldpar - epsilon;
     dmess_dp  = GetParametrizedMess();
@@ -65,20 +63,18 @@ double TData_TruthMess::chi2_fast(double* temp_derivative1, double*  temp_deriva
     if (GetMess()[0]!=0.) derror_dp = _error*dmess_dp/GetMess()[0];
     else derror_dp = _error;
 #endif   
-    //-- temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp);
-    temp_derivative1[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp) );
+    temp1 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(derror_dp*derror_dp) );
+
+    // Difference of chi2 at par+epsilon and par-epsilon
+    temp_derivative1[i] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i] += (temp2 + temp1 - 2*new_chi2); // for 2nd derivative
 
     _par[i-idx]  = oldpar;
-  }
-  for (unsigned i=idx+_n_par; i< total_n_pars; ++i){
-    temp_derivative2[i]+=new_chi2;
-    temp_derivative1[i]+=new_chi2;
   }
   return new_chi2;
 };
 
-double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_derivative2,
-				      double epsilon) {
+double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_derivative2, double epsilon) {
   double sum_mess=0.0, sum_error2=0.0, new_error, new_error2, new_mess, new_chi2,
     dmess_dp, dmess_dpE, derror_dp;    
   double sm1[total_n_pars],sm2[total_n_pars],se1[total_n_pars],se2[total_n_pars];//store sum_m & sum_e2 for df/dp_i
@@ -110,7 +106,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
     new_error2  = new_error * new_error;
     sum_error2 += new_error2;
     for (unsigned i=0; i<total_n_pars; ++i){
-      idx = (*it)->GetIndex()*(*it)->GetNumberOfPars();
+      idx = (*it)->GetIndex()*(*it)->GetNumberOfPars(); // Sollte aus for-Schleife raus?
       if (i>=idx && i<idx+(*it)->GetNumberOfPars()) {   
 	double oldpar = (*it)->GetPar()[i-idx];
 	(*it)->GetPar()[i-idx]  += epsilon;
@@ -154,13 +150,15 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //  if (_mess!=0) if (_mess[0]!=0.) new_error = _error*new_mess/_mess[0];
 //  else new_error = _error;
 //#endif   
-  //-- new_chi2  = weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
   new_chi2  = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
 
-
+  double temp1 = 0.;		// Value of chi2 at par+epsilon
+  double temp2 = 0.;		// Value of chi2 at par-epsilon
   idx = _index; //@@to be fixed -> introduce a eta-phi binning for JES
   for (unsigned i=0; i<total_n_pars; ++i){
     if (i>=idx && i<idx+_n_par) continue;//considered below
+    temp1 = 0.;
+    temp2 = 0.;
     new_mess  = sm2[i];  //the measurement with modified parameter "i"
     dmess_dp  = _func(&new_mess,_par);//calc. the jet's energy
 //#ifndef __FastErrorCalculation
@@ -169,8 +167,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //    if (new_mess!=0.) derror_dp = _error*dmess_dp/new_mess;
 //    else derror_dp = _error;
 //#endif   
-    //-- temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
-    temp_derivative2[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
+    temp2 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
 
     // same for p_i-epsilon:
     new_mess  = sm1[i];  
@@ -182,11 +179,16 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //    else derror_dp = _error;
 //#endif   
     derror_dp = _err(&dmess_dp);
-    //-- temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
-    temp_derivative1[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
+    temp1 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
+
+    // Difference of chi2 at par+epsilon and par-epsilon
+    temp_derivative1[i] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i] += (temp2 + temp1 - 2*new_chi2); // for 2nd derivative
   }
   	
   for (unsigned i=idx; i<idx+_n_par; ++i){
+    temp1 = 0.;
+    temp2 = 0.;
     //ok, we have to change the jet's parametrization:
     double oldpar =  _par[i-idx];
     _par[i-idx]  += epsilon;
@@ -197,8 +199,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //    if (sum_mess!=0.) derror_dp = _error*dmess_dp/sum_mess;
 //    else derror_dp = _error;
 //#endif
-    //-- temp_derivative2[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp);
-    temp_derivative2[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
+    temp2 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
 
     _par[i-idx]  = oldpar - epsilon;
     dmess_dp  = _func(&sum_mess,_par);
@@ -208,8 +209,10 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
 //    if (sum_mess!=0.) derror_dp = _error*dmess_dp/sum_mess;
 //    else derror_dp = _error;
 //#endif
-    //-- temp_derivative1[i]+= weight*(_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp);
-    temp_derivative1[i]+= weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
+    temp1 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
+    // Difference of chi2 at par+epsilon and par-epsilon
+    temp_derivative1[i] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i] += (temp2 + temp1 - 2*new_chi2); // for 2nd derivative
 
     _par[i-idx]  = oldpar;
   }
@@ -217,13 +220,13 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double*  temp_de
   return new_chi2;
 };
 
-//#include <iostream>
+
+
 
 double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_derivative2, 
 			        double epsilon)
 {
   double new_chi2, new_mess, new_messE, new_error, sum_error2=0.0;
-
   double weight = GetWeight();
 
   //Get all tower parameter used in this event:  
@@ -257,6 +260,8 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
   new_chi2 = chi2();
 
   //Calc. & Cache derivatives w.r.t. tower parameters:
+  double temp1 = 0.;		//Value of chi2 at par+epsilon
+  double temp2 = 0.;		//Value of chi2 at par-epsilon
   for (unsigned i=0; i<total_n_pars; ++i){
      // in case the ith parameter is used for this event, calculate 
      // derivative dchi/dpar[i] and cache it:
@@ -285,8 +290,7 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
 //       new_error = _error;
 //#endif
        new_mess  = GetMessCombination();  
-       //-- temp_derivative2[ i ]+=weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
-       temp_derivative2[i] += weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+       temp2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
        sum_error2 = 0.0;
 
        *tpars[i] = oldpar - epsilon;
@@ -311,18 +315,18 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
 //       new_error = _error;
 //#endif
        new_mess  = GetMessCombination();  
-       //-- temp_derivative1[ i ]+=weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
-       temp_derivative1[i] += weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+       temp1 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+
+       // Difference of chi2 at par+epsilon and par-epsilon
+       temp_derivative1[i] += (temp2 - temp1); // for 1st derivative
+       temp_derivative2[i] += (temp2 + temp1 - 2*new_chi2); // for 2nd derivative
+
        *tpars[i] = oldpar;
-    }
-    else 
-    {
-      temp_derivative1[ i ]+=new_chi2;
-      temp_derivative2[ i ]+=new_chi2;
     }
   }
   return new_chi2;
 }
+
 
 double TData_PtBalance::combine(){
   double x, y, dummy = GetParametrizedMess();

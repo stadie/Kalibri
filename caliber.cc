@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.17 2008/06/27 15:53:52 mschrode Exp $
+// $Id: caliber.cc,v 1.18 2008/06/30 15:26:21 thomsen Exp $
 //
 #include "caliber.h"
 
@@ -80,7 +80,7 @@ private:
       }
       parent->chi2 =0.0;   
       for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it) {
-	parent->chi2 += (*it)->chi2_fast(parent->td1,parent->td2,parent->epsilon);
+	parent->chi2 += (*it)->chi2_fast(parent->td1, parent->td2, parent->epsilon);
       } 
       boost::mutex::scoped_lock lock(io_mutex);
       for (int param=0; param< parent->npar ; ++param) {
@@ -93,11 +93,10 @@ private:
   boost::thread *thread;
   friend class calc_chi2_on;
 public:
-  ComputeThread(int npar,double *par, double *temp_derivative1, double *temp_derivative2,
-		double epsilon) 
+  ComputeThread(int npar,double *par, double *temp_derivative1, double *temp_derivative2, double epsilon) 
     : npar(npar), td1(new double[npar]), td2(new double[npar]), parorig(par),
-      mypar(new double[npar]), temp_derivative1(temp_derivative1),
-      temp_derivative2(temp_derivative2), epsilon(epsilon) {}
+      mypar(new double[npar]), temp_derivative1(temp_derivative1), temp_derivative2(temp_derivative2),
+      epsilon(epsilon) {}
   ~ComputeThread() {
     ClearData();
     delete [] td1;
@@ -806,7 +805,8 @@ void TCaliber::Run_Lvmini()
       t[n]->AddData(*it);
       n++;
       if(n == nthreads) n = 0;
-    }  
+    }
+
     do {
       //set storage for temporary derivative storage to zero
       for (int param=0; param< npar ; ++param) {
@@ -821,8 +821,8 @@ void TCaliber::Run_Lvmini()
       
       //fast derivative calculation:
       for (unsigned param=0; param<abs(npar); ++param) {
-	aux[param]           = (temp_derivative2[param]-temp_derivative1[param])/(2.0*epsilon);
-	aux[param+abs(npar)] = (temp_derivative2[param]+temp_derivative1[param]-2*fsum)/(epsilon*epsilon);
+	aux[param]           = temp_derivative1[param]/(2.0*epsilon);
+	aux[param+abs(npar)] = temp_derivative2[param]/(epsilon*epsilon);
       }
 	
       lvmfun_(p->GetPars(),fsum,iret,aux);
@@ -831,7 +831,6 @@ void TCaliber::Run_Lvmini()
     }
     while (iret<0);
     lvmprt_(2,aux,2); //Has any effect?
-    //outlier rejection
     for (int ithreads=0; ithreads<nthreads; ++ithreads){
       t[ithreads]->ClearData();
     }  
