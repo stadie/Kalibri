@@ -12,6 +12,7 @@
 #include "TTree.h"
 #include "TChain.h"
 #include "TLatex.h"
+#include "TLine.h"
 #include "TCanvas.h"
 #include "TPostScript.h"
 #include "TStyle.h"
@@ -592,6 +593,9 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
   ps.NewPage();
 
 
+
+  /////////////// OUTLIER CONTROL PLOTS //////////////////
+
   // Distribution of chi2 summands (normalized residuals)
   TH1F *h_chi2 = new TH1F("h_chi2","Scaled residuals z^{2} = 1/w #chi^{2};f(z^{2});dN / df(z^{2})",50,0,200);
   h_chi2->SetLineColor(1);
@@ -607,18 +611,30 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
   h_huber->SetLineColor(4);
   h_huber->SetLineStyle(1);
 
+  // Cauchy-scaled versus no scaling
+  TH2F *h_none_cauchy = new TH2F("h_none_cauchy","Residuals z^{2};z^{2};f(z^{2})",50,0,10,50,0,10);
+  h_none_cauchy->SetLineColor(2);
+
+  // Huber-scaled versus no scaling
+  TH2F *h_none_huber = static_cast<TH2F*>(h_none_cauchy->Clone("h_none_huber"));
+  h_none_huber->SetLineColor(4);
+
   for(  std::vector<TData*>::const_iterator it = data->begin();  it < data->end();  ++it )
     {
       double weight = (*it)->GetWeight();
 
       TData::ScaleResidual = &TData::ScaleNone;
-      h_chi2->Fill(  ( (*it)->chi2() ) / weight  );
-
+      double res = ( (*it)->chi2() ) / weight;
       TData::ScaleResidual = &TData::ScaleCauchy;
-      h_cauchy->Fill(  ( (*it)->chi2() ) / weight  );
-
+      double res_cauchy = ( (*it)->chi2() ) / weight;
       TData::ScaleResidual = &TData::ScaleHuber;
-      h_huber->Fill(  ( (*it)->chi2() ) / weight  );
+      double res_huber = ( (*it)->chi2() ) / weight;
+
+      h_chi2->Fill(res);
+      h_cauchy->Fill(res_cauchy);
+      h_huber->Fill(res_huber);
+      h_none_cauchy->Fill(res,res_cauchy);
+      h_none_huber->Fill(res,res_huber);
     }
 
   h_cauchy->Draw();
@@ -638,10 +654,40 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
   c1->Draw();
   ps.NewPage();
 
+
+  h_none_cauchy->Draw("box");
+  h_none_huber->Draw("boxsame");
+  c1->SetLogy(0);
+
+  TLine *line1 = new TLine(0,0,7,7);
+  line1->SetLineStyle(2);
+  line1->SetLineColor(1);
+  line1->SetLineWidth(1);
+  line1->Draw("same");
+
+  TLegend *l_res2 = new TLegend(0.35,0.68,0.7,0.88);
+  l_res2->SetFillColor(0);
+  l_res2->SetBorderSize(0);
+  l_res2->SetHeader("Scaling function f");
+  l_res2->AddEntry(line1,"None","L");
+  l_res2->AddEntry(h_none_huber,"Huber","L");
+  l_res2->AddEntry(h_none_cauchy,"Cauchy","L");
+  l_res2->Draw("same");
+
+  c1->Draw();
+  ps.NewPage();
+
   delete h_chi2;
   delete h_cauchy;
   delete h_huber;
   delete l_res;
+  delete h_none_cauchy;
+  delete h_none_huber;
+  delete line1;
+  delete l_res2;
+
+  /////////////// END: OUTLIER CONTROL PLOTS //////////////////
+
   
   ps.Close();
 }
