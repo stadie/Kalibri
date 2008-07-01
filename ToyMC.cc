@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.3 2008/06/30 13:15:27 stadie Exp $
+// $Id: ToyMC.cc,v 1.4 2008/07/01 11:50:31 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -66,7 +66,7 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
   tem = emf * e;
   thad = (1-emf) * e / mTowConst;
   tout = 0;
-  if(mModel == Gauss) {
+  if((mModel == Gauss)||(mModel == Flat)) {
     thad = mRandom->Gaus(1.0,sqrt(mResoStochastic * mResoStochastic/ thad + 
 				  mResoNoise * mResoNoise)) * thad;
   }  else if(mModel == Landau) {
