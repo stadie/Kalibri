@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.4 2008/07/01 11:50:31 stadie Exp $
+// $Id: ToyMC.cc,v 1.5 2008/07/01 12:15:39 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -17,7 +17,7 @@
 
 
 
-ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400), mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpread(0.07),mNoOutOfCone(true),mModel(Gauss),mChunks(200)
+ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400), mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpread(0.07),mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
 {
   mRandom = new TRandom3();
   mRandom->SetSeed(0);
@@ -62,19 +62,23 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
 }
 
 void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout) {
-  float emf = mRandom->Uniform(0.5);
+  float emf = mRandom->Uniform(mMaxEmf);
   tem = emf * e;
   thad = (1-emf) * e / mTowConst;
   tout = 0;
-  if((mModel == Gauss)||(mModel == Flat)) {
-    thad = mRandom->Gaus(1.0,sqrt(mResoStochastic * mResoStochastic/ thad + 
-				  mResoNoise * mResoNoise)) * thad;
-  }  else if(mModel == Landau) {
+  if(mModel == Landau) {
     double smear;
     do {
       smear =  mRandom->Landau(1,sqrt(mResoStochastic * mResoStochastic/ thad + mResoNoise * mResoNoise));
     } while((smear < 0) || (smear > 2));
     smear = 2 - smear;
+    thad *= smear;
+  } else {
+    double smear;
+    do {
+      smear = mRandom->Gaus(1.0,sqrt(mResoStochastic * mResoStochastic/ thad + 
+				     mResoNoise * mResoNoise));
+    } while((smear < 0) || (smear > 2));
     thad *= smear;
   }
   if(thad < 0) thad = 0;
@@ -262,8 +266,10 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     photonphi = mPinput.Phi();
     photonet = mPinput.Pt();
     photone = mPinput.E();
-    jgenpt = mRandom->Gaus(photonpt,0.04 * photonpt);
-    jgeneta = mRandom->Gaus(photoneta,1.0);
+    //jgenpt = mRandom->Gaus(photonpt,0.04 * photonpt);
+    jgenpt = photonet;
+   //jgeneta = mRandom->Gaus(photoneta,1.0);
+    jgeneta = photoneta;
     if((jgeneta > 2.5) || (jgeneta < -2.5)) {
       --i;
       continue;
@@ -277,10 +283,19 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     jet.SetPtEtaPhiM(0,0,0,0);
     double towmean = mTowConst;
     if(mModel == Flat) mTowConst = 1/mRandom->Uniform(1.5);
+    else if(mModel == Exp) mTowConst = 1/mRandom->Exp(0.5);
+    else if(mModel == Slope) {
+      double u1 = mRandom->Uniform(2);
+      double u2 = mRandom->Uniform(2);
+      mTowConst = 1/(2 - std::max(u1,u2));
+    }
+    double p0frac = mRandom->Uniform(mMaxPi0Frac);
     for(int j = 0; j < NobjTowCal ; ++j) {
       tower.SetPtEtaPhiM(towet[j],toweta[j],towphi[j],0);
-      towen[j] = tower.E();
-      smearTower(tower.E(),towen[j],towem[j],towhd[j],towoe[j]); 
+      towen[j] =  tower.E();
+      smearTower((1 - p0frac) * tower.E(),towen[j],towem[j],towhd[j],towoe[j]); 
+      towen[j] += p0frac * tower.E();
+      towem[j] += p0frac * tower.E();
       tower *= towen[j]/tower.E();
       towet[j] = tower.Pt();
       jet += tower;

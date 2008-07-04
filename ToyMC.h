@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.h,v 1.1 2008/06/30 13:15:27 stadie Exp $
+// $Id: ToyMC.h,v 1.2 2008/07/01 11:50:31 stadie Exp $
 //
 #ifndef TOYMC_H
 #define TOYMC_H
@@ -13,7 +13,7 @@ class TTree;
 
 class ToyMC {
 public:
-  enum Model { Gauss, Landau, Flat };
+  enum Model { Gauss, Landau, Flat, Exp, Slope };
   double mMinEta, mMaxEta;
   double mMinPt, mMaxPt;
   double mTowConst;
@@ -22,6 +22,8 @@ public:
   bool   mNoOutOfCone;
   Model  mModel;
   int    mChunks;
+  double mMaxPi0Frac;
+  double mMaxEmf;
 private: 
   TRandom* mRandom;
   TLorentzVector mPinput;
