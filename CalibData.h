@@ -1,7 +1,7 @@
 //s
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.20 2008/06/27 14:24:32 mschrode Exp $
+// $Id: CalibData.h,v 1.21 2008/06/30 15:24:01 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -84,12 +84,17 @@ public:
     resultcache.push_back( this );
     return resultcache;
   };
+
+  virtual double GetParametrizedErr(double *paramess){ 
+    double *mess = GetMess();
+    double pmess =  paramess[0] * (mess[6] / mess[0]);// * (mess[2] / (mess[1] + mess[2])); //Et->E hadronic
+    return _err(&pmess) * mess[0] / mess[6];
+  };     //search
+  
+
   virtual double chi2(){ 
     double new_mess  = GetParametrizedMess();
-    double *mess = GetMess();
-    //double new_error = GetParametrizedErr(&new_mess);
-    double new_messE = new_mess * mess[6] / mess[0]; //Et->E  
-    double new_error = GetParametrizedErr(&new_messE) * mess[0] / mess[6]; 
+    double new_error = GetParametrizedErr(&new_mess);
     double weight = GetWeight();
     //-- return weight*(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error);
     return weight * (*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(new_error*new_error) );
@@ -137,19 +142,16 @@ public:
     }
     return _func(&result, _par);	  
   };
+  virtual double GetParametrizedErr(double *paramess){ return _err(paramess);};
 
   virtual double chi2(){ 
-    double sum_mess=0.0, sum_error2=0.0, new_error, new_mess, new_messE;
+    double sum_mess=0.0, sum_error2=0.0, new_error, new_mess;
     double weight = GetWeight();
-    double *mess;
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
          it!=_vecmess.end(); ++it) {
        new_mess    = (*it)->GetParametrizedMess();
-       mess = (*it)->GetMess();	 
        sum_mess   += new_mess;
-       //new_error   = (*it)->GetParametrizedErr(&new_mess);
-       new_messE =  new_mess  * mess[6] / mess[0]; //Et->E  
-       new_error = (*it)->GetParametrizedErr(&new_messE) * mess[0] / mess[6];
+       new_error   = (*it)->GetParametrizedErr(&new_mess);
        sum_error2 += new_error * new_error;
     }
     new_mess  = _func( &sum_mess, _par);  
@@ -197,19 +199,34 @@ public:
     virtual double GetMessCombination(){ return combine(); };
     virtual double * GetDirection(){ return _direction; };
     virtual double chi2(){ 
-      double sum_error2=0.0, new_error, new_mess, new_messE; 
+      double sum_error2=0.0, new_error, new_mess;        
       double weight = GetWeight();
-      for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
+      for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin(); //jets except first
            it!=_m2.end(); ++it) {
-	 new_mess    = (*it)->GetParametrizedMess();	 
-  	 //new_error   = (*it)->GetParametrizedErr(&new_mess);
-	 double *mess = (*it)->GetMess();
-	 new_messE =  new_mess  * mess[6] / mess[0]; //Et->E   
-	 new_error = (*it)->GetParametrizedErr(&new_messE) * mess[0] / mess[6];
-	 sum_error2 += new_error * new_error;
+
+	double sum_errorT2=0.0, new_errorT, sum_mess = 0.0;   
+	for (std::vector<TData*>::const_iterator tit=(*it)->GetRef().begin();
+	     tit!=(*it)->GetRef().end(); ++tit) { 
+	  new_mess    = (*tit)->GetParametrizedMess();
+	  sum_mess += new_mess;
+	  new_errorT   = (*tit)->GetParametrizedErr(&new_mess);
+	  sum_errorT2 += new_errorT * new_errorT;     //tower errors
+	}
+    	//new_mess    = (*it)->GetParametrizedMess();  //same as sum_mess
+	new_error   = (*it)->GetParametrizedErr(&sum_mess); //remaining jet errors
+	sum_error2 += new_error * new_error + sum_errorT2;
       }
-      new_mess  = GetParametrizedMess();
-      new_error = _err( &new_mess );
+
+      double sum_errorT2=0.0, new_errorT, sum_mess = 0.0;   
+      for (std::vector<TData*>::const_iterator tit=GetRef().begin();    //first jet towers
+	     tit!=GetRef().end(); ++tit) { 
+	  new_mess    = (*tit)->GetParametrizedMess();
+	  sum_mess += new_mess;
+	  new_errorT   = (*tit)->GetParametrizedErr(&new_mess);
+	  sum_errorT2 += new_errorT * new_errorT;     //tower errors
+	}
+      //new_mess  = GetParametrizedMess();                  //same as sum_mess
+      sum_errorT2 += _err( &sum_mess ) * _err( &sum_mess );          //jet error first jet
       new_mess  = GetMessCombination();
 
       //Combination -> B -> to response
@@ -220,11 +237,8 @@ public:
       sum_error2 += new_error * new_error;
       */
 
-
-      //std::cout << "new_mess:" << new_mess << " error:" << new_error << " and " << sqrt(sum_error2) 
-      //		<< '\n';
       //-- return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
-      return weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+      return weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + sum_errorT2) );
     };
     virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
     virtual void ChangeParAddress(double* oldpar, double* newpar) { 
