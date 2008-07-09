@@ -43,6 +43,7 @@ public :
    Float_t         MetCal;
    Float_t         MetCalPhi;
    Float_t         MetCalSum;
+   Float_t         NonLeadingJetPt;
    Float_t         PhotonPt;
    Float_t         PhotonPhi;
    Float_t         PhotonEta;
@@ -81,6 +82,7 @@ public :
    TBranch        *b_MetCal;   //!
    TBranch        *b_MetCalPhi;   //!
    TBranch        *b_MetCalSum;   //!
+   TBranch        *b_NonLeadingJetPt;  //!
    TBranch        *b_PhotonPt;   //!
    TBranch        *b_PhotonPhi;   //!
    TBranch        *b_PhotonEta;   //!
@@ -157,6 +159,7 @@ void GammaJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("MetCal", &MetCal, &b_MetCal);
    fChain->SetBranchAddress("MetCalPhi", &MetCalPhi, &b_MetCalPhi);
    fChain->SetBranchAddress("MetCalSum", &MetCalSum, &b_MetCalSum);
+   fChain->SetBranchAddress("NonLeadingJetPt", &NonLeadingJetPt, &b_NonLeadingJetPt);
    fChain->SetBranchAddress("PhotonPt", &PhotonPt, &b_PhotonPt);
    fChain->SetBranchAddress("PhotonPhi", &PhotonPhi, &b_PhotonPhi);
    fChain->SetBranchAddress("PhotonEta", &PhotonEta, &b_PhotonEta);
