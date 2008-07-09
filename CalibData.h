@@ -1,7 +1,7 @@
 //s
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.21 2008/06/30 15:24:01 thomsen Exp $
+// $Id: CalibData.h,v 1.22 2008/07/04 12:36:43 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -87,7 +87,11 @@ public:
 
   virtual double GetParametrizedErr(double *paramess){ 
     double *mess = GetMess();
-    double pmess =  paramess[0] * (mess[6] / mess[0]);// * (mess[2] / (mess[1] + mess[2])); //Et->E hadronic
+    double pmess;
+    if(fabs(mess[4]) < 3)  
+      pmess =  paramess[0] * (mess[6] / mess[0]) * ((mess[2] + mess[3]) / (mess[1] + mess[2] + mess[3])); //Et->E hadronic
+    else
+      pmess =  paramess[0] * (mess[6] / mess[0]);  //Et->E 
     return _err(&pmess) * mess[0] / mess[6];
   };     //search
   
