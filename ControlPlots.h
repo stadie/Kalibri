@@ -13,6 +13,8 @@
 class TData;
 class TH2F;
 class TH1F;
+class TF1;
+
 class TControlPlots {
 public:
   //TControlPlots(){this->ReadConfigFile("config/calibration.cfg");};
@@ -29,10 +31,12 @@ public:
   void TrackTowerControlPlots();
   void TrackClusterControlPlots();
   void FitControlPlots();
+  void GammaJetSigmas();
 
 private:  
   void ReadConfigFile(std::string config);
   void Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4]);
+  void Fit1D(TH1F* hist, TF1* results);
 
   std::vector<TData*> * data;
   TParameters * p;

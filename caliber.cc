@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.18 2008/06/30 15:26:21 thomsen Exp $
+// $Id: caliber.cc,v 1.19 2008/07/01 11:56:24 mschrode Exp $
 //
 #include "caliber.h"
 
@@ -25,6 +25,12 @@ boost::mutex io_mutex;
 #include "CalibData.h"
 #include "external.h"
 
+#include<TH1F.h>
+#include<TF1.h>
+#include "TText.h"
+#include "TCanvas.h"
+#include "TPostScript.h"
+
 using namespace std;
 
 typedef std::vector<TData*>::iterator DataIter;
@@ -47,6 +53,25 @@ struct ControlCutSelection {
     return d->GetTruth()>_cut;
   }
   double _cut;
+};
+
+//"Not-Balanced" Rejection: Make average-fitting equal to peak-fitting
+struct NotBalancedRejection {
+  NotBalancedRejection(double *cut, double min, double max):
+    _cut(cut),_min(min),_max(max){};
+  bool operator()(TData *d){
+    bool result = false;
+    if(d->GetType()!=TypeGammaJet ||
+       d->GetMess()[0]<_min ||
+       d->GetMess()[0]>_max ||
+       d->GetMess()[0]==0.0 ) result = true;
+    else
+      result = (1.0-d->GetTruth()/d->GetMess()[0]) >
+               _cut[(int)(d->GetMess()[0]-_min)];
+    return result;
+  }
+  double *_cut;
+  double _min, _max;
 };
 
 
@@ -148,6 +173,13 @@ int TCaliber::GetSpectraBin(double m1, double m2=0., double m3=0.)
    return bin1 *bins2*bins3 + bin2 *bins3 + bin3;
 }
 
+double gauss_step(double *x, double *par)
+{
+   return par[2]/(par[1]*2.5)*exp(-(x[0]-par[0])*(x[0]-par[0])/(2.0*par[1]*par[1]))
+	   *
+	  (1.0-1.0/(1.0+exp((par[3]-x[0])/par[4]) ) );  	
+}
+
 void TCaliber::FlattenSpectra()
 {
   for (int type=0; type<7; ++type){
@@ -204,6 +236,93 @@ void TCaliber::FlattenSpectra()
     }
   } 
 }
+  
+//further weighting.............................................................
+void TCaliber::BalanceSpectra()
+{
+cout<<"...further weighting"<<endl;
+  double min = Et_cut_on_gamma;
+  double max = 100.; //GeV
+  int nbins = (int)(max-min);//one bin per GeV
+  if (nbins<2) return;
+
+  TCanvas * c1 = new TCanvas("controlplots","",600,600);
+  TPostScript ps("balance_spectra.ps",111);
+  TH1F * gauss_forpt[nbins];
+  gauss_forpt[0] = new TH1F("hgauss","pT bin[20..21GeV];#frac{pT jet - pT truth}{pT jet}",600,-10,10);
+  char * name = new char[100];
+  for(int i = 1 ; i < nbins; ++i) {
+    gauss_forpt[i] = (TH1F*)gauss_forpt[0]->Clone();
+    sprintf(name,"pT bin[%d..%dGeV]",(int)min+i,(int)min+i+1);
+    gauss_forpt[i]->SetTitle(name);
+  }
+
+cout<<"...fill truth histograms for each jet-pT bin"<<endl;
+  //loop over all fit-events
+  for ( std::vector<TData*>::iterator i = data.begin(); 
+        i != data.end() ; ++i )  {
+    TData* jg = *i;
+    if (jg->GetType()!=TypeGammaJet) continue;
+    
+    //double etjetcor = jg->GetParametrizedMess();
+    if(jg->GetMess()[0]>min && jg->GetMess()[0]<max)
+      gauss_forpt[(int)(jg->GetMess()[0]-min)]->Fill( (jg->GetMess()[0]-jg->GetTruth())/jg->GetMess()[0],jg->GetWeight() );
+  }
+
+cout<<"...fit the truth distributions"<<endl;
+  double edge;
+  TF1 * f = new TF1("gauss_step",gauss_step,-10,10,5);
+  double * cuts = new double[nbins];
+  TText * text = new TText();
+  text->SetTextSize(0.03);
+  text->SetTextColor(2);
+
+  for(int i = 0; i < nbins; ++i) {
+    if ( (i+1)%(nbins/10)==0) cout << (100*(i+1)/nbins)<<"% events weighted" << endl;  
+    //TF1 *f=0;
+    //gauss_forpt[i]->Fit("gaus","LLQNO","");
+    //f = (TF1*)gROOT->GetFunction("gaus")->Clone();
+    edge = 1.0-Et_cut_on_gamma/(((double)i)+min+0.5);
+    f->SetParameters(-1.,2.0,3.0, edge, 0.01);
+    f->FixParameter(3, edge);
+    f->FixParameter(4, 0.01);
+    gauss_forpt[i]->Fit("gauss_step","LLQNO","");
+
+    gauss_forpt[i]->Draw("h");
+    f->SetLineColor(2);
+    f->Draw("same");
+    sprintf(name,"mean %f",f->GetParameter(0));
+    text->DrawText(4.,0.7*gauss_forpt[i]->GetMaximum(),name);
+    c1->Draw();
+    
+    cout<<"bin "<<i
+      <<": mean="<<f->GetParameter(0)
+      <<", sigma="<<f->GetParameter(1)
+      <<", height="<<f->GetParameter(2)
+      <<", edge("<<edge<<")="<<f->GetParameter(3)
+      <<", width-edge="<<f->GetParameter(4)
+      <<endl;
+    cuts[i] = f->GetParameter(0)-fabs(f->GetParameter(0)-f->GetParameter(3));
+  }
+  delete f;
+  ps.Close();
+ 
+cout<<"...remove events which are not 'balanced'"<<endl;
+
+  DataIter beg = partition(data.begin(), data.end(), 
+                           NotBalancedRejection(cuts, min, max));
+  for(DataIter i = beg ; i != data.end() ; ++i) {
+    delete *i;
+  }
+  data.erase(beg,data.end());
+
+cout<<"...cleaning up"<<endl;
+  for(int i = 0; i < nbins; ++i){
+    delete gauss_forpt[i];
+  }  
+  delete [] cuts;
+  delete name;
+}
 
 
 void TCaliber::Run_GammaJet()
@@ -251,8 +370,8 @@ void TCaliber::Run_GammaJet()
     //Create an Gamma/Jet TData event
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
-			  gammajet.PhotonEt,				    //truth//
-			  //gammajet.JetGenPt,
+			  //gammajet.PhotonEt,				    //truth//
+			  gammajet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
 			  //gammajet.EventWeight,                           //weight//
 			  1.0,                                              //weight//
@@ -719,7 +838,11 @@ void TCaliber::Run()
     if (n_dijet_events!=0)            Run_NJet( dijet, 2);
     if (n_trijet_events!=0)           Run_NJet( trijet, 3);
     if (n_zjet_events!=0)             Run_ZJet();
-    if (flatten_spectra)              FlattenSpectra();
+    if (flatten_spectra){
+      FlattenSpectra();
+      BalanceSpectra();
+      //FlattenSpectra();
+    }  
     if (! tower_constraints.empty())  AddTowerConstraint();
 
     if (fit_method==1) Run_Lvmini();
@@ -883,6 +1006,8 @@ void TCaliber::Done()
 	plots->GammaJetControlPlotsJetBin();
 	cout << "Creating more gamma jet control plots,"<<endl;
 	plots->GammaJetControlPlotsJetJEC();
+	cout << "Creating even more gamma jet control plots (sigmas),"<<endl;
+	plots->GammaJetSigmas();
       }
     if (n_dijet_events!=0)   
       {

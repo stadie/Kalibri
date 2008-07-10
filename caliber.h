@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.18 2008/06/27 14:58:01 thomsen Exp $
+// $Id: caliber.h,v 1.19 2008/06/27 15:16:12 mschrode Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -66,6 +66,7 @@ protected:
 
   void AddTowerConstraint();
   void FlattenSpectra();
+  void BalanceSpectra();
 
 private:
   double analytic_derivate( double * pars, int npar, int index);

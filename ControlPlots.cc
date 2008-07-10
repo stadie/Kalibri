@@ -1274,9 +1274,14 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   heta[9]->SetTitle("#gamma-jet 90 < E_{T}^{#gamma} < 300 GeV;#eta");
 
   TH2F* hpt[3];
-  hpt[0] = new TH2F("hpt","#gamma-jet;p_{T} [GeV]",400,0,400,100,0,4);
+  hpt[0] = new TH2F("hpt","#gamma-jet;truth p_{T} [GeV]",400,0,400,100,0,4);
   hpt[1] = (TH2F*)hpt[0]->Clone();
   hpt[2] = (TH2F*)hpt[0]->Clone();
+  
+  TH2F* hpt_uncorr[3];
+  hpt_uncorr[0] = new TH2F("hpt_uncorr","#gamma-jet;uncorr. jet p_{T} [GeV]",400,0,400,100,0,4);
+  hpt_uncorr[1] = (TH2F*)hpt_uncorr[0]->Clone();
+  hpt_uncorr[2] = (TH2F*)hpt_uncorr[0]->Clone();
   
   TH2F* hemf[3];
   hemf[0] = new TH2F("hemf","#gamma-jet;EMF",100,0,1,100,0,4);
@@ -1311,6 +1316,7 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
 	  heta[4*i+2]->Sumw2();
 	  heta[4*i+3]->Sumw2();
 	  hpt[i]->Sumw2();
+	  hpt_uncorr[i]->Sumw2();
 	  hemf[i]->Sumw2();
 	  hptlog[i]->Sumw2();
     }
@@ -1519,10 +1525,12 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     hptlog[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
     hptlog[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
     hptlog[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());
+
+    hpt_uncorr[0]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
+    hpt_uncorr[1]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
+    hpt_uncorr[2]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
+
 /*
-    hpt[0]->Fill(jg->GetMess()[0],etjet/ jg->GetTruth(),jg->GetWeight());
-    hpt[1]->Fill(jg->GetMess()[0],etjetcor/jg->GetTruth(),jg->GetWeight());
-    hpt[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());    
     hptlog[0]->Fill(jg->GetMess()[0],etjet/ jg->GetTruth(),jg->GetWeight());
     hptlog[1]->Fill(jg->GetMess()[0],etjetcor/jg->GetTruth(),jg->GetWeight());
     hptlog[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());
@@ -1733,15 +1741,15 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
       delete hists[i][j];
     }	
   }
-  hpt[0]->SetMarkerStyle(20);
-  hpt[0]->SetMarkerColor(1);
-  hpt[2]->SetMarkerStyle(4);
-  hpt[2]->SetMarkerColor(4);  
-  hpt[1]->SetMarkerStyle(22);
-  hpt[1]->SetMarkerColor(2);
-  Fit2D(hpt[0],hists[0],gaussplots[0], gf[0]);
-  Fit2D(hpt[1],hists[1],gaussplots[1], gf[1]);
-  Fit2D(hpt[2],hists[2],gaussplots[2], gf[2]);
+  hpt_uncorr[0]->SetMarkerStyle(20);
+  hpt_uncorr[0]->SetMarkerColor(1);
+  hpt_uncorr[2]->SetMarkerStyle(4);
+  hpt_uncorr[2]->SetMarkerColor(4);  
+  hpt_uncorr[1]->SetMarkerStyle(22);
+  hpt_uncorr[1]->SetMarkerColor(2);
+  Fit2D(hpt_uncorr[0],hists[0],gaussplots[0], gf[0]);
+  Fit2D(hpt_uncorr[1],hists[1],gaussplots[1], gf[1]);
+  Fit2D(hpt_uncorr[2],hists[2],gaussplots[2], gf[2]);
     for(int a = 0; a<3;++a)
       {
 	for(int b = 0 ; b < 4 ; ++b) {
@@ -1963,6 +1971,9 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   delete hpt[0];
   delete hpt[1];
   delete hpt[2];
+  delete hpt_uncorr[0];
+  delete hpt_uncorr[1];
+  delete hpt_uncorr[2];
   delete hptlog[0];
   delete hptlog[1];
   delete hptlog[2];
@@ -2660,3 +2671,105 @@ void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF
   }
   delete htemp;
 }
+
+
+double gauss_step(double *x, double *par);
+//defined in caliber.cc
+
+void TControlPlots::GammaJetSigmas()
+{
+  TCanvas * c1 = new TCanvas("controlplots","",600,600);
+  TPostScript ps("sigmas_gammajet.ps",111);
+  char * name = new char[100];
+
+  TH1F * gauss_forpt[200];
+  TH1F * gauss_forptcorr[200];
+  gauss_forpt[0] = new TH1F("hgauss","pT bin[0..1GeV];#frac{pT jet - pT truth}{pT jet}",600,-10,10);
+  gauss_forptcorr[0] = new TH1F("hgausscorr","corrected jet pT bin[0..1GeV];#frac{pT jet - pT truth}{pT jet}",600,-10,10);
+  for(int i = 1 ; i < 200 ; ++i) {
+    gauss_forpt[i] = (TH1F*)gauss_forpt[0]->Clone();
+    sprintf(name,"pT bin[%d..%dGeV]",i,i+1);
+    gauss_forpt[i]->SetTitle(name);
+    gauss_forptcorr[i] = (TH1F*)gauss_forptcorr[0]->Clone();
+    sprintf(name,"corrected jet pT bin[%d..%dGeV]",i,i+1);
+    gauss_forptcorr[i]->SetTitle(name);
+  }
+  
+  //loop over all fit-events
+  for ( std::vector<TData*>::iterator i = data->begin(); 
+        i != data->end() ; ++i )  {
+    TData* jg = *i;
+    double etjetcor = jg->GetParametrizedMess();
+    if( jg->GetType() != TypeGammaJet ) continue;
+    if(jg->GetMess()[0]>0 && jg->GetMess()[0]<200)
+      gauss_forpt[(int)jg->GetMess()[0]]->Fill( (jg->GetMess()[0]-jg->GetTruth())/jg->GetMess()[0], jg->GetWeight() );
+    if(etjetcor>0 && etjetcor<200)
+      gauss_forptcorr[(int)etjetcor]->Fill( (etjetcor-jg->GetTruth())/etjetcor, jg->GetWeight() );
+  }
+
+  double edge;
+  TText * text = new TText();
+  text->SetTextSize(0.03);
+  text->SetTextColor(2);
+  //TF1 * f = new TF1("gauss_step",gauss_step,-10,10,5);
+  for(int i = 0 ; i < 200 ; ++i) {
+    //edge = 1.0-20./(((double)i)+0.5);
+    //f->SetParameters(-1.,2.0,3.0, edge, 0.01);
+    //f->FixParameter(3, edge);
+    //f->FixParameter(4, 0.01);
+    
+    gauss_forpt[i]->Fit("gaus","LLQNO","");
+    TF1 * f = (TF1*)gROOT->GetFunction("gaus")->Clone();
+    //cout<<"bin "<<i
+    //    <<": mean="<<f->GetParameter(0)
+    //	<<", sigma="<<f->GetParameter(1)
+    //	<<endl;
+    
+    //double mean = f->GetParameter(1);
+    //double meanerror = f->GetParError(1);
+    //double width = f->GetParameter(2);
+    
+    //gauss_forpt[i]->Fit("gauss_step","LLQNO","");
+    //cout<<"bin "<<i<<": mean="<<f->GetParameter(0)
+    //	<<", sigma="<<f->GetParameter(1)
+    //	<<", height="<<f->GetParameter(2)
+    //	<<", edge("<<edge<<")="<<f->GetParameter(3)
+    //	<<", width-edge="<<f->GetParameter(4)
+    //	<<endl;
+    
+    gauss_forpt[i]->Draw("h");
+    f->SetLineColor(2);
+    f->Draw("same");
+    sprintf(name,"mean %f",f->GetParameter(1));
+    text->DrawText(4.,0.7*gauss_forpt[i]->GetMaximum(),name);
+    //func->Draw("same");
+    c1->Draw();
+    delete f;
+
+    TF1 *g=0;
+    //Fit1D(gauss_forptcorr[i],g);
+    gauss_forptcorr[i]->Fit("gaus","LLQNO","");
+    g = (TF1*)gROOT->GetFunction("gaus")->Clone();
+    gauss_forptcorr[i]->Draw("h");
+    g->SetLineColor(4);
+    g->Draw("same");
+    c1->Draw();
+    delete g;
+  }
+  //delete f;
+  ps.Close();
+  
+  for(int i = 0 ; i < 200 ; ++i){
+    delete gauss_forpt[i];  
+    delete gauss_forptcorr[i];  
+  }  
+  delete name;
+}
+
+void TControlPlots::Fit1D(TH1F* hist, TF1* result)
+{
+   hist->Fit("gaus","LLQNO","");
+   result = (TF1*)gROOT->GetFunction("gaus")->Clone();
+}
+
+
