@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.19 2008/06/27 15:16:12 mschrode Exp $
+// $Id: caliber.h,v 1.20 2008/07/10 11:28:38 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -65,6 +65,7 @@ protected:
   void Run_ZJet();
 
   void AddTowerConstraint();
+  void AddParameterLimits();
   void FlattenSpectra();
   void BalanceSpectra();
 
@@ -93,7 +94,18 @@ private:
     TowerConstraint(int mineta,int maxeta,double hadEt, double emEt, double weight) :
       mineta(mineta),maxeta(maxeta),hadEt(hadEt),emEt(emEt),weight(weight) {}
   };
+  class ParameterLimit {
+  public:
+    int index;
+    double min;
+    double max;
+    double k;
+    ParameterLimit(int index, double min, double max, double k) 
+      : index(index), min(min), max(max), k(k) {}
+  };
+  
   std::vector<TowerConstraint> tower_constraints;
+  std::vector<ParameterLimit> par_limits;
   bool flatten_spectra;
   std::vector<TData*> data;
   

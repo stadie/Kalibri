@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.19 2008/07/01 11:56:24 mschrode Exp $
+// $Id: caliber.cc,v 1.20 2008/07/10 11:28:37 auterman Exp $
 //
 #include "caliber.h"
 
@@ -523,8 +523,6 @@ void TCaliber::Run_ZJet()
   }
 }
 
-
-
 void TCaliber::Run_TrackTower()
 {
   //Run Track-Tower stuff
@@ -694,6 +692,9 @@ void TCaliber::AddTowerConstraint()
 	mess[1] = ic->emEt;
 	mess[2] = ic->hadEt;
 	mess[3] = 0;
+	mess[4] = 0;
+	mess[5] = 0;
+	mess[6] = etsum;
 	TData_TruthMess *tower = new TData_TruthMess(index,
 						     mess, //mess
 						     etsum, //"truth" for plotting only
@@ -709,6 +710,21 @@ void TCaliber::AddTowerConstraint()
     } 
     data.push_back(tc);
   } 
+}
+
+void TCaliber::AddParameterLimits()
+{
+
+  for(std::vector<ParameterLimit>::const_iterator pl = par_limits.begin() ;
+      pl != par_limits.end() ; ++pl) {
+    std::cout << "adding limit for parameter " << pl->index << " min:" 
+	      << pl->min << " max:" << pl->max << " k:" << pl->k << '\n';
+    double* limit = new double[2];
+    limit[0] = pl->min;
+    limit[1] = pl->max;
+    TData_ParLimit * parlim = new TData_ParLimit(pl->index,limit,pl->k,p->GetPars() + pl->index,p->parameter_limit);
+    data.push_back(parlim);
+  }
 }
 
 void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
@@ -770,8 +786,8 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	  1.,                                            //weight//
 	  p->GetJetParRef( jet_index ),                  //params
 	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-	  //p->jet_parametrization,                      //function
-	  p->dummy_parametrization,
+	  p->jet_parametrization,                      //function
+	  //p->dummy_parametrization,
 	  p->jet_error_parametrization,                  //function
 	  jetp                                           //jet momentum for plotting and scale
         );
@@ -810,11 +826,37 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	    p->tower_error_parametrization                          //function//
 	  ));
       }
-      if(nstoredjets> 0) 
+      if(nstoredjets> 0)  
       	jj_data[0]->AddNewMultMess( jj_data[nstoredjets] );
       ++nstoredjets;
     }//loop over all n-jets
     if(jj_data[0] && nstoredjets == injet && jj_data[0]->GetScale() > 15.0) {
+      /*
+      //sort jets. 1st is barrel, 2nd is probe
+      if( nstoredjets ==  2) {
+      if(std::abs(jj_data[0]->GetMess()[1]) > 1.2) {
+      if(std::abs(jj_data[1]->GetMess()[1]) > 1.2) {
+      delete jj_data[0];
+      continue;
+      } else {
+      jj_data[0]->ClearMultMess();
+      jj_data[1]->AddNewMultMess(jj_data[0]);
+      TData_PtBalance* tmp = jj_data[1];
+      jj_data[1] = jj_data[0];
+      jj_data[0] = tmp; 
+      }
+      } else if(std::abs(jj_data[1]->GetMess()[1]) < 1.2) {
+      //both jets central, roll the dice and swap
+      if(rand()/(RAND_MAX+1.0) > 0.5) {
+      jj_data[0]->ClearMultMess();
+      jj_data[1]->AddNewMultMess(jj_data[0]);
+      TData_PtBalance* tmp = jj_data[1];
+      jj_data[1] = jj_data[0];
+      jj_data[0] = tmp; 
+      }
+      }
+      }    
+      */
       ++evt;    
       data.push_back( jj_data[0] ); 
     } else {
@@ -844,6 +886,7 @@ void TCaliber::Run()
       //FlattenSpectra();
     }  
     if (! tower_constraints.empty())  AddTowerConstraint();
+    if (! par_limits.empty())         AddParameterLimits();
 
     if (fit_method==1) Run_Lvmini();
   } 
@@ -1064,7 +1107,25 @@ void TCaliber::Init(string file)
   //read config file
   fit_method = config.read<int>("Fit method",1);
   nthreads = config.read<int>("Number of Threads",1);
-  flatten_spectra = config.read<int>("Flatten Spectra",1);
+  flatten_spectra = config.read<int>("Flatten Spectra",1); 
+  vector<double> limits = bag_of<double>(config.read<string>( "Jet Parameter Limit",""));
+
+  if(limits.size() % 4 == 0) {
+    for(unsigned int i = 0 ; i < limits.size() ; i += 4) {
+      int index = (int)limits[i];
+      std::cout << p->GetNumberOfTowerParameters() + index << ","
+		<< p->GetNumberOfParameters() << "\n";
+      for(int j = p->GetNumberOfTowerParameters() + index; 
+	  j <  p->GetNumberOfParameters() ; 
+	  j += p->GetNumberOfJetParametersPerBin()) {
+	par_limits.push_back(ParameterLimit(j,limits[i+1],limits[i+2],
+					    limits[i+3]));
+      }
+    }
+  } else if(limits.size() > 1) {
+    std::cout << "wrong number of arguments for JetParameter Limit:" 
+	      << limits.size() << '\n';
+  }
   //last minute kinematic cuts
   Et_cut_on_jet   = config.read<double>("Et cut on jet",0.0); 
   Et_cut_on_gamma = config.read<double>("Et cut on gamma",0.0); 
@@ -1081,7 +1142,7 @@ void TCaliber::Init(string file)
 						  tower_constraint[i+2],tower_constraint[i+3],
 						  tower_constraint[i+4]));
     } 
-  } else {
+  } else if(tower_constraint.size() > 1) {
     std::cout << "wrong number of arguments for tower constraint:" << tower_constraint.size() << '\n';
   }
 
