@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.22 2008/06/19 15:32:39 stadie Exp $
+// $Id: Parameters.h,v 1.23 2008/06/27 12:24:02 thomsen Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -94,6 +94,14 @@ public :
     return jet_parametrization(x,par)/x[0];
   }
 
+  static double parameter_limit(double *x, double *par) {
+    double min = x[0];
+    double max = x[1];
+    if(par[0] < min) return (min-par[0]);
+    if(par[0] > max) return (par[0]-max);
+    return 0;
+    //return 1e4/(1+exp(k* (par[0] - min))) + 1e4/(1+exp(-k* (par[0] - max));
+  }
 
 protected:
   TParameters(Parametrization* p) 
