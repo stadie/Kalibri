@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.20 2008/07/10 11:28:37 auterman Exp $
+// $Id: caliber.cc,v 1.21 2008/07/14 12:59:06 stadie Exp $
 //
 #include "caliber.h"
 
@@ -1108,13 +1108,11 @@ void TCaliber::Init(string file)
   fit_method = config.read<int>("Fit method",1);
   nthreads = config.read<int>("Number of Threads",1);
   flatten_spectra = config.read<int>("Flatten Spectra",1); 
-  vector<double> limits = bag_of<double>(config.read<string>( "Jet Parameter Limit",""));
+  vector<double> limits = bag_of<double>(config.read<string>( "Jet Parameter Limits",""));
 
   if(limits.size() % 4 == 0) {
     for(unsigned int i = 0 ; i < limits.size() ; i += 4) {
       int index = (int)limits[i];
-      std::cout << p->GetNumberOfTowerParameters() + index << ","
-		<< p->GetNumberOfParameters() << "\n";
       for(int j = p->GetNumberOfTowerParameters() + index; 
 	  j <  p->GetNumberOfParameters() ; 
 	  j += p->GetNumberOfJetParametersPerBin()) {
@@ -1123,7 +1121,24 @@ void TCaliber::Init(string file)
       }
     }
   } else if(limits.size() > 1) {
-    std::cout << "wrong number of arguments for JetParameter Limit:" 
+    std::cout << "wrong number of arguments for Jet Parameter Limits:" 
+	      << limits.size() << '\n';
+  }
+  limits.clear();
+  limits = bag_of<double>(config.read<string>( "Tower Parameter Limits",""));
+
+  if(limits.size() % 4 == 0) {
+    for(unsigned int i = 0 ; i < limits.size() ; i += 4) {
+      int index = (int)limits[i];
+      for(int j = index; 
+	  j <  p->GetNumberOfTowerParameters() ; 
+	  j += p->GetNumberOfTowerParametersPerBin()) {
+	par_limits.push_back(ParameterLimit(j,limits[i+1],limits[i+2],
+					    limits[i+3]));
+      }
+    }
+  } else if(limits.size() > 1) {
+    std::cout << "wrong number of arguments for Tower Parameter Limits:" 
 	      << limits.size() << '\n';
   }
   //last minute kinematic cuts
