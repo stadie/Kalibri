@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.5 2008/07/01 11:56:24 mschrode Exp $
+// $Id: CalibData.cc,v 1.6 2008/07/04 12:36:43 thomsen Exp $
 //
 #include "CalibData.h"
 #include "map"
@@ -354,13 +354,18 @@ double TData_PtBalance::combine(){
   
   x = dummy * _direction[0];
   y = dummy * _direction[1];
+  //x = 0;
+  //y = 0;
+  //dummy = 0;
   for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
        it!=_m2.end();++it){
     dummy = (*it)->GetParametrizedMess(); 
     x += dummy * (*it)->GetDirection()[0];
     y += dummy * (*it)->GetDirection()[1];  
   }
-  return sqrt(x*x+y*y);     
+  return sqrt(x*x+y*y);
+  //return GetParametrizedMess() - dummy;
+  //return GetMess()[0] - dummy;
 };
 
 double TData_InvMass::combine(){
@@ -387,7 +392,28 @@ double TData_InvMass::combine(){
   return sqrt(e*e - x*x - y*y - z*z);     
 };
 
+std::vector<TData*> TData_ParLimit::_cache = std::vector<TData*>(1);
 
+double TData_ParLimit::chi2_fast(double * temp_derivative1, 
+				 double* temp_derivative2, double epsilon) {
+  double new_chi2 = chi2();
+  //if((_par[0] < _mess[0]) || (_par[0] > _mess[1])) {
+  //  std::cout << "WARNING: paramter " << _index << " at limit:" 
+  //	      << _par[0] << '\n'; 
+  //}
+  //std::cout << "ParLimit: par=" << _par[0] << " chi2:" <<   new_chi2 << '\n';
+  double oldpar = _par[0];
+  _par[0] += epsilon;
+  double temp2 = chi2();
+  _par[0]  = oldpar - epsilon;
+  double temp1 = chi2();
+  // Difference of chi2 at par+epsilon and par-epsilon
+  temp_derivative1[_index] += (temp2 - temp1); // for 1st derivative
+  temp_derivative2[_index] += (temp2 + temp1 - 2*new_chi2); // for 2nd derivative
+  _par[0]  = oldpar;
+  return new_chi2;
+}
+    
 
 /*
   Scale the normalized residual 'z^2 = chi^2/weight' using 

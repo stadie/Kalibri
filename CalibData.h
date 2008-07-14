@@ -1,7 +1,7 @@
 //s
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.22 2008/07/04 12:36:43 thomsen Exp $
+// $Id: CalibData.h,v 1.23 2008/07/09 09:52:15 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -24,6 +24,7 @@
 #define TypePtBalance    5
 #define TypeInvMass      6
 #define TypeTowerConstraint 7
+#define TypeParLimit        8
 //#define __FastErrorCalculation
 
 //virtual data base class -> not directly used!
@@ -191,7 +192,8 @@ public:
       _m2.clear();
       delete [] _direction;	
     };
-    virtual void AddNewMultMess(TData_MessMess * m2 ){_m2.push_back(m2);};
+    virtual void AddNewMultMess(TData_MessMess * m2 ){assert(m2->_m2.empty());_m2.push_back(m2);};
+    void ClearMultMess() { _m2.clear();}
     virtual double GetMultParametrizedMess(int i) {
       if(i == 0) return GetParametrizedMess();
       return _m2[i-1]->GetParametrizedMess();
@@ -296,6 +298,38 @@ public:
   virtual double GetTruth(){ return sqrt(_truth);};
  protected:
   virtual double combine();  
+};
+
+//data class to limit a parameter
+class TData_ParLimit : public TData
+{
+ public:
+  TData_ParLimit(unsigned short int index, double *mess, double error, double *par,double(*func)(double*,double*)) 
+    : TData(index,mess,0,error,1.0,par,1,func,0) 
+    {
+      _type=TypeParLimit;
+    };
+    
+    virtual const std::vector<TData*>& GetRef() { 
+      _cache.clear();
+      _cache.push_back(this);
+      return _cache;
+    };
+    
+    virtual double GetParametrizedErr(double *paramess){ 
+      return _error;
+    };
+        
+    virtual double chi2(){  
+      double new_mess  = GetParametrizedMess();
+      double new_error = GetParametrizedErr(&new_mess);
+      return new_mess * new_mess / (new_error * new_error);
+    };
+    virtual double chi2_fast(double * temp_derivative1, 
+			     double* temp_derivative2, double epsilon);
+    
+ private:
+    static std::vector<TData*> _cache;
 };
 
 #endif
