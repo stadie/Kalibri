@@ -18,6 +18,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new StepParametrization();
   } else if(name == "MyParametrization") {
     return new MyParametrization();
+  } else if(name == "StepParametrizationEnergy") {
+    return new StepParametrizationEnergy();
   } else if(name == "StepEfracParametrization") {
     return new StepEfracParametrization();
   }  else if(name == "JetMETParametrization") {
@@ -42,6 +44,8 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "StepParametrization";
   } else if(parclass == "TMyParameters") {
     parclass = "MyParametrization";
+  } else if(parclass == "TStepParametersEnergy") {
+    parclass = "StepParametrizationEnergy";
   } else if(parclass == "TStepEfracParameters") {
     parclass = "StepEfracParametrization";
   }  else if(parclass == "TJetMETParameters") {
