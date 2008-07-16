@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.22 2008/07/14 15:22:35 stadie Exp $
+// $Id: caliber.cc,v 1.23 2008/07/16 12:20:14 auterman Exp $
 //
 #include "caliber.h"
 
@@ -382,14 +382,15 @@ void TCaliber::Run_GammaJet()
       exit(8);
     }
  
+
     //trivial cuts
-    if (gammajet.PhotonEt<Et_cut_on_gamma  
-        //|| gammajet.JetGenPt<Et_cut_on_gamma 
-	//|| gammajet.JetCalPt<30 
-	//|| gammajet.JetCalPt>150 
-	|| gammajet.JetCalPt<Et_cut_on_jet 
-	//|| fabs(gammajet.JetCalEta)>2.1
-	) continue;
+    if (gammajet.PhotonEt<Et_cut_on_gamma || 
+        //gammajet.JetGenPt<Et_cut_on_gamma || 
+        gammajet.JetCalPt<Et_cut_on_jet) continue;
+
+
+    //if (gammajet.NonLeadingJetPt   / gammajet.PhotonPt >  Rel_cut_on_gamma)  continue;    //fraction of unwanted stuff
+
      
     //Find the jets eta & phi index using the leading (ET) tower:
     int jet_index=0;
@@ -410,11 +411,12 @@ void TCaliber::Run_GammaJet()
     if(had/(had + em) > 0.92) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
+
     double* jetp  = new double[4];
     jetp[0] = gammajet.JetCalEt;
     jetp[1] = gammajet.JetCalEta;
     jetp[2] = gammajet.JetCalPhi;
-    jetp[3] = em/(had+em);
+    jetp[3] = gammajet.JetCalE;
     //Create an Gamma/Jet TData event
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
@@ -510,10 +512,11 @@ void TCaliber::Run_ZJet()
     if(em == 0) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
-    double* jetp  = new double[3];
+    double* jetp  = new double[4];
     jetp[0] = zjet.JetCalEt;
     jetp[1] = zjet.JetCalEta;
     jetp[2] = zjet.JetCalPhi;
+    jetp[3] = zjet.JetCalE;
     //Create an Z/Jet TData event
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
@@ -641,10 +644,11 @@ void TCaliber::Run_TrackCluster()
       cluster_energy += trackcluster.TowEt[n];
 
     if (trackcluster.TrackEt < Et_cut_on_track || cluster_energy < Et_cut_on_cluster) continue;
-    double* clusterp  = new double[3];
+    double* clusterp  = new double[4];
     clusterp[0] = cluster_energy;
     clusterp[1] = trackcluster.TrackEta;
     clusterp[2] = trackcluster.TrackPhi;
+    clusterp[3] = trackcluster.TrackE;
     //Define Track-Cluster event	
     TData_TruthMultMess * tc = new TData_TruthMultMess( 0,
 							trackcluster.TrackEt,  			           //truth//
@@ -711,10 +715,11 @@ void TCaliber::AddTowerConstraint()
     int ntowers= (ic->maxeta - ic->mineta + 1) * 72;
     if((ic->maxeta  > 0) && (ic->mineta < 0)) ntowers -= 72;
     double etsum = ic->hadEt + ic->emEt;
-    double* constraintp = new double[3];
+    double* constraintp = new double[4];
     constraintp[0] = etsum;
     constraintp[1] = 0;
     constraintp[2] = 0;
+    constraintp[3] = etsum;
     TData_TruthMultMess * tc = new TData_TruthMultMess(0,
 						       etsum * ntowers, //truth
 						       sqrt(pow(0.5,2)+ pow(0.1*etsum * ntowers,2)), //error
@@ -821,10 +826,11 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       double * direction = new double[2];
       direction[0] = sin(njet.JetPhi[ij]);
       direction[1] = cos(njet.JetPhi[ij]);
-      double* jetp  = new double[3];
+      double* jetp  = new double[4];
       jetp[0] = njet.JetEt[ij];
       jetp[1] = njet.JetEta[ij];
       jetp[2] = njet.JetPhi[ij];
+      jetp[3] = njet.JetE[ij];
       //Create an jet/Jet TData event
       jj_data[nstoredjets] = new TData_PtBalance( 
           jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
@@ -1031,7 +1037,6 @@ void TCaliber::Run_Lvmini()
       for (int ithreads=0; ithreads<nthreads; ++ithreads){
 	if(t[ithreads]->IsDone()) fsum += t[ithreads]->Chi2();
       }
-      
       //fast derivative calculation:
       for (unsigned param=0; param<abs(npar); ++param) {
 	aux[param]           = temp_derivative1[param]/(2.0*epsilon);
@@ -1196,6 +1201,7 @@ void TCaliber::Init(string file)
   Et_cut_on_tower = config.read<double>("Et cut on tower",0.0);
   Et_cut_on_cluster = config.read<double>("Et cut on cluster",0.0);
   Et_cut_nplus1Jet = config.read<double>("Et cut on n+1 Jet",10.0);
+  Rel_cut_on_gamma =  config.read<double>("Relative Rest Jet Cut",0.2);
   //specify constraints
   vector<double> tower_constraint = bag_of<double>(config.read<string>( "Tower Constraint",""));
   if(tower_constraint.size() % 5 == 0) {

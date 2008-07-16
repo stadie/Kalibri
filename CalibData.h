@@ -1,7 +1,7 @@
 //s
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.23 2008/07/09 09:52:15 thomsen Exp $
+// $Id: CalibData.h,v 1.24 2008/07/14 12:55:24 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -41,6 +41,7 @@ public:
   double *GetMess(){ return _mess;};//used only for plotting
   virtual double GetParametrizedMess(){return _func(_mess,_par);}
   virtual double GetParametrizedErr(double *paramess){ return _err(paramess);};
+  virtual double GetParametrizedErr2(double *paramess){ return _err(paramess) *  _err(paramess);};
   double GetTruth(){ return _truth;};
   virtual double GetScale(){return GetTruth();};//flatten spectrum w.r.t. this
   double GetError(){ return _error;};
@@ -95,6 +96,12 @@ public:
       pmess =  paramess[0] * (mess[6] / mess[0]);  //Et->E 
     return _err(&pmess) * mess[0] / mess[6];
   };     //search
+
+  virtual double GetParametrizedErr2(double *paramess){ 
+    double ret;
+    ret =  GetParametrizedErr(paramess) *  GetParametrizedErr(paramess);
+    return ret;
+  };     //search
   
 
   virtual double chi2(){ 
@@ -119,7 +126,7 @@ public:
   TData_TruthMultMess(unsigned short int index, double truth, double error, 
 		      double weight, double * par, unsigned short int n_par,
 		      double(*func)(double*,double*), double(*err)(double*), double *mess) :
-    TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=TypeGammaJet;};
+    TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=TypeGammaJet;_jmess = mess;};
   virtual ~TData_TruthMultMess() {
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	 it!=_vecmess.end(); ++it)
@@ -139,30 +146,60 @@ public:
 /*     }	  */
 /*     return result;	   */
 /*   }; */
+
+
   virtual double GetParametrizedMess(){
     double result=0.0;
+    double messTower[4];
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
   	 it!=_vecmess.end(); ++it){
       result+=(*it)->GetParametrizedMess();
     }
-    return _func(&result, _par);	  
+    messTower [3] =  _jmess[3] * result / _jmess[0];
+    messTower[0] = result;
+    //for(int i=1;i<2;++i)               //eta and phi not needed
+    //  messTower[i] = _jmess[i];
+    return _func(messTower, _par);           //jan
   };
-  virtual double GetParametrizedErr(double *paramess){ return _err(paramess);};
+  
+
+  double GetJetCor(double *towermess){
+    double messTower[4];
+    messTower [3] =  _jmess[3] * towermess[0] / _jmess[0];
+    messTower[0] = towermess[0];
+    return _func(messTower, _par);           //jan
+  };
+
+
+
+
+  virtual double GetParametrizedErr2() //no imput needed
+    {
+      double new_mess, new_error;
+      double error2 = 0;
+      double sum_mess = 0;
+      for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	   it!=_vecmess.end(); ++it) {
+	new_mess    = (*it)->GetParametrizedMess();
+	sum_mess   += new_mess;
+	new_error   = (*it)->GetParametrizedErr(&new_mess);
+	error2 += new_error * new_error;
+      }
+      new_mess    = GetParametrizedMess();
+      error2 += _err( &new_mess ) *  _err( &new_mess );
+      return error2;
+    };
+
+  virtual double GetParametrizedErr(double *paramess)  {return  _err(paramess);};
 
   virtual double chi2(){ 
-    double sum_mess=0.0, sum_error2=0.0, new_error, new_mess;
-    double weight = GetWeight();
-    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
-         it!=_vecmess.end(); ++it) {
-       new_mess    = (*it)->GetParametrizedMess();
-       sum_mess   += new_mess;
-       new_error   = (*it)->GetParametrizedErr(&new_mess);
-       sum_error2 += new_error * new_error;
-    }
-    new_mess  = _func( &sum_mess, _par);  
-    new_error = _err(  &new_mess );
+    double new_error2, new_mess;
+    double weight = GetWeight(); 
+    new_mess  = GetParametrizedMess();             //jan
+    new_error2 =  GetParametrizedErr2();
     //-- return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
-    return weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+
+    return weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/new_error2 );
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
   virtual const std::vector<TData*>& GetRef() {return _vecmess;};
@@ -172,7 +209,8 @@ public:
          it !=_vecmess.end(); ++it) { (*it)->ChangeParAddress(oldpar,newpar);}
   }
 protected:  
-  std::vector<TData*> _vecmess;
+  std::vector<TData*> _vecmess; 
+  double *_jmess;
 };
 
 //virtual data class for data providing only multiple messurements

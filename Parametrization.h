@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.4 2008/06/30 13:24:09 stadie Exp $
+// $Id: Parametrization.h,v 1.5 2008/07/16 12:20:14 auterman Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -46,7 +46,8 @@ private:
 // Parametrization of hadronic response by a step function
 class StepParametrization : public Parametrization { 
 public:
-  StepParametrization() : Parametrization(12,10) {}
+  StepParametrization() : Parametrization(12,8) {}
+  //StepParametrization() : Parametrization(12,24) {}
  
   const char* name() const { return "StepParametrization";}
 
@@ -69,19 +70,68 @@ public:
   }
     
   double correctedJetEt(double *x,double *par) const {
-    //return  par[0]*x[0] + par[1];
     double result = 0;
+    /*
+    if(x[0]>=0.0  && x[0]<=1.0)          result =  par[0]*x[0] + par[1];
+    else if (x[0]>1.0   && x[0]<=2.0)    result =  par[2]*x[0] + par[3];
+    else if (x[0]>2.0   && x[0]<=5.0)    result =  par[4]*x[0] + par[5];
+    else if (x[0]>5.0   && x[0]<=10.0)   result =  par[6]*x[0] + par[7];
+    else if (x[0]>10.0  && x[0]<=20.0)   result =  par[8]*x[0] + par[9];
+    else if (x[0]>20.0  && x[0]<=40.0)   result =  par[10]*x[0] + par[11];
+    else if (x[0]>40.0  && x[0]<=80.0)   result =  par[12]*x[0] + par[13];
+    else if (x[0]>80.0  && x[0]<=160.0)  result =  par[14]*x[0] + par[15];
+    else if (x[0]>160.0 && x[0]<=300.0)  result =  par[16]*x[0] + par[17];
+    else if (x[0]>300.0 && x[0]<=600.0)  result =  par[18]*x[0] + par[19];
+    else if (x[0]>600.0 && x[0]<=1000.0) result =  par[20]*x[0] + par[21];
+    else if (x[0]>1000.0 )               result =  par[22]*x[0] + par[23];
+    return result;
+    */
     
-    if(x[0]>=0.0        && x[0]<=5.0)    result = par[0]*x[0];
-    else if (x[0]>5.0   && x[0]<=10.0)   result = par[1]*x[0];
-    else if (x[0]>10.0  && x[0]<=20.0)   result = par[2]*x[0];
-    else if (x[0]>20.0  && x[0]<=40.0)   result = par[3]*x[0];
-    else if (x[0]>40.0  && x[0]<=80.0)   result = par[4]*x[0];
-    else if (x[0]>80.0  && x[0]<=160.0)  result = par[5]*x[0];
-    else if (x[0]>160.0 && x[0]<=300.0)  result = par[6]*x[0];
-    else if (x[0]>300.0 && x[0]<=600.0)  result = par[7]*x[0];
-    else if (x[0]>600.0 && x[0]<=1000.0) result = par[8]*x[0];
-    else if (x[0]>1000.0 )               result = par[9]*x[0];
+    if(x[0]>=0.0  && x[0]<=5.0)          result =  par[0]*x[0] + par[1];
+    else if (x[0]>5.0   && x[0]<=20.0)   result =  par[2]*x[0] + par[3];
+    else if (x[0]>20.0  && x[0]<=80.0)   result =  par[4]*x[0] + par[5];
+    else if (x[0]>80.0 )                 result =  par[6]*x[0] + par[7];
+    return result;
+ 
+
+    //return  x[0];
+    //return  par[0]*x[0] + par[1];
+  }
+};
+
+// Parametrization of hadronic response by a step function
+class StepParametrizationEnergy : public Parametrization { 
+public:
+  StepParametrizationEnergy() : Parametrization(12,3) {}
+ 
+  const char* name() const { return "StepParametrizationEnergy";}
+
+  double correctedTowerEt(double *x,double *par) const {
+    double result = 0;
+    double e =  x[2] * x[6] / x[0];
+
+    if(e>=0.0  && e<=1.0)  result = x[1]+x[3] + par[0]*x[2];
+    else if (e>1.0   && e<=2.0)  result = x[1]+x[3] + par[1]*x[2];
+    else if (e>2.0   && e<=5.0)  result = x[1]+x[3] + par[2]*x[2];
+    else if (e>5.0   && e<=10.0)  result = x[1]+x[3] + par[3]*x[2];
+    else if (e>10.0  && e<=20.0)  result = x[1]+x[3] + par[4]*x[2];
+    else if (e>20.0  && e<=40.0)  result = x[1]+x[3] + par[5]*x[2];
+    else if (e>40.0  && e<=80.0) result = x[1]+x[3] + par[6]*x[2];
+    else if (e>80.0  && e<=160.0) result = x[1]+x[3] + par[7]*x[2];
+    else if (e>160.0 && e<=300.0) result = x[1]+x[3] + par[8]*x[2];
+    else if (e>300.0 && e<=600.0) result = x[1]+x[3] + par[9]*x[2];
+    else if (e>600.0 && e<=1000.0) result = x[1]+x[3] + par[10]*x[2];
+    else if (e>1000.0 )              result = x[1]+x[3] + par[11]*x[2];
+    return result;
+  }
+    
+  double correctedJetEt(double *x,double *par) const {
+    double result = x[0] * ( 1 + par[0] * exp(-x[0]));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
+    if(x[3] > exp(par[1]))        //punch through?
+      result = result * (1 + par[2] * (log(x[3]) - par[1]));
+
+    //if(result<0)   std::cout<<"gfdgfdfghk"<<std::endl;  // 
+    //result *= -1;
     return result;
   }
 };

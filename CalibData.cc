@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.6 2008/07/04 12:36:43 thomsen Exp $
+// $Id: CalibData.cc,v 1.7 2008/07/14 12:55:24 stadie Exp $
 //
 #include "CalibData.h"
 #include "map"
@@ -68,6 +68,8 @@ double TData_TruthMess::chi2_fast(double *temp_derivative1, double *temp_derivat
   return new_chi2;
 };
 
+
+
 double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_derivative2, double epsilon) {
   double sum_mess=0.0, sum_error2=0.0, new_error, new_error2, new_mess, new_chi2,
     dmess_dp, derror_dp;    
@@ -130,7 +132,8 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
       }
     }
   } 
-  new_mess  = _func( &sum_mess, _par);  
+  new_mess  = GetJetCor( &sum_mess); 
+  //new_mess  = GetParametrizedMess();               //jan
 //#ifndef __FastErrorCalculation
   new_error = _err(&new_mess); 
 //#else
@@ -147,7 +150,8 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     temp1 = 0.;
     temp2 = 0.;
     new_mess  = sm2[i];  //the measurement with modified parameter "i"
-    dmess_dp  = _func(&new_mess,_par);//calc. the jet's energy
+    dmess_dp  = GetJetCor(&new_mess);//calc. the jet's energy 
+    //dmess_dp  = GetParametrizedMess();                //jan
 //#ifndef __FastErrorCalculation
     derror_dp = _err(&dmess_dp);
 //#else
@@ -158,7 +162,8 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
 
     // same for p_i-epsilon:
     new_mess  = sm1[i];  
-    dmess_dp  = _func(&new_mess,_par);
+    dmess_dp  = GetJetCor(&new_mess); 
+    //dmess_dp  = GetParametrizedMess();              //jan
 //#ifndef __FastErrorCalculation
     derror_dp = _err(&dmess_dp);
 //#else
@@ -179,7 +184,8 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     //ok, we have to change the jet's parametrization:
     double oldpar =  _par[i-idx];
     _par[i-idx]  += epsilon;
-    dmess_dp  = _func(&sum_mess,_par);
+    dmess_dp  = GetJetCor(&sum_mess); 
+    //dmess_dp  = GetParametrizedMess();               //jan
 //#ifndef __FastErrorCalculation
     derror_dp = _err(&dmess_dp);
 //#else
@@ -189,7 +195,8 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     temp2 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
 
     _par[i-idx]  = oldpar - epsilon;
-    dmess_dp  = _func(&sum_mess,_par);
+    dmess_dp  = GetJetCor(&sum_mess);              //jan
+    //dmess_dp  = GetParametrizedMess();  
 //#ifndef __FastErrorCalculation
     derror_dp = _err(&dmess_dp);
 //#else
@@ -206,8 +213,6 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
 
   return new_chi2;
 };
-
-
 
 
 double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_derivative2, 
