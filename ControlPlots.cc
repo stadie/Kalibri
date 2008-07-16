@@ -2684,8 +2684,8 @@ void TControlPlots::GammaJetSigmas()
 
   TH1F * gauss_forpt[200];
   TH1F * gauss_forptcorr[200];
-  gauss_forpt[0] = new TH1F("hgauss","pT bin[0..1GeV];#frac{pT jet - pT truth}{pT jet}",600,-10,10);
-  gauss_forptcorr[0] = new TH1F("hgausscorr","corrected jet pT bin[0..1GeV];#frac{pT jet - pT truth}{pT jet}",600,-10,10);
+  gauss_forpt[0] = new TH1F("hgauss","pT bin[0..1GeV];#frac{pT jet - pT truth}{pT jet}",600,-3,3);
+  gauss_forptcorr[0] = new TH1F("hgausscorr","corrected jet pT bin[0..1GeV];#frac{pT jet - pT truth}{pT jet}",600,-3,3);
   for(int i = 1 ; i < 200 ; ++i) {
     gauss_forpt[i] = (TH1F*)gauss_forpt[0]->Clone();
     sprintf(name,"pT bin[%d..%dGeV]",i,i+1);
@@ -2741,11 +2741,11 @@ void TControlPlots::GammaJetSigmas()
     f->SetLineColor(2);
     f->Draw("same");
     sprintf(name,"mean %f",f->GetParameter(1));
-    text->DrawText(4.,0.7*gauss_forpt[i]->GetMaximum(),name);
+    text->DrawText(1.4,0.7*gauss_forpt[i]->GetMaximum(),name);
     //func->Draw("same");
     c1->Draw();
     delete f;
-
+/*
     TF1 *g=0;
     //Fit1D(gauss_forptcorr[i],g);
     gauss_forptcorr[i]->Fit("gaus","LLQNO","");
@@ -2755,6 +2755,7 @@ void TControlPlots::GammaJetSigmas()
     g->Draw("same");
     c1->Draw();
     delete g;
+*/
   }
   //delete f;
   ps.Close();

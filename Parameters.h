@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.23 2008/06/27 12:24:02 thomsen Exp $
+// $Id: Parameters.h,v 1.24 2008/07/14 12:57:47 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -30,7 +30,6 @@ public :
   int GetJetEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity_jet, phi_granularity_jet, eta_symmetry);}
   int GetJetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity_jet);}
   int GetBin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity + phibin;}
-  //int GetJetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return eta_granularity*phi_granularity*free_pars_per_bin+etabin*phi_granularity_jet + phibin;}
   int GetJetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return etabin*phi_granularity_jet + phibin;}
   int GetNumberOfTowerParameters() const{return p->nTowerPars() *eta_granularity*phi_granularity;}
   int GetNumberOfJetParameters() const{return p->nJetPars()*eta_granularity_jet*phi_granularity_jet;}

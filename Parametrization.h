@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.3 2008/05/09 13:43:01 auterman Exp $
+// $Id: Parametrization.h,v 1.4 2008/06/30 13:24:09 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -46,7 +46,7 @@ private:
 // Parametrization of hadronic response by a step function
 class StepParametrization : public Parametrization { 
 public:
-  StepParametrization() : Parametrization(12,2) {}
+  StepParametrization() : Parametrization(12,10) {}
  
   const char* name() const { return "StepParametrization";}
 
@@ -69,7 +69,20 @@ public:
   }
     
   double correctedJetEt(double *x,double *par) const {
-    return  par[0]*x[0] + par[1];
+    //return  par[0]*x[0] + par[1];
+    double result = 0;
+    
+    if(x[0]>=0.0        && x[0]<=5.0)    result = par[0]*x[0];
+    else if (x[0]>5.0   && x[0]<=10.0)   result = par[1]*x[0];
+    else if (x[0]>10.0  && x[0]<=20.0)   result = par[2]*x[0];
+    else if (x[0]>20.0  && x[0]<=40.0)   result = par[3]*x[0];
+    else if (x[0]>40.0  && x[0]<=80.0)   result = par[4]*x[0];
+    else if (x[0]>80.0  && x[0]<=160.0)  result = par[5]*x[0];
+    else if (x[0]>160.0 && x[0]<=300.0)  result = par[6]*x[0];
+    else if (x[0]>300.0 && x[0]<=600.0)  result = par[7]*x[0];
+    else if (x[0]>600.0 && x[0]<=1000.0) result = par[8]*x[0];
+    else if (x[0]>1000.0 )               result = par[9]*x[0];
+    return result;
   }
 };
 

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.21 2008/07/14 12:59:06 stadie Exp $
+// $Id: caliber.cc,v 1.22 2008/07/14 15:22:35 stadie Exp $
 //
 #include "caliber.h"
 
@@ -50,7 +50,7 @@ struct OutlierRejection {
 struct ControlCutSelection {
   ControlCutSelection(double cut):_cut(cut){};
   bool operator()(TData *d){
-    return d->GetTruth()>_cut;
+    return d->GetTruth()>_cut && fabs(d->GetMess()[1])<2.5;
   }
   double _cut;
 };
@@ -180,6 +180,22 @@ double gauss_step(double *x, double *par)
 	  (1.0-1.0/(1.0+exp((par[3]-x[0])/par[4]) ) );  	
 }
 
+void FitWithoutBottom(TH1 * hist, TF1 * func, double bottom=0.33)
+{
+  TH1F * result=(TH1F*)hist->Clone();
+  double maximum = hist->GetMaximum();
+  int min=0, max=0;
+  for (int i=0; i<hist->GetNbinsX(); ++i)
+    if (hist->GetBinContent(i)>bottom*maximum){
+      result->SetBinContent(i,hist->GetBinContent(i));
+      max=i;
+      if (min==0.) min=i;
+    }      
+  func->SetRange(hist->GetXaxis()->GetXmin()+(double)min/(double)hist->GetNbinsX()*(hist->GetXaxis()->GetXmax()-hist->GetXaxis()->GetXmin()),
+                    hist->GetXaxis()->GetXmin()+(double)max/(double)hist->GetNbinsX()*(hist->GetXaxis()->GetXmax()-hist->GetXaxis()->GetXmin()));
+  result->Fit("gauss_step","LLQNO","");
+}
+
 void TCaliber::FlattenSpectra()
 {
   for (int type=0; type<7; ++type){
@@ -245,16 +261,23 @@ cout<<"...further weighting"<<endl;
   double max = 100.; //GeV
   int nbins = (int)(max-min);//one bin per GeV
   if (nbins<2) return;
-
+  double EMF[nbins];
+  double TOT[nbins];
+  
   TCanvas * c1 = new TCanvas("controlplots","",600,600);
   TPostScript ps("balance_spectra.ps",111);
   TH1F * gauss_forpt[nbins];
-  gauss_forpt[0] = new TH1F("hgauss","pT bin[20..21GeV];#frac{pT jet - pT truth}{pT jet}",600,-10,10);
+  TH1F * gauss_forpt_truth[nbins];
+  gauss_forpt[0] = new TH1F("hgauss","pT bin[20..21GeV];#frac{pT jet - pT truth}{pT jet}",600,-3,3);
+  gauss_forpt_truth[0] = new TH1F("hgauss_truth","pT bin[20..21GeV];pT truth",400,0,200);
   char * name = new char[100];
   for(int i = 1 ; i < nbins; ++i) {
     gauss_forpt[i] = (TH1F*)gauss_forpt[0]->Clone();
     sprintf(name,"pT bin[%d..%dGeV]",(int)min+i,(int)min+i+1);
     gauss_forpt[i]->SetTitle(name);
+    gauss_forpt_truth[i] = (TH1F*)gauss_forpt_truth[0]->Clone();
+    sprintf(name,"pT bin[%d..%dGeV]",(int)min+i,(int)min+i+1);
+    gauss_forpt_truth[i]->SetTitle(name);
   }
 
 cout<<"...fill truth histograms for each jet-pT bin"<<endl;
@@ -265,13 +288,17 @@ cout<<"...fill truth histograms for each jet-pT bin"<<endl;
     if (jg->GetType()!=TypeGammaJet) continue;
     
     //double etjetcor = jg->GetParametrizedMess();
-    if(jg->GetMess()[0]>min && jg->GetMess()[0]<max)
+    if(jg->GetMess()[0]>min && jg->GetMess()[0]<max) {
       gauss_forpt[(int)(jg->GetMess()[0]-min)]->Fill( (jg->GetMess()[0]-jg->GetTruth())/jg->GetMess()[0],jg->GetWeight() );
+      gauss_forpt_truth[(int)(jg->GetMess()[0]-min)]->Fill( jg->GetTruth(),jg->GetWeight() );
+      EMF[(int)(jg->GetMess()[0]-min)] += jg->GetWeight()*jg->GetMess()[3];
+      TOT[(int)(jg->GetMess()[0]-min)] += jg->GetWeight()*jg->GetMess()[0];
+    }      
   }
 
 cout<<"...fit the truth distributions"<<endl;
   double edge;
-  TF1 * f = new TF1("gauss_step",gauss_step,-10,10,5);
+  TF1 * f = new TF1("gauss_step",gauss_step,-3,3,5);
   double * cuts = new double[nbins];
   TText * text = new TText();
   text->SetTextSize(0.03);
@@ -283,16 +310,31 @@ cout<<"...fit the truth distributions"<<endl;
     //gauss_forpt[i]->Fit("gaus","LLQNO","");
     //f = (TF1*)gROOT->GetFunction("gaus")->Clone();
     edge = 1.0-Et_cut_on_gamma/(((double)i)+min+0.5);
-    f->SetParameters(-1.,2.0,3.0, edge, 0.01);
+    f->SetParameters(-1.,2.0,3.0, edge, 0.0001);
     f->FixParameter(3, edge);
-    f->FixParameter(4, 0.01);
-    gauss_forpt[i]->Fit("gauss_step","LLQNO","");
+    f->FixParameter(4, 0.0001);
+    FitWithoutBottom(gauss_forpt[i], f);
+    //bla->Fit("gauss_step","LLQNO","");
+    //delete bla;
 
     gauss_forpt[i]->Draw("h");
     f->SetLineColor(2);
     f->Draw("same");
     sprintf(name,"mean %f",f->GetParameter(0));
-    text->DrawText(4.,0.7*gauss_forpt[i]->GetMaximum(),name);
+    text->DrawText(1.4,0.7*gauss_forpt[i]->GetMaximum(),name);
+
+    sprintf(name,"average truth %f", (double)i+0.5+min-((double)i+0.5+min)*f->GetParameter(0));
+    text->DrawText(0.50,0.65*gauss_forpt[i]->GetMaximum(),name);
+    c1->Draw();
+
+    if (TOT[i]!=0.0) EMF[i] = EMF[i]/TOT[i];
+    sprintf(name,"average/truth %+f",(double)i+0.5+min-((double)i+0.5+min)*f->GetParameter(0) / 
+                                     (1.3*((double)i+0.5+min)   )); //-EMF[i])  );
+    text->DrawText(0.50,0.60*gauss_forpt[i]->GetMaximum(),name);
+    c1->Draw();
+
+
+    gauss_forpt_truth[i]->Draw("h");
     c1->Draw();
     
     cout<<"bin "<<i
@@ -302,18 +344,19 @@ cout<<"...fit the truth distributions"<<endl;
       <<", edge("<<edge<<")="<<f->GetParameter(3)
       <<", width-edge="<<f->GetParameter(4)
       <<endl;
-    cuts[i] = f->GetParameter(0)-fabs(f->GetParameter(0)-f->GetParameter(3));
+    cuts[i] = f->GetParameter(0)-fabs(f->GetParameter(0)-f->GetParameter(3))+0.2;
   }
   delete f;
   ps.Close();
  
-cout<<"...remove events which are not 'balanced'"<<endl;
-
+cout<<"...remove events which are not 'balanced'";
   DataIter beg = partition(data.begin(), data.end(), 
                            NotBalancedRejection(cuts, min, max));
   for(DataIter i = beg ; i != data.end() ; ++i) {
+    cout<<".";
     delete *i;
   }
+  cout<<endl;
   data.erase(beg,data.end());
 
 cout<<"...cleaning up"<<endl;
@@ -340,9 +383,13 @@ void TCaliber::Run_GammaJet()
     }
  
     //trivial cuts
-    if (//gammajet.PhotonPt<Et_cut_on_gamma || 
-        gammajet.JetGenPt<Et_cut_on_gamma || 
-        gammajet.JetCalPt<Et_cut_on_jet) continue;
+    if (gammajet.PhotonEt<Et_cut_on_gamma  
+        //|| gammajet.JetGenPt<Et_cut_on_gamma 
+	//|| gammajet.JetCalPt<30 
+	//|| gammajet.JetCalPt>150 
+	|| gammajet.JetCalPt<Et_cut_on_jet 
+	//|| fabs(gammajet.JetCalEta)>2.1
+	) continue;
      
     //Find the jets eta & phi index using the leading (ET) tower:
     int jet_index=0;
@@ -363,15 +410,16 @@ void TCaliber::Run_GammaJet()
     if(had/(had + em) > 0.92) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
-    double* jetp  = new double[3];
+    double* jetp  = new double[4];
     jetp[0] = gammajet.JetCalEt;
     jetp[1] = gammajet.JetCalEta;
     jetp[2] = gammajet.JetCalPhi;
+    jetp[3] = em/(had+em);
     //Create an Gamma/Jet TData event
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
-			  //gammajet.PhotonEt,				    //truth//
-			  gammajet.JetGenPt,
+			  gammajet.PhotonEt,				    //truth//
+			  //gammajet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
 			  //gammajet.EventWeight,                           //weight//
 			  1.0,                                              //weight//
@@ -882,8 +930,7 @@ void TCaliber::Run()
     if (n_zjet_events!=0)             Run_ZJet();
     if (flatten_spectra){
       FlattenSpectra();
-      BalanceSpectra();
-      //FlattenSpectra();
+      //BalanceSpectra();
     }  
     if (! tower_constraints.empty())  AddTowerConstraint();
     if (! par_limits.empty())         AddParameterLimits();
