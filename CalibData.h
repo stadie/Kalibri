@@ -1,7 +1,7 @@
 //s
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.24 2008/07/14 12:55:24 stadie Exp $
+// $Id: CalibData.h,v 1.25 2008/07/16 12:52:03 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -247,42 +247,12 @@ public:
       double weight = GetWeight();
       for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin(); //jets except first
            it!=_m2.end(); ++it) {
-
-	double sum_errorT2=0.0, new_errorT, sum_mess = 0.0;   
-	for (std::vector<TData*>::const_iterator tit=(*it)->GetRef().begin();
-	     tit!=(*it)->GetRef().end(); ++tit) { 
-	  new_mess    = (*tit)->GetParametrizedMess();
-	  sum_mess += new_mess;
-	  new_errorT   = (*tit)->GetParametrizedErr(&new_mess);
-	  sum_errorT2 += new_errorT * new_errorT;     //tower errors
-	}
-    	//new_mess    = (*it)->GetParametrizedMess();  //same as sum_mess
-	new_error   = (*it)->GetParametrizedErr(&sum_mess); //remaining jet errors
-	sum_error2 += new_error * new_error + sum_errorT2;
-      }
-
-      double sum_errorT2=0.0, new_errorT, sum_mess = 0.0;   
-      for (std::vector<TData*>::const_iterator tit=GetRef().begin();    //first jet towers
-	     tit!=GetRef().end(); ++tit) { 
-	  new_mess    = (*tit)->GetParametrizedMess();
-	  sum_mess += new_mess;
-	  new_errorT   = (*tit)->GetParametrizedErr(&new_mess);
-	  sum_errorT2 += new_errorT * new_errorT;     //tower errors
-	}
-      //new_mess  = GetParametrizedMess();                  //same as sum_mess
-      sum_errorT2 += _err( &sum_mess ) * _err( &sum_mess );          //jet error first jet
+	new_error   = (*it)->GetParametrizedErr2(); //all tower & jet errors
+	sum_error2 += new_error;
+      }           
+      sum_error2 += GetParametrizedErr2(); //all tower & jet errors first jet
       new_mess  = GetMessCombination();
-
-      //Combination -> B -> to response
-      /*
-      new_mess /= GetScale();
-      new_mess = (2+new_mess)/(2-new_mess);
-      new_error *= 4 / ( 4 - (4*new_mess) + (new_mess*new_mess));
-      sum_error2 += new_error * new_error;
-      */
-
-      //-- return weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
-      return weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + sum_errorT2) );
+      return weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/sum_error2 );
     };
     virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double epsilon);
     virtual void ChangeParAddress(double* oldpar, double* newpar) { 

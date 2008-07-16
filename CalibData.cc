@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.7 2008/07/14 12:55:24 stadie Exp $
+// $Id: CalibData.cc,v 1.8 2008/07/16 12:52:03 thomsen Exp $
 //
 #include "CalibData.h"
 #include "map"
@@ -218,7 +218,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
 double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_derivative2, 
 			        double epsilon)
 {
-  double new_chi2, new_mess, new_error, sum_error2=0.0;
+  double new_chi2, new_mess,  sum_error2=0.0;
   double weight = GetWeight();
 
   //Get all tower parameter used in this event:  
@@ -261,87 +261,36 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
        double oldpar =  *tpars[i];
        *tpars[i] += epsilon;
        sum_error2 = 0.0;
+       
        for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
             mit!=_m2.end(); ++mit) {
-
-	 double sum_errorT2=0.0, new_errorT, sum_mess = 0.0;   
-	 for (std::vector<TData*>::const_iterator tit=(*mit)->GetRef().begin();
-	      tit!=(*mit)->GetRef().end(); ++tit) { 
-	   new_mess    = (*tit)->GetParametrizedMess();
-	   sum_mess += new_mess;
-	   new_errorT   = (*tit)->GetParametrizedErr(&new_mess);
-	   sum_errorT2 += new_errorT * new_errorT;     //tower errors
-	 }
-	 //new_mess    = (*mit)->GetParametrizedMess();	 
-//#ifndef __FastErrorCalculation
-	 new_error   = (*mit)->GetParametrizedErr(&sum_mess);     //other jet errors
-//#else
-//  	  if ((*mit)->GetMess()) if ((*mit)->GetMess()[0]!=0.) new_error = (*mit)->GetError()*new_mess/(*mit)->GetMess()[0];
+	 //#ifndef __FastErrorCalculation
+	 sum_error2 += (*mit)->GetParametrizedErr2(); //all tower & jet errors
+	 //#else
+	 //  	  if ((*mit)->GetMess()) if ((*mit)->GetMess()[0]!=0.) new_error = (*mit)->GetError()*new_mess/(*mit)->GetMess()[0];
 //	  else new_error   = (*mit)->GetError();
 //#endif
-	  sum_error2 += new_error * new_error + sum_errorT2;
        }
-
-      double sum_errorT2=0.0, new_errorT, sum_mess = 0.0;   
-      for (std::vector<TData*>::const_iterator tit=GetRef().begin();    //first jet towers
-	     tit!=GetRef().end(); ++tit) { 
-	  new_mess    = (*tit)->GetParametrizedMess();
-	  sum_mess += new_mess;
-	  new_errorT   = (*tit)->GetParametrizedErr(&new_mess);
-	  sum_errorT2 += new_errorT * new_errorT;     //tower errors
-	}
-      //new_mess  = GetParametrizedMess();  //=sum_mess
-//#ifndef __FastErrorCalculation
-      sum_errorT2 += _err(  &sum_mess ) * _err(  &sum_mess );  //total error first jet
-//#else
-//       new_error = _error;
-//#endif
+       sum_error2 += GetParametrizedErr2(); //total error first jet
        new_mess  = GetMessCombination();  
-       temp2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + sum_errorT2) );
+       temp2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/sum_error2 );
        sum_error2 = 0.0;
        
+
        *tpars[i] = oldpar - epsilon;
+
        for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
             mit!=_m2.end(); ++mit) {
-	 
-	 sum_errorT2=0.0;
-	 new_errorT=0.0;
-	 sum_mess = 0.0;   
-	 for (std::vector<TData*>::const_iterator tit=(*mit)->GetRef().begin();
-	      tit!=(*mit)->GetRef().end(); ++tit) { 
-	   new_mess    = (*tit)->GetParametrizedMess();
-	   sum_mess += new_mess;
-	   new_errorT   = (*tit)->GetParametrizedErr(&new_mess);
-	   sum_errorT2 += new_errorT * new_errorT;     //tower errors
-	 } 
 	 //#ifndef __FastErrorCalculation
-	 new_error   = (*mit)->GetParametrizedErr(&sum_mess);
-	 sum_error2 += new_error * new_error + sum_errorT2;
+	 sum_error2 += (*mit)->GetParametrizedErr2(); //all tower & jet errors
 	 //#else
-//  	  if ((*mit)->GetMess()) if ((*mit)->GetMess()[0]!=0.) new_error = (*mit)->GetError()*new_mess/(*mit)->GetMess()[0];
+	 //  	  if ((*mit)->GetMess()) if ((*mit)->GetMess()[0]!=0.) new_error = (*mit)->GetError()*new_mess/(*mit)->GetMess()[0];
 //	  else new_error   = (*mit)->GetError();
 //#endif
        }
-
-      sum_errorT2=0.0;
-      new_errorT=0.0;
-      sum_mess = 0.0;   
-      for (std::vector<TData*>::const_iterator tit=GetRef().begin();    //first jet towers
-	     tit!=GetRef().end(); ++tit) { 
-	  new_mess    = (*tit)->GetParametrizedMess();
-	  sum_mess += new_mess;
-	  new_errorT   = (*tit)->GetParametrizedErr(&new_mess);
-	  sum_errorT2 += new_errorT * new_errorT;     //tower errors
-      }
-//#ifndef __FastErrorCalculation
-      //new_error = _err(  &new_mess );
-      sum_errorT2 += _err(  &sum_mess ) * _err(  &sum_mess ) ;  //total error first jet
-      //#else
-      //       new_error = _error;
-//#endif
-      new_mess  = GetMessCombination();  
-      temp1 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + sum_errorT2) );
-      
+       sum_error2 += GetParametrizedErr2(); //total error first jet
+       new_mess  = GetMessCombination();  
+       temp1 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/sum_error2 );
       // Difference of chi2 at par+epsilon and par-epsilon
       temp_derivative1[i] += (temp2 - temp1); // for 1st derivative
       temp_derivative2[i] += (temp2 + temp1 - 2*new_chi2); // for 2nd derivative
