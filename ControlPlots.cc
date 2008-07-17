@@ -812,7 +812,7 @@ void TControlPlots::GammaJetControlPlotsJetBin()  // Gamma-Jet Control Histogram
   //one plot per *JET* bin!
   for (int eta=0; eta<p->GetEtaGranularityJet();++eta){
     for (int phi=0; phi<p->GetPhiGranularityJet();++phi){
-      int i = p->GetJetBin(eta,phi) + p->GetNumberOfTowerParameters();
+      int i = p->GetJetBin(eta,phi)*p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters();
       char * name = new char[100];
       sprintf(name, "h2jes_gj%d_eta%d_phi%d",i,eta+1,phi+1);
       TH1F * plot_jes = new TH1F(name,";#sum calibrated tower E_{T} [GeV]; JES: ( E_{T}^{#gamma} / #sum E_{T}^{calib. tower})",100,0.0,400.);    
@@ -828,7 +828,7 @@ void TControlPlots::GammaJetControlPlotsJetBin()  // Gamma-Jet Control Histogram
       //loop over all fit-events
       for (; data_it != data->end();++data_it){
         if ( (*data_it)->GetType()!=TypeGammaJet) continue;
-	if ( (*data_it)->GetIndex()!=i)	  continue; //event belongs to a wrong bin
+	if ( (*data_it)->GetIndex()!= i )	  continue; //event belongs to a wrong bin
 	
 	double calib_tower_sum=0.0;
         double JetCorr = (*data_it)->GetParametrizedMess();
@@ -886,7 +886,7 @@ void TControlPlots::GammaJetControlPlotsJetBin()  // Gamma-Jet Control Histogram
       TF1 * res2 = new TF1("res2",p->jes_plot_parametrization, 0.5, 400., 3);
       i = p->GetJetBin(eta, phi);
       double * val = p->GetJetParRef(i);
-      res2->SetParameters(val[0],val[1]);
+      res2->SetParameters(val[0],val[1],val[2]);
       res2->SetLineWidth( 3 );
       res2->SetLineColor( 2 );
       res2->Draw("same");

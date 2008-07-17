@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.5 2008/07/16 12:20:14 auterman Exp $
+// $Id: Parametrization.h,v 1.6 2008/07/16 12:52:03 thomsen Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -229,6 +229,25 @@ public:
     if(par[3] < 0) par[3] *= -1;
     if(par[4] < 0) par[4] *= -1;
     return (par[0] - par[1]/(pow(logx,par[2]) + par[3]) + par[4]/x[0]) * x[0];  
+  }
+};
+
+// Simple parametrization
+class SimpleParametrization: public Parametrization {
+public:
+  SimpleParametrization() : Parametrization(3,3) {}
+  const char* name() const { return "SimpleParametrization";}
+  double correctedTowerEt(double *x,double *par) const {
+    if(par[0] < -10) par[0] = -10;
+    if(par[1] < 0) par[1] = -par[1];
+    if(par[2] < 0) par[2] = -par[2];
+    return par[1] * x[1] + par[2] * x[2] + x[3] + par[0];
+  }
+  double correctedJetEt(double *x,double *par) const {
+    if(par[0] < 0) par[0] *= -1;
+    if(par[1] < 0) par[1] *= -1;
+    if(par[2] < 0) par[2] *= -1;
+    return x[0] * ( par[2] + par[0] * exp( -par[1] * x[0] ) );  
   }
 };
 

@@ -24,6 +24,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new StepEfracParametrization();
   }  else if(name == "JetMETParametrization") {
     return new JetMETParametrization();
+  }  else if(name == "TSimpleParametrization") {
+    return new SimpleParametrization();
   }  else if(name == "ToyParametrization") {
     return new ToyParametrization();
   }
@@ -50,6 +52,8 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "StepEfracParametrization";
   }  else if(parclass == "TJetMETParameters") {
     parclass = "JetMETParametrization";
+  }  else if(parclass == "TSimpleParameters") {
+    parclass = "SimpleParametrization";
   }  else if(parclass == "TToyParameters") {
     parclass = "ToyParametrization";
   }
