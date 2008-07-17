@@ -1,12 +1,11 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.8 2008/07/16 12:52:03 thomsen Exp $
+// $Id: CalibData.cc,v 1.9 2008/07/16 14:36:04 thomsen Exp $
 //
 #include "CalibData.h"
 #include "map"
-#include <iostream>//cout
-
+//#include <iostream>//cout
 
 unsigned int TData::total_n_pars = 0;
 double (*TData::ScaleResidual)(double z2) = &TData::ScaleNone;
@@ -71,67 +70,89 @@ double TData_TruthMess::chi2_fast(double *temp_derivative1, double *temp_derivat
 
 
 double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_derivative2, double epsilon) {
-  double sum_mess=0.0, sum_error2=0.0, new_error, new_error2, new_mess, new_chi2,
-    dmess_dp, derror_dp;    
-  double sm1[total_n_pars],sm2[total_n_pars],se1[total_n_pars],se2[total_n_pars];//store sum_m & sum_e2 for df/dp_i
+  // store sum_m & sum_e2 
+  TLorentzVector sum_vec(0,0,0,0);
+  double sum_mess = 0.;
+  double sum_error2 = 0.;
+  TLorentzVector single_vec(0,0,0,0);
+  double single_mess = 0.;
+  double single_error = 0.;
+  double single_error2 = 0.;
+  TLorentzVector dvec_dp(0,0,0,0);
+  double new_mess = 0.;
+  double new_error = 0.;
+  double dmess_dp = 0.;
+  double derror_dp = 0.;   
+  double new_chi2 = 0;
+
+  TLorentzVector sm1[total_n_pars];
+  TLorentzVector sm2[total_n_pars];
+  double se1[total_n_pars];
+  double se2[total_n_pars];
+
   double weight = GetWeight();
+
   for (unsigned i=0; i<total_n_pars; ++i){
-    sm1[i] = 0.0;
-    sm2[i] = 0.0;
+    sm1[i] = TLorentzVector(0,0,0,0);
+    sm2[i] = TLorentzVector(0,0,0,0);
     se1[i] = 0.0;
     se2[i] = 0.0;
   }
   unsigned idx;
+
   for (std::vector<TData*>::const_iterator it=_vecmess.begin();
        it!=_vecmess.end(); ++it) {
-    new_mess    = (*it)->GetParametrizedMess();	 
-    sum_mess   += new_mess;
+    single_vec.SetPtEtaPhiM((*it)->GetParametrizedMess(),(*it)->GetMess()[4],(*it)->GetMess()[5],0);
+    sum_vec += single_vec;
 //#ifndef __FastErrorCalculation
-    new_error   = (*it)->GetParametrizedErr(&new_mess);
+    single_mess = single_vec.Et();
+    single_error = (*it)->GetParametrizedErr(&single_mess);
 
 //#else
 //    if ((*it)->GetMess()[0]!=0.) new_error = (*it)->GetError()*new_mess/(*it)->GetMess()[0];
 //    else new_error = (*it)->GetError();
 //#endif   
-    new_error2  = new_error * new_error;
-    sum_error2 += new_error2;
-    for (unsigned i=0; i<total_n_pars; ++i){
+    single_error2 = single_error * single_error;
+    sum_error2 += single_error2;
+    for (unsigned i=0; i<total_n_pars; ++i) {
       idx = (*it)->GetIndex()*(*it)->GetNumberOfPars(); // Sollte aus for-Schleife raus?
       if (i>=idx && i<idx+(*it)->GetNumberOfPars()) {   
 	double oldpar = (*it)->GetPar()[i-idx];
 	(*it)->GetPar()[i-idx]  += epsilon;
-	dmess_dp  =(*it)->GetParametrizedMess();
-	sm2[i]   += dmess_dp;
+	dvec_dp.SetPtEtaPhiM((*it)->GetParametrizedMess(),(*it)->GetMess()[4],(*it)->GetMess()[5],0);
+	sm2[i] += dvec_dp;
 //#ifndef __FastErrorCalculation
-	new_error = (*it)->GetParametrizedErr(&dmess_dp);
+	single_mess = dvec_dp.Et();
+	single_error = (*it)->GetParametrizedErr(&single_mess);
 
 //#else
 //        if ((*it)->GetMess()[0]!=0.) new_error = (*it)->GetError()*dmess_dp/(*it)->GetMess()[0];
 //	else new_error = (*it)->GetError();
 //#endif   
-	se2[i]   += new_error * new_error;
+	se2[i] += single_error * single_error;
 	
 	(*it)->GetPar()[i-idx]  = oldpar - epsilon;
-	dmess_dp  =(*it)->GetParametrizedMess();
-	sm1[i]   += dmess_dp;
+	dvec_dp.SetPtEtaPhiM((*it)->GetParametrizedMess(),(*it)->GetMess()[4],(*it)->GetMess()[5],0);
+	sm1[i] += dvec_dp;
 //#ifndef __FastErrorCalculation
-
-	new_error = (*it)->GetParametrizedErr(&dmess_dp);
+	single_mess = dvec_dp.Et();
+	single_error = (*it)->GetParametrizedErr(&single_mess);
 
 //#else
 //        if ((*it)->GetMess()[0]!=0.) new_error = (*it)->GetError()*dmess_dp/(*it)->GetMess()[0];
 //	else new_error = (*it)->GetError();
 //#endif   
-	se1[i]   += new_error * new_error;
+	se1[i] += single_error * single_error;
 	(*it)->GetPar()[i-idx] = oldpar;
       } else {
-	sm1[i] += new_mess;
-	sm2[i] += new_mess;
-	se1[i] += new_error2;
-	se2[i] += new_error2;
+	sm1[i] += single_vec;
+	sm2[i] += single_vec;
+	se1[i] += single_error2;
+	se2[i] += single_error2;
       }
     }
   } 
+  sum_mess = sum_vec.Et();
   new_mess  = GetJetCor( &sum_mess); 
   //new_mess  = GetParametrizedMess();               //jan
 //#ifndef __FastErrorCalculation
@@ -149,7 +170,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     if (i>=idx && i<idx+_n_par) continue;//considered below
     temp1 = 0.;
     temp2 = 0.;
-    new_mess  = sm2[i];  //the measurement with modified parameter "i"
+    new_mess  = sm2[i].Et();  //the measurement with modified parameter "i"
     dmess_dp  = GetJetCor(&new_mess);//calc. the jet's energy 
     //dmess_dp  = GetParametrizedMess();                //jan
 //#ifndef __FastErrorCalculation
@@ -161,7 +182,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     temp2 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
 
     // same for p_i-epsilon:
-    new_mess  = sm1[i];  
+    new_mess  = sm1[i].Et();  
     dmess_dp  = GetJetCor(&new_mess); 
     //dmess_dp  = GetParametrizedMess();              //jan
 //#ifndef __FastErrorCalculation
@@ -170,7 +191,6 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
 //    if (new_mess!=0.) derror_dp = _error*dmess_dp/new_mess;
 //    else derror_dp = _error;
 //#endif   
-    derror_dp = _err(&dmess_dp);
     temp1 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
 
     // Difference of chi2 at par+epsilon and par-epsilon
@@ -184,7 +204,8 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     //ok, we have to change the jet's parametrization:
     double oldpar =  _par[i-idx];
     _par[i-idx]  += epsilon;
-    dmess_dp  = GetJetCor(&sum_mess); 
+    new_mess = sum_vec.Et();
+    dmess_dp  = GetJetCor(&new_mess); 
     //dmess_dp  = GetParametrizedMess();               //jan
 //#ifndef __FastErrorCalculation
     derror_dp = _err(&dmess_dp);
@@ -195,7 +216,8 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     temp2 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
 
     _par[i-idx]  = oldpar - epsilon;
-    dmess_dp  = GetJetCor(&sum_mess);              //jan
+    new_mess = sum_vec.Et();
+    dmess_dp  = GetJetCor(&new_mess);              //jan
     //dmess_dp  = GetParametrizedMess();  
 //#ifndef __FastErrorCalculation
     derror_dp = _err(&dmess_dp);
@@ -376,7 +398,7 @@ double TData_ParLimit::chi2_fast(double * temp_derivative1,
 double TData::ScaleCauchy(double z2)
 {
   double c = 2.3849;
-  return c*c * TMath::Log( 1 + z2/(c*c) );
+  return c*c * log( 1 + z2/(c*c) );
 }
 
 /*
@@ -387,6 +409,6 @@ double TData::ScaleCauchy(double z2)
 double TData::ScaleHuber(double z2)
 {
   double c = 1.345;
-  double z = TMath::Sqrt(z2);
+  double z = sqrt(z2);
   return (  fabs(z) <= c  ?  z2  :  c*(2*fabs(z) - c)  );
 }
