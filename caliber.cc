@@ -395,16 +395,11 @@ void TCaliber::Run_GammaJet()
      
     //Find the jets eta & phi index using the nearest tower to jet axis:
     int jet_index=-1;
-    //double max_tower_et = 0.0;
     double min_tower_dr = 10.0;
     double em = 0;
     double had = 0;
     TLorentzVector Ljet(0,0,0,0);
-    for (int n=0; n<gammajet.NobjTowCal; ++n){
-      TLorentzVector Ltower(0,0,0,0);
-      Ltower.SetPtEtaPhiE(gammajet.TowEt[n],gammajet.TowEta[n],gammajet.TowPhi[n],gammajet.TowE[n]);
-      Ljet += Ltower;
-    }
+    Ljet.SetPtEtaPhiE(gammajet.JetCalEt,gammajet.JetCalEta,gammajet.JetCalPhi,gammajet.JetCalE);
     for (int n=0; n<gammajet.NobjTowCal; ++n){
       em += gammajet.TowEm[n];
       had +=  gammajet.TowHad[n];
@@ -416,13 +411,6 @@ void TCaliber::Run_GammaJet()
 				 p->GetJetPhiBin(gammajet.TowId_phi[n]));
 	min_tower_dr = dr;
       }
-      /*
-      if (gammajet.TowEt[n]>max_tower_et) {
-	jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[n]),
-				 p->GetJetPhiBin(gammajet.TowId_phi[n]));
-	max_tower_et = gammajet.TowEt[n];
-      }
-      */
     }
     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
     if(had/(had + em) < 0.07) { continue;}
@@ -520,11 +508,7 @@ void TCaliber::Run_ZJet()
     double em = 0;
     double had = 0;
     TLorentzVector Ljet(0,0,0,0);
-    for (int n=0; n<zjet.NobjTowCal; ++n){
-      TLorentzVector Ltower(0,0,0,0);
-      Ltower.SetPtEtaPhiE(zjet.TowEt[n],zjet.TowEta[n],zjet.TowPhi[n],zjet.TowE[n]);
-      Ljet += Ltower;
-    }
+    Ljet.SetPtEtaPhiE(zjet.JetCalEt,zjet.JetCalEta,zjet.JetCalPhi,zjet.JetCalE);
     for (int n=0; n<gammajet.NobjTowCal; ++n){
       em += zjet.TowEm[n];
       had +=  zjet.TowHad[n];
@@ -537,21 +521,6 @@ void TCaliber::Run_ZJet()
 	min_tower_dr = dr;
       }
     }
-
-    /* 8888888888
-    //Find the jets eta & phi index using the leading (ET) tower:
-    int jet_index=0;
-    double max_tower_et = 0.0;
-    double em = 0;
-    for (int n=0; n<zjet.NobjTowCal; ++n){
-      em += zjet.TowEm[n];
-      if (zjet.TowEt[n]>max_tower_et) {
-	jet_index = p->GetJetBin(p->GetJetEtaBin(zjet.TowId_eta[n]),
-				 p->GetJetPhiBin(zjet.TowId_phi[n]));
-	max_tower_et = zjet.TowEt[n];
-      }
-    }
-    8888888888 */
 
     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
     if(em == 0) { continue;}
@@ -853,12 +822,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       double em = 0;
       double had = 0;
       TLorentzVector Ljet(0,0,0,0);
-      for (int n=0; n<njet.NobjTow; ++n){
-        if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
-	TLorentzVector Ltower(0,0,0,0);
-	Ltower.SetPtEtaPhiE(njet.TowEt[n],njet.TowEta[n],njet.TowPhi[n],njet.TowE[n]);
-	Ljet += Ltower;
-      }
+      Ljet.SetPtEtaPhiE(njet.JetPt[ij],njet.JetEta[ij],njet.JetPhi[ij],njet.JetE[ij]);
       for (int n=0; n<njet.NobjTow; ++n){
         if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
 	em += njet.TowEm[n];
@@ -872,25 +836,6 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	  min_tower_dr = dr;
 	}
       }
-      /* 8888888888
-      //Find the jets eta & phi index using the leading (ET) tower:
-      int jet_index = -1;
-      double max_tower_et = 0.0;
-      if(njet.JetPt[ij] < Et_cut_nplus1Jet) continue;
-      for (int n=0; n<njet.NobjTow; ++n){
-        if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
-	//	cout << ij<<". jet, "<<n<<". tow with ieta="<<njet.TowId_eta[n]
-	//	     <<", iphi="<<njet.TowId_phi[n]
-	//     <<",  jetidx = " << p->GetJetBin(p->GetJetEtaBin(njet.TowId_eta[n]),
-	//				 p->GetJetPhiBin(njet.TowId_phi[n]))
-	//     <<endl;
-	if (njet.TowEt[n]>max_tower_et) {
-	  jet_index = p->GetJetBin(p->GetJetEtaBin(njet.TowId_eta[n]),
-				   p->GetJetPhiBin(njet.TowId_phi[n]));
-	  max_tower_et = njet.TowEt[n];
-	}
-      }
-      8888888888 */
       if (jet_index<0){ 
 	 cerr<<"WARNING: JJ jet_index = " << jet_index << endl; 
 	 continue; 
