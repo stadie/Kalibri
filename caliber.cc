@@ -1,13 +1,14 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.24 2008/07/16 12:52:03 thomsen Exp $
+// $Id: caliber.cc,v 1.26 2008/07/17 10:21:57 csander Exp $
 //
 #include "caliber.h"
 
 //C++ libs
 #include <cmath>
 #include <iomanip>
+#include <time.h>
 //Root libs
 #include "TFile.h"
 #include "TTree.h"
@@ -946,6 +947,8 @@ void TCaliber::Run()
 {
   if (fit_method!=3){
 
+    time_t start = time(0);
+
     if (n_gammajet_events!=0)         Run_GammaJet();
     if (n_tracktower_events!=0)       Run_TrackTower();
     if (n_trackcluster_events!=0)     Run_TrackCluster();
@@ -960,6 +963,9 @@ void TCaliber::Run()
     if (! par_limits.empty())         AddParameterLimits();
 
     if (fit_method==1) Run_Lvmini();
+
+    time_t end = time(0);
+    cout << "Done, fitted " << p->GetNumberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
   } 
   //Dummy Configuration: Nothing to be done, start-values are written to file
 }
@@ -1028,7 +1034,7 @@ void TCaliber::Run_Lvmini()
 	cout << "scaling of residuals with Huber-Function." << endl;
       }
     else {
-      cout << endl << "ERROR: " << _residualScalingScheme.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
+      cerr << "ERROR: " << _residualScalingScheme.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
       break;
     }
 
@@ -1239,10 +1245,10 @@ void TCaliber::Init(string file)
       int scheme = static_cast<int>(*resScheme - '0');
       if(  scheme < 0  ||  scheme > 2  )
 	{
-	  cout << endl << "ERROR: " << scheme << " is not a valid scheme for resdiual scaling! Using default scheme 221." << endl << endl;
+	  cerr << "ERROR: " << scheme << " is not a valid scheme for resdiual scaling! Using default scheme 111." << endl << endl;
 	  _residualScalingScheme.clear();
-	  _residualScalingScheme.push_back(2);
-	  _residualScalingScheme.push_back(2);
+	  _residualScalingScheme.push_back(1);
+	  _residualScalingScheme.push_back(1);
 	  _residualScalingScheme.push_back(1);
 	  break;
 	}
@@ -1343,10 +1349,12 @@ int caliber(int argc, char *argv[])
     Calibration->Init( argv[1] );
   else  
     Calibration->Init("config/calibration.cfg"); //Read input defined in config file
+
   Calibration->Run();  //Run Fit
   Calibration->Done(); //Do Plots & Write Calibration to file
   
   delete Calibration;    
+
   return 0;
 }
 
