@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.26 2008/07/16 14:36:04 thomsen Exp $
+// $Id: CalibData.h,v 1.27 2008/07/17 13:27:05 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -169,7 +169,7 @@ public:
 	   it!=_vecmess.end(); ++it) {
 	single_vec.SetPtEtaPhiM((*it)->GetParametrizedMess(),(*it)->GetMess()[4],(*it)->GetMess()[5],0);
 	sum_vec += single_vec;
-	new_mess = sum_vec.Et();
+	new_mess = single_vec.Et();
 	new_error   = (*it)->GetParametrizedErr(&new_mess);
 	error2 += new_error * new_error;
       }
