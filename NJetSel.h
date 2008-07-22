@@ -39,6 +39,7 @@ public :
    Float_t         Met;
    Float_t         MetPhi;
    Float_t         MetSum;
+   Float_t         Weight;
 
    // List of branches
    TBranch        *b_NobjTow;   //!
@@ -62,6 +63,7 @@ public :
    TBranch        *b_Met;   //!
    TBranch        *b_MetPhi;   //!
    TBranch        *b_MetSum;   //!
+   TBranch        *b_Weight;   //!
 
    NJetSel(TTree * /*tree*/ =0) { }
    virtual ~NJetSel() { }
@@ -121,6 +123,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("Met", &Met, &b_Met);
    fChain->SetBranchAddress("MetPhi", &MetPhi, &b_MetPhi);
    fChain->SetBranchAddress("MetSum", &MetSum, &b_MetSum);
+   fChain->SetBranchAddress("Weight", &Weight, &b_Weight);
 }
 
 Bool_t NJetSel::Notify()

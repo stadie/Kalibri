@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.26 2008/07/17 10:21:57 csander Exp $
+// $Id: caliber.cc,v 1.27 2008/07/18 10:14:29 mschrode Exp $
 //
 #include "caliber.h"
 
@@ -213,6 +213,66 @@ void TCaliber::FlattenSpectra()
       double em = 0;
       double had = 0;
       int index=0;
+      double min_tower_dr = 10.;
+      //double ptmax=0;
+
+      TLorentzVector Ljet(0,0,0,0);
+      Ljet.SetPtEtaPhiE((*it)->GetMess()[0],(*it)->GetMess()[1],(*it)->GetMess()[2],(*it)->GetMess()[3]);
+      for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+	em  += (*t)->GetMess()[1];
+	had += (*t)->GetMess()[2];
+	had += (*t)->GetMess()[3];
+	TLorentzVector Ltower(0,0,0,0);
+	Ltower.SetPtEtaPhiE((*t)->GetMess()[0],(*t)->GetMess()[4],(*t)->GetMess()[5],(*t)->GetMess()[6]);
+	double dr = Ltower.DeltaR(Ljet);
+	if (dr<min_tower_dr) {
+	  index = (*t)->GetIndex();
+	  min_tower_dr = dr;
+	}
+      }
+      //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
+      int bin = GetSpectraBin( (*it)->GetScale(), index );
+      //int bin = GetSpectraBin( (*it)->GetScale() );
+      weights[bin]+=(*it)->GetWeight();
+      tot+=(*it)->GetWeight();
+    }
+    if (tot!=0.)
+    for (DataIter it = data.begin(); it!=data.end(); ++it) {
+      if ((*it)->GetType()!=type) continue;
+
+      double em = 0;
+      double had = 0;
+      int index=0;
+      double min_tower_dr = 10.;
+      TLorentzVector Ljet(0,0,0,0);
+      Ljet.SetPtEtaPhiE((*it)->GetMess()[0],(*it)->GetMess()[1],(*it)->GetMess()[2],(*it)->GetMess()[3]);
+      for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+	em  += (*t)->GetMess()[1];
+	had += (*t)->GetMess()[2];
+	had += (*t)->GetMess()[3];
+	TLorentzVector Ltower(0,0,0,0);
+	Ltower.SetPtEtaPhiE((*t)->GetMess()[0],(*t)->GetMess()[4],(*t)->GetMess()[5],(*t)->GetMess()[6]);
+	double dr = Ltower.DeltaR(Ljet);
+	if (dr<min_tower_dr) {
+	  index = (*t)->GetIndex();
+	  min_tower_dr = dr;
+	}
+      }
+      //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
+      int bin = GetSpectraBin( (*it)->GetScale(), index );
+      //int bin = GetSpectraBin( (*it)->GetScale() );
+      //(*it)->SetWeight(1);
+      (*it)->SetWeight((*it)->GetWeight()/weights[bin] * (double(tot) / double(weights.size())));
+      //(*it)->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
+    }
+
+    /*
+    // Old version using leading tower bin as jet bin
+    for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
+      if ((*it)->GetType()!=type) continue;
+      double em = 0;
+      double had = 0;
+      int index=0;
       double ptmax=0;
       for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
 	em  += (*t)->GetMess()[1];
@@ -225,9 +285,11 @@ void TCaliber::FlattenSpectra()
       }
       //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
       int bin = GetSpectraBin( (*it)->GetScale(), index );
-      weights[bin]+=1.; //(*it)->GetWeight();
-      tot+=1.; //(*it)->GetWeight();
+      //int bin = GetSpectraBin( (*it)->GetScale() );
+      weights[bin]+=(*it)->GetWeight();
+      tot+=(*it)->GetWeight();
     }
+
     if (tot!=0.)
     for (DataIter it = data.begin(); it!=data.end(); ++it) {
       if ((*it)->GetType()!=type) continue;
@@ -248,10 +310,13 @@ void TCaliber::FlattenSpectra()
 
       //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
       int bin = GetSpectraBin( (*it)->GetScale(), index );
+      //int bin = GetSpectraBin( (*it)->GetScale() );
       //(*it)->SetWeight(1);
       //(*it)->SetWeight(1./weights[bin]);
       (*it)->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
     }
+    */
+
   } 
 }
   
@@ -401,6 +466,14 @@ void TCaliber::Run_GammaJet()
     double had = 0;
     TLorentzVector Ljet(0,0,0,0);
     Ljet.SetPtEtaPhiE(gammajet.JetCalEt,gammajet.JetCalEta,gammajet.JetCalPhi,gammajet.JetCalE);
+    /*
+    for (int n=0; n<gammajet.NobjTowCal; ++n){
+      TLorentzVector Ltower(0,0,0,0);
+      Ltower.SetPtEtaPhiE(gammajet.TowEt[n],gammajet.TowEta[n],gammajet.TowPhi[n],gammajet.TowE[n]);
+      Ljet += Ltower;
+    }
+    */
+    //Ljet.SetPtEtaPhiE(gammajet.JetCalEt,gammajet.JetCalEta,gammajet.JetCalPhi,gammajet.JetCalE);
     for (int n=0; n<gammajet.NobjTowCal; ++n){
       em += gammajet.TowEm[n];
       had +=  gammajet.TowHad[n];
@@ -430,8 +503,8 @@ void TCaliber::Run_GammaJet()
 			  gammajet.PhotonEt,				    //truth//
 			  //gammajet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
-			  //gammajet.EventWeight,                           //weight//
-			  1.0,                                              //weight//
+			  gammajet.EventWeight,                             //weight//
+			  //1.0,                                            //weight//
 			  p->GetJetParRef( jet_index ),                     //params
 			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
 			  p->jet_parametrization,                           //function
@@ -537,13 +610,13 @@ void TCaliber::Run_ZJet()
       TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
 			  // zjet.ZEt,				    //truth//
 			  zjet.JetGenPt,
-			  sqrt(pow(0.5,2)+pow(0.10*zjet.ZEt,2)),   //error//
-			  //zjet.EventWeight,                           //weight//
-			  1.0,                                              //weight//
-			  p->GetJetParRef( jet_index ),                     //params
-			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
-			  p->jet_parametrization,                           //function
-			  p->jet_error_parametrization,                     //function
+			  sqrt(pow(0.5,2)+pow(0.10*zjet.ZEt,2)),    //error//
+			  //zjet.EventWeight,                       //weight//
+			  1.0,                                      //weight//
+			  p->GetJetParRef( jet_index ),             //params
+			  p->GetNumberOfJetParametersPerBin(),      //number of free jet param. p. bin
+			  p->jet_parametrization,                   //function
+			  p->jet_error_parametrization,             //function
 			  jetp
 			  );
 
@@ -571,14 +644,14 @@ void TCaliber::Run_ZJet()
       mess[5] = double(zjet.TowPhi[n]);
       mess[6] = double(zjet.TowE[n]);
       gj_data->AddMess(new TData_TruthMess(index,
-					   mess,                                                    //mess//
+					   mess,                                           //mess//
 					   zjet.ZEt * relativEt,                           //truth//
 					   sqrt(pow(0.5,2)+pow(0.1*zjet.ZEt*relativEt,2)), //error//
-					   1.,                                                      //weight//
-					   p->GetTowerParRef( index ),                              //parameter//
-					   p->GetNumberOfTowerParametersPerBin(),                   //number of free tower param. p. bin//
-					   p->tower_parametrization,                                //function//
-					   p->tower_error_parametrization                           //function//
+					   1.,                                             //weight//
+					   p->GetTowerParRef( index ),                     //parameter//
+					   p->GetNumberOfTowerParametersPerBin(),          //number of free tower param. p. bin//
+					   p->tower_parametrization,                       //function//
+					   p->tower_error_parametrization                  //function//
 					   ));
     } 
  
@@ -673,7 +746,7 @@ void TCaliber::Run_TrackCluster()
 							0,                                                 //params
 							0,                                                 //number of free jet param. p. bin
 							p->dummy_parametrization,                          //function
-							p->jet_error_parametrization,                       //function
+							p->jet_error_parametrization,                      //function
 							clusterp);
     tc->SetType( TypeTrackCluster );
     //Add the towers to the event
@@ -856,10 +929,11 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	  direction,                                     //p_T direction of this jet
 	  0.0,                                           //truth//
 	  sqrt(pow(0.5,2)+pow(0.10*njet.JetPt[ij],2)),   //error//
-	  1.,                                            //weight//
+	  njet.Weight,                                   //weight//
+	  //1.,                                          //weight//
 	  p->GetJetParRef( jet_index ),                  //params
 	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-	  p->jet_parametrization,                      //function
+	  p->jet_parametrization,                        //function
 	  //p->dummy_parametrization,
 	  p->jet_error_parametrization,                  //function
 	  jetp                                           //jet momentum for plotting and scale
@@ -890,9 +964,10 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	jj_data[nstoredjets]->AddMess(new TData_TruthMess(
 	    index,
 	    mess,                                                   //mess//
-	    njet.JetPt[ij] * relativEt,                           //truth//
-	    sqrt(pow(0.5,2)+pow(0.1*njet.JetPt[ij]*relativEt,2)), //error//
-            1.,                                                     //weight//
+	    njet.JetPt[ij] * relativEt,                             //truth//
+	    sqrt(pow(0.5,2)+pow(0.1*njet.JetPt[ij]*relativEt,2)),   //error//
+            //1.,                                                   //weight//
+	    njet.Weight,                                            //weight//
 	    p->GetTowerParRef( index ),                             //parameter//
 	    p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
 	    p->tower_parametrization,                               //function//
@@ -973,8 +1048,8 @@ void TCaliber::Run()
 void TCaliber::Run_Lvmini()
 {
   int naux = 1000000, niter=1000, iret=0;
-  //int mvec = 29;
-  int mvec = 6;
+  int mvec = 29;
+  //int mvec = 6;
   //int mvec = 2;
   double aux[naux], fsum = 0;
 
@@ -993,7 +1068,8 @@ void TCaliber::Run_Lvmini()
     t[ithreads] = new ComputeThread(npar, p->GetPars(),temp_derivative1,temp_derivative2,epsilon);
   }
 
-  float eps =float(1.E-6*data.size());
+  //float eps =float(1.E-6*data.size());
+  float eps =float(1.E-6);
   float wlf1=1.E-4;
   float wlf2=0.9;
   lvmeps_(eps,wlf1,wlf2);
