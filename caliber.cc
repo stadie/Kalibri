@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.27 2008/07/18 10:14:29 mschrode Exp $
+// $Id: caliber.cc,v 1.28 2008/07/22 09:33:43 csander Exp $
 //
 #include "caliber.h"
 
@@ -536,6 +536,7 @@ void TCaliber::Run_GammaJet()
       mess[4] = double(gammajet.TowEta[n]);
       mess[5] = double(gammajet.TowPhi[n]);
       mess[6] = double(gammajet.TowE[n]);
+      mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       EM+=mess[1];
       F+=mess[0];
       gj_data->AddMess(new TData_TruthMess(index,
@@ -643,6 +644,7 @@ void TCaliber::Run_ZJet()
       mess[4] = double(zjet.TowEta[n]);
       mess[5] = double(zjet.TowPhi[n]);
       mess[6] = double(zjet.TowE[n]);
+      mess[7] = double( cos( zjet.JetCalPhi-zjet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       gj_data->AddMess(new TData_TruthMess(index,
 					   mess,                                           //mess//
 					   zjet.ZEt * relativEt,                           //truth//
@@ -693,6 +695,7 @@ void TCaliber::Run_TrackTower()
       mess[4] = double(tracktower.TowEta[n]);
       mess[5] = double(tracktower.TowPhi[n]);
       mess[6] = double(tracktower.TowE[n]);
+      mess[7] = double( cos( tracktower.TrackPhi[n]-tracktower.TowPhi[n] ) ); // Projection factor for summing tower Pt
       data.push_back(new TData_TruthMess(index,
 					 mess,                                                //mess//
 					 tracktower.TrackEt[n],                               //truth//
@@ -769,6 +772,8 @@ void TCaliber::Run_TrackCluster()
       mess[4] = double(trackcluster.TowEta[n]);
       mess[5] = double(trackcluster.TowPhi[n]);
       mess[6] = double(trackcluster.TowE[n]);
+      mess[7] = double( cos( trackcluster.TrackPhi-trackcluster.TowPhi[n] ) ); // Projection factor for summing tower Pt
+
       TData_TruthMess * tower = new TData_TruthMess(index,
 						    mess,                                                      //mess//
 						    trackcluster.TrackEt*trackcluster.TowEt[n]/cluster_energy, //"truth" for plotting only!//
@@ -836,6 +841,7 @@ void TCaliber::AddTowerConstraint()
 	mess[4] = 0;
 	mess[5] = 0;
 	mess[6] = etsum;
+	mess[7] = 1.;
 	TData_TruthMess *tower = new TData_TruthMess(index,
 						     mess, //mess
 						     etsum, //"truth" for plotting only
@@ -961,6 +967,8 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	mess[4] = double(njet.TowEta[n]);
 	mess[5] = double(njet.TowPhi[n]);
 	mess[6] = double(njet.TowE[n]);
+	mess[7] = double( cos( njet.JetPhi[ij]-njet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+
 	jj_data[nstoredjets]->AddMess(new TData_TruthMess(
 	    index,
 	    mess,                                                   //mess//

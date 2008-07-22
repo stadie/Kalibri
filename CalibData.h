@@ -1,12 +1,10 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.27 2008/07/17 13:27:05 mschrode Exp $
+// $Id: CalibData.h,v 1.28 2008/07/21 09:31:00 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
-
-#include <TLorentzVector.h>
 
 #include <iostream>
 #include <vector> 
@@ -14,7 +12,7 @@
 #include <utility> //pair
 #include <cmath>
 
-#define __DimensionMeasurement 7
+#define __DimensionMeasurement 8
 
 #define TypeDefault      0
 #define TypeTrackTower   1
@@ -125,7 +123,7 @@ public:
   TData_TruthMultMess(unsigned short int index, double truth, double error, 
 		      double weight, double * par, unsigned short int n_par,
 		      double(*func)(double*,double*), double(*err)(double*), double *mess) :
-    TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=TypeGammaJet;_jmess = mess;};
+    TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=TypeGammaJet;};
   virtual ~TData_TruthMultMess() {
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	 it!=_vecmess.end(); ++it)
@@ -135,25 +133,23 @@ public:
   void AddMess(TData_TruthMess * m){ _vecmess.push_back(m);};
 
   virtual double GetParametrizedMess(){
-    TLorentzVector sum_vec(0,0,0,0);
-    TLorentzVector single_vec(0,0,0,0);
+    double result=0.0;
+    double messTower[4] = { 0.,0.,0.,0. };
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
   	 it!=_vecmess.end(); ++it){
-      single_vec.SetPtEtaPhiM((*it)->GetParametrizedMess(),(*it)->GetMess()[4],(*it)->GetMess()[5],0);
-      sum_vec += single_vec;
+      result += (*it)->GetParametrizedMess() * (*it)->GetMess()[7]; // Sum of tower Pt
     }
-    double messTower[4];
-    messTower [3] =  _jmess[3] * sum_vec.Et() / _jmess[0];
-    messTower[0] = sum_vec.Et();
+    messTower [3] =  GetMess()[3] * result / GetMess()[0]; // Sum tower Pt --> Sum tower P
+    messTower[0] = result; // Sum of tower Pt
     //for(int i=1;i<2;++i)               //eta and phi not needed
-    //  messTower[i] = _jmess[i];
+    //  messTower[i] = GetMess()[i];
     return _func(messTower, _par);           //jan
   };
   
 
   double GetJetCor(double *towermess){
     double messTower[4];
-    messTower [3] =  _jmess[3] * towermess[0] / _jmess[0];
+    messTower [3] =  GetMess()[3] * towermess[0] / GetMess()[0];
     messTower[0] = towermess[0];
     return _func(messTower, _par);           //jan
   };
@@ -161,19 +157,20 @@ public:
 
   virtual double GetParametrizedErr2() //no input needed
     {
-      TLorentzVector sum_vec(0,0,0,0);
-      TLorentzVector single_vec(0,0,0,0);
       double new_mess, new_error;
       double error2 = 0;
+      double sum_mess = 0;
       for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	   it!=_vecmess.end(); ++it) {
-	single_vec.SetPtEtaPhiM((*it)->GetParametrizedMess(),(*it)->GetMess()[4],(*it)->GetMess()[5],0);
-	sum_vec += single_vec;
-	new_mess = single_vec.Et();
+	new_mess    = (*it)->GetParametrizedMess();
+	sum_mess += new_mess * (*it)->GetMess()[7]; // Sum of tower Pt
 	new_error   = (*it)->GetParametrizedErr(&new_mess);
 	error2 += new_error * new_error;
       }
-      new_mess = GetParametrizedMess();
+      double messTower[4] = { 0.,0.,0.,0. };
+      messTower [3] =  GetMess()[3] * sum_mess / GetMess()[0]; // Sum tower Pt --> Sum tower P
+      messTower[0] = sum_mess; // Sum of tower Pt
+      new_mess = _func(messTower, _par);
       error2 += _err( &new_mess ) *  _err( &new_mess );
       return error2;
     };
@@ -195,7 +192,6 @@ public:
   }
 protected:  
   std::vector<TData*> _vecmess; 
-  double *_jmess;
 };
 
 //virtual data class for data providing only multiple messurements
