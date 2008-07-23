@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.28 2008/07/22 09:33:43 csander Exp $
+// $Id: caliber.cc,v 1.29 2008/07/22 11:50:22 mschrode Exp $
 //
 #include "caliber.h"
 
@@ -986,7 +986,17 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       	jj_data[0]->AddNewMultMess( jj_data[nstoredjets] );
       ++nstoredjets;
     }//loop over all n-jets
-    if(jj_data[0] && nstoredjets == injet && jj_data[0]->GetScale() > 15.0) {
+    bool goodevent=true;
+    if (nstoredjets < injet) goodevent = false;
+    if (nstoredjets > injet){
+      /*
+      for (int i=0; i < nstoredjets; ++i){
+	cout<<i<<"-ter Jet Pt: "<<jj_data[i]->GetMess()[0]<<endl;
+      }
+      */
+      //relative Pt cut only works if jets are Pt sorted
+      if ( jj_data[injet]->GetMess()[0] > jj_data[0]->GetMess()[0]*Rel_cut_on_nJet ) goodevent = false;
+    }
       /*
       //sort jets. 1st is barrel, 2nd is probe
       if( nstoredjets ==  2) {
@@ -1013,6 +1023,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       }
       }    
       */
+    if (goodevent) {
       ++evt;    
       data.push_back( jj_data[0] ); 
     } else {
@@ -1309,6 +1320,7 @@ void TCaliber::Init(string file)
   Et_cut_on_tower = config.read<double>("Et cut on tower",0.0);
   Et_cut_on_cluster = config.read<double>("Et cut on cluster",0.0);
   Et_cut_nplus1Jet = config.read<double>("Et cut on n+1 Jet",10.0);
+  Rel_cut_on_nJet  =  config.read<double>("Relative n+1 Jet Et Cut",0.2);
   Rel_cut_on_gamma =  config.read<double>("Relative Rest Jet Cut",0.2);
   //specify constraints
   vector<double> tower_constraint = bag_of<double>(config.read<string>( "Tower Constraint",""));
