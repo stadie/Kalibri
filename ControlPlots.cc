@@ -2201,11 +2201,16 @@ void TControlPlots::DiJetControlPlots()
   TH2F* Bvsdphi;
   TH2F* Difvscomb;
   TH1F* eta[2];
-  TH1F* ptspec[2];
+  TH1F* ptspec[4];
   TH1F* dphi[11];
+  TH2F* Scale[2];
   
+  Scale[0] = new TH2F("Scale dif","Scale;Scale; Scale After Fit - Scale",100,0,1000,100,-100,100);
+  Scale[1] = new TH2F("Scale","Scale;Scale; Scale After Fit",100,0,1000,100,0,1000);
   ptspec[0] = new TH1F("Pt spectrum probe jet","Pt spectrum probe jet;Pt",300,0,2000);
   ptspec[1] = new TH1F("Pt spectrum barrel jet","Pt spectrum barrel jet;Pt",300,0,2000);
+  ptspec[2] = new TH1F("Pt spectrum probe jet before fit","Pt spectrum probe jet before fit;Pt",300,0,2000);
+  ptspec[3] = new TH1F("Pt spectrum barrel jet before fit","Pt spectrum barrel jet before fit;Pt",300,0,2000);
   eta[0] = new TH1F("eta probe jet","#eta probe jet;#eta",100,-5,5);
   eta[1] = new TH1F("eta barrel jet","#eta barrel jet;#eta",100,-5,5);
   dphi[0] = new TH1F("Delta Phi","#Delta Phi;#Delta #Phi",70,2.8,3.5);
@@ -2247,22 +2252,22 @@ void TControlPlots::DiJetControlPlots()
 
   //book hists
   TH2F* Beta[8];
-  Beta[0] = new TH2F("Beta","di-jet;#eta",100,-5,5,100,-1,1);
+  Beta[0] = new TH2F("Beta","di-jet;#eta",100,-5,5,100,-0.7,0.7);
   for(int i = 1 ; i < 8 ; ++i) Beta[i] = (TH2F*)Beta[0]->Clone();
   Beta[2]->SetTitle("di-jet 10 < E_{T}^{barrel jet} < 35 GeV;#eta");
   Beta[4]->SetTitle("di-jet 35 < E_{T}^{barrel jet} < 90 GeV;#eta");
   Beta[6]->SetTitle("di-jet 90 < E_{T}^{barrel jet} < 300 GeV;#eta");
 
   TH2F* Bpt[2];
-  Bpt[0] = new TH2F("Bpt","di-jet;p_{T} [GeV]",400,0,400,100,-1,1);
+  Bpt[0] = new TH2F("Bpt","di-jet;p_{T} [GeV]",400,0,400,100,-0.7,0.7);
   Bpt[1] = (TH2F*)Bpt[0]->Clone();
 
   TH2F* Benergy[2];
-  Benergy[0] = new TH2F("Benergy","di-jet;Energy [GeV]",400,0,400,100,-1,1);
+  Benergy[0] = new TH2F("Benergy","di-jet;Energy [GeV]",400,0,400,100,-0.7,0.7);
   Benergy[1] = (TH2F*)Benergy[0]->Clone();
   
   TH2F* Bemf[2];
-  Bemf[0] = new TH2F("Bemf","di-jet;EMF (probe jet)",100,0,1,100,-1,1);
+  Bemf[0] = new TH2F("Bemf","di-jet;EMF (probe jet)",100,0,1,100,-0.7,0.7);
   Bemf[1] = (TH2F*)Bemf[0]->Clone();
 
   double bins[101];
@@ -2271,7 +2276,7 @@ void TControlPlots::DiJetControlPlots()
   }
 
   TH2F* Bptlog[2];
-  Bptlog[0] = new TH2F("Bptlog","di-jet;p_{T} [GeV]",100,bins,100,-1,1); 
+  Bptlog[0] = new TH2F("Bptlog","di-jet;p_{T} [GeV]",100,bins,100,-0.7,0.7); 
   Bptlog[1] = (TH2F*)Bptlog[0]->Clone();
 
 
@@ -2294,6 +2299,7 @@ void TControlPlots::DiJetControlPlots()
       if(jj->GetType() != TypePtBalance) continue;
       TData_MessMess* jm = (TData_MessMess*) jj;
       double etscale = jm->GetScale();
+      double etparascale = jm->GetParametrizedScale();
       double etajet1 = jm->GetMultMess(0)[1];
       double etajet2 = jm->GetMultMess(1)[1];
       double etjetcomb = jm->GetMessCombination();
@@ -2317,7 +2323,10 @@ void TControlPlots::DiJetControlPlots()
 	  etaprobe = etajet2; 
 	  etajet2 = etajet1;  
 	  phiprobe = phijet2; 
-	  phijet2 = phijet1;  
+	  phijet2 = phijet1; 
+	  double temp = etjet2uncor;
+	  etjet2uncor = etjet1uncor;
+	  etjet1uncor = temp;
 	}
       double deltaphi = fabs(phiprobe - phijet2);
       //double etjet3uncor = jm->GetMultMess(2)[0];
@@ -2326,8 +2335,12 @@ void TControlPlots::DiJetControlPlots()
       //combmean->Fill(etmean, etjetdif, jj->GetWeight());
       //ptspec[0]
 
+      Scale[0]->Fill(etscale,etparascale - etscale);
+      Scale[1]->Fill(etscale,etparascale);
       ptspec[0]->Fill(etprobe);
       ptspec[1]->Fill(etjet2);
+      ptspec[2]->Fill(etjet1uncor);
+      ptspec[3]->Fill(etjet2uncor);
       eta[0]->Fill(etaprobe);
       eta[1]->Fill(etajet2);
       dphi[0]->Fill(deltaphi);
@@ -2398,7 +2411,13 @@ void TControlPlots::DiJetControlPlots()
 
 
   c1->cd();
-  for(int i=0;i<2;++i)
+  Scale[0]->Draw("box");
+  c1->Draw();
+  ps.NewPage(); 
+  Scale[1]->Draw("box");
+  c1->Draw();
+  ps.NewPage(); 
+  for(int i=0;i<4;++i)
     {
       ptspec[i]->Draw();
       c1->Draw();
@@ -2443,8 +2462,8 @@ void TControlPlots::DiJetControlPlots()
     for(int a = 0; a<2;++a)
       {
 	for(int b = 0 ; b < 4 ; ++b) {
-	  hists[a+i][b]->SetMinimum(-1.);
-	  hists[a+i][b]->SetMaximum(1.);
+	  hists[a+i][b]->SetMinimum(-0.5);
+	  hists[a+i][b]->SetMaximum(0.5);
 	  ++b;
 	  hists[a+i][b]->SetMinimum(0.0);
 	  hists[a+i][b]->SetMaximum(1.);
@@ -2510,8 +2529,8 @@ void TControlPlots::DiJetControlPlots()
     for(int a = 0; a<2;++a)
       {
 	for(int b = 0 ; b < 4 ; ++b) {
-	  hists[a][b]->SetMinimum(-1.);
-	  hists[a][b]->SetMaximum(1.);
+	  hists[a][b]->SetMinimum(-0.5);
+	  hists[a][b]->SetMaximum(0.5);
 	  ++b;
 	  hists[a][b]->SetMinimum(0.0);
 	  hists[a][b]->SetMaximum(1.);
@@ -2568,8 +2587,8 @@ void TControlPlots::DiJetControlPlots()
     for(int a = 0; a<2;++a)
       {
 	for(int b = 0 ; b < 4 ; ++b) {
-	  hists[a][b]->SetMinimum(-1.);
-	  hists[a][b]->SetMaximum(1.);
+	  hists[a][b]->SetMinimum(-0.5);
+	  hists[a][b]->SetMaximum(0.5);
 	  ++b;
 	  hists[a][b]->SetMinimum(0.0);
 	  hists[a][b]->SetMaximum(1.);
@@ -2625,8 +2644,8 @@ void TControlPlots::DiJetControlPlots()
     for(int a = 0; a<2;++a)
       {
 	for(int b = 0 ; b < 4 ; ++b) {
-	  hists[a][b]->SetMinimum(-1.);
-	  hists[a][b]->SetMaximum(1.);
+	  hists[a][b]->SetMinimum(-0.5);
+	  hists[a][b]->SetMaximum(0.5);
 	  ++b;
 	  hists[a][b]->SetMinimum(0.0);
 	  hists[a][b]->SetMaximum(1.);
@@ -2683,8 +2702,8 @@ void TControlPlots::DiJetControlPlots()
     for(int a = 0; a<2;++a)
       {
 	for(int b = 0 ; b < 4 ; ++b) {
-	  hists[a][b]->SetMinimum(-1.);
-	  hists[a][b]->SetMaximum(1.);
+	  hists[a][b]->SetMinimum(-0.5);
+	  hists[a][b]->SetMaximum(0.5);
 	  ++b;
 	  hists[a][b]->SetMinimum(0.0);
 	  hists[a][b]->SetMaximum(1.);
