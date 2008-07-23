@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.29 2008/07/22 11:50:22 mschrode Exp $
+// $Id: caliber.cc,v 1.30 2008/07/23 07:54:23 csander Exp $
 //
 #include "caliber.h"
 
@@ -995,7 +995,13 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       }
       */
       //relative Pt cut only works if jets are Pt sorted
-      if ( jj_data[injet]->GetMess()[0] > jj_data[0]->GetMess()[0]*Rel_cut_on_nJet ) goodevent = false;
+      double scale=0;
+      for (int i=0; i < injet; ++i){
+	scale += jj_data[i]->GetMess()[0];
+      }
+      scale /= injet;
+      //cout<<"scale: "<<scale<<endl;
+      if ( jj_data[injet]->GetMess()[0] > scale*Rel_cut_on_nJet ) goodevent = false;
     }
       /*
       //sort jets. 1st is barrel, 2nd is probe
