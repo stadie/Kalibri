@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.5 2008/07/01 12:15:39 stadie Exp $
+// $Id: ToyMC.cc,v 1.6 2008/07/04 13:51:07 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -17,7 +17,7 @@
 
 
 
-ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400), mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpread(0.07),mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
+ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400), mPtSpectrum(Uniform),mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpreadA(0.5),mJetSpreadB(0),mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
 {
   mRandom = new TRandom3();
   mRandom->SetSeed(0);
@@ -25,9 +25,15 @@ ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400), mTowConst(1
 
 void ToyMC::genInput() { 
   static double rand[3];
-
   mRandom->RndmArray(3,rand);
-  mPinput.SetPtEtaPhiM(rand[0]*(mMaxPt - mMinPt)+mMinPt,
+  double pt = 0;  
+  if(mPtSpectrum == Uniform) {
+    mRandom->RndmArray(3,rand);
+    pt = rand[0]*(mMaxPt - mMinPt)+mMinPt;
+  } else if(mPtSpectrum == PowerLaw) {
+    pt = mMinPt * pow(rand[0],-1.0/3.5);
+  }
+  mPinput.SetPtEtaPhiM(pt,
 		       rand[1]*(mMaxEta - mMinEta)+mMinEta,
 		       rand[2]*2 * M_PI - M_PI, 0);
 }
@@ -92,14 +98,29 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
   double jphi = jet.Phi();
   if(jphi < 0) jphi += 2 * M_PI;
   //std::cout << "jet: Pt:" << jet.Pt() << " Phi:" << jet.Phi() << " Eta:" << jet.Eta() << '\n';
-  double de = jet.E() / mChunks;
+  //double de = jet.E() / mChunks;
   int ntowers = 0;
   TLorentzVector rec(0,0,0,0);
   TLorentzVector tow;
+  double lostPt = 0;
+   double dpt = jet.Pt() / mChunks ;
   for(int i = 0 ; i < mChunks ; ++i) {
-    float teta = mRandom->Gaus(jet.Eta(), mJetSpread);
-    float tphi = mRandom->Gaus(jet.Phi(), mJetSpread);
-    if( tphi < 0) tphi += 2 * M_PI;
+    //float teta = mRandom->Gaus(jet.Eta(), jetspread);
+    //float tphi = mRandom->Gaus(jet.Phi(), jetspread);
+    float R = mRandom->Exp(1/(mJetSpreadA +mJetSpreadB * jet.E()));
+    float PHI = mRandom->Uniform(2 * M_PI);
+    //std::cout << "E:" << jet.E() << "  R:" << R << '\n';
+    float teta = jet.Eta() + R * cos(PHI);
+    float tphi = jet.Phi() + R * sin(PHI);
+    
+    tphi = TVector2::Phi_0_2pi(tphi);
+    if(std::abs(teta) > 3.33333) {
+      //std::cout << "chunk outside simulated calo\n";
+      if(mNoOutOfCone) --i;
+      else lostPt += dpt;
+      continue;
+    }
+    double de = dpt/cos(tphi-jphi);
     int ie, ip;
     calIds(teta, tphi, ie, ip); 
     //std::cout << "vorher:" << teta << ", " << tphi << ", " << ie << ", " 
@@ -109,6 +130,7 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
     if(sqrt(deta*deta + dphi*dphi) > 0.5) {
       //std::cout << "Out of cone:" << teta << ":" << jet.Eta() << " , " << dphi << '\n';
       if(mNoOutOfCone) --i;
+      else lostPt += dpt;
       continue;
     }
     int id = towers[ie*1000 + ip];
@@ -119,18 +141,18 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
       et[id-1] = 0;
     }
     --id;
-    tow.SetPtEtaPhiM(1,teta,tphi,0);
-    tow *= de/tow.E();
+    tow.SetPtEtaPhiM(de,teta,tphi,0);
+    //tow *= de/tow.E();
     et[id] += tow.Pt();
     eta[id] = teta;
-    phi[id] = tphi;
+    phi[id] = TVector2::Phi_mpi_pi(tphi);
     ieta[id] = ie;
     iphi[id] = ip;
     rec += tow;
   }
   //std::cout  << "Eta:" << jet.Eta() <<  "       : " << rec.Pt() << "," << rec.E() << "  == " << jet.Pt() << "," << jet.E() << '\n';
   //std::cout << "lost energy:" << lostE/jet.E() << '\n';
-  //assert(lostE/jet.E() < 0.25);
+  assert(lostPt/jet.Pt() < 0.95);
   return ntowers;
 }
 
@@ -258,7 +280,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("PhotonEt",&photonet,"PhtonEt/F");
   CalibTree->Branch("PhotonE",&photone,"PhotonE/F");
  
-  TLorentzVector jet, tower;
+  TLorentzVector jet,genjet, tower;
   for(int i = 0; i < nevents ; ++i) {
     genInput();
     photonpt = mPinput.Pt();
@@ -268,19 +290,16 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     photone = mPinput.E();
     //jgenpt = mRandom->Gaus(photonpt,0.04 * photonpt);
     jgenpt = photonet;
-   //jgeneta = mRandom->Gaus(photoneta,1.0);
-    jgeneta = photoneta;
-    if((jgeneta > 2.5) || (jgeneta < -2.5)) {
+    jgeneta = mRandom->Gaus(photoneta,1.0);
+    if((jgeneta > 3.3) || (jgeneta < -3.3)) {
       --i;
       continue;
     }
     jgenphi = photonphi +M_PI;
-    if(jgenphi > M_PI) jgenphi -= 2 * M_PI;
-    jgenet = jgenpt;
-    jet.SetPtEtaPhiM(jgenpt,jgeneta,jgenphi,0);
-    jgene = jet.E();
-    NobjTowCal = splitJet(jet,towet,toweta,towphi,towid_eta,towid_phi);
+    genjet.SetPtEtaPhiM(jgenpt,jgeneta,jgenphi,0);
+    NobjTowCal = splitJet(genjet,towet,toweta,towphi,towid_eta,towid_phi);
     jet.SetPtEtaPhiM(0,0,0,0);
+    genjet.SetPtEtaPhiM(0,0,0,0);
     double towmean = mTowConst;
     if(mModel == Flat) mTowConst = 1/mRandom->Uniform(1.5);
     else if(mModel == Exp) mTowConst = 1/mRandom->Exp(0.5);
@@ -293,6 +312,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     for(int j = 0; j < NobjTowCal ; ++j) {
       tower.SetPtEtaPhiM(towet[j],toweta[j],towphi[j],0);
       towen[j] =  tower.E();
+      genjet += tower;
       smearTower((1 - p0frac) * tower.E(),towen[j],towem[j],towhd[j],towoe[j]); 
       towen[j] += p0frac * tower.E();
       towem[j] += p0frac * tower.E();
@@ -305,7 +325,12 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     jcaleta = jet.Eta();
     jcalphi = jet.Phi();
     jcalet = jet.Pt();
-    jcale = jet.E();
+    jcale = jet.E(); 
+    jgenphi = genjet.Phi();
+    jgenet = genjet.Pt();
+    jgenpt = genjet.Pt();
+    jgene = genjet.E();
+    jgeneta = genjet.Eta();
     mcalmet = 0;
     mcalphi = 0;
     mcalsum = 0;

@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.h,v 1.2 2008/07/01 11:50:31 stadie Exp $
+// $Id: ToyMC.h,v 1.3 2008/07/04 13:51:07 stadie Exp $
 //
 #ifndef TOYMC_H
 #define TOYMC_H
@@ -14,11 +14,13 @@ class TTree;
 class ToyMC {
 public:
   enum Model { Gauss, Landau, Flat, Exp, Slope };
+  enum Spectrum { Uniform, PowerLaw };
   double mMinEta, mMaxEta;
   double mMinPt, mMaxPt;
+  Spectrum mPtSpectrum;
   double mTowConst;
   double mResoStochastic,mResoNoise;
-  double mJetSpread;
+  double mJetSpreadA,mJetSpreadB;
   bool   mNoOutOfCone;
   Model  mModel;
   int    mChunks;
