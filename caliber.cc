@@ -1,7 +1,14 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.30 2008/07/23 07:54:23 csander Exp $
+// $Id: caliber.cc,v 1.31 2008/07/23 11:44:37 csander Exp $
+//
+//
+// for profiling:
+//  - to prevent gprof from missing the threads: 
+//      wget http://sam.zoy.org/writings/programming/gprof-helper.c
+//      gcc -shared -fPIC gprof-helper.c -o gprof-helper.so -lpthread -ldl 
+//      LD_PRELOAD=./gprof-helper.so ./junk
 //
 #include "caliber.h"
 
@@ -88,6 +95,7 @@ private:
   double *temp_derivative2;
   double epsilon;
   std::vector<TData*> data;
+  bool data_changed;
   struct calc_chi2_on
   {
   private:
@@ -100,6 +108,11 @@ private:
 // 	boost::mutex::scoped_lock lock(io_mutex);
 // 	std::cout << "start Thread for " << parent << std::endl; 
 //       }   
+      if(parent->data_changed) {
+	for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it)
+	  (*it)->ChangeParAddress(parent->parorig,parent->mypar); 
+	parent->data_changed = false;
+      }
       for (int param=0; param< parent->npar ; ++param) {
 	parent->td1[param]= 0.0;
 	parent->td2[param]= 0.0;
@@ -122,8 +135,8 @@ private:
 public:
   ComputeThread(int npar,double *par, double *temp_derivative1, double *temp_derivative2, double epsilon) 
     : npar(npar), td1(new double[npar]), td2(new double[npar]), parorig(par),
-      mypar(new double[npar]), temp_derivative1(temp_derivative1), temp_derivative2(temp_derivative2),
-      epsilon(epsilon) {}
+      mypar(new double[npar]), temp_derivative1(temp_derivative1), 
+      temp_derivative2(temp_derivative2), epsilon(epsilon), data_changed(false) {}
   ~ComputeThread() {
     ClearData();
     delete [] td1;
@@ -131,7 +144,8 @@ public:
     delete [] mypar;
   }
   void AddData(TData* d) { 
-    d->ChangeParAddress(parorig, mypar);
+    //d->ChangeParAddress(parorig, mypar);
+    data_changed = true;
     data.push_back(d);
   }
   void ClearData() {   
@@ -864,7 +878,7 @@ void TCaliber::AddParameterLimits()
 
   for(std::vector<ParameterLimit>::const_iterator pl = par_limits.begin() ;
       pl != par_limits.end() ; ++pl) {
-    std::cout << "adding limit for parameter " << pl->index << " min:" 
+    std::cout << "adding limit for parameter " << pl->index+1 << " min:" 
 	      << pl->min << " max:" << pl->max << " k:" << pl->k << '\n';
     double* limit = new double[2];
     limit[0] = pl->min;

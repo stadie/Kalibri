@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.29 2008/07/22 11:50:22 mschrode Exp $
+// $Id: CalibData.h,v 1.30 2008/07/23 16:04:50 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -86,13 +86,12 @@ public:
   };
 
   virtual double GetParametrizedErr(double *paramess){ 
-    double *mess = GetMess();
     double pmess;
-    if(fabs(mess[4]) < 3)  
-      pmess =  paramess[0] * (mess[6] / mess[0]) * ((mess[2] + mess[3]) / (mess[1] + mess[2] + mess[3])); //Et->E hadronic
+    if(std::abs(_mess[4]) < 3.0)  
+      pmess =  paramess[0] * _mess[6] / (_mess[0] * _mess[0]) * (_mess[2] + _mess[3]); //Et->E hadronic
     else
-      pmess =  paramess[0] * (mess[6] / mess[0]);  //Et->E 
-    return _err(&pmess) * mess[0] / mess[6];
+      pmess =  paramess[0] * (_mess[6] / _mess[0]);  //Et->E 
+    return _err(&pmess) * _mess[0] / _mess[6];
   };     //search
 
   virtual double GetParametrizedErr2(double *paramess){ 
@@ -210,7 +209,7 @@ public:
   virtual void ChangeParAddress(double* oldpar, double* newpar) { 
     TData::ChangeParAddress(oldpar,newpar);
     for (std::vector<TData*>::iterator it=_vecmess.begin();
-         it !=_vecmess.end(); ++it) { (*it)->ChangeParAddress(oldpar,newpar);}
+	 it !=_vecmess.end(); ++it) { (*it)->ChangeParAddress(oldpar,newpar);}
   }
 protected:  
   std::vector<TData*> _vecmess; 
