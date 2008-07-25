@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.h,v 1.3 2008/07/04 13:51:07 stadie Exp $
+// $Id: ToyMC.h,v 1.4 2008/07/23 08:44:47 stadie Exp $
 //
 #ifndef TOYMC_H
 #define TOYMC_H
@@ -39,8 +39,10 @@ private:
   ~ToyMC() {}
   int generatePhotonJetTree(TTree *tree, int nevents);
   int generateTrackClusterTree(TTree *tree, int nevents);
+  int generateDiJetTree(TTree* CalibTree, int nevents);
   int makeTrackCluster(const char* filename, int nevents);
   int makePhotonJet(const char* filename, int nevents);
+  int makeDiJet(const char* filename, int nevents);
 };
 
 #endif

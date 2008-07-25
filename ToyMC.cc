@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.6 2008/07/04 13:51:07 stadie Exp $
+// $Id: ToyMC.cc,v 1.7 2008/07/23 08:44:47 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <cassert> 
+#include <ext/hash_map>
 
 #include "TRandom.h"
 #include "TRandom3.h"
@@ -40,8 +41,8 @@ void ToyMC::genInput() {
 
 void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi) 
 {
-  const float dEta = 2.5/30;
-  const float dPhi =  2 * M_PI / 72;
+  const static float dEta = 2.5/30;
+  const static float dPhi =  2 * M_PI / 72;
   
   if(eta > 0) {
     ieta = (int)(eta / dEta) + 1;
@@ -67,7 +68,8 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
   assert(ieta >= -40);
 }
 
-void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout) {
+void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout) 
+{
   float emf = mRandom->Uniform(mMaxEmf);
   tem = emf * e;
   thad = (1-emf) * e / mTowConst;
@@ -92,7 +94,7 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
 }
 
 int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi) {
-  typedef std::map<int,int> TowerMap;
+  typedef __gnu_cxx::hash_map<int,int> TowerMap;
 
   TowerMap towers;
   double jphi = jet.Phi();
@@ -133,8 +135,11 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
       else lostPt += dpt;
       continue;
     }
-    int id = towers[ie*1000 + ip];
-    if(! id) {
+    int id = 0;
+    TowerMap::const_iterator towit = towers.find(ie*1000 + ip);
+    if(towit != towers.end()) {
+      id = towit->second;
+    } else {
       ++ntowers;
       id = ntowers;
       towers[ie*1000 + ip] = id;
@@ -246,6 +251,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   float jgenpt,jgenphi,jgeneta,jgenet,jgene;
   float mcalmet,mcalphi,mcalsum;
   float photonpt,photonphi,photoneta,photonet,photone;
+  float weight = 1.0;
   CalibTree->Branch("NobjTowCal",&NobjTowCal,"NobjTowCal/I");
   CalibTree->Branch("TowId",towid,"TowId[NobjTowCal]/I");
   CalibTree->Branch("TowId_phi",towid_phi,"TowId_phi[NobjTowCal]/I");
@@ -279,7 +285,9 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("PhotonEta",&photoneta,"PhotonEta/F");
   CalibTree->Branch("PhotonEt",&photonet,"PhtonEt/F");
   CalibTree->Branch("PhotonE",&photone,"PhotonE/F");
- 
+  CalibTree->Branch("Weight",&weight,"Weight/F");
+  
+
   TLorentzVector jet,genjet, tower;
   for(int i = 0; i < nevents ; ++i) {
     genInput();
@@ -340,11 +348,180 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   return CalibTree->GetEntriesFast();
 }
 
+int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
+{
+  //make tree 
+  const int kMAX = 1000;
+  int NobjTow;
+  float towet[kMAX];
+  float toweta[kMAX];
+  float towphi[kMAX];
+  float towen[kMAX];
+  float towem[kMAX];
+  float towhd[kMAX];
+  float towoe[kMAX];
+  int towid_phi[kMAX];
+  int towid_eta[kMAX];
+  int towid[kMAX];
+  int tow_jetidx[kMAX];
+  
+  const int kjMAX = 2;
+  int NobjJet = 2;
+  float jetpt[kjMAX];
+  float jetphi[kjMAX];
+  float jeteta[kjMAX];
+  float jetet[kjMAX];
+  float jete[kjMAX]; 
+  float jetgenpt[kjMAX];
+  float jetgenphi[kjMAX];
+  float jetgeneta[kjMAX];
+  float jetgenet[kjMAX];
+  float jetgene[kjMAX];
+  float weight = 1;
+  // CaloTower branches
+  CalibTree->Branch("NobjTow",&NobjTow,"NobjTow/I");
+  CalibTree->Branch("TowId",towid,"TowId[NobjTow]/I");
+  CalibTree->Branch("TowId_phi",towid_phi,"TowId_phi[NobjTow]/I");
+  CalibTree->Branch("TowId_eta",towid_eta,"TowId_eta[NobjTow]/I");
+  CalibTree->Branch("TowEt",towet,"TowEt[NobjTow]/F");
+  CalibTree->Branch("TowEta",toweta,"TowEta[NobjTow]/F");
+  CalibTree->Branch("TowPhi",towphi,"TowPhi[NobjTow]/F");
+  CalibTree->Branch("TowE",towen,"TowE[NobjTow]/F");
+  CalibTree->Branch("TowEm",towem,"TowEm[NobjTow]/F");
+  CalibTree->Branch("TowHad",towhd,"TowHad[NobjTow]/F");
+  CalibTree->Branch("TowOE",towoe,"TowOE[NobjTow]/F");
+  CalibTree->Branch("Tow_jetidx",tow_jetidx,"Tow_jetidx[NobjTow]/I");
+  // Jet-specific branches of the tree
+  CalibTree->Branch("NobjJet",&NobjJet,"NobjJet/I"             );
+  CalibTree->Branch("JetPt",jetpt,"JetPt[NobjJet]/F" );
+  CalibTree->Branch("JetPhi",jetphi,"JetPhi[NobjJet]/F");
+  CalibTree->Branch("JetEta",jeteta,"JetEta[NobjJet]/F");
+  CalibTree->Branch("JetEt",jetet,"JetEt[NobjJet]/F" );
+  CalibTree->Branch("JetE",jete,"JetE[NobjJet]/F"  );
+  CalibTree->Branch("Weight",&weight,"Weight/F"  );
+
+
+  TLorentzVector jet[2],genjet[2], tower;
+  for(int n = 0; n < nevents ; ++n) {
+    genInput();
+    jetgenpt[0] = mPinput.Pt();
+    jetgeneta[0] = mPinput.Eta();
+    jetgenphi[0] = mPinput.Phi();
+    jetgenet[0] = mPinput.Pt();
+    jetgene[0] = mPinput.E();
+    //jgenpt = mRandom->Gaus(photonpt,0.04 * photonpt);
+    jetgenpt[1] = jetgenpt[0];
+    jetgeneta[1] = mRandom->Gaus(jetgeneta[0],1.0);
+    if((jetgeneta[1] > 3.3) || (jetgeneta[1] < -3.3)) {
+      --n;
+      continue;
+    }
+    jetgenphi[1] = jetgenphi[0] +M_PI;
+    if(mModel == Flat) mTowConst = 1/mRandom->Uniform(1.5);
+    else if(mModel == Exp) mTowConst = 1/mRandom->Exp(0.5);
+    else if(mModel == Slope) {
+      double u1 = mRandom->Uniform(2);
+      double u2 = mRandom->Uniform(2);
+      mTowConst = 1/(2 - std::max(u1,u2));
+    }
+    float ttowet[kMAX];
+    float ttoweta[kMAX];
+    float ttowphi[kMAX];
+    int ttowid_phi[kMAX];
+    int ttowid_eta[kMAX]; 
+    NobjTow = 0;
+    for(int i = 0 ; i < NobjJet ; ++i) {
+      genjet[i].SetPtEtaPhiM(jetgenpt[i],jetgeneta[i],jetgenphi[i],0);
+      int ntow = splitJet(genjet[i],ttowet,ttoweta,ttowphi,ttowid_eta,
+			  ttowid_phi);  
+      jet[i].SetPtEtaPhiM(0,0,0,0);
+      genjet[i].SetPtEtaPhiM(0,0,0,0);
+      double p0frac = mRandom->Uniform(mMaxPi0Frac);
+      for(int j = 0 ; j < ntow ; ++j) {
+	int k = NobjTow + j;
+	towet[k] = ttowet[j];
+	toweta[k] = ttoweta[j];
+	towphi[k] = ttowphi[j];	
+	towid[k] = 0;
+	towid_eta[k] = ttowid_eta[j];
+	towid_phi[k] = ttowid_phi[j];
+	tow_jetidx[k] = i;
+	tower.SetPtEtaPhiM(towet[k],toweta[k],towphi[k],0);
+	towen[k] =  tower.E();
+	genjet[i] += tower;
+	smearTower((1 - p0frac) * tower.E(),towen[k],towem[k],towhd[k],
+		   towoe[k]); 
+	towen[k] += p0frac * tower.E();
+	towem[k] += p0frac * tower.E();
+	tower *= towen[k]/tower.E();
+	towet[k] = tower.Pt();
+	jet[i] += tower;
+      }
+      NobjTow += ntow; 
+      jetpt[i] = jet[i].Pt();
+      jetphi[i] = jet[i].Phi();
+      jeteta[i] = jet[i].Eta();
+      jetet[i] = jet[i].Pt();
+      jete[i] = jet[i].E(); 
+      jetgenpt[i] = genjet[i].Pt();
+      jetgenphi[i] = genjet[i].Phi();
+      jetgeneta[i] = genjet[i].Eta();
+      jetgenet[i] = genjet[i].Pt();
+      jetgene[i] = genjet[i].E();
+    }
+    if((jeteta[0] < mMinEta) || (jeteta[0] > mMaxEta)) {
+      --n;
+      continue;
+    }
+    if((jeteta[1] > mMinEta) && (jeteta[1] < mMaxEta)
+       && (jetpt[1] > jetpt[0])) {
+      //swap jets
+      jetpt[0] = jet[1].Pt();
+      jetphi[0] = jet[1].Phi();
+      jeteta[0] = jet[1].Eta();
+      jetet[0] = jet[1].Pt();
+      jete[0] = jet[1].E(); 
+      jetgenpt[0] = genjet[1].Pt();
+      jetgenphi[0] = genjet[1].Phi();
+      jetgeneta[0] = genjet[1].Eta();
+      jetgenet[0] = genjet[1].Pt();
+      jetgene[0] = genjet[1].E();
+      jetpt[1] = jet[0].Pt();
+      jetphi[1] = jet[0].Phi();
+      jeteta[1] = jet[0].Eta();
+      jetet[1] = jet[0].Pt();
+      jete[1] = jet[0].E(); 
+      jetgenpt[1] = genjet[0].Pt();
+      jetgenphi[1] = genjet[0].Phi();
+      jetgeneta[1] = genjet[0].Eta();
+      jetgenet[1] = genjet[0].Pt();
+      jetgene[1] = genjet[0].E();
+      for(int j = 0 ; j < NobjTow ; ++j) {
+	tow_jetidx[j] = (tow_jetidx[j] == 0) ? 1 : 0;
+      }
+    }
+    CalibTree->Fill();
+    if(n % 1000 == 0) std::cout << "writing event " << n << '\n';
+  } 
+  return CalibTree->GetEntriesFast();
+}
+
 int ToyMC::makePhotonJet(const char* filename, int nevents) {
   TFile* file = new TFile(filename,"recreate");
   TTree* CalibTree = new TTree("GammaJetTree","GammaJetTree");
 
   nevents = generatePhotonJetTree(CalibTree,nevents);
+  //file->ls();
+  file->Write();
+  file->Close();
+  return nevents;
+}
+
+int ToyMC::makeDiJet(const char* filename, int nevents) {
+  TFile* file = new TFile(filename,"recreate");
+  TTree* CalibTree = new TTree("DiJetTree","DiJetTree");
+
+  nevents = generateDiJetTree(CalibTree,nevents);
   //file->ls();
   file->Write();
   file->Close();
