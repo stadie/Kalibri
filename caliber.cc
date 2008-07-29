@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.31 2008/07/23 11:44:37 csander Exp $
+// $Id: caliber.cc,v 1.32 2008/07/24 13:13:08 stadie Exp $
 //
 //
 // for profiling:
@@ -214,15 +214,22 @@ void FitWithoutBottom(TH1 * hist, TF1 * func, double bottom=0.33)
 
 void TCaliber::FlattenSpectra()
 {
+  double allweights=0;
+ for(int i=0;i<7;++i)
+   allweights += RelWeight[i];
   for (int type=0; type<7; ++type){
     if (type==TypeDefault) continue; //types are defined in CalibData.h
-    if (type==TypeMessMess) continue;
+    //if (type==TypeMessMess) continue;
     //if (type==TypePtBalance) continue;
 
-    map<int,double> weights;
-    double tot=0.;
+    map<int,double> weights[7];
+    double tot[7];
+    double alltotal=0;
+    for(int i=0;i<7;++i)
+      tot[i]=0.;
 
     for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
+      alltotal+=(*it)->GetWeight();
       if ((*it)->GetType()!=type) continue;
       double em = 0;
       double had = 0;
@@ -247,10 +254,10 @@ void TCaliber::FlattenSpectra()
       //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
       int bin = GetSpectraBin( (*it)->GetScale(), index );
       //int bin = GetSpectraBin( (*it)->GetScale() );
-      weights[bin]+=(*it)->GetWeight();
-      tot+=(*it)->GetWeight();
+      weights[type][bin]+=(*it)->GetWeight();
+      tot[type]+=(*it)->GetWeight();
     }
-    if (tot!=0.)
+    if (tot[type]!=0.)
     for (DataIter it = data.begin(); it!=data.end(); ++it) {
       if ((*it)->GetType()!=type) continue;
 
@@ -276,7 +283,12 @@ void TCaliber::FlattenSpectra()
       int bin = GetSpectraBin( (*it)->GetScale(), index );
       //int bin = GetSpectraBin( (*it)->GetScale() );
       //(*it)->SetWeight(1);
-      (*it)->SetWeight((*it)->GetWeight()/weights[bin] * (double(tot) / double(weights.size())));
+
+
+      //(*it)->SetWeight((*it)->GetWeight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
+      (*it)->SetWeight((*it)->GetWeight()/weights[type][bin] * (double(alltotal) / double(weights[type].size()) )  * RelWeight[type] / allweights );
+
+
       //(*it)->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
     }
 
@@ -470,7 +482,7 @@ void TCaliber::Run_GammaJet()
         gammajet.JetCalPt<Et_cut_on_jet) continue;
 
 
-    //if (gammajet.NonLeadingJetPt   / gammajet.PhotonPt >  Rel_cut_on_gamma)  continue;    //fraction of unwanted stuff
+    if (gammajet.NonLeadingJetPt   / gammajet.PhotonPt >  Rel_cut_on_gamma)  continue;    //fraction of unwanted stuff
 
      
     //Find the jets eta & phi index using the nearest tower to jet axis:
@@ -1108,7 +1120,8 @@ void TCaliber::Run_Lvmini()
   }
 
   //float eps =float(1.E-6*data.size());
-  float eps =float(1.E-6);
+  //float eps =float(1.E-6);
+  float eps =float(1.E-4);
   float wlf1=1.E-4;
   float wlf2=0.9;
   lvmeps_(eps,wlf1,wlf2);
@@ -1342,6 +1355,14 @@ void TCaliber::Init(string file)
   Et_cut_nplus1Jet = config.read<double>("Et cut on n+1 Jet",10.0);
   Rel_cut_on_nJet  =  config.read<double>("Relative n+1 Jet Et Cut",0.2);
   Rel_cut_on_gamma =  config.read<double>("Relative Rest Jet Cut",0.2);
+  //relative sample weight 
+  RelWeight[2]        = config.read<double>("Gamma-Jet weight",1.0);
+  RelWeight[1]        = config.read<double>("Track-Tower weight",1.0);
+  RelWeight[3]        = config.read<double>("Track-Cluster weight",1.0);
+  RelWeight[4]        = config.read<double>("Di-Jet weight",1.0);
+  RelWeight[5]        = config.read<double>("Multi-Jet weight",1.0);
+  //RelWeight[2]        = config.read<double>("Z-Jet weight",1.0);
+
   //specify constraints
   vector<double> tower_constraint = bag_of<double>(config.read<string>( "Tower Constraint",""));
   if(tower_constraint.size() % 5 == 0) {

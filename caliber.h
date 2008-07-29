@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.22 2008/07/16 12:52:03 thomsen Exp $
+// $Id: caliber.h,v 1.23 2008/07/23 07:54:23 csander Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -81,6 +81,7 @@ private:
   double Et_cut_on_jet, Et_cut_on_gamma, Et_cut_nplus1Jet,     //kin. cuts
          Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster, Et_cut_on_Z,
          Rel_cut_on_gamma, Rel_cut_on_nJet;
+  double RelWeight[7];
 
   std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals
   double OutlierChi2Cut;                            // Cut on outlier when no scaling is chosen
