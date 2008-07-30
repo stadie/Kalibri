@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.25 2008/07/16 12:20:14 auterman Exp $
+// $Id: Parameters.h,v 1.26 2008/07/17 08:32:46 csander Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -65,37 +65,36 @@ public :
     return x[0];
   }
 
-  template<int Et> static double const_error(double * x) {
+  //Error parametrization functions:
+  template<int Et> static double const_error(double * x, double * xorig=0, double errorig=0) {
     return Et;
   }
-
-  /*
-  static double tower_error_parametrization(double * x) {        
-    return (x[0]>0 ? 0.0*x[0] + 1.0*sqrt( x[0]) + 0. :     
-	    0.0*x[0] - 1.0*sqrt(-x[0]) + 0.);  
-  }
-  static double jet_error_parametrization(double * x) {
-    return (x[0]>0. ? 0.05*x[0] + 1.0*sqrt( x[0]) + 0.:
-	    0.05*x[0] - 1.0*sqrt(-x[0]) + 0.); 
-  }
-  */
-
-  static double tower_error_parametrization(double * x) {        
+  static double tower_error_parametrization(double * x, double * xorig=0, double errorig=0) {        
     return (x[0]>0 ?  1.25 * sqrt( x[0])   :   1.25 * sqrt(-x[0]) );  
   }
-  static double jet_error_parametrization(double * x) {
+  static double jet_error_parametrization(double * x, double * xorig=0, double errorig=0) {
     return (x[0]>0. ? 0.033*x[0] + 5.6   :   0.03*(-x[0]) + 5.6); 
   }
-
-  /*
-  static double tower_error_parametrization(double * x) {        
-    return 0.;  
+  static double dummy_error_parametrization(double * x, double * xorig=0, double errorig=0) {        
+    return x[0];  
   }
-  static double jet_error_parametrization(double * x) {
-    return (x[0]>0. ? 1.25*sqrt(x[0]) + 0.033*x[0] + 5.6 : 1.25*sqrt(-x[0]) + 0.03*(-x[0]) + 5.6); 
+  static double fast_error_parametrization(double * x, double * xorig, double errorig) {        
+    return (xorig[0]=0. ? errorig : errorig*x[0]/xorig[0] );  
   }
-  */
 
+  static double jans_E_tower_error_parametrization(double * x, double * xorig=0, double errorig=0) {        
+    // E = x[0]*xorig[7];  x[0]=param. mess;    xorig == _mess
+    double pmess;
+    if(std::abs(xorig[4]) < 3.0)  
+      pmess =  x[0] * xorig[6] / (xorig[0] * xorig[0]) * (xorig[2] + xorig[3]); //Et->E hadronic
+    else
+      pmess =  x[0] * (xorig[6] / xorig[0]);  //Et->E 
+    return (xorig[6]!=0. ? tower_error_parametrization(&pmess,xorig,errorig) * xorig[0] / xorig[6] : 0.0);
+  }
+
+
+
+  //Plot paramterization stuff
   static double plot_parametrization(double * x,double *par) {
     return tower_parametrization(x,par)/x[0]; 
   }
@@ -104,6 +103,7 @@ public :
     return jet_parametrization(x,par)/x[0];
   }
 
+  //Limiting parameters
   static double parameter_limit(double *x, double *par) {
     double min = x[0];
     double max = x[1];

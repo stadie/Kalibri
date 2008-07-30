@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.32 2008/07/24 13:13:08 stadie Exp $
+// $Id: caliber.cc,v 1.33 2008/07/29 14:05:13 thomsen Exp $
 //
 //
 // for profiling:
@@ -534,7 +534,7 @@ void TCaliber::Run_GammaJet()
 			  p->GetJetParRef( jet_index ),                     //params
 			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
 			  p->jet_parametrization,                           //function
-			  p->jet_error_parametrization,                     //function
+			  jet_error_param,                                  //error param. function
 			  jetp
 			  );
 
@@ -573,7 +573,7 @@ void TCaliber::Run_GammaJet()
 					   p->GetTowerParRef( index ),                              //parameter//
 					   p->GetNumberOfTowerParametersPerBin(),                   //number of free tower param. p. bin//
 					   p->tower_parametrization,                                //function//
-					   p->tower_error_parametrization                           //function//
+					   tower_error_param                                        //error param.func.//
 					   ));
     } 
     if (EM/F<0.05 || EM/F>0.95) continue;
@@ -643,7 +643,7 @@ void TCaliber::Run_ZJet()
 			  p->GetJetParRef( jet_index ),             //params
 			  p->GetNumberOfJetParametersPerBin(),      //number of free jet param. p. bin
 			  p->jet_parametrization,                   //function
-			  p->jet_error_parametrization,             //function
+			  jet_error_param,                                  //error param. function
 			  jetp
 			  );
 
@@ -679,7 +679,7 @@ void TCaliber::Run_ZJet()
 					   p->GetTowerParRef( index ),                     //parameter//
 					   p->GetNumberOfTowerParametersPerBin(),          //number of free tower param. p. bin//
 					   p->tower_parametrization,                       //function//
-					   p->tower_error_parametrization                  //function//
+					   tower_error_param                                        //error param.func.//
 					   ));
     } 
  
@@ -732,7 +732,7 @@ void TCaliber::Run_TrackTower()
 					 p->GetTowerParRef( index ),                          //parameter//
 					 p->GetNumberOfTowerParametersPerBin(),               //number of free tower param. p. bin//
 					 p->tower_parametrization,                            //function//
-					 p->tower_error_parametrization                       //function//
+ 				         tower_error_param                                        //error param.func.//
 					 ) );
       if((evt++)%1000==0) cout<<"Track-Tower Event: "<<evt<<endl;
       break;//use only one track-tower per event! ->bug in the producer
@@ -775,7 +775,7 @@ void TCaliber::Run_TrackCluster()
 							0,                                                 //params
 							0,                                                 //number of free jet param. p. bin
 							p->dummy_parametrization,                          //function
-							p->jet_error_parametrization,                      //function
+			                                jet_error_param,                                  //error param. function
 							clusterp);
     tc->SetType( TypeTrackCluster );
     //Add the towers to the event
@@ -809,7 +809,7 @@ void TCaliber::Run_TrackCluster()
 						    p->GetTowerParRef( index ),                                //parameter//
 						    p->GetNumberOfTowerParametersPerBin(),                     //number of free cluster param. p. bin//
 						    p->tower_parametrization,                                  //function//
-						    p->tower_error_parametrization                             //function//
+					            tower_error_param                                        //error param.func.//
 						    );
       tc->AddMess( tower );
     } 
@@ -876,7 +876,7 @@ void TCaliber::AddTowerConstraint()
 						     p->GetTowerParRef(index), //parameter
 						     p->GetNumberOfTowerParametersPerBin(), //number of free cluster param. p. bin
 						     p->tower_parametrization, //function
-						     p->const_error<10> //function
+						     p->const_error<10> //error param.
 						     );
 	tc->AddMess(tower);
       } 
@@ -967,7 +967,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
 	  p->jet_parametrization,                        //function
 	  //p->dummy_parametrization,
-	  p->jet_error_parametrization,                  //function
+          jet_error_param,                                  //error param. function
 	  jetp                                           //jet momentum for plotting and scale
         );
       //Add the jet's towers to "jj_data":
@@ -1005,7 +1005,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	    p->GetTowerParRef( index ),                             //parameter//
 	    p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
 	    p->tower_parametrization,                               //function//
-	    p->tower_error_parametrization                          //function//
+	    tower_error_param                                       //error param. function//
 	  ));
       }
       if(nstoredjets> 0)  
@@ -1345,6 +1345,29 @@ void TCaliber::Init(string file)
     std::cout << "wrong number of arguments for Tower Parameter Limits:" 
 	      << limits.size() << '\n';
   }
+  
+  //Error Parametrization...
+  //...for tower:
+  string te = config.read<string>("tower error parametrization","standard"); 
+  if (te=="standard")
+    tower_error_param = p->tower_error_parametrization;
+  else if (te=="fast")
+    tower_error_param = p->fast_error_parametrization;
+  else if (te=="Jans E parametrization")
+    tower_error_param = p->jans_E_tower_error_parametrization;
+  else  
+    tower_error_param = p->tower_error_parametrization;
+  //...for jets:
+  string je = config.read<string>("jet error parametrization","standard");
+  if (je=="standard")
+     jet_error_param   = p->jet_error_parametrization;
+  else if (je=="fast")
+     jet_error_param   = p->fast_error_parametrization;
+  else if (je=="dummy")
+     jet_error_param   = p->dummy_error_parametrization;
+  else 
+     jet_error_param   = p->jet_error_parametrization;
+
   //last minute kinematic cuts
   Et_cut_on_jet   = config.read<double>("Et cut on jet",0.0); 
   Et_cut_on_gamma = config.read<double>("Et cut on gamma",0.0); 

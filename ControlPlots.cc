@@ -2187,9 +2187,9 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
 }
 
 
-
 void TControlPlots::DiJetControlPlots()
 {
+/*
   TCanvas * c1 = new TCanvas("controlplots","",600,600);
   TCanvas * c2 = new TCanvas("controlplotsGauss","",600,600);
   c2->Divide(1,3);
@@ -2478,30 +2478,6 @@ void TControlPlots::DiJetControlPlots()
 	gaussplots[1][k]->SetMarkerStyle(22);
 	gaussplots[1][k]->SetMarkerColor(2);
       }
-    /*
-    for(int b=0;b<3;++b) 
-      {
-	for(int a=0; a<2;++a) // 1: B after correction, 2: B before correction
-	  {
-	    if(i==0)    
-	      gaussplots[a][b]->SetTitle("di-jet full energy range;#eta");
-	    if(i==2)    
-	      gaussplots[a][b]->SetTitle("di-jet 10 < P_{T}^{scale} < 35 GeV;#eta");
-	    if(i==4)    
-	      gaussplots[a][b]->SetTitle("di-jet 35 < P_{T}^{scale} < 90 GeV;#eta");
-	    if(i==6)    
-	      gaussplots[a][b]->SetTitle("di-jet 90 < P_{T}^{scale} < 300 GeV;#eta");
-	    c2->cd(b);
-	    if(a==0)	    gaussplots[a][b]->Draw();
-	    else            gaussplots[a][b]->Draw("same");
-	    gf[a][b]->Draw("same");
-	  }
-	c2->Update();
-	c2->Draw();
-	ps.NewPage();
-      }
-    c1->cd();
-    */
     for(int j = 0 ; j < 8 ; ++j) 
       {
 	hists[i][j]->Draw();
@@ -2545,23 +2521,6 @@ void TControlPlots::DiJetControlPlots()
       gaussplots[1][k]->SetMarkerStyle(22);
       gaussplots[1][k]->SetMarkerColor(2);
     }
-  /*
-  for(int b=0;b<3;++b)
-    { 
-      for(int a=0; a<2;++a)
-	{
-	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
-	  c2->cd(b);
-	  if(a==0)	    gaussplots[a][b]->Draw();
-	  else            gaussplots[a][b]->Draw("same");
-	  gf[a][b]->Draw("same");
-	}
-      c2->Update();
-      c2->Draw();
-      ps.NewPage();
-    }
-  c1->cd();
-  */
   for(int i = 0 ; i < 8 ; ++i) {
     hists[0][i]->Draw();
     hists[0][i]->SetStats(0);
@@ -2603,23 +2562,6 @@ void TControlPlots::DiJetControlPlots()
       gaussplots[1][k]->SetMarkerStyle(22);
       gaussplots[1][k]->SetMarkerColor(2);
     }
-  /*
-  for(int b=0;b<3;++b)
-    { 
-      for(int a=0; a<2;++a)
-	{
-	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
-	  c2->cd(b);
-	  if(a==0)	    gaussplots[a][b]->Draw();
-	  else            gaussplots[a][b]->Draw("same");
-	  gf[a][b]->Draw("same");
-	}
-      c2->Update();
-      c2->Draw();
-      ps.NewPage();
-    }
-  c1->cd();
-  */
   for(int i = 0 ; i < 8 ; ++i) {
     hists[0][i]->Draw();
     hists[0][i]->SetStats(0);
@@ -2659,23 +2601,6 @@ void TControlPlots::DiJetControlPlots()
       gaussplots[1][k]->SetMarkerStyle(22);
       gaussplots[1][k]->SetMarkerColor(2);
     }
-  /*
-  for(int b=0;b<3;++b)
-    { 
-      for(int a=0; a<2;++a) 
-	{
-	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
-	  c2->cd(b);
-	  if(a==0)	    gaussplots[a][b]->Draw();
-	  else            gaussplots[a][b]->Draw("same");
-	  gf[a][b]->Draw("same");
-	}
-      c2->Update();
-      c2->Draw();
-      ps.NewPage();
-    }
-  c1->cd();
-  */
 
   for(int i = 0 ; i < 8 ; ++i) {
     hists[0][i]->Draw();
@@ -2717,23 +2642,6 @@ void TControlPlots::DiJetControlPlots()
       gaussplots[1][k]->SetMarkerStyle(22);
       gaussplots[1][k]->SetMarkerColor(2);
     }
-  /*
-  for(int b=0;b<3;++b)
-    { 
-      for(int a=0; a<2;++a)
-	{
-	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
-	  c2->cd(b);
-	  if(a==0)	    gaussplots[a][b]->Draw();
-	  else            gaussplots[a][b]->Draw("same");
-	  gf[a][b]->Draw("same");
-	}
-      c2->Update();
-      c2->Draw();
-      ps.NewPage();
-    }
-  c1->cd();
-  */
   for(int i = 0 ; i < 2 ; ++i) 
     {
       for(int j=0; j<3;++j)
@@ -2768,24 +2676,24 @@ void TControlPlots::DiJetControlPlots()
     delete Bemf[i];
   }
   
-  /*
-  c1->SetLogx(0);
-  TF1* line = new TF1("line","x",0,200);
-  for(int i=0;i<5;++i)
-    {
-      combmean[i]->Draw("Box");
-      line->Draw("same");
-      c1->Draw();   
-      ps.NewPage();
-    }
-  for(int i=0;i<5;++i)
-    {
-      difmean[i]->Draw("Box");
-      line->Draw("same");
-      c1->Draw();   
-      ps.NewPage();
-    }
-  */
+  
+//  c1->SetLogx(0);
+//  TF1* line = new TF1("line","x",0,200);
+//  for(int i=0;i<5;++i)
+//    {
+//      combmean[i]->Draw("Box");
+//      line->Draw("same");
+//      c1->Draw();   
+//      ps.NewPage();
+//    }
+//  for(int i=0;i<5;++i)
+//    {
+//      difmean[i]->Draw("Box");
+//      line->Draw("same");
+//      c1->Draw();   
+//      ps.NewPage();
+//    }
+  
   ps.Close();
 
   for(int i=0;i<5;++i)
@@ -2798,8 +2706,8 @@ void TControlPlots::DiJetControlPlots()
   delete ptspec[0];
   delete ptspec[1];
   //delete line;
+*/
 }
-
 
 void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] )
 {
@@ -2959,7 +2867,7 @@ void TControlPlots::GammaJetSigmas()
       gauss_forptcorr[(int)etjetcor]->Fill( (etjetcor-jg->GetTruth())/etjetcor, jg->GetWeight() );
   }
 
-  double edge;
+  //double edge;
   TText * text = new TText();
   text->SetTextSize(0.03);
   text->SetTextColor(2);
