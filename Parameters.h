@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.26 2008/07/17 08:32:46 csander Exp $
+// $Id: Parameters.h,v 1.27 2008/07/30 15:19:38 auterman Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -55,58 +55,56 @@ public :
   void Print() const;
   friend std::ostream& operator<<( std::ostream& os, const TParameters& c );
   
-  static double tower_parametrization(double *x,double *par) {
+  static double tower_parametrization(TMeasurement *x,double *par) {
     return instance->p->correctedTowerEt(x,par);
   }
-  static double jet_parametrization(double *x,double *par) {
+  static double jet_parametrization(TMeasurement *x,double *par) {
     return instance->p->correctedJetEt(x,par);
   }
-  static double dummy_parametrization(double *x,double *par) {
-    return x[0];
+  static double dummy_parametrization(TMeasurement *x,double *par) {
+    return x->pt;
   }
 
   //Error parametrization functions:
-  template<int Et> static double const_error(double * x, double * xorig=0, double errorig=0) {
+  template<int Et> static double const_error(double * x, TMeasurement * xorig=0, double errorig=0) {
     return Et;
   }
-  static double tower_error_parametrization(double * x, double * xorig=0, double errorig=0) {        
+  static double tower_error_parametrization(double * x, TMeasurement * xorig=0, double errorig=0) {        
     return (x[0]>0 ?  1.25 * sqrt( x[0])   :   1.25 * sqrt(-x[0]) );  
   }
-  static double jet_error_parametrization(double * x, double * xorig=0, double errorig=0) {
+  static double jet_error_parametrization(double * x, TMeasurement * xorig=0, double errorig=0) {
     return (x[0]>0. ? 0.033*x[0] + 5.6   :   0.03*(-x[0]) + 5.6); 
   }
-  static double dummy_error_parametrization(double * x, double * xorig=0, double errorig=0) {        
+  static double dummy_error_parametrization(double * x, TMeasurement * xorig=0, double errorig=0) {        
     return x[0];  
   }
-  static double fast_error_parametrization(double * x, double * xorig, double errorig) {        
-    return (xorig[0]=0. ? errorig : errorig*x[0]/xorig[0] );  
+  static double fast_error_parametrization(double * x, TMeasurement * xorig, double errorig) {        
+    return (xorig->pt=0. ? errorig : errorig*x[0]/xorig->pt );  
   }
-
-  static double jans_E_tower_error_parametrization(double * x, double * xorig=0, double errorig=0) {        
+  static double jans_E_tower_error_parametrization(double * x, TMeasurement * xorig=0, double errorig=0) {        
     // E = x[0]*xorig[7];  x[0]=param. mess;    xorig == _mess
     double pmess;
-    if(std::abs(xorig[4]) < 3.0)  
-      pmess =  x[0] * xorig[6] / (xorig[0] * xorig[0]) * (xorig[2] + xorig[3]); //Et->E hadronic
+    if(std::abs(xorig->eta) < 3.0)  
+      pmess =  x[0] * xorig->E / (xorig->pt * xorig->pt) * (xorig->HadF + xorig->OutF); //Et->E hadronic
     else
-      pmess =  x[0] * (xorig[6] / xorig[0]);  //Et->E 
-    return (xorig[6]!=0. ? tower_error_parametrization(&pmess,xorig,errorig) * xorig[0] / xorig[6] : 0.0);
+      pmess =  x[0] * (xorig->E / xorig->pt);  //Et->E 
+    return (xorig->E!=0. ? tower_error_parametrization(&pmess,xorig,errorig) * xorig->pt / xorig->E : 0.0);
   }
-
 
 
   //Plot paramterization stuff
-  static double plot_parametrization(double * x,double *par) {
-    return tower_parametrization(x,par)/x[0]; 
+  static double plot_parametrization(TMeasurement * x,double *par) {
+    return tower_parametrization(x,par)/x->pt; 
   }
 
-  static double jes_plot_parametrization(double * x,double *par) {
-    return jet_parametrization(x,par)/x[0];
+  static double jes_plot_parametrization(TMeasurement * x,double *par) {
+    return jet_parametrization(x,par)/x->pt;
   }
 
   //Limiting parameters
-  static double parameter_limit(double *x, double *par) {
-    double min = x[0];
-    double max = x[1];
+  static double parameter_limit(TMeasurement *x, double *par) {
+    double min = x->pt;
+    double max = x->EMF;  //@@ Are you sure this is correct????
     if(par[0] < min) return (min-par[0]);
     if(par[0] > max) return (par[0]-max);
     return 0;

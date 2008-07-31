@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.33 2008/07/29 14:05:13 thomsen Exp $
+// $Id: caliber.cc,v 1.34 2008/07/30 15:19:38 auterman Exp $
 //
 //
 // for profiling:
@@ -30,7 +30,6 @@ boost::mutex io_mutex;
 #include "Parameters.h"
 #include "ControlPlots.h"
 #include "CalibMath.h"
-#include "CalibData.h"
 #include "external.h"
 
 #include<TH1F.h>
@@ -49,7 +48,7 @@ typedef std::vector<TData*>::const_iterator DataConstIter;
 struct OutlierRejection {
   OutlierRejection(double cut):_cut(cut){};
   bool operator()(TData *d){
-    if(d->GetType()==TypeTowerConstraint) return true;
+    if(d->GetType()==typeTowerConstraint) return true;
     return (d->chi2()/d->GetWeight())<_cut;
   }
   double _cut;
@@ -59,7 +58,7 @@ struct OutlierRejection {
 struct ControlCutSelection {
   ControlCutSelection(double cut):_cut(cut){};
   bool operator()(TData *d){
-    return d->GetTruth()>_cut && fabs(d->GetMess()[1])<2.5;
+    return d->GetTruth()>_cut && fabs(d->GetMess()->eta)<2.5;
   }
   double _cut;
 };
@@ -70,13 +69,13 @@ struct NotBalancedRejection {
     _cut(cut),_min(min),_max(max){};
   bool operator()(TData *d){
     bool result = false;
-    if(d->GetType()!=TypeGammaJet ||
-       d->GetMess()[0]<_min ||
-       d->GetMess()[0]>_max ||
-       d->GetMess()[0]==0.0 ) result = true;
+    if(d->GetType()!=GammaJet ||
+       d->GetMess()->pt<_min ||
+       d->GetMess()->pt>_max ||
+       d->GetMess()->pt==0.0 ) result = true;
     else
-      result = (1.0-d->GetTruth()/d->GetMess()[0]) >
-               _cut[(int)(d->GetMess()[0]-_min)];
+      result = (1.0-d->GetTruth()/d->GetMess()->pt) >
+               _cut[(int)(d->GetMess()->pt-_min)];
     return result;
   }
   double *_cut;
@@ -214,13 +213,12 @@ void FitWithoutBottom(TH1 * hist, TF1 * func, double bottom=0.33)
 
 void TCaliber::FlattenSpectra()
 {
-  double allweights=0;
+ double allweights=0;
+ //@@ Replace "7" with some more meaningful variable name!!!
  for(int i=0;i<7;++i)
    allweights += RelWeight[i];
-  for (int type=0; type<7; ++type){
-    if (type==TypeDefault) continue; //types are defined in CalibData.h
-    //if (type==TypeMessMess) continue;
-    //if (type==TypePtBalance) continue;
+ for (int type=0; type<7; ++type){
+    if (type==Default || type==MessMess || type==PtBalance) continue;
 
     map<int,double> weights[7];
     double tot[7];
@@ -231,20 +229,20 @@ void TCaliber::FlattenSpectra()
     for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
       alltotal+=(*it)->GetWeight();
       if ((*it)->GetType()!=type) continue;
-      double em = 0;
-      double had = 0;
+      double em = 0.;
+      double had = 0.;
       int index=0;
       double min_tower_dr = 10.;
       //double ptmax=0;
 
-      TLorentzVector Ljet(0,0,0,0);
-      Ljet.SetPtEtaPhiE((*it)->GetMess()[0],(*it)->GetMess()[1],(*it)->GetMess()[2],(*it)->GetMess()[3]);
+      TLorentzVector Ljet(0.,0.,0.,0.);
+      Ljet.SetPtEtaPhiE((*it)->GetMess()->pt,(*it)->GetMess()->eta,(*it)->GetMess()->phi,(*it)->GetMess()->E);
       for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
-	em  += (*t)->GetMess()[1];
-	had += (*t)->GetMess()[2];
-	had += (*t)->GetMess()[3];
-	TLorentzVector Ltower(0,0,0,0);
-	Ltower.SetPtEtaPhiE((*t)->GetMess()[0],(*t)->GetMess()[4],(*t)->GetMess()[5],(*t)->GetMess()[6]);
+	em  += (*t)->GetMess()->EMF;
+	had += (*t)->GetMess()->HadF;
+	had += (*t)->GetMess()->OutF;
+	TLorentzVector Ltower(0.,0.,0.,0.);
+        Ltower.SetPtEtaPhiE((*t)->GetMess()->pt,(*t)->GetMess()->eta,(*t)->GetMess()->phi,(*t)->GetMess()->E);
 	double dr = Ltower.DeltaR(Ljet);
 	if (dr<min_tower_dr) {
 	  index = (*t)->GetIndex();
@@ -266,13 +264,14 @@ void TCaliber::FlattenSpectra()
       int index=0;
       double min_tower_dr = 10.;
       TLorentzVector Ljet(0,0,0,0);
-      Ljet.SetPtEtaPhiE((*it)->GetMess()[0],(*it)->GetMess()[1],(*it)->GetMess()[2],(*it)->GetMess()[3]);
+     
+      Ljet.SetPtEtaPhiE((*it)->GetMess()->pt,(*it)->GetMess()->eta,(*it)->GetMess()->phi,(*it)->GetMess()->E);
       for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
-	em  += (*t)->GetMess()[1];
-	had += (*t)->GetMess()[2];
-	had += (*t)->GetMess()[3];
-	TLorentzVector Ltower(0,0,0,0);
-	Ltower.SetPtEtaPhiE((*t)->GetMess()[0],(*t)->GetMess()[4],(*t)->GetMess()[5],(*t)->GetMess()[6]);
+	em  += (*t)->GetMess()->EMF;
+	had += (*t)->GetMess()->HadF;
+	had += (*t)->GetMess()->OutF;
+	TLorentzVector Ltower(0.,0.,0.,0.);
+        Ltower.SetPtEtaPhiE((*t)->GetMess()->pt,(*t)->GetMess()->eta,(*t)->GetMess()->phi,(*t)->GetMess()->E);
 	double dr = Ltower.DeltaR(Ljet);
 	if (dr<min_tower_dr) {
 	  index = (*t)->GetIndex();
@@ -378,14 +377,14 @@ cout<<"...fill truth histograms for each jet-pT bin"<<endl;
   for ( std::vector<TData*>::iterator i = data.begin(); 
         i != data.end() ; ++i )  {
     TData* jg = *i;
-    if (jg->GetType()!=TypeGammaJet) continue;
+    if (jg->GetType()!=GammaJet) continue;
     
     //double etjetcor = jg->GetParametrizedMess();
-    if(jg->GetMess()[0]>min && jg->GetMess()[0]<max) {
-      gauss_forpt[(int)(jg->GetMess()[0]-min)]->Fill( (jg->GetMess()[0]-jg->GetTruth())/jg->GetMess()[0],jg->GetWeight() );
-      gauss_forpt_truth[(int)(jg->GetMess()[0]-min)]->Fill( jg->GetTruth(),jg->GetWeight() );
-      EMF[(int)(jg->GetMess()[0]-min)] += jg->GetWeight()*jg->GetMess()[3];
-      TOT[(int)(jg->GetMess()[0]-min)] += jg->GetWeight()*jg->GetMess()[0];
+    if(jg->GetMess()->pt>min && jg->GetMess()->pt<max) {
+      gauss_forpt[(int)(jg->GetMess()->pt-min)]->Fill( (jg->GetMess()->pt-jg->GetTruth())/jg->GetMess()->pt,jg->GetWeight() );
+      gauss_forpt_truth[(int)(jg->GetMess()->pt-min)]->Fill( jg->GetTruth(),jg->GetWeight() );
+      EMF[(int)(jg->GetMess()->pt-min)] += jg->GetWeight()*jg->GetMess()->EMF;
+      TOT[(int)(jg->GetMess()->pt-min)] += jg->GetWeight()*jg->GetMess()->pt;
     }      
   }
 
@@ -518,14 +517,13 @@ void TCaliber::Run_GammaJet()
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
 
-    double* jetp  = new double[4];
-    jetp[0] = gammajet.JetCalEt;
-    jetp[1] = gammajet.JetCalEta;
-    jetp[2] = gammajet.JetCalPhi;
-    jetp[3] = gammajet.JetCalE;
+    TMeasurement* jetp  = new TJet;
+    jetp->pt  = gammajet.JetCalEt;
+    jetp->eta = gammajet.JetCalEta;
+    jetp->phi = gammajet.JetCalPhi;
+    jetp->E   = gammajet.JetCalE;
     //Create an Gamma/Jet TData event
-    TData_TruthMultMess * gj_data = new 
-      TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+    TData_TruthMultMess * gj_data = new TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
 			  gammajet.PhotonEt,				    //truth//
 			  //gammajet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
@@ -535,7 +533,7 @@ void TCaliber::Run_GammaJet()
 			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
 			  p->jet_parametrization,                           //function
 			  jet_error_param,                                  //error param. function
-			  jetp
+			  jetp                                              //measurement
 			  );
 
     double EM=0.,F=0.;
@@ -553,18 +551,18 @@ void TCaliber::Run_GammaJet()
       //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
       //This relativeE is used *only* for plotting! Therefore no cuts on this var!
       //create array with multidimensional measurement
-      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-      mess[0] = double(gammajet.TowEt[n]);
+      TMeasurement * mess = new TTower;
+      mess->pt = double(gammajet.TowEt[n]);
       double scale = gammajet.TowEt[n]/gammajet.TowE[n];
-      mess[1] = double(gammajet.TowEm[n]*scale);
-      mess[2] = double(gammajet.TowHad[n]*scale);
-      mess[3] = double(gammajet.TowOE[n]*scale);
-      mess[4] = double(gammajet.TowEta[n]);
-      mess[5] = double(gammajet.TowPhi[n]);
-      mess[6] = double(gammajet.TowE[n]);
-      mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
-      EM+=mess[1];
-      F+=mess[0];
+      mess->EMF = double(gammajet.TowEm[n]*scale);
+      mess->HadF = double(gammajet.TowHad[n]*scale);
+      mess->OutF = double(gammajet.TowOE[n]*scale);
+      mess->eta = double(gammajet.TowEta[n]);
+      mess->phi = double(gammajet.TowPhi[n]);
+      mess->E = double(gammajet.TowE[n]);
+      //mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+      EM+=mess->EMF;
+      F+=mess->pt;
       gj_data->AddMess(new TData_TruthMess(index,
 					   mess,                                                    //mess//
 					   gammajet.PhotonEt * relativEt,                           //truth//
@@ -627,11 +625,12 @@ void TCaliber::Run_ZJet()
     if(em == 0) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
-    double* jetp  = new double[4];
-    jetp[0] = zjet.JetCalEt;
-    jetp[1] = zjet.JetCalEta;
-    jetp[2] = zjet.JetCalPhi;
-    jetp[3] = zjet.JetCalE;
+
+    TMeasurement* jetp  = new TJet;
+    jetp->pt  = zjet.JetCalEt;
+    jetp->eta = zjet.JetCalEta;
+    jetp->phi = zjet.JetCalPhi;
+    jetp->E   = zjet.JetCalE;
     //Create an Z/Jet TData event
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
@@ -661,16 +660,16 @@ void TCaliber::Run_ZJet()
       //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
       //This relativeE is used *only* for plotting! Therefore no cuts on this var!
       //create array with multidimensional measurement
-      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-      mess[0] = double(zjet.TowEt[n]);
+      TMeasurement * mess = new TTower;
+      mess->pt = double(zjet.TowEt[n]);
       double scale = zjet.TowEt[n]/zjet.TowE[n];
-      mess[1] = double(zjet.TowEm[n]*scale);
-      mess[2] = double(zjet.TowHad[n]*scale);
-      mess[3] = double(zjet.TowOE[n]*scale);
-      mess[4] = double(zjet.TowEta[n]);
-      mess[5] = double(zjet.TowPhi[n]);
-      mess[6] = double(zjet.TowE[n]);
-      mess[7] = double( cos( zjet.JetCalPhi-zjet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+      mess->EMF = double(zjet.TowEm[n]*scale);
+      mess->HadF = double(zjet.TowHad[n]*scale);
+      mess->OutF = double(zjet.TowOE[n]*scale);
+      mess->eta = double(zjet.TowEta[n]);
+      mess->phi = double(zjet.TowPhi[n]);
+      mess->E = double(zjet.TowE[n]);
+      //mess[7] = double( cos( zjet.JetCalPhi-zjet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       gj_data->AddMess(new TData_TruthMess(index,
 					   mess,                                           //mess//
 					   zjet.ZEt * relativEt,                           //truth//
@@ -712,16 +711,16 @@ void TCaliber::Run_TrackTower()
 	continue;
       }
       //create array with multidimensional measurement
-      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-      mess[0] = double(tracktower.TowEt[n]);
+      TMeasurement * mess = new TTower;
+      mess->pt = double(tracktower.TowEt[n]);
       double scale = tracktower.TowEt[n]/tracktower.TowE[n];
-      mess[1] = double(tracktower.TowEm[n])*scale;
-      mess[2] = double(tracktower.TowHad[n]*scale);
-      mess[3] = double(tracktower.TowOE[n])*scale;
-      mess[4] = double(tracktower.TowEta[n]);
-      mess[5] = double(tracktower.TowPhi[n]);
-      mess[6] = double(tracktower.TowE[n]);
-      mess[7] = double( cos( tracktower.TrackPhi[n]-tracktower.TowPhi[n] ) ); // Projection factor for summing tower Pt
+      mess->EMF = double(tracktower.TowEm[n]*scale);
+      mess->HadF = double(tracktower.TowHad[n]*scale);
+      mess->OutF = double(tracktower.TowOE[n]*scale);
+      mess->eta = double(tracktower.TowEta[n]);
+      mess->phi = double(tracktower.TowPhi[n]);
+      mess->E = double(tracktower.TowE[n]);
+      //mess[7] = double( cos( tracktower.JetCalPhi-tracktower.TowPhi[n] ) ); // Projection factor for summing tower Pt
       data.push_back(new TData_TruthMess(index,
 					 mess,                                                //mess//
 					 tracktower.TrackEt[n],                               //truth//
@@ -761,11 +760,11 @@ void TCaliber::Run_TrackCluster()
       cluster_energy += trackcluster.TowEt[n];
 
     if (trackcluster.TrackEt < Et_cut_on_track || cluster_energy < Et_cut_on_cluster) continue;
-    double* clusterp  = new double[4];
-    clusterp[0] = cluster_energy;
-    clusterp[1] = trackcluster.TrackEta;
-    clusterp[2] = trackcluster.TrackPhi;
-    clusterp[3] = trackcluster.TrackE;
+    TMeasurement* clusterp  = new TJet;
+    clusterp->pt  = cluster_energy;
+    clusterp->eta = 0;
+    clusterp->phi = 0;
+    clusterp->E   = 0;
     //Define Track-Cluster event	
     TData_TruthMultMess * tc = new TData_TruthMultMess( 0,
 							trackcluster.TrackEt,  			           //truth//
@@ -777,7 +776,7 @@ void TCaliber::Run_TrackCluster()
 							p->dummy_parametrization,                          //function
 			                                jet_error_param,                                  //error param. function
 							clusterp);
-    tc->SetType( TypeTrackCluster );
+    tc->SetType( TrackCluster );
     //Add the towers to the event
     for (int n=0; n<trackcluster.NobjTowCal; ++n){
       //if (trackcluster.TrackEt[n]<Et_cut_on_track)
@@ -789,16 +788,16 @@ void TCaliber::Run_TrackCluster()
 	continue;
       }
       //create array with multidimensional measurement
-      double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-      mess[0] = double(trackcluster.TowEt[n]);
+      TMeasurement * mess = new TTower;
+      mess->pt = double(trackcluster.TowEt[n]);
       double scale = trackcluster.TowEt[n]/trackcluster.TowE[n];
-      mess[1] = double(trackcluster.TowEm[n]*scale);
-      mess[2] = double(trackcluster.TowHad[n]*scale);
-      mess[3] = double(trackcluster.TowOE[n]*scale);
-      mess[4] = double(trackcluster.TowEta[n]);
-      mess[5] = double(trackcluster.TowPhi[n]);
-      mess[6] = double(trackcluster.TowE[n]);
-      mess[7] = double( cos( trackcluster.TrackPhi-trackcluster.TowPhi[n] ) ); // Projection factor for summing tower Pt
+      mess->EMF = double(trackcluster.TowEm[n]*scale);
+      mess->HadF = double(trackcluster.TowHad[n]*scale);
+      mess->OutF = double(trackcluster.TowOE[n]*scale);
+      mess->eta = double(trackcluster.TowEta[n]);
+      mess->phi = double(trackcluster.TowPhi[n]);
+      mess->E = double(trackcluster.TowE[n]);
+      //mess[7] = double( cos( trackcluster.JetCalPhi-trackcluster.TowPhi[n] ) ); // Projection factor for summing tower Pt
 
       TData_TruthMess * tower = new TData_TruthMess(index,
 						    mess,                                                      //mess//
@@ -834,11 +833,12 @@ void TCaliber::AddTowerConstraint()
     int ntowers= (ic->maxeta - ic->mineta + 1) * 72;
     if((ic->maxeta  > 0) && (ic->mineta < 0)) ntowers -= 72;
     double etsum = ic->hadEt + ic->emEt;
-    double* constraintp = new double[4];
-    constraintp[0] = etsum;
-    constraintp[1] = 0;
-    constraintp[2] = 0;
-    constraintp[3] = etsum;
+    TMeasurement* constraintp  = new TMeasurement;
+    constraintp->pt  = etsum;
+    constraintp->eta = 0;
+    constraintp->phi = 0;
+    constraintp->E   = etsum;
+   
     TData_TruthMultMess * tc = new TData_TruthMultMess(0,
 						       etsum * ntowers, //truth
 						       sqrt(pow(0.5,2)+ pow(0.1*etsum * ntowers,2)), //error
@@ -848,7 +848,7 @@ void TCaliber::AddTowerConstraint()
 						       p->dummy_parametrization, // function
 						       p->const_error<10000>, // function
 						       constraintp);
-    tc->SetType(TypeTowerConstraint);
+    tc->SetType( typeTowerConstraint );
     //Add the towers to the event
     for(int ideta = ic->mineta ; ideta <= ic->maxeta  ; ++ideta) {
       if(ideta == 0) ideta = 1;
@@ -859,15 +859,15 @@ void TCaliber::AddTowerConstraint()
 	  continue;
 	}
 	//create array with multidimensional measurement
-	double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-	mess[0] = etsum;
-	mess[1] = ic->emEt;
-	mess[2] = ic->hadEt;
-	mess[3] = 0;
-	mess[4] = 0;
-	mess[5] = 0;
-	mess[6] = etsum;
-	mess[7] = 1.;
+	TMeasurement * mess = new TMeasurement;
+	mess->pt = etsum;
+	mess->EMF = ic->emEt;
+	mess->HadF = ic->hadEt;
+	mess->OutF = 0;
+	mess->eta = 0;
+	mess->phi = 0;
+	mess->E = etsum;
+	//mess[7] = double( cos( trackcluster.JetCalPhi-trackcluster.TowPhi[n] ) ); // Projection factor for summing tower Pt
 	TData_TruthMess *tower = new TData_TruthMess(index,
 						     mess, //mess
 						     etsum, //"truth" for plotting only
@@ -892,10 +892,10 @@ void TCaliber::AddParameterLimits()
       pl != par_limits.end() ; ++pl) {
     std::cout << "adding limit for parameter " << pl->index+1 << " min:" 
 	      << pl->min << " max:" << pl->max << " k:" << pl->k << '\n';
-    double* limit = new double[2];
-    limit[0] = pl->min;
-    limit[1] = pl->max;
-    TData_ParLimit * parlim = new TData_ParLimit(pl->index,limit,pl->k,p->GetPars() + pl->index,p->parameter_limit);
+    TMeasurement* limitp  = new TMeasurement;
+    limitp->pt  = pl->min;//@@Add new TMeasurement derivative
+    limitp->eta = pl->max;
+    TData_ParLimit * parlim = new TData_ParLimit(pl->index,limitp,pl->k,p->GetPars() + pl->index,p->parameter_limit);
     data.push_back(parlim);
   }
 }
@@ -950,11 +950,11 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       double * direction = new double[2];
       direction[0] = sin(njet.JetPhi[ij]);
       direction[1] = cos(njet.JetPhi[ij]);
-      double* jetp  = new double[4];
-      jetp[0] = njet.JetEt[ij];
-      jetp[1] = njet.JetEta[ij];
-      jetp[2] = njet.JetPhi[ij];
-      jetp[3] = njet.JetE[ij];
+      TMeasurement* jetp  = new TJet;
+      jetp->pt  = njet.JetEt[ij];
+      jetp->eta = njet.JetEta[ij];
+      jetp->phi = njet.JetPhi[ij];
+      jetp->E   = njet.JetE[ij];
       //Create an jet/Jet TData event
       jj_data[nstoredjets] = new TData_PtBalance( 
           jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
@@ -967,7 +967,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
 	  p->jet_parametrization,                        //function
 	  //p->dummy_parametrization,
-          jet_error_param,                                  //error param. function
+          jet_error_param,                               //error param. function
 	  jetp                                           //jet momentum for plotting and scale
         );
       //Add the jet's towers to "jj_data":
@@ -984,16 +984,16 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	//if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
 	//This relativeE is used *only* for plotting! Therefore no cuts on this var!
 	//create array with multidimensional measurement
-	double * mess = new double[__DimensionMeasurement]; //__DimensionMeasurement difined in CalibData.h
-	mess[0] = double(njet.TowEt[n]);
+	TMeasurement * mess = new TTower;
+	mess->pt = double(njet.TowEt[n]);
 	double scale = njet.TowEt[n]/njet.TowE[n];
-	mess[1] = double(njet.TowEm[n]*scale);
-	mess[2] = double(njet.TowHad[n]*scale);
-	mess[3] = double(njet.TowOE[n]*scale);
-	mess[4] = double(njet.TowEta[n]);
-	mess[5] = double(njet.TowPhi[n]);
-	mess[6] = double(njet.TowE[n]);
-	mess[7] = double( cos( njet.JetPhi[ij]-njet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+	mess->EMF = double(njet.TowEm[n]*scale);
+	mess->HadF = double(njet.TowHad[n]*scale);
+	mess->OutF = double(njet.TowOE[n]*scale);
+	mess->eta = double(njet.TowEta[n]);
+	mess->phi = double(njet.TowPhi[n]);
+	mess->E = double(njet.TowE[n]);
+	//mess[7] = double( cos( njet.JetCalPhi-njet.TowPhi[n] ) ); // Projection factor for summing tower Pt
 
 	jj_data[nstoredjets]->AddMess(new TData_TruthMess(
 	    index,
@@ -1017,17 +1017,17 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
     if (nstoredjets > injet){
       /*
       for (int i=0; i < nstoredjets; ++i){
-	cout<<i<<"-ter Jet Pt: "<<jj_data[i]->GetMess()[0]<<endl;
+	cout<<i<<"-ter Jet Pt: "<<jj_data[i]->GetMess()->pt<<endl;
       }
       */
       //relative Pt cut only works if jets are Pt sorted
       double scale=0;
       for (int i=0; i < injet; ++i){
-	scale += jj_data[i]->GetMess()[0];
+	scale += jj_data[i]->GetMess()->pt;
       }
       scale /= injet;
       //cout<<"scale: "<<scale<<endl;
-      if ( jj_data[injet]->GetMess()[0] > scale*Rel_cut_on_nJet ) goodevent = false;
+      if ( jj_data[injet]->GetMess()->pt > scale*Rel_cut_on_nJet ) goodevent = false;
     }
       /*
       //sort jets. 1st is barrel, 2nd is probe

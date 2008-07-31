@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.12 2008/07/23 16:04:50 thomsen Exp $
+// $Id: CalibData.cc,v 1.13 2008/07/30 15:19:38 auterman Exp $
 //
 #include "CalibData.h"
 #include "map"
@@ -64,7 +64,9 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
   for (std::vector<TData*>::const_iterator it=_vecmess.begin();
        it!=_vecmess.end(); ++it) {
     new_mess    = (*it)->GetParametrizedMess();	 
-    sum_mess   += new_mess * (*it)->GetMess()[7]; // Sum of tower Pt
+    //@@ Why not replacing "tower pT" by "tower pT * (*it)->GetMess()[7]"
+    //   directly when TData vector is filled ???
+    sum_mess   += new_mess; // * (*it)->GetMess()[7]; // Sum of tower Pt
     new_error   = (*it)->GetParametrizedErr(&new_mess);
     new_error2  = new_error * new_error;
     sum_error2 +=  new_error2;
@@ -74,19 +76,19 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
 	double oldpar = (*it)->GetPar()[i-idx];
 	(*it)->GetPar()[i-idx]  += epsilon;
 	dmess_dp  =(*it)->GetParametrizedMess();
-	sm2[i]   += dmess_dp * (*it)->GetMess()[7]; // Sum of tower Pt
+	sm2[i]   += dmess_dp;// * (*it)->GetMess()[7]; // Sum of tower Pt
 	new_error = (*it)->GetParametrizedErr(&dmess_dp);
 	se2[i]   += new_error * new_error;
 	
 	(*it)->GetPar()[i-idx]  = oldpar - epsilon;
 	dmess_dp  =(*it)->GetParametrizedMess();
-	sm1[i]   += dmess_dp * (*it)->GetMess()[7]; // Sum of tower Pt
+	sm1[i]   += dmess_dp;// * (*it)->GetMess()[7]; // Sum of tower Pt
 	new_error = (*it)->GetParametrizedErr(&dmess_dp);
 	se1[i]   += new_error * new_error;
 	(*it)->GetPar()[i-idx] = oldpar;
       } else {
-	sm1[i] += new_mess * (*it)->GetMess()[7]; // Sum of tower Pt
-	sm2[i] += new_mess * (*it)->GetMess()[7]; // Sum of tower Pt
+	sm1[i] += new_mess;// * (*it)->GetMess()[7]; // Sum of tower Pt
+	sm2[i] += new_mess;// * (*it)->GetMess()[7]; // Sum of tower Pt
 	se1[i] += new_error2;
 	se2[i] += new_error2;
       }
@@ -248,14 +250,14 @@ double TData_InvMass2::combine(){
   
   x = dummy * _direction[0];
   y = dummy * _direction[1];
-  if (_mess[0]!=0.) z = dummy/_mess[0] * _direction[2];
+  if (GetMess()->pt!=0.) z = dummy/GetMess()->pt * _direction[2];
   e = sqrt( x*x + y*y + z*z );
   for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
        it!=_m2.end();++it){
     dummy = (*it)->GetParametrizedMess();
     tx = dummy * (*it)->GetDirection()[0];
     ty = dummy * (*it)->GetDirection()[1];  
-    if ((*it)->GetMess()[0]!=0.) tz = dummy/(*it)->GetMess()[0] * (*it)->GetDirection()[2];  
+    if ((*it)->GetMess()->pt!=0.) tz = dummy/(*it)->GetMess()->pt * (*it)->GetDirection()[2];  
     else tz = 0.;
     x += tx;
     y += ty;
@@ -287,8 +289,10 @@ double TData_ParLimit::chi2_fast(double * temp_derivative1,
 //  the Cauchy-Function:  z^2 --> c^2 * Ln( 1 + (z/c)^2 )
 double TData::ScaleCauchy(double z2)
 {
-  double c = 2.3849;
-  return c*c * log( 1 + z2/(c*c) );
+  //double c = 2.3849;
+  double c2 = 5.687748;
+  //return c*c * log( 1 + z2/(c*c) );
+  return c2 * log( 1. + z2/c2 );
 }
 
 //  Scale the normalized residual 'z^2 = chi^2/weight' using 
@@ -298,5 +302,5 @@ double TData::ScaleHuber(double z2)
 {
   double c = 1.345;
   double z = sqrt(z2);
-  return (  fabs(z) <= c  ?  z2  :  c*(2*fabs(z) - c)  );
+  return (  fabs(z) <= c  ?  z2  :  c*(2.*fabs(z) - c)  );
 }

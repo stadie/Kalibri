@@ -41,7 +41,7 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
   TLatex latex;
   latex.SetTextSize(0.035);
   TH2F * constants = new TH2F("calib_constants","Calibration constants vs. Et and eta-bin with EMF=OUF=0",100,0.5,100.,p->GetEtaGranularity(),1,p->GetEtaGranularity());    
-  double * testmess = new double[4];
+  TMeasurement * testmess = new TMeasurement();
   //int d = 0;
   for (int eta=0; eta<p->GetEtaGranularity();++eta){
     for (int phi=0; phi<p->GetPhiGranularity();++phi){
@@ -200,61 +200,61 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
 	
 	//first loop over towers
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
-	  double * m = (*it)->GetMess();
+	  TMeasurement * m = (*it)->GetMess();
 	  int thisIndex = (*it)->GetIndex();
-	  if (m[0]>maxTowerET) {
+	  if (m->pt>maxTowerET) {
 	    thisIndexJet = thisIndex;
-	    maxTowerET = m[0];
+	    maxTowerET = m->pt;
 	  }
 	  if (thisIndex !=i)
 	    continue; //tower belongs to a wrong bin
 
-	  if (m[0]!=0.0){
-	    norm[0]->Fill(m[0] );
-	    em[ 0]->Fill( m[0], m[1] );
-	    had[0]->Fill( m[0], m[2] );
-	    au[ 0]->Fill( m[0], m[3] );
-	    if ((*data_it)->GetType()==TypeGammaJet) {
-  	      norm[2]->Fill(m[0] );
-	      em[ 2]->Fill( m[0], m[1] );
-	      had[2]->Fill( m[0], m[2] );
-	      au[ 2]->Fill( m[0], m[3] );
+	  if (m->pt!=0.0){
+	    norm[0]->Fill(m->pt );
+	    em[ 0]->Fill( m->pt, m->EMF );
+	    had[0]->Fill( m->pt, m->HadF );
+	    au[ 0]->Fill( m->pt, m->OutF );
+	    if ((*data_it)->GetType()==GammaJet) {
+  	      norm[2]->Fill(m->pt );
+	      em[ 2]->Fill( m->pt, m->EMF );
+	      had[2]->Fill( m->pt, m->HadF );
+	      au[ 2]->Fill( m->pt, m->OutF );
 	    }  
-	    else if ((*data_it)->GetType()==TypeTrackTower) {
-  	      norm[1]->Fill(m[0] );
-	      em[ 1]->Fill( m[0], m[1] );
-	      had[1]->Fill( m[0], m[2] );
-	      au[ 1]->Fill( m[0], m[3] );
+	    else if ((*data_it)->GetType()==TrackTower) {
+  	      norm[1]->Fill(m->pt );
+	      em[ 1]->Fill( m->pt, m->EMF );
+	      had[1]->Fill( m->pt, m->HadF );
+	      au[ 1]->Fill( m->pt, m->OutF );
 	    }  
-	    else if ((*data_it)->GetType()==TypeTrackCluster) {
-	      norm[3]->Fill(m[0] );
-	      em[ 3]->Fill( m[0], m[1] );
-	      had[3]->Fill( m[0], m[2] );
-	      au[ 3]->Fill( m[0], m[3] );
+	    else if ((*data_it)->GetType()==TrackCluster) {
+	      norm[3]->Fill(m->pt );
+	      em[ 3]->Fill( m->pt, m->EMF );
+	      had[3]->Fill( m->pt, m->HadF );
+	      au[ 3]->Fill( m->pt, m->OutF );
 	    }  
 	  }
-	  if (m[2]!=0.0){
-	    norm_vs_had[0]->Fill( m[2] );
-	    et_vs_had[  0]->Fill( m[2], m[0] );
-	    em_vs_had[  0]->Fill( m[2], m[1] );
-	    au_vs_had[  0]->Fill( m[2], m[3] );
-	    if ((*data_it)->GetType()==TypeGammaJet) {
-	      norm_vs_had[2]->Fill( m[2] );
-	      et_vs_had[  2]->Fill( m[2], m[0] );
-	      em_vs_had[  2]->Fill( m[2], m[1] );
-	      au_vs_had[  2]->Fill( m[2], m[3] );
+	  if (m->HadF!=0.0){
+	    norm_vs_had[0]->Fill( m->HadF );
+	    et_vs_had[  0]->Fill( m->HadF, m->pt );
+	    em_vs_had[  0]->Fill( m->HadF, m->EMF );
+	    au_vs_had[  0]->Fill( m->HadF, m->OutF );
+	    if ((*data_it)->GetType()==GammaJet) {
+	      norm_vs_had[2]->Fill( m->HadF );
+	      et_vs_had[  2]->Fill( m->HadF, m->pt );
+	      em_vs_had[  2]->Fill( m->HadF, m->EMF );
+	      au_vs_had[  2]->Fill( m->HadF, m->OutF );
 	    }  
-	    else if ((*data_it)->GetType()==TypeTrackTower) {
-	      norm_vs_had[1]->Fill( m[2] );
-	      et_vs_had[  1]->Fill( m[2], m[0] );
-	      em_vs_had[  1]->Fill( m[2], m[1] );
-	      au_vs_had[  1]->Fill( m[2], m[3] );
+	    else if ((*data_it)->GetType()==TrackTower) {
+	      norm_vs_had[1]->Fill( m->HadF );
+	      et_vs_had[  1]->Fill( m->HadF, m->pt );
+	      em_vs_had[  1]->Fill( m->HadF, m->EMF );
+	      au_vs_had[  1]->Fill( m->HadF, m->OutF );
 	    }  
-	    else if ((*data_it)->GetType()==TypeTrackCluster) {
-	      norm_vs_had[3]->Fill( m[2] );
-	      et_vs_had[  3]->Fill( m[2], m[0] );
-	      em_vs_had[  3]->Fill( m[2], m[1] );
-	      au_vs_had[  3]->Fill( m[2], m[3] );
+	    else if ((*data_it)->GetType()==TrackCluster) {
+	      norm_vs_had[3]->Fill( m->HadF );
+	      et_vs_had[  3]->Fill( m->HadF, m->pt );
+	      em_vs_had[  3]->Fill( m->HadF, m->EMF );
+	      au_vs_had[  3]->Fill( m->HadF, m->OutF );
 	    }  
 	  }
 	}
@@ -299,8 +299,8 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
 	
          //second loop over towers
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
-	  double m = (*it)->GetMess()[0];
-	  double mhad = (*it)->GetMess()[2];
+	  double m = (*it)->GetMess()->pt;
+	  double mhad = (*it)->GetMess()->HadF;
 	  double t   = (*it)->GetTruth()*(Jet/JetCorr);
           double tmp = (*it)->GetParametrizedMess();
           mess  += tmp;
@@ -314,21 +314,21 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
 	    continue; //tower belongs to a wrong bin
 
           if (mhad!=0.0){
-	    testmess[0] = m;
-	    testmess[1] = em[0]->GetBinContent(em[0]->GetXaxis()->FindBin(m));
-	    testmess[2] = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
-	    testmess[3] = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
+	    testmess->pt = m;
+	    testmess->EMF = em[0]->GetBinContent(em[0]->GetXaxis()->FindBin(m));
+	    testmess->HadF = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
+	    testmess->OutF = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
 	    plot_had[0]->Fill( mhad, t/m );
 	    khad[0]->Fill(     mhad, p->plot_parametrization(testmess,val) );
-	    if ((*data_it)->GetType()==TypeGammaJet) {
+	    if ((*data_it)->GetType()==GammaJet) {
 	      plot_had[2]->Fill( mhad, t/m );
 	      khad[2]->Fill(     mhad, p->plot_parametrization(testmess,val) );
 	    }  
-	    else if ((*data_it)->GetType()==TypeTrackTower) {
+	    else if ((*data_it)->GetType()==TrackTower) {
 	      khad[1]->Fill(     mhad, p->plot_parametrization(testmess,val) );
 	      plot_had[1]->Fill( mhad, t/m );
 	    }  
-	    else if ((*data_it)->GetType()==TypeTrackCluster) {
+	    else if ((*data_it)->GetType()==TrackCluster) {
   	      plot_had[3]->Fill( mhad, t/m );
 	      khad[3]->Fill(     mhad, p->plot_parametrization(testmess,val) );
 	    }  
@@ -337,37 +337,37 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
 	  if (m!=0.0){
 	    plot[0]->Fill( m, t/m );
 	    
-	    testmess[0] = m;
-	    testmess[1] = em[0]->GetBinContent(em[0]->GetXaxis()->FindBin(m));
-	    testmess[2] = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
-	    testmess[3] = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
+	    testmess->pt = m;
+	    testmess->EMF = em[0]->GetBinContent(em[0]->GetXaxis()->FindBin(m));
+	    testmess->HadF = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
+	    testmess->OutF = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
 	    k[0]->Fill( m, p->plot_parametrization(testmess,val) );
 
-	    if ((*data_it)->GetType()==TypeGammaJet) {
+	    if ((*data_it)->GetType()==GammaJet) {
 	      plot[2]->Fill( m, t/m );
   	      plot2dgj->Fill( m, t/m );
 	      double weight = t/Jet;
 	      norm_weight->Fill( m, weight );
   	      plotgj_weight->Fill( m, t/m );
-	      testmess[1] = em[2]->GetBinContent(em[2]->GetXaxis()->FindBin(m));
-	      testmess[2] = had[2]->GetBinContent(had[2]->GetXaxis()->FindBin(m));
-	      testmess[3] = au[2]->GetBinContent(au[2]->GetXaxis()->FindBin(m));
+	      testmess->EMF = em[2]->GetBinContent(em[2]->GetXaxis()->FindBin(m));
+	      testmess->HadF = had[2]->GetBinContent(had[2]->GetXaxis()->FindBin(m));
+	      testmess->OutF = au[2]->GetBinContent(au[2]->GetXaxis()->FindBin(m));
 	      k[2]->Fill( m, p->plot_parametrization(testmess,val) );
 	    }  
-	    else if ((*data_it)->GetType()==TypeTrackTower) {
+	    else if ((*data_it)->GetType()==TrackTower) {
 	      plot[1]->Fill( m, t/m );
   	      plot2dtt->Fill( m, t/m );
-	      testmess[1] = em[1]->GetBinContent(em[1]->GetXaxis()->FindBin(m));
-	      testmess[2] = had[1]->GetBinContent(had[1]->GetXaxis()->FindBin(m));
-	      testmess[3] = au[1]->GetBinContent(au[1]->GetXaxis()->FindBin(m));
+	      testmess->EMF = em[1]->GetBinContent(em[1]->GetXaxis()->FindBin(m));
+	      testmess->HadF = had[1]->GetBinContent(had[1]->GetXaxis()->FindBin(m));
+	      testmess->OutF = au[1]->GetBinContent(au[1]->GetXaxis()->FindBin(m));
 	      k[1]->Fill( m, p->plot_parametrization(testmess,val) );
 	    }  
-	    else if ((*data_it)->GetType()==TypeTrackCluster) {
+	    else if ((*data_it)->GetType()==TrackCluster) {
 	      plot[3]->Fill( m, t/m );
   	      plot2dtc->Fill( m, t/m );
-	      testmess[1] = em[3]->GetBinContent(em[3]->GetXaxis()->FindBin(m));
-	      testmess[2] = had[3]->GetBinContent(had[3]->GetXaxis()->FindBin(m));
-	      testmess[3] = au[3]->GetBinContent(au[3]->GetXaxis()->FindBin(m));
+	      testmess->EMF = em[3]->GetBinContent(em[3]->GetXaxis()->FindBin(m));
+	      testmess->HadF = had[3]->GetBinContent(had[3]->GetXaxis()->FindBin(m));
+	      testmess->OutF = au[3]->GetBinContent(au[3]->GetXaxis()->FindBin(m));
 	      k[3]->Fill( m, p->plot_parametrization(testmess,val) );
 	    }  
 	  }
@@ -378,14 +378,14 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
 	  continue; //event (jet or tower) belongs to a wrong bin
 
 	switch ( (*data_it)->GetType()) {
-	case TypeTrackTower://track-tower
+	case TrackTower://track-tower
 	  if (mess != 0.0) chi2[0]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); break;
-	case TypeGammaJet://gamma-jet
+	case GammaJet://gamma-jet
 	  if (mess != 0.0) chi2[1]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); break;
-	case TypeTrackCluster://track-cluster
+	case TrackCluster://track-cluster
 	  if (mess != 0.0) chi2[2]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); 
 	  break;
-	case TypePtBalance://jet-jet
+	case PtBalance://jet-jet
 	  if (mess != 0.0) chi2[3]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); break;
 	}
       }
@@ -468,21 +468,21 @@ void TControlPlots::FitControlPlots()  // Fit Control Histograms w.r.t. towers
       TH1F * kEfrac02 = new TH1F(name,";k vs. had. E_{T} with EMF=0.2 OUF=0 [GeV];",100,0.5,100.);    
       sprintf(name, "h_k_Efrac05_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
       TH1F * kEfrac05 = new TH1F(name,";k vs. had. E_{T} with EMF=0.5 OUF=0 [GeV];",100,0.5,100.);    
-      testmess[3] = 0.0;
+      testmess->OutF = 0.0;
       for (int b=1; b<=100; ++b){
-	testmess[0] = (double)b; // -> EMFrac = 0.0
-	testmess[1] = 0.0;
-	testmess[2] = (double)b;
+	testmess->pt = (double)b; // -> EMFrac = 0.0
+	testmess->EMF = 0.0;
+	testmess->HadF = (double)b;
 	khadonly->SetBinContent(khadonly->GetXaxis()->FindBin(b), 
 	                        p->plot_parametrization(testmess,val) );
 	constants->SetBinContent(constants->GetXaxis()->FindBin(b),constants->GetYaxis()->FindBin(eta+1),
 				 p->plot_parametrization(testmess,val));
-	testmess[1] = (double)b*0.2; // -> EMFrac = 0.25
-	testmess[2] = (double)b*0.8;
+	testmess->EMF = (double)b*0.2; // -> EMFrac = 0.25
+	testmess->HadF = (double)b*0.8;
 	kEfrac02->SetBinContent(kEfrac02->GetXaxis()->FindBin(b), 
 	                        p->plot_parametrization(testmess,val) );       
-	testmess[1] = (double)b*0.5; // -> EMFrac = 1.0
-	testmess[2] = (double)b*0.5;
+	testmess->EMF = (double)b*0.5; // -> EMFrac = 1.0
+	testmess->HadF = (double)b*0.5;
 	kEfrac05->SetBinContent(kEfrac05->GetXaxis()->FindBin(b), 
 	                        p->plot_parametrization(testmess,val) );       
       }
@@ -720,7 +720,7 @@ void TControlPlots::GammaJetControlPlots() // Gamma-Jet Control Histograms
       data_it = data->begin();
       //loop over all fit-events
       for (; data_it != data->end();++data_it){
-        if ( (*data_it)->GetType()!=TypeGammaJet) continue;
+        if ( (*data_it)->GetType()!=GammaJet) continue;
 
 	int indexTower=0;
 	double Etmax=0, calib_tower_sum=0.0;
@@ -728,12 +728,12 @@ void TControlPlots::GammaJetControlPlots() // Gamma-Jet Control Histograms
 	                        //but since we need the index too, this is faster
 	const std::vector<TData*>& data_ref = (*data_it)->GetRef();
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
-	  double * tow_et = (*it)->GetMess();
-	  if (tow_et[0]>Etmax){
+	  TMeasurement * tow_et = (*it)->GetMess();
+	  if (tow_et->pt>Etmax){
 	    indexTower=(*it)->GetIndex();
-	    Etmax=tow_et[0];
+	    Etmax=tow_et->pt;
 	  }
-	  tower_sum += tow_et[0];
+	  tower_sum += tow_et->pt;
 	  calib_tower_sum += (*it)->GetParametrizedMess();
 	}
 
@@ -827,7 +827,7 @@ void TControlPlots::GammaJetControlPlotsJetBin()  // Gamma-Jet Control Histogram
       data_it = data->begin();
       //loop over all fit-events
       for (; data_it != data->end();++data_it){
-        if ( (*data_it)->GetType()!=TypeGammaJet) continue;
+        if ( (*data_it)->GetType()!=GammaJet) continue;
 	if ( (*data_it)->GetIndex()!= i )	  continue; //event belongs to a wrong bin
 	
 	double calib_tower_sum=0.0;
@@ -836,7 +836,7 @@ void TControlPlots::GammaJetControlPlotsJetBin()  // Gamma-Jet Control Histogram
 	double tower_sum = 0.0; //is equivalent to (*data_it)->GetMess(),
 	const std::vector<TData*>& data_ref = (*data_it)->GetRef();
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
-	  tower_sum += (*it)->GetMess()[0];
+	  tower_sum += (*it)->GetMess()->pt;
 	  calib_tower_sum += (*it)->GetParametrizedMess();
 	}
 
@@ -935,7 +935,7 @@ void TControlPlots::TrackTowerControlPlots() // Track-Tower Control Histograms
 	}
 	double maxTowerET = 0.0;
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
-	  double m   = (*it)->GetMess()[0];
+	  double m   = (*it)->GetMess()->pt;
 	  double t   = (*it)->GetTruth()*(Jet/JetCorr);
           double tmp = (*it)->GetParametrizedMess();
           mess  += tmp;
@@ -949,7 +949,7 @@ void TControlPlots::TrackTowerControlPlots() // Track-Tower Control Histograms
 	  if (thisIndex !=i)
 	    continue; //tower belongs to a wrong bin
 	  if (m!=0.0){
-	    if ((*data_it)->GetType()==TypeTrackTower) {
+	    if ((*data_it)->GetType()==TrackTower) {
 	      plot_tt->Fill( m, t/m );
 	      norm_tt->Fill( m );
   	      plot2d_tt->Fill( m, t/m );
@@ -1135,7 +1135,7 @@ void TControlPlots::TrackClusterControlPlots() // Track-Cluster Control Histogra
       data_it = data->begin();
       //loop over all fit-events
       for (; data_it != data->end();++data_it){
-        if ( (*data_it)->GetType()!=TypeTrackCluster) continue;
+        if ( (*data_it)->GetType()!=TrackCluster) continue;
 
 	int indexJet=0;
 	double Etmax=0, calib_tower_sum=0.0;
@@ -1143,7 +1143,7 @@ void TControlPlots::TrackClusterControlPlots() // Track-Cluster Control Histogra
 	                        //but since we need the index too, this is faster
 	const  std::vector<TData*>& data_ref = (*data_it)->GetRef();
 	for (it =data_ref.begin(); it!=data_ref.end(); ++it){
-	  double tow_et = (*it)->GetMess()[0];
+	  double tow_et = (*it)->GetMess()->pt;
 	  if (tow_et>Etmax){
 	    indexJet=(*it)->GetIndex();
 	    Etmax=tow_et;
@@ -1340,12 +1340,12 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
   for ( std::vector<TData*>::iterator i = data->begin() ; i != data->end() ; ++i )  {
     TData* jg = *i;
     
-    if( jg->GetType() != TypeGammaJet ) continue;
-    double etjet = jg->GetMess()[0];
-    double energyjet = jg->GetMess()[0];  //Et -> E see below
+    if( jg->GetType() != GammaJet ) continue;
+    double etjet = jg->GetMess()->pt;
+    double energyjet = jg->GetMess()->pt;  //Et -> E see below
     double etjetcor = jg->GetParametrizedMess();
-    double etajet = jg->GetMess()[1];
-    double phijet = jg->GetMess()[2];
+    double etajet = jg->GetMess()->EMF;
+    double phijet = jg->GetMess()->HadF;
     int noTower=0;
     double maxTowerET=0;
     double maxTowerEnergy=0;
@@ -1356,19 +1356,19 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     const std::vector<TData*>& data_ref =(*i)->GetRef();
     for(std::vector<TData*>::const_iterator it = data_ref.begin();it != data_ref.end(); ++it)
       {
-	double * m = (*it)->GetMess();
+	TMeasurement * m = (*it)->GetMess();
 	double  pm = (*it)->GetParametrizedMess();
-	respvstet[0]->Fill(m[0],pm/m[0]);
+	respvstet[0]->Fill(m->pt,pm/m->pt);
 	int thisIndex = (*it)->GetIndex();
 	if (pm>maxTowerET) {
 	  thisIndexJet = thisIndex;
 	  maxTowerET = pm;
-	  maxTowerETraw = m[0];
-	  maxTowerEta = m[4];
-	  maxTowerPhi = m[5];
-	  maxTowerEnergy = m[6];
+	  maxTowerETraw = m->pt; //m[0];
+	  maxTowerEta = m->eta; //m[4];
+	  maxTowerPhi = m->phi; //m[5];
+	  maxTowerEnergy = m->E; //m[6];
 	  }
-	testNegResponse[0]->Fill(m[2]/(m[1]+m[2]),pm/m[0]);
+	testNegResponse[0]->Fill(m->HadF/(m->EMF+m->HadF),pm/m->pt);
 	if(fabs(etajet) > 3)	testNegResponse[1]->Fill(m[2]/(m[1]+m[2]),pm/m[0]);
 	testNegResponse[2]->Fill(etajet,pm/m[0]);
 	testNegResponse[3]->Fill(thisIndex,pm/m[0]);
@@ -1553,9 +1553,9 @@ void TControlPlots::GammaJetControlPlotsJetJEC()
     double had = 0;
     for(std::vector<TData*>::const_iterator t = jg->GetRef().begin(); t != jg->GetRef().end(); ++t) {
       TData* tt = *t;
-      em  += tt->GetMess()[1];
-      had += tt->GetMess()[2];
-      had += tt->GetMess()[3];
+      em  += tt->GetMess()->pt;
+      had += tt->GetMess()->EMF;
+      had += tt->GetMess()->HadF;
     }
     hemf[0]->Fill(em/(em+had),etjet/jg->GetTruth(),jg->GetWeight());
     hemf[1]->Fill(em/(em+had),etjetcor/jg->GetTruth(),jg->GetWeight());
@@ -2296,7 +2296,7 @@ void TControlPlots::DiJetControlPlots()
   for ( std::vector<TData*>::iterator i = data->begin() ; i != data->end() ; ++i )  
     {
       TData* jj = *i;
-      if(jj->GetType() != TypePtBalance) continue;
+      if(jj->GetType() != PtBalance) continue;
       TData_MessMess* jm = (TData_MessMess*) jj;
       double etscale = jm->GetScale();
       double etparascale = jm->GetParametrizedScale();
@@ -2860,7 +2860,7 @@ void TControlPlots::GammaJetSigmas()
         i != data->end() ; ++i )  {
     TData* jg = *i;
     double etjetcor = jg->GetParametrizedMess();
-    if( jg->GetType() != TypeGammaJet ) continue;
+    if( jg->GetType() != GammaJet ) continue;
     if(jg->GetMess()[0]>0 && jg->GetMess()[0]<200)
       gauss_forpt[(int)jg->GetMess()[0]]->Fill( (jg->GetMess()[0]-jg->GetTruth())/jg->GetMess()[0], jg->GetWeight() );
     if(etjetcor>0 && etjetcor<200)
