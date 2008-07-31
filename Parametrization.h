@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.6 2008/07/16 12:52:03 thomsen Exp $
+// $Id: Parametrization.h,v 1.7 2008/07/17 08:32:46 csander Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -102,7 +102,7 @@ public:
 // Parametrization of hadronic response by a step function
 class StepParametrizationEnergy : public Parametrization { 
 public:
-  StepParametrizationEnergy() : Parametrization(12,3) {}
+  StepParametrizationEnergy() : Parametrization(14,2) {} //14,5
  
   const char* name() const { return "StepParametrizationEnergy";}
 
@@ -110,26 +110,33 @@ public:
     double result = 0;
     double e =  x[2] * x[6] / x[0];
 
-    if(e>=0.0  && e<=1.0)  result = x[1]+x[3] + par[0]*x[2];
-    else if (e>1.0   && e<=2.0)  result = x[1]+x[3] + par[1]*x[2];
-    else if (e>2.0   && e<=5.0)  result = x[1]+x[3] + par[2]*x[2];
-    else if (e>5.0   && e<=10.0)  result = x[1]+x[3] + par[3]*x[2];
-    else if (e>10.0  && e<=20.0)  result = x[1]+x[3] + par[4]*x[2];
-    else if (e>20.0  && e<=40.0)  result = x[1]+x[3] + par[5]*x[2];
-    else if (e>40.0  && e<=80.0) result = x[1]+x[3] + par[6]*x[2];
-    else if (e>80.0  && e<=160.0) result = x[1]+x[3] + par[7]*x[2];
-    else if (e>160.0 && e<=300.0) result = x[1]+x[3] + par[8]*x[2];
-    else if (e>300.0 && e<=600.0) result = x[1]+x[3] + par[9]*x[2];
-    else if (e>600.0 && e<=1000.0) result = x[1]+x[3] + par[10]*x[2];
-    else if (e>1000.0 )              result = x[1]+x[3] + par[11]*x[2];
+    if(e>=0.0  && e<=1.0)  result = par[12]*x[1]+x[3] + par[0]*x[2] + par[13];
+    else if (e>1.0   && e<=2.0)  result = par[12]*x[1]+x[3] + par[1]*x[2] + par[13];
+    else if (e>2.0   && e<=5.0)  result = par[12]*x[1]+x[3] + par[2]*x[2] + par[13];
+    else if (e>5.0   && e<=10.0)  result = par[12]*x[1]+x[3] + par[3]*x[2] + par[13];
+    else if (e>10.0  && e<=20.0)  result = par[12]*x[1]+x[3] + par[4]*x[2] + par[13];
+    else if (e>20.0  && e<=40.0)  result = par[12]*x[1]+x[3] + par[5]*x[2] + par[13];
+    else if (e>40.0  && e<=80.0)  result = par[12]*x[1]+x[3] + par[6]*x[2] + par[13];
+    else if (e>80.0  && e<=160.0) result = par[12]*x[1]+x[3] + par[7]*x[2] + par[13];
+    else if (e>160.0 && e<=300.0) result = par[12]*x[1]+x[3] + par[8]*x[2] + par[13];
+    else if (e>300.0 && e<=600.0) result = par[12]*x[1]+x[3] + par[9]*x[2] + par[13];
+    else if (e>600.0 && e<=1000.0) result = par[12]*x[1]+x[3] + par[10]*x[2] + par[13];
+    else if (e>1000.0 )             result = par[12]*x[1]+x[3] + par[11]*x[2] + par[13];
     return result;
   }
     
   double correctedJetEt(double *x,double *par) const {
-    double result = x[0] * ( 1 + par[0] * exp(-x[0]));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
-    if(x[3] > exp(par[1]))        //punch through?
-      result = result * (1 + par[2] * (log(x[3]) - par[1]));
+    double result =0;
+    result = x[0] * ( 1 + 0.295 * par[0] * exp(- 0.02566 * par[1] * x[0]));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
+    //nubers come from fit in (genPhoten vs. genJet) in barrel region
 
+    /*
+    if(par[2]<0) par[2] = 0;
+    if(par[3]<0) par[3] = 0;
+    if(x[3] > exp(par[2]))        //punch through?
+      result = result * (1 + par[3] * (log(x[3]) - par[2]));
+    */
+    //result -= par[4];
     //if(result<0)   std::cout<<"gfdgfdfghk"<<std::endl;  // 
     //result *= -1;
     return result;
