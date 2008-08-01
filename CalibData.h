@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.32 2008/07/30 15:19:38 auterman Exp $
+// $Id: CalibData.h,v 1.33 2008/07/31 12:53:35 auterman Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -42,9 +42,11 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 class TMeasurement
 {
 public:
-  TMeasurement(){};
+  TMeasurement() {pt=0.;EMF=0.;HadF=0.;OutF=0.;E=0.;eta=0.;phi=0.;};
   TMeasurement(TMeasurement* m){pt=m->pt;EMF=m->EMF;HadF=m->HadF;OutF=m->OutF;
                                 E=m->E;eta=m->eta;phi=m->phi;};
+  TMeasurement(double *x){pt=x[0];EMF=x[1];HadF=x[2];OutF=x[3];E=x[6];eta=x[4];phi=x[5];};
+
   //all common variables
   double pt;
   double EMF;
@@ -217,7 +219,15 @@ public:
     };
     virtual void AddNewMultMess(TData_MessMess * m2 ){assert(m2->_m2.empty());_m2.push_back(m2);};
     void ClearMultMess() { _m2.clear();}
-    virtual double GetMessCombination(){ return combine(); };
+    virtual double GetMessCombination(){ return combine(); }; // for plotting
+    virtual TMeasurement* GetMultMess(int i) { 
+      if(i == 0) return GetMess();
+      return _m2[i-1]->GetMess();
+    }
+    virtual double GetMultParametrizedMess(int i) { // for plotting
+      if(i == 0) return GetParametrizedMess();
+      return _m2[i-1]->GetParametrizedMess();
+    }
     virtual double * GetDirection(){ return _direction; };
     virtual double chi2(){ 
       double sum_error2=0.0, new_error, new_mess;

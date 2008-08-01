@@ -1,50 +1,41 @@
-#ifndef TControlPlots_h
-#define TControlPlots_h
+#ifndef TControlPlots_NEW_h
+#define TControlPlots_NEW_h
 
-//C++ libs
 #include <string>
-#include <cmath>
-//User
-#include "Parameters.h"
-#include "TF1.h"
+#include <vector>
 
-#include <iostream>
+#include <TF1.h>
+#include <TFile.h>
+#include <TH1F.h>
+#include <TH2F.h>
+#include <TObject.h>
+#include <TStyle.h>
 
 class TData;
-class TH2F;
-class TH1F;
-class TF1;
+class TParameters;
 
-class TControlPlots {
+class TControlPlots
+{
 public:
-  //TControlPlots(){this->ReadConfigFile("config/calibration.cfg");};
-  TControlPlots(std::string config, std::vector<TData*> * d, TParameters * pars)
-                {this->ReadConfigFile(config); data=d; p=pars; iplot=0;};
-  //TControlPlots(std::string config, std::vector<TData*> * d, TStepEfracParameters * pars)
-  //              {this->ReadConfigFile(config); data=d; p=pars;};
-  ~TControlPlots(){};
+  TControlPlots(const std::vector<TData*> *data, TParameters *par, int outputFormat = 0);
+  ~TControlPlots();
+
+  void MakeControlPlotsDiJet();
+  void MakeControlPlotsGammaJet();
+  void MakeControlPlotsGammaJetPerJetBin();
+  void MakeControlPlotsGammaJetPerTowerBin();
+  void MakeControlPlotsGammaJetSigmas();
   
-  void GammaJetControlPlots();
-  void GammaJetControlPlotsJetBin();
-  void GammaJetControlPlotsJetJEC();
-  void DiJetControlPlots();
-  void TrackTowerControlPlots();
-  void TrackClusterControlPlots();
-  void FitControlPlots();
-  void GammaJetSigmas();
+private:
+  void Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] );
+  void SetGStyle();
+  void WriteToRootFile(std::vector<TObject*> obj, std::string dir);
 
-private:  
-  void ReadConfigFile(std::string config);
-  void Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4]);
-  void Fit1D(TH1F* hist, TF1* results);
-
-  std::vector<TData*> * data;
-  TParameters * p;
-  int iplot;
-
-  bool _doPlots;
-  //... bins, pt ranges, etc...
-  
+  const std::vector<TData*> *_data; 
+  TParameters *_par;
+  TFile * const _outFile;
+  TString ptRatioName[3];	  // For histo titles etc
+  TString controlQuantityName[8]; // For histo titles etc
+  bool _outputROOT;
 };
-
 #endif

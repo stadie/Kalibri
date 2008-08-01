@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.8 2008/07/31 12:51:15 thomsen Exp $
+// $Id: Parametrization.h,v 1.9 2008/07/31 12:53:35 auterman Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -127,20 +127,7 @@ public:
   }
     
   double correctedJetEt(TMeasurement *x,double *par) const {
-    double result = x->pt * ( 1. + par[0] * exp(-x->pt));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
-    if(x->OutF > exp(par[1]))        //punch through?
-      result = result * (1. + par[2] * (log(x->OutF) - par[1]));
-
-    /*
-    if(par[2]<0) par[2] = 0;
-    if(par[3]<0) par[3] = 0;
-    if(x[3] > exp(par[2]))        //punch through?
-      result = result * (1 + par[3] * (log(x[3]) - par[2]));
-    */
-    //result -= par[4];
-    //if(result<0)   std::cout<<"gfdgfdfghk"<<std::endl;  // 
-    //result *= -1;
-    return result;
+    return x->pt * ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x->pt));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
   }
 };
 
@@ -262,10 +249,10 @@ public:
 // Parametrization for toy MC
 class ToyParametrization: public Parametrization {
 public:
-  ToyParametrization() : Parametrization(3,0) {}
+  ToyParametrization() : Parametrization(1,0) {}
   const char* name() const { return "ToyParametrization";}
   double correctedTowerEt(TMeasurement *x,double *par) const {
-    return par[0] * x->HadF + par[1] * x->EMF + x->OutF + par[2];
+    return par[0] * x->HadF + x->EMF + x->OutF;
   }
   double correctedJetEt(TMeasurement *x,double *par) const {
     return x->pt;  

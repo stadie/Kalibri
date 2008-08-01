@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.34 2008/07/30 15:19:38 auterman Exp $
+// $Id: caliber.cc,v 1.35 2008/07/31 12:53:35 auterman Exp $
 //
 //
 // for profiling:
@@ -1119,8 +1119,6 @@ void TCaliber::Run_Lvmini()
     t[ithreads] = new ComputeThread(npar, p->GetPars(),temp_derivative1,temp_derivative2,epsilon);
   }
 
-  //float eps =float(1.E-6*data.size());
-  //float eps =float(1.E-6);
   float eps =float(1.E-4);
   float wlf1=1.E-4;
   float wlf2=0.9;
@@ -1172,6 +1170,7 @@ void TCaliber::Run_Lvmini()
     npar=abs(npar);
 
     int n = 0;
+
     for(DataIter it = data.begin()  ; it < data.end() ; ++it) {
       t[n]->AddData(*it);
       n++;
@@ -1243,28 +1242,32 @@ void TCaliber::Done()
   
   //Do Plots
   if(plots) {
-    cout << "Creating tower control plots,"<<endl;
-    plots->FitControlPlots();
+//     cout << "Creating tower control plots,"<<endl;
+//     plots->FitControlPlots();
     if(n_gammajet_events!=0)
       {
 	cout << "Creating gamma jet (tower bin) control plots,"<<endl;
-	plots->GammaJetControlPlots();
+	plots->MakeControlPlotsGammaJetPerTowerBin();
+
 	cout << "Creating gamma jet (jet bin) control plots,"<<endl;
-	plots->GammaJetControlPlotsJetBin();
+	plots->MakeControlPlotsGammaJetPerJetBin();
+
 	cout << "Creating more gamma jet control plots,"<<endl;
-	plots->GammaJetControlPlotsJetJEC();
+	plots->MakeControlPlotsGammaJet();
+
 	cout << "Creating even more gamma jet control plots (sigmas),"<<endl;
-	plots->GammaJetSigmas();
+	plots->MakeControlPlotsGammaJetSigmas();
+
       }
     if (n_dijet_events!=0)   
       {
 	cout << "Creating di-jet  control plots,"<<endl;
-	plots->DiJetControlPlots();
+	plots->MakeControlPlotsDiJet();
       }
-    cout << "Creating track tower control plots,"<<endl;
-    plots->TrackTowerControlPlots();
-    cout << "Creating track cluster control plots,"<<endl;
-    plots->TrackClusterControlPlots();
+//     cout << "Creating track tower control plots,"<<endl;
+//     plots->TrackTowerControlPlots();
+//     cout << "Creating track cluster control plots,"<<endl;
+//     plots->TrackClusterControlPlots();
   }
   //Clean-up
   delete plots; 
@@ -1278,32 +1281,12 @@ void TCaliber::Done()
 
 void TCaliber::Init(string file)
 {
-  //set root style
-  gStyle->SetCanvasColor(0);
-  gStyle->SetCanvasBorderMode(0);
-  gStyle->SetPadColor(0);
-  gStyle->SetPadBorderMode(0);
-  gStyle->SetFrameBorderMode(0);
-  gStyle->SetPadLeftMargin(0.15);
-  gStyle->SetTitleFillColor(0);  
-  gStyle->SetTitleBorderSize(1);
-  gStyle->SetStatColor(0);          
-  gStyle->SetStatBorderSize(0);     
-  gStyle->SetStatX(0.89);              
-  gStyle->SetStatY(0.89);              
-  gStyle->SetStatW(0.2);              
-  gStyle->SetStatH(0.2);              
-  gStyle->SetTitleXOffset(1.1);
-  gStyle->SetTitleYOffset(2.0);
-
-
-  
   ConfigFile config( file.c_str() );
 
   p = TParameters::CreateParameters(file);
 
   if(config.read<bool>("create plots",1)) {
-    plots = new TControlPlots(file, &data, p);
+    plots = new TControlPlots(&data, p);
   }
   //initialize temp arrays for fast derivative calculation
   TData::total_n_pars     = p->GetNumberOfParameters();
