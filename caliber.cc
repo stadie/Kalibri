@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.36 2008/08/01 14:56:51 mschrode Exp $
+// $Id: caliber.cc,v 1.37 2008/08/04 08:55:30 mschrode Exp $
 //
 //
 // for profiling:
@@ -1235,8 +1235,9 @@ void TCaliber::Done()
     cout << endl << "Writing control plots in .ps " << flush;
     if( plots->OutputFormatRoot() ) cout << "and .root " << flush;
     cout << "format:" << endl;
-//     cout << "Creating tower control plots,"<<endl;
-//     plots->FitControlPlots();
+    cout << "Creating tower control plots... " << flush;
+    plots->MakeControlPlotsTowers();
+    cout << "ok" << endl;
     if(n_gammajet_events!=0)
       {
 	cout << "Creating gamma jet (tower bin) control plots... " << flush;

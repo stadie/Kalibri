@@ -7,6 +7,7 @@
 #include <TH1I.h>
 #include <TLatex.h>
 #include <TLegend.h>
+#include <TLine.h>
 #include <TPostScript.h>
 #include <TString.h>
 
@@ -61,6 +62,800 @@ TControlPlots::~TControlPlots()
       delete _outFile;
     }
 }
+
+
+
+
+//---------------------------------------------------------------
+//   Tower control plots
+//---------------------------------------------------------------
+void TControlPlots::MakeControlPlotsTowers()
+{
+  std::vector<TObject*> objToBeWritten;
+  std::vector<TData*>::const_iterator data_it,it;
+
+  TCanvas * const c1 = new TCanvas("c1","",600,600);
+  TPostScript * const ps = new TPostScript("controlplotsTowers.ps",111);
+
+
+  //book objects
+  TLatex *latex = new TLatex();
+  latex->SetTextSize(0.03);
+  latex->SetTextFont(42);
+
+  TMeasurement * testmess = new TMeasurement();
+
+  char name[100];
+  int markerColor[5] = { 1,4,2,3,7 };
+  int markerStyle[5] = { 8,1,1,1,1 };
+
+  TH2F * constants = new TH2F("hCalibConstants","Calibration constants vs. E_{T} and #eta-bin with f_{em} = OUF = 0;E_{T} [GeV];#eta-bin",100,0.5,100.,_par->GetEtaGranularity(),1,_par->GetEtaGranularity()); 
+   
+  for (int eta=0; eta<_par->GetEtaGranularity();++eta) // Loop over eta bins
+    {
+      for (int phi=0; phi<_par->GetPhiGranularity();++phi) // Loop over phi bins
+	{
+	  int i = _par->GetBin(eta,phi);
+	  double * val = _par->GetTowerParRef(i);
+
+	  TH1F * plot[5]; 
+	  sprintf(name, "h%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot[0] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "htt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot[1] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "hgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot[2] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "htc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot[3] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.); 
+	  sprintf(name, "hjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot[4] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.); 
+   
+	  TH1F * plot_had[5]; 
+	  sprintf(name, "hhad%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot_had[0] = new TH1F(name,";uncorrected hadronic fraction of tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "hhadtt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot_had[1] = new TH1F(name,";uncorrected hadronic fraction of ttower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "hhadgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot_had[2] = new TH1F(name,";uncorrected hadronic fraction of ttower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "hhadtc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot_had[3] = new TH1F(name,";uncorrected hadronic fraction of ttower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "hhadjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  plot_had[4] = new TH1F(name,";uncorrected hadronic fraction of ttower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+
+	  TH1F * k[5];
+	  sprintf(name, "k%d_eta%d_phi%d",i,eta+1,phi+1);
+	  k[0] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "ktt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  k[1] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "kgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  k[2] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "ktc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  k[3] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.); 
+	  sprintf(name, "kjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  k[4] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.); 
+   
+	  TH1F * em[5];
+	  sprintf(name, "em%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em[0] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "emtt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em[1] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "emgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em[2] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "emtc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em[3] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "emjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em[4] = new TH1F(name,"",100,0.5,100.);    
+
+	  TH1F * had[5];
+	  sprintf(name, "had%d_eta%d_phi%d",i,eta+1,phi+1);
+	  had[0] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "hadtt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  had[1] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "hadgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  had[2] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "hadtc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  had[3] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "hadjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  had[4] = new TH1F(name,"",100,0.5,100.);    
+
+	  TH1F * au[5];
+	  sprintf(name, "au%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au[0] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "autt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au[1] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "augj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au[2] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "autc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au[3] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "aujj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au[4] = new TH1F(name,"",100,0.5,100.);    
+
+	  TH1F * khad[5];
+	  sprintf(name, "khad%d_eta%d_phi%d",i,eta+1,phi+1);
+	  khad[0] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "khadtt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  khad[1] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "khadgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  khad[2] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "khadtc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  khad[3] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+	  sprintf(name, "khadjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  khad[4] = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+
+	  TH1F * et_vs_had[5];
+	  sprintf(name, "et_vs_had%d_eta%d_phi%d",i,eta+1,phi+1);
+	  et_vs_had[0] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "et_vs_hadtt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  et_vs_had[1] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "et_vs_hadgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  et_vs_had[2] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "et_vs_hadtc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  et_vs_had[3] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "et_vs_hadjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  et_vs_had[4] = new TH1F(name,"",100,0.5,100.);    
+
+	  TH1F * em_vs_had[5];
+	  sprintf(name, "em_vs_had%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em_vs_had[0] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "em_vs_hadtt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em_vs_had[1] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "em_vs_hadgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em_vs_had[2] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "em_vs_hadtc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em_vs_had[3] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "em_vs_hadjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  em_vs_had[4] = new TH1F(name,"",100,0.5,100.);    
+
+	  TH1F * au_vs_had[5];
+	  sprintf(name, "au_vs_had%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au_vs_had[0] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "au_vs_hadtt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au_vs_had[1] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "au_vs_hadgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au_vs_had[2] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "au_vs_hadtc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au_vs_had[3] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "au_vs_hadjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  au_vs_had[4] = new TH1F(name,"",100,0.5,100.);    
+
+	  TH1F * norm_vs_had[5];
+	  sprintf(name, "norm_vs_had%d_eta%d_phi%d",i,eta+1,phi+1);
+	  norm_vs_had[0] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "norm_vs_hadtt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  norm_vs_had[1] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "norm_vs_hadgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  norm_vs_had[2] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "norm_vs_hadtc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  norm_vs_had[3] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "norm_vs_hadjj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  norm_vs_had[4] = new TH1F(name,"",100,0.5,100.);    
+
+	  TH1F * norm[5];
+	  sprintf(name, "hnorm%d",i);
+	  norm[0] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "hnormtt%d",i);
+	  norm[1] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "hnormgj%d",i);
+	  norm[2] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "hnormtc%d",i);
+	  norm[3] = new TH1F(name,"",100,0.5,100.);    
+	  sprintf(name, "hnormjj%d",i);
+	  norm[4] = new TH1F(name,"",100,0.5,100.);    
+
+	  TH1F * chi2[4];
+	  sprintf(name, "hgj_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
+	  chi2[0] = new TH1F(name,";#chi^{2};N",100,0.0,50.);    
+	  sprintf(name, "htt_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
+	  chi2[1] = new TH1F(name,";#chi^{2};N",100,0.0,50.);    
+	  sprintf(name, "htc_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
+	  chi2[2] = new TH1F(name,";#chi^{2};N",100,0.0,50.);    
+	  sprintf(name, "hjj_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
+	  chi2[3] = new TH1F(name,";#chi^{2};N",100,0.0,50.);    
+
+	  sprintf(name, "h2dgj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  TH2F * plot2dgj = new TH2F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.,100,0.0,5.0);    
+	  sprintf(name, "hdgj_weight%d_eta%d_phi%d",i,eta+1,phi+1);
+	  TH1F * plotgj_weight = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);
+
+	  sprintf(name, "norm_weight%d_eta%d_phi%d",i,eta+1,phi+1);
+	  TH1F * norm_weight = new TH1F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+
+	  sprintf(name, "h2dtt%d_eta%d_phi%d",i,eta+1,phi+1);
+	  TH2F * plot2dtt = new TH2F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.,100,0.0,5.0);    
+
+	  sprintf(name, "h2dtc%d_eta%d_phi%d",i,eta+1,phi+1);
+	  TH2F * plot2dtc = new TH2F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.,100,0.0,5.0);    
+	  sprintf(name, "h2djj%d_eta%d_phi%d",i,eta+1,phi+1);
+	  TH2F * plot2djj = new TH2F(name,";uncorrected tower E_{T} [GeV];tower k-factor",100,0.5,100.,100,0.0,5.0);    
+
+
+	  // Fill histos
+	  double Jet, JetCorr;
+
+	  double maxTowerET;	      
+	  int thisIndexJet;
+
+	  double mess, error;
+
+	  data_it = _data->begin();
+	  for (; data_it != _data->end();++data_it) // 1. loop over all fit events
+	    {
+	      //if one fit event is composed of multiple towers, than loop over all
+	      const std::vector<TData*>& data_ref = (*data_it)->GetRef();
+
+	      // Get sum of corrected tower Et
+	      Jet = 0.;
+	      for(it = data_ref.begin(); it != data_ref.end(); ++it) //1. loop over towers
+		{
+		  Jet += (*it)->GetParametrizedMess();
+		}
+
+	      // Find tower with max Et
+	      maxTowerET = 0.;	      
+	      thisIndexJet = 0;
+	      for (it = data_ref.begin(); it != data_ref.end(); ++it) //2. loop over towers
+		{
+		  TMeasurement * m = (*it)->GetMess();
+		  int thisIndex = (*it)->GetIndex();
+		  if ( m->pt > maxTowerET ) 
+		    {
+		      thisIndexJet = thisIndex;
+		      maxTowerET = m->pt;
+		    }
+		  if ( thisIndex != i ) continue; //tower belongs to a wrong bin
+
+		  if (m->pt != 0.0)
+		    {
+		      norm[0]->Fill(m->pt );
+		      em[ 0]->Fill( m->pt, m->EMF );
+		      had[0]->Fill( m->pt, m->HadF );
+		      au[ 0]->Fill( m->pt, m->OutF );
+		      if ( (*data_it)->GetType()==GammaJet ) 
+			{
+			  norm[2]->Fill(m->pt );
+			  em[ 2]->Fill( m->pt, m->EMF );
+			  had[2]->Fill( m->pt, m->HadF );
+			  au[ 2]->Fill( m->pt, m->OutF );
+			}  
+		      else if ( (*data_it)->GetType()==TrackTower ) 
+			{
+			  norm[1]->Fill(m->pt );
+			  em[ 1]->Fill( m->pt, m->EMF );
+			  had[1]->Fill( m->pt, m->HadF );
+			  au[ 1]->Fill( m->pt, m->OutF );
+			}  
+		      else if ( (*data_it)->GetType()==TrackCluster)
+			{
+			  norm[3]->Fill(m->pt );
+			  em[ 3]->Fill( m->pt, m->EMF );
+			  had[3]->Fill( m->pt, m->HadF );
+			  au[ 3]->Fill( m->pt, m->OutF );
+			}  
+		      else if ( (*data_it)->GetType()==PtBalance)
+			{
+			  norm[4]->Fill(m->pt );
+			  em[ 4]->Fill( m->pt, m->EMF );
+			  had[4]->Fill( m->pt, m->HadF );
+			  au[ 4]->Fill( m->pt, m->OutF );
+			}  
+		    }
+
+		  if (m->HadF!=0.0)
+		    {
+		      norm_vs_had[0]->Fill( m->HadF );
+		      et_vs_had[  0]->Fill( m->HadF, m->pt );
+		      em_vs_had[  0]->Fill( m->HadF, m->EMF );
+		      au_vs_had[  0]->Fill( m->HadF, m->OutF );
+		      if ((*data_it)->GetType()==GammaJet) 
+			{
+			  norm_vs_had[2]->Fill( m->HadF );
+			  et_vs_had[  2]->Fill( m->HadF, m->pt );
+			  em_vs_had[  2]->Fill( m->HadF, m->EMF );
+			  au_vs_had[  2]->Fill( m->HadF, m->OutF );
+			}  
+		      else if ((*data_it)->GetType()==TrackTower) 
+			{
+			  norm_vs_had[1]->Fill( m->HadF );
+			  et_vs_had[  1]->Fill( m->HadF, m->pt );
+			  em_vs_had[  1]->Fill( m->HadF, m->EMF );
+			  au_vs_had[  1]->Fill( m->HadF, m->OutF );
+			}  
+		      else if ((*data_it)->GetType()==TrackCluster) 
+			{
+			  norm_vs_had[3]->Fill( m->HadF );
+			  et_vs_had[  3]->Fill( m->HadF, m->pt );
+			  em_vs_had[  3]->Fill( m->HadF, m->EMF );
+			  au_vs_had[  3]->Fill( m->HadF, m->OutF );
+			}  
+		      else if ((*data_it)->GetType()==PtBalance) 
+			{
+			  norm_vs_had[4]->Fill( m->HadF );
+			  et_vs_had[  4]->Fill( m->HadF, m->pt );
+			  em_vs_had[  4]->Fill( m->HadF, m->EMF );
+			  au_vs_had[  4]->Fill( m->HadF, m->OutF );
+			}  
+		    }
+		} // End of 2. loop over towers
+	    } // End of 1. loop over all fit events
+
+	  for(int a = 0; a < 5; a++)
+	    {
+	      em[a]->Divide(norm[a]);
+	      had[a]->Divide(norm[a]);
+	      au[a]->Divide(norm[a]);
+	      em_vs_had[a]->Divide(norm_vs_had[a]);
+	      et_vs_had[a]->Divide(norm_vs_had[a]);
+	      au_vs_had[a]->Divide(norm_vs_had[a]);
+	    }
+	  
+	  for (data_it = _data->begin(); data_it != _data->end();++data_it) // 2. loop over all fit-events
+	    {
+	      //if one fit event is composed of multiple towers, than loop over all
+	      mess = 0.;
+	      error=0.;
+
+	      const std::vector<TData*>& data_ref = (*data_it)->GetRef();
+	      JetCorr = (*data_it)->GetParametrizedMess(); // Corrected jet Pt
+	      Jet = 0.;		// Sum of corrected tower Et
+	      for (it =data_ref.begin(); it!=data_ref.end(); ++it) // 3. loop over towers
+		{
+		  Jet += (*it)->GetParametrizedMess();
+		}
+
+	      maxTowerET = 0.;
+	      thisIndexJet = 0;
+	      for (it =data_ref.begin(); it!=data_ref.end(); ++it) // 4. loop over towers
+		{
+		  double m = (*it)->GetMess()->pt;
+		  double mhad = (*it)->GetMess()->HadF;
+		  double t   = (*it)->GetTruth()*(Jet/JetCorr);
+		  double tmp = (*it)->GetParametrizedMess();
+		  mess  += tmp;
+		  error +=  (*it)->GetParametrizedErr(&tmp);
+		  int thisIndex = (*it)->GetIndex();
+		  if (m>maxTowerET)
+		    {
+		      thisIndexJet = thisIndex;
+		      maxTowerET = m;
+		    }
+		  if (thisIndex !=i) continue; //tower belongs to a wrong bin
+
+		  if (mhad!=0.0)
+		    {
+		      testmess->pt = m;
+		      testmess->EMF = em[0]->GetBinContent(em[0]->GetXaxis()->FindBin(m));
+		      testmess->HadF = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
+		      testmess->OutF = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
+		      plot_had[0]->Fill( mhad, t/m );
+		      khad[0]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+		      if ((*data_it)->GetType()==GammaJet)
+			{
+			  plot_had[2]->Fill( mhad, t/m );
+			  khad[2]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+			}  
+		      else if ((*data_it)->GetType()==TrackTower)
+			{
+			  khad[1]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+			  plot_had[1]->Fill( mhad, t/m );
+			}  
+		      else if ((*data_it)->GetType()==TrackCluster)
+			{
+			  plot_had[3]->Fill( mhad, t/m );
+			  khad[3]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+			}  
+		      else if ((*data_it)->GetType()==PtBalance)
+			{
+			  plot_had[4]->Fill( mhad, t/m );
+			  khad[4]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+			}  
+		    }
+
+		  if (m!=0.0)
+		    {
+		      plot[0]->Fill( m, t/m );
+	    
+		      testmess->pt = m;
+		      testmess->EMF = em[0]->GetBinContent(em[0]->GetXaxis()->FindBin(m));
+		      testmess->HadF = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
+		      testmess->OutF = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
+		      k[0]->Fill( m, _par->plot_parametrization(testmess,val) );
+
+		      if ((*data_it)->GetType()==GammaJet)
+			{
+			  plot[2]->Fill( m, t/m );
+			  plot2dgj->Fill( m, t/m );
+			  double weight = t/Jet;
+			  norm_weight->Fill( m, weight );
+			  plotgj_weight->Fill( m, t/m );
+			  testmess->EMF = em[2]->GetBinContent(em[2]->GetXaxis()->FindBin(m));
+			  testmess->HadF = had[2]->GetBinContent(had[2]->GetXaxis()->FindBin(m));
+			  testmess->OutF = au[2]->GetBinContent(au[2]->GetXaxis()->FindBin(m));
+			  k[2]->Fill( m, _par->plot_parametrization(testmess,val) );
+			}  
+		      else if ((*data_it)->GetType()==TrackTower)
+			{
+			  plot[1]->Fill( m, t/m );
+			  plot2dtt->Fill( m, t/m );
+			  testmess->EMF = em[1]->GetBinContent(em[1]->GetXaxis()->FindBin(m));
+			  testmess->HadF = had[1]->GetBinContent(had[1]->GetXaxis()->FindBin(m));
+			  testmess->OutF = au[1]->GetBinContent(au[1]->GetXaxis()->FindBin(m));
+			  k[1]->Fill( m, _par->plot_parametrization(testmess,val) );
+			}  
+		      else if ((*data_it)->GetType()==TrackCluster) 
+			{
+			  plot[3]->Fill( m, t/m );
+			  plot2dtc->Fill( m, t/m );
+			  testmess->EMF = em[3]->GetBinContent(em[3]->GetXaxis()->FindBin(m));
+			  testmess->HadF = had[3]->GetBinContent(had[3]->GetXaxis()->FindBin(m));
+			  testmess->OutF = au[3]->GetBinContent(au[3]->GetXaxis()->FindBin(m));
+			  k[3]->Fill( m, _par->plot_parametrization(testmess,val) );
+			}  
+		      else if ((*data_it)->GetType()==PtBalance) 
+			{
+			  plot[4]->Fill( m, t/m );
+			  plot2djj->Fill( m, t/m );
+			  testmess->EMF = em[3]->GetBinContent(em[3]->GetXaxis()->FindBin(m));
+			  testmess->HadF = had[3]->GetBinContent(had[3]->GetXaxis()->FindBin(m));
+			  testmess->OutF = au[3]->GetBinContent(au[3]->GetXaxis()->FindBin(m));
+			  k[4]->Fill( m, _par->plot_parametrization(testmess,val) );
+			}  
+		    }
+		} // End of 4. loop over towers
+
+
+	      if (thisIndexJet!=i) continue; //event (jet or tower) belongs to a wrong bin
+
+	      switch ( (*data_it)->GetType())
+		{
+		case TrackTower://track-tower
+		  if (mess != 0.0) chi2[0]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); break;
+		case GammaJet://gamma-jet
+		  if (mess != 0.0) chi2[1]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); break;
+		case TrackCluster://track-cluster
+		  if (mess != 0.0) chi2[2]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); 
+		  break;
+		case PtBalance://jet-jet
+		  if (mess != 0.0) chi2[3]->Fill( (*data_it)->chi2()/(*data_it)->GetWeight() ); break;
+		default:// do nothing
+		  break;
+		}
+	    }// End of 2. loop over all fit-events
+
+	  if (norm[0]->GetEntries()==0) continue;
+
+	  for(int a = 0; a < 5; a++)
+	    {
+	      plot[a]->Divide(norm[a]);
+	      plot_had[a]->Divide(norm_vs_had[a]);
+	      k[a]->Divide(norm[a]);
+	      khad[a]->Divide(norm_vs_had[a]);
+	    }
+	  plotgj_weight->Divide(norm_weight);
+
+	  for (int j=0; j<5; ++j)//number of diff samples, i.e. gj, tt, tc, jj,...
+	    {
+	      for (int b=1; b<=100; ++b) //number of bins
+		{
+		  if (norm[j]->GetBinContent(b)>0)
+		    {
+		      plot[j]->SetBinError(  b, 1./sqrt(
+							norm[j]->GetBinContent(b)     //stat
+							)*plot[j]->GetBinContent(b) );
+		      plot_had[j]->SetBinError(  b, 1./sqrt(
+							    norm_vs_had[j]->GetBinContent(b)     //stat
+							    )*plot_had[j]->GetBinContent(b) );
+		    }			      
+		}
+	    }
+
+
+	  for(int a = 0; a < 5; a++)
+	    {
+	      plot[a]->SetMarkerStyle(markerStyle[a]);
+	      plot[a]->SetMarkerColor(markerColor[a]);
+	      plot[a]->SetLineColor(markerColor[a]);
+	      plot[a]->GetYaxis()->SetRangeUser(0.,6.);
+	      if( a == 0 ) plot[a]->Draw("PE");
+	      else plot[a]->Draw("PE SAME");
+
+	      k[a]->SetLineColor(markerColor[a]);
+	      k[a]->SetLineWidth(3);
+	      k[a]->GetYaxis()->SetRangeUser(0.,6.);
+	      k[a]->Draw("L SAME");
+
+	      objToBeWritten.push_back(plot[a]->Clone());
+	      objToBeWritten.push_back(k[a]->Clone());
+ 	    }
+	  latex->DrawLatex( 66,3.8,"Average");
+	  latex->DrawLatex( 66,3.5,"#color[2]{Gamma-Jet}");
+	  latex->DrawLatex( 66,3.2,"#color[3]{Track-Cluster}");
+	  latex->DrawLatex( 66,2.9,"#color[4]{Track-Tower}");
+	  latex->DrawLatex( 66,2.6,"#color[7]{p_{T}-Balance}");
+
+	  c1->Draw(); 
+	  ps->NewPage();
+
+    
+	  sprintf(name, "h_k_hadonly_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
+	  TH1F * khadonly = new TH1F(name,"f_{em} = OUF = 0 [GeV];uncorrected hadronic tower E_{T} [GeV];tower k-factor",100,0.5,100.);    
+
+	  sprintf(name, "h_k_Efrac02_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
+	  TH1F * kEfrac02 = new TH1F(name,"f_{em} = 0.2, OUF = 0 [GeV];uncorrected hadronic tower E_{T} [GeV];tower k-factork",100,0.5,100.);    
+
+	  sprintf(name, "h_k_Efrac05_chi2_%d_eta%d_phi%d",i,eta+1,phi+1);
+	  TH1F * kEfrac05 = new TH1F(name,"f_{em} = 0.5, OUF = 0 [GeV];uncorrected hadronic tower E_{T} [GeV];tower k-factork",100,0.5,100.);    
+
+	  testmess->OutF = 0.0;
+	  for (int b=1; b<=100; ++b)
+	    {
+	      testmess->pt = (double)b; // -> EMFrac = 0.0
+	      testmess->EMF = 0.0;
+	      testmess->HadF = (double)b;
+	      khadonly->SetBinContent(khadonly->GetXaxis()->FindBin(b), 
+				      _par->plot_parametrization(testmess,val) );
+	      constants->SetBinContent(constants->GetXaxis()->FindBin(b),constants->GetYaxis()->FindBin(eta+1),
+				       _par->plot_parametrization(testmess,val));
+	      testmess->EMF = (double)b*0.2; // -> EMFrac = 0.25
+	      testmess->HadF = (double)b*0.8;
+	      kEfrac02->SetBinContent(kEfrac02->GetXaxis()->FindBin(b), 
+				      _par->plot_parametrization(testmess,val) );       
+	      testmess->EMF = (double)b*0.5; // -> EMFrac = 1.0
+	      testmess->HadF = (double)b*0.5;
+	      kEfrac05->SetBinContent(kEfrac05->GetXaxis()->FindBin(b), 
+				      _par->plot_parametrization(testmess,val) );       
+	    }
+
+	  khadonly->GetYaxis()->SetRangeUser(0.9,1.1);
+	  khadonly->Draw("l"); 
+	  c1->Draw(); 
+	  ps->NewPage();
+	  objToBeWritten.push_back(khadonly->Clone());
+
+	  kEfrac02->GetYaxis()->SetRangeUser(0.9,1.1);
+	  kEfrac02->Draw("l"); 
+	  c1->Draw(); 
+	  ps->NewPage();
+	  objToBeWritten.push_back(kEfrac02->Clone());
+
+	  kEfrac05->GetYaxis()->SetRangeUser(0.9,1.1);
+	  kEfrac05->Draw("l"); 
+	  c1->Draw(); 
+	  ps->NewPage();
+	  objToBeWritten.push_back(kEfrac05->Clone());
+
+	  for(int a = 0; a < 5; a++)
+	    {
+	      plot_had[a]->SetMarkerStyle(markerStyle[a]);
+	      plot_had[a]->SetMarkerColor(markerColor[a]);
+	      plot_had[a]->SetLineColor(markerColor[a]);
+	      plot_had[a]->GetYaxis()->SetRangeUser(0.,6.);
+	      if( a == 0 ) plot_had[a]->Draw("PE");
+	      else plot_had[a]->Draw("PE SAME");
+
+	      khad[a]->SetLineColor(markerColor[a]);
+	      khad[a]->SetLineWidth(3);
+	      khad[a]->GetYaxis()->SetRangeUser(0.,6.);
+	      khad[a]->Draw("L SAME");
+
+	      objToBeWritten.push_back(plot_had[a]->Clone());
+	      objToBeWritten.push_back(khad[a]->Clone());
+	    }
+	  latex->DrawLatex( 66,3.8,"Average");
+	  latex->DrawLatex( 66,3.5,"#color[2]{Gamma-Jet}");
+	  latex->DrawLatex( 66,3.2,"#color[3]{Track-Cluster}");
+	  latex->DrawLatex( 66,2.9,"#color[4]{Track-Tower}");
+	  latex->DrawLatex( 66,2.6,"#color[7]{p_{T}-Balance}");
+
+	  c1->Draw(); 
+	  ps->NewPage();
+
+
+	  plot2dgj->SetLineColor(2);
+	  plot2dtc->SetLineColor(3);
+	  plot2dtt->SetLineColor(4);
+	  plot2djj->SetLineColor(7);	      
+	  plot2dgj->Draw("BOX");	      
+	  plot2dtt->Draw("BOX,same");	      
+	  plot2dtc->Draw("BOX,same");	      
+	  plot2djj->Draw("BOX,same");	      
+
+	  objToBeWritten.push_back(plot2dgj->Clone());
+	  objToBeWritten.push_back(plot2dtt->Clone());
+	  objToBeWritten.push_back(plot2dtc->Clone());
+	  objToBeWritten.push_back(plot2djj->Clone());
+			      
+	  latex->DrawLatex( 0.66*(plot2dgj->GetXaxis()->GetXmax()-plot2dgj->GetXaxis()->GetXmin()),
+			    0.5*(plot2dgj->GetYaxis()->GetXmax()-plot2dgj->GetYaxis()->GetXmin()),
+			    "#color[2]{Gamma-Jet}");
+	  latex->DrawLatex( 0.66*(plot2dgj->GetXaxis()->GetXmax()-plot2dgj->GetXaxis()->GetXmin()),
+			    0.45*(plot2dgj->GetYaxis()->GetXmax()-plot2dgj->GetYaxis()->GetXmin()),
+			    "#color[3]{TrackCluster}");
+	  latex->DrawLatex( 0.66*(plot2dgj->GetXaxis()->GetXmax()-plot2dgj->GetXaxis()->GetXmin()),
+			    0.4*(plot2dgj->GetYaxis()->GetXmax()-plot2dgj->GetYaxis()->GetXmin()),
+			    "#color[4]{TrackTower}");
+	  latex->DrawLatex( 0.66*(plot2dgj->GetXaxis()->GetXmax()-plot2dgj->GetXaxis()->GetXmin()),
+			    0.35*(plot2dgj->GetYaxis()->GetXmax()-plot2dgj->GetYaxis()->GetXmin()),
+			    "#color[7]{p_{T}-Balance}");
+	  c1->Draw(); 
+	  ps->NewPage();
+      
+
+	  //show overflow in the last bin
+	  double maximum = 0.0;
+	  for (int k=0; k<4; ++k)
+	    {
+	      if (chi2[k]->GetMaximum()>maximum)
+		maximum = chi2[k]->GetMaximum(); 
+	      chi2[k]->SetBinContent(100,chi2[k]->GetBinContent(100)+chi2[k]->GetBinContent(101));
+	      chi2[k]->SetBinContent(1,chi2[k]->GetBinContent(0)+chi2[k]->GetBinContent(1));
+	    }
+	  for(int k = 0; k < 4; k++)
+	    {
+	      chi2[k]->SetMaximum( maximum+sqrt(maximum) );
+	      chi2[k]->SetLineColor(markerColor[k+1]);
+	      if( k == 0 ) chi2[k]->Draw("h");
+	      else chi2[k]->Draw("h,same");
+	      
+	      objToBeWritten.push_back(chi2[k]->Clone());
+	    }
+
+	  latex->DrawLatex( 0.66*(chi2[0]->GetXaxis()->GetXmax()-chi2[0]->GetXaxis()->GetXmin()),
+			    0.65*(chi2[0]->GetMaximum()-chi2[0]->GetMinimum()),
+			    "#color[2]{Gamma-Jet}");
+	  latex->DrawLatex( 0.66*(chi2[0]->GetXaxis()->GetXmax()-chi2[0]->GetXaxis()->GetXmin()),
+			    0.6*(chi2[0]->GetMaximum()-chi2[0]->GetMinimum()),
+			    "#color[1]{TrackTower}");
+	  latex->DrawLatex( 0.66*(chi2[0]->GetXaxis()->GetXmax()-chi2[0]->GetXaxis()->GetXmin()),
+			    0.55*(chi2[0]->GetMaximum()-chi2[0]->GetMinimum()),
+			    "#color[3]{TrackCluster}");
+	  latex->DrawLatex( 0.66*(chi2[0]->GetXaxis()->GetXmax()-chi2[0]->GetXaxis()->GetXmin()),
+			    0.5*(chi2[0]->GetMaximum()-chi2[0]->GetMinimum()),
+			    "#color[7]{p_{T}-Balance}");
+	  c1->Draw(); 
+	  ps->NewPage();
+
+	  for(int a = 0; a < 5; a++)
+	    {
+	      delete plot[a];
+	      delete plot_had[a];
+	      delete k[a];
+	      delete em[a];
+	      delete had[a];
+	      delete au[a];
+	      delete khad[a];
+	      delete et_vs_had[a];
+	      delete em_vs_had[a];
+	      delete au_vs_had[a];
+	      delete norm_vs_had[a];
+	      delete norm[a];
+	      if(a < 4) delete chi2[a];
+	    }
+	  delete plot2dgj;
+	  delete plotgj_weight;
+	  delete norm_weight;
+	  delete plot2dtt;
+	  delete plot2dtc;
+	  delete plot2djj;
+	  delete khadonly;
+	  delete kEfrac02; 
+	  delete kEfrac05; 
+
+	} // End of loop over phi bins
+    } // End of loop over eta bins
+
+  gStyle->SetPalette(1);
+  constants->Draw("COLZ"); 
+  c1->Draw(); 
+  ps->NewPage();
+  objToBeWritten.push_back(constants);
+
+
+  // Distribution of chi2 summands (normalized residuals)
+  TH1F *h_chi2 = new TH1F("h_chi2","Scaled residuals z^{2} = 1/w #chi^{2};f(z^{2});dN / df(z^{2})",50,0,200);
+  h_chi2->SetLineColor(1);
+  h_chi2->SetLineStyle(3);
+  objToBeWritten.push_back(h_chi2);
+
+  // Distribution of Cauchy scaled normalized residuals
+  TH1F *h_cauchy = static_cast<TH1F*>(h_chi2->Clone("h_cauchy"));
+  h_cauchy->SetLineColor(2);
+  h_cauchy->SetLineStyle(2);
+  objToBeWritten.push_back(h_cauchy);
+
+  // Distribution of Huber scaled normalized residuals
+  TH1F *h_huber = static_cast<TH1F*>(h_chi2->Clone("h_huber"));
+  h_huber->SetLineColor(4);
+  h_huber->SetLineStyle(1);
+  objToBeWritten.push_back(h_huber);
+
+  // Cauchy-scaled versus no scaling
+  TH2F *h_none_cauchy = new TH2F("h_none_cauchy","Residuals z^{2};z^{2};f(z^{2})",50,0,10,50,0,10);
+  h_none_cauchy->SetLineColor(2);
+  objToBeWritten.push_back(h_none_cauchy);
+
+  // Huber-scaled versus no scaling
+  TH2F *h_none_huber = static_cast<TH2F*>(h_none_cauchy->Clone("h_none_huber"));
+  h_none_huber->SetLineColor(4);
+  objToBeWritten.push_back(h_none_huber);
+
+  for(  std::vector<TData*>::const_iterator it = _data->begin();  it < _data->end();  ++it )
+    {
+      double weight = (*it)->GetWeight();
+
+      TData::ScaleResidual = &TData::ScaleNone;
+      double res = ( (*it)->chi2() ) / weight;
+      TData::ScaleResidual = &TData::ScaleCauchy;
+      double res_cauchy = ( (*it)->chi2() ) / weight;
+      TData::ScaleResidual = &TData::ScaleHuber;
+      double res_huber = ( (*it)->chi2() ) / weight;
+
+      h_chi2->Fill(res);
+      h_cauchy->Fill(res_cauchy);
+      h_huber->Fill(res_huber);
+      h_none_cauchy->Fill(res,res_cauchy);
+      h_none_huber->Fill(res,res_huber);
+    }
+
+  h_cauchy->Draw();
+  h_huber->Draw("same");
+  h_chi2->Draw("same");
+  c1->SetLogy(1);
+
+  TLegend *l_res = new TLegend(0.35,0.68,0.7,0.88);
+  l_res->SetFillColor(0);
+  l_res->SetBorderSize(0);
+  l_res->SetHeader("Scaling function f");
+  l_res->AddEntry(h_chi2,"None","L");
+  l_res->AddEntry(h_huber,"Huber","L");
+  l_res->AddEntry(h_cauchy,"Cauchy","L");
+  l_res->Draw("same");
+
+  c1->Draw();
+  ps->NewPage();
+
+
+  h_none_cauchy->Draw("box");
+  h_none_huber->Draw("boxsame");
+  c1->SetLogy(0);
+
+  TLine *line1 = new TLine(0,0,7,7);
+  line1->SetLineStyle(2);
+  line1->SetLineColor(1);
+  line1->SetLineWidth(1);
+  line1->Draw("same");
+
+  TLegend *l_res2 = new TLegend(0.35,0.68,0.7,0.88);
+  l_res2->SetFillColor(0);
+  l_res2->SetBorderSize(0);
+  l_res2->SetHeader("Scaling function f");
+  l_res2->AddEntry(line1,"None","L");
+  l_res2->AddEntry(h_none_huber,"Huber","L");
+  l_res2->AddEntry(h_none_cauchy,"Cauchy","L");
+  l_res2->Draw("same");
+
+  c1->Draw();
+
+
+  if( _outputROOT ) WriteToRootFile(objToBeWritten, "Towers");
+    
+  ps->Close();
+
+  delete h_chi2;
+  delete h_cauchy;
+  delete h_huber;
+  delete l_res;
+  delete h_none_cauchy;
+  delete h_none_huber;
+  delete line1;
+  delete l_res2;
+  delete constants;
+  delete latex;
+  delete testmess;
+  delete c1;
+  delete ps;
+  objToBeWritten.clear();
+}
+
 
 
 //---------------------------------------------------------------
@@ -1421,7 +2216,7 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 	  objToBeDeleted.push_back(plot_jes);
 
 	  sprintf(name, "h_gj%d_eta%d_phi%d",i,eta+1,phi+1);
-	  TH1F * plot = new TH1F(name,";uncalibrated jet P_{T} [GeV];average of ( P_{T}^{#gamma} / P_{T}^{uncalib. jet})",100,0.0,400.);    
+	  TH1F * plot = new TH1F(name,";uncorrected jet P_{T} [GeV];average of ( P_{T}^{#gamma} / P_{T}^{uncalib. jet})",100,0.0,400.);    
 	  objToBeDeleted.push_back(plot);
 
 	  sprintf(name, "gj_fit%d",i);
@@ -1569,7 +2364,7 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 	  TH1F * plot_jes = new TH1F(name,";#sum calibrated tower E_{T} [GeV]; JES: ( E_{T}^{#gamma} / #sum E_{T}^{calib. tower})",100,0.0,400.);
 	  objToBeDeleted.push_back(plot_jes);
 	  sprintf(name, "h2_gj%d_eta%d_phi%d",i,eta+1,phi+1);
-	  TH1F * plot = new TH1F(name,";uncalibrated jet E_{T} [GeV];average of ( E_{T}^{#gamma} / E_{T}^{uncalib. jet})",100,0.0,400.);    
+	  TH1F * plot = new TH1F(name,";uncorrected jet E_{T} [GeV];average of ( E_{T}^{#gamma} / E_{T}^{uncalib. jet})",100,0.0,400.);    
 	  objToBeDeleted.push_back(plot);
 	  sprintf(name, "gj2_fit%d",i);
 	  TH1F * fit  = new TH1F(name,"",100,0.0,400.);    

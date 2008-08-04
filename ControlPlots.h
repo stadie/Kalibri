@@ -25,6 +25,7 @@ public:
   void MakeControlPlotsGammaJetPerJetBin();
   void MakeControlPlotsGammaJetPerTowerBin();
   void MakeControlPlotsGammaJetSigmas();
+  void MakeControlPlotsTowers();
   bool OutputFormatRoot() const { return _outputROOT; }
   
 private:
