@@ -49,7 +49,7 @@ TControlPlots::TControlPlots(const std::vector<TData*> *data, TParameters *par, 
   SetGStyle();
 
   if( outputFormat == 1 ) _outputROOT = false;
-  _outputROOT = true;
+  else _outputROOT = true;
 }
 
 
@@ -1828,10 +1828,10 @@ void TControlPlots::MakeControlPlotsDiJet()
       sprintf(name,"hDeltaPhi%i",i);
       dphi[i] = (TH1F*)dphi[0]->Clone(name);
     }
-  dphi[1]->SetTitle("#Delta Phi (10-35 GeV);#Delta #Phi");
-  dphi[2]->SetTitle("#Delta Phi (35-90 GeV);#Delta #Phi");
-  dphi[3]->SetTitle("#Delta Phi (90-300 GeV);#Delta #Phi");
-  dphi[4]->SetTitle("#Delta Phi (300+ GeV);#Delta #Phi");
+  dphi[1]->SetTitle("#Delta #Phi (P^{scale}_{T} 10-35 GeV);#Delta #Phi");
+  dphi[2]->SetTitle("#Delta #Phi (P^{scale}_{T} 35-90 GeV);#Delta #Phi");
+  dphi[3]->SetTitle("#Delta #Phi (P^{scale}_{T} 90-300 GeV);#Delta #Phi");
+  dphi[4]->SetTitle("#Delta #Phi (P^{scale}_{T} 300+ GeV);#Delta #Phi");
   dphi[5] = new TH1F("hDeltaPhiOff","#Delta Phi;#Delta #Phi",120,-3.4,3.4);
   dphi[6] = new TH1F("hDeltaPhiOff+","#Delta Phi;#Delta #Phi",120,2.8,3.4);
   dphi[7] = new TH1F("hAbsDeltaPhiOff","#Delta Phi;#Delta #Phi",120,2.8,3.4);
@@ -1874,20 +1874,20 @@ void TControlPlots::MakeControlPlotsDiJet()
       sprintf(name,"hBeta%i",i);
       Beta[i] = (TH2F*)Beta[0]->Clone(name);
     }
-  Beta[2]->SetTitle("di-jet 10 < E_{T}^{barrel jet} < 35 GeV;#eta");
-  Beta[4]->SetTitle("di-jet 35 < E_{T}^{barrel jet} < 90 GeV;#eta");
-  Beta[6]->SetTitle("di-jet 90 < E_{T}^{barrel jet} < 300 GeV;#eta");
+  Beta[2]->SetTitle("di-jet 10 < E_{T}^{scale} < 35 GeV;#eta");
+  Beta[4]->SetTitle("di-jet 35 < E_{T}^{scale} < 90 GeV;#eta");
+  Beta[6]->SetTitle("di-jet 90 < E_{T}^{scale} < 300 GeV;#eta");
 
   TH2F* Bpt[2];
   Bpt[0] = new TH2F("hBpt0","di-jet;p_{T} [GeV]",400,0,400,100,-0.7,0.7);
   Bpt[1] = (TH2F*)Bpt[0]->Clone("hBpt1");
 
   TH2F* Benergy[2];
-  Benergy[0] = new TH2F("hBenergy0","di-jet;Energy [GeV]",400,0,400,100,-0.7,0.7);
+  Benergy[0] = new TH2F("hBenergy0","di-jet;E [GeV]",400,0,400,100,-0.7,0.7);
   Benergy[1] = (TH2F*)Benergy[0]->Clone("hBenergy1");
   
   TH2F* Bemf[2];
-  Bemf[0] = new TH2F("hBemf0","di-jet;EMF (probe jet)",100,0,1,100,-0.7,0.7);
+  Bemf[0] = new TH2F("hBemf0","di-jet;f_{em} (probe jet)",100,0,1,100,-0.7,0.7);
   Bemf[1] = (TH2F*)Bemf[0]->Clone("hBemf1");
 
   double bins[101];
@@ -1922,119 +1922,119 @@ void TControlPlots::MakeControlPlotsDiJet()
       double etscale = jm->GetScale();
 
 
-  double etparascale = 0.;
-    for(std::vector<TData*>::const_iterator t = jm->GetRef().begin(); t != jm->GetRef().end(); ++t)
-      {
-	etparascale += (*t)->GetParametrizedMess();
-      }
-    etparascale = ( etparascale + jm->GetParametrizedMess() )/2.;
-    double etajet1 = jm->GetMultMess(0)->eta;
-    double etajet2 = jm->GetMultMess(1)->eta;
-    double etjetcomb = jm->GetMessCombination();
-    double etjet1 = jm->GetMultParametrizedMess(0);      //Probe
-    double etjet2 = jm->GetMultParametrizedMess(1);      //Barrel
-    double etjet1uncor = jm->GetMultMess(0)->pt;      //Probe
-    double etjet2uncor = jm->GetMultMess(1)->pt;      //Barrel
-    double phijet1 = jm->GetMultMess(0)->phi;      //Probe
-    double phijet2 = jm->GetMultMess(1)->phi;      //Barrel
-    double B = (etjet1 - etjet2) / etscale;
-    double Buncor = (etjet1uncor - etjet2uncor) * 2 / (etjet1uncor + etjet2uncor);
-    double etaprobe = etajet1;
-    double phiprobe = phijet1;
-    double etprobe = etjet1;
-    if(fabs(etajet1) < fabs(etajet2))  //unbias if both jets in barrel
-      {
-	B *= -1;
-	Buncor *= -1;
-	etprobe = etjet2; 
-	etjet2 = etjet1;  
-	etaprobe = etajet2; 
-	etajet2 = etajet1;  
-	phiprobe = phijet2; 
-	phijet2 = phijet1; 
-	double temp = etjet2uncor;
-	etjet2uncor = etjet1uncor;
-	etjet1uncor = temp;
-      }
-    double deltaphi = fabs(phiprobe - phijet2);
-    double deltaphioff = deltaPhi(phiprobe,phijet2);
+      double etparascale = 0.;
+      for(std::vector<TData*>::const_iterator t = jm->GetRef().begin(); t != jm->GetRef().end(); ++t)
+	{
+	  etparascale += (*t)->GetParametrizedMess();
+	}
+      etparascale = ( etparascale + jm->GetParametrizedMess() )/2.;
+      double etajet1 = jm->GetMultMess(0)->eta;
+      double etajet2 = jm->GetMultMess(1)->eta;
+      double etjetcomb = jm->GetMessCombination();
+      double etjet1 = jm->GetMultParametrizedMess(0);      //Probe
+      double etjet2 = jm->GetMultParametrizedMess(1);      //Barrel
+      double etjet1uncor = jm->GetMultMess(0)->pt;      //Probe
+      double etjet2uncor = jm->GetMultMess(1)->pt;      //Barrel
+      double phijet1 = jm->GetMultMess(0)->phi;      //Probe
+      double phijet2 = jm->GetMultMess(1)->phi;      //Barrel
+      double B = (etjet1 - etjet2) / etscale;
+      double Buncor = (etjet1uncor - etjet2uncor) * 2 / (etjet1uncor + etjet2uncor);
+      double etaprobe = etajet1;
+      double phiprobe = phijet1;
+      double etprobe = etjet1;
+      if(fabs(etajet1) < fabs(etajet2))  //unbias if both jets in barrel
+	{
+	  B *= -1;
+	  Buncor *= -1;
+	  etprobe = etjet2; 
+	  etjet2 = etjet1;  
+	  etaprobe = etajet2; 
+	  etajet2 = etajet1;  
+	  phiprobe = phijet2; 
+	  phijet2 = phijet1; 
+	  double temp = etjet2uncor;
+	  etjet2uncor = etjet1uncor;
+	  etjet1uncor = temp;
+	}
+      double deltaphi = fabs(phiprobe - phijet2);
+      double deltaphioff = deltaPhi(phiprobe,phijet2);
 
-    Scale[0]->Fill(etscale,etparascale - etscale);
-    Scale[1]->Fill(etscale,etparascale);
-    ptspec[0]->Fill(etprobe);
-    ptspec[1]->Fill(etjet2);
-    ptspec[2]->Fill(etjet1uncor);
-    ptspec[3]->Fill(etjet2uncor);
-    eta[0]->Fill(etaprobe);
-    eta[1]->Fill(etajet2);
-    dphi[0]->Fill(deltaphi);
-    dphi[5]->Fill(deltaphioff);
-    dphi[6]->Fill(deltaphioff);
-    dphi[7]->Fill(fabs(deltaphioff));
-    dphi[8]->Fill(phiprobe - phijet2);             //
-    if((phiprobe - phijet2) > 0) dphi[9]->Fill(phiprobe - phijet2);             //
-    else dphi[10]->Fill(phiprobe - phijet2);             //
-    Bvsdphi->Fill(deltaphi,B); 
-    Difvscomb->Fill(fabs(etprobe - etjet2),etjetcomb);
-    combmean[0]->Fill(etscale, etjetcomb);
-    difmean[0]->Fill(etscale, fabs(etprobe - etjet2));
+      Scale[0]->Fill(etscale,etparascale - etscale);
+      Scale[1]->Fill(etscale,etparascale);
+      ptspec[0]->Fill(etprobe);
+      ptspec[1]->Fill(etjet2);
+      ptspec[2]->Fill(etjet1uncor);
+      ptspec[3]->Fill(etjet2uncor);
+      eta[0]->Fill(etaprobe);
+      eta[1]->Fill(etajet2);
+      dphi[0]->Fill(deltaphi);
+      dphi[5]->Fill(deltaphioff);
+      dphi[6]->Fill(deltaphioff);
+      dphi[7]->Fill(fabs(deltaphioff));
+      dphi[8]->Fill(phiprobe - phijet2);             //
+      if((phiprobe - phijet2) > 0) dphi[9]->Fill(phiprobe - phijet2);             //
+      else dphi[10]->Fill(phiprobe - phijet2);             //
+      Bvsdphi->Fill(deltaphi,B); 
+      Difvscomb->Fill(fabs(etprobe - etjet2),etjetcomb);
+      combmean[0]->Fill(etscale, etjetcomb);
+      difmean[0]->Fill(etscale, fabs(etprobe - etjet2));
 
-    Beta[0]->Fill(etaprobe, B,jj->GetWeight());
-    Beta[1]->Fill(etaprobe, Buncor,jj->GetWeight());
-    if (etscale > 10 && etscale < 35)
-      {
-	Beta[2]->Fill(etaprobe, B,jj->GetWeight());
-	Beta[3]->Fill(etaprobe, Buncor,jj->GetWeight());
-	dphi[1]->Fill(deltaphi);
-      }
-    else if (etscale > 35 && etscale < 90)
-      {
-	Beta[4]->Fill(etaprobe, B,jj->GetWeight());
-	Beta[5]->Fill(etaprobe, Buncor,jj->GetWeight());
-	dphi[2]->Fill(deltaphi);
-      }
-    else if (etscale > 90 && etscale < 300)
-      {
-	Beta[6]->Fill(etaprobe, B,jj->GetWeight());
-	Beta[7]->Fill(etaprobe, Buncor,jj->GetWeight());
-	dphi[3]->Fill(deltaphi);
-      }
-    else if (etscale > 300) dphi[4]->Fill(deltaphi);
+      Beta[0]->Fill(etaprobe, B,jj->GetWeight());
+      Beta[1]->Fill(etaprobe, Buncor,jj->GetWeight());
+      if (etscale > 10 && etscale < 35)
+	{
+	  Beta[2]->Fill(etaprobe, B,jj->GetWeight());
+	  Beta[3]->Fill(etaprobe, Buncor,jj->GetWeight());
+	  dphi[1]->Fill(deltaphi);
+	}
+      else if (etscale > 35 && etscale < 90)
+	{
+	  Beta[4]->Fill(etaprobe, B,jj->GetWeight());
+	  Beta[5]->Fill(etaprobe, Buncor,jj->GetWeight());
+	  dphi[2]->Fill(deltaphi);
+	}
+      else if (etscale > 90 && etscale < 300)
+	{
+	  Beta[6]->Fill(etaprobe, B,jj->GetWeight());
+	  Beta[7]->Fill(etaprobe, Buncor,jj->GetWeight());
+	  dphi[3]->Fill(deltaphi);
+	}
+      else if (etscale > 300) dphi[4]->Fill(deltaphi);
 
-    Bpt[0]->Fill(etscale,B,jj->GetWeight());
-    Bpt[1]->Fill(etscale,Buncor,jj->GetWeight());
+      Bpt[0]->Fill(etscale,B,jj->GetWeight());
+      Bpt[1]->Fill(etscale,Buncor,jj->GetWeight());
 
-    double theta1 = 2 * atan(exp(-etaprobe));
-    double theta2 = 2 * atan(exp(-etajet2));
-    double energy1 = etprobe * sin(theta1);
-    double energy2 = etjet2 * sin(theta2);
-    Benergy[0]->Fill((energy1 + energy2) /2,B,jj->GetWeight());
-    Benergy[1]->Fill((energy1 + energy2) /2,Buncor,jj->GetWeight());
-    Bptlog[0]->Fill(etscale,B,jj->GetWeight());
-    Bptlog[1]->Fill(etscale,Buncor,jj->GetWeight());
+      double theta1 = 2 * atan(exp(-etaprobe));
+      double theta2 = 2 * atan(exp(-etajet2));
+      double energy1 = etprobe * sin(theta1);
+      double energy2 = etjet2 * sin(theta2);
+      Benergy[0]->Fill((energy1 + energy2) /2,B,jj->GetWeight());
+      Benergy[1]->Fill((energy1 + energy2) /2,Buncor,jj->GetWeight());
+      Bptlog[0]->Fill(etscale,B,jj->GetWeight());
+      Bptlog[1]->Fill(etscale,Buncor,jj->GetWeight());
 
 
-    //em fraction plots     
-    double em = 0;
-    double had = 0;
-    for(std::vector<TData*>::const_iterator t = jj->GetRef().begin(); t != jj->GetRef().end(); ++t)
-      {
-	TData* tt = *t;
-	em  += tt->GetMess()->EMF;
-	had += tt->GetMess()->HadF;
-	had += tt->GetMess()->OutF;
-      }
-    Bemf[0]->Fill(em/(em+had),B,jj->GetWeight());
-    Bemf[1]->Fill(em/(em+had),Buncor,jj->GetWeight());
+      //em fraction plots     
+      double em = 0;
+      double had = 0;
+      for(std::vector<TData*>::const_iterator t = jj->GetRef().begin(); t != jj->GetRef().end(); ++t)
+	{
+	  TData* tt = *t;
+	  em  += tt->GetMess()->EMF;
+	  had += tt->GetMess()->HadF;
+	  had += tt->GetMess()->OutF;
+	}
+      Bemf[0]->Fill(em/(em+had),B,jj->GetWeight());
+      Bemf[1]->Fill(em/(em+had),Buncor,jj->GetWeight());
             
-    for(int i=0;i<4;++i)
-      {
-	if((fabs(etaprobe) > i) && (fabs(etaprobe) < i+1)) 
-	  {
-	    combmean[i+1]->Fill(etscale, etjetcomb);
-	    difmean[i+1]->Fill(etscale, fabs(etprobe - etjet2));
-	  }
-      }
+      for(int i=0;i<4;++i)
+	{
+	  if((fabs(etaprobe) > i) && (fabs(etaprobe) < i+1)) 
+	    {
+	      combmean[i+1]->Fill(etscale, etjetcomb);
+	      difmean[i+1]->Fill(etscale, fabs(etprobe - etjet2));
+	    }
+	}
     }  //End of loop over all fit-events
 
 
@@ -2083,364 +2083,375 @@ void TControlPlots::MakeControlPlotsDiJet()
   ps->NewPage();  
 
 
-  TH1F* hists[8][8];
-  TH1F* gaussplots[2][4];  
-  TF1* gf[2][4];     
+  // Control quantities vs eta
+  TH1F* hists_beta[8][8];
+  TH1F* gp_beta[8][4];  
+  TF1* gf_beta[8][4];     
 
-  TLegend* leg = new TLegend(0.7,0.96,0.96,0.72);
-  leg->AddEntry(Beta[0],"B = P^{probe}_{T} - P^{barrel}_{T} / scale");
+  TLegend* leg = new TLegend(0.7,0.7,0.96,0.9);
+  leg->SetFillColor(0);
   leg->AddEntry(Beta[1],"B before fit");
-  for(int i = 0 ; i < 8 ; i+=2) // Loop over control quantities
-    {
-      Beta[i]->SetMarkerStyle(20);
-      Beta[i]->SetMarkerColor(1);
-      Beta[i+1]->SetMarkerStyle(22);
-      Beta[i+1]->SetMarkerColor(2);
-      leg->Draw();
+  leg->AddEntry(Beta[0],"B after fit");
 
-      Fit2D(Beta[i],hists[i],gaussplots[0], gf[0]);
-      Fit2D(Beta[i+1],hists[i+1],gaussplots[1], gf[1]);
-      for(int a = 0; a<2;++a)
+  int markerColor[2] = { 2,1 };
+  int markerStyle[2] = { 22,20 };
+  int etLimit[4] = { 10,35,90,300 };
+
+  for(int i = 0 ; i < 8 ; i+=2) // Loop over balance plots
+    {
+      for(int a = 0; a < 2; a++)
 	{
-	  for(int b = 0 ; b < 4 ; ++b) {
-	    hists[a+i][b]->SetMinimum(-0.5);
-	    hists[a+i][b]->SetMaximum(0.5);
-	    ++b;
-	    hists[a+i][b]->SetMinimum(0.0);
-	    hists[a+i][b]->SetMaximum(1.);
-	  }
+	  Beta[i+a]->SetMarkerStyle(markerStyle[a]);
+	  Beta[i+a]->SetMarkerColor(markerColor[a]);
+	  Beta[i+a]->SetLineColor(markerColor[a]);
+	  objToBeWritten.push_back(Beta[i+a]);
+	  
+	  Fit2D(Beta[i+a],hists_beta[i+a],gp_beta[i+a], gf_beta[i+a]);
+
+	  for(int b = 0 ; b < 4 ; ++b)
+	    {
+	      hists_beta[i+a][b]->SetMinimum(-0.5);
+	      hists_beta[i+a][b]->SetMaximum(0.5);
+	      ++b;
+	      hists_beta[i+a][b]->SetMinimum(0.0);
+	      hists_beta[i+a][b]->SetMaximum(1.);
+	    }
 	}
-    
-      for(int k=0;k<3;++k)
+
+      for(int a = 1; a >=0; a--) // Loop over correction
 	{
-	  gf[1][k]->SetLineColor(2);
-	  gaussplots[0][k]->SetMarkerStyle(20);
-	  gaussplots[0][k]->SetMarkerColor(1);
-	  gaussplots[1][k]->SetMarkerStyle(22);
-	  gaussplots[1][k]->SetMarkerColor(2);
-	}
-      /*
-	for(int b=0;b<3;++b) 
-	{
-	for(int a=0; a<2;++a) // 1: B after correction, 2: B before correction
-	{
-	if(i==0)    
-	gaussplots[a][b]->SetTitle("di-jet full energy range;#eta");
-	if(i==2)    
-	gaussplots[a][b]->SetTitle("di-jet 10 < P_{T}^{scale} < 35 GeV;#eta");
-	if(i==4)    
-	gaussplots[a][b]->SetTitle("di-jet 35 < P_{T}^{scale} < 90 GeV;#eta");
-	if(i==6)    
-	gaussplots[a][b]->SetTitle("di-jet 90 < P_{T}^{scale} < 300 GeV;#eta");
-	c2->cd(b);
-	if(a==0)	    gaussplots[a][b]->Draw();
-	else            gaussplots[a][b]->Draw("same");
-	gf[a][b]->Draw("same");
-	}
-	c2->Update();
-	c2->Draw();
-	ps->NewPage();
-	}
-	c1->cd();
-      */
+	  for(int b = 0; b < 3; b++) // Loop over example eta bins
+	    {
+	      // Find eta bin of gaussplot
+	      int bin = 0;
+	      if(  b == 0  )  bin = int(Beta[i+a]->GetNbinsX()/6);
+	      else if(  b == 1  )  bin = int(Beta[i+a]->GetNbinsX()/3);
+	      else if(  b == 2  )  bin = int(Beta[i+a]->GetNbinsX()/2);
+	      float min = Beta[i+a]->GetXaxis()->GetBinLowEdge(bin);
+	      float max = min + Beta[i+a]->GetXaxis()->GetBinWidth(bin);
+
+	      // Set title according to eta bin
+	      if( i == 0 )  sprintf(name,"di-jet, %.2f < #eta < %.2f",min,max);
+	      else sprintf(name,"di-jet, %i < E_{T}^{scale} < %i GeV, %.2f < #eta < %.2f",
+			   etLimit[int(i/2)-1],etLimit[int(i/2)],min,max);
+	      gp_beta[a][b]->SetTitle(name);
+
+	      if( a == 0 ) gp_beta[a][b]->SetXTitle("B after fit");
+	      else gp_beta[a][b]->SetXTitle("B before fit");
+
+	      // Set style and line color according to ptRatioName
+	      gp_beta[a][b]->SetMarkerStyle(markerStyle[a]);
+	      gp_beta[a][b]->SetMarkerColor(markerColor[a]);
+	      gp_beta[a][b]->SetLineColor(markerColor[a]);
+	      gf_beta[a][b]->SetLineColor(markerColor[a]);
+
+	      // Plot gaussplots
+	      c2->cd(1+b);
+	      gp_beta[a][b]->Draw();
+	      gf_beta[a][b]->Draw("same");
+
+	      objToBeWritten.push_back(gp_beta[a][b]);
+	      objToBeWritten.push_back(gf_beta[a][b]);
+	    } // End of loop over example ptbins
+	  c2->Draw();
+	  ps->NewPage();
+	} // End of loop over correction
+      c1->cd();
+
       for(int j = 0 ; j < 8 ; ++j) 
 	{
-	  hists[i][j]->Draw();
-	  hists[i][j]->SetStats(0);
-	  hists[i+1][j]->Draw("SAME");
-	  leg->Draw();
+	  hists_beta[i][j]->Draw();
+	  objToBeWritten.push_back(hists_beta[i][j]);
+	  hists_beta[i][j]->SetStats(0);
+	  hists_beta[i+1][j]->Draw("SAME");
+	  objToBeWritten.push_back(hists_beta[i+1][j]);
+	  leg->Draw("SAME");
 	  c1->SetGrid();
 	  c1->Draw();   
 	  ps->NewPage(); 
 	}
-    } // End of loop over control quantities 
+    } // End of loop over balance plots 
 
-  for(int i = 0 ; i < 8 ; ++i) {
-    for(int j = 0 ; j < 8 ; ++j) {
-      delete hists[i][j];
-    }	
-  }
+
+
+  // Control quantities vs pt
+  TH1F* hists_pt[2][8];
+  TH1F* gp_pt[2][4];  
+  TF1* gf_pt[2][4];     
+  for(int a = 0; a < 2; a++)
+    {
+      Bpt[a]->SetMarkerStyle(markerStyle[a]);
+      Bpt[a]->SetMarkerColor(markerColor[a]);
+      Bpt[a]->SetLineColor(markerColor[a]);
+
+      Fit2D(Bpt[a],hists_pt[a],gp_pt[a], gf_pt[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_pt[a][b]->SetMinimum(-0.5);
+	  hists_pt[a][b]->SetMaximum(0.5);
+	  ++b;
+	  hists_pt[a][b]->SetMinimum(0.0);
+	  hists_pt[a][b]->SetMaximum(1.);
+	}
+    }
+
+  for(int a = 1; a >=0; a--) // Loop over correction
+    {
+      for(int b = 0; b < 3; b++) // Loop over example pt bins
+	{
+	  // Find pt bin of gaussplot
+	  int bin = 0;
+	  if(  b == 0  )  bin = int(Bpt[a]->GetNbinsX()/6);
+	  else if(  b == 1  )  bin = int(Bpt[a]->GetNbinsX()/3);
+	  else if(  b == 2  )  bin = int(Bpt[a]->GetNbinsX()/2);
+	  float min = Bpt[a]->GetXaxis()->GetBinLowEdge(bin);
+	  float max = min + Bpt[a]->GetXaxis()->GetBinWidth(bin);
+
+	  // Set title according to pt bin
+	  sprintf(name,"di-jet, %.1f < p_{T} < %.1f [GeV]",min,max);
+	  gp_pt[a][b]->SetTitle(name);
+
+	  if( a == 0 ) gp_pt[a][b]->SetXTitle("B after fit");
+	  else gp_pt[a][b]->SetXTitle("B before fit");
+
+	  // Set style and line color according to ptRatioName
+	  gp_pt[a][b]->SetMarkerStyle(markerStyle[a]);
+	  gp_pt[a][b]->SetMarkerColor(markerColor[a]);
+	  gp_pt[a][b]->SetLineColor(markerColor[a]);
+	  gf_pt[a][b]->SetLineColor(markerColor[a]);
+
+	  // Plot gaussplots
+	  c2->cd(1+b);
+	  gp_pt[a][b]->Draw();
+	  gf_pt[a][b]->Draw("same");
+
+	  objToBeWritten.push_back(gp_pt[a][b]);
+	  objToBeWritten.push_back(gf_pt[a][b]);
+	} // End of loop over example ptbins
+      c2->Draw();
+      ps->NewPage();
+    } // End of loop over correction
+
+  c1->cd();
+  for(int j = 0 ; j < 8 ; ++j) 
+    {
+      hists_pt[0][j]->Draw();
+      objToBeWritten.push_back(hists_pt[0][j]);
+      hists_pt[0][j]->SetStats(0);
+      hists_pt[1][j]->Draw("SAME");
+      objToBeWritten.push_back(hists_pt[1][j]);
+      leg->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+
+
+  // Control quantities vs log pt
+  TH1F* hists_ptlog[2][8];
+  TH1F* gp_ptlog[2][4];  
+  TF1* gf_ptlog[2][4];     
+  for(int a = 0; a < 2; a++)
+    {
+      Bptlog[a]->SetMarkerStyle(markerStyle[a]);
+      Bptlog[a]->SetMarkerColor(markerColor[a]);
+      Bptlog[a]->SetLineColor(markerColor[a]);
+
+      Fit2D(Bptlog[a],hists_ptlog[a],gp_ptlog[a], gf_ptlog[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_ptlog[a][b]->SetMinimum(-0.5);
+	  hists_ptlog[a][b]->SetMaximum(0.5);
+	  ++b;
+	  hists_ptlog[a][b]->SetMinimum(0.0);
+	  hists_ptlog[a][b]->SetMaximum(1.);
+	}
+    }
+
+  c1->cd();
+  for(int j = 0 ; j < 8 ; ++j) 
+    {
+      hists_ptlog[0][j]->Draw();
+      objToBeWritten.push_back(hists_ptlog[0][j]);
+      hists_ptlog[0][j]->SetStats(0);
+      hists_ptlog[1][j]->Draw("SAME");
+      objToBeWritten.push_back(hists_ptlog[1][j]);
+      leg->Draw("SAME");
+      c1->SetGrid();
+      c1->SetLogx(1);
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+  c1->SetLogx(0);
+
+  // Control quantities vs energy
+  TH1F* hists_energy[2][8];
+  TH1F* gp_energy[2][4];  
+  TF1* gf_energy[2][4];     
+  for(int a = 0; a < 2; a++)
+    {
+      Benergy[a]->SetMarkerStyle(markerStyle[a]);
+      Benergy[a]->SetMarkerColor(markerColor[a]);
+      Benergy[a]->SetLineColor(markerColor[a]);
+
+      Fit2D(Benergy[a],hists_energy[a],gp_energy[a], gf_energy[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_energy[a][b]->SetMinimum(-0.5);
+	  hists_energy[a][b]->SetMaximum(0.5);
+	  ++b;
+	  hists_energy[a][b]->SetMinimum(0.0);
+	  hists_energy[a][b]->SetMaximum(1.);
+	}
+    }
+
+  for(int a = 1; a >=0; a--) // Loop over correction
+    {
+      for(int b = 0; b < 3; b++) // Loop over example energy bins
+	{
+	  // Find energy bin of gaussplot
+	  int bin = 0;
+	  if(  b == 0  )  bin = int(Benergy[a]->GetNbinsX()/6);
+	  else if(  b == 1  )  bin = int(Benergy[a]->GetNbinsX()/3);
+	  else if(  b == 2  )  bin = int(Benergy[a]->GetNbinsX()/2);
+	  float min = Benergy[a]->GetXaxis()->GetBinLowEdge(bin);
+	  float max = min + Benergy[a]->GetXaxis()->GetBinWidth(bin);
+
+	  // Set title according to energy bin
+	  sprintf(name,"di-jet, %.1f < E < %.1f [GeV]",min,max);
+	  gp_energy[a][b]->SetTitle(name);
+
+	  if( a == 0 ) gp_energy[a][b]->SetXTitle("B after fit");
+	  else gp_energy[a][b]->SetXTitle("B before fit");
+
+	  // Set style and line color according to ptRatioName
+	  gp_energy[a][b]->SetMarkerStyle(markerStyle[a]);
+	  gp_energy[a][b]->SetMarkerColor(markerColor[a]);
+	  gp_energy[a][b]->SetLineColor(markerColor[a]);
+	  gf_energy[a][b]->SetLineColor(markerColor[a]);
+
+	  // Plot gaussplots
+	  c2->cd(1+b);
+	  gp_energy[a][b]->Draw();
+	  gf_energy[a][b]->Draw("same");
+
+	  objToBeWritten.push_back(gp_energy[a][b]);
+	  objToBeWritten.push_back(gf_energy[a][b]);
+	} // End of loop over example energy bins
+      c2->Draw();
+      ps->NewPage();
+    } // End of loop over correction
+
+  c1->cd();
+  for(int j = 0 ; j < 8 ; ++j) 
+    {
+      hists_energy[0][j]->Draw();
+      objToBeWritten.push_back(hists_energy[0][j]);
+      hists_energy[0][j]->SetStats(0);
+      hists_energy[1][j]->Draw("SAME");
+      objToBeWritten.push_back(hists_energy[1][j]);
+      leg->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+
+  // Control quantities vs emf
+  TH1F* hists_emf[2][8];
+  TH1F* gp_emf[2][4];  
+  TF1* gf_emf[2][4];     
+  for(int a = 0; a < 2; a++)
+    {
+      Bemf[a]->SetMarkerStyle(markerStyle[a]);
+      Bemf[a]->SetMarkerColor(markerColor[a]);
+      Bemf[a]->SetLineColor(markerColor[a]);
+
+      Fit2D(Bemf[a],hists_emf[a],gp_emf[a], gf_emf[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_emf[a][b]->SetMinimum(-0.5);
+	  hists_emf[a][b]->SetMaximum(0.5);
+	  ++b;
+	  hists_emf[a][b]->SetMinimum(0.0);
+	  hists_emf[a][b]->SetMaximum(1.);
+	}
+    }
+
+  for(int a = 1; a >=0; a--) // Loop over correction
+    {
+      for(int b = 0; b < 3; b++) // Loop over example emf bins
+	{
+	  // Find emf bin of gaussplot
+	  int bin = 0;
+	  if(  b == 0  )  bin = int(Bemf[a]->GetNbinsX()/6);
+	  else if(  b == 1  )  bin = int(Bemf[a]->GetNbinsX()/3);
+	  else if(  b == 2  )  bin = int(Bemf[a]->GetNbinsX()/2);
+	  float min = Bemf[a]->GetXaxis()->GetBinLowEdge(bin);
+	  float max = min + Bemf[a]->GetXaxis()->GetBinWidth(bin);
+
+	  // Set title according to energy bin
+	  sprintf(name,"di-jet, %.2f < f_{em} < %.2f",min,max);
+	  gp_emf[a][b]->SetTitle(name);
+
+	  if( a == 0 ) gp_emf[a][b]->SetXTitle("B after fit");
+	  else gp_emf[a][b]->SetXTitle("B before fit");
+
+	  // Set style and line color according to ptRatioName
+	  gp_emf[a][b]->SetMarkerStyle(markerStyle[a]);
+	  gp_emf[a][b]->SetMarkerColor(markerColor[a]);
+	  gp_emf[a][b]->SetLineColor(markerColor[a]);
+	  gf_emf[a][b]->SetLineColor(markerColor[a]);
+
+	  // Plot gaussplots
+	  c2->cd(1+b);
+	  gp_emf[a][b]->Draw();
+	  gf_emf[a][b]->Draw("same");
+
+	  objToBeWritten.push_back(gp_emf[a][b]);
+	  objToBeWritten.push_back(gf_emf[a][b]);
+	} // End of loop over example energy bins
+      c2->Draw();
+      ps->NewPage();
+    } // End of loop over correction
+
+  c1->cd();
+  for(int j = 0 ; j < 8 ; ++j) 
+    {
+      hists_emf[0][j]->Draw();
+      objToBeWritten.push_back(hists_emf[0][j]);
+      hists_emf[0][j]->SetStats(0);
+      hists_emf[1][j]->Draw("SAME");
+      objToBeWritten.push_back(hists_emf[1][j]);
+      leg->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
   
-// //   Bpt[0]->SetMarkerStyle(20);
-// //   Bpt[0]->SetMarkerColor(1);
-// //   Bpt[1]->SetMarkerStyle(22);
-// //   Bpt[1]->SetMarkerColor(2);
-// //   Fit2D(Bpt[0],hists[0],gaussplots[0], gf[0]);
-// //   Fit2D(Bpt[1],hists[1],gaussplots[1], gf[1]);
-// //     for(int a = 0; a<2;++a)
-// //       {
-// // 	for(int b = 0 ; b < 4 ; ++b) {
-// // 	  hists[a][b]->SetMinimum(-0.5);
-// // 	  hists[a][b]->SetMaximum(0.5);
-// // 	  ++b;
-// // 	  hists[a][b]->SetMinimum(0.0);
-// // 	  hists[a][b]->SetMaximum(1.);
-// // 	}
-// //       }
 
-// //   for(int k=0;k<3;++k)
-// //     {
-// //       gf[1][k]->SetLineColor(2);
-// //       gaussplots[0][k]->SetMarkerStyle(20);
-// //       gaussplots[0][k]->SetMarkerColor(1);
-// //       gaussplots[1][k]->SetMarkerStyle(22);
-// //       gaussplots[1][k]->SetMarkerColor(2);
-// //     }
-// //   /*
-// //   for(int b=0;b<3;++b)
-// //     { 
-// //       for(int a=0; a<2;++a)
-// // 	{
-// // 	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
-// // 	  c2->cd(b);
-// // 	  if(a==0)	    gaussplots[a][b]->Draw();
-// // 	  else            gaussplots[a][b]->Draw("same");
-// // 	  gf[a][b]->Draw("same");
-// // 	}
-// //       c2->Update();
-// //       c2->Draw();
-// //       ps->NewPage();
-// //     }
-// //   c1->cd();
-// //   */
-// //   for(int i = 0 ; i < 8 ; ++i) {
-// //     hists[0][i]->Draw();
-// //     hists[0][i]->SetStats(0);
-// //     hists[1][i]->Draw("same");
-// //     leg->Draw();
-// //     c1->SetGrid();
-// //     c1->Draw();   
-// //     ps->NewPage(); 
-// //   }
-// //   for(int i = 0 ; i < 8 ; ++i) {
-// //     delete hists[0][i];
-// //     delete hists[1][i];
-// //   }
-  
-
-  
-// //   Benergy[0]->SetMarkerStyle(20);
-// //   Benergy[0]->SetMarkerColor(1);
-// //   Benergy[1]->SetMarkerStyle(22);
-// //   Benergy[1]->SetMarkerColor(2);
-// //   Fit2D(Benergy[0],hists[0],gaussplots[0], gf[0]);
-// //   Fit2D(Benergy[1],hists[1],gaussplots[1], gf[1]);
-// //     for(int a = 0; a<2;++a)
-// //       {
-// // 	for(int b = 0 ; b < 4 ; ++b) {
-// // 	  hists[a][b]->SetMinimum(-0.5);
-// // 	  hists[a][b]->SetMaximum(0.5);
-// // 	  ++b;
-// // 	  hists[a][b]->SetMinimum(0.0);
-// // 	  hists[a][b]->SetMaximum(1.);
-// // 	}
-// //       }
-
-// //   for(int k=0;k<3;++k)
-// //     {
-// //       gf[1][k]->SetLineColor(2);
-// //       gaussplots[0][k]->SetMarkerStyle(20);
-// //       gaussplots[0][k]->SetMarkerColor(1);
-// //       gaussplots[1][k]->SetMarkerStyle(22);
-// //       gaussplots[1][k]->SetMarkerColor(2);
-// //     }
-// //   /*
-// //   for(int b=0;b<3;++b)
-// //     { 
-// //       for(int a=0; a<2;++a)
-// // 	{
-// // 	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
-// // 	  c2->cd(b);
-// // 	  if(a==0)	    gaussplots[a][b]->Draw();
-// // 	  else            gaussplots[a][b]->Draw("same");
-// // 	  gf[a][b]->Draw("same");
-// // 	}
-// //       c2->Update();
-// //       c2->Draw();
-// //       ps->NewPage();
-// //     }
-// //   c1->cd();
-// //   */
-// //   for(int i = 0 ; i < 8 ; ++i) {
-// //     hists[0][i]->Draw();
-// //     hists[0][i]->SetStats(0);
-// //     hists[1][i]->Draw("same");
-// //     leg->Draw();
-// //     c1->SetGrid();
-// //     c1->Draw();   
-// //     ps->NewPage(); 
-// //   }
-// //   for(int i = 0 ; i < 8 ; ++i) {
-// //     delete hists[0][i];
-// //     delete hists[1][i];
-// //   }
-
-// //   Bemf[0]->SetMarkerStyle(20);
-// //   Bemf[0]->SetMarkerColor(1);
-// //   Bemf[1]->SetMarkerStyle(22);
-// //   Bemf[1]->SetMarkerColor(2);
-// //   Fit2D(Bemf[0],hists[0],gaussplots[0], gf[0]);
-// //   Fit2D(Bemf[1],hists[1],gaussplots[1], gf[1]);
-
-// //     for(int a = 0; a<2;++a)
-// //       {
-// // 	for(int b = 0 ; b < 4 ; ++b) {
-// // 	  hists[a][b]->SetMinimum(-0.5);
-// // 	  hists[a][b]->SetMaximum(0.5);
-// // 	  ++b;
-// // 	  hists[a][b]->SetMinimum(0.0);
-// // 	  hists[a][b]->SetMaximum(1.);
-// // 	}
-// //       }
-// //   for(int k=0;k<3;++k)
-// //     {
-// //       gf[1][k]->SetLineColor(2);
-// //       gaussplots[0][k]->SetMarkerStyle(20);
-// //       gaussplots[0][k]->SetMarkerColor(1);
-// //       gaussplots[1][k]->SetMarkerStyle(22);
-// //       gaussplots[1][k]->SetMarkerColor(2);
-// //     }
-// //   /*
-// //   for(int b=0;b<3;++b)
-// //     { 
-// //       for(int a=0; a<2;++a) 
-// // 	{
-// // 	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
-// // 	  c2->cd(b);
-// // 	  if(a==0)	    gaussplots[a][b]->Draw();
-// // 	  else            gaussplots[a][b]->Draw("same");
-// // 	  gf[a][b]->Draw("same");
-// // 	}
-// //       c2->Update();
-// //       c2->Draw();
-// //       ps->NewPage();
-// //     }
-// //   c1->cd();
-// //   */
-
-// //   for(int i = 0 ; i < 8 ; ++i) {
-// //     hists[0][i]->Draw();
-// //     hists[0][i]->SetStats(0);
-// //     hists[1][i]->Draw("SAME");
-// //     leg->Draw();
-// //     c1->SetGrid();
-// //     c1->Draw();   
-// //     ps->NewPage(); 
-// //   }
-// //   for(int i = 0 ; i < 8 ; ++i) {
-// //     delete hists[0][i];
-// //     delete hists[1][i];
-// //   }
-// //   Bptlog[0]->SetMarkerStyle(20);
-// //   Bptlog[0]->SetMarkerColor(1);
-// //   Bptlog[0]->SetMinimum(0.2);
-// //   Bptlog[0]->SetMaximum(1.8);
-// //   Bptlog[1]->SetMarkerStyle(22);
-// //   Bptlog[1]->SetMarkerColor(2);  
-// //   Fit2D(Bptlog[0],hists[0],gaussplots[0], gf[0]);
-// //   Fit2D(Bptlog[1],hists[1],gaussplots[1], gf[1]);
-
-// //     for(int a = 0; a<2;++a)
-// //       {
-// // 	for(int b = 0 ; b < 4 ; ++b) {
-// // 	  hists[a][b]->SetMinimum(-0.5);
-// // 	  hists[a][b]->SetMaximum(0.5);
-// // 	  ++b;
-// // 	  hists[a][b]->SetMinimum(0.0);
-// // 	  hists[a][b]->SetMaximum(1.);
-// // 	}
-// //       }
-// //   for(int k=0;k<3;++k)
-// //     {
-// //       gf[1][k]->SetLineColor(2);
-// //       gaussplots[0][k]->SetMarkerStyle(20);
-// //       gaussplots[0][k]->SetMarkerColor(1);
-// //       gaussplots[1][k]->SetMarkerStyle(22);
-// //       gaussplots[1][k]->SetMarkerColor(2);
-// //     }
-// //   /*
-// //   for(int b=0;b<3;++b)
-// //     { 
-// //       for(int a=0; a<2;++a)
-// // 	{
-// // 	  gaussplots[a][b]->SetTitle("di-jet;p_{T} [GeV]");
-// // 	  c2->cd(b);
-// // 	  if(a==0)	    gaussplots[a][b]->Draw();
-// // 	  else            gaussplots[a][b]->Draw("same");
-// // 	  gf[a][b]->Draw("same");
-// // 	}
-// //       c2->Update();
-// //       c2->Draw();
-// //       ps->NewPage();
-// //     }
-// //   c1->cd();
-// //   */
-// //   for(int i = 0 ; i < 2 ; ++i) 
-// //     {
-// //       for(int j=0; j<3;++j)
-// // 	{
-// // 	  delete gaussplots[i][j];
-// // 	  delete gf[i][j];
-// // 	}
-// //     }
-
-// //   for(int i = 0 ; i < 8 ; ++i) {
-// //     hists[0][i]->Draw();
-// //     hists[0][i]->SetStats(0);
-// //     hists[1][i]->Draw("SAME");
-// //     c1->SetLogx(1);
-// //     c1->SetGrid(); 
-// //     leg->Draw();
-// //     c1->SetGrid();
-// //     c1->Draw();   
-// //     ps->NewPage(); 
-// //   }
-// //   for(int i = 0 ; i < 8 ; ++i) {
-// //     delete hists[0][i];
-// //     delete hists[1][i];
-// //   }
-// //   ps->NewPage();
-// //   delete leg;
-// //   for(int i = 0 ; i < 8 ; ++i)  delete Beta[i];
-// //   for(int i = 0 ; i < 2 ; ++i){
-// //     delete Bpt[i];
-// //     delete Benergy[i];
-// //     delete Bptlog[i];
-// //     delete Bemf[i];
-// //   }
-  
-// //   /*
-// //   c1->SetLogx(0);
-// //   TF1* line = new TF1("line","x",0,200);
-// //   for(int i=0;i<5;++i)
-// //     {
-// //       combmean[i]->Draw("Box");
-// //       line->Draw("same");
-// //       c1->Draw();   
-// //       ps->NewPage();
-// //     }
-// //   for(int i=0;i<5;++i)
-// //     {
-// //       difmean[i]->Draw("Box");
-// //       line->Draw("same");
-// //       c1->Draw();   
-// //       ps->NewPage();
-// //     }
-// //   */
-// //   ps->Close();
-
-// //   for(int i=0;i<5;++i)
-// //     {
-// //       delete combmean[i];
-// //       delete difmean[i];
-// //     }
-// //   delete eta[0];
-// //   delete eta[1];
-// //   delete ptspec[0];
-// //   delete ptspec[1];
-// //   //delete line;
-
-
+//   TF1* line = new TF1("line","x",0,200);
+//   for(int i=0;i<5;++i)
+//     {
+//       combmean[i]->Draw("Box");
+//       line->Draw("same");
+//       c1->Draw();   
+//       ps->NewPage();
+//     }
+//   for(int i=0;i<5;++i)
+//     {
+//       difmean[i]->Draw("Box");
+//       line->Draw("same");
+//       c1->Draw();   
+//       ps->NewPage();
+//     }
+//   delete line;
 
 
 
@@ -2477,6 +2488,42 @@ void TControlPlots::MakeControlPlotsDiJet()
       delete Bemf[i];
       delete Bptlog[i];
     }
+  for(int i = 0 ; i < 8 ; ++i)
+    {
+      for(int j = 0 ; j < 4 ; ++j)
+	{
+	  delete hists_beta[i][j];
+	  delete hists_beta[i][j+4];
+	  delete gp_beta[i][j];
+	  delete gf_beta[i][j];
+	}	
+    }
+  for(int i = 0 ; i < 2 ; ++i)
+    {
+      for(int j = 0 ; j < 4 ; ++j)
+	{
+	  delete hists_pt[i][j];
+	  delete hists_pt[i][j+4];
+	  delete gp_pt[i][j];
+	  delete gf_pt[i][j];
+
+	  delete hists_ptlog[i][j];
+	  delete hists_ptlog[i][j+4];
+	  delete gp_ptlog[i][j];
+	  delete gf_ptlog[i][j];
+
+	  delete hists_energy[i][j];
+	  delete hists_energy[i][j+4];
+	  delete gp_energy[i][j];
+	  delete gf_energy[i][j];
+
+	  delete hists_emf[i][j];
+	  delete hists_emf[i][j+4];
+	  delete gp_emf[i][j];
+	  delete gf_emf[i][j];
+	}	
+    }
+  delete leg;
 }
 
 

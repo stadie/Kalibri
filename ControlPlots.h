@@ -25,6 +25,7 @@ public:
   void MakeControlPlotsGammaJetPerJetBin();
   void MakeControlPlotsGammaJetPerTowerBin();
   void MakeControlPlotsGammaJetSigmas();
+  bool OutputFormatRoot() const { return _outputROOT; }
   
 private:
   void Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] );
