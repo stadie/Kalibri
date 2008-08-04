@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.33 2008/07/31 12:53:35 auterman Exp $
+// $Id: CalibData.h,v 1.34 2008/08/01 14:56:51 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -42,11 +42,10 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 class TMeasurement
 {
 public:
-  TMeasurement() {pt=0.;EMF=0.;HadF=0.;OutF=0.;E=0.;eta=0.;phi=0.;};
-  TMeasurement(TMeasurement* m){pt=m->pt;EMF=m->EMF;HadF=m->HadF;OutF=m->OutF;
-                                E=m->E;eta=m->eta;phi=m->phi;};
-  TMeasurement(double *x){pt=x[0];EMF=x[1];HadF=x[2];OutF=x[3];E=x[6];eta=x[4];phi=x[5];};
-
+  TMeasurement():pt(0.),EMF(0.),HadF(0.),OutF(0.),E(0.),eta(0.),phi(0.){};
+  TMeasurement(TMeasurement* m):pt(m->pt),EMF(m->EMF),HadF(m->HadF),OutF(m->OutF),
+                                E(m->E),eta(m->eta),phi(m->phi){};
+  //TMeasurement(double *x){pt=x[0];EMF=x[1];HadF=x[2];OutF=x[3];E=x[6];eta=x[4];phi=x[5];};
   //all common variables
   double pt;
   double EMF;
@@ -81,8 +80,8 @@ class TData
 public:
   TData(){_mess=0; _par=0; };
   TData(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
-        double(*func)(TMeasurement*,double*),double(*err)(double*,TMeasurement*,double)){
-    _index=index;_mess=mess;_truth=truth;_error=error;_par=par;_n_par=n_par;_func=func;_err=err;_weight=weight; };
+        double(*func)(TMeasurement*,double*),double(*err)(double*,TMeasurement*,double))
+  : _index(index),_mess(mess),_truth(truth),_error(error),_weight(weight),_par(par),_n_par(n_par),_func(func),_err(err){};
   virtual ~TData(){
     delete _mess;
   };
@@ -116,13 +115,14 @@ public:
   static double ScaleHuber(double z2);               // Scaling of residuals with Huber-Function in chi2() or chi2_fast()
 
 protected:
-  unsigned short int _index, _n_par; //limited from 0 to 65535
-  DataType _type;
+  unsigned short int _index; //limited from 0 to 65535
+  TMeasurement *_mess;
   double _truth, _error, _weight;
   double *_par;
-  TMeasurement *_mess;
+  unsigned short int _n_par; //limited from 0 to 65535
   double (*_func)(TMeasurement * x, double * par);
   double (*_err)(double * x, TMeasurement * x_original, double error);
+  DataType _type;
 };
 
 //data class for data providing one truth and one messurement, 
@@ -131,8 +131,8 @@ class TData_TruthMess : public TData
 {
 public:
   TData_TruthMess(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
-        double(*func)(TMeasurement*,double*),double(*err)(double*,TMeasurement*,double)):
-    TData(index, mess, truth, error, weight, par, n_par, func, err){_type=TrackTower;};
+        double(*func)(TMeasurement*,double*),double(*err)(double*,TMeasurement*,double))
+  : TData(index, mess, truth, error, weight, par, n_par, func, err){_type=TrackTower;};
 
   virtual const std::vector<TData*>& GetRef() { 
     resultcache.clear();	
@@ -160,8 +160,8 @@ public:
   TData_TruthMultMess(unsigned short int index, double truth, double error, 
 		      double weight, double * par, unsigned short int n_par,
 		      double(*func)(TMeasurement*,double*), double(*err)(double*,TMeasurement*,double), 
-		      TMeasurement *mess) :
-    TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=GammaJet;};
+		      TMeasurement *mess)
+  : TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=GammaJet;};
   virtual ~TData_TruthMultMess() {
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	 it!=_vecmess.end(); ++it)
@@ -207,9 +207,9 @@ public:
     TData_MessMess(unsigned short int index, double * dir, double truth, double error, 
                    double weight, double * par, unsigned short int n_par,
 		   double(*func)(TMeasurement*,double*),double(*err)(double*,TMeasurement*,double), 
-		   TMeasurement *mess):
-      TData_TruthMultMess(index, truth, error, weight, par, n_par, func, err, mess){
-      _direction=dir; _type=MessMess;};
+		   TMeasurement *mess)
+    : TData_TruthMultMess(index, truth, error, weight, par, n_par, func, err,mess),
+      _direction(dir){_type=MessMess;};
     virtual ~TData_MessMess() {
       for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
 	   it!=_m2.end(); ++it)
@@ -219,16 +219,6 @@ public:
     };
     virtual void AddNewMultMess(TData_MessMess * m2 ){assert(m2->_m2.empty());_m2.push_back(m2);};
     void ClearMultMess() { _m2.clear();}
-    virtual double GetMessCombination(){ return combine(); }; // for plotting
-    virtual TMeasurement* GetMultMess(int i) { 
-      if(i == 0) return GetMess();
-      return _m2[i-1]->GetMess();
-    }
-    virtual double GetMultParametrizedMess(int i) { // for plotting
-      if(i == 0) return GetParametrizedMess();
-      return _m2[i-1]->GetParametrizedMess();
-    }
-    virtual double * GetDirection(){ return _direction; };
     virtual double chi2(){ 
       double sum_error2=0.0, new_error, new_mess;
       double weight = GetWeight();
@@ -252,6 +242,18 @@ public:
       for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin(); it!=_m2.end(); ++it)
 	(*it)->ChangeParAddress(oldpar,newpar);
     }
+    virtual double GetMessCombination(){ return combine(); }; // for plotting
+    virtual double * GetDirection(){ return _direction; };
+    virtual std::vector<TData_MessMess*>* GetSecondaryJets(){return &_m2;};
+    //virtual TMeasurement* GetMultMess(int i) { 
+    //  if(i == 0) return GetMess();
+    //  return _m2[i-1]->GetMess();
+    //}
+    //virtual double GetMultParametrizedMess(int i) { // for plotting
+    //  if(i == 0) return GetParametrizedMess();
+    //  return _m2[i-1]->GetParametrizedMess();
+    //}
+   
 protected:
   virtual double combine() = 0;
   std::vector<TData_MessMess*> _m2;
@@ -265,10 +267,8 @@ public:
   TData_PtBalance(unsigned short int index, double * dir, double truth, double error, 
 		  double weight, double * par, unsigned short int n_par,
 		  double(*func)(TMeasurement*,double*),double(*err)(double*,TMeasurement*,double), 
-		  TMeasurement *mess) 
-    : TData_MessMess(index, dir, truth*truth, error, weight, par, n_par, func, err, mess) {
-    _type=PtBalance;
-  };
+		  TMeasurement *mess)
+  : TData_MessMess(index, dir, truth*truth, error, weight, par, n_par, func, err, mess){_type=PtBalance;};
   virtual ~TData_PtBalance(){};
   virtual double GetTruth(){ return sqrt(_truth);};
   virtual double GetScale(){
@@ -289,10 +289,8 @@ public:
   TData_InvMass2(unsigned short int index, double * dir, double truth, double error, double weight,
 		double * par, unsigned short int n_par,
 		double(*func)(TMeasurement*,double*),	double(*err)(double*,TMeasurement*,double), 
-		TMeasurement *mess) 
-    : TData_MessMess(index, dir, truth*truth, error, weight, par, n_par, func, err, mess) {
-    _type=InvMass;
-  };
+		TMeasurement *mess)
+  : TData_MessMess(index, dir, truth*truth, error, weight, par, n_par, func, err, mess) { _type=InvMass; };
   virtual ~TData_InvMass2(){};
   virtual double GetTruth(){ return sqrt(_truth);};
  protected:
@@ -304,8 +302,7 @@ class TData_ParLimit : public TData
 {
  public:
   TData_ParLimit(unsigned short int index, TMeasurement *mess, double error, double *par,double(*func)(TMeasurement*,double*)) 
-  : TData(index,mess,0,error,1.0,par,1,func,0){
-      _type=ParLimit;
+  : TData(index,mess,0,error,1.0,par,1,func,0){ _type=ParLimit;
     };
     
     virtual const std::vector<TData*>& GetRef() { 

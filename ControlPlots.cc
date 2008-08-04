@@ -1521,15 +1521,15 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 	  objToBeWritten.push_back(plot_jes);
 
 	  sprintf(name,"res2_%i",i);
-	  TF1 * res2 = new TF1(name,_par->jes_plot_parametrization, 0.5, 400., 3);
-	  objToBeDeleted.push_back(res2);
-	  i = indexJet/ijets - _par->GetNumberOfTowerParameters();
-	  double * val = _par->GetJetParRef(i);
-	  res2->SetParameters(val[0],val[1]);
-	  res2->SetLineWidth( 3 );
-	  res2->SetLineColor( 2 );
-	  res2->Draw("same");
-	  objToBeWritten.push_back(res2);
+	  //TF1 * res2 = new TF1(name,_par->jes_plot_parametrization, 0.5, 400., 3);
+	  //objToBeDeleted.push_back(res2);
+	  //i = indexJet/ijets - _par->GetNumberOfTowerParameters();
+	  //double * val = _par->GetJetParRef(i);
+	  //res2->SetParameters(val[0],val[1]);
+	  //res2->SetLineWidth( 3 );
+	  //res2->SetLineColor( 2 );
+	  //res2->Draw("same");
+	  //objToBeWritten.push_back(res2);
 	  c1->Draw(); 
 	  ps->NewPage();
     }
@@ -1653,15 +1653,15 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 	  objToBeWritten.push_back( plot_jes );
 
 	  sprintf(name,"res2_%i",i);
-	  TF1 * res2 = new TF1(name,_par->jes_plot_parametrization, 0.5, 400., 3);
-	  objToBeDeleted.push_back(res2);
-	  i = _par->GetJetBin(eta, phi);
-	  double * val = _par->GetJetParRef(i);
-	  res2->SetParameters(val[0],val[1],val[2]);
-	  res2->SetLineWidth( 3 );
-	  res2->SetLineColor( 2 );
-	  res2->Draw("same");
-	  objToBeWritten.push_back( res2 );
+	  //TF1 * res2 = new TF1(name,_par->jes_plot_parametrization, 0.5, 400., 3);
+	  //objToBeDeleted.push_back(res2);
+	  //i = _par->GetJetBin(eta, phi);
+	  //double * val = _par->GetJetParRef(i);
+	  //res2->SetParameters(val[0],val[1],val[2]);
+	  //res2->SetLineWidth( 3 );
+	  //res2->SetLineColor( 2 );
+	  //res2->Draw("same");
+	  //objToBeWritten.push_back( res2 );
 
 	  c1->Draw(); 
 	  ps->NewPage();
@@ -1928,15 +1928,15 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  etparascale += (*t)->GetParametrizedMess();
 	}
       etparascale = ( etparascale + jm->GetParametrizedMess() )/2.;
-      double etajet1 = jm->GetMultMess(0)->eta;
-      double etajet2 = jm->GetMultMess(1)->eta;
+      double etajet1 = jm->GetMess()->eta;
+      double etajet2 = (*jm->GetSecondaryJets())[0]->GetMess()->eta;
       double etjetcomb = jm->GetMessCombination();
-      double etjet1 = jm->GetMultParametrizedMess(0);      //Probe
-      double etjet2 = jm->GetMultParametrizedMess(1);      //Barrel
-      double etjet1uncor = jm->GetMultMess(0)->pt;      //Probe
-      double etjet2uncor = jm->GetMultMess(1)->pt;      //Barrel
-      double phijet1 = jm->GetMultMess(0)->phi;      //Probe
-      double phijet2 = jm->GetMultMess(1)->phi;      //Barrel
+      double etjet1 = jm->GetParametrizedMess();      //Probe
+      double etjet2 = (*jm->GetSecondaryJets())[0]->GetParametrizedMess();      //Barrel
+      double etjet1uncor = jm->GetMess()->pt;      //Probe
+      double etjet2uncor = (*jm->GetSecondaryJets())[0]->GetMess()->pt;      //Barrel
+      double phijet1 = jm->GetMess()->phi;      //Probe
+      double phijet2 = (*jm->GetSecondaryJets())[0]->GetMess()->phi;      //Barrel
       double B = (etjet1 - etjet2) / etscale;
       double Buncor = (etjet1uncor - etjet2uncor) * 2 / (etjet1uncor + etjet2uncor);
       double etaprobe = etajet1;
