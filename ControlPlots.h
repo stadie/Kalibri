@@ -29,8 +29,8 @@ public:
   bool OutputFormatRoot() const { return _outputROOT; }
   
 private:
-  void Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] );
-  void SetGStyle();
+  void Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
+  void SetGStyle() const;
   void WriteToRootFile(std::vector<TObject*> obj, std::string dir);
 
   const std::vector<TData*> *_data; 

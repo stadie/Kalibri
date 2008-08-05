@@ -1,6 +1,7 @@
 #include "ControlPlots.h"
 
 #include <iostream>
+using namespace std;
 
 #include <TCanvas.h>
 #include <TDirectory.h>
@@ -3356,7 +3357,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 //      "<hist-name>_gaussfit<X>"
 //   respectively.
 //---------------------------------------------------------------
-void TControlPlots::Fit2D(TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] )
+void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const
 {
   //book hists
   TString s = hist->GetName();
@@ -3506,7 +3507,7 @@ void TControlPlots::WriteToRootFile(std::vector<TObject*> obj, std::string dir)
 //---------------------------------------------------------------
 // Set style option for ps output.
 //---------------------------------------------------------------
-void TControlPlots::SetGStyle()
+void TControlPlots::SetGStyle() const
 {
   // For the canvas:
   gStyle->SetCanvasBorderMode(0);
