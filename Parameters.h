@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.28 2008/07/31 12:53:35 auterman Exp $
+// $Id: Parameters.h,v 1.29 2008/08/05 08:46:35 auterman Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -51,6 +51,7 @@ public :
     std::memcpy(copy,e,GetNumberOfParameters()*sizeof(double));
   }
   double* GetPars() { return k; }
+  double* GetErrors() { return e; }
 
   void Print() const;
   friend std::ostream& operator<<( std::ostream& os, const TParameters& c );
@@ -79,7 +80,7 @@ public :
     return x[0];  
   }
   static const double fast_error_parametrization(double *const x, TMeasurement *const xorig, double const errorig)  {
-    return (xorig->pt=0. ? errorig : errorig*x[0]/xorig->pt );  
+    return (xorig->pt==0. ? errorig : errorig*x[0]/xorig->pt );  
   }
   static const double jans_E_tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double errorig=0)  {
     // E = x[0]*xorig[7];  x[0]=param. mess;    xorig == _mess
