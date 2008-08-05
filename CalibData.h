@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.36 2008/08/05 08:46:35 auterman Exp $
+// $Id: CalibData.h,v 1.37 2008/08/05 12:00:47 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -227,8 +227,7 @@ public:
     new_mess  = GetParametrizedMess();
     new_error = GetParametrizedErr( &new_mess );
     new_mess  = GetMessCombination();
-    sum_error2 = new_error*new_error;
-    return (sum_error2!=0 ? weight*(_truth-new_mess)*(_truth-new_mess)/sum_error2 : 0.0);
+    return (sum_error2!=0 ? weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) ) : 0.0) ;
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;
   virtual void ChangeParAddress(double* oldpar, double* newpar) { 
