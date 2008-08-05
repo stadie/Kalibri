@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.27 2008/07/30 15:19:38 auterman Exp $
+// $Id: Parameters.h,v 1.28 2008/07/31 12:53:35 auterman Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -55,33 +55,33 @@ public :
   void Print() const;
   friend std::ostream& operator<<( std::ostream& os, const TParameters& c );
   
-  static double tower_parametrization(TMeasurement *x,double *par) {
+  static const double tower_parametrization(TMeasurement *const x,double *const par) {
     return instance->p->correctedTowerEt(x,par);
   }
-  static double jet_parametrization(TMeasurement *x,double *par) {
+  static const double jet_parametrization(TMeasurement *const x,double *const par) {
     return instance->p->correctedJetEt(x,par);
   }
-  static double dummy_parametrization(TMeasurement *x,double *par) {
+  static const double dummy_parametrization(TMeasurement *const x,double *const par) {
     return x->pt;
   }
 
   //Error parametrization functions:
-  template<int Et> static double const_error(double * x, TMeasurement * xorig=0, double errorig=0) {
+  template<int Et> static const double const_error(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
     return Et;
   }
-  static double tower_error_parametrization(double * x, TMeasurement * xorig=0, double errorig=0) {        
+  static const double tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {        
     return (x[0]>0 ?  1.25 * sqrt( x[0])   :   1.25 * sqrt(-x[0]) );  
   }
-  static double jet_error_parametrization(double * x, TMeasurement * xorig=0, double errorig=0) {
+  static const double jet_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
     return (x[0]>0. ? 0.033*x[0] + 5.6   :   0.03*(-x[0]) + 5.6); 
   }
-  static double dummy_error_parametrization(double * x, TMeasurement * xorig=0, double errorig=0) {        
+  static const double dummy_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {        
     return x[0];  
   }
-  static double fast_error_parametrization(double * x, TMeasurement * xorig, double errorig) {        
+  static const double fast_error_parametrization(double *const x, TMeasurement *const xorig, double const errorig)  {
     return (xorig->pt=0. ? errorig : errorig*x[0]/xorig->pt );  
   }
-  static double jans_E_tower_error_parametrization(double * x, TMeasurement * xorig=0, double errorig=0) {        
+  static const double jans_E_tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double errorig=0)  {
     // E = x[0]*xorig[7];  x[0]=param. mess;    xorig == _mess
     double pmess;
     if(std::abs(xorig->eta) < 3.0)  
@@ -93,16 +93,16 @@ public :
 
 
   //Plot paramterization stuff
-  static double plot_parametrization(TMeasurement * x,double *par) {
+  static const double plot_parametrization(TMeasurement *const x,double *const par) {
     return tower_parametrization(x,par)/x->pt; 
   }
 
-  static double jes_plot_parametrization(TMeasurement * x,double *par) {
+  static const double jes_plot_parametrization(TMeasurement *const x,double *const par)  {
     return jet_parametrization(x,par)/x->pt;
   }
 
   //Limiting parameters
-  static double parameter_limit(TMeasurement *x, double *par) {
+  static const double parameter_limit(TMeasurement *const x, double *const par) {
     double min = x->pt;
     double max = x->EMF;  //@@ Are you sure this is correct????
     if(par[0] < min) return (min-par[0]);

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.37 2008/08/04 08:55:30 mschrode Exp $
+// $Id: caliber.cc,v 1.38 2008/08/04 14:05:48 mschrode Exp $
 //
 //
 // for profiling:
@@ -1184,7 +1184,7 @@ void TCaliber::Run_Lvmini()
 	temp_derivative2[param]=0.0;
       }  
       fsum = 0;
-      for (int  ithreads=0; ithreads<nthreads; ++ithreads) t[ithreads]->Start();
+      for (int ithreads=0; ithreads<nthreads; ++ithreads) t[ithreads]->Start();
       for (int ithreads=0; ithreads<nthreads; ++ithreads){
 	if(t[ithreads]->IsDone()) fsum += t[ithreads]->Chi2();
       }
@@ -1196,10 +1196,10 @@ void TCaliber::Run_Lvmini()
 	
       lvmfun_(p->GetPars(),fsum,iret,aux);
       //p->SetParameters(aux + par_index); 
-      lvmprt_(2,aux,2); //Has any effect?
+      lvmprt_(2,aux,2); //print out
     }
     while (iret<0);
-    lvmprt_(2,aux,2); //Has any effect?
+    lvmprt_(2,aux,2); //print out
     for (int ithreads=0; ithreads<nthreads; ++ithreads){
       t[ithreads]->ClearData();
     }  

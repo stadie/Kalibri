@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.25 2008/07/30 15:19:38 auterman Exp $
+// $Id: caliber.h,v 1.26 2008/07/31 12:53:35 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -113,8 +113,8 @@ private:
   std::vector<TData*> data;
   
   TParameters * p;    //fit parameters, depend on number of bins & geometry
-  double (*tower_error_param)(double * x, TMeasurement * xorig, double err);
-  double (*jet_error_param)  (double * x, TMeasurement * xorig, double err);
+  double const (*tower_error_param)(double *const x, TMeasurement *const xorig, double const err);
+  double const (*jet_error_param)  (double *const x, TMeasurement *const xorig, double const err);
 
   TControlPlots * plots;  //the control plots
 };

@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.9 2008/07/31 12:53:35 auterman Exp $
+// $Id: Parametrization.h,v 1.10 2008/08/01 14:56:51 mschrode Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ public:
                              x->OutF : Et of Outer part
            par:  the correction parameters of this tower
   **/
-  virtual double correctedTowerEt(TMeasurement *x,double *par) const = 0;
+  virtual double correctedTowerEt(TMeasurement *const x,double *const par) const = 0;
 
   /** correctedJetEt(double *x,double *par)
       returns the corrected Et of a jet 
@@ -33,7 +33,7 @@ public:
                         x->HadF : phi of uncorrected jet(not used)
            par:  the correction parameters of this jet
   **/
-  virtual double correctedJetEt(TMeasurement *x,double *par) const = 0;
+  virtual double correctedJetEt(TMeasurement *const x,double *const par) const = 0;
   virtual const char * name() const = 0;
 
   unsigned int nTowerPars() const { return ntowerpars_;}
@@ -52,7 +52,7 @@ public:
  
   const char* name() const { return "StepParametrization";}
 
-  double correctedTowerEt(TMeasurement *x,double *par) const {
+  double correctedTowerEt(TMeasurement *const x,double *par) const {
     double result = 0;
     
     if(x->HadF>=0.0  && x->HadF<=1.0)  result = x->EMF+x->OutF + par[0]*x->HadF;
@@ -70,7 +70,7 @@ public:
     return result;
   }
     
-  double correctedJetEt(TMeasurement *x,double *par) const {
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
     double result = 0;
     /*
     if(x->pt>=0.0  && x->pt<=1.0)          result =  par[0]*x->pt + par[1];
@@ -107,7 +107,7 @@ public:
  
   const char* name() const { return "StepParametrizationEnergy";}
 
-  double correctedTowerEt(TMeasurement *x,double *par) const {
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
     double result = 0;
     double e =  x->HadF * x->E / x->pt;
 
@@ -126,7 +126,7 @@ public:
     return result;
   }
     
-  double correctedJetEt(TMeasurement *x,double *par) const {
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
     return x->pt * ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x->pt));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
   }
 };
@@ -140,7 +140,7 @@ public:
   
   const char* name() const { return "StepEfracParametrization";}
 
-  double correctedTowerEt(TMeasurement *x,double *par) const {
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
     double result=0;
     
     //double Efrac = x->EMF/(x->HadF+x->OutF);
@@ -187,7 +187,7 @@ public:
     return result;
   }
   
-  double correctedJetEt(TMeasurement *x,double *par) const {
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
     return  par[0]*x->pt + par[1];
   }
 };
@@ -197,10 +197,10 @@ class MyParametrization: public Parametrization {
 public:
   MyParametrization() : Parametrization(3,2) {}
   const char* name() const { return "MyParametrization";}
-  double correctedTowerEt(TMeasurement *x,double *par) const {
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
     return x->EMF + par[0]*x->HadF + par[1]*log(x->pt) + par[2];
   }
-  double correctedJetEt(TMeasurement *x,double *par) const {
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
     return par[0]*x->pt + par[1];
   }
 };
@@ -210,13 +210,13 @@ class JetMETParametrization: public Parametrization {
 public:
   JetMETParametrization() : Parametrization(3,5) {}
   const char* name() const { return "JetMETParametrization";}
-  double correctedTowerEt(TMeasurement *x,double *par) const {
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
     if(par[0] < -10) par[0] = -10;
     if(par[1] < 0) par[1] = -par[1];
     if(par[2] < 0) par[2] = -par[2];
     return par[1] * x->HadF + par[2] * x->EMF + x->OutF + par[0];
   }
-  double correctedJetEt(TMeasurement *x,double *par) const {
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
     double logx = log(x->pt);
     if(logx < 0) logx = 0;
     if(par[1] < 0) par[1] *= -1;
@@ -232,13 +232,13 @@ class SimpleParametrization: public Parametrization {
 public:
   SimpleParametrization() : Parametrization(3,3) {}
   const char* name() const { return "SimpleParametrization";}
-  double correctedTowerEt(TMeasurement *x,double *par) const {
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
     if(par[0] < -10) par[0] = -10;
     if(par[1] < 0) par[1] = -par[1];
     if(par[2] < 0) par[2] = -par[2];
     return par[1] * x->EMF + par[2] * x->HadF + x->OutF + par[0];
   }
-  double correctedJetEt(TMeasurement *x,double *par) const {
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
     if(par[0] < 0) par[0] *= -1;
     if(par[1] < 0) par[1] *= -1;
     if(par[2] < 0) par[2] *= -1;
@@ -251,10 +251,10 @@ class ToyParametrization: public Parametrization {
 public:
   ToyParametrization() : Parametrization(1,0) {}
   const char* name() const { return "ToyParametrization";}
-  double correctedTowerEt(TMeasurement *x,double *par) const {
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
     return par[0] * x->HadF + x->EMF + x->OutF;
   }
-  double correctedJetEt(TMeasurement *x,double *par) const {
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
     return x->pt;  
   }
 };
