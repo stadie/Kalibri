@@ -1,12 +1,14 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.35 2008/08/04 09:56:07 auterman Exp $
+// $Id: CalibData.h,v 1.36 2008/08/05 08:46:35 auterman Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
 
 //#include <iostream>//cout
+//#include <iomanip>
+using namespace std;
 #include <vector> 
 
 enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
@@ -164,9 +166,21 @@ public:
   
   virtual double chi2() const{ 
     double weight = GetWeight(); 
-    double new_mess  = GetParametrizedMess();             
-    double new_error =  GetParametrizedErr( &new_mess );
-    return (new_error!=0. ? weight*(*TData::ScaleResidual)(_truth-new_mess)*(_truth-new_mess)/(new_error*new_error):0.0);
+    double new_mess, new_error;
+    double sum_mess = 0.;
+    double sum_error2 = 0.;
+    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	 it!=_vecmess.end(); ++it) {
+      new_mess    = (*it)->GetParametrizedMess();
+      sum_mess   += new_mess;
+      new_error   = (*it)->GetParametrizedErr(&new_mess);
+      sum_error2 += new_error * new_error;
+    }
+    TJet jet(_mess);
+    jet.pt    = sum_mess;
+    new_mess  = _func(&jet, _par);
+    new_error =  GetParametrizedErr( &new_mess );
+    return (new_error!=0. ? weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) ):0.0);
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;
   virtual const std::vector<TData*>& GetRef() {return _vecmess;};

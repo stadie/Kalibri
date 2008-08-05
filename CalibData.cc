@@ -1,12 +1,12 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.14 2008/07/31 12:53:35 auterman Exp $
+// $Id: CalibData.cc,v 1.15 2008/08/05 08:46:35 auterman Exp $
 //
 #include "CalibData.h"
+
 #include <map>
 #include <cmath>
-//#include <iostream>//cout
 
 unsigned int TData::total_n_pars = 0;
 double (*TData::ScaleResidual)(double z2) = &TData::ScaleNone;
@@ -136,6 +136,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     dmess_dp  = GetParametrizedMess();  
     derror_dp = GetParametrizedErr(&dmess_dp);
     temp1 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
+
     // Difference of chi2 at par+epsilon and par-epsilon
     temp_derivative1[i] += (temp2 - temp1); // for 1st derivative
     temp_derivative2[i] += (temp2 + temp1 - 2.*new_chi2); // for 2nd derivative
@@ -201,7 +202,7 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
        new_mess  = GetParametrizedMess();
        new_error = GetParametrizedErr( &new_mess );
        new_mess  = GetMessCombination();  
-       temp2 += weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+       temp2 += weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
        sum_error2 = 0.0;
 
        *tpars[i] = oldpar - epsilon;
@@ -214,7 +215,7 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
        new_mess  = GetParametrizedMess();
        new_error = GetParametrizedErr(  &new_mess );
        new_mess  = GetMessCombination();  
-       temp1 += weight*(_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error);
+       temp1 += weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
    
        // Difference of chi2 at par+epsilon and par-epsilon
        temp_derivative1[i] += (temp2 - temp1); // for 1st derivative
