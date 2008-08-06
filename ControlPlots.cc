@@ -2671,8 +2671,11 @@ void TControlPlots::MakeControlPlotsDiJet()
       Beta[i] = (TH2F*)Beta[0]->Clone(name);
     }
   Beta[2]->SetTitle("di-jet 10 < E_{T}^{scale} < 35 GeV;#eta");
+  Beta[3]->SetTitle("di-jet 10 < E_{T}^{scale} < 35 GeV;#eta");
   Beta[4]->SetTitle("di-jet 35 < E_{T}^{scale} < 90 GeV;#eta");
+  Beta[5]->SetTitle("di-jet 35 < E_{T}^{scale} < 90 GeV;#eta");
   Beta[6]->SetTitle("di-jet 90 < E_{T}^{scale} < 300 GeV;#eta");
+  Beta[7]->SetTitle("di-jet 90 < E_{T}^{scale} < 300 GeV;#eta");
 
   TH2F* Bpt[2];
   Bpt[0] = new TH2F("hBpt0","di-jet;p_{T} [GeV]",400,0,400,100,-0.7,0.7);
