@@ -50,6 +50,7 @@ Parameters.o: Parameters.cc Parameters.h Parametrization.h
 ControlPlots.o: ControlPlots.cc ControlPlots.h
 		$(C) $(RCXX) -c ControlPlots.cc
 
+
 caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ZJetSel.h NJetSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h
 		$(C) $(RCXX) -c caliber.cc 
 
@@ -72,9 +73,19 @@ clean:
 		@rm -f .#*
 
 
+
 ToyMC.o: ToyMC.h ToyMC.cc
 	$(C) $(RCXX) -c ToyMC.cc
 
 toy:	ToyMC.o toy.o
 	$(LD) ToyMC.o toy.o $(RLXX) -o toy
 	@echo '-> toy MC executable created.'
+
+
+
+ControlPlotsComparison.o: ControlPlotsComparison.cc ControlPlotsComparison.h
+		$(C) $(RCXX) -c ControlPlotsComparison.cc
+
+comp: 	ControlPlotsComparison.o compareControlPlots.o
+	$(LD) ControlPlotsComparison.o compareControlPlots.o $(RLXX) -o compControlPlots
+	@echo '-> Comparison executable created. Type "compControlPlots" to compare control plots.'
