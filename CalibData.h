@@ -1,15 +1,14 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.37 2008/08/05 12:00:47 mschrode Exp $
+// $Id: CalibData.h,v 1.38 2008/08/05 12:31:55 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
 
-//#include <iostream>//cout
-//#include <iomanip>
-using namespace std;
+#include <iostream>//cout
 #include <vector> 
+#include <cmath>
 
 enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
                InvMass, typeTowerConstraint, ParLimit};
@@ -57,7 +56,7 @@ public:
 class TData
 {
 public:
-  TData(){_mess=0; _par=0; };
+  TData(){_mess=0; _par=0;};
   TData(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
         double const(*func)(TMeasurement *const,double *const),
 	double const(*err)(double *const,TMeasurement *const,double const))
@@ -66,7 +65,12 @@ public:
     delete _mess;
   };
   TMeasurement *GetMess() const { return _mess;};
-  virtual double GetParametrizedMess() const {return _func(_mess,_par);}
+  virtual double GetParametrizedMess() const {return _func(_mess,_par);};
+  virtual double GetParametrizedMess(double *const paramess) const { // For derivative calculation
+    TMeasurement m(_mess);
+    m.pt = paramess[0];
+    return _func(&m,_par);
+  };
   virtual double GetParametrizedErr(double *const paramess) const { return _err(paramess,_mess,_error);};
   virtual double GetParametrizedErr2(double *const paramess){ 
     double error = GetParametrizedErr(paramess);
@@ -95,6 +99,7 @@ public:
   static double ScaleCauchy(double z2);	             // Scaling of residuals with Cauchy-Function in chi2() or chi2_fast()
   static double ScaleHuber(double z2);               // Scaling of residuals with Huber-Function in chi2() or chi2_fast()
 
+
 protected:
   unsigned short int _index; //limited from 0 to 65535
   TMeasurement *_mess;
@@ -113,14 +118,25 @@ class TData_TruthMess : public TData
 public:
   TData_TruthMess(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
         double const(*func)(TMeasurement *const,double *const),
-	double const(*err)(double *const,TMeasurement *const,double const))
-  : TData(index, mess, truth, error, weight, par, n_par, func, err){_type=TrackTower;};
+		  double const(*err)(double *const,TMeasurement *const,double const))
+  : TData(index, mess, truth, error, weight, par, n_par, func, err ){_type=TrackTower;};
 
   virtual const std::vector<TData*>& GetRef() { 
     resultcache.clear();	
     resultcache.push_back( this );
     return resultcache;
   };
+
+
+//  virtual double GetParametrizedErr(double *const paramess) const{ 	 
+//    double pmess; 	 
+//    if(std::abs(_mess->eta) < 3.0) 	 
+//      pmess =  paramess[0] * _mess->E / (_mess->pt * _mess->pt) * (_mess->HadF + _mess->OutF); //Et->E hadronic 	 
+//    else 	 
+//      pmess =  paramess[0] * (_mess->E / _mess->pt);  //Et->E 	 
+//    return _err(&pmess,0,0) * _mess->pt / _mess->E; 	 
+//  };     //search 	 
+	 
 
   virtual double chi2() const{ 
     double new_mess  = GetParametrizedMess();
@@ -144,7 +160,7 @@ public:
         	      double const(*func)(TMeasurement *const,double *const),
 		      double const(*err)(double *const,TMeasurement *const,double const),
 		      TMeasurement *mess)
-  : TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=GammaJet;};
+  : TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=GammaJet; };
   virtual ~TData_TruthMultMess() {
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	 it!=_vecmess.end(); ++it)
@@ -161,9 +177,16 @@ public:
     }
     TJet jet(_mess);
     jet.pt = tower_pt_sum;
+
     return _func(&jet, _par);
   };
-  
+
+  virtual double GetParametrizedMess(double *const paramess) const { // For derivative calculation
+    TJet jet(_mess);
+    jet.pt = paramess[0];
+    return _func(&jet,_par);
+  };
+
   virtual double chi2() const{ 
     double weight = GetWeight(); 
     double new_mess, new_error;
