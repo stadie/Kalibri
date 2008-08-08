@@ -986,7 +986,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
   //     1: ptjetcorr/etgamma
   //     2: ptjet/ptjetcorr
   TH2F* heta[12];
-  heta[0] = new TH2F("heta0","#gamma-jet;#eta",100,-5,5,100,0,4);
+  heta[0] = new TH2F("heta0","#gamma-jet;#eta",400,-5,5,100,0,4);
   objToBeWritten.push_back(heta[0]);
 
   TH2F* hpt_uncorr[12];
@@ -1498,10 +1498,10 @@ void TControlPlots::MakeControlPlotsGammaJet()
       c1->cd();
       for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
 	{
-	  hists_eta[i][j]->Draw();
+	  hists_eta[i][j]->Draw("P");
 	  hists_eta[i][j]->SetStats(0);
-	  hists_eta[i+1][j]->Draw("SAME");
-	  hists_eta[i+2][j]->Draw("SAME");
+	  hists_eta[i+1][j]->Draw("P SAME");
+	  hists_eta[i+2][j]->Draw("P SAME");
 	  leg->Draw("SAME");
 	  c1->SetGrid();
 	  c1->Draw();   
@@ -1646,10 +1646,10 @@ void TControlPlots::MakeControlPlotsGammaJet()
       c1->cd();
       for(int j = 0 ; j < 8 ; ++j)
 	{
-	  hists_ptuncorr[i][j]->Draw();
+	  hists_ptuncorr[i][j]->Draw("P");
 	  hists_ptuncorr[i][j]->SetStats(0);
-	  hists_ptuncorr[i+1][j]->Draw("SAME");
-	  hists_ptuncorr[i+2][j]->Draw("SAME");
+	  hists_ptuncorr[i+1][j]->Draw("P SAME");
+	  hists_ptuncorr[i+2][j]->Draw("P SAME");
 	  leg->Draw("SAME");
 	  c1->SetGrid();
 	  c1->Draw();   
@@ -1744,10 +1744,10 @@ void TControlPlots::MakeControlPlotsGammaJet()
   c1->cd();
   for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
     {
-      hists_pttrue[0][j]->Draw();
+      hists_pttrue[0][j]->Draw("P");
       hists_pttrue[0][j]->SetStats(0);
-      hists_pttrue[1][j]->Draw("SAME");
-      hists_pttrue[2][j]->Draw("SAME");
+      hists_pttrue[1][j]->Draw("P SAME");
+      hists_pttrue[2][j]->Draw("P SAME");
       leg->Draw("SAME");
       c1->SetGrid();
       c1->Draw();   
@@ -1804,10 +1804,10 @@ void TControlPlots::MakeControlPlotsGammaJet()
   c1->cd();
   for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
     {
-      hists_ptlog[0][j]->Draw();
+      hists_ptlog[0][j]->Draw("P");
       hists_ptlog[0][j]->SetStats(0);
-      hists_ptlog[1][j]->Draw("SAME");
-      hists_ptlog[2][j]->Draw("SAME");
+      hists_ptlog[1][j]->Draw("P SAME");
+      hists_ptlog[2][j]->Draw("P SAME");
       leg->Draw("SAME");
       c1->SetGrid();
       c1->SetLogx(1);
@@ -1903,10 +1903,10 @@ void TControlPlots::MakeControlPlotsGammaJet()
   c1->cd();
   for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
     {
-      hists_energy[0][j]->Draw();
+      hists_energy[0][j]->Draw("P");
       hists_energy[0][j]->SetStats(0);
-      hists_energy[1][j]->Draw("SAME");
-      hists_energy[2][j]->Draw("SAME");
+      hists_energy[1][j]->Draw("P SAME");
+      hists_energy[2][j]->Draw("P SAME");
       leg->Draw("SAME");
       c1->SetGrid();
       c1->Draw();   
@@ -2000,10 +2000,10 @@ void TControlPlots::MakeControlPlotsGammaJet()
   c1->cd();
   for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
     {
-      hists_emf[0][j]->Draw();
+      hists_emf[0][j]->Draw("P");
       hists_emf[0][j]->SetStats(0);
-      hists_emf[1][j]->Draw("SAME");
-      hists_emf[2][j]->Draw("SAME");
+      hists_emf[1][j]->Draw("P SAME");
+      hists_emf[2][j]->Draw("P SAME");
       leg->Draw("SAME");
       c1->SetGrid();
       c1->Draw();   
@@ -2959,10 +2959,10 @@ void TControlPlots::MakeControlPlotsDiJet()
 
       for(int j = 0 ; j < 8 ; ++j) 
 	{
-	  hists_beta[i][j]->Draw();
+	  hists_beta[i][j]->Draw("P");
 	  objToBeWritten.push_back(hists_beta[i][j]);
 	  hists_beta[i][j]->SetStats(0);
-	  hists_beta[i+1][j]->Draw("SAME");
+	  hists_beta[i+1][j]->Draw("P SAME");
 	  objToBeWritten.push_back(hists_beta[i+1][j]);
 	  leg->Draw("SAME");
 	  c1->SetGrid();
@@ -3035,10 +3035,10 @@ void TControlPlots::MakeControlPlotsDiJet()
   c1->cd();
   for(int j = 0 ; j < 8 ; ++j) 
     {
-      hists_pt[0][j]->Draw();
+      hists_pt[0][j]->Draw("P");
       objToBeWritten.push_back(hists_pt[0][j]);
       hists_pt[0][j]->SetStats(0);
-      hists_pt[1][j]->Draw("SAME");
+      hists_pt[1][j]->Draw("P SAME");
       objToBeWritten.push_back(hists_pt[1][j]);
       leg->Draw("SAME");
       c1->SetGrid();
@@ -3073,10 +3073,10 @@ void TControlPlots::MakeControlPlotsDiJet()
   c1->cd();
   for(int j = 0 ; j < 8 ; ++j) 
     {
-      hists_ptlog[0][j]->Draw();
+      hists_ptlog[0][j]->Draw("P");
       objToBeWritten.push_back(hists_ptlog[0][j]);
       hists_ptlog[0][j]->SetStats(0);
-      hists_ptlog[1][j]->Draw("SAME");
+      hists_ptlog[1][j]->Draw("P SAME");
       objToBeWritten.push_back(hists_ptlog[1][j]);
       leg->Draw("SAME");
       c1->SetGrid();
@@ -3149,10 +3149,10 @@ void TControlPlots::MakeControlPlotsDiJet()
   c1->cd();
   for(int j = 0 ; j < 8 ; ++j) 
     {
-      hists_energy[0][j]->Draw();
+      hists_energy[0][j]->Draw("P");
       objToBeWritten.push_back(hists_energy[0][j]);
       hists_energy[0][j]->SetStats(0);
-      hists_energy[1][j]->Draw("SAME");
+      hists_energy[1][j]->Draw("P SAME");
       objToBeWritten.push_back(hists_energy[1][j]);
       leg->Draw("SAME");
       c1->SetGrid();
@@ -3223,10 +3223,10 @@ void TControlPlots::MakeControlPlotsDiJet()
   c1->cd();
   for(int j = 0 ; j < 8 ; ++j) 
     {
-      hists_emf[0][j]->Draw();
+      hists_emf[0][j]->Draw("P");
       objToBeWritten.push_back(hists_emf[0][j]);
       hists_emf[0][j]->SetStats(0);
-      hists_emf[1][j]->Draw("SAME");
+      hists_emf[1][j]->Draw("P SAME");
       objToBeWritten.push_back(hists_emf[1][j]);
       leg->Draw("SAME");
       c1->SetGrid();
