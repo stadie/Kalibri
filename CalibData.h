@@ -1,12 +1,13 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.38 2008/08/05 12:31:55 mschrode Exp $
+// $Id: CalibData.h,v 1.39 2008/08/08 14:08:54 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
 
-#include <iostream>//cout
+#include <iostream>
+using namespace std;
 #include <vector> 
 #include <cmath>
 
@@ -214,6 +215,7 @@ public:
   }
 protected:  
   std::vector<TData*> _vecmess; 
+  double JetError2;
 };
 
 //virtual data class for data providing only multiple messurements
@@ -241,15 +243,47 @@ public:
   virtual double chi2() const{ 
     double sum_error2=0.0, new_error, new_mess;
     double weight = GetWeight();
+      
+
+    //diese Zeile loeschen und ab hier const Errors? 
+
+    double totalsum = 0;
+    double sum = 0;
+    double scale = 0;
+    double parascale = 0;
+    double jets[_m2.size()+1];
+    jets[0] = GetMess()->pt;        //Paramess?
+    totalsum +=  GetMess()->pt;        //Paramess?
+    parascale += GetParametrizedMess();
+    int count=0;
+    for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
+	 it!=_m2.end(); ++it) {
+      count++;
+      jets[count] = (*it)->GetMess()->pt;   //ParaMess?
+      totalsum += (*it)->GetMess()->pt;     //Paramess?
+      parascale += GetParametrizedMess();
+    }
+    
+    scale = totalsum / double(count+1);
+    parascale *= 1 / double(count+1);
+
+    
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
          it!=_m2.end(); ++it) {
        new_mess    = (*it)->GetParametrizedMess();	 
        new_error   = (*it)->GetParametrizedErr(&new_mess);
+       sum = totalsum -  (*it)->GetMess()->pt;   //new_mess?
+       new_error *= sum / (scale * scale);
        sum_error2 += new_error * new_error;
+       //sum_error2 *= sum * sum / (scale * scale * scale * scale); //
     }
     new_mess  = GetParametrizedMess();
+    sum = totalsum - GetMess()->pt;   //new_mess?
     new_error = GetParametrizedErr( &new_mess );
+    new_error *= sum / (scale * scale);   //
     new_mess  = GetMessCombination();
+    new_mess *= 1 / parascale;
+
     return (sum_error2!=0 ? weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) ) : 0.0) ;
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;

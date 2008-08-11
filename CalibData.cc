@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.16 2008/08/05 12:00:47 mschrode Exp $
+// $Id: CalibData.cc,v 1.17 2008/08/08 14:08:54 mschrode Exp $
 //
 #include "CalibData.h"
 
@@ -173,6 +173,15 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
       }
     }  
   }
+
+
+
+
+  //Out of Cone can hardly be determined by Di-Jet (but Punch throughs can)
+
+
+  /*
+
   //Add all jet parameters in this event:
   for (unsigned i=0; i<_n_par; ++i)
     tpars[ i+_index ]= &(_par[i]);
@@ -181,6 +190,29 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
     for (unsigned i=0; i<(*mit)->GetNumberOfPars(); ++i) {
       tpars[ i+(*mit)->GetIndex() ]= &((*mit)->GetPar()[i]);
     }
+
+  */
+
+      
+
+    //const Errors? Else: Parametrized Mess after each Parameter change
+
+    double totalsum = 0;
+    double sum = 0;
+    double scale = 0;
+    double parascale;
+    double jets[_m2.size()+1];
+    jets[0] = GetMess()->pt;        //Paramess?
+    totalsum +=  GetMess()->pt;        //Paramess?
+    int count=0;
+    for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
+	 it!=_m2.end(); ++it) {
+      count++;
+      jets[count] = (*it)->GetMess()->pt;   //ParaMess?
+      totalsum += (*it)->GetMess()->pt;        //Paramess?
+    }
+    
+    scale = totalsum / double(count+1);
   
   //This event's chi^2 for the current (unchanged) parameters:
   new_chi2 = chi2();
@@ -195,34 +227,52 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
        double oldpar =  *tpars[i];
        *tpars[i] += epsilon;
        sum_error2 = 0.0;
+       parascale = 0;
        for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
             mit!=_m2.end(); ++mit) {
 	  new_mess    = (*mit)->GetParametrizedMess();	 
+	  parascale += new_mess;
   	  new_error   = (*mit)->GetParametrizedErr(&new_mess);
+	  sum = totalsum -  (*mit)->GetMess()->pt;   //new_mess?
+	  new_error *= sum / (scale * scale);
 	  sum_error2 += new_error * new_error;
        }
        new_mess  = GetParametrizedMess();
+       parascale += new_mess;
+       parascale /= double(count+1);
+       sum = totalsum - GetMess()->pt;   //new_mess?
        new_error = GetParametrizedErr( &new_mess );
+       new_error *= sum / (scale * scale);   //
        new_mess  = GetMessCombination();  
-       temp2 += weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+       new_mess /= parascale;
+       temp2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+
        sum_error2 = 0.0;
+       parascale = 0.0;
 
        *tpars[i] = oldpar - epsilon;
        for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
             mit!=_m2.end(); ++mit) {
-	  new_mess    = (*mit)->GetParametrizedMess();	 
+	  new_mess    = (*mit)->GetParametrizedMess();	 	 
+	  parascale += new_mess;
   	  new_error   = (*mit)->GetParametrizedErr(&new_mess);
+	  sum = totalsum -  (*mit)->GetMess()->pt;   //new_mess?
+	  new_error *= sum / (scale * scale);
 	  sum_error2 += new_error * new_error;
        }
        new_mess  = GetParametrizedMess();
+       parascale += new_mess;
+       parascale /= double(count+1);
+       sum = totalsum - GetMess()->pt;   //new_mess?
        new_error = GetParametrizedErr(  &new_mess );
+       new_error *= sum / (scale * scale);   //
        new_mess  = GetMessCombination();  
-       temp1 += weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+       new_mess /=  parascale;
+       temp1 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
 
        // Difference of chi2 at par+epsilon and par-epsilon
        temp_derivative1[i] += (temp2 - temp1); // for 1st derivative
        temp_derivative2[i] += (temp2 + temp1 - 2.*new_chi2); // for 2nd derivative
-   
        *tpars[i] = oldpar;
     }
   }
