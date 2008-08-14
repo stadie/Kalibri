@@ -2,7 +2,7 @@ C=g++
 LD=g++
 F77=g77
 #O2 for optimization, g for debugging
-SPECIALFLAGS=-O3 -g -Wall#-O2
+SPECIALFLAGS=-O3 #-g -Wall -pg#-O2
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 
@@ -74,14 +74,12 @@ clean:
 
 
 
-ToyMC.o: ToyMC.h ToyMC.cc
+ToyMC.o: ToyMC.h ToyMC.cc ConfigFile.h
 	$(C) $(RCXX) -c ToyMC.cc
 
-toy:	ToyMC.o toy.o
-	$(LD) ToyMC.o toy.o $(RLXX) -o toy
+toy:	ToyMC.o toy.o ConfigFile.o
+	$(LD) ToyMC.o toy.o ConfigFile.o $(RLXX) -o toy
 	@echo '-> toy MC executable created.'
-
-
 
 ControlPlotsComparison.o: ControlPlotsComparison.cc ControlPlotsComparison.h
 		$(C) $(RCXX) -c ControlPlotsComparison.cc

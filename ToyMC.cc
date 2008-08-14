@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.7 2008/07/23 08:44:47 stadie Exp $
+// $Id: ToyMC.cc,v 1.8 2008/07/25 15:34:01 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -16,7 +16,7 @@
 #include "TTree.h"
 #include "TFile.h"
 
-
+#include "ConfigFile.h"
 
 ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400), mPtSpectrum(Uniform),mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpreadA(0.5),mJetSpreadB(0),mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
 {
@@ -526,4 +526,62 @@ int ToyMC::makeDiJet(const char* filename, int nevents) {
   file->Write();
   file->Close();
   return nevents;
+}
+
+void ToyMC::init(const std::string& configfile) {
+  ConfigFile config(configfile.c_str());
+
+   mMinEta = config.read<double>("ToyMC min eta",-2.5);
+   mMaxEta = config.read<double>("ToyMC max eta",2.5);
+   mMinPt  = config.read<double>("ToyMC min pt",30);
+   mMaxPt  = config.read<double>("ToyMC max pt",400);
+   std::string spectrum = config.read<std::string>("ToyMC pt spectrum","uniform");
+   if(spectrum == "powerlaw") {
+     mPtSpectrum = PowerLaw; 
+   } else if(spectrum == "uniform") {
+     mPtSpectrum = Uniform;
+   } else {
+     std::cerr << "unknown ToyMC pt spectrum:" << spectrum << '\n';
+     exit(1);
+   }
+   mTowConst = config.read<double>("ToyMC tower const",1.25);
+   mResoStochastic = config.read<double>("ToyMC tower resolution stochastic",1.20);
+   mResoNoise = config.read<double>("ToyMC tower resolution noise",0.05);
+   mJetSpreadA = config.read<double>("ToyMC jet spread A",0.5);
+   mJetSpreadB = config.read<double>("ToyMC jet spread B",0);
+   mNoOutOfCone = config.read<bool>("ToyMC avoid out-of-cone",true);
+   std::string model = config.read<std::string>("ToyMC model","gauss");
+   if(model == "gauss") {
+     mModel = Gauss;
+   } else if(model  == "landau") {
+     mModel = Landau;
+   } else if(model == "flat") {
+     mModel = Flat;
+   } else if(model == "exp") {
+     mModel = Exp;
+   } else if(model == "slope") {
+     mModel = Slope;
+   } else {
+     std::cerr << "unknown ToyMC model:" << model << '\n';
+     exit(1);
+   }
+   mChunks = config.read<int>("ToyMC chunks",200);
+   mMaxPi0Frac = config.read<double>("ToyMC max pi0 fraction",0.5);
+   mMaxEmf = config.read<double>("ToyMC tower max EMF",0.5);
+}
+
+void ToyMC::print() const {
+  std::cout << "ToyMC configuration:\n";
+  std::cout << "  primary: " << mMinEta << " < eta < " << mMaxEta << '\n';
+  std::cout << "           " << mMinPt << " < pt < " << mMaxPt 
+	    << " spectrum = " << mPtSpectrum << '\n';
+  std::cout << "    tower: c = " << mTowConst 
+	    << " stoch = " << mResoStochastic << " noise = "
+	    << mResoNoise << " max EMF = " << mMaxEmf << " max piO = "
+	    << mMaxPi0Frac << '\n';
+  std::cout << "     jets: spread A = " << mJetSpreadA << " B = " 
+	    << mJetSpreadB << " avoid out-of-cone = " << mNoOutOfCone
+	    << '\n';
+  std::cout << "    model: n chunks = " <<  mChunks << " model = "
+	    << mModel << '\n';
 }

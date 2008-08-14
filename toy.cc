@@ -1,45 +1,36 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: toy.cc,v 1.5 2008/07/23 08:44:47 stadie Exp $
+// $Id: toy.cc,v 1.6 2008/07/25 15:34:01 stadie Exp $
 //
 #include "ToyMC.h"
 
+#include <iostream>
 
-int main() {
+#include "ConfigFile.h"
+
+int main(int argc, char* argv[]) {
+  if (argc!= 2) {
+    std::cout << "Usage:\n    " << argv[0] << " <config.file>\n";
+    return 1;
+  }
   ToyMC* mc = new ToyMC();
-  mc->mMinEta         = -1.2;
-  mc->mMaxEta         =  1.2;
-  mc->mMinPt          = 20;
-  mc->mMaxPt          = 200;
-  //PtSpectrum:
-  //  - Uniform: flat in pt between minPt and maxPt
-  //  - PowerLaw: falling pt spectrum from minPt with p_T^{-2.5}
-  //mc->mPtSpectrum     = ToyMC::PowerLaw;
-  mc->mPtSpectrum     = ToyMC::Uniform;
-  mc->mMaxPi0Frac     =  0.5;
-  mc->mMaxEmf         =  0.0;
-  mc->mTowConst       =  1.3;
-  mc->mResoStochastic =  1.3;
-  mc->mResoNoise      =  0.056;
-  //mc->mTowConst       =  1.00;
-  //mc->mResoStochastic =  0.0;
-  //mc->mResoNoise      =  0.0;
-  //simulated out-of-cone correction factor 
-  //R = 1/(1-exp(-0.5(A+bE))) = 1 + exp(-0.5(A+BE)) + exp(-(A+BE)) +...
-  mc->mJetSpreadA     =  -2 * log(1-0.995);//99.5% in 0.5 cone
-  mc->mJetSpreadB     =  0.0;
-  mc->mNoOutOfCone    =  true;
-  //settings for symmetric distributions 
-  mc->mModel          = ToyMC::Gauss;
-  //setting for flat distribution (noise)
-  //mc->mModel          = ToyMC::Flat;
-  //settings for asymmetric distributions (noise)
-  //mc->mModel          = ToyMC::Exp;
-  //mc->mModel          = ToyMC::Slope;
-  //mc->makeTrackCluster("trackcluster.root", 50000);
-  //mc->makePhotonJet("input/toy_photonjet.root",20000);
-  mc->makeDiJet("input/toy_dijet.root",10000);
+  mc->init(argv[1]);
+  mc->print();
+  ConfigFile config(argv[1]);
+  std::string file = config.read<std::string>("ToyMC output file","toy.root");
+  int nevents = config.read<int>("ToyMC events",10);
+  int mode = config.read<int>("ToyMC mode",1);
+  if(mode == 1) 
+    mc->makePhotonJet(file.c_str(),nevents);
+  else if(mode == 2) 
+    mc->makeDiJet(file.c_str(),nevents);
+  else {
+    std::cerr << "unknown mode:" << mode << '\n';
+    delete mc;
+    return 1;
+  }
+  delete mc;
   return 0;
 }
 
