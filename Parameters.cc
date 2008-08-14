@@ -129,10 +129,28 @@ void TParameters::Init(const ConfigFile& config)
       e[i] = 0.0;
     }
   }
-  Read_Calibration(input_calibration);
+
+  // read predefined calibration contants from cfi
+  // or txt file depending on the ending of the name
+  cout << "Reading calibration from file '" << input_calibration << endl;
+  if(!input_calibration.empty()){
+    if( !input_calibration.substr(input_calibration.rfind(".")+1).compare("cfi") ){
+      Read_CalibrationCfi(input_calibration); 
+    } 
+    else if( !input_calibration.substr(input_calibration.rfind(".")+1).compare("txt") ){
+      cout << "call function" << endl;
+      Read_CalibrationTxt(input_calibration); 
+    }
+    else{
+      cout << "Error: unknown file format: '" 
+	   << input_calibration.substr(input_calibration.rfind("."))
+	   << "'"<< endl;  
+    }
+  }
 }
 
-std::string TParameters::trim(std::string const& source, char const* delims) {
+std::string TParameters::trim(std::string const& source, char const* delims) 
+{
   std::string result(source);
   std::string::size_type index = result.find_last_not_of(delims);
   if(index != std::string::npos)
@@ -154,7 +172,87 @@ std::string TParameters::trim(std::string const& source, char const* delims) {
   return result;
 }
 
-void TParameters::Read_Calibration(std::string const& configFile) {
+void TParameters::Read_CalibrationTxt(std::string const& configFile)
+{
+  // ---------------------------------------------------------------
+  // fills start parameters for fit when read from txt file; expects 
+  // 72 lines for 72 bins in phi for each eta bin ranging from -41
+  // to 41 (skipping the 0) and the following parameter format:
+  // maxEta minEta nPar towerParameters jetParameters separated by
+  // blanks
+  // ---------------------------------------------------------------
+  std::ifstream file(configFile.c_str());
+  std::string line; // buffer line
+
+  int      etaBin=-41;
+  unsigned phiBin=  0;
+  unsigned iLines=  0;
+  while( std::getline(file,line) ){
+    // determine phi bin on the fly
+    phiBin=(iLines%72)+1;      // phi counts from 1...72 for each eta bin
+    ++iLines;
+    // determine eta bin on the fly
+    if(iLines%72==0) ++etaBin; // increas etaValue by 1 each 72 lines...
+    if(etaBin   ==0) ++etaBin; // and don't forget to skip the 0
+
+    //cout << "etaBin: " << etaBin << " :: " << "phiBin: " << phiBin << endl;
+
+    // buffers for input parameters
+    unsigned nPar=0; //this is not needed but read out for control reasons 
+    double etaMax=0; //this is not needed but read out for control reasons  
+    double etaMin=0; //this is not needed but read out for control reasons 
+    std::vector<double> twrPars, jetPars;
+    unsigned entry=0; // controls which parameter is to filled
+    while( line.length()>line.substr(0, line.find(" ")).size() ){
+      if( 0<line.find(" ")){
+   	// extract value
+	switch(++entry){
+	case 1 : etaMin = std::atof( line.substr(0, line.find(" ")).c_str() ); 
+	  break;
+	case 2 : etaMax = std::atof( line.substr(0, line.find(" ")).c_str() ); 
+	  break; 
+	case 3 : nPar   = std::atoi( line.substr(0, line.find(" ")).c_str() ); 
+	  break; 
+	default:
+	  if((entry-3)<=p->nTowerPars()){
+	    twrPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+	  }
+	  else{
+	    jetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+	  }
+	  break;
+	}
+	// cut string
+	line = line.substr(line.find(" "));
+      }
+      else{
+	//cut string
+	if(line.find(" ")<std::string::npos){
+	  line = line.substr(line.find(" ")+1);
+	}
+      }
+    }
+    // catch last character
+    jetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+
+    // fill parameters
+    int towerIdx = GetBin(GetEtaBin(etaBin),GetPhiBin(phiBin));
+    if( towerIdx<0 ) continue;
+    for (unsigned n=0; n< p->nTowerPars(); ++n) {
+      k[towerIdx*p->nTowerPars()+n] = twrPars[n];
+      //e[towerIdx*p->nTowerPars()+n] = NOT_READ_OUT;
+    }
+    int jetIdx = GetJetBin(GetJetEtaBin(etaBin),GetJetPhiBin(phiBin));
+    if( jetIdx<0 ) continue;
+    for (unsigned n=0; n<p->nJetPars(); ++n) {
+      k[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = jetPars[n];
+      //e[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = NOT_READ_OUT;
+    }
+  }
+}
+
+void TParameters::Read_CalibrationCfi(std::string const& configFile)
+{
   std::ifstream file(configFile.c_str());
 
   std::string line, name;
@@ -246,7 +344,6 @@ void TParameters::Read_Calibration(std::string const& configFile) {
       }
     }
   }
-
   delete[] dummy;
 }
 
@@ -405,10 +502,9 @@ void TParameters::Print() const
 
 void TParameters::Write_CalibrationTxt(const char* name)
 {
-  // open output file with 'name' and .txt ending
-  std::string fileName=std::string(name)+".txt";
-  ofstream file(fileName.c_str(),ofstream::binary);
-  
+  cout << "Writing calibration to file '" << name << "'" << endl;
+
+  ofstream file(name, ofstream::binary);
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
     for (unsigned iphi=1; iphi<=phi_ntwr; ++iphi){
@@ -437,9 +533,8 @@ void TParameters::Write_CalibrationTxt(const char* name)
 
 void TParameters::Write_CalibrationCfi(const char* name)
 {
-  // open output file with 'name' and .txt ending
-  std::string fileName=std::string(name)+".cfi";
-  ofstream file ( fileName.c_str(),ofstream::binary);
+  cout << "Writing calibration to file '" << name << "'" << endl;
+  ofstream file(name, ofstream::binary);
   
   time_t rawtime = time(0);
   struct tm * timeinfo;

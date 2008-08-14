@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.30 2008/08/05 09:52:50 mschrode Exp $
+// $Id: Parameters.h,v 1.31 2008/08/14 15:21:58 rwolf Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -25,13 +25,6 @@ public :
 
   std::string GetName() const;
 
-  /// return upper or lower eta eta edge
-  float EtaEdge(int const etaBin, bool lowerEdge);
-  /// return upper edge of bin in eta
-  float EtaUpperEdge(int const etaBin) { return EtaEdge(etaBin, false); };
-  /// return lower edge of bin in eta
-  float EtaLowerEdge(int const etaBin) { return EtaEdge(etaBin, true ); };
-  
   int GetEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity, phi_granularity, eta_symmetry);}
   int GetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity);}
   int GetJetEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity_jet, phi_granularity_jet, eta_symmetry);}
@@ -50,6 +43,11 @@ public :
   int GetEtaGranularityJet() const { return eta_granularity_jet;}
   int GetPhiGranularityJet() const { return phi_granularity_jet;}
 
+  /// write calibration constants to cfi file
+  void Write_CalibrationCfi(const char* name); 
+  /// write calibration constants to txt file
+  void Write_CalibrationTxt(const char* name); 
+
   double* GetTowerParRef(int bin) { return k + bin*p->nTowerPars(); }
   double* GetJetParRef(int jetbin)  { return k + GetNumberOfTowerParameters()+jetbin*p->nJetPars();}
   void SetErrors(double *ne) { std::memcpy(e,ne,GetNumberOfParameters()*sizeof(double));}  
@@ -63,10 +61,6 @@ public :
   double* GetErrors() { return e; }
 
   void Print() const;
-
-  /// create jet calibration output files
-  void Write_CalibrationCfi(const char* name); 
-  void Write_CalibrationTxt(const char* name); 
   
   static const double tower_parametrization(TMeasurement *const x,double *const par) {
     return instance->p->correctedTowerEt(x,par);
@@ -152,9 +146,25 @@ private:
   double * k; //all fit-parameters
   double * e; //all fit-parameter errors
   double fitchi2;
-  //private functions
+
+  /// ------------------------------------------------------
+  /// private functions
+
   void Init(const ConfigFile& config);
-  void Read_Calibration(const std::string& file);
+
+  /// return upper or lower eta eta edge
+  float EtaEdge(int const etaBin, bool lowerEdge);
+  /// return upper edge of bin in eta
+  float EtaUpperEdge(int const etaBin) { return EtaEdge(etaBin, false); };
+  /// return lower edge of bin in eta
+  float EtaLowerEdge(int const etaBin) { return EtaEdge(etaBin, true ); };
+
+
+  /// read predefined calibration constants from cfi file 
+  void Read_CalibrationCfi(const std::string& file);
+  /// read predefined calibration constants from txt file
+  void Read_CalibrationTxt(const std::string& file);
+
   std::string trim(std::string const& source, char const* delims = " {}\t\r\n");
   std::string input_calibration;
   

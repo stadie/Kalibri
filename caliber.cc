@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.40 2008/08/14 12:41:54 stadie Exp $
+// $Id: caliber.cc,v 1.41 2008/08/14 15:21:58 rwolf Exp $
 //
 //
 // for profiling:
@@ -1225,15 +1225,30 @@ void TCaliber::Run_Lvmini()
 
 void TCaliber::Done()
 {
-  //Write calibration output to cfi file
-  cout << "Writing calibration to cfg file '" << GetOutputFile() << ".cfi'," << endl;
-  p->Write_CalibrationCfi( GetOutputFile() );
+  // write calibration to cfi output file if ending is cfi
+  bool cfi=false;
+  bool txt=false;
+  std::string fileName(GetOutputFile());
+  if( fileName.find(".cfi")!=std::string::npos ){
+    if( fileName.substr(fileName.find(".cfi")).compare(".cfi")==0 ){
+      p->Write_CalibrationCfi( fileName.c_str() );
+      cfi=true; // file has a real .cfi ending
+    }
+  }
+  // write calibration to cfi output file if ending is txt
+  if( fileName.find(".txt")!=std::string::npos ){
+    if( fileName.substr(fileName.find(".txt")).compare(".txt")==0 ){
+      p->Write_CalibrationTxt( fileName.c_str() );
+      txt=true; // file has a real .txt ending
+    }
+  }
+  // write calibration to cfi & txt output file if w/o ending
+  if( !cfi && !txt ){
+    p->Write_CalibrationCfi( (fileName+".cfi").c_str() );
+    p->Write_CalibrationTxt( (fileName+".txt").c_str() );
+  }
 
-  //Write calibration output to txt file
-  cout << "Writing calibration to cfg file '" << GetOutputFile() << ".txt'," << endl;
-  p->Write_CalibrationTxt( GetOutputFile() );
-
-  //Do Plots
+  // Do Plots
   if(plots) {
     cout << endl << "Writing control plots in .ps " << flush;
     if( plots->OutputFormatRoot() ) cout << "and .root " << flush;
@@ -1270,7 +1285,7 @@ void TCaliber::Done()
 //     cout << "Creating track cluster control plots,"<<endl;
 //     plots->TrackClusterControlPlots();
   }
-  //Clean-up
+  // Clean-up
   cout << endl << "Cleaning up... " << flush;
   delete plots; 
   for(DataIter i = data.begin() ; i != data.end() ; ++i) {
