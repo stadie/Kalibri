@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.8 2008/07/25 15:34:01 stadie Exp $
+// $Id: ToyMC.cc,v 1.9 2008/08/14 11:56:39 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -343,7 +343,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     mcalphi = 0;
     mcalsum = 0;
     CalibTree->Fill();
-    if(i % 1000 == 0) std::cout << "writing event " << i << '\n';
+    if(i % 1000 == 0) std::cout << "generating event " << i << '\n';
   } 
   return CalibTree->GetEntriesFast();
 }
@@ -501,7 +501,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       }
     }
     CalibTree->Fill();
-    if(n % 1000 == 0) std::cout << "writing event " << n << '\n';
+    if(n % 1000 == 0) std::cout << "generating event " << n << '\n';
   } 
   return CalibTree->GetEntriesFast();
 }

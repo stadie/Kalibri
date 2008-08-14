@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.38 2008/08/04 14:05:48 mschrode Exp $
+// $Id: caliber.cc,v 1.39 2008/08/05 08:46:35 auterman Exp $
 //
 //
 // for profiling:
@@ -31,10 +31,11 @@ boost::mutex io_mutex;
 #include "ControlPlots.h"
 #include "CalibMath.h"
 #include "external.h"
+#include "ToyMC.h"
 
-#include<TH1F.h>
-#include<TF1.h>
-#include<TLorentzVector.h>
+#include "TH1F.h"
+#include "TF1.h"
+#include "TLorentzVector.h"
 #include "TText.h"
 #include "TCanvas.h"
 #include "TPostScript.h"
@@ -1413,15 +1414,26 @@ void TCaliber::Init(string file)
   //--------------------------------------------------------------------------
   //Read Gamma-Jet Tree:
   string treename_gammajet = config.read<string>( "Gamma-Jet tree", default_tree_name );
-  TChain * tchain_gammajet = new TChain( treename_gammajet.c_str() );
+  TTree* tchain_gammajet;
   vector<string> input_gammajet = bag_of_string( 
 						config.read<string>( "Gamma-Jet input file", "input/gammajet.root" ) );
-  for (bag_of_string::const_iterator it = input_gammajet.begin(); it!=input_gammajet.end(); ++it){
-    cout << "...opening root-file " << (*it) << " for Gamma-Jet analysis." << endl;
-    tchain_gammajet->Add( it->c_str() );
-  }  
+  if(input_gammajet[0] == "toy") {
+    std::cout << "generating " << n_gammajet_events << " Gamma-Jet events\n";
+    ToyMC* mc = new ToyMC();
+    mc->init(file);
+    mc->print();
+    tchain_gammajet = new TTree(treename_gammajet.c_str(),"Gamma Jet events");
+    mc->generatePhotonJetTree(tchain_gammajet,n_gammajet_events);
+    delete mc;
+  } else {
+    TChain* chain = new TChain(treename_gammajet.c_str());
+    for (bag_of_string::const_iterator it = input_gammajet.begin(); it!=input_gammajet.end(); ++it){
+      cout << "...opening root-file " << (*it) << " for Gamma-Jet analysis." << endl;
+      chain->Add( it->c_str() );
+    }
+    tchain_gammajet = chain;
+  }
   gammajet.Init( tchain_gammajet );
-
   //Read Track-Tower Tree:
   string treename_tracktower = config.read<string>( "Track-Tower tree", default_tree_name );
   TChain * tchain_tracktower = new TChain( treename_tracktower.c_str() );
@@ -1446,13 +1458,25 @@ void TCaliber::Init(string file)
   
   //Read Di-Jet Tree:
   string treename_dijet    = config.read<string>( "Di-Jet tree", default_tree_name );
-  TChain * tchain_dijet = new TChain( treename_dijet.c_str() );
+  TTree * tchain_dijet;
   vector<string> input_dijet = bag_of_string( 
-					      config.read<string>( "Di-Jet input file", "input/dijet.root" ) );
-  for (bag_of_string::const_iterator it = input_dijet.begin(); it!=input_dijet.end(); ++it){
-    cout << "...opening root-file " << (*it) << " for Di-Jet analysis." << endl;
-    tchain_dijet->Add( it->c_str() );
-  }  
+					      config.read<string>( "Di-Jet input file", "input/dijet.root" ) );  
+  if(input_dijet[0] == "toy") {
+    std::cout << "generating " << n_dijet_events << " Di-Jet events\n";
+    ToyMC* mc = new ToyMC();
+    mc->init(file);
+    mc->print();
+    tchain_dijet = new TTree(treename_dijet.c_str(),"Di-Jet events");
+    mc->generateDiJetTree(tchain_dijet,n_dijet_events);
+    delete mc;
+  } else {
+    TChain* chain = new TChain(treename_dijet.c_str()); 
+    for (bag_of_string::const_iterator it = input_dijet.begin(); it!=input_dijet.end(); ++it){
+      cout << "...opening root-file " << (*it) << " for Di-Jet analysis." << endl;
+      chain->Add( it->c_str() );
+    }  
+    tchain_dijet = chain;
+  }
   dijet.Init( tchain_dijet );
 
   //Read Tri-Jet Tree:

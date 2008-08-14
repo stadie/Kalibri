@@ -13,7 +13,7 @@ LFLAGS = $(SPECIALFLAGS) -L../../lib/$(SRT_SUBDIR)/ -lz -lg2c
 RCXX=$(CFLAGS) $(ROOTCFLAGS) -I/usr/include/boost
 RLXX=$(LFLAGS) $(ROOTLIBS)  -I/usr/include/boost -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
-SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackTowerSel.cc TrackClusterSel.cc NJetSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc
+SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackTowerSel.cc TrackClusterSel.cc NJetSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -50,8 +50,10 @@ Parameters.o: Parameters.cc Parameters.h Parametrization.h
 ControlPlots.o: ControlPlots.cc ControlPlots.h
 		$(C) $(RCXX) -c ControlPlots.cc
 
+ToyMC.o: ToyMC.cc ToyMC.h
+		$(C) $(RCXX) -c ToyMC.cc
 
-caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ZJetSel.h NJetSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h
+caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ZJetSel.h NJetSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h ToyMC.h
 		$(C) $(RCXX) -c caliber.cc 
 
 runjunk: $(SRC:.cc=.o) lbfgs.o
