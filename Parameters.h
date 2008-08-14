@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.29 2008/08/05 08:46:35 auterman Exp $
+// $Id: Parameters.h,v 1.30 2008/08/05 09:52:50 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -24,6 +24,13 @@ public :
   static TParameters* CreateParameters(const std::string& configfile);
 
   std::string GetName() const;
+
+  /// return upper or lower eta eta edge
+  float EtaEdge(int const etaBin, bool lowerEdge);
+  /// return upper edge of bin in eta
+  float EtaUpperEdge(int const etaBin) { return EtaEdge(etaBin, false); };
+  /// return lower edge of bin in eta
+  float EtaLowerEdge(int const etaBin) { return EtaEdge(etaBin, true ); };
   
   int GetEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity, phi_granularity, eta_symmetry);}
   int GetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity);}
@@ -31,11 +38,13 @@ public :
   int GetJetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity_jet);}
   int GetBin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity + phibin;}
   int GetJetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return etabin*phi_granularity_jet + phibin;}
+
   int GetNumberOfTowerParameters() const{return p->nTowerPars() *eta_granularity*phi_granularity;}
   int GetNumberOfJetParameters() const{return p->nJetPars()*eta_granularity_jet*phi_granularity_jet;}
   int GetNumberOfParameters() const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters();}
   int GetNumberOfTowerParametersPerBin() const {return p->nTowerPars();}
   int GetNumberOfJetParametersPerBin() const {return p->nJetPars();}
+
   int GetEtaGranularity() const { return eta_granularity;}
   int GetPhiGranularity() const { return phi_granularity;}
   int GetEtaGranularityJet() const { return eta_granularity_jet;}
@@ -54,7 +63,10 @@ public :
   double* GetErrors() { return e; }
 
   void Print() const;
-  friend std::ostream& operator<<( std::ostream& os, const TParameters& c );
+
+  /// create jet calibration output files
+  void Write_CalibrationCfi(const char* name); 
+  void Write_CalibrationTxt(const char* name); 
   
   static const double tower_parametrization(TMeasurement *const x,double *const par) {
     return instance->p->correctedTowerEt(x,par);

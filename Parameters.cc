@@ -3,7 +3,7 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <ctime>
-
+#include <iomanip>
 
 #include "Parameters.h"
 #include "ConfigFile.h"
@@ -294,6 +294,97 @@ int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) 
   return -4;
 }
 
+float TParameters::EtaEdge(int const etaBin, bool lowerEdge)
+{
+  // return eta bin - eta edge mappting
+  switch(etaBin){
+  case -41: return (lowerEdge ? -5.191 : -4.889); break;
+  case -40: return (lowerEdge ? -4.889 : -4.716); break;
+  case -39: return (lowerEdge ? -4.716 : -4.538); break;
+  case -38: return (lowerEdge ? -4.538 : -4.363); break;
+  case -37: return (lowerEdge ? -4.363 : -4.191); break;
+  case -36: return (lowerEdge ? -4.191 : -4.013); break;
+  case -35: return (lowerEdge ? -4.013 : -3.839); break;
+  case -34: return (lowerEdge ? -3.839 : -3.664); break;
+  case -33: return (lowerEdge ? -3.664 : -3.489); break;
+  case -32: return (lowerEdge ? -3.489 : -3.314); break;
+  case -31: return (lowerEdge ? -3.314 : -3.139); break;
+  case -30: return (lowerEdge ? -3.139 : -2.964); break;
+  case -29: return (lowerEdge ? -2.964 : -2.853); break; 
+  case -28: return (lowerEdge ? -2.853 :  -2.65); break;
+  case -27: return (lowerEdge ?  -2.65 :   -2.5); break;
+  case -26: return (lowerEdge ?   -2.5 : -2.322); break;
+  case -25: return (lowerEdge ? -2.322 : -2.172); break;
+  case -24: return (lowerEdge ? -2.172 : -2.043); break;
+  case -23: return (lowerEdge ? -2.043 :  -1.93); break;
+  case -22: return (lowerEdge ?  -1.93 :  -1.83); break;
+  case -21: return (lowerEdge ?  -1.83 :  -1.74); break;
+  case -20: return (lowerEdge ?  -1.74 : -1.653); break;
+  case -19: return (lowerEdge ? -1.653 : -1.566); break;
+  case -18: return (lowerEdge ? -1.566 : -1.479); break;
+  case -17: return (lowerEdge ? -1.479 : -1.392); break;
+  case -16: return (lowerEdge ? -1.392 : -1.305); break;
+  case -15: return (lowerEdge ? -1.305 : -1.218); break;
+  case -14: return (lowerEdge ? -1.218 : -1.131); break;
+  case -13: return (lowerEdge ? -1.131 : -1.044); break;
+  case -12: return (lowerEdge ? -1.044 : -0.957); break;
+  case -11: return (lowerEdge ? -0.957 : -0.879); break;
+  case -10: return (lowerEdge ? -0.879 : -0.783); break;
+  case  -9: return (lowerEdge ? -0.783 : -0.696); break;
+  case  -8: return (lowerEdge ? -0.696 : -0.609); break;
+  case  -7: return (lowerEdge ? -0.609 : -0.522); break;
+  case  -6: return (lowerEdge ? -0.522 : -0.435); break;
+  case  -5: return (lowerEdge ? -0.435 : -0.348); break;
+  case  -4: return (lowerEdge ? -0.348 : -0.261); break;
+  case  -3: return (lowerEdge ? -0.261 : -0.174); break;
+  case  -2: return (lowerEdge ? -0.174 : -0.087); break;
+  case  -1: return (lowerEdge ? -0.087 :      0); break;
+  case  +1: return (lowerEdge ?      0 :  0.087); break;
+  case  +2: return (lowerEdge ?  0.087 :  0.174); break;
+  case  +3: return (lowerEdge ?  0.174 :  0.261); break;
+  case  +4: return (lowerEdge ?  0.261 :  0.348); break;
+  case  +5: return (lowerEdge ?  0.348 :  0.435); break;
+  case  +6: return (lowerEdge ?  0.435 :  0.522); break;
+  case  +7: return (lowerEdge ?  0.522 :  0.609); break;
+  case  +8: return (lowerEdge ?  0.609 :  0.696); break;
+  case  +9: return (lowerEdge ?  0.696 :  0.783); break;
+  case +10: return (lowerEdge ?  0.783 :  0.879); break;
+  case +11: return (lowerEdge ?  0.879 :  0.957); break;
+  case +12: return (lowerEdge ?  0.957 :  1.044); break;
+  case +13: return (lowerEdge ?  1.044 :  1.131); break;
+  case +14: return (lowerEdge ?  1.131 :  1.218); break;
+  case +15: return (lowerEdge ?  1.218 :  1.305); break;
+  case +16: return (lowerEdge ?  1.305 :  1.392); break;
+  case +17: return (lowerEdge ?  1.392 :  1.479); break;
+  case +18: return (lowerEdge ?  1.479 :  1.566); break;
+  case +19: return (lowerEdge ?  1.566 :  1.653); break;
+  case +20: return (lowerEdge ?  1.653 :   1.74); break;
+  case +21: return (lowerEdge ?   1.74 :   1.83); break;
+  case +22: return (lowerEdge ?   1.83 :   1.93); break;
+  case +23: return (lowerEdge ?   1.93 :  2.043); break;
+  case +24: return (lowerEdge ?  2.043 :  2.172); break;
+  case +25: return (lowerEdge ?  2.172 :  2.322); break;
+  case +26: return (lowerEdge ?  2.322 :    2.5); break;
+  case +27: return (lowerEdge ?    2.5 :   2.65); break;
+  case +28: return (lowerEdge ?   2.65 :  2.853); break;
+  case +29: return (lowerEdge ?  2.853 :  2.964); break;
+  case +30: return (lowerEdge ?  2.964 :  3.139); break;
+  case +31: return (lowerEdge ?  3.139 :  3.314); break;
+  case +32: return (lowerEdge ?  3.314 :  3.489); break;
+  case +33: return (lowerEdge ?  3.489 :  3.664); break;
+  case +34: return (lowerEdge ?  3.664 :  3.839); break;
+  case +35: return (lowerEdge ?  3.839 :  4.013); break;
+  case +36: return (lowerEdge ?  4.013 :  4.191); break;
+  case +37: return (lowerEdge ?  4.191 :  4.363); break;
+  case +38: return (lowerEdge ?  4.363 :  4.538); break;
+  case +39: return (lowerEdge ?  4.538 :  4.716); break;
+  case +40: return (lowerEdge ?  4.716 :  4.889); break;
+  case +41: return (lowerEdge ?  4.889 :  5.191); break;
+    //something went wrong;
+  default : return -1; break;
+  }
+}
+
 int TParameters::GetPhiBin(int phi_id, int phigranu) const
 //This function knows the number of wanted phi-bins and returns 
 //in which phi-bin the tower with eta-ID "phi_id" is located.
@@ -312,8 +403,44 @@ void TParameters::Print() const
     << GetNumberOfJetParameters() << " in total \n";
 }
 
-std::ostream& operator<<( std::ostream& os, const TParameters& cal )
+void TParameters::Write_CalibrationTxt(const char* name)
 {
+  // open output file with 'name' and .txt ending
+  std::string fileName=std::string(name)+".txt";
+  ofstream file(fileName.c_str(),ofstream::binary);
+  
+  for (int ieta= -41; ieta<=41; ++ieta){
+    if (ieta==0) continue;
+    for (unsigned iphi=1; iphi<=phi_ntwr; ++iphi){
+      int towerIdx = GetBin(GetEtaBin(ieta),GetPhiBin(iphi));
+      int jetIdx = GetJetBin(GetJetEtaBin(ieta),GetJetPhiBin(iphi));
+      if(towerIdx<0 || jetIdx<0) continue;
+      // write: lower eta | upper eta | nparameters, for
+      // each eta id of the tower and n times for n phi bins
+      file << std::setw(10) << EtaLowerEdge(ieta) 
+	   << std::setw(10) << EtaUpperEdge(ieta)  
+	   << std::setw(10) << p->nTowerPars()+p->nJetPars();
+      // write: each tower parameter
+      for(unsigned itower=0; itower<p->nTowerPars(); ++itower){
+	file << std::setw(8) << std::setprecision(4) << k[towerIdx*p->nTowerPars()+itower];
+      }
+      // write: each jet parameter
+      for(unsigned ijet=0; ijet<p->nJetPars(); ++ijet){
+	file << std::setw(8) << std::setprecision(4) << k[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+ijet];
+      }
+      // complete line
+      file << std::endl;
+    }
+  }
+  file.close();
+}
+
+void TParameters::Write_CalibrationCfi(const char* name)
+{
+  // open output file with 'name' and .txt ending
+  std::string fileName=std::string(name)+".cfi";
+  ofstream file ( fileName.c_str(),ofstream::binary);
+  
   time_t rawtime = time(0);
   struct tm * timeinfo;
   char buffer [80];
@@ -322,149 +449,148 @@ std::ostream& operator<<( std::ostream& os, const TParameters& cal )
   struct passwd* pw = getpwuid(getuid());	
   
   //double aux[10000], fsum;
-  //int npar = cal.GetNumberOfParameters(), iflag=0;
-  //cal.fitfunction(npar, aux, fsum, cal.k, iflag);  
+  //int npar = GetNumberOfParameters(), iflag=0;
+  //fitfunction(npar, aux, fsum, k, iflag);  
 
-  os << buffer << " by " << pw->pw_name << "." << endl 
-     << " block CalibParameters = {" << endl
-     << "    untracked string  Parametrization    = " << '\"' << cal.p->name() << '\"' <<  endl
-     << "    untracked  int32  NTowerParamsPerBin = " << cal.GetNumberOfTowerParametersPerBin() << endl
-     << "    untracked int32  NJetParamsPerBin   = " << cal.GetNumberOfJetParametersPerBin() << endl
-     << "    untracked int32  NEtaBins           = " << cal.eta_granularity << endl
-     << "    untracked int32  NPhiBins           = " << cal.phi_granularity << endl
-     << "    untracked bool   EtaSymmetryUsed    = " << cal.eta_symmetry << endl
-     << "    untracked double FitChi2            = " << cal.GetFitChi2() << endl
-     << " }";
+  file << buffer << " by " << pw->pw_name << "." << endl 
+       << " block CalibParameters = {" << endl
+       << "    untracked string  Parametrization    = " << '\"' << p->name() << '\"' <<  endl
+       << "   untracked  int32  NTowerParamsPerBin = " << GetNumberOfTowerParametersPerBin() << endl
+       << "    untracked int32  NJetParamsPerBin   = " << GetNumberOfJetParametersPerBin() << endl
+       << "    untracked int32  NEtaBins           = " << eta_granularity << endl
+       << "    untracked int32  NPhiBins           = " << phi_granularity << endl
+       << "    untracked bool   EtaSymmetryUsed    = " << eta_symmetry << endl
+       << "    untracked double FitChi2            = " << GetFitChi2() << endl
+       << " }";
   //--------------------------------------------------------------------
-  os << endl
-     << " block TowerCalibConstants = {" << endl
-     << "    untracked vint32 TowMapEta       = { ";
+  file << endl
+       << " block TowerCalibConstants = {" << endl
+       << "    untracked vint32 TowMapEta       = { ";
   //1. ieta
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
-    for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+    for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
       if (ieta!=-41 || iphi!=1)
-        os << ", " << ieta;
+        file << ", " << ieta;
       else
-        os << ieta;	
+        file << ieta;	
     }
   }
-  os << " }" << endl << "    untracked vint32 TowMapPhi       = { ";
+  file << " }" << endl << "    untracked vint32 TowMapPhi       = { ";
 
   //2. iphi
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
-    for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+    for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
       if (ieta!= -41 || iphi!=1)
-        os << ", " << iphi;
+        file << ", " << iphi;
       else
-        os << iphi;
+        file << iphi;
     }
   }
-  os << " }"<< endl;
-  os << endl;
+  file << " }"<< endl;
+  file << endl;
 
   //3. tower calibration constants
-  os << "    untracked  int32  TowerParam  = " << cal.GetNumberOfTowerParametersPerBin() << endl;
-  for (unsigned int n=0; n<cal.p->nTowerPars(); ++n) {
-    os << "    untracked vdouble TowerParam"<< n <<" = { ";
+  file << "    untracked  int32  TowerParam  = " << GetNumberOfTowerParametersPerBin() << endl;
+  for (unsigned int n=0; n<p->nTowerPars(); ++n) {
+    file << "    untracked vdouble TowerParam"<< n <<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
-      for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
-        int index = cal.GetBin(cal.GetEtaBin(ieta),cal.GetPhiBin(iphi));
+      for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
+        int index = GetBin(GetEtaBin(ieta),GetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
-          os << ", " << cal.k[index*cal.p->nTowerPars()+n];
+          file << ", " << k[index*p->nTowerPars()+n];
 	else
-          os << cal.k[index*cal.p->nTowerPars()+n];;
+          file << k[index*p->nTowerPars()+n];;
       }
     }
-    os << " }" << endl; 
+    file << " }" << endl; 
   }
 
   //4. calibration constants errors
-  for (unsigned int n=0; n<cal.p->nTowerPars(); ++n) {
-    os << "    untracked vdouble TowerError"<<n<<" = { ";
+  for (unsigned int n=0; n<p->nTowerPars(); ++n) {
+    file << "    untracked vdouble TowerError"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
-      for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
-        int index = cal.GetBin(cal.GetEtaBin(ieta),cal.GetPhiBin(iphi));
+      for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
+        int index = GetBin(GetEtaBin(ieta),GetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
-          os << ", " << cal.e[index*cal.p->nTowerPars()+n];
+          file << ", " << e[index*p->nTowerPars()+n];
 	else
-          os << cal.e[index*cal.p->nTowerPars()+n];;
+          file << e[index*p->nTowerPars()+n];;
       }
     }
-    os << " }" << endl; 
+    file << " }" << endl; 
   }
-  os << " }" << endl; 
+  file << " }" << endl; 
   //--------------------------------------------------------------------
-  os << endl
-     << " block JetCalibConstants = {" << endl
-     << "    InputTag Jets    = MyFavoriteJetAlgorithm" << endl
-     << "    string CalibJets = \"\" " << endl
-     << endl
-     << "    untracked vint32 JetMapEta     = { ";
+  file << endl
+       << " block JetCalibConstants = {" << endl
+       << "    InputTag Jets    = MyFavoriteJetAlgorithm" << endl
+       << "    string CalibJets = \"\" " << endl
+       << endl
+       << "    untracked vint32 JetMapEta     = { ";
   
   //5. ieta
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
-    for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+    for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
       if (ieta!=-41 || iphi!=1)
-        os << ", " << ieta;
+        file << ", " << ieta;
       else
-        os << ieta;	
+        file << ieta;	
     }
   }
-  os << " }" << endl << "    untracked vint32 JetMapPhi     = { ";
-
+  file << " }" << endl << "    untracked vint32 JetMapPhi     = { ";
+  
   //6. iphi
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
-    for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
+    for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
       if (ieta!= -41 || iphi!=1)
-        os << ", " << iphi;
+        file << ", " << iphi;
       else
-        os << iphi;
+        file << iphi;
     }
   }
-  os << " }" << endl;
-  os << endl;
+  file << " }" << endl;
+  file << endl;
 
   //7. jet calibration constants
-  os << "    untracked  int32  JetParam  = " << cal.GetNumberOfJetParametersPerBin() << endl;
-  for (unsigned int n=0; n<cal.p->nJetPars(); ++n) {
-    os << "    untracked vdouble JetParam"<<n<<" = { ";
+  file << "    untracked  int32  JetParam  = " << GetNumberOfJetParametersPerBin() << endl;
+  for (unsigned int n=0; n<p->nJetPars(); ++n) {
+    file << "    untracked vdouble JetParam"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
-      for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
-	int index = cal.GetJetBin(cal.GetJetEtaBin(ieta),cal.GetJetPhiBin(iphi));
+      for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
+	int index = GetJetBin(GetJetEtaBin(ieta),GetJetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
-          os << ", " << cal.k[cal.GetNumberOfTowerParameters() + index*cal.p->nJetPars()+n];
+          file << ", " << k[GetNumberOfTowerParameters()+index*p->nJetPars()+n];
 	else
-          os << cal.k[cal.GetNumberOfTowerParameters() + index+n];
+          file << k[GetNumberOfTowerParameters()+index*p->nJetPars()+n];
       }
     }
-    os << " }" << endl; 
+    file << " }" << endl; 
   }
   //8. calibration constants errors
-  for (unsigned int n=0; n<cal.p->nJetPars(); ++n) {
-    os << "    untracked vdouble JetError"<<n<<" = { ";
+  for (unsigned int n=0; n<p->nJetPars(); ++n) {
+    file << "    untracked vdouble JetError"<<n<<" = { ";
     for (int ieta=-41; ieta<=41; ++ieta){
       if (ieta==0) continue;
-      for (unsigned int iphi=1; iphi<=cal.phi_ntwr; ++iphi){
-	int index = cal.GetBin(cal.GetJetEtaBin(ieta),cal.GetJetPhiBin(iphi));
+      for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
+	int index = GetBin(GetJetEtaBin(ieta),GetJetPhiBin(iphi));
 	if (index<0) continue;
 	if (ieta!=-41 || iphi!=1)
-          os << ", " << cal.e[cal.GetNumberOfTowerParameters() + index*cal.p->nJetPars()+n];
+          file << ", " << e[GetNumberOfTowerParameters() + index*p->nJetPars()+n];
 	else
-          os << cal.e[cal.GetNumberOfTowerParameters() + index+n];
+          file << e[GetNumberOfTowerParameters() + index*p->nJetPars()+n];
       }
     }
-    os << " }" << endl; 
+    file << " }" << endl; 
   }
-  os << " }" << endl; 
-  return os;
+  file << " }" << endl; 
 }

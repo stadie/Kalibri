@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.39 2008/08/05 08:46:35 auterman Exp $
+// $Id: caliber.cc,v 1.40 2008/08/14 12:41:54 stadie Exp $
 //
 //
 // for profiling:
@@ -1225,11 +1225,13 @@ void TCaliber::Run_Lvmini()
 
 void TCaliber::Done()
 {
-  //Write calibration to file
-  cout << "Writing calibration to file '"<<GetOutputFile()<<"',"<<endl;
-  ofstream outfile (this->GetOutputFile(),ofstream::binary);
-  outfile << (*p);
-  outfile.close();
+  //Write calibration output to cfi file
+  cout << "Writing calibration to cfg file '" << GetOutputFile() << ".cfi'," << endl;
+  p->Write_CalibrationCfi( GetOutputFile() );
+
+  //Write calibration output to txt file
+  cout << "Writing calibration to cfg file '" << GetOutputFile() << ".txt'," << endl;
+  p->Write_CalibrationTxt( GetOutputFile() );
 
   //Do Plots
   if(plots) {
