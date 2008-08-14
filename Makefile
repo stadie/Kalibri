@@ -50,9 +50,6 @@ Parameters.o: Parameters.cc Parameters.h Parametrization.h
 ControlPlots.o: ControlPlots.cc ControlPlots.h
 		$(C) $(RCXX) -c ControlPlots.cc
 
-ToyMC.o: ToyMC.cc ToyMC.h
-		$(C) $(RCXX) -c ToyMC.cc
-
 caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ZJetSel.h NJetSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h ToyMC.h
 		$(C) $(RCXX) -c caliber.cc 
 
