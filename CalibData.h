@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.40 2008/08/11 16:54:50 thomsen Exp $
+// $Id: CalibData.h,v 1.41 2008/08/13 09:52:31 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -296,25 +296,19 @@ public:
     double sum_error2=0.0, new_error, new_mess;
     double weight = GetWeight();
       
-    double totalsum = 0;
     double sum = 0;
-    double scale = 0;
-    double parascale = 0;
-    double jets[_m2.size()+1];
-    jets[0] = GetMess()->pt;        //Paramess?
-    totalsum +=  GetMess()->pt;        //Paramess?
-    parascale += GetParametrizedMess();
+    double totalsum =  GetMess()->pt;        //Paramess?
+    double parascale = GetParametrizedMess();
     int count=0;
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
 	 it!=_m2.end(); ++it) {
       count++;
-      jets[count] = (*it)->GetMess()->pt;   //ParaMess?
       totalsum += (*it)->GetMess()->pt;     //Paramess?
       parascale += (*it)->GetParametrizedMess();
     }
     
-    scale = totalsum / double(count+1);
-    parascale /= double(count+1);
+    double scale = totalsum / (count+1);
+    parascale /= (count+1);
 
     
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.18 2008/08/11 16:54:50 thomsen Exp $
+// $Id: CalibData.cc,v 1.19 2008/08/13 09:52:31 thomsen Exp $
 //
 #include "CalibData.h"
 
@@ -310,14 +310,11 @@ double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_deriv
     double sum = 0;
     double scale = 0;
     double parascale;
-    double jets[_m2.size()+1];
-    jets[0] = GetMess()->pt;        //Paramess?
     totalsum +=  GetMess()->pt;        //Paramess?
     int count=0;
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
 	 it!=_m2.end(); ++it) {
       count++;
-      jets[count] = (*it)->GetMess()->pt;   //ParaMess?
       totalsum += (*it)->GetMess()->pt;        //Paramess?
     }
     
@@ -348,7 +345,7 @@ double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_deriv
        }
        new_mess  = GetParametrizedMess();
        parascale += new_mess;
-       parascale /= double(count+1);
+       parascale /= (count+1);
        sum = totalsum - GetMess()->pt;   //new_mess?
        new_mess = GetMess()->pt;    //const error
        new_error = GetParametrizedErr( &new_mess );
