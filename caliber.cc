@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.41 2008/08/14 15:21:58 rwolf Exp $
+// $Id: caliber.cc,v 1.42 2008/08/14 21:40:49 rwolf Exp $
 //
 //
 // for profiling:
@@ -218,108 +218,110 @@ void TCaliber::FlattenSpectra()
  //@@ Replace "7" with some more meaningful variable name!!!
  for(int i=0;i<7;++i)
    allweights += RelWeight[i];
- for (int type=0; type<7; ++type){
-    if (type==Default || type==MessMess || type==PtBalance) continue;
 
-    map<int,double> weights[7];
-    double tot[7];
-    double alltotal=0;
-    for(int i=0;i<7;++i)
-      tot[i]=0.;
-
-    for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
-      alltotal+=(*it)->GetWeight();
-      if ((*it)->GetType()!=type) continue;
-      double em = 0.;
-      double had = 0.;
-      int index=0;
-      double min_tower_dr = 10.;
-      //double ptmax=0;
-
-      TLorentzVector Ljet(0.,0.,0.,0.);
-      Ljet.SetPtEtaPhiE((*it)->GetMess()->pt,(*it)->GetMess()->eta,(*it)->GetMess()->phi,(*it)->GetMess()->E);
-      for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
-	em  += (*t)->GetMess()->EMF;
-	had += (*t)->GetMess()->HadF;
-	had += (*t)->GetMess()->OutF;
-	TLorentzVector Ltower(0.,0.,0.,0.);
-        Ltower.SetPtEtaPhiE((*t)->GetMess()->pt,(*t)->GetMess()->eta,(*t)->GetMess()->phi,(*t)->GetMess()->E);
-	double dr = Ltower.DeltaR(Ljet);
-	if (dr<min_tower_dr) {
-	  index = (*t)->GetIndex();
-	  min_tower_dr = dr;
-	}
-      }
-      //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
-      int bin = GetSpectraBin( (*it)->GetScale(), index );
-      //int bin = GetSpectraBin( (*it)->GetScale() );
-      weights[type][bin]+=(*it)->GetWeight();
-      tot[type]+=(*it)->GetWeight();
-    }
-    if (tot[type]!=0.)
-    for (DataIter it = data.begin(); it!=data.end(); ++it) {
-      if ((*it)->GetType()!=type) continue;
-
-      double em = 0;
-      double had = 0;
-      int index=0;
-      double min_tower_dr = 10.;
-      TLorentzVector Ljet(0,0,0,0);
+ map<int,double> weights[7];
+ double tot[7];
+ double alltotal=0;
+ for(int i=0;i<7;++i)
+   tot[i]=0.;
+ 
+   for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
+     alltotal+=(*it)->GetWeight();
+     for (int type=0; type<7; ++type){
+       if ((*it)->GetType()!=type) continue;
+       double em = 0.;
+       double had = 0.;
+       int index=0;
+       double min_tower_dr = 10.;
+       //double ptmax=0;
+       
+       TLorentzVector Ljet(0.,0.,0.,0.);
+       Ljet.SetPtEtaPhiE((*it)->GetMess()->pt,(*it)->GetMess()->eta,(*it)->GetMess()->phi,(*it)->GetMess()->E);
+       for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+	 em  += (*t)->GetMess()->EMF;
+	 had += (*t)->GetMess()->HadF;
+	 had += (*t)->GetMess()->OutF;
+	 TLorentzVector Ltower(0.,0.,0.,0.);
+	 Ltower.SetPtEtaPhiE((*t)->GetMess()->pt,(*t)->GetMess()->eta,(*t)->GetMess()->phi,(*t)->GetMess()->E);
+	 double dr = Ltower.DeltaR(Ljet);
+	 if (dr<min_tower_dr) {
+	   index = (*t)->GetIndex();
+	   min_tower_dr = dr;
+	 }
+       }
+       //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
+       int bin = GetSpectraBin( (*it)->GetScale(), index );
+       //int bin = GetSpectraBin( (*it)->GetScale() );
+       weights[type][bin]+=(*it)->GetWeight();
+       tot[type]+=(*it)->GetWeight();
+     }
+   }
+   for (int type=0; type<7; ++type){
+     if (tot[type]!=0.)
+       for (DataIter it = data.begin(); it!=data.end(); ++it) {
+	 if ((*it)->GetType()!=type) continue;
+	 
+	 double em = 0;
+	 double had = 0;
+	 int index=0;
+	 double min_tower_dr = 10.;
+	 TLorentzVector Ljet(0,0,0,0);
+	 
+	 Ljet.SetPtEtaPhiE((*it)->GetMess()->pt,(*it)->GetMess()->eta,(*it)->GetMess()->phi,(*it)->GetMess()->E);
+	 for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+	   em  += (*t)->GetMess()->EMF;
+	   had += (*t)->GetMess()->HadF;
+	   had += (*t)->GetMess()->OutF;
+	   TLorentzVector Ltower(0.,0.,0.,0.);
+	   Ltower.SetPtEtaPhiE((*t)->GetMess()->pt,(*t)->GetMess()->eta,(*t)->GetMess()->phi,(*t)->GetMess()->E);
+	   double dr = Ltower.DeltaR(Ljet);
+	   if (dr<min_tower_dr) {
+	     index = (*t)->GetIndex();
+	     min_tower_dr = dr;
+	   }
+	 }
+	 //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
+	 int bin = GetSpectraBin( (*it)->GetScale(), index );
+	 //int bin = GetSpectraBin( (*it)->GetScale() );
+	 //(*it)->SetWeight(1);
+	 
+	 
+	 //(*it)->SetWeight((*it)->GetWeight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
+	 
+	 (*it)->SetWeight((*it)->GetWeight()/weights[type][bin] * (alltotal / double(weights[type].size()) )  * RelWeight[type] / allweights );
+	 
+	 
+	 //(*it)->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
+       }
      
-      Ljet.SetPtEtaPhiE((*it)->GetMess()->pt,(*it)->GetMess()->eta,(*it)->GetMess()->phi,(*it)->GetMess()->E);
-      for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
-	em  += (*t)->GetMess()->EMF;
-	had += (*t)->GetMess()->HadF;
-	had += (*t)->GetMess()->OutF;
-	TLorentzVector Ltower(0.,0.,0.,0.);
-        Ltower.SetPtEtaPhiE((*t)->GetMess()->pt,(*t)->GetMess()->eta,(*t)->GetMess()->phi,(*t)->GetMess()->E);
-	double dr = Ltower.DeltaR(Ljet);
-	if (dr<min_tower_dr) {
-	  index = (*t)->GetIndex();
-	  min_tower_dr = dr;
-	}
-      }
-      //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
-      int bin = GetSpectraBin( (*it)->GetScale(), index );
-      //int bin = GetSpectraBin( (*it)->GetScale() );
-      //(*it)->SetWeight(1);
-
-
-      //(*it)->SetWeight((*it)->GetWeight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
-      (*it)->SetWeight((*it)->GetWeight()/weights[type][bin] * (double(alltotal) / double(weights[type].size()) )  * RelWeight[type] / allweights );
-
-
-      //(*it)->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
-    }
-
     /*
-    // Old version using leading tower bin as jet bin
-    for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
-      if ((*it)->GetType()!=type) continue;
-      double em = 0;
-      double had = 0;
-      int index=0;
-      double ptmax=0;
-      for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
-	em  += (*t)->GetMess()[1];
+   // Old version using leading tower bin as jet bin
+   for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
+   if ((*it)->GetType()!=type) continue;
+   double em = 0;
+   double had = 0;
+   int index=0;
+   double ptmax=0;
+   for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+   em  += (*t)->GetMess()[1];
 	had += (*t)->GetMess()[2];
 	had += (*t)->GetMess()[3];
 	if ((*t)->GetMess()[1]>ptmax) {
-	  ptmax=(*t)->GetMess()[1];
-	  index=(*t)->GetIndex();
+	ptmax=(*t)->GetMess()[1];
+	index=(*t)->GetIndex();
 	}
-      }
-      //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
-      int bin = GetSpectraBin( (*it)->GetScale(), index );
-      //int bin = GetSpectraBin( (*it)->GetScale() );
-      weights[bin]+=(*it)->GetWeight();
-      tot+=(*it)->GetWeight();
-    }
-
-    if (tot!=0.)
+	}
+	//int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
+	int bin = GetSpectraBin( (*it)->GetScale(), index );
+	//int bin = GetSpectraBin( (*it)->GetScale() );
+	weights[bin]+=(*it)->GetWeight();
+	tot+=(*it)->GetWeight();
+	}
+	
+	if (tot!=0.)
     for (DataIter it = data.begin(); it!=data.end(); ++it) {
-      if ((*it)->GetType()!=type) continue;
-
+    if ((*it)->GetType()!=type) continue;
+    
       double em = 0;
       double had = 0;
       int index=0;
@@ -343,7 +345,7 @@ void TCaliber::FlattenSpectra()
     }
     */
 
-  } 
+   } 
 }
   
 //further weighting.............................................................
@@ -1099,13 +1101,19 @@ void TCaliber::Run()
 
 void TCaliber::Run_Lvmini()
 {
-  int naux = 1000000, niter=1000, iret=0;
+  //int naux = 1000000, niter=1000, iret=0;
+  int naux = 3000000, niter=1000, iret=0;
   int mvec = 29;
   //int mvec = 6;
   //int mvec = 2;
-  double aux[naux], fsum = 0;
 
   int npar = p->GetNumberOfParameters();
+
+  naux = lvmdim_(npar,mvec);
+  cout<<"array of size "<<naux<<" needed."<<endl;
+
+  double aux[naux], fsum = 0;
+
   double *temp_derivative1 = new double[npar];
   double *temp_derivative2 = new double[npar];
   double epsilon = 1.E-3;
@@ -1120,7 +1128,7 @@ void TCaliber::Run_Lvmini()
     t[ithreads] = new ComputeThread(npar, p->GetPars(),temp_derivative1,temp_derivative2,epsilon);
   }
 
-  float eps =float(1.E-4);
+  float eps =float(1.E-2);//-4
   float wlf1=1.E-4;
   float wlf2=0.9;
   lvmeps_(eps,wlf1,wlf2);
@@ -1164,7 +1172,8 @@ void TCaliber::Run_Lvmini()
       cerr << "ERROR: " << _residualScalingScheme.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
       break;
     }
-
+    if(lvmdim_(npar,mvec) > naux)
+      cout<<"Aux field too small. "<<lvmdim_(npar,mvec)<<" enntires needed."<<endl;
     if (npar>0) npar*=-1; //Show output
     //initialization
     lvmini_( npar, mvec, niter, aux);
