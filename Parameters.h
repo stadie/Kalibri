@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.31 2008/08/14 15:21:58 rwolf Exp $
+// $Id: Parameters.h,v 1.32 2008/08/14 21:40:49 rwolf Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -97,7 +97,11 @@ public :
       pmess =  x[0] * (xorig->E / xorig->pt);  //Et->E 
     return (xorig->E!=0. ? tower_error_parametrization(&pmess,xorig,errorig) * xorig->pt / xorig->E : 0.0);
   }
-
+  static const double const_error_parametrization(double *const x, 
+						  TMeasurement *const xorig, 
+						  double const errorig)  {
+    return errorig;  
+  }
 
   //Plot paramterization stuff
   static const double plot_parametrization(TMeasurement *const x,double *const par) {

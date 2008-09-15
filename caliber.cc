@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.42 2008/08/14 21:40:49 rwolf Exp $
+// $Id: caliber.cc,v 1.43 2008/08/21 15:07:08 thomsen Exp $
 //
 //
 // for profiling:
@@ -486,7 +486,6 @@ void TCaliber::Run_GammaJet()
 
     if (gammajet.NonLeadingJetPt   / gammajet.PhotonPt >  Rel_cut_on_gamma)  continue;    //fraction of unwanted stuff
 
-     
     //Find the jets eta & phi index using the nearest tower to jet axis:
     int jet_index=-1;
     double min_tower_dr = 10.0;
@@ -526,19 +525,22 @@ void TCaliber::Run_GammaJet()
     jetp->phi = gammajet.JetCalPhi;
     jetp->E   = gammajet.JetCalE;
     //Create an Gamma/Jet TData event
-    TData_TruthMultMess * gj_data = new TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
-			  gammajet.PhotonEt,				    //truth//
-			  //gammajet.JetGenPt,
-			  sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
-			  gammajet.EventWeight,                             //weight//
-			  //1.0,                                            //weight//
-			  p->GetJetParRef( jet_index ),                     //params
-			  p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
-			  p->jet_parametrization,                           //function
-			  jet_error_param,                                  //error param. function
-			  jetp                                              //measurement
-			  );
-
+    TData_TruthMultMess * gj_data = new TData_TruthMultMess
+      (
+       jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+       gammajet.PhotonEt,				    //truth//
+       //gammajet.JetGenPt,
+       sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
+       //0.10*gammajet.PhotonEt.//error//				    
+       gammajet.EventWeight,                             //weight//
+       //1.0,                                            //weight//
+       p->GetJetParRef( jet_index ),                     //params
+       p->GetNumberOfJetParametersPerBin(),              //number of free jet param. p. bin
+       p->jet_parametrization,                           //function
+       jet_error_param,                                  //error param. function
+       jetp                                              //measurement
+       );
+    
     double EM=0.,F=0.;
     //Add the jet's towers to "gj_data":
     for (int n=0; n<gammajet.NobjTowCal; ++n){
@@ -569,6 +571,7 @@ void TCaliber::Run_GammaJet()
       gj_data->AddMess(new TData_TruthMess(index,
 					   mess,                                                    //mess//
 					   gammajet.PhotonEt * relativEt,                           //truth//
+					   //sqrt(1.3 * 1.3/gammajet.TowHad[n] + 0.056 * 0.056) * mess->HadF,
 					   sqrt(pow(0.5,2)+pow(0.1*gammajet.PhotonEt*relativEt,2)), //error//
 					   1.,                                                      //weight//
 					   p->GetTowerParRef( index ),                              //parameter//
@@ -1100,13 +1103,13 @@ void TCaliber::Run()
 }
 
 void TCaliber::Run_Lvmini()
-{
+{ 
   //int naux = 1000000, niter=1000, iret=0;
   int naux = 3000000, niter=1000, iret=0;
   int mvec = 29;
   //int mvec = 6;
   //int mvec = 2;
-
+  
   int npar = p->GetNumberOfParameters();
 
   naux = lvmdim_(npar,mvec);
@@ -1364,18 +1367,22 @@ void TCaliber::Init(string file)
     tower_error_param = p->fast_error_parametrization;
   else if (te=="Jans E parametrization")
     tower_error_param = p->jans_E_tower_error_parametrization;
+  else if(te=="const")
+    tower_error_param = p->const_error_parametrization;
   else  
     tower_error_param = p->tower_error_parametrization;
   //...for jets:
   string je = config.read<string>("jet error parametrization","standard");
   if (je=="standard")
-     jet_error_param   = p->jet_error_parametrization;
+    jet_error_param   = p->jet_error_parametrization;
   else if (je=="fast")
-     jet_error_param   = p->fast_error_parametrization;
+    jet_error_param   = p->fast_error_parametrization;
   else if (je=="dummy")
-     jet_error_param   = p->dummy_error_parametrization;
-  else 
-     jet_error_param   = p->jet_error_parametrization;
+    jet_error_param   = p->dummy_error_parametrization;
+  else if(te=="const")
+    jet_error_param = p->const_error_parametrization;
+  else  
+    jet_error_param   = p->jet_error_parametrization;
 
   //last minute kinematic cuts
   Et_cut_on_jet   = config.read<double>("Et cut on jet",0.0); 
