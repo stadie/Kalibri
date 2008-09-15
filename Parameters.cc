@@ -28,6 +28,10 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new SimpleParametrization();
   }  else if(name == "ToyParametrization") {
     return new ToyParametrization();
+  } else if(name == "TStepParametrizationEnergy") {
+    return new StepParametrizationEnergy();
+  } else if(name == "ToyStepParametrizationEnergy") {
+    return new ToyStepParametrizationEnergy();
   }
   
   return 0;
@@ -50,13 +54,16 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "StepParametrizationEnergy";
   } else if(parclass == "TStepEfracParameters") {
     parclass = "StepEfracParametrization";
-  }  else if(parclass == "TJetMETParameters") {
+  } else if(parclass == "TJetMETParameters") {
     parclass = "JetMETParametrization";
   }  else if(parclass == "TSimpleParameters") {
     parclass = "SimpleParametrization";
   }  else if(parclass == "TToyParameters") {
     parclass = "ToyParametrization";
+  }  else if(parclass == "TToyStepParametersEnergy") {
+    parclass = "ToyStepParametrizationEnergy";
   }
+
   Parametrization *param = CreateParametrization(parclass);
   if(! param) {
     cerr << "TParameters::CreateParameters: could not instantiate class " << parclass << '\n';

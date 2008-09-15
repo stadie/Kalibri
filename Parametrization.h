@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.10 2008/08/01 14:56:51 mschrode Exp $
+// $Id: Parametrization.h,v 1.11 2008/08/05 08:46:35 auterman Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -258,4 +258,30 @@ public:
     return x->pt;  
   }
 };
+
+
+// Parametrization of hadronic response by a step function
+class ToyStepParametrizationEnergy : public Parametrization { 
+public:
+  ToyStepParametrizationEnergy() : Parametrization(5,0) {} //14,0
+ 
+  const char* name() const { return "ToyStepParametrizationEnergy";}
+  
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
+    double result = 0;
+    double e =  x->HadF * x->E / x->pt;
+
+    if(e<=5.0)        result = x->EMF+x->OutF + par[0]*x->HadF;
+    else if (e<=10.0) result = x->EMF+x->OutF + par[1]*x->HadF;
+    else if (e<=25.0) result = x->EMF+x->OutF + par[2]*x->HadF;
+    else if (e<=50)   result = x->EMF+x->OutF + par[3]*x->HadF;
+    else              result = x->EMF+x->OutF + par[4]*x->HadF;
+    return result;
+  }
+    
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
+    return x->pt;
+  }
+};
+
 #endif
