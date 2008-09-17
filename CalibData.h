@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.41 2008/08/13 09:52:31 thomsen Exp $
+// $Id: CalibData.h,v 1.42 2008/08/20 13:28:42 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -79,6 +79,7 @@ public:
   };
   double GetTruth() const { return _truth;};
   virtual double GetScale() const {return GetTruth();};//flatten spectrum w.r.t. this
+  virtual void UpdateError(){};
   double GetError() const { return _error;};
   double GetWeight() const { return _weight;};
   void   SetWeight(const double & weight) { _weight=weight;};
@@ -289,28 +290,47 @@ public:
     double scale = GetMess()->pt;
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();it!=_m2.end(); ++it)
       scale += (*it)->GetMess()->pt;
-    //@@ return scale/double(1+_m2.size());
     return scale/2.;
   }
-  virtual double chi2() const{ 
-    double sum_error2=0.0, new_error, new_mess;
-    double weight = GetWeight();
-      
-    double sum = 0;
-    double totalsum =  GetMess()->pt;        //Paramess?
-    double parascale = GetParametrizedMess();
-    int count=0;
+  virtual void UpdateError() {
+    double totalsum = GetParametrizedMess();
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
 	 it!=_m2.end(); ++it) {
-      count++;
-      totalsum += (*it)->GetMess()->pt;     //Paramess?
+      totalsum += (*it)->GetParametrizedMess();
+    }
+    
+    double scale = totalsum / 2; //should be changed to ptsum (scalar) of the part projected to leading jet axis devided by 2 for n>2 n-jets     (also chi2() and chi2fast())
+
+    double new_mess = GetParametrizedMess();
+    double sum = totalsum - new_mess; 
+    double new_error = GetParametrizedErr( &new_mess );
+    new_error *= sum / (scale * scale);
+    double sum_error2 = new_error * new_error;
+    for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
+	 it!=_m2.end(); ++it) {
+      new_mess    = (*it)->GetParametrizedMess();
+      new_error   = (*it)->GetParametrizedErr(&new_mess);
+      sum = totalsum - new_mess;
+      new_error *= sum / (scale * scale);
+      sum_error2 += new_error * new_error;
+    }
+    _error = sqrt(sum_error2);  
+};
+
+  virtual double chi2() const{ 
+    double new_mess;
+    double weight = GetWeight();
+      
+    double parascale = GetParametrizedMess();
+    for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
+	 it!=_m2.end(); ++it) {
       parascale += (*it)->GetParametrizedMess();
     }
     
-    double scale = totalsum / (count+1);
-    parascale /= (count+1);
+    //should be changed to ptsum (scalar) of the part projected to leading jet axis devided by 2 for n>2 n-jets           same for parascale and in ChiFast...
+    parascale /= 2;
 
-    
+    /*
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
          it!=_m2.end(); ++it) {
       //new_mess    = (*it)->GetParametrizedMess();
@@ -324,9 +344,10 @@ public:
     sum = totalsum - GetMess()->pt;   //new_mess?
     new_error = GetParametrizedErr( &new_mess );
     new_error *= sum / (scale * scale);   //
+    */
     new_mess  = combine() / parascale;
 
-    return (sum_error2!=0 ? weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) ) : 0.0) ;
+    return (_error!=0 ? weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(_error * _error) ) : 0.0) ;
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;
 protected:

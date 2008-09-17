@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.19 2008/08/13 09:52:31 thomsen Exp $
+// $Id: CalibData.cc,v 1.20 2008/08/20 13:28:42 thomsen Exp $
 //
 #include "CalibData.h"
 
@@ -265,7 +265,7 @@ double TData_PtBalance::combine() const{
 double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_derivative2, 
  			         double const epsilon) const
 {
-  double new_chi2, new_mess, new_error, sum_error2=0.0;
+  double new_chi2, new_mess;
   double weight = GetWeight();
 
   //Get all tower parameter used in this event:  
@@ -303,23 +303,8 @@ double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_deriv
 
   */
      
-
-    //const Errors? Else: Parametrized Mess after each Parameter change
-
-    double totalsum = 0;
-    double sum = 0;
-    double scale = 0;
     double parascale;
-    totalsum +=  GetMess()->pt;        //Paramess?
-    int count=0;
-    for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
-	 it!=_m2.end(); ++it) {
-      count++;
-      totalsum += (*it)->GetMess()->pt;        //Paramess?
-    }
-    
-    scale = totalsum / double(count+1);
-  
+      
   //This event's chi^2 for the current (unchanged) parameters:
   new_chi2 = chi2();
 
@@ -332,49 +317,31 @@ double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_deriv
      if ( tpars.find(i)!=tpars.end() ) {
        double oldpar =  *tpars[i];
        *tpars[i] += epsilon;
-       sum_error2 = 0.0;
        parascale = 0;
        for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin(); mit!=_m2.end(); ++mit) {
 	 new_mess    = (*mit)->GetParametrizedMess();	//aufraeumen, wenn richtig 
 	 parascale += new_mess;
-	 new_mess = (*mit)->GetMess()->pt;      //const error
-	 new_error   = (*mit)->GetParametrizedErr(&new_mess);
-	 sum = totalsum -  (*mit)->GetMess()->pt;   //new_mess?
-	 new_error *= sum / (scale * scale);
-	 sum_error2 += new_error * new_error;
        }
        new_mess  = GetParametrizedMess();
        parascale += new_mess;
-       parascale /= (count+1);
-       sum = totalsum - GetMess()->pt;   //new_mess?
-       new_mess = GetMess()->pt;    //const error
-       new_error = GetParametrizedErr( &new_mess );
-       new_error *= sum / (scale * scale);   //
+       parascale /= 2;
+    //should be changed to ptsum (scalar) of the part projected to leading jet axis devided by 2 for n>2 n-jets 
        new_mess  = combine() / parascale;
-       temp2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+       temp2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(_error * _error));
 
-       sum_error2 = 0.0;
        parascale = 0.0;
 
        *tpars[i] = oldpar - epsilon;
        for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin(); mit!=_m2.end(); ++mit) {
 	  new_mess    = (*mit)->GetParametrizedMess();	 	 
 	  parascale += new_mess;
-	  new_mess = (*mit)->GetMess()->pt;      //const error
-  	  new_error   = (*mit)->GetParametrizedErr(&new_mess);
-	  sum = totalsum -  (*mit)->GetMess()->pt;   //new_mess?
-	  new_error *= sum / (scale * scale);
-	  sum_error2 += new_error * new_error;
        }
        new_mess  = GetParametrizedMess();
        parascale += new_mess;
-       parascale /= double(count+1);
-       sum = totalsum - GetMess()->pt;   //new_mess?
-       new_mess = GetMess()->pt;    //const error
-       new_error = GetParametrizedErr(  &new_mess );
-       new_error *= sum / (scale * scale);   //
+       parascale /= 2;
+    //should be changed to ptsum (scalar) of the part projected to leading jet axis devided by 2 for n>2 n-jets 
        new_mess  = combine() / parascale;
-       temp1 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
+       temp1 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(_error * _error) );
 
        // Difference of chi2 at par+epsilon and par-epsilon
        temp_derivative1[i] += (temp2 - temp1); // for 1st derivative

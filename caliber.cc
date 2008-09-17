@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.45 2008/09/17 15:46:23 mschrode Exp $
+// $Id: caliber.cc,v 1.46 2008/09/17 16:10:07 stadie Exp $
 //
 //
 // for profiling:
@@ -1144,6 +1144,10 @@ void TCaliber::Run_Lvmini()
   p->FillErrors(aux+error_index);
 
   for( int loop = 0; loop < static_cast<int>(_residualScalingScheme.size()); loop++ ) {
+    cout<<"Updateing Di-Jet Errors"<<endl;
+    for(DataIter it = data.begin()  ; it < data.end() ; ++it) {
+      (*it)->UpdateError();
+    }
 
     // Setting function to scale residuals in chi2 calculation
     cout << loop+1 << flush;
