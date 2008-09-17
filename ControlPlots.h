@@ -25,19 +25,20 @@ public:
   void MakeControlPlotsGammaJetPerJetBin();
   void MakeControlPlotsGammaJetPerTowerBin();
   void MakeControlPlotsGammaJetSigmas();
+  void MakeControlPlotsParameterScan();
   void MakeControlPlotsTowers();
-  bool OutputFormatRoot() const { return _outputROOT; }
+  bool OutputFormatRoot() const { return mOutputROOT; }
   
 private:
   void Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
   void SetGStyle() const;
   void WriteToRootFile(std::vector<TObject*> obj, std::string dir);
 
-  const std::vector<TData*> *_data; 
-  TParameters *_par;
-  TFile * const _outFile;
-  TString ptRatioName[3];	  // For histo titles etc
-  TString controlQuantityName[8]; // For histo titles etc
-  bool _outputROOT;
+  const std::vector<TData*> *mData; 
+  TParameters *mPar;
+  TFile * const mOutFile;
+  TString mPtRatioName[3];	  // For histo titles etc
+  TString mControlQuantityName[8]; // For histo titles etc
+  bool mOutputROOT;
 };
 #endif

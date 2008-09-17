@@ -1,10 +1,12 @@
 #include "ControlPlots.h"
 
+#include <algorithm>
 #include <iostream>
 using namespace std;
 
 #include "TCanvas.h"
 #include "TDirectory.h"
+#include "TGraph.h"
 #include "TH1I.h"
 #include "TLatex.h"
 #include "TLegend.h"
@@ -34,34 +36,34 @@ using namespace std;
 //                 1  .ps
 //---------------------------------------------------------------
 TControlPlots::TControlPlots(const std::vector<TData*> *data, TParameters *par, int outputFormat)
-  : _data(data), _par(par), _outFile( outputFormat==0 ? new TFile("controlplots.root","RECREATE","Cal calib control plots") : 0 )
+  : mData(data), mPar(par), mOutFile( outputFormat==0 ? new TFile("controlplots.root","RECREATE","Cal calib control plots") : 0 )
 { 
-  ptRatioName[0] = "p^{jet}_{T}/ E_{T}^{#gamma}";
-  ptRatioName[1] = "p_{T}^{cor. jet}/E_{T}^{#gamma}";
-  ptRatioName[2] = "p_{T}^{jet}/p_{T}^{cor. jet}";
+  mPtRatioName[0] = "p^{jet}_{T}/ E_{T}^{#gamma}";
+  mPtRatioName[1] = "p_{T}^{cor. jet}/E_{T}^{#gamma}";
+  mPtRatioName[2] = "p_{T}^{jet}/p_{T}^{cor. jet}";
 
-  controlQuantityName[0] = "mean"; 
-  controlQuantityName[1] = "standard deviation"; 
-  controlQuantityName[2] = "mean of Gauss fit"; 
-  controlQuantityName[3] = "width of Gauss fit"; 
-  controlQuantityName[4] = "median"; 
-  controlQuantityName[5] = "#chi^{2} / n.d.f."; 
-  controlQuantityName[6] = "probability"; 
-  controlQuantityName[7] = "quantiles"; 
+  mControlQuantityName[0] = "mean"; 
+  mControlQuantityName[1] = "standard deviation"; 
+  mControlQuantityName[2] = "mean of Gauss fit"; 
+  mControlQuantityName[3] = "width of Gauss fit"; 
+  mControlQuantityName[4] = "median"; 
+  mControlQuantityName[5] = "#chi^{2} / n.d.f."; 
+  mControlQuantityName[6] = "probability"; 
+  mControlQuantityName[7] = "quantiles"; 
 
   SetGStyle();
 
-  if( outputFormat == 1 ) _outputROOT = false;
-  else _outputROOT = true;
+  if( outputFormat == 1 ) mOutputROOT = false;
+  else mOutputROOT = true;
 }
 
 
 TControlPlots::~TControlPlots()
 {
-  if( _outFile !=0 )
+  if( mOutFile !=0 )
     {
-      if( _outFile->IsOpen() ) _outFile->Close();
-      delete _outFile;
+      if( mOutFile->IsOpen() ) mOutFile->Close();
+      delete mOutFile;
     }
 }
 
@@ -91,14 +93,14 @@ void TControlPlots::MakeControlPlotsTowers()
   int markerColor[5] = { 1,4,2,3,7 };
   int markerStyle[5] = { 8,1,1,1,1 };
 
-  TH2F * constants = new TH2F("hCalibConstants","Calibration constants vs. E_{T} and #eta-bin with f_{em} = OUF = 0;E_{T} [GeV];#eta-bin",100,0.5,100.,_par->GetEtaGranularity(),1,_par->GetEtaGranularity()); 
+  TH2F * constants = new TH2F("hCalibConstants","Calibration constants vs. E_{T} and #eta-bin with f_{em} = OUF = 0;E_{T} [GeV];#eta-bin",100,0.5,100.,mPar->GetEtaGranularity(),1,mPar->GetEtaGranularity()); 
    
-  for (int eta=0; eta<_par->GetEtaGranularity();++eta) // Loop over eta bins
+  for (int eta=0; eta<mPar->GetEtaGranularity();++eta) // Loop over eta bins
     {
-      for (int phi=0; phi<_par->GetPhiGranularity();++phi) // Loop over phi bins
+      for (int phi=0; phi<mPar->GetPhiGranularity();++phi) // Loop over phi bins
 	{
-	  int i = _par->GetBin(eta,phi);
-	  double * val = _par->GetTowerParRef(i);
+	  int i = mPar->GetBin(eta,phi);
+	  double * val = mPar->GetTowerParRef(i);
 
 	  TH1F * plot[5]; 
 	  sprintf(name, "h%d_eta%d_phi%d",i,eta+1,phi+1);
@@ -279,8 +281,8 @@ void TControlPlots::MakeControlPlotsTowers()
 
 	  double mess, error;
 
-	  data_it = _data->begin();
-	  for (; data_it != _data->end();++data_it) // 1. loop over all fit events
+	  data_it = mData->begin();
+	  for (; data_it != mData->end();++data_it) // 1. loop over all fit events
 	    {
 	      //if one fit event is composed of multiple towers, than loop over all
 	      const std::vector<TData*>& data_ref = (*data_it)->GetRef();
@@ -390,7 +392,7 @@ void TControlPlots::MakeControlPlotsTowers()
 	      au_vs_had[a]->Divide(norm_vs_had[a]);
 	    }
 	  
-	  for (data_it = _data->begin(); data_it != _data->end();++data_it) // 2. loop over all fit-events
+	  for (data_it = mData->begin(); data_it != mData->end();++data_it) // 2. loop over all fit-events
 	    {
 	      //if one fit event is composed of multiple towers, than loop over all
 	      mess = 0.;
@@ -429,26 +431,26 @@ void TControlPlots::MakeControlPlotsTowers()
 		      testmess->HadF = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
 		      testmess->OutF = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
 		      plot_had[0]->Fill( mhad, t/m );
-		      khad[0]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+		      khad[0]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
 		      if ((*data_it)->GetType()==GammaJet)
 			{
 			  plot_had[2]->Fill( mhad, t/m );
-			  khad[2]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+			  khad[2]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==TrackTower)
 			{
-			  khad[1]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+			  khad[1]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
 			  plot_had[1]->Fill( mhad, t/m );
 			}  
 		      else if ((*data_it)->GetType()==TrackCluster)
 			{
 			  plot_had[3]->Fill( mhad, t/m );
-			  khad[3]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+			  khad[3]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==PtBalance)
 			{
 			  plot_had[4]->Fill( mhad, t/m );
-			  khad[4]->Fill(     mhad, _par->plot_parametrization(testmess,val) );
+			  khad[4]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
 			}  
 		    }
 
@@ -460,7 +462,7 @@ void TControlPlots::MakeControlPlotsTowers()
 		      testmess->EMF = em[0]->GetBinContent(em[0]->GetXaxis()->FindBin(m));
 		      testmess->HadF = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
 		      testmess->OutF = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
-		      k[0]->Fill( m, _par->plot_parametrization(testmess,val) );
+		      k[0]->Fill( m, mPar->plot_parametrization(testmess,val) );
 
 		      if ((*data_it)->GetType()==GammaJet)
 			{
@@ -472,7 +474,7 @@ void TControlPlots::MakeControlPlotsTowers()
 			  testmess->EMF = em[2]->GetBinContent(em[2]->GetXaxis()->FindBin(m));
 			  testmess->HadF = had[2]->GetBinContent(had[2]->GetXaxis()->FindBin(m));
 			  testmess->OutF = au[2]->GetBinContent(au[2]->GetXaxis()->FindBin(m));
-			  k[2]->Fill( m, _par->plot_parametrization(testmess,val) );
+			  k[2]->Fill( m, mPar->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==TrackTower)
 			{
@@ -481,7 +483,7 @@ void TControlPlots::MakeControlPlotsTowers()
 			  testmess->EMF = em[1]->GetBinContent(em[1]->GetXaxis()->FindBin(m));
 			  testmess->HadF = had[1]->GetBinContent(had[1]->GetXaxis()->FindBin(m));
 			  testmess->OutF = au[1]->GetBinContent(au[1]->GetXaxis()->FindBin(m));
-			  k[1]->Fill( m, _par->plot_parametrization(testmess,val) );
+			  k[1]->Fill( m, mPar->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==TrackCluster) 
 			{
@@ -490,7 +492,7 @@ void TControlPlots::MakeControlPlotsTowers()
 			  testmess->EMF = em[3]->GetBinContent(em[3]->GetXaxis()->FindBin(m));
 			  testmess->HadF = had[3]->GetBinContent(had[3]->GetXaxis()->FindBin(m));
 			  testmess->OutF = au[3]->GetBinContent(au[3]->GetXaxis()->FindBin(m));
-			  k[3]->Fill( m, _par->plot_parametrization(testmess,val) );
+			  k[3]->Fill( m, mPar->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==PtBalance) 
 			{
@@ -499,7 +501,7 @@ void TControlPlots::MakeControlPlotsTowers()
 			  testmess->EMF = em[3]->GetBinContent(em[3]->GetXaxis()->FindBin(m));
 			  testmess->HadF = had[3]->GetBinContent(had[3]->GetXaxis()->FindBin(m));
 			  testmess->OutF = au[3]->GetBinContent(au[3]->GetXaxis()->FindBin(m));
-			  k[4]->Fill( m, _par->plot_parametrization(testmess,val) );
+			  k[4]->Fill( m, mPar->plot_parametrization(testmess,val) );
 			}  
 		    }
 		} // End of 4. loop over towers
@@ -594,17 +596,17 @@ void TControlPlots::MakeControlPlotsTowers()
 	      testmess->EMF = 0.0;
 	      testmess->HadF = (double)b;
 	      khadonly->SetBinContent(khadonly->GetXaxis()->FindBin(b), 
-				      _par->plot_parametrization(testmess,val) );
+				      mPar->plot_parametrization(testmess,val) );
 	      constants->SetBinContent(constants->GetXaxis()->FindBin(b),constants->GetYaxis()->FindBin(eta+1),
-				       _par->plot_parametrization(testmess,val));
+				       mPar->plot_parametrization(testmess,val));
 	      testmess->EMF = (double)b*0.2; // -> EMFrac = 0.25
 	      testmess->HadF = (double)b*0.8;
 	      kEfrac02->SetBinContent(kEfrac02->GetXaxis()->FindBin(b), 
-				      _par->plot_parametrization(testmess,val) );       
+				      mPar->plot_parametrization(testmess,val) );       
 	      testmess->EMF = (double)b*0.5; // -> EMFrac = 1.0
 	      testmess->HadF = (double)b*0.5;
 	      kEfrac05->SetBinContent(kEfrac05->GetXaxis()->FindBin(b), 
-				      _par->plot_parametrization(testmess,val) );       
+				      mPar->plot_parametrization(testmess,val) );       
 	    }
 
 	  khadonly->GetYaxis()->SetRangeUser(0.9,1.1);
@@ -780,7 +782,7 @@ void TControlPlots::MakeControlPlotsTowers()
   h_none_huber->SetLineColor(4);
   objToBeWritten.push_back(h_none_huber);
 
-  for(  std::vector<TData*>::const_iterator it = _data->begin();  it < _data->end();  ++it )
+  for(  std::vector<TData*>::const_iterator it = mData->begin();  it < mData->end();  ++it )
     {
       double weight = (*it)->GetWeight();
 
@@ -838,7 +840,7 @@ void TControlPlots::MakeControlPlotsTowers()
   c1->Draw();
 
 
-  if( _outputROOT ) WriteToRootFile(objToBeWritten, "Towers");
+  if( mOutputROOT ) WriteToRootFile(objToBeWritten, "Towers");
     
   ps->Close();
 
@@ -1085,7 +1087,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
   // Fill histos
 
   //loop over all fit-events
-  for ( std::vector<TData*>::const_iterator i = _data->begin() ; i != _data->end() ; ++i )
+  for ( std::vector<TData*>::const_iterator i = mData->begin() ; i != mData->end() ; ++i )
     {
       TData* jg = *i;
       if( jg->GetType() != GammaJet ) continue;
@@ -1423,9 +1425,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 
   TLegend* leg = new TLegend(0.7,0.68,0.96,0.9);
   leg->SetFillColor(0);
-  leg->AddEntry(heta[0],ptRatioName[0],"p");
-  leg->AddEntry(heta[2],ptRatioName[2],"p");
-  leg->AddEntry(heta[1],ptRatioName[1],"p");
+  leg->AddEntry(heta[0],mPtRatioName[0],"p");
+  leg->AddEntry(heta[2],mPtRatioName[2],"p");
+  leg->AddEntry(heta[1],mPtRatioName[1],"p");
 
   for(int i = 0 ; i < 12 ; i += 3) // Loop over Etgamma bins
     {
@@ -1475,9 +1477,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	      else sprintf(title,"#gamma-jet, %i < E_{T}^{#gamma} < %i GeV, %.2f < #eta < %.2f",
 			   etLimit[int(i/3)-1],etLimit[int(i/3)],etaMin,etaMax);
 	      gp_eta[i+a][b]->SetTitle(title);
-	      gp_eta[i+a][b]->SetXTitle(ptRatioName[a]);
+	      gp_eta[i+a][b]->SetXTitle(mPtRatioName[a]);
 
-	      // Set style and line color according to ptRatioName
+	      // Set style and line color according to mPtRatioName
 	      gp_eta[i+a][b]->SetMarkerStyle(markerStyle[a]);
 	      gp_eta[i+a][b]->SetMarkerColor(markerColor[a]);
 	      gp_eta[i+a][b]->SetLineColor(markerColor[a]);
@@ -1532,7 +1534,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	  for(int c = 0; c < 7; c += 3) // Loop over etgamma bins
 	    {
 	      TH1F *h = static_cast<TH1F*>(hists_eta[a+c][b]->Clone("h"));
-	      h->SetTitle("#gamma-jet,  " + ptRatioName[a-3] + " " + controlQuantityName[b]);
+	      h->SetTitle("#gamma-jet,  " + mPtRatioName[a-3] + " " + mControlQuantityName[b]);
 	      h->SetMarkerStyle(markerStyle[c/3]);
 	      h->SetMarkerColor(markerColor[c/3]);
 	      h->SetLineColor(markerColor[c/3]);
@@ -1624,9 +1626,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 					"#gamma-jet, 3.0 < |#eta|, %.1f < p^{jet}_{T} < %.1f GeV",
 					min,max);
 	      gp_ptuncorr[i+a][b]->SetTitle(title);
-	      gp_ptuncorr[i+a][b]->SetXTitle(ptRatioName[a]);
+	      gp_ptuncorr[i+a][b]->SetXTitle(mPtRatioName[a]);
 
-	      // Set style and line color according to ptRatioName
+	      // Set style and line color according to mPtRatioName
 	      gp_ptuncorr[i+a][b]->SetMarkerStyle(markerStyle[a]);
 	      gp_ptuncorr[i+a][b]->SetMarkerColor(markerColor[a]);
 	      gp_ptuncorr[i+a][b]->SetLineColor(markerColor[a]);
@@ -1722,9 +1724,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	  // Set title according to pt bin
 	  sprintf(title,"#gamma-jet, %.1f < E^{#gamma}_{T} < %.1f GeV",min,max);
 	  gp_pttrue[a][b]->SetTitle(title);
-	  gp_pttrue[a][b]->SetXTitle(ptRatioName[a]);
+	  gp_pttrue[a][b]->SetXTitle(mPtRatioName[a]);
 
-	  // Set style and line color according to ptRatioName
+	  // Set style and line color according to mPtRatioName
 	  gp_pttrue[a][b]->SetMarkerStyle(markerStyle[a]);
 	  gp_pttrue[a][b]->SetMarkerColor(markerColor[a]);
 	  gp_pttrue[a][b]->SetLineColor(markerColor[a]);
@@ -1881,9 +1883,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	  // Set title according to energy bin
 	  sprintf(title,"#gamma-jet, %.1f < E^{jet} < %.1f GeV",min,max);
 	  gp_energy[a][b]->SetTitle(title);
-	  gp_energy[a][b]->SetXTitle(ptRatioName[a]);
+	  gp_energy[a][b]->SetXTitle(mPtRatioName[a]);
 
-	  // Set style and line color according to ptRatioName
+	  // Set style and line color according to mPtRatioName
 	  gp_energy[a][b]->SetMarkerStyle(markerStyle[a]);
 	  gp_energy[a][b]->SetMarkerColor(markerColor[a]);
 	  gp_energy[a][b]->SetLineColor(markerColor[a]);
@@ -1978,9 +1980,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	  // Set title according to emf bin
 	  sprintf(title,"#gamma-jet, %.2f < f_{em} < %.2f",min,max);
 	  gp_emf[a][b]->SetTitle(title);
-	  gp_emf[a][b]->SetXTitle(ptRatioName[a]);
+	  gp_emf[a][b]->SetXTitle(mPtRatioName[a]);
 
-	  // Set style and line color according to ptRatioName
+	  // Set style and line color according to mPtRatioName
 	  gp_emf[a][b]->SetMarkerStyle(markerStyle[a]);
 	  gp_emf[a][b]->SetMarkerColor(markerColor[a]);
 	  gp_emf[a][b]->SetLineColor(markerColor[a]);
@@ -2074,9 +2076,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
   
   for (int eta=-41; eta < 41;++eta)
     {
-      int i = _par->GetEtaBin(eta >= 0 ? eta +1 : eta);
+      int i = mPar->GetEtaBin(eta >= 0 ? eta +1 : eta);
       TMeasurement x;
-      double* par = _par->GetTowerParRef(_par->GetBin(i,0));
+      double* par = mPar->GetTowerParRef(mPar->GetBin(i,0));
       htow[0]->Fill(eta + 41,TParameters::tower_parametrization(&x,par));
       x.HadF = 5;
       htow[1]->Fill(eta + 41,TParameters::tower_parametrization(&x,par));
@@ -2108,7 +2110,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
 
   // Closing ps file and writing objects to .root file
   ps->Close();
-  if( _outputROOT ) WriteToRootFile(objToBeWritten, "GammaJet");
+  if( mOutputROOT ) WriteToRootFile(objToBeWritten, "GammaJet");
 
 
   // free memory
@@ -2205,11 +2207,11 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
   objToBeDeleted.push_back(ps);
 
   //one plot per *TOWER* bin!
-  for (int eta=0; eta<_par->GetEtaGranularity();++eta) // Loop over eta bins
+  for (int eta=0; eta<mPar->GetEtaGranularity();++eta) // Loop over eta bins
     {
-      for (int phi=0; phi<_par->GetPhiGranularity();++phi) // Loop over phi bins
+      for (int phi=0; phi<mPar->GetPhiGranularity();++phi) // Loop over phi bins
 	{
-	  int i = _par->GetBin(eta,phi);
+	  int i = mPar->GetBin(eta,phi);
 
 	  // Initialize histos
 	  char * name = new char[100];
@@ -2235,8 +2237,8 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 
 
 	  int indexJet=0, ijets=0;      
-	  data_it = _data->begin();
-	  for (; data_it != _data->end();++data_it) // loop over all fit-events
+	  data_it = mData->begin();
+	  for (; data_it != mData->end();++data_it) // loop over all fit-events
 	    {
 	      if ( (*data_it)->GetType()!=GammaJet ) continue;
 
@@ -2318,10 +2320,10 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 	  objToBeWritten.push_back(plot_jes);
 
 	  sprintf(name,"res2_%i",i);
-	  //TF1 * res2 = new TF1(name,_par->jes_plot_parametrization, 0.5, 400., 3);
+	  //TF1 * res2 = new TF1(name,mPar->jes_plot_parametrization, 0.5, 400., 3);
 	  //objToBeDeleted.push_back(res2);
-	  //i = indexJet/ijets - _par->GetNumberOfTowerParameters();
-	  //double * val = _par->GetJetParRef(i);
+	  //i = indexJet/ijets - mPar->GetNumberOfTowerParameters();
+	  //double * val = mPar->GetJetParRef(i);
 	  //res2->SetParameters(val[0],val[1]);
 	  //res2->SetLineWidth( 3 );
 	  //res2->SetLineColor( 2 );
@@ -2333,7 +2335,7 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
   }
 
   ps->Close();
-  if( _outputROOT ) WriteToRootFile( objToBeWritten, "GammaJetPerTowerBin" );
+  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "GammaJetPerTowerBin" );
   objToBeDeleted.clear();
 }
 
@@ -2356,11 +2358,11 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
   objToBeDeleted.push_back(ps);
 
   //one plot per *JET* bin!
-  for (int eta=0; eta<_par->GetEtaGranularityJet();++eta)
+  for (int eta=0; eta<mPar->GetEtaGranularityJet();++eta)
     {
-      for (int phi=0; phi<_par->GetPhiGranularityJet();++phi)
+      for (int phi=0; phi<mPar->GetPhiGranularityJet();++phi)
 	{
-	  int i = _par->GetJetBin(eta,phi)*_par->GetNumberOfJetParametersPerBin() + _par->GetNumberOfTowerParameters();
+	  int i = mPar->GetJetBin(eta,phi)*mPar->GetNumberOfJetParametersPerBin() + mPar->GetNumberOfTowerParameters();
 	  char * name = new char[100];
 	  sprintf(name, "h2jes_gj%d_eta%d_phi%d",i,eta+1,phi+1);
 	  TH1F * plot_jes = new TH1F(name,";#sum calibrated tower E_{T} [GeV]; JES: ( E_{T}^{#gamma} / #sum E_{T}^{calib. tower})",100,0.0,400.);
@@ -2379,8 +2381,8 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 	  objToBeDeleted.push_back(norm_jes);
 
 	  //loop over all fit-events
-	  data_it = _data->begin();
-	  for (; data_it != _data->end();++data_it)
+	  data_it = mData->begin();
+	  for (; data_it != mData->end();++data_it)
 	    {
 	      if ( (*data_it)->GetType()!=GammaJet ) continue;
 	      if ( (*data_it)->GetIndex()!= i )	  continue; //event belongs to a wrong bin
@@ -2450,10 +2452,10 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 	  objToBeWritten.push_back( plot_jes );
 
 	  sprintf(name,"res2_%i",i);
-	  //TF1 * res2 = new TF1(name,_par->jes_plot_parametrization, 0.5, 400., 3);
+	  //TF1 * res2 = new TF1(name,mPar->jes_plot_parametrization, 0.5, 400., 3);
 	  //objToBeDeleted.push_back(res2);
-	  //i = _par->GetJetBin(eta, phi);
-	  //double * val = _par->GetJetParRef(i);
+	  //i = mPar->GetJetBin(eta, phi);
+	  //double * val = mPar->GetJetParRef(i);
 	  //res2->SetParameters(val[0],val[1],val[2]);
 	  //res2->SetLineWidth( 3 );
 	  //res2->SetLineColor( 2 );
@@ -2465,7 +2467,7 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 	}
     }
   ps->Close();
-  if( _outputROOT ) WriteToRootFile( objToBeWritten, "GammaJetPerJetBin" );
+  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "GammaJetPerJetBin" );
   objToBeDeleted.clear();
 }
 
@@ -2504,7 +2506,7 @@ void TControlPlots::MakeControlPlotsGammaJetSigmas()
   }
   
   //loop over all fit-events
-  for ( std::vector<TData*>::const_iterator i = _data->begin(); i != _data->end() ; ++i )
+  for ( std::vector<TData*>::const_iterator i = mData->begin(); i != mData->end() ; ++i )
     {
       if( (*i)->GetType() != GammaJet ) continue;
 
@@ -2576,7 +2578,7 @@ void TControlPlots::MakeControlPlotsGammaJetSigmas()
   
   ps->Close();
 
-  if( _outputROOT ) WriteToRootFile( objToBeWritten, "GammaJetSigmas" );
+  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "GammaJetSigmas" );
 
   for(int i = 0 ; i < nPtBins ; ++i)
     {
@@ -2713,7 +2715,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 
 
   //loop over all fit-events
-  for( std::vector<TData*>::const_iterator i = _data->begin() ; i != _data->end() ; ++i )  
+  for( std::vector<TData*>::const_iterator i = mData->begin() ; i != mData->end() ; ++i )  
     {
       TData* jj = *i;
       if(jj->GetType() != PtBalance) continue;
@@ -2939,7 +2941,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	      if( a == 0 ) gp_beta[a][b]->SetXTitle("B after fit");
 	      else gp_beta[a][b]->SetXTitle("B before fit");
 
-	      // Set style and line color according to ptRatioName
+	      // Set style and line color according to mPtRatioName
 	      gp_beta[a][b]->SetMarkerStyle(markerStyle[a]);
 	      gp_beta[a][b]->SetMarkerColor(markerColor[a]);
 	      gp_beta[a][b]->SetLineColor(markerColor[a]);
@@ -3015,7 +3017,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  if( a == 0 ) gp_pt[a][b]->SetXTitle("B after fit");
 	  else gp_pt[a][b]->SetXTitle("B before fit");
 
-	  // Set style and line color according to ptRatioName
+	  // Set style and line color according to mPtRatioName
 	  gp_pt[a][b]->SetMarkerStyle(markerStyle[a]);
 	  gp_pt[a][b]->SetMarkerColor(markerColor[a]);
 	  gp_pt[a][b]->SetLineColor(markerColor[a]);
@@ -3129,7 +3131,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  if( a == 0 ) gp_energy[a][b]->SetXTitle("B after fit");
 	  else gp_energy[a][b]->SetXTitle("B before fit");
 
-	  // Set style and line color according to ptRatioName
+	  // Set style and line color according to mPtRatioName
 	  gp_energy[a][b]->SetMarkerStyle(markerStyle[a]);
 	  gp_energy[a][b]->SetMarkerColor(markerColor[a]);
 	  gp_energy[a][b]->SetLineColor(markerColor[a]);
@@ -3203,7 +3205,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  if( a == 0 ) gp_emf[a][b]->SetXTitle("B after fit");
 	  else gp_emf[a][b]->SetXTitle("B before fit");
 
-	  // Set style and line color according to ptRatioName
+	  // Set style and line color according to mPtRatioName
 	  gp_emf[a][b]->SetMarkerStyle(markerStyle[a]);
 	  gp_emf[a][b]->SetMarkerColor(markerColor[a]);
 	  gp_emf[a][b]->SetLineColor(markerColor[a]);
@@ -3258,7 +3260,7 @@ void TControlPlots::MakeControlPlotsDiJet()
   // Clean up
   ps->Close();
 
-  if( _outputROOT ) WriteToRootFile( objToBeWritten, "DiJet" );
+  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "DiJet" );
 
   delete c1;
   delete c2;
@@ -3327,6 +3329,110 @@ void TControlPlots::MakeControlPlotsDiJet()
 }
 
 
+//---------------------------------------------------------------
+//   Scan parameters around fitted value and plot
+//   chi2 profile.
+//
+//   NOTE: Chi2 is calculated w/o scaling of residuals
+//   ( = scaling scheme '0' )
+//---------------------------------------------------------------
+void TControlPlots::MakeControlPlotsParameterScan()
+{
+  // Put scaling scheme to no scaling for the time being
+  TData::ScaleResidual = &TData::ScaleNone;
+
+  std::vector<TObject*> objToBeWritten;
+
+  TCanvas * const c1 = new TCanvas("c1","",600,600);
+  //c1->Divide(2,2);
+  TPostScript * const ps = new TPostScript("controlplotsParameterScan.ps",111);
+
+
+  // Loop over parameters
+  TGraph *gParScan[mPar->GetNumberOfParameters()];
+  TH1F *hFrame[mPar->GetNumberOfParameters()];
+  TLine *line[mPar->GetNumberOfParameters()];
+  for(int i = 0; i < mPar->GetNumberOfParameters(); i++)
+    {
+      // Store original value of parameter i
+      double origPar = mPar->GetPars()[i];
+
+      // Vary parameter and get chi2
+      double x_param[21];
+      double y_chi2[21];
+      for(int a = 0; a < 21; a++)
+	{
+	  x_param[a] = 0.;
+	  y_chi2[a] = 0.;
+	}
+      for(int a = 0; a < 21; a++)
+	{
+	  double variedPar = origPar - 0.1 + 0.01*a;
+	  x_param[a] = variedPar;
+	  mPar->GetPars()[i] = variedPar;
+	  for( std::vector<TData*>::const_iterator it = mData->begin();  it < mData->end();  ++it )
+	    {
+	      y_chi2[a] += (*it)->chi2();
+	    }
+	}
+
+      // Reset original parameter
+      mPar->GetPars()[i] = origPar;
+
+      TString name = "gParScan";
+      name += i;
+      TString title = "Parameter ";
+      title += i;
+      if( i < mPar->GetNumberOfTowerParameters() ) title += " (tower parameter ";
+      else title += " (jet parameter ";
+      title += i%(mPar->GetNumberOfTowerParameters());
+      title += ");Parameter p_{";
+      title += i;
+      title += "};#chi^{2}";
+      gParScan[i] = new TGraph(21,x_param,y_chi2);
+      gParScan[i]->SetName(name);
+      gParScan[i]->SetTitle(title);
+      gParScan[i]->SetMarkerStyle(20);
+      objToBeWritten.push_back(gParScan[i]);
+
+      name = "hParScanFrame";
+      name += i;
+      hFrame[i] = new TH1F(name,title,1,x_param[0]-0.01,x_param[20]+0.01);
+      double y_min = *min_element(y_chi2,y_chi2+21);
+      double y_max = *max_element(y_chi2,y_chi2+21);
+      double range = y_max - y_min;
+      hFrame[i]->GetYaxis()->SetRangeUser(y_min - range/20, y_max + range/20);
+
+      line[i] = new TLine(origPar,hFrame[i]->GetMinimum(),origPar,hFrame[i]->GetMaximum());
+      line[i]->SetLineStyle(2);
+      line[i]->SetLineWidth(1);
+
+      c1->cd();
+      hFrame[i]->Draw();
+      gParScan[i]->Draw("Psame");
+      line[i]->Draw("same");
+      c1->Draw();   
+      if( i < mPar->GetNumberOfTowerParameters()-1 ) ps->NewPage();
+    }
+
+
+
+  // Clean up
+  ps->Close();
+
+  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "ParScan" );
+
+  delete c1;
+  delete ps;
+
+  for(int i = 0; i < mPar->GetNumberOfParameters(); i++)
+    {
+      delete gParScan[i];
+      delete hFrame[i];
+      delete line[i];
+    }
+}
+
 
 
 
@@ -3387,10 +3493,10 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
       s += i;
       hresults[i] = (TH1F*) hresults[0]->Clone(s);
       s = hist->GetTitle();
-      hresults[i]->SetTitle(s + ",  " + controlQuantityName[i]); 
+      hresults[i]->SetTitle(s + ",  " + mControlQuantityName[i]); 
     }
   s = hist->GetTitle();
-  hresults[0]->SetTitle(s + ",  " + controlQuantityName[0]); 
+  hresults[0]->SetTitle(s + ",  " + mControlQuantityName[0]); 
 
   hresults[5]->SetMinimum(0.0);
   hresults[5]->SetMaximum(100);
@@ -3482,13 +3588,13 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
 
 
 //---------------------------------------------------------------
-// Write all TObjects in 'obj' to the file '_outFile' into the
-// directory '_outFile:/dir'. If '_outFile:/dir' does not exist,
+// Write all TObjects in 'obj' to the file 'mOutFile' into the
+// directory 'mOutFile:/dir'. If 'mOutFile:/dir' does not exist,
 // it is created first.
 //---------------------------------------------------------------
 void TControlPlots::WriteToRootFile(std::vector<TObject*> obj, std::string dir)
 {
-  std::string directory = _outFile->GetName();
+  std::string directory = mOutFile->GetName();
   directory += ":";
   gDirectory->cd(directory.c_str());
   directory += "/";
