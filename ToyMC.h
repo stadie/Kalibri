@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.h,v 1.5 2008/07/25 15:34:01 stadie Exp $
+// $Id: ToyMC.h,v 1.6 2008/08/14 11:56:39 stadie Exp $
 //
 #ifndef TOYMC_H
 #define TOYMC_H
@@ -32,7 +32,8 @@ private:
 
   void genInput();
   void calIds(float& eta, float &phi, int& ieta, int& iphi);
-  void smearTower(double e, float& te, float& tem, float& thad, float& tout);  
+  void smearTower(double e, float& te, float& tem, float& thad, float& tout, float& temtrue, 
+		  float& thadtrue, float& touttrue);  
   int splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi);
  public:
   ToyMC();

@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.9 2008/08/14 11:56:39 stadie Exp $
+// $Id: ToyMC.cc,v 1.10 2008/08/14 12:41:54 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -18,7 +18,7 @@
 
 #include "ConfigFile.h"
 
-ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400), mPtSpectrum(Uniform),mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpreadA(0.5),mJetSpreadB(0),mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
+ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(Uniform),mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpreadA(0.5),mJetSpreadB(0),mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
 {
   mRandom = new TRandom3();
   mRandom->SetSeed(0);
@@ -68,12 +68,16 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
   assert(ieta >= -40);
 }
 
-void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout) 
+void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout, 
+		       float& temtrue, float& thadtrue, float& touttrue) 
 {
   float emf = mRandom->Uniform(mMaxEmf);
-  tem = emf * e;
-  thad = (1-emf) * e / mTowConst;
-  tout = 0;
+  temtrue = emf * e;
+  tem = temtrue;
+  thadtrue = (1-emf) * e / mTowConst;
+  thad = thadtrue;
+  touttrue = 0;
+  tout = touttrue;
   if(mModel == Landau) {
     double smear;
     do {
@@ -105,7 +109,11 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
   TLorentzVector rec(0,0,0,0);
   TLorentzVector tow;
   double lostPt = 0;
-   double dpt = jet.Pt() / mChunks ;
+  double dpt = jet.Pt() / mChunks;
+  if(mChunks < 0) {
+    dpt = 0.3;
+    mChunks = (int)std::ceil(jet.Pt() / dpt);
+  }
   for(int i = 0 ; i < mChunks ; ++i) {
     //float teta = mRandom->Gaus(jet.Eta(), jetspread);
     //float tphi = mRandom->Gaus(jet.Phi(), jetspread);
@@ -136,6 +144,7 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
       continue;
     }
     int id = 0;
+    assert(ie*1000 + ip != 0);
     TowerMap::const_iterator towit = towers.find(ie*1000 + ip);
     if(towit != towers.end()) {
       id = towit->second;
@@ -157,7 +166,13 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
   }
   //std::cout  << "Eta:" << jet.Eta() <<  "       : " << rec.Pt() << "," << rec.E() << "  == " << jet.Pt() << "," << jet.E() << '\n';
   //std::cout << "lost energy:" << lostE/jet.E() << '\n';
-  assert(lostPt/jet.Pt() < 0.95);
+  if(mNoOutOfCone) {
+    if(std::abs(rec.E() - jet.E())/ jet.E()  > 0.01) {
+      return splitJet(jet,et,eta,phi,ieta,iphi);
+    }
+    assert(lostPt == 0);
+    assert(std::abs(rec.E() - jet.E())/ jet.E() < 0.01);
+  }
   return ntowers;
 }
 
@@ -173,6 +188,9 @@ int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents)
   float towem[kMaxTower];
   float towhd[kMaxTower];
   float towoe[kMaxTower];
+  float towemtrue[kMaxTower];
+  float towhdtrue[kMaxTower];
+  float towoetrue[kMaxTower];
   int towid_phi[kMaxTower];
   int towid_eta[kMaxTower];
   int towid [kMaxTower];
@@ -192,6 +210,9 @@ int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("TowEm",towem,"TowEm[NobjTowCal]/F");
   CalibTree->Branch("TowHad",towhd,"TowHad[NobjTowCal]/F");
   CalibTree->Branch("TowOE",towoe,"TowOE[NobjTowCal]/F");
+  CalibTree->Branch("TowEmTrue",towemtrue,"TowEmTrue[NobjTowCal]/F");
+  CalibTree->Branch("TowHadTrue",towhdtrue,"TowHadTrue[NobjTowCal]/F");
+  CalibTree->Branch("TowOETrue",towoetrue,"TowOETrue[NobjTowCal]/F");
   CalibTree->Branch("TrackEt",&tracket,"TrackEt/F");
   CalibTree->Branch("TrackEterr",&tracketerr,"TrackEterr/F");
   CalibTree->Branch("TrackEta",&tracketa,"TrackEta/F");
@@ -214,7 +235,7 @@ int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents)
     calIds(toweta[0],towphi[0],towid_eta[0],towid_phi[0]);
     //std::cout << "nachher:" << toweta[0] << ", " << towphi[0] << ", " << towid_eta[0] << ", " 
     //	      << towid_phi[0] << "\n";
-    smearTower(mPinput.E(),towen[0],towem[0],towhd[0],towoe[0]);
+    smearTower(mPinput.E(),towen[0],towem[0],towhd[0],towoe[0],towemtrue[0],towhdtrue[0],towoetrue[0]);
     towet[0] = towen[0]/mPinput.E() * mPinput.Pt();
     CalibTree->Fill();
     if(i % 1000 == 0) std::cout << "generated event " << i << '\n';
@@ -243,7 +264,10 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   float towen[kMaxTower];
   float towem[kMaxTower];
   float towhd[kMaxTower];
-  float towoe[kMaxTower];
+  float towoe[kMaxTower]; 
+  float towemtrue[kMaxTower];
+  float towhdtrue[kMaxTower];
+  float towoetrue[kMaxTower];
   int towid_phi[kMaxTower];
   int towid_eta[kMaxTower];
   int towid [kMaxTower];
@@ -263,6 +287,9 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("TowEm",towem,"TowEm[NobjTowCal]/F");
   CalibTree->Branch("TowHad",towhd,"TowHad[NobjTowCal]/F");
   CalibTree->Branch("TowOE",towoe,"TowOE[NobjTowCal]/F");
+  CalibTree->Branch("TowEmTrue",towemtrue,"TowEmTrue[NobjTowCal]/F");
+  CalibTree->Branch("TowHadTrue",towhdtrue,"TowHadTrue[NobjTowCal]/F");
+  CalibTree->Branch("TowOETrue",towoetrue,"TowOETrue[NobjTowCal]/F");
   // Jet- MEt-specific branches of the tree
   CalibTree->Branch("JetCalPt",&jcalpt,"JetCalPt/F");
   CalibTree->Branch("JetCalPhi",&jcalphi,"JetCalPhi/F");
@@ -299,7 +326,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     //jgenpt = mRandom->Gaus(photonpt,0.04 * photonpt);
     jgenpt = photonet;
     jgeneta = mRandom->Gaus(photoneta,1.0);
-    if((jgeneta > 3.3) || (jgeneta < -3.3)) {
+    if((jgeneta > 3.0) || (jgeneta < -3.0)) {
       --i;
       continue;
     }
@@ -321,9 +348,11 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
       tower.SetPtEtaPhiM(towet[j],toweta[j],towphi[j],0);
       towen[j] =  tower.E();
       genjet += tower;
-      smearTower((1 - p0frac) * tower.E(),towen[j],towem[j],towhd[j],towoe[j]); 
+      smearTower((1 - p0frac) * tower.E(),towen[j],towem[j],towhd[j],towoe[j],
+		 towemtrue[j],towhdtrue[j],towoetrue[j]); 
       towen[j] += p0frac * tower.E();
       towem[j] += p0frac * tower.E();
+      towemtrue[j] += p0frac * tower.E();
       tower *= towen[j]/tower.E();
       towet[j] = tower.Pt();
       jet += tower;
@@ -359,7 +388,10 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float towen[kMAX];
   float towem[kMAX];
   float towhd[kMAX];
-  float towoe[kMAX];
+  float towoe[kMAX];  
+  float towemtrue[kMAX];
+  float towhdtrue[kMAX];
+  float towoetrue[kMAX];
   int towid_phi[kMAX];
   int towid_eta[kMAX];
   int towid[kMAX];
@@ -389,7 +421,10 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("TowE",towen,"TowE[NobjTow]/F");
   CalibTree->Branch("TowEm",towem,"TowEm[NobjTow]/F");
   CalibTree->Branch("TowHad",towhd,"TowHad[NobjTow]/F");
-  CalibTree->Branch("TowOE",towoe,"TowOE[NobjTow]/F");
+  CalibTree->Branch("TowOE",towoe,"TowOE[NobjTow]/F"); 
+  CalibTree->Branch("TowEmTrue",towemtrue,"TowEmTrue[NobjTowCal]/F");
+  CalibTree->Branch("TowHadTrue",towhdtrue,"TowHadTrue[NobjTowCal]/F");
+  CalibTree->Branch("TowOETrue",towoetrue,"TowOETrue[NobjTowCal]/F");
   CalibTree->Branch("Tow_jetidx",tow_jetidx,"Tow_jetidx[NobjTow]/I");
   // Jet-specific branches of the tree
   CalibTree->Branch("NobjJet",&NobjJet,"NobjJet/I"             );
@@ -450,9 +485,10 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 	towen[k] =  tower.E();
 	genjet[i] += tower;
 	smearTower((1 - p0frac) * tower.E(),towen[k],towem[k],towhd[k],
-		   towoe[k]); 
+		   towoe[k],towemtrue[k],towhdtrue[k],towoetrue[k]); 
 	towen[k] += p0frac * tower.E();
 	towem[k] += p0frac * tower.E();
+	towemtrue[k] += p0frac * tower.E();
 	tower *= towen[k]/tower.E();
 	towet[k] = tower.Pt();
 	jet[i] += tower;
