@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.32 2008/08/14 21:40:49 rwolf Exp $
+// $Id: Parameters.h,v 1.33 2008/09/15 12:26:58 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -97,6 +97,16 @@ public :
       pmess =  x[0] * (xorig->E / xorig->pt);  //Et->E 
     return (xorig->E!=0. ? tower_error_parametrization(&pmess,xorig,errorig) * xorig->pt / xorig->E : 0.0);
   }
+
+  static const double toy_tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {        
+    double hade = x[0] / (xorig->pt *xorig->pt )* xorig->HadF * xorig->E;
+    return sqrt( 1.3 * 1.3 / hade + 0.056 * 0.056) * hade * xorig->pt / xorig->E;
+  }
+  
+  static const double toy_jet_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
+    return 0;
+  }
+
   static const double const_error_parametrization(double *const x, 
 						  TMeasurement *const xorig, 
 						  double const errorig)  {

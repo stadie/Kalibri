@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.44 2008/09/15 12:26:58 stadie Exp $
+// $Id: caliber.cc,v 1.45 2008/09/17 15:46:23 mschrode Exp $
 //
 //
 // for profiling:
@@ -1374,6 +1374,8 @@ void TCaliber::Init(string file)
     tower_error_param = p->jans_E_tower_error_parametrization;
   else if(te=="const")
     tower_error_param = p->const_error_parametrization;
+  else if(te=="toy")
+    tower_error_param = p->toy_tower_error_parametrization;
   else  
     tower_error_param = p->tower_error_parametrization;
   //...for jets:
@@ -1386,6 +1388,8 @@ void TCaliber::Init(string file)
     jet_error_param   = p->dummy_error_parametrization;
   else if(te=="const")
     jet_error_param = p->const_error_parametrization;
+  else if(te=="toy")
+    jet_error_param   = p->toy_jet_error_parametrization;
   else  
     jet_error_param   = p->jet_error_parametrization;
 
