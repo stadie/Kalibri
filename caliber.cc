@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.43 2008/08/21 15:07:08 thomsen Exp $
+// $Id: caliber.cc,v 1.44 2008/09/15 12:26:58 stadie Exp $
 //
 //
 // for profiling:
@@ -16,6 +16,7 @@
 #include <cmath>
 #include <iomanip>
 #include <time.h>
+
 //Root libs
 #include "TFile.h"
 #include "TTree.h"
@@ -524,6 +525,7 @@ void TCaliber::Run_GammaJet()
     jetp->eta = gammajet.JetCalEta;
     jetp->phi = gammajet.JetCalPhi;
     jetp->E   = gammajet.JetCalE;
+
     //Create an Gamma/Jet TData event
     TData_TruthMultMess * gj_data = new TData_TruthMultMess
       (
@@ -540,7 +542,7 @@ void TCaliber::Run_GammaJet()
        jet_error_param,                                  //error param. function
        jetp                                              //measurement
        );
-    
+
     double EM=0.,F=0.;
     //Add the jet's towers to "gj_data":
     for (int n=0; n<gammajet.NobjTowCal; ++n){
@@ -1140,7 +1142,6 @@ void TCaliber::Run_Lvmini()
   int error_index=2;
   error_index = lvmind_(error_index);
   p->FillErrors(aux+error_index);
-  //for (int n=0; n<naux; ++n) aux[n]=0.0; 
 
   for( int loop = 0; loop < static_cast<int>(_residualScalingScheme.size()); loop++ ) {
 
@@ -1292,6 +1293,10 @@ void TCaliber::Done()
 	plots->MakeControlPlotsDiJet();
 	cout << "ok" << endl;
       }
+    cout << "Creating parameter scan control plots... " << flush;
+    plots->MakeControlPlotsParameterScan();
+    cout << "ok" << endl;
+    
 //     cout << "Creating track tower control plots,"<<endl;
 //     plots->TrackTowerControlPlots();
 //     cout << "Creating track cluster control plots,"<<endl;
