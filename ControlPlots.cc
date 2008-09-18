@@ -7,6 +7,7 @@ using namespace std;
 #include "TCanvas.h"
 #include "TDirectory.h"
 #include "TGraph.h"
+#include "TGraph2D.h"
 #include "TH1I.h"
 #include "TLatex.h"
 #include "TLegend.h"
@@ -3330,8 +3331,15 @@ void TControlPlots::MakeControlPlotsDiJet()
 
 
 //---------------------------------------------------------------
-//   Scan parameters around fitted value and plot
-//   chi2 profile.
+//   Vary parameters around fitted value and plot
+//   chi2 profile. The method generates one 1-dim plot
+//   for each parameter in which that parameter is varied
+//   and all other parameters are left as in TParameters::GetPars().
+//   Additionally, correlations between parameters are
+//   shown in 2-dim plots, where two parameters are varied.
+//   So far, only correlations between the 1st and 2nd, the
+//   3rd and 4th and so on are plotted. This has to be extended
+//   in a clever way...
 //
 //   NOTE: Chi2 is calculated w/o scaling of residuals
 //   ( = scaling scheme '0' )
@@ -3344,11 +3352,11 @@ void TControlPlots::MakeControlPlotsParameterScan()
   std::vector<TObject*> objToBeWritten;
 
   TCanvas * const c1 = new TCanvas("c1","",600,600);
-  //c1->Divide(2,2);
   TPostScript * const ps = new TPostScript("controlplotsParameterScan.ps",111);
 
 
-  // Loop over parameters
+  // Loop over parameters and vary one parameter
+  // while the others are left as in TParameter::GetPars()
   TGraph *gParScan[mPar->GetNumberOfParameters()];
   TH1F *hFrame[mPar->GetNumberOfParameters()];
   TLine *line[mPar->GetNumberOfParameters()];
@@ -3379,6 +3387,8 @@ void TControlPlots::MakeControlPlotsParameterScan()
       // Reset original parameter
       mPar->GetPars()[i] = origPar;
 
+
+      // Draw graphs
       TString name = "gParScan";
       name += i;
       TString title = "Parameter ";
@@ -3412,8 +3422,79 @@ void TControlPlots::MakeControlPlotsParameterScan()
       gParScan[i]->Draw("Psame");
       line[i]->Draw("same");
       c1->Draw();   
-      if( i < mPar->GetNumberOfTowerParameters()-1 ) ps->NewPage();
     }
+
+
+
+  // Correlations between 2 parameters
+  int nPlots = mPar->GetNumberOfParameters()/2;
+  TGraph2D *gParScan2D[nPlots];
+  for(int i = 0; i < nPlots; i++)
+    {
+      int parIdx = 2*i;
+
+      // Store original value of parameters i and i+1
+      double origParX = mPar->GetPars()[parIdx];
+      double origParY = mPar->GetPars()[parIdx+1];
+
+      // Vary parameter and get chi2
+      double x_param[441];
+      double y_param[441];
+      double z_chi2[441];
+      for(int a = 0; a < 441; a++)
+	{
+	  x_param[a] = 0.;
+	  y_param[a] = 0.;
+	  z_chi2[a] = 0.;
+	}
+      for(int a = 0; a < 21; a++)
+	{
+	  double variedParX = origParX - 0.1 + 0.01*a;
+	  mPar->GetPars()[parIdx] = variedParX;
+	  for(int b = 0; b < 21; b++)
+	    {
+	      double variedParY = origParY - 0.1 + 0.01*b;
+	      mPar->GetPars()[parIdx+1] = variedParY;
+
+	      int pointIdx = b + 21*a;
+	      x_param[pointIdx] = variedParX;
+	      y_param[pointIdx] = variedParY;
+
+	      for( std::vector<TData*>::const_iterator it = mData->begin();  it < mData->end();  ++it )
+		{
+		  z_chi2[pointIdx] += (*it)->chi2();
+		}
+	    }
+	}
+
+      // Reset original parameter
+      mPar->GetPars()[parIdx] = origParX;
+      mPar->GetPars()[parIdx+1] = origParY;
+
+
+      // Draw graphs
+      TString name = "gParScan2D";
+      name += i;
+      TString title = "Parameter ";
+      title += parIdx;
+      title += " and ";
+      title += parIdx+1;
+      title += ";Parameter p_{";
+      title += parIdx;
+      title += "};Parameter p_{";
+      title += parIdx+1;
+      title += "};#chi^{2}";
+      gParScan2D[i] = new TGraph2D(441,x_param,y_param,z_chi2);
+      gParScan2D[i]->SetName(name);
+      gParScan2D[i]->SetTitle(title);
+      objToBeWritten.push_back(gParScan2D[i]);
+
+      c1->cd();
+      gParScan2D[i]->Draw("cont3");
+      c1->Draw();   
+      if( i < nPlots-1 ) ps->NewPage();
+    }
+
 
 
 
@@ -3430,6 +3511,10 @@ void TControlPlots::MakeControlPlotsParameterScan()
       delete gParScan[i];
       delete hFrame[i];
       delete line[i];
+    }
+  for(int i = 0; i < nPlots; i++)
+    {
+      delete gParScan2D[i];
     }
 }
 
