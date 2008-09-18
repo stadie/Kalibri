@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.10 2008/08/14 12:41:54 stadie Exp $
+// $Id: ToyMC.cc,v 1.11 2008/09/17 08:19:23 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -447,7 +447,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
     //jgenpt = mRandom->Gaus(photonpt,0.04 * photonpt);
     jetgenpt[1] = jetgenpt[0];
     jetgeneta[1] = mRandom->Gaus(jetgeneta[0],1.0);
-    if((jetgeneta[1] > 3.3) || (jetgeneta[1] < -3.3)) {
+    if((jetgeneta[1] > 3.0) || (jetgeneta[1] < -3.0)) {
       --n;
       continue;
     }
