@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.26 2008/07/31 12:53:35 auterman Exp $
+// $Id: caliber.h,v 1.27 2008/08/05 08:46:35 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -83,6 +83,7 @@ private:
          Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster, Et_cut_on_Z,
          Rel_cut_on_gamma, Rel_cut_on_nJet;
   double RelWeight[7];//@@ Replace 7 by something meaningful
+  bool makeControlPlotsParScan;
 
   std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals
   double OutlierChi2Cut;                            // Cut on outlier when no scaling is chosen

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.46 2008/09/17 16:10:07 stadie Exp $
+// $Id: caliber.cc,v 1.47 2008/09/17 16:23:20 thomsen Exp $
 //
 //
 // for profiling:
@@ -1297,9 +1297,12 @@ void TCaliber::Done()
 	plots->MakeControlPlotsDiJet();
 	cout << "ok" << endl;
       }
-    cout << "Creating parameter scan control plots... " << flush;
-    plots->MakeControlPlotsParameterScan();
-    cout << "ok" << endl;
+    if( makeControlPlotsParScan ) 
+      {
+	cout << "Creating parameter scan control plots... " << flush;
+	plots->MakeControlPlotsParameterScan();
+	cout << "ok" << endl;
+      }
     
 //     cout << "Creating track tower control plots,"<<endl;
 //     plots->TrackTowerControlPlots();
@@ -1325,7 +1328,9 @@ void TCaliber::Init(string file)
 
   if(config.read<bool>("create plots",1)) {
     plots = new TControlPlots(&data, p, config.read<bool>("plot output format",0));
+    makeControlPlotsParScan = config.read<bool>("create parameter scan plots",false);
   }
+
   //initialize temp arrays for fast derivative calculation
   TData::total_n_pars     = p->GetNumberOfParameters();
   //--------------------------------------------------------------------------
