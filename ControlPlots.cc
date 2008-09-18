@@ -3491,6 +3491,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
 
       c1->cd();
       gParScan2D[i]->Draw("cont3");
+      c1->SetGrid();
       c1->Draw();   
       if( i < nPlots-1 ) ps->NewPage();
     }
