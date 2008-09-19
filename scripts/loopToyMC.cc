@@ -4,16 +4,25 @@
 
 #include "TCanvas.h"
 #include "TF1.h"
+#include "TFile.h"
 #include "TH1F.h"
+#include "TObject.h"
 #include "TStyle.h"
 
 
 // Always COMPILE script before execution!
 
+void loopToyMC(int nLoops = 1, bool writeToFile = true, TString fileName = "loopHistos.root");
+int WriteToRootFile(const std::vector<TObject*> &obj, TString fileName);
+
+
+//---------------------------------------------------------------
 // Generate a toy mc sample, run calibration,
 // and store fitted parameters. Loop nLoops
-// times
-void loopToyMC(int nLoops = 1)
+// times. The resulting histograms are optionally
+// stored in a root file.
+//---------------------------------------------------------------
+void loopToyMC(int nLoops, bool writeToFile, TString fileName)
 {
   // Two dimensional vector (n,m) storing the
   // parameters with index n of loop m
@@ -21,15 +30,16 @@ void loopToyMC(int nLoops = 1)
   int nPar = -1;
   for(int n = 0; n < nLoops; n++)
     {
-      cout << endl << "Processing loop " << n+1 << " of " << nLoops << ":" << endl;
+      std::cout << std::endl << "Processing loop " << n+1 << " of " << nLoops << ":" << std::endl;
 
-      gROOT->ProcessLine(".! ./../toy ./../config/test_tower_bias.cfg");
-      gROOT->ProcessLine(".! ./../junk ./../config/test_tower_bias.cfg");
+      gROOT->ProcessLine(".! ./../toy ./../config/toymc.cfg");
+      gROOT->ProcessLine(".! ./../junk ./../config/calibration.cfg");
 
       // Read fitted parameters
-      // Needs txt-output from caliber
+      // Needs txt-output from caliber with
+      // name 'CalibMaker.txt'
       // TODO: extend to read different eta bins
-      TString fileName = "./../CalibMaker.txt";
+      TString fileName = "./CalibMaker.txt";
       std::ifstream read;
       read.open(fileName);
       double val = -1.;
@@ -52,17 +62,17 @@ void loopToyMC(int nLoops = 1)
 
 //   for(int p = 0; p < nPar; p++)
 //     {
-//       cout << "Par " << p << ":  " << flush;
+//       std::cout << "Par " << p << ":  " << std::flush;
 //       for(int n = 0; n < nLoops; n++)
 // 	{
-// 	  cout << paramLoops.at(p).at(n) << "  " << flush;
+// 	  std::cout << paramLoops.at(p).at(n) << "  " << std::flush;
 // 	}
-//       cout << endl;
+//       std::cout << std::endl;
 //     }
 
 
   // One histogram per parameter
-  cout << "Plotting parameter values.... " << flush;
+  std::cout << "Plotting parameter values.... " << std::flush;
 
   std::vector<TH1F*> hPar;
   std::vector<TCanvas*> can;
@@ -97,11 +107,11 @@ void loopToyMC(int nLoops = 1)
       hPar.back()->Draw();
     }
 
-  cout << "ok" << endl;
+  std::cout << "ok" << std::endl;
 
 
   // Mean values of parameters
-  cout << "Plotting mean parameter values.... " << flush;
+  std::cout << "Plotting mean parameter values.... " << std::flush;
 
   gStyle->SetErrorX(0);
 
@@ -132,5 +142,39 @@ void loopToyMC(int nLoops = 1)
   canMeanGauss->cd();
   hMeanGaussPar->Draw("PE1");
 
-  cout << "ok" << endl;
+  std::cout << "ok" << std::endl;
+
+  if( writeToFile )
+    {
+      std::cout << "Writing histograms to file... " << std::flush;
+
+      std::vector<TObject*> obj;
+      for(std::vector<TH1F*>::const_iterator it = hPar.begin(); it < hPar.end(); it++)
+	{
+	  obj.push_back( *it );
+	}
+      obj.push_back( hMeanPar );
+      obj.push_back( hMeanGaussPar );
+
+      if( WriteToRootFile(obj,fileName) ) std::cout << "ok" << std::endl;
+    }
+}
+
+
+
+//---------------------------------------------------------------
+// Write all TObjects in 'obj' to the root-file 'fileName'.
+//---------------------------------------------------------------
+int WriteToRootFile(const std::vector<TObject*> &obj, TString fileName)
+{
+  int ok = 1;
+  TFile outFile(fileName,"RECREATE");
+  for(std::vector<TObject*>::const_iterator it = obj.begin(); it < obj.end(); it++)
+    {
+      ok *= outFile.WriteTObject( *it );
+      if( !ok ) std::cerr << "Error writing object '" << (*it)->GetName() << "' to file." << std::endl;
+    }
+  outFile.Close();
+
+  return ok;
 }
