@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.47 2008/09/17 16:23:20 thomsen Exp $
+// $Id: caliber.cc,v 1.48 2008/09/18 16:12:29 mschrode Exp $
 //
 //
 // for profiling:
@@ -492,6 +492,7 @@ void TCaliber::Run_GammaJet()
     double min_tower_dr = 10.0;
     double em = 0;
     double had = 0;
+    double out = 0;
     TLorentzVector Ljet(0,0,0,0);
     Ljet.SetPtEtaPhiE(gammajet.JetCalEt,gammajet.JetCalEta,gammajet.JetCalPhi,gammajet.JetCalE);
     /*
@@ -505,6 +506,7 @@ void TCaliber::Run_GammaJet()
     for (int n=0; n<gammajet.NobjTowCal; ++n){
       em += gammajet.TowEm[n];
       had +=  gammajet.TowHad[n];
+      out +=  gammajet.TowOE[n];
       TLorentzVector Ltower(0,0,0,0);
       Ltower.SetPtEtaPhiE(gammajet.TowEt[n],gammajet.TowEta[n],gammajet.TowPhi[n],gammajet.TowE[n]);
       double dr = Ltower.DeltaR(Ljet);
@@ -525,6 +527,11 @@ void TCaliber::Run_GammaJet()
     jetp->eta = gammajet.JetCalEta;
     jetp->phi = gammajet.JetCalPhi;
     jetp->E   = gammajet.JetCalE;
+    //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
+    double factor =  gammajet.JetCalEt /  gammajet.JetCalE;
+    jetp->HadF = had * factor;
+    jetp->EMF = em * factor;
+    jetp->OutF = out * factor;
 
     //Create an Gamma/Jet TData event
     TData_TruthMultMess * gj_data = new TData_TruthMultMess
@@ -543,7 +550,7 @@ void TCaliber::Run_GammaJet()
        jetp                                              //measurement
        );
 
-    double EM=0.,F=0.;
+    //double EM=0.,F=0.;
     //Add the jet's towers to "gj_data":
     for (int n=0; n<gammajet.NobjTowCal; ++n){
       //if (gammajet.TowEt[n]<0.01) continue;
@@ -568,8 +575,8 @@ void TCaliber::Run_GammaJet()
       mess->phi = double(gammajet.TowPhi[n]);
       mess->E = double(gammajet.TowE[n]);
       //mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
-      EM+=mess->EMF;
-      F+=mess->pt;
+      //EM+=mess->EMF;
+      //F+=mess->pt;
       gj_data->AddMess(new TData_TruthMess(index,
 					   mess,                                                    //mess//
 					   gammajet.PhotonEt * relativEt,                           //truth//
@@ -582,7 +589,7 @@ void TCaliber::Run_GammaJet()
 					   tower_error_param                                        //error param.func.//
 					   ));
     } 
-    if (EM/F<0.05 || EM/F>0.95) continue;
+    //if (EM/F<0.05 || EM/F>0.95) continue;
   
     data.push_back( gj_data ); 
    
@@ -935,12 +942,14 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       double min_tower_dr = 10.0;
       double em = 0;
       double had = 0;
+      double out = 0;
       TLorentzVector Ljet(0,0,0,0);
       Ljet.SetPtEtaPhiE(njet.JetPt[ij],njet.JetEta[ij],njet.JetPhi[ij],njet.JetE[ij]);
       for (int n=0; n<njet.NobjTow; ++n){
         if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
 	em += njet.TowEm[n];
 	had += njet.TowHad[n];
+	out += njet.TowOE[n];
 	TLorentzVector Ltower(0,0,0,0);
 	Ltower.SetPtEtaPhiE(njet.TowEt[n],njet.TowEta[n],njet.TowPhi[n],njet.TowE[n]);
 	double dr = Ltower.DeltaR(Ljet);
@@ -963,6 +972,11 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       jetp->eta = njet.JetEta[ij];
       jetp->phi = njet.JetPhi[ij];
       jetp->E   = njet.JetE[ij];
+    //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
+      double factor =  njet.JetEt[ij] /  njet.JetE[ij];
+      jetp->HadF = had * factor;
+      jetp->EMF = em * factor;
+      jetp->OutF = out * factor;
       //Create an jet/Jet TData event
       jj_data[nstoredjets] = new TData_PtBalance( 
           jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),

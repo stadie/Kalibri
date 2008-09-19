@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.11 2008/08/05 08:46:35 auterman Exp $
+// $Id: Parametrization.h,v 1.12 2008/09/15 12:24:39 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -103,7 +103,7 @@ public:
 // Parametrization of hadronic response by a step function
 class StepParametrizationEnergy : public Parametrization { 
 public:
-  StepParametrizationEnergy() : Parametrization(14,2) {} //14,5
+  StepParametrizationEnergy() : Parametrization(13,2) {} //14,5
  
   const char* name() const { return "StepParametrizationEnergy";}
 
@@ -123,6 +123,7 @@ public:
     else if (e>300.0 && e<=600.0) result = x->EMF+x->OutF + par[9]*x->HadF;
     else if (e>600.0 && e<=1000.0) result = x->EMF+x->OutF + par[10]*x->HadF;
     else if (e>1000.0 )              result = x->EMF+x->OutF + par[11]*x->HadF;
+    //result += par[12];
     return result;
   }
     
@@ -252,13 +253,14 @@ public:
   ToyParametrization() : Parametrization(1,0) {}
   const char* name() const { return "ToyParametrization";}
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
+    //  if(fabs( x->HadF + x->EMF + x->OutF -   x->pt)  >  0.1)   std::cout<< x->HadF + x->EMF + x->OutF -   x->pt<<"   hjsdgfuyksdgf   "<< x->HadF + x->EMF + x->OutF -   x->E<<std::endl;
+    //std::cout<<par[0]<<"       "<<par<<std::endl;
     return par[0] * x->HadF + x->EMF + x->OutF;
   }
   double correctedJetEt(TMeasurement *const x,double *const par) const {
     return x->pt;  
   }
 };
-
 
 // Parametrization of hadronic response by a step function
 class ToyStepParametrizationEnergy : public Parametrization { 
@@ -269,13 +271,13 @@ public:
   
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
     double result = 0;
-    double e =  x->HadF * x->E / x->pt;
+    double e = x->HadF * x->E / x->pt;
 
-    if(e<=5.0)        result = x->EMF+x->OutF + par[0]*x->HadF;
-    else if (e<=10.0) result = x->EMF+x->OutF + par[1]*x->HadF;
-    else if (e<=25.0) result = x->EMF+x->OutF + par[2]*x->HadF;
-    else if (e<=50)   result = x->EMF+x->OutF + par[3]*x->HadF;
-    else              result = x->EMF+x->OutF + par[4]*x->HadF;
+    if(e<=5.0)        result =  x->EMF+x->OutF + par[0]*x->HadF;
+    else if (e<=10.0) result =  x->EMF+x->OutF + par[1]*x->HadF;
+    else if (e<=25.0) result =  x->EMF+x->OutF + par[2]*x->HadF;
+    else if (e<=50)   result =  x->EMF+x->OutF + par[3]*x->HadF;
+    else              result =  x->EMF+x->OutF + par[4]*x->HadF;
     return result;
   }
     
@@ -284,4 +286,36 @@ public:
   }
 };
 
+// Parametrization of Jet hadronic response by a step function
+class StepJetParametrization : public Parametrization { 
+public:
+  StepJetParametrization() : Parametrization(0,14) {}
+ 
+  const char* name() const { return "StepJetParametrization";}
+
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
+    return x->pt;
+  }
+    
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
+    double pt = x->HadF;
+    double result = 0;
+
+    if(pt>=0.0  && pt<=1.0)  result = x->EMF+x->OutF + par[0]*x->HadF;
+    else if (pt>1.0   && pt<=2.0)  result = x->EMF+x->OutF + par[1]*x->HadF;
+    else if (pt>2.0   && pt<=5.0)  result = x->EMF+x->OutF + par[2]*x->HadF;
+    else if (pt>5.0   && pt<=10.0)  result = x->EMF+x->OutF + par[3]*x->HadF;
+    else if (pt>10.0  && pt<=20.0)  result = x->EMF+x->OutF + par[4]*x->HadF;
+    else if (pt>20.0  && pt<=40.0)  result = x->EMF+x->OutF + par[5]*x->HadF;
+    else if (pt>40.0  && pt<=80.0) result = x->EMF+x->OutF + par[6]*x->HadF;
+    else if (pt>80.0  && pt<=160.0) result = x->EMF+x->OutF + par[7]*x->HadF;
+    else if (pt>160.0 && pt<=300.0) result = x->EMF+x->OutF + par[8]*x->HadF;
+    else if (pt>300.0 && pt<=600.0) result = x->EMF+x->OutF + par[9]*x->HadF;
+    else if (pt>600.0 && pt<=1000.0) result = x->EMF+x->OutF + par[10]*x->HadF;
+    else if (pt>1000.0 )              result = x->EMF+x->OutF + par[11]*x->HadF;
+
+    result *= ( 1. + 0.295 * par[12] * exp(- 0.02566 * par[13] * result));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
+    return  result;
+  }
+};
 #endif
