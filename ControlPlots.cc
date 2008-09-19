@@ -3393,9 +3393,16 @@ void TControlPlots::MakeControlPlotsParameterScan()
       name += i;
       TString title = "Parameter ";
       title += i;
-      if( i < mPar->GetNumberOfTowerParameters() ) title += " (tower parameter ";
-      else title += " (jet parameter ";
-      title += i%(mPar->GetNumberOfTowerParameters());
+      if( i < mPar->GetNumberOfTowerParameters() )
+	{
+	  title += " (tower parameter ";
+	  title += i;
+	}
+      else
+	{
+	  title += " (jet parameter ";
+	  title += i - (mPar->GetNumberOfTowerParameters());
+	}
       title += ");Parameter p_{";
       title += i;
       title += "};#chi^{2}";
@@ -3517,7 +3524,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
     {
       delete gParScan2D[i];
     }
-}
+ }
 
 
 
