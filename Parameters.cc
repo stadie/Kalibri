@@ -16,24 +16,24 @@ TParameters* TParameters::instance = 0;
 Parametrization* TParameters::CreateParametrization(const std::string& name) {
   if(name == "StepParametrization") {
     return new StepParametrization();
-  } else if(name == "MyParametrization") {
-    return new MyParametrization();
   } else if(name == "StepParametrizationEnergy") {
     return new StepParametrizationEnergy();
   } else if(name == "StepEfracParametrization") {
     return new StepEfracParametrization();
+  } else if(name == "StepJetParametrization") {
+    return new StepJetParametrization();
+  } else if(name == "MyParametrization") {
+    return new MyParametrization();
   }  else if(name == "JetMETParametrization") {
     return new JetMETParametrization();
-  }  else if(name == "TSimpleParametrization") {
+  }  else if(name == "SimpleParametrization") {
     return new SimpleParametrization();
   }  else if(name == "ToyParametrization") {
     return new ToyParametrization();
-  } else if(name == "TStepParametrizationEnergy") {
-    return new StepParametrizationEnergy();
-  } else if(name == "ToyStepParametrizationEnergy") {
-    return new ToyStepParametrizationEnergy();
-  } else if(name == "StepJetParametrization") {
-    return new StepJetParametrization();
+  }  else if(name == "ToyStepParametrization") {
+    return new ToyStepParametrization();
+  }  else if(name == "ToyStepJetParametrization") {
+    return new ToyStepJetParametrization();
   }
   
   return 0;
@@ -42,7 +42,13 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
 TParameters* TParameters::CreateParameters(const std::string& configfile) 
 {
   static Cleaner cleanup;
+  if(  instance != 0  )
+  {
+    delete instance; 
+    instance = 0; 
+  }
   assert(instance == 0);
+  
  
   ConfigFile config( configfile.c_str() );
   
