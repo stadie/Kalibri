@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.12 2008/09/15 12:24:39 stadie Exp $
+// $Id: Parametrization.h,v 1.13 2008/09/19 14:00:39 thomsen Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -47,8 +47,8 @@ private:
 // Parametrization of hadronic response by a step function
 class StepParametrization : public Parametrization { 
 public:
-  StepParametrization() : Parametrization(12,8) {}
-  //StepParametrization() : Parametrization(12,24) {}
+  StepParametrization() : Parametrization(12,0) {}
+  //StepParametrization() : Parametrization(12,2) {}
  
   const char* name() const { return "StepParametrization";}
 
@@ -72,6 +72,10 @@ public:
     
   double correctedJetEt(TMeasurement *const x,double *const par) const {
     double result = 0;
+    return  x->pt;   
+    //return x->pt * ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x->pt));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
+
+
     /*
     if(x->pt>=0.0  && x->pt<=1.0)          result =  par[0]*x->pt + par[1];
     else if (x->pt>1.0   && x->pt<=2.0)    result =  par[2]*x->pt + par[3];
@@ -86,7 +90,7 @@ public:
     else if (x->pt>600.0 && x->pt<=1000.0) result =  par[20]*x->pt + par[21];
     else if (x->pt>1000.0 )               result =  par[22]*x->pt + par[23];
     return result;
-    */
+    
     
     if(x->pt>=0.0  && x->pt<=5.0)          result =  par[0]*x->pt + par[1];
     else if (x->pt>5.0   && x->pt<=20.0)   result =  par[2]*x->pt + par[3];
@@ -94,9 +98,7 @@ public:
     else if (x->pt>80.0 )                 result =  par[6]*x->pt + par[7];
     return result;
  
-
-    //return  x->pt;
-    //return  par[0]*x->pt + par[1];
+    */
   }
 };
 
@@ -137,15 +139,15 @@ public:
 
 class StepEfracParametrization : public Parametrization {
 public:
-  StepEfracParametrization() : Parametrization(36,2) {}
+  StepEfracParametrization() : Parametrization(36,0) {}  //(36,2) {}
   
   const char* name() const { return "StepEfracParametrization";}
 
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
     double result=0;
     
-    //double Efrac = x->EMF/(x->HadF+x->OutF);
-    if( x->EMF < 0.1 * (x->HadF+x->OutF) ) {
+    double Efrac = x->EMF/(x->HadF+x->OutF+x->EMF);
+    if( Efrac < 0.2 ) {
       if      (x->HadF>=0.0   && x->HadF<=1.0)   result = x->EMF+x->OutF + par[0]*x->HadF;
       else if (x->HadF>1.0   && x->HadF<=2.0)    result = x->EMF+x->OutF + par[1]*x->HadF;
       else if (x->HadF>2.0   && x->HadF<=5.0)    result = x->EMF+x->OutF + par[2]*x->HadF;
@@ -158,7 +160,7 @@ public:
       else if (x->HadF>300.0 && x->HadF<=600.0)  result = x->EMF+x->OutF + par[9]*x->HadF;
       else if (x->HadF>600.0 && x->HadF<=1000.0) result = x->EMF+x->OutF + par[10]*x->HadF;
       else if (x->HadF>1000.0 )               result = x->EMF+x->OutF + par[11]*x->HadF;
-    } else if (x->EMF<0.3*(x->HadF+x->OutF)) {
+    } else if (Efrac < 0.5)) {
       if      (x->HadF>=0.0   && x->HadF<=1.0)   result = x->EMF+x->OutF + par[12]*x->HadF;
       else if (x->HadF>1.0   && x->HadF<=2.0)    result = x->EMF+x->OutF + par[13]*x->HadF;
       else if (x->HadF>2.0   && x->HadF<=5.0)    result = x->EMF+x->OutF + par[14]*x->HadF;
@@ -189,7 +191,8 @@ public:
   }
   
   double correctedJetEt(TMeasurement *const x,double *const par) const {
-    return  par[0]*x->pt + par[1];
+    return  x->pt;   
+    //return x->pt * ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x->pt));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
   }
 };
 
@@ -265,19 +268,94 @@ public:
 // Parametrization of hadronic response by a step function
 class ToyStepParametrizationEnergy : public Parametrization { 
 public:
-  ToyStepParametrizationEnergy() : Parametrization(5,0) {} //14,0
+  ToyStepParametrizationEnergy() : Parametrization(80,0) {} //5,0
  
   const char* name() const { return "ToyStepParametrizationEnergy";}
   
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
     double result = 0;
-    double e = x->HadF * x->E / x->pt;
+    double e = x->HadF ;//* x->E / x->pt;
 
     if(e<=5.0)        result =  x->EMF+x->OutF + par[0]*x->HadF;
     else if (e<=10.0) result =  x->EMF+x->OutF + par[1]*x->HadF;
-    else if (e<=25.0) result =  x->EMF+x->OutF + par[2]*x->HadF;
-    else if (e<=50)   result =  x->EMF+x->OutF + par[3]*x->HadF;
-    else              result =  x->EMF+x->OutF + par[4]*x->HadF;
+    else if (e<=15.0) result =  x->EMF+x->OutF + par[2]*x->HadF;
+    else if (e<=20)   result =  x->EMF+x->OutF + par[3]*x->HadF;
+    else if (e<=25.0) result =  x->EMF+x->OutF + par[4]*x->HadF;
+    else if (e<=30.0) result =  x->EMF+x->OutF + par[5]*x->HadF;
+    else if (e<=35)   result =  x->EMF+x->OutF + par[6]*x->HadF;
+    else if (e<=40.0) result =  x->EMF+x->OutF + par[7]*x->HadF;
+    else if (e<=45.0) result =  x->EMF+x->OutF + par[8]*x->HadF;
+    else if (e<=50.0) result =  x->EMF+x->OutF + par[9]*x->HadF;
+    else if (e<=55.0) result =  x->EMF+x->OutF + par[10]*x->HadF;
+    else if (e<=60)   result =  x->EMF+x->OutF + par[11]*x->HadF;
+    else if (e<=65.0) result =  x->EMF+x->OutF + par[12]*x->HadF;
+    else if (e<=70.0) result =  x->EMF+x->OutF + par[13]*x->HadF;
+    else if (e<=75)   result =  x->EMF+x->OutF + par[14]*x->HadF;
+    else if (e<=80.0) result =  x->EMF+x->OutF + par[15]*x->HadF;
+    else if (e<=85.0) result =  x->EMF+x->OutF + par[16]*x->HadF;
+    else if (e<=90.0) result =  x->EMF+x->OutF + par[17]*x->HadF;
+    else if (e<=95)   result =  x->EMF+x->OutF + par[18]*x->HadF;
+    else if (e<=100.0) result =  x->EMF+x->OutF + par[19]*x->HadF;
+    else if (e<=105)   result =  x->EMF+x->OutF + par[20]*x->HadF;
+    else if (e<=110.0) result =  x->EMF+x->OutF + par[21]*x->HadF;
+    else if (e<=115.0) result =  x->EMF+x->OutF + par[22]*x->HadF;
+    else if (e<=120)   result =  x->EMF+x->OutF + par[23]*x->HadF;
+    else if (e<=125.0) result =  x->EMF+x->OutF + par[24]*x->HadF;
+    else if (e<=130.0) result =  x->EMF+x->OutF + par[25]*x->HadF;
+    else if (e<=135)   result =  x->EMF+x->OutF + par[26]*x->HadF;
+    else if (e<=140.0) result =  x->EMF+x->OutF + par[27]*x->HadF;
+    else if (e<=145.0) result =  x->EMF+x->OutF + par[28]*x->HadF;
+    else if (e<=150.0) result =  x->EMF+x->OutF + par[29]*x->HadF;
+    else if (e<=155.0) result =  x->EMF+x->OutF + par[30]*x->HadF;
+    else if (e<=160)   result =  x->EMF+x->OutF + par[31]*x->HadF;
+    else if (e<=165.0) result =  x->EMF+x->OutF + par[32]*x->HadF;
+    else if (e<=170.0) result =  x->EMF+x->OutF + par[33]*x->HadF;
+    else if (e<=175)   result =  x->EMF+x->OutF + par[34]*x->HadF;
+    else if (e<=180.0) result =  x->EMF+x->OutF + par[35]*x->HadF;
+    else if (e<=185.0) result =  x->EMF+x->OutF + par[36]*x->HadF;
+    else if (e<=190.0) result =  x->EMF+x->OutF + par[37]*x->HadF;
+    else if (e<=195)   result =  x->EMF+x->OutF + par[38]*x->HadF;
+    else if (e<=200)   result =  x->EMF+x->OutF + par[39]*x->HadF;
+    else if (e<=205)   result =  x->EMF+x->OutF + par[40]*x->HadF;
+    else if (e<=210.0) result =  x->EMF+x->OutF + par[41]*x->HadF;
+    else if (e<=215.0) result =  x->EMF+x->OutF + par[42]*x->HadF;
+    else if (e<=220)   result =  x->EMF+x->OutF + par[43]*x->HadF;
+    else if (e<=225.0) result =  x->EMF+x->OutF + par[44]*x->HadF;
+    else if (e<=230.0) result =  x->EMF+x->OutF + par[45]*x->HadF;
+    else if (e<=235)   result =  x->EMF+x->OutF + par[46]*x->HadF;
+    else if (e<=240.0) result =  x->EMF+x->OutF + par[47]*x->HadF;
+    else if (e<=245.0) result =  x->EMF+x->OutF + par[48]*x->HadF;
+    else if (e<=250.0) result =  x->EMF+x->OutF + par[49]*x->HadF;
+    else if (e<=255.0) result =  x->EMF+x->OutF + par[50]*x->HadF;
+    else if (e<=260)   result =  x->EMF+x->OutF + par[51]*x->HadF;
+    else if (e<=265.0) result =  x->EMF+x->OutF + par[52]*x->HadF;
+    else if (e<=270.0) result =  x->EMF+x->OutF + par[53]*x->HadF;
+    else if (e<=275)   result =  x->EMF+x->OutF + par[54]*x->HadF;
+    else if (e<=280.0) result =  x->EMF+x->OutF + par[55]*x->HadF;
+    else if (e<=285.0) result =  x->EMF+x->OutF + par[56]*x->HadF;
+    else if (e<=290.0) result =  x->EMF+x->OutF + par[57]*x->HadF;
+    else if (e<=295)   result =  x->EMF+x->OutF + par[58]*x->HadF;
+    else if (e<=300)   result =  x->EMF+x->OutF + par[59]*x->HadF;
+    else if (e<=305)   result =  x->EMF+x->OutF + par[60]*x->HadF;
+    else if (e<=310.0) result =  x->EMF+x->OutF + par[61]*x->HadF;
+    else if (e<=315.0) result =  x->EMF+x->OutF + par[62]*x->HadF;
+    else if (e<=320)   result =  x->EMF+x->OutF + par[63]*x->HadF;
+    else if (e<=325.0) result =  x->EMF+x->OutF + par[64]*x->HadF;
+    else if (e<=330.0) result =  x->EMF+x->OutF + par[65]*x->HadF;
+    else if (e<=335)   result =  x->EMF+x->OutF + par[66]*x->HadF;
+    else if (e<=340.0) result =  x->EMF+x->OutF + par[67]*x->HadF;
+    else if (e<=345.0) result =  x->EMF+x->OutF + par[68]*x->HadF;
+    else if (e<=350.0) result =  x->EMF+x->OutF + par[69]*x->HadF;
+    else if (e<=355.0) result =  x->EMF+x->OutF + par[70]*x->HadF;
+    else if (e<=360)   result =  x->EMF+x->OutF + par[71]*x->HadF;
+    else if (e<=365.0) result =  x->EMF+x->OutF + par[72]*x->HadF;
+    else if (e<=370.0) result =  x->EMF+x->OutF + par[73]*x->HadF;
+    else if (e<=375)   result =  x->EMF+x->OutF + par[74]*x->HadF;
+    else if (e<=380.0) result =  x->EMF+x->OutF + par[75]*x->HadF;
+    else if (e<=385.0) result =  x->EMF+x->OutF + par[76]*x->HadF;
+    else if (e<=390.0) result =  x->EMF+x->OutF + par[77]*x->HadF;
+    else if (e<=395)   result =  x->EMF+x->OutF + par[78]*x->HadF;
+    else               result =  x->EMF+x->OutF + par[79]*x->HadF;
     return result;
   }
     
@@ -289,7 +367,7 @@ public:
 // Parametrization of Jet hadronic response by a step function
 class StepJetParametrization : public Parametrization { 
 public:
-  StepJetParametrization() : Parametrization(0,14) {}
+  StepJetParametrization() : Parametrization(0,63) {}
  
   const char* name() const { return "StepJetParametrization";}
 
@@ -298,23 +376,79 @@ public:
   }
     
   double correctedJetEt(TMeasurement *const x,double *const par) const {
-    double pt = x->HadF;
+    double pt = x->pt;
+    double Efrac = x->EMF / ( x->EMF + x->HadF + x->OutF);
     double result = 0;
+    if(Efrac < 0.2)
+      {
+      if      (pt>=0.0   && pt<=10.0)   result = x->EMF+x->OutF + par[0]*x->HadF;
+      else if (pt>10.0   && pt<=20.0)    result = x->EMF+x->OutF + par[1]*x->HadF;
+      else if (pt>20.0   && pt<=30.0)    result = x->EMF+x->OutF + par[2]*x->HadF;
+      else if (pt>30.0   && pt<=40.0)   result = x->EMF+x->OutF + par[3]*x->HadF;
+      else if (pt>40.0  && pt<=60.0)   result = x->EMF+x->OutF + par[4]*x->HadF;
+      else if (pt>60.0  && pt<=80.0)   result = x->EMF+x->OutF + par[5]*x->HadF;
+      else if (pt>80.0  && pt<=100.0)   result = x->EMF+x->OutF + par[6]*x->HadF;
+      else if (pt>100.0  && pt<=120.0)  result = x->EMF+x->OutF + par[7]*x->HadF;
+      else if (pt>120.0 && pt<=140.0)  result = x->EMF+x->OutF + par[8]*x->HadF;
+      else if (pt>140.0 && pt<=160.0)  result = x->EMF+x->OutF + par[9]*x->HadF;
+      else if (pt>160.0 && pt<=180.0) result = x->EMF+x->OutF + par[10]*x->HadF;
+      else if (pt>180.0 && pt<=200.0) result = x->EMF+x->OutF + par[11]*x->HadF;
+      else if (pt>200.0 && pt<=225.0)  result = x->EMF+x->OutF + par[12]*x->HadF;
+      else if (pt>225.0 && pt<=250.0)  result = x->EMF+x->OutF + par[13]*x->HadF;
+      else if (pt>250.0 && pt<=275.0)  result = x->EMF+x->OutF + par[14]*x->HadF;
+      else if (pt>275.0 && pt<=300.0) result = x->EMF+x->OutF + par[15]*x->HadF;
+      else if (pt>300.0 && pt<=350.0) result = x->EMF+x->OutF + par[16]*x->HadF;
+      else if (pt>350.0 && pt<=400.0)  result = x->EMF+x->OutF + par[17]*x->HadF;
+      else if (pt>400.0 && pt<=500.0) result = x->EMF+x->OutF + par[18]*x->HadF;
+      else if (pt>500.0 && pt<=700.0) result = x->EMF+x->OutF + par[19]*x->HadF;
+      else if (pt>700.0 )               result = x->EMF+x->OutF + par[20]*x->HadF;
+    } else if (Efrac < 0.5) {
+      if      (pt>=0.0   && pt<=10.0)   result = x->EMF+x->OutF + par[21]*x->HadF;
+      else if (pt>10.0   && pt<=20.0)    result = x->EMF+x->OutF + par[22]*x->HadF;
+      else if (pt>20.0   && pt<=30.0)    result = x->EMF+x->OutF + par[23]*x->HadF;
+      else if (pt>30.0   && pt<=40.0)   result = x->EMF+x->OutF + par[24]*x->HadF;
+      else if (pt>40.0  && pt<=60.0)   result = x->EMF+x->OutF + par[25]*x->HadF;
+      else if (pt>60.0  && pt<=80.0)   result = x->EMF+x->OutF + par[26]*x->HadF;
+      else if (pt>80.0  && pt<=100.0)   result = x->EMF+x->OutF + par[27]*x->HadF;
+      else if (pt>100.0  && pt<=120.0)  result = x->EMF+x->OutF + par[28]*x->HadF;
+      else if (pt>120.0 && pt<=140.0)  result = x->EMF+x->OutF + par[29]*x->HadF;
+      else if (pt>140.0 && pt<=160.0)  result = x->EMF+x->OutF + par[30]*x->HadF;
+      else if (pt>160.0 && pt<=180.0) result = x->EMF+x->OutF + par[31]*x->HadF;
+      else if (pt>180.0 && pt<=200.0) result = x->EMF+x->OutF + par[32]*x->HadF;
+      else if (pt>200.0 && pt<=225.0)  result = x->EMF+x->OutF + par[33]*x->HadF;
+      else if (pt>225.0 && pt<=250.0)  result = x->EMF+x->OutF + par[34]*x->HadF;
+      else if (pt>250.0 && pt<=275.0)  result = x->EMF+x->OutF + par[35]*x->HadF;
+      else if (pt>275.0 && pt<=300.0) result = x->EMF+x->OutF + par[36]*x->HadF;
+      else if (pt>300.0 && pt<=350.0) result = x->EMF+x->OutF + par[37]*x->HadF;
+      else if (pt>350.0 && pt<=400.0)  result = x->EMF+x->OutF + par[38]*x->HadF;
+      else if (pt>400.0 && pt<=500.0) result = x->EMF+x->OutF + par[39]*x->HadF;
+      else if (pt>500.0 && pt<=700.0) result = x->EMF+x->OutF + par[40]*x->HadF;
+      else if (pt>700.0 )               result = x->EMF+x->OutF + par[41]*x->HadF;
+    } else {
+      if      (pt>=0.0   && pt<=10.0)   result = x->EMF+x->OutF + par[42]*x->HadF;
+      else if (pt>10.0   && pt<=20.0)    result = x->EMF+x->OutF + par[43]*x->HadF;
+      else if (pt>20.0   && pt<=30.0)    result = x->EMF+x->OutF + par[44]*x->HadF;
+      else if (pt>30.0   && pt<=40.0)   result = x->EMF+x->OutF + par[45]*x->HadF;
+      else if (pt>40.0  && pt<=60.0)   result = x->EMF+x->OutF + par[46]*x->HadF;
+      else if (pt>60.0  && pt<=80.0)   result = x->EMF+x->OutF + par[47]*x->HadF;
+      else if (pt>80.0  && pt<=100.0)   result = x->EMF+x->OutF + par[48]*x->HadF;
+      else if (pt>100.0  && pt<=120.0)  result = x->EMF+x->OutF + par[49]*x->HadF;
+      else if (pt>120.0 && pt<=140.0)  result = x->EMF+x->OutF + par[50]*x->HadF;
+      else if (pt>140.0 && pt<=160.0)  result = x->EMF+x->OutF + par[51]*x->HadF;
+      else if (pt>160.0 && pt<=180.0) result = x->EMF+x->OutF + par[52]*x->HadF;
+      else if (pt>180.0 && pt<=200.0) result = x->EMF+x->OutF + par[53]*x->HadF;
+      else if (pt>200.0 && pt<=225.0)  result = x->EMF+x->OutF + par[54]*x->HadF;
+      else if (pt>225.0 && pt<=250.0)  result = x->EMF+x->OutF + par[55]*x->HadF;
+      else if (pt>250.0 && pt<=275.0)  result = x->EMF+x->OutF + par[56]*x->HadF;
+      else if (pt>275.0 && pt<=300.0) result = x->EMF+x->OutF + par[57]*x->HadF;
+      else if (pt>300.0 && pt<=350.0) result = x->EMF+x->OutF + par[58]*x->HadF;
+      else if (pt>350.0 && pt<=400.0)  result = x->EMF+x->OutF + par[59]*x->HadF;
+      else if (pt>400.0 && pt<=500.0) result = x->EMF+x->OutF + par[60]*x->HadF;
+      else if (pt>500.0 && pt<=700.0) result = x->EMF+x->OutF + par[61]*x->HadF;
+      else if (pt>700.0 )               result = x->EMF+x->OutF + par[62]*x->HadF;
+    }
 
-    if(pt>=0.0  && pt<=1.0)  result = x->EMF+x->OutF + par[0]*x->HadF;
-    else if (pt>1.0   && pt<=2.0)  result = x->EMF+x->OutF + par[1]*x->HadF;
-    else if (pt>2.0   && pt<=5.0)  result = x->EMF+x->OutF + par[2]*x->HadF;
-    else if (pt>5.0   && pt<=10.0)  result = x->EMF+x->OutF + par[3]*x->HadF;
-    else if (pt>10.0  && pt<=20.0)  result = x->EMF+x->OutF + par[4]*x->HadF;
-    else if (pt>20.0  && pt<=40.0)  result = x->EMF+x->OutF + par[5]*x->HadF;
-    else if (pt>40.0  && pt<=80.0) result = x->EMF+x->OutF + par[6]*x->HadF;
-    else if (pt>80.0  && pt<=160.0) result = x->EMF+x->OutF + par[7]*x->HadF;
-    else if (pt>160.0 && pt<=300.0) result = x->EMF+x->OutF + par[8]*x->HadF;
-    else if (pt>300.0 && pt<=600.0) result = x->EMF+x->OutF + par[9]*x->HadF;
-    else if (pt>600.0 && pt<=1000.0) result = x->EMF+x->OutF + par[10]*x->HadF;
-    else if (pt>1000.0 )              result = x->EMF+x->OutF + par[11]*x->HadF;
-
-    result *= ( 1. + 0.295 * par[12] * exp(- 0.02566 * par[13] * result));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
+    //result *= ( 1. + 0.295 * par[12] * exp(- 0.02566 * par[13] * result));   //Out of Cone, Dominant, parametrized in Et since cone R lorenz invariant
     return  result;
   }
 };
