@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.20 2008/08/20 13:28:42 thomsen Exp $
+// $Id: CalibData.cc,v 1.21 2008/09/17 16:23:20 thomsen Exp $
 //
 #include "CalibData.h"
 
@@ -180,7 +180,7 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
   //Out of Cone can hardly be determined by MessMess (but Punch throughs can)
 
 
-  /*
+  
 
   //Add all jet parameters in this event:
   for (unsigned i=0; i<_n_par; ++i)
@@ -191,7 +191,7 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
       tpars[ i+(*mit)->GetIndex() ]= &((*mit)->GetPar()[i]);
     }
 
-  */
+  
 
   
   //This event's chi^2 for the current (unchanged) parameters:
@@ -290,7 +290,7 @@ double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_deriv
   //Out of Cone can hardly be determined by Di-Jet (but Punch throughs can)
 
 
-  /*
+  
 
   //Add all jet parameters in this event:
   for (unsigned i=0; i<_n_par; ++i)
@@ -301,7 +301,7 @@ double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_deriv
       tpars[ i+(*mit)->GetIndex() ]= &((*mit)->GetPar()[i]);
     }
 
-  */
+  
      
     double parascale;
       
