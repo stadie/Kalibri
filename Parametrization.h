@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.14 2008/09/25 09:51:19 thomsen Exp $
+// $Id: Parametrization.h,v 1.15 2008/09/25 16:27:44 mschrode Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -350,7 +350,7 @@ public:
 // Optimized for ToyMC pt spectrum 0 - 300 GeV
 class ToyStepParametrization : public Parametrization { 
 public:
-ToyStepParametrization() : Parametrization(14,0) {}
+ToyStepParametrization() : Parametrization(15,0) {}
  
   const char* name() const { return "ToyStepParametrization";}
   
@@ -358,20 +358,21 @@ ToyStepParametrization() : Parametrization(14,0) {}
     double result = 0.;
     double pt = x->HadF;
 
-    if( pt < 5. )        result = x->EMF + x->OutF + par[0]*x->HadF;
-    else if( pt < 10. )  result = x->EMF + x->OutF + par[1]*x->HadF;
-    else if( pt < 20. )  result = x->EMF + x->OutF + par[2]*x->HadF;
-    else if( pt < 30. )  result = x->EMF + x->OutF + par[3]*x->HadF;
-    else if( pt < 40. )  result = x->EMF + x->OutF + par[4]*x->HadF;
-    else if( pt < 50. )  result = x->EMF + x->OutF + par[5]*x->HadF;
-    else if( pt < 60. )  result = x->EMF + x->OutF + par[6]*x->HadF;
-    else if( pt < 70. )  result = x->EMF + x->OutF + par[7]*x->HadF;
-    else if( pt < 80. )  result = x->EMF + x->OutF + par[8]*x->HadF;
-    else if( pt < 100. ) result = x->EMF + x->OutF + par[9]*x->HadF;
-    else if( pt < 110. ) result = x->EMF + x->OutF + par[10]*x->HadF;
-    else if( pt < 120. ) result = x->EMF + x->OutF + par[11]*x->HadF;
-    else if( pt < 130. ) result = x->EMF + x->OutF + par[12]*x->HadF;
-    else                 result = x->EMF + x->OutF + par[13]*x->HadF;
+    if( pt < 2. )        result = x->EMF + x->OutF + par[0]*x->HadF;
+    else if( pt < 5. )   result = x->EMF + x->OutF + par[1]*x->HadF;
+    else if( pt < 10. )  result = x->EMF + x->OutF + par[2]*x->HadF;
+    else if( pt < 20. )  result = x->EMF + x->OutF + par[3]*x->HadF;
+    else if( pt < 30. )  result = x->EMF + x->OutF + par[4]*x->HadF;
+    else if( pt < 40. )  result = x->EMF + x->OutF + par[5]*x->HadF;
+    else if( pt < 50. )  result = x->EMF + x->OutF + par[6]*x->HadF;
+    else if( pt < 60. )  result = x->EMF + x->OutF + par[7]*x->HadF;
+    else if( pt < 70. )  result = x->EMF + x->OutF + par[8]*x->HadF;
+    else if( pt < 80. )  result = x->EMF + x->OutF + par[9]*x->HadF;
+    else if( pt < 90. )  result = x->EMF + x->OutF + par[10]*x->HadF;
+    else if( pt < 100. ) result = x->EMF + x->OutF + par[11]*x->HadF;
+    else if( pt < 110. ) result = x->EMF + x->OutF + par[12]*x->HadF;
+    else if( pt < 120. ) result = x->EMF + x->OutF + par[13]*x->HadF;
+    else                 result = x->EMF + x->OutF + par[14]*x->HadF;
 
     return result;
   }
@@ -386,7 +387,7 @@ ToyStepParametrization() : Parametrization(14,0) {}
 // Optimized for ToyMC pt spectrum 0 - 300 GeV
 class ToyStepJetParametrization : public Parametrization { 
 public:
-  ToyStepJetParametrization() : Parametrization(0,14) {}
+  ToyStepJetParametrization() : Parametrization(0,15) {}
  
   const char* name() const { return "ToyStepJetParametrization";}
 
@@ -411,7 +412,8 @@ public:
     else if( pt < 275. ) result = x->EMF+x->OutF + par[10]*x->HadF;
     else if( pt < 300. ) result = x->EMF+x->OutF + par[11]*x->HadF;
     else if( pt < 325. ) result = x->EMF+x->OutF + par[12]*x->HadF;
-    else                 result = x->EMF+x->OutF + par[13]*x->HadF;
+    else if( pt < 350. ) result = x->EMF+x->OutF + par[13]*x->HadF;
+    else                 result = x->EMF+x->OutF + par[14]*x->HadF;
 
     return  result;
   }
