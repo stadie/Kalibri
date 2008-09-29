@@ -866,7 +866,7 @@ void TControlPlots::MakeControlPlotsTowers()
 //---------------------------------------------------------------
 //   Gamma-Jet Control Histograms
 //---------------------------------------------------------------
-void TControlPlots::MakeControlPlotsGammaJet()
+void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plottedQuant)
 {
   std::vector<TObject*> objToBeWritten;
 
@@ -930,14 +930,14 @@ void TControlPlots::MakeControlPlotsGammaJet()
 
   double ringsSum[11][nRings];
   double ringsRawSum[11][nRings];
-    for(int b=0; b < 11; ++b)
-      {
-	for(int a=0; a < nRings; ++a)
-	  {
-	    ringsSum[b][a]=0;
-	    ringsRawSum[b][a]=0;
-	  }
-      }
+  for(int b=0; b < 11; ++b)
+    {
+      for(int a=0; a < nRings; ++a)
+	{
+	  ringsSum[b][a]=0;
+	  ringsRawSum[b][a]=0;
+	}
+    }
 
 
   // Hits in (eta,phi)
@@ -965,7 +965,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
   //   ptjet/etgamma
   //   ptjetcorr/etgamma 
   //   ptjet/ptjetcorr
-  // versus different quantities:
+  // versus different quantities (controlled via argument 'plottedQuant'):
   //   eta (for all Etgamma and binned in different Etgamma)
   //   uncorrected jet pt (for all eta and binned in different eta)
   //   Etgamma = true jet pt
@@ -990,52 +990,96 @@ void TControlPlots::MakeControlPlotsGammaJet()
   //     1: ptjetcorr/etgamma
   //     2: ptjet/ptjetcorr
   TH2F* heta[12];
-  heta[0] = new TH2F("heta0","#gamma-jet;#eta",400,-5,5,100,0,4);
-  objToBeWritten.push_back(heta[0]);
+  if( plottedQuant.count("eta") > 0 )
+    {
+      double etaBinEdge[83];
+      for(int e = 0; e < 82; e++)
+	{
+	  int etaBin = 0;
+	  if( e < 41 ) etaBin = -41 + e;
+	  else etaBin = -40 + e;
+	  etaBinEdge[e] = mPar->EtaLowerEdge(etaBin);
+	}
+      etaBinEdge[82] = mPar->EtaUpperEdge(41);
+
+      heta[0] = new TH2F("heta0","#gamma-jet;#eta",82,etaBinEdge,100,0,4);
+      objToBeWritten.push_back(heta[0]);
+      for(int i = 1 ; i < 12 ; ++i)
+	{
+	  sprintf(name,"heta%i",i);
+	  heta[i] = (TH2F*)heta[0]->Clone(name);
+	  heta[i]->Sumw2();
+	  if( i > 2 )
+	    {
+	      int etReg = (i-3)/3;
+	      sprintf(title,"#gamma-jet,  %i < E_{T}^{#gamma} < %i GeV",etLimit[etReg],etLimit[etReg+1]);
+	      heta[i]->SetTitle(title);
+	    }
+	  objToBeWritten.push_back(heta[i]);
+	}
+    }
 
   TH2F* hpt_uncorr[12];
-  hpt_uncorr[0] = new TH2F("hpt_uncorr0","#gamma-jet;p^{jet}_{T} [GeV]",400,0,400,100,0,4);
-  objToBeWritten.push_back(hpt_uncorr[0]);
-
-  for(int i = 1 ; i < 12 ; ++i)
+  if( plottedQuant.count("uncorrected jet pt") > 0 )
     {
-      sprintf(name,"heta%i",i);
-      heta[i] = (TH2F*)heta[0]->Clone(name);
-      heta[i]->Sumw2();
-
-      sprintf(name,"hpt_uncorr%i",i);
-      hpt_uncorr[i] = (TH2F*) hpt_uncorr[0]->Clone(name);
-      hpt_uncorr[i]->Sumw2();
-
-      if( i > 2 )
+      hpt_uncorr[0] = new TH2F("hpt_uncorr0","#gamma-jet;p^{jet}_{T} [GeV]",400,0,400,100,0,4);
+      objToBeWritten.push_back(hpt_uncorr[0]);
+      for(int i = 1 ; i < 12 ; ++i)
 	{
-	  int etReg = (i-3)/3;
-	  sprintf(title,"#gamma-jet,  %i < E_{T}^{#gamma} < %i GeV",etLimit[etReg],etLimit[etReg+1]);
-	  heta[i]->SetTitle(title);
+	  sprintf(name,"hpt_uncorr%i",i);
+	  hpt_uncorr[i] = (TH2F*) hpt_uncorr[0]->Clone(name);
+	  hpt_uncorr[i]->Sumw2();
 
-	  if( etReg == 0 ) sprintf(title,"#gamma-jet,  |#eta| < 1.4");
-	  if( etReg == 1 ) sprintf(title,"#gamma-jet,  1.4 < |#eta| < 3.0");
-	  if( etReg == 2 ) sprintf(title,"#gamma-jet,  3.0 < |#eta|");
-
-	  hpt_uncorr[i]->SetTitle(title);
+	  if( i > 2 )
+	    {
+	      int etReg = (i-3)/3;
+	      if( etReg == 0 ) sprintf(title,"#gamma-jet,  |#eta| < 1.4");
+	      if( etReg == 1 ) sprintf(title,"#gamma-jet,  1.4 < |#eta| < 3.0");
+	      if( etReg == 2 ) sprintf(title,"#gamma-jet,  3.0 < |#eta|");
+	      hpt_uncorr[i]->SetTitle(title);
+	    }
+	  objToBeWritten.push_back(heta[i]);
 	}
-      objToBeWritten.push_back(heta[i]);
     }
 
   TH2F* hpt[3];
-  hpt[0] = new TH2F("hpt0","#gamma-jet;E^{#gamma}_{T} [GeV]",400,0,400,100,0,4);
-  hpt[1] = (TH2F*)hpt[0]->Clone("hpt1");
-  hpt[2] = (TH2F*)hpt[0]->Clone("hpt2");
+  if( plottedQuant.count("true jet pt") > 0 )
+    {
+      hpt[0] = new TH2F("hpt0","#gamma-jet;E^{#gamma}_{T} [GeV]",400,0,400,100,0,4);
+      hpt[1] = (TH2F*)hpt[0]->Clone("hpt1");
+      hpt[2] = (TH2F*)hpt[0]->Clone("hpt2");
+      for(int i = 0; i < 3; i++)
+	{
+	  hpt[i]->Sumw2();
+	  objToBeWritten.push_back(hpt[i]);
+	}
+    }
 
   TH2F* henergy[3];
-  henergy[0] = new TH2F("henergy0","#gamma-jet;E^{jet} [GeV]",600,0,600,100,0,4);
-  henergy[1] = (TH2F*)henergy[0]->Clone("henergy1");
-  henergy[2] = (TH2F*)henergy[0]->Clone("henergy2");
-  
+  if( plottedQuant.count("uncorrected jet energy") > 0 )
+    {
+      henergy[0] = new TH2F("henergy0","#gamma-jet;E^{jet} [GeV]",600,0,600,100,0,4);
+      henergy[1] = (TH2F*)henergy[0]->Clone("henergy1");
+      henergy[2] = (TH2F*)henergy[0]->Clone("henergy2");
+      for(int i = 0; i < 3; i++)
+	{
+	  henergy[i]->Sumw2();
+	  objToBeWritten.push_back(henergy[i]);
+	}
+    }
+
   TH2F* hemf[3];
-  hemf[0] = new TH2F("hemf0","#gamma-jet;electromagnetic fraction f_{em}",100,0,1,100,0,4);
-  hemf[1] = (TH2F*)hemf[0]->Clone("hemf1");
-  hemf[2] = (TH2F*)hemf[0]->Clone("hemf2");
+  if( plottedQuant.count("emf") > 0 )
+    {
+      hemf[0] = new TH2F("hemf0","#gamma-jet;electromagnetic fraction f_{em}",100,0,1,100,0,4);
+      hemf[1] = (TH2F*)hemf[0]->Clone("hemf1");
+      hemf[2] = (TH2F*)hemf[0]->Clone("hemf2");
+      for(int i = 0; i < 3; i++)
+	{
+	  hemf[i]->Sumw2();
+	  objToBeWritten.push_back(hemf[i]);
+	}
+    }
 
   double bins[101];
   for(int i = 0; i < 101 ; ++i)
@@ -1043,21 +1087,16 @@ void TControlPlots::MakeControlPlotsGammaJet()
       bins[i] = pow(10,(i+32)/40.0);
     }
   TH2F* hptlog[3];
-  hptlog[0] = new TH2F("hptlog0","#gamma-jet;E^{#gamma}_{T} [GeV]",100,bins,100,0,4);
-  hptlog[1] = (TH2F*) hptlog[0]->Clone("hptlog1");
-  hptlog[2] = (TH2F*) hptlog[0]->Clone("hptlog2");
-
-  for(int i = 0; i < 3; i++)
+  if( plottedQuant.count("log true jet pt") > 0 )
     {
-      hpt[i]->Sumw2();
-      henergy[i]->Sumw2();
-      hemf[i]->Sumw2();
-      hptlog[i]->Sumw2();
-
-      objToBeWritten.push_back(hpt[i]);
-      objToBeWritten.push_back(henergy[i]);
-      objToBeWritten.push_back(hemf[i]);
-      objToBeWritten.push_back(hptlog[i]);
+      hptlog[0] = new TH2F("hptlog0","#gamma-jet;E^{#gamma}_{T} [GeV]",100,bins,100,0,4);
+      hptlog[1] = (TH2F*) hptlog[0]->Clone("hptlog1");
+      hptlog[2] = (TH2F*) hptlog[0]->Clone("hptlog2");
+      for(int i = 0; i < 3; i++)
+	{
+	  hptlog[i]->Sumw2();
+	  objToBeWritten.push_back(hptlog[i]);
+	}
     }
 
 
@@ -1239,93 +1278,119 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	    }
 	} // end of loop over rings
       towerinjet[0]->Fill(noTower);
-
-
-      heta[0]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
-      heta[1]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
-      heta[2]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
       if (jg->GetTruth() > 10 && jg->GetTruth() < 35)
 	{
-	  heta[3]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
-	  heta[4]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
-	  heta[5]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
 	  towerinjet[1]->Fill(noTower);
 	}
       else if (jg->GetTruth() > 35 && jg->GetTruth() < 90)
 	{
-	  heta[6]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
-	  heta[7]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
-	  heta[8]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
 	  towerinjet[2]->Fill(noTower);
 	}
       else if (jg->GetTruth() > 90 && jg->GetTruth() < 300)
 	{
-	  heta[9]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
-	  heta[10]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
-	  heta[11]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
 	  towerinjet[3]->Fill(noTower);
 	} 
 
-
-      hpt[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
-      hpt[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
-      hpt[2]->Fill(jg->GetTruth(),etjet/etjetcor,jg->GetWeight());   
-
-      henergy[0]->Fill(energyjet,etjet/ jg->GetTruth(),jg->GetWeight());
-      henergy[1]->Fill(energyjet,etjetcor/jg->GetTruth(),jg->GetWeight());
-      henergy[2]->Fill(energyjet,etjet/etjetcor,jg->GetWeight());    
-      hptlog[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
-      hptlog[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
-      hptlog[2]->Fill(jg->GetTruth(),etjet/etjetcor,jg->GetWeight());
-
-      hpt_uncorr[0]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
-      hpt_uncorr[1]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
-      hpt_uncorr[2]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
-      if(fabs(etajet) < 1.4)
+      if( plottedQuant.count("eta") > 0 )
 	{
-	  hpt_uncorr[3]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
-	  hpt_uncorr[4]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
-	  hpt_uncorr[5]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
-	}
-      else if(fabs(etajet) > 1.4  && fabs(etajet) < 3.0)
-	{
-	  hpt_uncorr[6]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
-	  hpt_uncorr[7]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
-	  hpt_uncorr[8]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
-	}
-      else if(fabs(etajet) > 3.0)
-	{
-	  hpt_uncorr[9]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
-	  hpt_uncorr[10]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
-	  hpt_uncorr[11]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
+	  heta[0]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
+	  heta[1]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
+	  heta[2]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+	  if (jg->GetTruth() > 10 && jg->GetTruth() < 35)
+	    {
+	      heta[3]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
+	      heta[4]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
+	      heta[5]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+	      towerinjet[1]->Fill(noTower);
+	    }
+	  else if (jg->GetTruth() > 35 && jg->GetTruth() < 90)
+	    {
+	      heta[6]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
+	      heta[7]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
+	      heta[8]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+	      towerinjet[2]->Fill(noTower);
+	    }
+	  else if (jg->GetTruth() > 90 && jg->GetTruth() < 300)
+	    {
+	      heta[9]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
+	      heta[10]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
+	      heta[11]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+	      towerinjet[3]->Fill(noTower);
+	    } 
 	}
 
-      /*
-	hptlog[0]->Fill(jg->GetMess()->pt,etjet/ jg->GetTruth(),jg->GetWeight());
-	hptlog[1]->Fill(jg->GetMess()->pt,etjetcor/jg->GetTruth(),jg->GetWeight());
-	hptlog[2]->Fill(etjetcor,etjet/etjetcor,jg->GetWeight());
-      */
+
+      if( plottedQuant.count("true jet pt") > 0 )
+	{
+	  hpt[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
+	  hpt[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
+	  hpt[2]->Fill(jg->GetTruth(),etjet/etjetcor,jg->GetWeight());   
+	}
+
+      if( plottedQuant.count("uncorrected jet energy") > 0 )
+	{
+	  henergy[0]->Fill(energyjet,etjet/ jg->GetTruth(),jg->GetWeight());
+	  henergy[1]->Fill(energyjet,etjetcor/jg->GetTruth(),jg->GetWeight());
+	  henergy[2]->Fill(energyjet,etjet/etjetcor,jg->GetWeight());    
+	}
+
+      if( plottedQuant.count("log true jet pt") > 0 )
+      {
+	hptlog[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
+	hptlog[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
+	hptlog[2]->Fill(jg->GetTruth(),etjet/etjetcor,jg->GetWeight());
+      }
+
+      if( plottedQuant.count("uncorrected jet pt") > 0 )
+	{
+	  hpt_uncorr[0]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
+	  hpt_uncorr[1]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
+	  hpt_uncorr[2]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
+	  if(fabs(etajet) < 1.4)
+	    {
+	      hpt_uncorr[3]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
+	      hpt_uncorr[4]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
+	      hpt_uncorr[5]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
+	    }
+	  else if(fabs(etajet) > 1.4  && fabs(etajet) < 3.0)
+	    {
+	      hpt_uncorr[6]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
+	      hpt_uncorr[7]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
+	      hpt_uncorr[8]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
+	    }
+	  else if(fabs(etajet) > 3.0)
+	    {
+	      hpt_uncorr[9]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
+	      hpt_uncorr[10]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
+	      hpt_uncorr[11]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
+	    }
+	}
+
       //em fraction plots     
-      double em = 0;
-      double had = 0;
-      for(std::vector<TData*>::const_iterator t = jg->GetRef().begin(); t != jg->GetRef().end(); ++t)
+      if( plottedQuant.count("emf") > 0 )
 	{
-	  TData* tt = *t;
-	  em  += tt->GetMess()->EMF;
-	  had += tt->GetMess()->HadF;
-	  had += tt->GetMess()->OutF;
+	  double em = 0;
+	  double had = 0;
+	  for(std::vector<TData*>::const_iterator t = jg->GetRef().begin(); t != jg->GetRef().end(); ++t)
+	    {
+	      TData* tt = *t;
+	      em  += tt->GetMess()->EMF;
+	      had += tt->GetMess()->HadF;
+	      had += tt->GetMess()->OutF;
+	    }
+	  hemf[0]->Fill(em/(em+had),etjet/jg->GetTruth(),jg->GetWeight());
+	  hemf[1]->Fill(em/(em+had),etjetcor/jg->GetTruth(),jg->GetWeight());
+	  hemf[2]->Fill(em/(em+had),etjet/etjetcor,jg->GetWeight());
+	  hptGamma[2]->Fill(em/(em+had));
+	  hptGammaW[2]->Fill(em/(em+had),jg->GetWeight());
+	  hptGamma2D->Fill(jg->GetTruth(),em/(em+had));
+	  hptGamma2DW->Fill(jg->GetTruth(),em/(em+had),jg->GetWeight());
 	}
-      hemf[0]->Fill(em/(em+had),etjet/jg->GetTruth(),jg->GetWeight());
-      hemf[1]->Fill(em/(em+had),etjetcor/jg->GetTruth(),jg->GetWeight());
-      hemf[2]->Fill(em/(em+had),etjet/etjetcor,jg->GetWeight());
+
       hptGamma[0]->Fill(jg->GetTruth());
       hptGammaW[0]->Fill(jg->GetTruth(),jg->GetWeight());
       hptGamma[1]->Fill(etajet);
       hptGammaW[1]->Fill(etajet,jg->GetWeight());
-      hptGamma[2]->Fill(em/(em+had));
-      hptGammaW[2]->Fill(em/(em+had),jg->GetWeight());
-      hptGamma2D->Fill(jg->GetTruth(),em/(em+had));
-      hptGamma2DW->Fill(jg->GetTruth(),em/(em+had),jg->GetWeight());
     } // end of loop over all fit-events
 
   // Fill energy in rings around jet axis
@@ -1430,127 +1495,129 @@ void TControlPlots::MakeControlPlotsGammaJet()
   leg->AddEntry(heta[2],mPtRatioName[2],"p");
   leg->AddEntry(heta[1],mPtRatioName[1],"p");
 
-  for(int i = 0 ; i < 12 ; i += 3) // Loop over Etgamma bins
+  if( plottedQuant.count("eta") > 0 )
     {
-      for(int a = 0; a < 3; a++) // Loop over Pt ratios
+      for(int i = 0 ; i < 12 ; i += 3) // Loop over Etgamma bins
 	{
-	  heta[i+a]->SetMinimum(0.5);
-	  heta[i+a]->SetMaximum(1.2);
-	  heta[i+a]->SetMarkerStyle(markerStyle[a]);
-	  heta[i+a]->SetMarkerColor(markerColor[a]);
-	  heta[i+a]->SetLineColor(markerColor[a]);
-	}
-
-      // Do projections and determine control quantities
-      Fit2D(heta[i],hists_eta[i],gp_eta[i], gf_eta[i]);
-      Fit2D(heta[i+1],hists_eta[i+1],gp_eta[i+1], gf_eta[i+1]);
-      Fit2D(heta[i+2],hists_eta[i+2],gp_eta[i+2], gf_eta[i+2]); 
-
-      // Set axis ranges
-      for(int a = 0; a<3;++a)
-	{
-	  for(int b = 0 ; b < 4 ; ++b)
+	  for(int a = 0; a < 3; a++) // Loop over Pt ratios
 	    {
-	      hists_eta[a+i][b]->SetMinimum(0.2);
-	      hists_eta[a+i][b]->SetMaximum(1.8);
-	      ++b;
-	      hists_eta[a+i][b]->SetMinimum(0.0);
-	      hists_eta[a+i][b]->SetMaximum(0.5);
+	      heta[i+a]->SetMinimum(0.5);
+	      heta[i+a]->SetMaximum(1.2);
+	      heta[i+a]->SetMarkerStyle(markerStyle[a]);
+	      heta[i+a]->SetMarkerColor(markerColor[a]);
+	      heta[i+a]->SetLineColor(markerColor[a]);
+	    }
+
+	  // Do projections and determine control quantities
+	  Fit2D(heta[i],hists_eta[i],gp_eta[i], gf_eta[i]);
+	  Fit2D(heta[i+1],hists_eta[i+1],gp_eta[i+1], gf_eta[i+1]);
+	  Fit2D(heta[i+2],hists_eta[i+2],gp_eta[i+2], gf_eta[i+2]); 
+
+	  // Set axis ranges
+	  for(int a = 0; a<3;++a)
+	    {
+	      for(int b = 0 ; b < 4 ; ++b)
+		{
+		  hists_eta[a+i][b]->SetMinimum(0.2);
+		  hists_eta[a+i][b]->SetMaximum(1.8);
+		  ++b;
+		  hists_eta[a+i][b]->SetMinimum(0.0);
+		  hists_eta[a+i][b]->SetMaximum(0.5);
+		}
+	    }
+
+	  // Draw gaussplots for example eta bins
+	  // on multi-canvas
+	  for(int a = 0; a < 3; a++) // Loop over ptratios
+	    {
+	      for(int b = 0; b < 3; b++) // Loop over example eta bins
+		{
+		  // Find eta bin of gaussplot
+		  int bin = 0;
+		  if(  b == 0  )  bin = int(heta[i+a]->GetNbinsX()/6);
+		  else if(  b == 1  )  bin = int(heta[i+a]->GetNbinsX()/3);
+		  else if(  b == 2  )  bin = int(heta[i+a]->GetNbinsX()/2);
+		  float etaMin = heta[i+a]->GetXaxis()->GetBinLowEdge(bin);
+		  float etaMax = etaMin + heta[i+a]->GetXaxis()->GetBinWidth(bin);
+
+		  // Set title according to energy and eta bin
+		  if( i == 0 )  sprintf(title,"#gamma-jet, %.2f < #eta < %.2f",etaMin,etaMax);
+		  else sprintf(title,"#gamma-jet, %i < E_{T}^{#gamma} < %i GeV, %.2f < #eta < %.2f",
+			       etLimit[int(i/3)-1],etLimit[int(i/3)],etaMin,etaMax);
+		  gp_eta[i+a][b]->SetTitle(title);
+		  gp_eta[i+a][b]->SetXTitle(mPtRatioName[a]);
+
+		  // Set style and line color according to mPtRatioName
+		  gp_eta[i+a][b]->SetMarkerStyle(markerStyle[a]);
+		  gp_eta[i+a][b]->SetMarkerColor(markerColor[a]);
+		  gp_eta[i+a][b]->SetLineColor(markerColor[a]);
+		  gf_eta[i+a][b]->SetLineColor(markerColor[a]);
+
+		  // Plot gaussplots_eta
+		  c2->cd(1+b);
+		  gp_eta[i+a][b]->Draw();
+		  gf_eta[i+a][b]->Draw("same");
+
+		  objToBeWritten.push_back(gp_eta[i+a][b]);
+		  objToBeWritten.push_back(gf_eta[i+a][b]);
+		} // End of loop over example eta bins
+	      c2->Draw();
+	      ps->NewPage();
+	    } // End of loop over ptratios
+
+	  // Draw control quantities
+	  c1->cd();
+	  for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
+	    {
+	      hists_eta[i][j]->Draw("P");
+	      hists_eta[i][j]->SetStats(0);
+	      hists_eta[i+1][j]->Draw("P SAME");
+	      hists_eta[i+2][j]->Draw("P SAME");
+	      leg->Draw("SAME");
+	      c1->SetGrid();
+	      c1->Draw();   
+	      ps->NewPage(); 
+
+	      objToBeWritten.push_back(hists_eta[i][j]);
+	      objToBeWritten.push_back(hists_eta[i+1][j]);
+	      objToBeWritten.push_back(hists_eta[i+2][j]);
+	    }
+	} // End loop over Etgamma bins
+	 
+
+      //Comparison of control quantities in Etgamma bins
+      //and Pt ratio bins
+      TLegend* leg2 = new TLegend(0.7,0.68,0.96,0.9);
+      leg2->SetFillColor(0);
+      for(int i = 0; i < 3; i++)
+	{
+	  sprintf(title,"%i < E_{T}^{#gamma} < %i GeV",etLimit[i],etLimit[i+1]);
+	  leg2->AddEntry(hists_eta[i][0],title,"P");
+	}
+	    
+      for(int a = 3 ; a < 5 ; ++a) // Loop over ptratio bins
+	{
+	  for(int b = 0 ; b < 8 ; ++b) // Loop over control quantites
+	    {
+	      for(int c = 0; c < 7; c += 3) // Loop over etgamma bins
+		{
+		  TH1F *h = static_cast<TH1F*>(hists_eta[a+c][b]->Clone("h"));
+		  h->SetTitle("#gamma-jet,  " + mPtRatioName[a-3] + " " + mControlQuantityName[b]);
+		  h->SetMarkerStyle(markerStyle[c/3]);
+		  h->SetMarkerColor(markerColor[c/3]);
+		  h->SetLineColor(markerColor[c/3]);
+		  if( c == 0 ) h->Draw("P");
+		  else h->Draw("P SAME");
+		  h->SetStats(0);
+		}
+	      leg2->Draw("SAME");
+	      c1->SetGrid();
+	      c1->Draw();   
+	      ps->NewPage();
 	    }
 	}
-
-      // Draw gaussplots for example eta bins
-      // on multi-canvas
-      for(int a = 0; a < 3; a++) // Loop over ptratios
-	{
-	  for(int b = 0; b < 3; b++) // Loop over example eta bins
-	    {
-	      // Find eta bin of gaussplot
-	      int bin = 0;
-	      if(  b == 0  )  bin = int(heta[i+a]->GetNbinsX()/6);
-	      else if(  b == 1  )  bin = int(heta[i+a]->GetNbinsX()/3);
-	      else if(  b == 2  )  bin = int(heta[i+a]->GetNbinsX()/2);
-	      float etaMin = heta[i+a]->GetXaxis()->GetBinLowEdge(bin);
-	      float etaMax = etaMin + heta[i+a]->GetXaxis()->GetBinWidth(bin);
-
-	      // Set title according to energy and eta bin
-	      if( i == 0 )  sprintf(title,"#gamma-jet, %.2f < #eta < %.2f",etaMin,etaMax);
-	      else sprintf(title,"#gamma-jet, %i < E_{T}^{#gamma} < %i GeV, %.2f < #eta < %.2f",
-			   etLimit[int(i/3)-1],etLimit[int(i/3)],etaMin,etaMax);
-	      gp_eta[i+a][b]->SetTitle(title);
-	      gp_eta[i+a][b]->SetXTitle(mPtRatioName[a]);
-
-	      // Set style and line color according to mPtRatioName
-	      gp_eta[i+a][b]->SetMarkerStyle(markerStyle[a]);
-	      gp_eta[i+a][b]->SetMarkerColor(markerColor[a]);
-	      gp_eta[i+a][b]->SetLineColor(markerColor[a]);
-	      gf_eta[i+a][b]->SetLineColor(markerColor[a]);
-
-	      // Plot gaussplots_eta
-	      c2->cd(1+b);
-	      gp_eta[i+a][b]->Draw();
-	      gf_eta[i+a][b]->Draw("same");
-
-	      objToBeWritten.push_back(gp_eta[i+a][b]);
-	      objToBeWritten.push_back(gf_eta[i+a][b]);
-	    } // End of loop over example eta bins
-	  c2->Draw();
-	  ps->NewPage();
-	} // End of loop over ptratios
-
-      // Draw control quantities
-      c1->cd();
-      for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
-	{
-	  hists_eta[i][j]->Draw("P");
-	  hists_eta[i][j]->SetStats(0);
-	  hists_eta[i+1][j]->Draw("P SAME");
-	  hists_eta[i+2][j]->Draw("P SAME");
-	  leg->Draw("SAME");
-	  c1->SetGrid();
-	  c1->Draw();   
-	  ps->NewPage(); 
-
-	  objToBeWritten.push_back(hists_eta[i][j]);
-	  objToBeWritten.push_back(hists_eta[i+1][j]);
-	  objToBeWritten.push_back(hists_eta[i+2][j]);
-	}
-    } // End loop over Etgamma bins
-
-
-  //Comparison of control quantities in Etgamma bins
-  //and Pt ratio bins
-  TLegend* leg2 = new TLegend(0.7,0.68,0.96,0.9);
-  leg2->SetFillColor(0);
-  for(int i = 0; i < 3; i++)
-    {
-      sprintf(title,"%i < E_{T}^{#gamma} < %i GeV",etLimit[i],etLimit[i+1]);
-      leg2->AddEntry(hists_eta[i][0],title,"P");
+      delete leg2;
     }
-
-  for(int a = 3 ; a < 5 ; ++a) // Loop over ptratio bins
-    {
-      for(int b = 0 ; b < 8 ; ++b) // Loop over control quantites
-	{
-	  for(int c = 0; c < 7; c += 3) // Loop over etgamma bins
-	    {
-	      TH1F *h = static_cast<TH1F*>(hists_eta[a+c][b]->Clone("h"));
-	      h->SetTitle("#gamma-jet,  " + mPtRatioName[a-3] + " " + mControlQuantityName[b]);
-	      h->SetMarkerStyle(markerStyle[c/3]);
-	      h->SetMarkerColor(markerColor[c/3]);
-	      h->SetLineColor(markerColor[c/3]);
-	      if( c == 0 ) h->Draw("P");
-	      else h->Draw("P SAME");
-	      h->SetStats(0);
-	    }
-	  leg2->Draw("SAME");
-	  c1->SetGrid();
-	  c1->Draw();   
-	  ps->NewPage();
-	}
-    }
-  delete leg2;
-
 
 
   // Control quantities from the Pt ratio vs uncorrected
@@ -1574,97 +1641,99 @@ void TControlPlots::MakeControlPlotsGammaJet()
   TH1F* gp_ptuncorr[12][4];  
   TF1* gf_ptuncorr[12][4];
 
-  for(int i = 0 ; i < 12 ; i+= 3)  // Loop over eta-bins
+  if( plottedQuant.count("uncorrected jet pt") > 0 )
     {
-      for(int a = 0; a < 3; a++) // Loop over Pt ratios
+      for(int i = 0 ; i < 12 ; i+= 3)  // Loop over eta-bins
 	{
-	  hpt_uncorr[i+a]->SetMinimum(0.5);
-	  hpt_uncorr[i+a]->SetMaximum(1.2);
-	  hpt_uncorr[i+a]->SetMarkerStyle(markerStyle[a]);
-	  hpt_uncorr[i+a]->SetMarkerColor(markerColor[a]);
-	  hpt_uncorr[i+a]->SetLineColor(markerColor[a]);
-	}
-
-      // Do projections and determine control quantities
-      Fit2D(hpt_uncorr[i],hists_ptuncorr[i],gp_ptuncorr[i], gf_ptuncorr[i]);
-      Fit2D(hpt_uncorr[i+1],hists_ptuncorr[i+1],gp_ptuncorr[i+1], gf_ptuncorr[i+1]);
-      Fit2D(hpt_uncorr[i+2],hists_ptuncorr[i+2],gp_ptuncorr[i+2], gf_ptuncorr[i+2]); 
-      for(int a = 0; a<3;++a)
-	{
-	  for(int b = 0 ; b < 4 ; ++b)
+	  for(int a = 0; a < 3; a++) // Loop over Pt ratios
 	    {
-	      hists_ptuncorr[a+i][b]->SetMinimum(0.2);
-	      hists_ptuncorr[a+i][b]->SetMaximum(1.8);
-	      ++b;
-	      hists_ptuncorr[a+i][b]->SetMinimum(0.0);
-	      hists_ptuncorr[a+i][b]->SetMaximum(0.5);
+	      hpt_uncorr[i+a]->SetMinimum(0.5);
+	      hpt_uncorr[i+a]->SetMaximum(1.2);
+	      hpt_uncorr[i+a]->SetMarkerStyle(markerStyle[a]);
+	      hpt_uncorr[i+a]->SetMarkerColor(markerColor[a]);
+	      hpt_uncorr[i+a]->SetLineColor(markerColor[a]);
 	    }
-	}
 
-      // Draw gaussplots for example pt bins
-      // on multi-canvas
-      for(int a = 0; a < 3; a++) // Loop over ptratios
-	{
-	  for(int b = 0; b < 3; b++) // Loop over example pt bins
+	  // Do projections and determine control quantities
+	  Fit2D(hpt_uncorr[i],hists_ptuncorr[i],gp_ptuncorr[i], gf_ptuncorr[i]);
+	  Fit2D(hpt_uncorr[i+1],hists_ptuncorr[i+1],gp_ptuncorr[i+1], gf_ptuncorr[i+1]);
+	  Fit2D(hpt_uncorr[i+2],hists_ptuncorr[i+2],gp_ptuncorr[i+2], gf_ptuncorr[i+2]); 
+	  for(int a = 0; a<3;++a)
 	    {
-	      // Find pt bin of gaussplot
-	      int bin = 0;
-	      if(  b == 0  )  bin = int(hpt_uncorr[i+a]->GetNbinsX()/6);
-	      else if(  b == 1  )  bin = int(hpt_uncorr[i+a]->GetNbinsX()/3);
-	      else if(  b == 2  )  bin = int(hpt_uncorr[i+a]->GetNbinsX()/2);
-	      float min = hpt_uncorr[i+a]->GetXaxis()->GetBinLowEdge(bin);
-	      float max = min + hpt_uncorr[i+a]->GetXaxis()->GetBinWidth(bin);
+	      for(int b = 0 ; b < 4 ; ++b)
+		{
+		  hists_ptuncorr[a+i][b]->SetMinimum(0.2);
+		  hists_ptuncorr[a+i][b]->SetMaximum(1.8);
+		  ++b;
+		  hists_ptuncorr[a+i][b]->SetMinimum(0.0);
+		  hists_ptuncorr[a+i][b]->SetMaximum(0.5);
+		}
+	    }
 
-	      // Set title according to energy and pt bin
-	      if( i == 0 )      sprintf(title,"#gamma-jet, %.1f < p^{jet}_{T} < %.1f GeV",min,max);
-	      else if( i == 3 ) sprintf(title,
-					"#gamma-jet, |#eta| < 1.4, %.1f < p^{jet}_{T} < %.1f GeV",
-					min,max);
-	      else if( i == 6 ) sprintf(title,
-					"#gamma-jet, 1.4 < |#eta| < 3.0, %.1f < p^{jet}_{T} < %.1f GeV",
-					min,max);
-	      else if( i == 9 ) sprintf(title,
-					"#gamma-jet, 3.0 < |#eta|, %.1f < p^{jet}_{T} < %.1f GeV",
-					min,max);
-	      gp_ptuncorr[i+a][b]->SetTitle(title);
-	      gp_ptuncorr[i+a][b]->SetXTitle(mPtRatioName[a]);
+	  // Draw gaussplots for example pt bins
+	  // on multi-canvas
+	  for(int a = 0; a < 3; a++) // Loop over ptratios
+	    {
+	      for(int b = 0; b < 3; b++) // Loop over example pt bins
+		{
+		  // Find pt bin of gaussplot
+		  int bin = 0;
+		  if(  b == 0  )  bin = int(hpt_uncorr[i+a]->GetNbinsX()/6);
+		  else if(  b == 1  )  bin = int(hpt_uncorr[i+a]->GetNbinsX()/3);
+		  else if(  b == 2  )  bin = int(hpt_uncorr[i+a]->GetNbinsX()/2);
+		  float min = hpt_uncorr[i+a]->GetXaxis()->GetBinLowEdge(bin);
+		  float max = min + hpt_uncorr[i+a]->GetXaxis()->GetBinWidth(bin);
 
-	      // Set style and line color according to mPtRatioName
-	      gp_ptuncorr[i+a][b]->SetMarkerStyle(markerStyle[a]);
-	      gp_ptuncorr[i+a][b]->SetMarkerColor(markerColor[a]);
-	      gp_ptuncorr[i+a][b]->SetLineColor(markerColor[a]);
-	      gf_ptuncorr[i+a][b]->SetLineColor(markerColor[a]);
+		  // Set title according to energy and pt bin
+		  if( i == 0 )      sprintf(title,"#gamma-jet, %.1f < p^{jet}_{T} < %.1f GeV",min,max);
+		  else if( i == 3 ) sprintf(title,
+					    "#gamma-jet, |#eta| < 1.4, %.1f < p^{jet}_{T} < %.1f GeV",
+					    min,max);
+		  else if( i == 6 ) sprintf(title,
+					    "#gamma-jet, 1.4 < |#eta| < 3.0, %.1f < p^{jet}_{T} < %.1f GeV",
+					    min,max);
+		  else if( i == 9 ) sprintf(title,
+					    "#gamma-jet, 3.0 < |#eta|, %.1f < p^{jet}_{T} < %.1f GeV",
+					    min,max);
+		  gp_ptuncorr[i+a][b]->SetTitle(title);
+		  gp_ptuncorr[i+a][b]->SetXTitle(mPtRatioName[a]);
 
-	      // Plot gaussplots
-	      c2->cd(1+b);
-	      gp_ptuncorr[i+a][b]->Draw();
-	      gf_ptuncorr[i+a][b]->Draw("same");
+		  // Set style and line color according to mPtRatioName
+		  gp_ptuncorr[i+a][b]->SetMarkerStyle(markerStyle[a]);
+		  gp_ptuncorr[i+a][b]->SetMarkerColor(markerColor[a]);
+		  gp_ptuncorr[i+a][b]->SetLineColor(markerColor[a]);
+		  gf_ptuncorr[i+a][b]->SetLineColor(markerColor[a]);
 
-	      objToBeWritten.push_back(gp_ptuncorr[i+a][b]);
-	      objToBeWritten.push_back(gf_ptuncorr[i+a][b]);
-	    } // End of loop over example ptbins
-	  c2->Draw();
-	  ps->NewPage();
-	} // End of loop over ptratios
+		  // Plot gaussplots
+		  c2->cd(1+b);
+		  gp_ptuncorr[i+a][b]->Draw();
+		  gf_ptuncorr[i+a][b]->Draw("same");
 
-      c1->cd();
-      for(int j = 0 ; j < 8 ; ++j)
-	{
-	  hists_ptuncorr[i][j]->Draw("P");
-	  hists_ptuncorr[i][j]->SetStats(0);
-	  hists_ptuncorr[i+1][j]->Draw("P SAME");
-	  hists_ptuncorr[i+2][j]->Draw("P SAME");
-	  leg->Draw("SAME");
-	  c1->SetGrid();
-	  c1->Draw();   
-	  ps->NewPage(); 
+		  objToBeWritten.push_back(gp_ptuncorr[i+a][b]);
+		  objToBeWritten.push_back(gf_ptuncorr[i+a][b]);
+		} // End of loop over example ptbins
+	      c2->Draw();
+	      ps->NewPage();
+	    } // End of loop over ptratios
 
-	  objToBeWritten.push_back(hists_ptuncorr[i][j]);
-	  objToBeWritten.push_back(hists_ptuncorr[i+1][j]);
-	  objToBeWritten.push_back(hists_ptuncorr[i+2][j]);
-	}
-    }   // End of loop over eta-bins
+	  c1->cd();
+	  for(int j = 0 ; j < 8 ; ++j)
+	    {
+	      hists_ptuncorr[i][j]->Draw("P");
+	      hists_ptuncorr[i][j]->SetStats(0);
+	      hists_ptuncorr[i+1][j]->Draw("P SAME");
+	      hists_ptuncorr[i+2][j]->Draw("P SAME");
+	      leg->Draw("SAME");
+	      c1->SetGrid();
+	      c1->Draw();   
+	      ps->NewPage(); 
 
+	      objToBeWritten.push_back(hists_ptuncorr[i][j]);
+	      objToBeWritten.push_back(hists_ptuncorr[i+1][j]);
+	      objToBeWritten.push_back(hists_ptuncorr[i+2][j]);
+	    }
+	}   // End of loop over eta-bins
+    }
 
 
 
@@ -1683,85 +1752,87 @@ void TControlPlots::MakeControlPlotsGammaJet()
   TH1F* gp_pttrue[3][4];  
   TF1* gf_pttrue[3][4];
 
-  for(int a = 0; a < 3; a++) // Loop over Pt ratios
+  if( plottedQuant.count("true jet pt") > 0 )
     {
-      hpt[a]->SetMinimum(0.5);
-      hpt[a]->SetMaximum(1.2);
-      hpt[a]->SetMarkerStyle(markerStyle[a]);
-      hpt[a]->SetMarkerColor(markerColor[a]);
-      hpt[a]->SetLineColor(markerColor[a]);
-    }
-
-  // Do projections and determine control quantities
-  Fit2D(hpt[0],hists_pttrue[0],gp_pttrue[0], gf_pttrue[0]);
-  Fit2D(hpt[1],hists_pttrue[1],gp_pttrue[1], gf_pttrue[1]);
-  Fit2D(hpt[2],hists_pttrue[2],gp_pttrue[2], gf_pttrue[2]); 
-  for(int a = 0; a<3;++a)
-    {
-      for(int b = 0 ; b < 4 ; ++b)
+      for(int a = 0; a < 3; a++) // Loop over Pt ratios
 	{
-	  hists_pttrue[a][b]->SetMinimum(0.2);
-	  hists_pttrue[a][b]->SetMaximum(1.8);
-	  ++b;
-	  hists_pttrue[a][b]->SetMinimum(0.0);
-	  hists_pttrue[a][b]->SetMaximum(0.5);
+	  hpt[a]->SetMinimum(0.5);
+	  hpt[a]->SetMaximum(1.2);
+	  hpt[a]->SetMarkerStyle(markerStyle[a]);
+	  hpt[a]->SetMarkerColor(markerColor[a]);
+	  hpt[a]->SetLineColor(markerColor[a]);
+	}
+
+      // Do projections and determine control quantities
+      Fit2D(hpt[0],hists_pttrue[0],gp_pttrue[0], gf_pttrue[0]);
+      Fit2D(hpt[1],hists_pttrue[1],gp_pttrue[1], gf_pttrue[1]);
+      Fit2D(hpt[2],hists_pttrue[2],gp_pttrue[2], gf_pttrue[2]); 
+      for(int a = 0; a<3;++a)
+	{
+	  for(int b = 0 ; b < 4 ; ++b)
+	    {
+	      hists_pttrue[a][b]->SetMinimum(0.2);
+	      hists_pttrue[a][b]->SetMaximum(1.8);
+	      ++b;
+	      hists_pttrue[a][b]->SetMinimum(0.0);
+	      hists_pttrue[a][b]->SetMaximum(0.5);
+	    }
+	}
+
+      // Draw gaussplots for example pt bins
+      // on multi-canvas
+      for(int a = 0; a < 3; a++) // Loop over ptratios
+	{
+	  for(int b = 0; b < 3; b++) // Loop over example pt bins
+	    {
+	      // Find pt bin of gaussplot
+	      int bin = 0;
+	      if(  b == 0  )  bin = int(hpt[a]->GetNbinsX()/6);
+	      else if(  b == 1  )  bin = int(hpt[a]->GetNbinsX()/3);
+	      else if(  b == 2  )  bin = int(hpt[a]->GetNbinsX()/2);
+	      float min = hpt[a]->GetXaxis()->GetBinLowEdge(bin);
+	      float max = min + hpt[a]->GetXaxis()->GetBinWidth(bin);
+
+	      // Set title according to pt bin
+	      sprintf(title,"#gamma-jet, %.1f < E^{#gamma}_{T} < %.1f GeV",min,max);
+	      gp_pttrue[a][b]->SetTitle(title);
+	      gp_pttrue[a][b]->SetXTitle(mPtRatioName[a]);
+
+	      // Set style and line color according to mPtRatioName
+	      gp_pttrue[a][b]->SetMarkerStyle(markerStyle[a]);
+	      gp_pttrue[a][b]->SetMarkerColor(markerColor[a]);
+	      gp_pttrue[a][b]->SetLineColor(markerColor[a]);
+	      gf_pttrue[a][b]->SetLineColor(markerColor[a]);
+
+	      // Plot gaussplots
+	      c2->cd(1+b);
+	      gp_pttrue[a][b]->Draw();
+	      gf_pttrue[a][b]->Draw("same");
+
+	      objToBeWritten.push_back(gp_pttrue[a][b]);
+	      objToBeWritten.push_back(gf_pttrue[a][b]);
+	    } // End of loop over example ptbins
+	  c2->Draw();
+	  ps->NewPage();
+	} // End of loop over ptratios
+
+      c1->cd();
+      for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
+	{
+	  hists_pttrue[0][j]->Draw("P");
+	  hists_pttrue[0][j]->SetStats(0);
+	  hists_pttrue[1][j]->Draw("P SAME");
+	  hists_pttrue[2][j]->Draw("P SAME");
+	  leg->Draw("SAME");
+	  c1->SetGrid();
+	  c1->Draw();   
+	  ps->NewPage(); 
+
+	  objToBeWritten.push_back(hists_pttrue[0][j]);
+	  objToBeWritten.push_back(hists_pttrue[1][j]);
+	  objToBeWritten.push_back(hists_pttrue[2][j]);
 	}
     }
-
-  // Draw gaussplots for example pt bins
-  // on multi-canvas
-  for(int a = 0; a < 3; a++) // Loop over ptratios
-    {
-      for(int b = 0; b < 3; b++) // Loop over example pt bins
-	{
-	  // Find pt bin of gaussplot
-	  int bin = 0;
-	  if(  b == 0  )  bin = int(hpt[a]->GetNbinsX()/6);
-	  else if(  b == 1  )  bin = int(hpt[a]->GetNbinsX()/3);
-	  else if(  b == 2  )  bin = int(hpt[a]->GetNbinsX()/2);
-	  float min = hpt[a]->GetXaxis()->GetBinLowEdge(bin);
-	  float max = min + hpt[a]->GetXaxis()->GetBinWidth(bin);
-
-	  // Set title according to pt bin
-	  sprintf(title,"#gamma-jet, %.1f < E^{#gamma}_{T} < %.1f GeV",min,max);
-	  gp_pttrue[a][b]->SetTitle(title);
-	  gp_pttrue[a][b]->SetXTitle(mPtRatioName[a]);
-
-	  // Set style and line color according to mPtRatioName
-	  gp_pttrue[a][b]->SetMarkerStyle(markerStyle[a]);
-	  gp_pttrue[a][b]->SetMarkerColor(markerColor[a]);
-	  gp_pttrue[a][b]->SetLineColor(markerColor[a]);
-	  gf_pttrue[a][b]->SetLineColor(markerColor[a]);
-
-	  // Plot gaussplots
-	  c2->cd(1+b);
-	  gp_pttrue[a][b]->Draw();
-	  gf_pttrue[a][b]->Draw("same");
-
-	  objToBeWritten.push_back(gp_pttrue[a][b]);
-	  objToBeWritten.push_back(gf_pttrue[a][b]);
-	} // End of loop over example ptbins
-      c2->Draw();
-      ps->NewPage();
-    } // End of loop over ptratios
-
-  c1->cd();
-  for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
-    {
-      hists_pttrue[0][j]->Draw("P");
-      hists_pttrue[0][j]->SetStats(0);
-      hists_pttrue[1][j]->Draw("P SAME");
-      hists_pttrue[2][j]->Draw("P SAME");
-      leg->Draw("SAME");
-      c1->SetGrid();
-      c1->Draw();   
-      ps->NewPage(); 
-
-      objToBeWritten.push_back(hists_pttrue[0][j]);
-      objToBeWritten.push_back(hists_pttrue[1][j]);
-      objToBeWritten.push_back(hists_pttrue[2][j]);
-    }
-
 
 
   // Control quantities from the Pt ratio vs Et gamma
@@ -1780,50 +1851,52 @@ void TControlPlots::MakeControlPlotsGammaJet()
   TH1F* gp_ptlog[3][4];  
   TF1* gf_ptlog[3][4];
 
-  for(int a = 0; a < 3; a++) // Loop over Pt ratios
+  if( plottedQuant.count("log true jet pt") > 0 )
     {
-      hptlog[a]->SetMinimum(0.5);
-      hptlog[a]->SetMaximum(1.2);
-      hptlog[a]->SetMarkerStyle(markerStyle[a]);
-      hptlog[a]->SetMarkerColor(markerColor[a]);
-      hptlog[a]->SetLineColor(markerColor[a]);
-    }
-
-  // Do projections and determine control quantities
-  Fit2D(hptlog[0],hists_ptlog[0],gp_ptlog[0], gf_ptlog[0]);
-  Fit2D(hptlog[1],hists_ptlog[1],gp_ptlog[1], gf_ptlog[1]);
-  Fit2D(hptlog[2],hists_ptlog[2],gp_ptlog[2], gf_ptlog[2]); 
-  for(int a = 0; a<3;++a)
-    {
-      for(int b = 0 ; b < 4 ; ++b)
+      for(int a = 0; a < 3; a++) // Loop over Pt ratios
 	{
-	  hists_ptlog[a][b]->SetMinimum(0.2);
-	  hists_ptlog[a][b]->SetMaximum(1.8);
-	  ++b;
-	  hists_ptlog[a][b]->SetMinimum(0.0);
-	  hists_ptlog[a][b]->SetMaximum(0.5);
+	  hptlog[a]->SetMinimum(0.5);
+	  hptlog[a]->SetMaximum(1.2);
+	  hptlog[a]->SetMarkerStyle(markerStyle[a]);
+	  hptlog[a]->SetMarkerColor(markerColor[a]);
+	  hptlog[a]->SetLineColor(markerColor[a]);
 	}
+
+      // Do projections and determine control quantities
+      Fit2D(hptlog[0],hists_ptlog[0],gp_ptlog[0], gf_ptlog[0]);
+      Fit2D(hptlog[1],hists_ptlog[1],gp_ptlog[1], gf_ptlog[1]);
+      Fit2D(hptlog[2],hists_ptlog[2],gp_ptlog[2], gf_ptlog[2]); 
+      for(int a = 0; a<3;++a)
+	{
+	  for(int b = 0 ; b < 4 ; ++b)
+	    {
+	      hists_ptlog[a][b]->SetMinimum(0.2);
+	      hists_ptlog[a][b]->SetMaximum(1.8);
+	      ++b;
+	      hists_ptlog[a][b]->SetMinimum(0.0);
+	      hists_ptlog[a][b]->SetMaximum(0.5);
+	    }
+	}
+
+      c1->cd();
+      for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
+	{
+	  hists_ptlog[0][j]->Draw("P");
+	  hists_ptlog[0][j]->SetStats(0);
+	  hists_ptlog[1][j]->Draw("P SAME");
+	  hists_ptlog[2][j]->Draw("P SAME");
+	  leg->Draw("SAME");
+	  c1->SetGrid();
+	  c1->SetLogx(1);
+	  c1->Draw();   
+	  ps->NewPage(); 
+
+	  objToBeWritten.push_back(hists_ptlog[0][j]);
+	  objToBeWritten.push_back(hists_ptlog[1][j]);
+	  objToBeWritten.push_back(hists_ptlog[2][j]);
+	}
+      c1->SetLogx(0);
     }
-
-  c1->cd();
-  for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
-    {
-      hists_ptlog[0][j]->Draw("P");
-      hists_ptlog[0][j]->SetStats(0);
-      hists_ptlog[1][j]->Draw("P SAME");
-      hists_ptlog[2][j]->Draw("P SAME");
-      leg->Draw("SAME");
-      c1->SetGrid();
-      c1->SetLogx(1);
-      c1->Draw();   
-      ps->NewPage(); 
-
-      objToBeWritten.push_back(hists_ptlog[0][j]);
-      objToBeWritten.push_back(hists_ptlog[1][j]);
-      objToBeWritten.push_back(hists_ptlog[2][j]);
-    }
-  c1->SetLogx(0);
-
 
 
   // Control quantities from the Pt ratio vs uncorrected
@@ -1842,85 +1915,87 @@ void TControlPlots::MakeControlPlotsGammaJet()
   TH1F* gp_energy[3][4];  
   TF1* gf_energy[3][4];
 
-  for(int a = 0; a < 3; a++) // Loop over Pt ratios
+  if( plottedQuant.count("uncorrected jet energy") > 0 )
     {
-      henergy[a]->SetMinimum(0.5);
-      henergy[a]->SetMaximum(1.2);
-      henergy[a]->SetMarkerStyle(markerStyle[a]);
-      henergy[a]->SetMarkerColor(markerColor[a]);
-      henergy[a]->SetLineColor(markerColor[a]);
-    }
-
-  // Do projections and determine control quantities
-  Fit2D(henergy[0],hists_energy[0],gp_energy[0], gf_energy[0]);
-  Fit2D(henergy[1],hists_energy[1],gp_energy[1], gf_energy[1]);
-  Fit2D(henergy[2],hists_energy[2],gp_energy[2], gf_energy[2]); 
-  for(int a = 0; a<3;++a)
-    {
-      for(int b = 0 ; b < 4 ; ++b)
+      for(int a = 0; a < 3; a++) // Loop over Pt ratios
 	{
-	  hists_energy[a][b]->SetMinimum(0.2);
-	  hists_energy[a][b]->SetMaximum(1.8);
-	  ++b;
-	  hists_energy[a][b]->SetMinimum(0.0);
-	  hists_energy[a][b]->SetMaximum(0.5);
+	  henergy[a]->SetMinimum(0.5);
+	  henergy[a]->SetMaximum(1.2);
+	  henergy[a]->SetMarkerStyle(markerStyle[a]);
+	  henergy[a]->SetMarkerColor(markerColor[a]);
+	  henergy[a]->SetLineColor(markerColor[a]);
+	}
+
+      // Do projections and determine control quantities
+      Fit2D(henergy[0],hists_energy[0],gp_energy[0], gf_energy[0]);
+      Fit2D(henergy[1],hists_energy[1],gp_energy[1], gf_energy[1]);
+      Fit2D(henergy[2],hists_energy[2],gp_energy[2], gf_energy[2]); 
+      for(int a = 0; a<3;++a)
+	{
+	  for(int b = 0 ; b < 4 ; ++b)
+	    {
+	      hists_energy[a][b]->SetMinimum(0.2);
+	      hists_energy[a][b]->SetMaximum(1.8);
+	      ++b;
+	      hists_energy[a][b]->SetMinimum(0.0);
+	      hists_energy[a][b]->SetMaximum(0.5);
+	    }
+	}
+
+      // Draw gaussplots for example energy bins
+      // on multi-canvas
+      for(int a = 0; a < 3; a++) // Loop over ptratios
+	{
+	  for(int b = 0; b < 3; b++) // Loop over example energy bins
+	    {
+	      // Find pt bin of gaussplot
+	      int bin = 0;
+	      if(  b == 0  )  bin = int(henergy[a]->GetNbinsX()/6);
+	      else if(  b == 1  )  bin = int(henergy[a]->GetNbinsX()/3);
+	      else if(  b == 2  )  bin = int(henergy[a]->GetNbinsX()/2);
+	      float min = henergy[a]->GetXaxis()->GetBinLowEdge(bin);
+	      float max = min + henergy[a]->GetXaxis()->GetBinWidth(bin);
+
+	      // Set title according to energy bin
+	      sprintf(title,"#gamma-jet, %.1f < E^{jet} < %.1f GeV",min,max);
+	      gp_energy[a][b]->SetTitle(title);
+	      gp_energy[a][b]->SetXTitle(mPtRatioName[a]);
+
+	      // Set style and line color according to mPtRatioName
+	      gp_energy[a][b]->SetMarkerStyle(markerStyle[a]);
+	      gp_energy[a][b]->SetMarkerColor(markerColor[a]);
+	      gp_energy[a][b]->SetLineColor(markerColor[a]);
+	      gf_energy[a][b]->SetLineColor(markerColor[a]);
+
+	      // Plot gaussplots
+	      c2->cd(1+b);
+	      gp_energy[a][b]->Draw();
+	      gf_energy[a][b]->Draw("same");
+
+	      objToBeWritten.push_back(gp_energy[a][b]);
+	      objToBeWritten.push_back(gf_energy[a][b]);
+	    } // End of loop over example ptbins
+	  c2->Draw();
+	  ps->NewPage();
+	} // End of loop over ptratios
+
+      c1->cd();
+      for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
+	{
+	  hists_energy[0][j]->Draw("P");
+	  hists_energy[0][j]->SetStats(0);
+	  hists_energy[1][j]->Draw("P SAME");
+	  hists_energy[2][j]->Draw("P SAME");
+	  leg->Draw("SAME");
+	  c1->SetGrid();
+	  c1->Draw();   
+	  ps->NewPage(); 
+
+	  objToBeWritten.push_back(hists_energy[0][j]);
+	  objToBeWritten.push_back(hists_energy[1][j]);
+	  objToBeWritten.push_back(hists_energy[2][j]);
 	}
     }
-
-  // Draw gaussplots for example energy bins
-  // on multi-canvas
-  for(int a = 0; a < 3; a++) // Loop over ptratios
-    {
-      for(int b = 0; b < 3; b++) // Loop over example energy bins
-	{
-	  // Find pt bin of gaussplot
-	  int bin = 0;
-	  if(  b == 0  )  bin = int(henergy[a]->GetNbinsX()/6);
-	  else if(  b == 1  )  bin = int(henergy[a]->GetNbinsX()/3);
-	  else if(  b == 2  )  bin = int(henergy[a]->GetNbinsX()/2);
-	  float min = henergy[a]->GetXaxis()->GetBinLowEdge(bin);
-	  float max = min + henergy[a]->GetXaxis()->GetBinWidth(bin);
-
-	  // Set title according to energy bin
-	  sprintf(title,"#gamma-jet, %.1f < E^{jet} < %.1f GeV",min,max);
-	  gp_energy[a][b]->SetTitle(title);
-	  gp_energy[a][b]->SetXTitle(mPtRatioName[a]);
-
-	  // Set style and line color according to mPtRatioName
-	  gp_energy[a][b]->SetMarkerStyle(markerStyle[a]);
-	  gp_energy[a][b]->SetMarkerColor(markerColor[a]);
-	  gp_energy[a][b]->SetLineColor(markerColor[a]);
-	  gf_energy[a][b]->SetLineColor(markerColor[a]);
-
-	  // Plot gaussplots
-	  c2->cd(1+b);
-	  gp_energy[a][b]->Draw();
-	  gf_energy[a][b]->Draw("same");
-
-	  objToBeWritten.push_back(gp_energy[a][b]);
-	  objToBeWritten.push_back(gf_energy[a][b]);
-	} // End of loop over example ptbins
-      c2->Draw();
-      ps->NewPage();
-    } // End of loop over ptratios
-
-  c1->cd();
-  for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
-    {
-      hists_energy[0][j]->Draw("P");
-      hists_energy[0][j]->SetStats(0);
-      hists_energy[1][j]->Draw("P SAME");
-      hists_energy[2][j]->Draw("P SAME");
-      leg->Draw("SAME");
-      c1->SetGrid();
-      c1->Draw();   
-      ps->NewPage(); 
-
-      objToBeWritten.push_back(hists_energy[0][j]);
-      objToBeWritten.push_back(hists_energy[1][j]);
-      objToBeWritten.push_back(hists_energy[2][j]);
-    }
-
 
 
 
@@ -1939,86 +2014,88 @@ void TControlPlots::MakeControlPlotsGammaJet()
   TH1F* gp_emf[3][4];  
   TF1* gf_emf[3][4];
 
-  for(int a = 0; a < 3; a++) // Loop over Pt ratios
+  if( plottedQuant.count("emf") > 0 )
     {
-      hemf[a]->SetMinimum(0.5);
-      hemf[a]->SetMaximum(1.2);
-      hemf[a]->SetMarkerStyle(markerStyle[a]);
-      hemf[a]->SetMarkerColor(markerColor[a]);
-      hemf[a]->SetLineColor(markerColor[a]);
-    }
-
-  // Do projections and determine control quantities
-  Fit2D(hemf[0],hists_emf[0],gp_emf[0], gf_emf[0]);
-  Fit2D(hemf[1],hists_emf[1],gp_emf[1], gf_emf[1]);
-  Fit2D(hemf[2],hists_emf[2],gp_emf[2], gf_emf[2]); 
-  for(int a = 0; a<3;++a)
-    {
-      for(int b = 0 ; b < 4 ; ++b)
+      for(int a = 0; a < 3; a++) // Loop over Pt ratios
 	{
-	  hists_emf[a][b]->SetMinimum(0.2);
-	  hists_emf[a][b]->SetMaximum(1.8);
-	  ++b;
-	  hists_emf[a][b]->SetMinimum(0.0);
-	  hists_emf[a][b]->SetMaximum(0.5);
+	  hemf[a]->SetMinimum(0.5);
+	  hemf[a]->SetMaximum(1.2);
+	  hemf[a]->SetMarkerStyle(markerStyle[a]);
+	  hemf[a]->SetMarkerColor(markerColor[a]);
+	  hemf[a]->SetLineColor(markerColor[a]);
 	}
-    }
 
-  // Draw gaussplots for example emf bins
-  // on multi-canvas
-  for(int a = 0; a < 3; a++) // Loop over ptratios
-    {
-      for(int b = 0; b < 3; b++) // Loop over example emf bins
+      // Do projections and determine control quantities
+      Fit2D(hemf[0],hists_emf[0],gp_emf[0], gf_emf[0]);
+      Fit2D(hemf[1],hists_emf[1],gp_emf[1], gf_emf[1]);
+      Fit2D(hemf[2],hists_emf[2],gp_emf[2], gf_emf[2]); 
+      for(int a = 0; a<3;++a)
 	{
-	  // Find emf bin of gaussplot
-	  int bin = 0;
-	  if(  b == 0  )  bin = int(hemf[a]->GetNbinsX()/6);
-	  else if(  b == 1  )  bin = int(hemf[a]->GetNbinsX()/3);
-	  else if(  b == 2  )  bin = int(hemf[a]->GetNbinsX()/2);
-	  float min = hemf[a]->GetXaxis()->GetBinLowEdge(bin);
-	  float max = min + hemf[a]->GetXaxis()->GetBinWidth(bin);
+	  for(int b = 0 ; b < 4 ; ++b)
+	    {
+	      hists_emf[a][b]->SetMinimum(0.2);
+	      hists_emf[a][b]->SetMaximum(1.8);
+	      ++b;
+	      hists_emf[a][b]->SetMinimum(0.0);
+	      hists_emf[a][b]->SetMaximum(0.5);
+	    }
+	}
 
-	  // Set title according to emf bin
-	  sprintf(title,"#gamma-jet, %.2f < f_{em} < %.2f",min,max);
-	  gp_emf[a][b]->SetTitle(title);
-	  gp_emf[a][b]->SetXTitle(mPtRatioName[a]);
+      // Draw gaussplots for example emf bins
+      // on multi-canvas
+      for(int a = 0; a < 3; a++) // Loop over ptratios
+	{
+	  for(int b = 0; b < 3; b++) // Loop over example emf bins
+	    {
+	      // Find emf bin of gaussplot
+	      int bin = 0;
+	      if(  b == 0  )  bin = int(hemf[a]->GetNbinsX()/6);
+	      else if(  b == 1  )  bin = int(hemf[a]->GetNbinsX()/3);
+	      else if(  b == 2  )  bin = int(hemf[a]->GetNbinsX()/2);
+	      float min = hemf[a]->GetXaxis()->GetBinLowEdge(bin);
+	      float max = min + hemf[a]->GetXaxis()->GetBinWidth(bin);
 
-	  // Set style and line color according to mPtRatioName
-	  gp_emf[a][b]->SetMarkerStyle(markerStyle[a]);
-	  gp_emf[a][b]->SetMarkerColor(markerColor[a]);
-	  gp_emf[a][b]->SetLineColor(markerColor[a]);
-	  gf_emf[a][b]->SetLineColor(markerColor[a]);
+	      // Set title according to emf bin
+	      sprintf(title,"#gamma-jet, %.2f < f_{em} < %.2f",min,max);
+	      gp_emf[a][b]->SetTitle(title);
+	      gp_emf[a][b]->SetXTitle(mPtRatioName[a]);
 
-	  // Plot gaussplots
-	  c2->cd(1+b);
-	  gp_emf[a][b]->Draw();
-	  gf_emf[a][b]->Draw("same");
+	      // Set style and line color according to mPtRatioName
+	      gp_emf[a][b]->SetMarkerStyle(markerStyle[a]);
+	      gp_emf[a][b]->SetMarkerColor(markerColor[a]);
+	      gp_emf[a][b]->SetLineColor(markerColor[a]);
+	      gf_emf[a][b]->SetLineColor(markerColor[a]);
 
-	  objToBeWritten.push_back(gp_emf[a][b]);
-	  objToBeWritten.push_back(gf_emf[a][b]);
-	} // End of loop over example emf bins
-      c2->Draw();
-      ps->NewPage();
-    } // End of loop over ptratios
+	      // Plot gaussplots
+	      c2->cd(1+b);
+	      gp_emf[a][b]->Draw();
+	      gf_emf[a][b]->Draw("same");
 
-  c1->cd();
-  for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
-    {
-      hists_emf[0][j]->Draw("P");
-      hists_emf[0][j]->SetStats(0);
-      hists_emf[1][j]->Draw("P SAME");
-      hists_emf[2][j]->Draw("P SAME");
-      leg->Draw("SAME");
-      c1->SetGrid();
-      c1->Draw();   
+	      objToBeWritten.push_back(gp_emf[a][b]);
+	      objToBeWritten.push_back(gf_emf[a][b]);
+	    } // End of loop over example emf bins
+	  c2->Draw();
+	  ps->NewPage();
+	} // End of loop over ptratios
+
+      c1->cd();
+      for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
+	{
+	  hists_emf[0][j]->Draw("P");
+	  hists_emf[0][j]->SetStats(0);
+	  hists_emf[1][j]->Draw("P SAME");
+	  hists_emf[2][j]->Draw("P SAME");
+	  leg->Draw("SAME");
+	  c1->SetGrid();
+	  c1->Draw();   
+	  ps->NewPage(); 
+
+	  objToBeWritten.push_back(hists_emf[0][j]);
+	  objToBeWritten.push_back(hists_emf[1][j]);
+	  objToBeWritten.push_back(hists_emf[2][j]);
+	}
       ps->NewPage(); 
-
-      objToBeWritten.push_back(hists_emf[0][j]);
-      objToBeWritten.push_back(hists_emf[1][j]);
-      objToBeWritten.push_back(hists_emf[2][j]);
     }
-  ps->NewPage(); 
-
 
 
 
@@ -2106,7 +2183,6 @@ void TControlPlots::MakeControlPlotsGammaJet()
   leg->AddEntry(htow[2],"50","p");
   leg->Draw("SAME");
   c1->Draw(); 
-  ps->Close();
 
 
   // Closing ps file and writing objects to .root file
@@ -2121,64 +2197,114 @@ void TControlPlots::MakeControlPlotsGammaJet()
       delete respvstet[i];
     }
   for(int i = 0; i < 21; i++) delete leadToNext[i];
-  for(int i = 0; i < 12; i++)
+  if( plottedQuant.count("eta") > 0 )
     {
-      delete heta[i];
-      delete hpt_uncorr[i];
+      for(int i = 0; i < 12; i++)
+	{
+	  delete heta[i];
+	  for(int j = 0; j < 4; j++)
+	    {
+	      delete hists_eta[i][j];
+	      delete hists_eta[i][j+4];
+	      delete gp_eta[i][j];
+	      delete gf_eta[i][j];
+	    }
+	}
+    } 
+
+  if( plottedQuant.count("uncorrected jet pt") > 0 )
+    {
+      for(int i = 0; i < 12; i++)
+	{
+	  delete hpt_uncorr[i];
+	  for(int j = 0; j < 4; j++)
+	    {
+	      delete hists_ptuncorr[i][j];
+	      delete hists_ptuncorr[i][j+4];
+	      delete gp_ptuncorr[i][j];
+	      delete gf_ptuncorr[i][j];
+	    }
+	}
     }
   delete EtaPhiMap;
-  for(int i = 0; i < 3; i++)
+  if( plottedQuant.count("true jet pt") > 0 )
     {
-      delete hpt[i];
-      delete henergy[i];
-      delete hemf[i];
-      delete hptlog[i];
-      delete hptGamma[i];
-      delete hptGammaW[i];
+      delete hpt[0];
+      delete hpt[1];
+      delete hpt[2];
+      for(int i = 0; i < 3; i++)
+	{
+	  for(int j = 0; j < 4; j++)
+	    {
+	      delete hists_pttrue[i][j];
+	      delete hists_pttrue[i][j+4];
+	      delete gp_pttrue[i][j];
+	      delete gf_pttrue[i][j];
+	    }
+	}
     }
+
+  if( plottedQuant.count("uncorrected jet energy") > 0 )
+    {
+      delete henergy[0];
+      delete henergy[1];
+      delete henergy[2];
+      for(int i = 0; i < 3; i++)
+	{
+	  for(int j = 0; j < 4; j++)
+	    {
+	      delete hists_energy[i][j];
+	      delete hists_energy[i][j+4];
+	      delete gp_energy[i][j];
+	      delete gf_energy[i][j];
+	    }
+	}
+    }
+
+  if( plottedQuant.count("log true jet pt") > 0 )
+    {
+      delete hptlog[0];
+      delete hptlog[1];
+      delete hptlog[2];
+      for(int i = 0; i < 3; i++)
+	{
+	  for(int j = 0; j < 4; j++)
+	    {
+	      delete hists_ptlog[i][j];
+	      delete hists_ptlog[i][j+4];
+	      delete gp_ptlog[i][j];
+	      delete gf_ptlog[i][j];
+	    }
+	}
+    }
+
+  if( plottedQuant.count("emf") > 0 )
+    {
+      delete hemf[0];
+      delete hemf[1];
+      delete hemf[2];
+      for(int i = 0; i < 3; i++)
+	{
+	  for(int j = 0; j < 4; j++)
+	    {
+	      delete hists_emf[i][j];
+	      delete hists_emf[i][j+4];
+	      delete gp_emf[i][j];
+	      delete gf_emf[i][j];
+	    }
+	}
+    }
+	  
+	  
+  delete hptGamma[0];
+  delete hptGamma[1];
+  delete hptGamma[2];
+  delete hptGammaW[0];
+  delete hptGammaW[1];
+  delete hptGammaW[2];
+    
   delete hptGamma2D;
   delete hptGamma2DW;
-
-  for(int i = 0; i < 12; i++)
-    {
-      for(int j = 0; j < 4; j++)
-	{
-	  delete hists_eta[i][j];
-	  delete hists_eta[i][j+4];
-	  delete gp_eta[i][j];
-	  delete gf_eta[i][j];
-
-	  delete hists_ptuncorr[i][j];
-	  delete hists_ptuncorr[i][j+4];
-	  delete gp_ptuncorr[i][j];
-	  delete gf_ptuncorr[i][j];
-	}
-    }          
-  for(int i = 0; i < 3; i++)
-    {
-      for(int j = 0; j < 4; j++)
-	{
-	  delete hists_pttrue[i][j];
-	  delete hists_pttrue[i][j+4];
-	  delete gp_pttrue[i][j];
-	  delete gf_pttrue[i][j];
-
-	  delete hists_ptlog[i][j];
-	  delete hists_ptlog[i][j+4];
-	  delete gp_ptlog[i][j];
-	  delete gf_ptlog[i][j];
-
-	  delete hists_energy[i][j];
-	  delete hists_energy[i][j+4];
-	  delete gp_energy[i][j];
-	  delete gf_energy[i][j];
-
-	  delete hists_emf[i][j];
-	  delete hists_emf[i][j+4];
-	  delete gp_emf[i][j];
-	  delete gf_emf[i][j];
-	}
-    }
   delete htow[0];
   delete htow[1];
   delete htow[2];
@@ -2189,10 +2315,10 @@ void TControlPlots::MakeControlPlotsGammaJet()
   delete c1;
   delete c2;
 }
+      
 
 
-
-//---------------------------------------------------------------
+      //---------------------------------------------------------------
 //   Gamma-Jet Control Histograms per tower bin
 //   orig name: gammajet_plots_per_towerbin.ps
 //---------------------------------------------------------------

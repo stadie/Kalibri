@@ -1,6 +1,7 @@
 #ifndef TControlPlots_NEW_h
 #define TControlPlots_NEW_h
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -21,7 +22,7 @@ public:
   ~TControlPlots();
 
   void MakeControlPlotsDiJet();
-  void MakeControlPlotsGammaJet();
+  void MakeControlPlotsGammaJet(const std::set<std::string>& plottedQuant);
   void MakeControlPlotsGammaJetPerJetBin();
   void MakeControlPlotsGammaJetPerTowerBin();
   void MakeControlPlotsGammaJetSigmas();

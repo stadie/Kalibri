@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.33 2008/09/15 12:26:58 stadie Exp $
+// $Id: Parameters.h,v 1.34 2008/09/17 16:10:07 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -132,6 +132,14 @@ public :
     //return 1e4/(1+exp(k* (par[0] - min))) + 1e4/(1+exp(-k* (par[0] - max));
   }
 
+  /// return upper or lower eta eta edge
+  float EtaEdge(int const etaBin, bool lowerEdge);
+  /// return upper edge of bin in eta
+  float EtaUpperEdge(int const etaBin) { return EtaEdge(etaBin, false); };
+  /// return lower edge of bin in eta
+  float EtaLowerEdge(int const etaBin) { return EtaEdge(etaBin, true ); };
+
+
 protected:
   TParameters(Parametrization* p) 
     : p(p),k(0),e(0),fitchi2(0) {
@@ -165,14 +173,6 @@ private:
   /// private functions
 
   void Init(const ConfigFile& config);
-
-  /// return upper or lower eta eta edge
-  float EtaEdge(int const etaBin, bool lowerEdge);
-  /// return upper edge of bin in eta
-  float EtaUpperEdge(int const etaBin) { return EtaEdge(etaBin, false); };
-  /// return lower edge of bin in eta
-  float EtaLowerEdge(int const etaBin) { return EtaEdge(etaBin, true ); };
-
 
   /// read predefined calibration constants from cfi file 
   void Read_CalibrationCfi(const std::string& file);

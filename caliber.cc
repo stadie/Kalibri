@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.48 2008/09/18 16:12:29 mschrode Exp $
+// $Id: caliber.cc,v 1.49 2008/09/19 14:00:39 thomsen Exp $
 //
 //
 // for profiling:
@@ -15,6 +15,7 @@
 //C++ libs
 #include <cmath>
 #include <iomanip>
+#include <set>
 #include <time.h>
 
 //Root libs
@@ -518,7 +519,7 @@ void TCaliber::Run_GammaJet()
     }
     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
     if(had/(had + em) < 0.07) { continue;}
-    if(had/(had + em) > 0.92) { continue;}
+    //if(had/(had + em) > 0.92) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
 
@@ -1284,32 +1285,44 @@ void TCaliber::Done()
     cout << endl << "Writing control plots in .ps " << flush;
     if( plots->OutputFormatRoot() ) cout << "and .root " << flush;
     cout << "format:" << endl;
-    cout << "Creating tower control plots... " << flush;
-    plots->MakeControlPlotsTowers();
-    cout << "ok" << endl;
-    if(n_gammajet_events!=0)
-      {
-	cout << "Creating gamma jet (tower bin) control plots... " << flush;
-	plots->MakeControlPlotsGammaJetPerTowerBin();
-	cout << "ok" << endl;
 
-	cout << "Creating gamma jet (jet bin) control plots... " << flush;
-	plots->MakeControlPlotsGammaJetPerJetBin();
-	cout << "ok" << endl;
+      if( makeControlPlotsTowers )
+	{
+	  cout << "Creating tower control plots... " << flush;
+	  plots->MakeControlPlotsTowers();
+	  cout << "ok" << endl;
+	}
+      if(n_gammajet_events!=0)
+	{
+	  if( makeControlPlotsGammaJet )
+	    {
+	      cout << "Creating more gamma jet control plots... " << flush;
+	      plots->MakeControlPlotsGammaJet(mPlottedQuant);
+	      cout << "ok" << endl;
+	    }
+	  if( makeControlPlotsGammaJet2 )
+	    {
+	      cout << "Creating gamma jet (tower bin) control plots... " << flush;
+	      plots->MakeControlPlotsGammaJetPerTowerBin();
+	      cout << "ok" << endl;
 
-	cout << "Creating more gamma jet control plots... " << flush;
-	plots->MakeControlPlotsGammaJet();
-	cout << "ok" << endl;
-
-	cout << "Creating even more gamma jet control plots (sigmas)... " << flush;
-	plots->MakeControlPlotsGammaJetSigmas();
-	cout << "ok" << endl;
+	      cout << "Creating gamma jet (jet bin) control plots... " << flush;
+	      plots->MakeControlPlotsGammaJetPerJetBin();
+	      cout << "ok" << endl;
+	      
+	      cout << "Creating even more gamma jet control plots (sigmas)... " << flush;
+	      plots->MakeControlPlotsGammaJetSigmas();
+	      cout << "ok" << endl;
+	    }
       }
     if (n_dijet_events!=0)   
       {
-	cout << "Creating di-jet control plots... " << flush;
-	plots->MakeControlPlotsDiJet();
-	cout << "ok" << endl;
+	if( makeControlPlotsDiJet )
+	  {
+	    cout << "Creating di-jet control plots... " << flush;
+	    plots->MakeControlPlotsDiJet();
+	    cout << "ok" << endl;
+	  }
       }
     if( makeControlPlotsParScan ) 
       {
@@ -1317,11 +1330,6 @@ void TCaliber::Done()
 	plots->MakeControlPlotsParameterScan();
 	cout << "ok" << endl;
       }
-    
-//     cout << "Creating track tower control plots,"<<endl;
-//     plots->TrackTowerControlPlots();
-//     cout << "Creating track cluster control plots,"<<endl;
-//     plots->TrackClusterControlPlots();
   }
   // Clean-up
   cout << endl << "Cleaning up... " << flush;
@@ -1340,10 +1348,23 @@ void TCaliber::Init(string file)
 
   p = TParameters::CreateParameters(file);
 
-  if(config.read<bool>("create plots",1)) {
-    plots = new TControlPlots(&data, p, config.read<bool>("plot output format",0));
-    makeControlPlotsParScan = config.read<bool>("create parameter scan plots",false);
-  }
+  if(config.read<bool>("create plots",1))
+    {
+      plots = new TControlPlots(&data, p, config.read<bool>("plot output format",0));
+      makeControlPlotsGammaJet = config.read<bool>("create gamma jet plots",false);
+      if( makeControlPlotsGammaJet )
+	{ 
+	  vector<std::string> tmpPlottedQuant = bag_of_string(config.read<std::string>( "gamma jet plotted quantities", ""));
+	  for(std::vector<std::string>::const_iterator it = tmpPlottedQuant.begin(); it < tmpPlottedQuant.end(); it++)
+	    {
+	      mPlottedQuant.insert(*it);
+	    }
+	}  				 
+      makeControlPlotsGammaJet2 = config.read<bool>("create more gamma jet plots",false);
+      makeControlPlotsDiJet = config.read<bool>("create dijet plots",false);
+      makeControlPlotsTowers = config.read<bool>("create tower plots",false);
+      makeControlPlotsParScan = config.read<bool>("create parameter scan plots",false);
+    }
 
   //initialize temp arrays for fast derivative calculation
   TData::total_n_pars     = p->GetNumberOfParameters();

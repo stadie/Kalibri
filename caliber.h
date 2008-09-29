@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.27 2008/08/05 08:46:35 auterman Exp $
+// $Id: caliber.h,v 1.28 2008/09/18 16:12:29 mschrode Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -20,6 +20,8 @@
 #include <map>
 #include <sstream>
 #include <cmath>
+#include <set>
+
 //Root
 #include "TMinuit.h"
 
@@ -38,7 +40,10 @@ class TData;
 
 class TCaliber {
 public :
-  TCaliber() : plots(0) {};
+  TCaliber()
+    : makeControlPlotsTowers(0), makeControlPlotsGammaJet(0), makeControlPlotsGammaJet2(0),
+      makeControlPlotsDiJet(0), makeControlPlotsParScan(0), plots(0)
+ {};
   ~TCaliber(){};
 
   void Init(std::string f);
@@ -83,7 +88,12 @@ private:
          Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster, Et_cut_on_Z,
          Rel_cut_on_gamma, Rel_cut_on_nJet;
   double RelWeight[7];//@@ Replace 7 by something meaningful
+  bool makeControlPlotsTowers;
+  bool makeControlPlotsGammaJet;
+  bool makeControlPlotsGammaJet2;
+  bool makeControlPlotsDiJet;
   bool makeControlPlotsParScan;
+  std::set<std::string> mPlottedQuant;
 
   std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals
   double OutlierChi2Cut;                            // Cut on outlier when no scaling is chosen
