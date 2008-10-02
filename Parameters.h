@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.34 2008/09/17 16:10:07 stadie Exp $
+// $Id: Parameters.h,v 1.35 2008/09/29 10:15:16 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -76,12 +76,32 @@ public :
   template<int Et> static const double const_error(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
     return Et;
   }
-  static const double tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {        
-    return (x[0]>0 ?  1.25 * sqrt( x[0])   :   1.25 * sqrt(-x[0]) );  
+  static const double tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) { 
+    return (x[0]>0 ?  1.25 * sqrt( x[0])   :   1.25 * sqrt(-x[0]) );
   }
   static const double jet_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
-    return (x[0]>0. ? 0.033*x[0] + 5.6   :   0.03*(-x[0]) + 5.6); 
+    return (x[0]>0. ? 0.033*x[0] + 5.6   :   0.033*(-x[0]) + 5.6 ); 
   }
+
+
+  static const double jet_only_tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) { 
+    return 0;
+  }
+  static const double jet_only_jet_error_parametrization_et(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
+    return (x[0]>0. ? 0.033*x[0] + 5.6 + 1.25 * sqrt( x[0])   :   0.033*(-x[0]) + 5.6 + 1.25 * sqrt( -x[0]) ); 
+  }
+  static const double jet_only_jet_error_parametrization_energy(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
+    double pmess;
+    if(std::abs(xorig->eta) < 3.0)  
+      pmess =  x[0] * xorig->E / (xorig->pt * xorig->pt) * (xorig->HadF + xorig->OutF); //Et->E hadronic
+    else
+      pmess =  x[0] * (xorig->E / xorig->pt);  //Et->E 
+    //constant before stochastic term is not properly knowen
+    return (x[0]>0. ? 0.033*x[0] + 5.6 + 1.0 * sqrt(pmess)  :   0.033*(-x[0]) + 5.6 + 1.0 * sqrt(-pmess) ); 
+  }
+
+
+
   static const double dummy_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {        
     return x[0];  
   }
@@ -89,6 +109,7 @@ public :
     return (xorig->pt==0. ? errorig : errorig*x[0]/xorig->pt );  
   }
   static const double jans_E_tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double errorig=0)  {
+    
     // E = x[0]*xorig[7];  x[0]=param. mess;    xorig == _mess
     double pmess;
     if(std::abs(xorig->eta) < 3.0)  
@@ -96,6 +117,8 @@ public :
     else
       pmess =  x[0] * (xorig->E / xorig->pt);  //Et->E 
     return (xorig->E!=0. ? tower_error_parametrization(&pmess,xorig,errorig) * xorig->pt / xorig->E : 0.0);
+    
+    //return 0;
   }
 
   static const double toy_tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {        

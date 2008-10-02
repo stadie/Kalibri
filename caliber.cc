@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.49 2008/09/19 14:00:39 thomsen Exp $
+// $Id: caliber.cc,v 1.50 2008/09/29 10:15:16 mschrode Exp $
 //
 //
 // for profiling:
@@ -1420,6 +1420,8 @@ void TCaliber::Init(string file)
     tower_error_param = p->const_error_parametrization;
   else if(te=="toy")
     tower_error_param = p->toy_tower_error_parametrization;
+  else if(te=="jet")
+    tower_error_param = p->jet_only_tower_error_parametrization;
   else  
     tower_error_param = p->tower_error_parametrization;
   //...for jets:
@@ -1434,6 +1436,11 @@ void TCaliber::Init(string file)
     jet_error_param = p->const_error_parametrization;
   else if(te=="toy")
     jet_error_param   = p->toy_jet_error_parametrization;
+  else if(te=="jet et")
+    jet_error_param   = p->jet_only_jet_error_parametrization_et;
+  else if(te=="jet energy")
+    jet_error_param   = p->jet_only_jet_error_parametrization_energy;
+
   else  
     jet_error_param   = p->jet_error_parametrization;
 
