@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.11 2008/09/17 08:19:23 stadie Exp $
+// $Id: ToyMC.cc,v 1.12 2008/09/18 15:57:58 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -167,11 +167,16 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
   //std::cout  << "Eta:" << jet.Eta() <<  "       : " << rec.Pt() << "," << rec.E() << "  == " << jet.Pt() << "," << jet.E() << '\n';
   //std::cout << "lost energy:" << lostE/jet.E() << '\n';
   if(mNoOutOfCone) {
-    if(std::abs(rec.E() - jet.E())/ jet.E()  > 0.01) {
-      return splitJet(jet,et,eta,phi,ieta,iphi);
+    double scale = jet.Pt()/rec.Pt();
+    assert(scale < 1.1); 
+    TLorentzVector rec2(0,0,0,0);
+    for(int i = 0 ; i < ntowers ; ++i) {
+      et[i] *= scale; 
+      tow.SetPtEtaPhiM(et[i],eta[i],phi[i],0);
+      rec2 += tow;
     }
-    assert(lostPt == 0);
-    assert(std::abs(rec.E() - jet.E())/ jet.E() < 0.01);
+    assert(std::abs((rec2.Pt()-jet.Pt())/jet.Pt()) < 0.001); 
+    //std::cout << " vorher:" << scale << "  nachher:" << rec2.E()/jet.E() << "\n";
   }
   return ntowers;
 }
