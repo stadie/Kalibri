@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.42 2008/08/20 13:28:42 thomsen Exp $
+// $Id: CalibData.h,v 1.43 2008/09/17 16:23:20 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -314,6 +314,7 @@ public:
       new_error *= sum / (scale * scale);
       sum_error2 += new_error * new_error;
     }
+    if( (GetParametrizedMess()>0) && (totalsum>GetParametrizedMess()))   //update only if new value is reasonable (Pt > 0)
     _error = sqrt(sum_error2);  
 };
 
