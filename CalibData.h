@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.44 2008/10/10 11:48:17 thomsen Exp $
+// $Id: CalibData.h,v 1.45 2008/10/13 14:32:08 rwolf Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -23,8 +23,6 @@ class TMeasurement
 {
 public:
   TMeasurement():pt(0.),EMF(0.),HadF(0.),OutF(0.),E(0.),eta(0.),phi(0.){};
-  TMeasurement(double pt, double emf, double hadf, double outf, double en, double eta, double phi): 
-    pt(pt),EMF(emf),HadF(hadf),OutF(outf),E(en),eta(eta),phi(phi){};
   TMeasurement(TMeasurement* m):pt(m->pt),EMF(m->EMF),HadF(m->HadF),OutF(m->OutF),
                                 E(m->E),eta(m->eta),phi(m->phi){};
   //all common variables
