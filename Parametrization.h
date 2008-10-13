@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.16 2008/09/26 18:23:38 mschrode Exp $
+// $Id: Parametrization.h,v 1.17 2008/10/13 14:32:08 rwolf Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -358,9 +358,7 @@ public:
   const char* name() const { return "ToyParametrization";}
 
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
-    if( fabs(x->HadF+x->EMF+x->OutF-x->pt)>0.1){
-      return par[0] * x->HadF + x->EMF + x->OutF;
-    }
+    return par[0] * x->HadF + x->EMF + x->OutF;
   }
 
   double correctedJetEt(TMeasurement *const x,double *const par) const {
