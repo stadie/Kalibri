@@ -992,6 +992,7 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
   TH2F* heta[12];
   if( plottedQuant.count("eta") > 0 )
     {
+      /*
       double etaBinEdge[83];
       for(int e = 0; e < 82; e++)
 	{
@@ -1001,8 +1002,9 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	  etaBinEdge[e] = mPar->EtaLowerEdge(etaBin);
 	}
       etaBinEdge[82] = mPar->EtaUpperEdge(41);
-
       heta[0] = new TH2F("heta0","#gamma-jet;#eta",82,etaBinEdge,100,0,4);
+      */
+      heta[0] = new TH2F("heta0","#gamma-jet;#eta",20,-5,5,100,0,4);
       objToBeWritten.push_back(heta[0]);
       for(int i = 1 ; i < 12 ; ++i)
 	{
@@ -1022,7 +1024,7 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
   TH2F* hpt_uncorr[12];
   if( plottedQuant.count("uncorrected jet pt") > 0 )
     {
-      hpt_uncorr[0] = new TH2F("hpt_uncorr0","#gamma-jet;p^{jet}_{T} [GeV]",400,0,400,100,0,4);
+      hpt_uncorr[0] = new TH2F("hpt_uncorr0","#gamma-jet;p^{jet}_{T} [GeV]",80,0,400,100,0,4);
       objToBeWritten.push_back(hpt_uncorr[0]);
       for(int i = 1 ; i < 12 ; ++i)
 	{
@@ -1045,7 +1047,7 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
   TH2F* hpt[3];
   if( plottedQuant.count("true jet pt") > 0 )
     {
-      hpt[0] = new TH2F("hpt0","#gamma-jet;E^{#gamma}_{T} [GeV]",400,0,400,100,0,4);
+      hpt[0] = new TH2F("hpt0","#gamma-jet;E^{#gamma}_{T} [GeV]",80,0,400,100,0,4);
       hpt[1] = (TH2F*)hpt[0]->Clone("hpt1");
       hpt[2] = (TH2F*)hpt[0]->Clone("hpt2");
       for(int i = 0; i < 3; i++)
@@ -1058,7 +1060,7 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
   TH2F* henergy[3];
   if( plottedQuant.count("uncorrected jet energy") > 0 )
     {
-      henergy[0] = new TH2F("henergy0","#gamma-jet;E^{jet} [GeV]",600,0,600,100,0,4);
+      henergy[0] = new TH2F("henergy0","#gamma-jet;E^{jet} [GeV]",120,0,600,100,0,4);
       henergy[1] = (TH2F*)henergy[0]->Clone("henergy1");
       henergy[2] = (TH2F*)henergy[0]->Clone("henergy2");
       for(int i = 0; i < 3; i++)
@@ -1071,7 +1073,7 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
   TH2F* hemf[3];
   if( plottedQuant.count("emf") > 0 )
     {
-      hemf[0] = new TH2F("hemf0","#gamma-jet;electromagnetic fraction f_{em}",100,0,1,100,0,4);
+      hemf[0] = new TH2F("hemf0","#gamma-jet;electromagnetic fraction f_{em}",50,0,1,100,0,4);
       hemf[1] = (TH2F*)hemf[0]->Clone("hemf1");
       hemf[2] = (TH2F*)hemf[0]->Clone("hemf2");
       for(int i = 0; i < 3; i++)
@@ -1524,6 +1526,8 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 		  hists_eta[a+i][b]->SetMinimum(0.0);
 		  hists_eta[a+i][b]->SetMaximum(0.5);
 		}
+	      hists_eta[a+i][4]->SetMinimum(0.4);
+	      hists_eta[a+i][4]->SetMaximum(1.6);
 	    }
 
 	  // Draw gaussplots for example eta bins
@@ -1668,6 +1672,8 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 		  hists_ptuncorr[a+i][b]->SetMinimum(0.0);
 		  hists_ptuncorr[a+i][b]->SetMaximum(0.5);
 		}
+	      hists_ptuncorr[a+i][4]->SetMinimum(0.4);
+	      hists_ptuncorr[a+i][4]->SetMaximum(1.6);
 	    }
 
 	  // Draw gaussplots for example pt bins
@@ -1777,6 +1783,8 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	      hists_pttrue[a][b]->SetMinimum(0.0);
 	      hists_pttrue[a][b]->SetMaximum(0.5);
 	    }
+	  hists_pttrue[a][4]->SetMinimum(0.4);
+	  hists_pttrue[a][4]->SetMaximum(1.6);
 	}
 
       // Draw gaussplots for example pt bins
@@ -1876,6 +1884,8 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	      hists_ptlog[a][b]->SetMinimum(0.0);
 	      hists_ptlog[a][b]->SetMaximum(0.5);
 	    }
+	  hists_ptlog[a][4]->SetMinimum(0.4);
+	  hists_ptlog[a][4]->SetMaximum(1.6);
 	}
 
       c1->cd();
@@ -1940,6 +1950,8 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	      hists_energy[a][b]->SetMinimum(0.0);
 	      hists_energy[a][b]->SetMaximum(0.5);
 	    }
+	  hists_energy[a][4]->SetMinimum(0.4);
+	  hists_energy[a][4]->SetMaximum(1.6);
 	}
 
       // Draw gaussplots for example energy bins
@@ -2039,6 +2051,8 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	      hists_emf[a][b]->SetMinimum(0.0);
 	      hists_emf[a][b]->SetMaximum(0.5);
 	    }
+	  hists_emf[a][4]->SetMinimum(0.4);
+	  hists_emf[a][4]->SetMaximum(1.6);
 	}
 
       // Draw gaussplots for example emf bins
@@ -2794,7 +2808,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 
 
   TH2F* Beta[8];
-  Beta[0] = new TH2F("hBeta0","di-jet;#eta",100,-5,5,100,-0.7,0.7);
+  Beta[0] = new TH2F("hBeta0","di-jet;#eta",50,-5,5,100,-0.7,0.7);
   for(int i = 1 ; i < 8 ; ++i)
     {
       sprintf(name,"hBeta%i",i);
@@ -2808,15 +2822,15 @@ void TControlPlots::MakeControlPlotsDiJet()
   Beta[7]->SetTitle("di-jet 90 < E_{T}^{scale} < 300 GeV;#eta");
 
   TH2F* Bpt[2];
-  Bpt[0] = new TH2F("hBpt0","di-jet;p_{T} [GeV]",400,0,400,100,-0.7,0.7);
+  Bpt[0] = new TH2F("hBpt0","di-jet;p_{T} [GeV]",80,0,400,100,-0.7,0.7);
   Bpt[1] = (TH2F*)Bpt[0]->Clone("hBpt1");
 
   TH2F* Benergy[2];
-  Benergy[0] = new TH2F("hBenergy0","di-jet;E [GeV]",400,0,400,100,-0.7,0.7);
+  Benergy[0] = new TH2F("hBenergy0","di-jet;E [GeV]",100,0,400,100,-0.7,0.7);
   Benergy[1] = (TH2F*)Benergy[0]->Clone("hBenergy1");
   
   TH2F* Bemf[2];
-  Bemf[0] = new TH2F("hBemf0","di-jet;f_{em} (probe jet)",100,0,1,100,-0.7,0.7);
+  Bemf[0] = new TH2F("hBemf0","di-jet;f_{em} (probe jet)",50,0,1,100,-0.7,0.7);
   Bemf[1] = (TH2F*)Bemf[0]->Clone("hBemf1");
 
   double bins[101];
@@ -3045,6 +3059,8 @@ void TControlPlots::MakeControlPlotsDiJet()
 	      hists_beta[i+a][b]->SetMinimum(0.0);
 	      hists_beta[i+a][b]->SetMaximum(1.);
 	    }
+	  hists_beta[i+a][4]->SetMinimum(-0.6);
+	  hists_beta[i+a][4]->SetMaximum(0.6);
 	}
 
       for(int a = 1; a >=0; a--) // Loop over correction
@@ -3123,6 +3139,8 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  hists_pt[a][b]->SetMinimum(0.0);
 	  hists_pt[a][b]->SetMaximum(1.);
 	}
+      hists_pt[a][4]->SetMinimum(-0.6);
+      hists_pt[a][4]->SetMaximum(0.6);
     }
 
   for(int a = 1; a >=0; a--) // Loop over correction
@@ -3198,6 +3216,8 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  hists_ptlog[a][b]->SetMinimum(0.0);
 	  hists_ptlog[a][b]->SetMaximum(1.);
 	}
+      hists_ptlog[a][4]->SetMinimum(-0.6);
+      hists_ptlog[a][4]->SetMaximum(0.6);
     }
 
   c1->cd();
@@ -3237,6 +3257,8 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  hists_energy[a][b]->SetMinimum(0.0);
 	  hists_energy[a][b]->SetMaximum(1.);
 	}
+      hists_energy[a][4]->SetMinimum(-0.6);
+      hists_energy[a][4]->SetMaximum(0.6);
     }
 
   for(int a = 1; a >=0; a--) // Loop over correction
@@ -3311,6 +3333,8 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  hists_emf[a][b]->SetMinimum(0.0);
 	  hists_emf[a][b]->SetMaximum(1.);
 	}
+      hists_emf[a][4]->SetMinimum(-0.6);
+      hists_emf[a][4]->SetMaximum(0.6);
     }
 
   for(int a = 1; a >=0; a--) // Loop over correction
