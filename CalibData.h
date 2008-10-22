@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.45 2008/10/13 14:32:08 rwolf Exp $
+// $Id: CalibData.h,v 1.46 2008/10/13 15:15:05 rwolf Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -182,6 +182,24 @@ public:
 
     return _func(&jet, _par);
   };
+  virtual double GetParametrizedErr() const { //returns total jet error and mot only the non-tower part like _err
+    double error = 0, new_mess=0, sum_mess=0, new_error=0,sum_error2=0;
+    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	 it!=_vecmess.end(); ++it) {
+      new_mess    = (*it)->GetParametrizedMess();
+      sum_mess   += new_mess;
+      new_error   = (*it)->GetParametrizedErr(&new_mess);
+      sum_error2 += new_error * new_error;
+    }
+    TJet jet(_mess);
+    jet.pt    = sum_mess;
+    new_mess  = _func(&jet, _par);
+    new_error =  _err( &new_mess, _mess, _error );
+    sum_error2 += new_error * new_error;
+    
+    error = sqrt(sum_error2);
+    return error;
+  };
 
   virtual double GetParametrizedMess(double *const paramess) const { // For derivative calculation
     TJet jet(_mess);
@@ -204,7 +222,7 @@ public:
     TJet jet(_mess);
     jet.pt    = sum_mess;
     new_mess  = _func(&jet, _par);
-    new_error =  GetParametrizedErr( &new_mess );
+    new_error =   _err( &new_mess, _mess, _error );
     return (new_error!=0. ? weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) ):0.0);
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;
@@ -247,12 +265,10 @@ public:
     
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
          it!=_m2.end(); ++it) {
-      new_mess    = (*it)->GetParametrizedMess();
-      new_error   = (*it)->GetParametrizedErr(&new_mess);
+      new_error   = (*it)->GetParametrizedErr();
       sum_error2 += new_error * new_error;
     }
-    new_mess  = GetParametrizedMess();
-    new_error = GetParametrizedErr( &new_mess );
+    new_error = GetParametrizedErr();
     new_mess  = GetMessCombination();
 
     return (sum_error2!=0 ? weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) ) : 0.0) ;
@@ -303,13 +319,13 @@ public:
 
     double new_mess = GetParametrizedMess();
     double sum = totalsum - new_mess; 
-    double new_error = GetParametrizedErr( &new_mess );
+    double new_error = GetParametrizedErr();
     new_error *= sum / (scale * scale);
     double sum_error2 = new_error * new_error;
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
 	 it!=_m2.end(); ++it) {
       new_mess    = (*it)->GetParametrizedMess();
-      new_error   = (*it)->GetParametrizedErr(&new_mess);
+      new_error   = (*it)->GetParametrizedErr();
       sum = totalsum - new_mess;
       new_error *= sum / (scale * scale);
       sum_error2 += new_error * new_error;

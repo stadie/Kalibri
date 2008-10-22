@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.21 2008/09/17 16:23:20 thomsen Exp $
+// $Id: CalibData.cc,v 1.22 2008/09/25 14:49:29 thomsen Exp $
 //
 #include "CalibData.h"
 
@@ -97,7 +97,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     }
   } 
   new_mess  = GetParametrizedMess(&sum_mess);
-  new_error = GetParametrizedErr(&new_mess); 
+  new_error = _err(&new_mess, _mess, _error);    //saves time not to use total GetParametrizedError(incl. tower & tracks)
   new_chi2  = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
 
 
@@ -110,13 +110,13 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     temp2 = 0.;
     new_mess  = sm2[i];  //the measurement with modified parameter "i"
     dmess_dp  = GetParametrizedMess(&new_mess);
-    derror_dp = GetParametrizedErr(&dmess_dp);
+    derror_dp = _err(&dmess_dp, _mess, _error);
     temp2 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
 
     // same for p_i-epsilon:
     new_mess  = sm1[i];  
     dmess_dp  = GetParametrizedMess(&new_mess);
-    derror_dp = GetParametrizedErr(&dmess_dp);
+    derror_dp = _err(&dmess_dp, _mess, _error);
     temp1 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
 
     // Difference of chi2 at par+epsilon and par-epsilon
@@ -131,12 +131,12 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     double oldpar =  _par[i-idx];
     _par[i-idx]  += epsilon;
     dmess_dp  = GetParametrizedMess(&sum_mess);
-    derror_dp = GetParametrizedErr(&dmess_dp);
+    derror_dp = _err(&dmess_dp, _mess, _error);
     temp2 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se2[i] + derror_dp*derror_dp) );
 
     _par[i-idx]  = oldpar - epsilon;
-    dmess_dp  = GetParametrizedMess(&sum_mess);  
-    derror_dp = GetParametrizedErr(&dmess_dp);
+    dmess_dp  = GetParametrizedMess(&sum_mess);
+    derror_dp = _err(&dmess_dp, _mess, _error);
     temp1 = weight*(*TData::ScaleResidual)( (_truth-dmess_dp)*(_truth-dmess_dp)/(se1[i] + derror_dp*derror_dp) );
 
     // Difference of chi2 at par+epsilon and par-epsilon
@@ -209,12 +209,10 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
        sum_error2 = 0.0;
        for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
             mit!=_m2.end(); ++mit) {
-	 new_mess    = (*mit)->GetParametrizedMess();
-	 new_error   = (*mit)->GetParametrizedErr(&new_mess);
+	 new_error   = (*mit)->GetParametrizedErr();
 	 sum_error2 += new_error * new_error;
        }
-       new_mess  = GetParametrizedMess();
-       new_error = GetParametrizedErr( &new_mess );
+       new_error = GetParametrizedErr();
        new_mess  = GetMessCombination();  
        temp2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
 
@@ -223,12 +221,10 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
        *tpars[i] = oldpar - epsilon;
        for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
             mit!=_m2.end(); ++mit) {
-	  new_mess    = (*mit)->GetParametrizedMess();	 
-  	  new_error   = (*mit)->GetParametrizedErr(&new_mess);
+  	  new_error   = (*mit)->GetParametrizedErr();
 	  sum_error2 += new_error * new_error;
        }
-       new_mess  = GetParametrizedMess();
-       new_error = GetParametrizedErr(  &new_mess );
+       new_error = GetParametrizedErr();
        new_mess  = GetMessCombination();  
        temp1 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) );
 
