@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.12 2008/09/18 15:57:58 stadie Exp $
+// $Id: ToyMC.cc,v 1.13 2008/10/06 09:13:12 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -18,8 +18,14 @@
 
 #include "ConfigFile.h"
 
-ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(Uniform),mTowConst(1.25),mResoStochastic(1.20),mResoNoise(0.05),mJetSpreadA(0.5),mJetSpreadB(0),mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
+ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(Uniform),
+		 mResoStochastic(1.20),mResoNoise(0.05),mJetSpreadA(0.5),mJetSpreadB(0),
+		 mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
 {
+  mTowConst[0] = 1.24;
+  mTowConst[1] = 0;
+  mTowConst[2] = 1;
+  mTowConst[3] = 1;
   mRandom = new TRandom3();
   mRandom->SetSeed(0);
 }
@@ -74,7 +80,14 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
   float emf = mRandom->Uniform(mMaxEmf);
   temtrue = emf * e;
   tem = temtrue;
-  thadtrue = (1-emf) * e / mTowConst;
+  thadtrue = (1-emf) * e;
+  if(mTowConst[1] == 0) {
+    thadtrue /= mTowConst[0];
+  } else { 
+    double c =  (thadtrue < 1.0) ? mTowConst[0] - mTowConst[1]/mTowConst[3] +  mTowConst[4] :  mTowConst[0] - mTowConst[1]/(pow(log(thadtrue),mTowConst[2]) + mTowConst[3]) + mTowConst[4]/thadtrue;
+    //std::cout << thadtrue << ",  " << c << '\n';
+    thadtrue /= c;
+  }
   thad = thadtrue;
   touttrue = 0;
   tout = touttrue;
@@ -340,13 +353,13 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     NobjTowCal = splitJet(genjet,towet,toweta,towphi,towid_eta,towid_phi);
     jet.SetPtEtaPhiM(0,0,0,0);
     genjet.SetPtEtaPhiM(0,0,0,0);
-    double towmean = mTowConst;
-    if(mModel == Flat) mTowConst = 1/mRandom->Uniform(1.5);
-    else if(mModel == Exp) mTowConst = 1/mRandom->Exp(0.5);
+    double towmean = mTowConst[0];
+    if(mModel == Flat) mTowConst[0] = 1/mRandom->Uniform(1.5);
+    else if(mModel == Exp) mTowConst[0] = 1/mRandom->Exp(0.5);
     else if(mModel == Slope) {
       double u1 = mRandom->Uniform(2);
       double u2 = mRandom->Uniform(2);
-      mTowConst = 1/(2 - std::max(u1,u2));
+      mTowConst[0] = 1/(2 - std::max(u1,u2));
     }
     double p0frac = mRandom->Uniform(mMaxPi0Frac);
     for(int j = 0; j < NobjTowCal ; ++j) {
@@ -362,7 +375,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
       towet[j] = tower.Pt();
       jet += tower;
     }
-    mTowConst = towmean;
+    mTowConst[0] = towmean;
     jcalpt = jet.Pt();
     jcaleta = jet.Eta();
     jcalphi = jet.Phi();
@@ -457,12 +470,12 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       continue;
     }
     jetgenphi[1] = jetgenphi[0] +M_PI;
-    if(mModel == Flat) mTowConst = 1/mRandom->Uniform(1.5);
-    else if(mModel == Exp) mTowConst = 1/mRandom->Exp(0.5);
+    if(mModel == Flat) mTowConst[0] = 1/mRandom->Uniform(1.5);
+    else if(mModel == Exp) mTowConst[0] = 1/mRandom->Exp(0.5);
     else if(mModel == Slope) {
       double u1 = mRandom->Uniform(2);
       double u2 = mRandom->Uniform(2);
-      mTowConst = 1/(2 - std::max(u1,u2));
+      mTowConst[0] = 1/(2 - std::max(u1,u2));
     }
     float ttowet[kMAX];
     float ttoweta[kMAX];
@@ -585,7 +598,10 @@ void ToyMC::init(const std::string& configfile) {
      std::cerr << "unknown ToyMC pt spectrum:" << spectrum << '\n';
      exit(1);
    }
-   mTowConst = config.read<double>("ToyMC tower const",1.25);
+   bag_of<double> auter = bag_of<double>(config.read<string>("ToyMC tower const","1.25, 0, 1, 1, 0"));
+   while(auter.size() < 5) auter.push_back(0);
+   assert(auter.size() == 5);
+   for(unsigned int i = 0; i < auter.size() ; ++i) mTowConst[i] = auter[i];
    mResoStochastic = config.read<double>("ToyMC tower resolution stochastic",1.20);
    mResoNoise = config.read<double>("ToyMC tower resolution noise",0.05);
    mJetSpreadA = config.read<double>("ToyMC jet spread A",0.5);
@@ -598,10 +614,13 @@ void ToyMC::init(const std::string& configfile) {
      mModel = Landau;
    } else if(model == "flat") {
      mModel = Flat;
+     mTowConst[1] = 0;
    } else if(model == "exp") {
      mModel = Exp;
+     mTowConst[1] = 0;
    } else if(model == "slope") {
      mModel = Slope;
+     mTowConst[1] = 0;
    } else {
      std::cerr << "unknown ToyMC model:" << model << '\n';
      exit(1);
@@ -616,8 +635,9 @@ void ToyMC::print() const {
   std::cout << "  primary: " << mMinEta << " < eta < " << mMaxEta << '\n';
   std::cout << "           " << mMinPt << " < pt < " << mMaxPt 
 	    << " spectrum = " << mPtSpectrum << '\n';
-  std::cout << "    tower: c = " << mTowConst 
-	    << " stoch = " << mResoStochastic << " noise = "
+  std::cout << "    tower: c = (" << mTowConst[0] <<", " << mTowConst[1]
+	    << ", " << mTowConst[2] << ", " << mTowConst[3] << ", "
+	    << mTowConst[4] << ") stoch = " << mResoStochastic << " noise = "
 	    << mResoNoise << " max EMF = " << mMaxEmf << " max piO = "
 	    << mMaxPi0Frac << '\n';
   std::cout << "     jets: spread A = " << mJetSpreadA << " B = " 
