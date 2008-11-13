@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.46 2008/10/13 15:15:05 rwolf Exp $
+// $Id: CalibData.h,v 1.47 2008/10/22 14:19:51 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -51,6 +51,8 @@ public:
   TJet(TMeasurement* j):TMeasurement(j){};
   TJet(TJet* j):TMeasurement(j){/*further initialization*/};
 //variables specific only to jets (i.e. mass)
+  enum Flavor{ gluon=0, uds=1, c=2, b=3 };
+  Flavor flavor;
 };
 
 //virtual data base class -> not directly used!

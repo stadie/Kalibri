@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.35 2008/09/29 10:15:16 mschrode Exp $
+// $Id: Parameters.h,v 1.36 2008/10/02 14:38:32 thomsen Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -141,8 +141,10 @@ public :
     return tower_parametrization(x,par)/x->pt; 
   }
 
-  static const double jes_plot_parametrization(TMeasurement *const x,double *const par)  {
-    return jet_parametrization(x,par)/x->pt;
+  static const double jes_plot_parametrization(double * x,double * par)  {
+    //return jet_parametrization(x,par)/x->pt;
+    return ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x[0]));   
+
   }
 
   //Limiting parameters

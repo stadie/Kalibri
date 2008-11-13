@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.28 2008/09/18 16:12:29 mschrode Exp $
+// $Id: caliber.h,v 1.29 2008/09/29 10:15:16 mschrode Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -33,6 +33,7 @@
 #include "TrackClusterSel.h"
 #include "NJetSel.h"
 #include "ZJetSel.h"
+#include "TopSel.h"
 
 class TParameters;
 class TControlPlots;
@@ -59,6 +60,7 @@ protected:
   NJetSel         dijet;
   NJetSel         trijet;
   ZJetSel         zjet;
+  TopSel          top;
 
   //internal functions
   void Run_Lvmini();
@@ -69,6 +71,7 @@ protected:
   void Run_TrackCluster();
   void Run_NJet(NJetSel & njet, int njet);
   void Run_ZJet();
+  void Run_Top();
 
   void AddTowerConstraint();
   void AddParameterLimits();
@@ -81,7 +84,8 @@ private:
   
   //internal variables
   int fit_method, n_gammajet_events, n_tracktower_events, 
-      n_trackcluster_events, n_dijet_events, n_trijet_events, n_zjet_events;
+      n_trackcluster_events, n_dijet_events, n_trijet_events, n_zjet_events,
+      n_top_events;
   std::string configfile, output_file;              //input/output
   int use_GammaJetTowerMethod,use_DisplayMethod;    //plots
   double Et_cut_on_jet, Et_cut_on_gamma, Et_cut_nplus1Jet,     //kin. cuts

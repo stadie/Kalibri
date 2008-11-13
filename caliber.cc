@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.51 2008/10/02 14:38:32 thomsen Exp $
+// $Id: caliber.cc,v 1.52 2008/10/13 15:10:19 thomsen Exp $
 //
 //
 // for profiling:
@@ -252,10 +252,11 @@ void TCaliber::FlattenSpectra()
 	 }
        }
        //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
-       int bin = GetSpectraBin( (*it)->GetScale(), index );
-       //int bin = GetSpectraBin( (*it)->GetScale() );
-       weights[type][bin]+=(*it)->GetWeight();
-       tot[type]+=(*it)->GetWeight();
+       //int bin = GetSpectraBin( (*it)->GetScale(), index );
+       int bin = GetSpectraBin( (*it)->GetScale() );
+       double error = 1.;//(*it)->GetParametrizedErr( &(*it)->GetMess()->pt );
+       weights[type][bin]+=(*it)->GetWeight()/error;
+       tot[type]+=(*it)->GetWeight()/error;
      }
    }
    for (int type=0; type<7; ++type){
@@ -283,8 +284,8 @@ void TCaliber::FlattenSpectra()
 	   }
 	 }
 	 //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
-	 int bin = GetSpectraBin( (*it)->GetScale(), index );
-	 //int bin = GetSpectraBin( (*it)->GetScale() );
+	 //int bin = GetSpectraBin( (*it)->GetScale(), index );
+	 int bin = GetSpectraBin( (*it)->GetScale() );
 	 //(*it)->SetWeight(1);
 	 
 	 
@@ -446,9 +447,9 @@ cout<<"...fit the truth distributions"<<endl;
   delete f;
   ps.Close();
  
-cout<<"...remove events which are not 'balanced'";
   DataIter beg = partition(data.begin(), data.end(), 
                            NotBalancedRejection(cuts, min, max));
+  cout<<"...remove " << int(data.end()-beg) << " events which are not 'balanced'";
   for(DataIter i = beg ; i != data.end() ; ++i) {
     cout<<".";
     delete *i;
@@ -1091,6 +1092,134 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 }
 
 
+void TCaliber::Run_Top()
+{
+  //Run Top stuff  
+  int nevent = top.fChain->GetEntries();
+  int evt=0;
+  for (int i=0;i<nevent;i++) {
+    if((i+1)%10000==0) cout<<"Top Event: "<<i+1<<endl;
+    top.fChain->GetEvent(i); 
+    if (top.NobjTow>1000 || top.NobjJet>8) {
+      cerr << "ERROR: Increase array sizes in topSelector; NobjTow="
+	   << top.NobjTow<<", NobjBJet="<<top.NobjJet<<"!"<<endl;
+      exit(10);
+    }
+    //--------------
+    //  b - Jet
+    //--------------
+    TData_InvMass2 * top_data[3];//two W-jets and one b-jet
+    top_data[0] = 0;
+    //std::cout << "reading " << top.NobjJet << " jets\n";
+    int nstoredjets = 0;
+    for (unsigned int ij = 0; ij<3; ++ij){
+      if(top.JetPt[ij] < Et_cut_nplus1Jet) continue;
+      //Find the jets eta & phi index using the nearest tower to jet axis:
+      int jet_index=-1;
+      double min_tower_dr = 10.0;
+      double em = 0;
+      double had = 0;
+      double out = 0;
+      TLorentzVector Ljet(0,0,0,0);
+      Ljet.SetPtEtaPhiE(top.JetPt[ij],top.JetEta[ij],top.JetPhi[ij],top.JetE[ij]);
+      for (int n=0; n<top.NobjTow; ++n){
+        if (top.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
+	em += top.TowEm[n];
+	had += top.TowHad[n];
+	out += top.TowOE[n];
+	TLorentzVector Ltower(0,0,0,0);
+	Ltower.SetPtEtaPhiE(top.TowEt[n],top.TowEta[n],top.TowPhi[n],top.TowE[n]);
+	double dr = Ltower.DeltaR(Ljet);
+	if (dr<min_tower_dr) {
+	  jet_index = p->GetJetBin(p->GetJetEtaBin(top.TowId_eta[n]),
+				   p->GetJetPhiBin(top.TowId_phi[n]));
+	  min_tower_dr = dr;
+	}
+      }
+      if (jet_index<0){ 
+	 cerr<<"WARNING: JJ jet_index = " << jet_index << endl; 
+	 continue; 
+      }
+
+      double * direction = new double[2];
+      direction[0] = sin(top.JetPhi[ij]);
+      direction[1] = cos(top.JetPhi[ij]);
+      TMeasurement* jetp  = new TJet;
+      jetp->pt  = top.JetEt[ij];
+      jetp->eta = top.JetEta[ij];
+      jetp->phi = top.JetPhi[ij];
+      jetp->E   = top.JetE[ij];
+    //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
+      double factor =  top.JetEt[ij] /  top.JetE[ij];
+      jetp->HadF = had * factor;
+      jetp->EMF = em * factor;
+      jetp->OutF = out * factor;
+      //Create an jet/Jet TData event
+      top_data[nstoredjets] = new TData_InvMass2( 
+          jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+	  direction,                                     //p_T direction of this jet
+	  0.0,                                           //truth//
+	  sqrt(pow(0.5,2)+pow(0.10*top.JetPt[ij],2)),   //error//
+	  top.Weight,                                   //weight//
+	  //1.,                                          //weight//
+	  p->GetJetParRef( jet_index ),                  //params
+	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
+	  p->jet_parametrization,                        //function
+	  //p->dummy_parametrization,
+          jet_error_param,                               //error param. function
+	  jetp                                           //jet momentum for plotting and scale
+        );
+      //Add the jet's towers to "top_data":
+      for (int n=0; n<top.NobjTow; ++n){
+        if (top.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
+	//if (top.TowEt[n]<0.01) continue;
+
+	int index = p->GetBin(p->GetEtaBin(top.TowId_eta[n]),
+			      p->GetPhiBin(top.TowId_phi[n]));
+	//std::cout << "jet:" << ij << "bin index:" << index << "\n";
+	if (index<0){ cerr<<"WARNING: JJ tower_index = " << index << endl; continue; }
+
+	double relativEt = top.TowEt[n]/top.JetEt[ij];  
+	//if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
+	//This relativeE is used *only* for plotting! Therefore no cuts on this var!
+	//create array with multidimensional measurement
+	TMeasurement * mess = new TTower;
+	mess->pt = double(top.TowEt[n]);
+	double scale = top.TowEt[n]/top.TowE[n];
+	mess->EMF = double(top.TowEm[n]*scale);
+	mess->HadF = double(top.TowHad[n]*scale);
+	mess->OutF = double(top.TowOE[n]*scale);
+	mess->eta = double(top.TowEta[n]);
+	mess->phi = double(top.TowPhi[n]);
+	mess->E = double(top.TowE[n]);
+	//mess[7] = double( cos( top.JetCalPhi-top.TowPhi[n] ) ); // Projection factor for summing tower Pt
+
+	top_data[nstoredjets]->AddMess(new TData_TruthMess(
+	    index,
+	    mess,                                                   //mess//
+	    top.JetPt[ij] * relativEt,                             //truth//
+	    sqrt(pow(0.5,2)+pow(0.1*top.JetPt[ij]*relativEt,2)),   //error//
+            //1.,                                                   //weight//
+	    top.Weight,                                            //weight//
+	    p->GetTowerParRef( index ),                             //parameter//
+	    p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
+	    p->tower_parametrization,                               //function//
+	    tower_error_param                                       //error param. function//
+	  ));
+      }
+      if(nstoredjets> 0)  
+      	top_data[0]->AddNewMultMess( top_data[nstoredjets] );
+      ++nstoredjets;
+    }//loop over all n-jets
+
+    ++evt;    
+    data.push_back( top_data[0] ); 
+    if (evt>=n_top_events)
+      break;
+  }
+}
+
+
 //--------------------------------------------------------------------------------------------
 void TCaliber::Run()
 {
@@ -1104,6 +1233,7 @@ void TCaliber::Run()
     if (n_dijet_events!=0)            Run_NJet( dijet, 2);
     if (n_trijet_events!=0)           Run_NJet( trijet, 3);
     if (n_zjet_events!=0)             Run_ZJet();
+    if (n_top_events!=0)              Run_Top();
     if (flatten_spectra){
       FlattenSpectra();
       //BalanceSpectra();
@@ -1123,8 +1253,8 @@ void TCaliber::Run_Lvmini()
 { 
   //int naux = 1000000, niter=1000, iret=0;
   int naux = 3000000, niter=1000, iret=0;
-  int mvec = 29;
-  //int mvec = 6;
+  //int mvec = 29;
+  int mvec = 6;
   //int mvec = 2;
   
   int npar = p->GetNumberOfParameters();
@@ -1159,7 +1289,7 @@ void TCaliber::Run_Lvmini()
   p->FillErrors(aux+error_index);
 
   for( int loop = 0; loop < static_cast<int>(_residualScalingScheme.size()); loop++ ) {
-    cout<<"Updateing Di-Jet Errors"<<endl;
+    cout<<"Updating Di-Jet Errors"<<endl;
     for(DataIter it = data.begin()  ; it < data.end() ; ++it) {
       (*it)->UpdateError();
     }
@@ -1249,8 +1379,8 @@ void TCaliber::Run_Lvmini()
   for (int ithreads=0; ithreads<nthreads; ++ithreads){
     delete t[ithreads];
   }
-  delete []  temp_derivative1;
-  delete []  temp_derivative2;
+  delete [] temp_derivative1;
+  delete [] temp_derivative2;
 }
 //--------------------------------------------------------------------------------------------
 
@@ -1501,6 +1631,7 @@ void TCaliber::Init(string file)
   n_trackcluster_events = config.read<int>("use Track-Cluster events",-1);
   n_dijet_events        = config.read<int>("use Di-Jet events",-1);
   n_trijet_events       = config.read<int>("use Tri-Jet events",-1);
+  n_top_events          = config.read<int>("use Top events",-1);
   string default_tree_name = config.read<string>( "Default Tree Name","CalibTree");
   output_file = config.read<string>( "Output file", "calibration_k.cfi" );
 
@@ -1575,8 +1706,7 @@ void TCaliber::Init(string file)
   //Read Tri-Jet Tree:
   string treename_trijet    = config.read<string>( "Tri-Jet tree", default_tree_name );
   TChain * tchain_trijet = new TChain( treename_trijet.c_str() );
-  vector<string> input_trijet = bag_of_string( 
-					      config.read<string>( "Tri-Jet input file", "input/trijet.root" ) );
+  vector<string> input_trijet = bag_of_string(config.read<string>( "Tri-Jet input file", "input/trijet.root" ) );
   for (bag_of_string::const_iterator it = input_trijet.begin(); it!=input_trijet.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Tri-Jet analysis." << endl;
     tchain_trijet->Add( it->c_str() );
@@ -1586,13 +1716,23 @@ void TCaliber::Init(string file)
   //Read Z-Jet Tree:
   string treename_zjet      = config.read<string>( "Z-Jet tree", default_tree_name );
   TChain * tchain_zjet      = new TChain( treename_zjet.c_str() );
-  vector<string> input_zjet = bag_of_string( 
-					      config.read<string>( "Z-Jet input file", "input/zjet.root" ) );
+  vector<string> input_zjet = bag_of_string( config.read<string>( "Z-Jet input file", "input/zjet.root" ) );
   for (bag_of_string::const_iterator it = input_zjet.begin(); it!=input_zjet.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Z-Jet analysis." << endl;
     tchain_zjet->Add( it->c_str() );
   }  
   zjet.Init( tchain_zjet );
+
+  //Read Top Tree:
+  string treename_top    = config.read<string>( "Top tree", default_tree_name );
+  TChain * tchain_top = new TChain( treename_top.c_str() );
+  vector<string> input_top = bag_of_string( config.read<string>( "Top input file", "input/top.root" ) );
+  for (bag_of_string::const_iterator it = input_top.begin(); it!=input_top.end(); ++it){
+    cout << "...opening root-file " << (*it) << " for Top analysis." << endl;
+    tchain_top->Add( it->c_str() );
+  }  
+  top.Init( tchain_top );
+
 }
 
 //--^-TCaliber class-^------------------------------------------------------------------------
