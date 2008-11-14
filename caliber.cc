@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.54 2008/11/14 12:41:37 thomsen Exp $
+// $Id: caliber.cc,v 1.55 2008/11/14 13:15:53 thomsen Exp $
 //
 //
 // for profiling:
@@ -1301,7 +1301,7 @@ void TCaliber::Run_Top()
       top_data[nstoredjets] = new TData_InvMass2( 
           jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
 	  direction,                                     //p_T direction of this jet
-	  0.0,                                           //truth//
+	  172.9,                                           //truth//
 	  sqrt(pow(0.5,2)+pow(0.10*top.JetPt[ij],2)),   //error//
 	  top.Weight,                                   //weight//
 	  //1.,                                          //weight//
