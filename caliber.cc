@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.53 2008/11/13 17:29:14 auterman Exp $
+// $Id: caliber.cc,v 1.54 2008/11/14 12:41:37 thomsen Exp $
 //
 //
 // for profiling:
@@ -1033,6 +1033,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       if(njet.JetPt[ij] < Et_cut_nplus1Jet) continue;
       //Find the jets eta & phi index using the nearest tower to jet axis:
       int jet_index=-1;
+      int track_index=-1;
       double min_tower_dr = 10.0;
       double em = 0;
       double had = 0;
@@ -1050,6 +1051,8 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	if (dr<min_tower_dr) {
 	  jet_index = p->GetJetBin(p->GetJetEtaBin(njet.TowId_eta[n]),
 				   p->GetJetPhiBin(njet.TowId_phi[n]));
+	  track_index = p->GetJetBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
+				     p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
 	  min_tower_dr = dr;
 	}
       }
@@ -1057,6 +1060,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	 cerr<<"WARNING: JJ jet_index = " << jet_index << endl; 
 	 continue; 
       }
+    if (track_index<0){ cerr<<"WARNING: track_index = " << track_index << endl; continue; }
 
       double * direction = new double[2];
       direction[0] = sin(njet.JetPhi[ij]);
@@ -1124,6 +1128,53 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	    tower_error_param                                      //error param. function//
 	  ));
       }
+
+      //Add the jet's tracks to "gj_data":
+      for (int n=0; n<gammajet.NobjTrack; ++n){
+	
+        if (njet.Track_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
+
+	//one trackindex for all tracks in jet = track_index
+	//int index = p->GetTrackBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
+	//			         p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
+	//create array with multidimensional measurement
+	//TMeasurement * Tmess = new TTrack;
+	TTrack * Tmess = new TTrack;
+	Tmess->TrackId = int(gammajet.TrackId[n]);
+	Tmess->TowerId = int(gammajet.TrackTowId[n]);
+	Tmess->pt = double(gammajet.TrackPt[n]);
+	double scale = gammajet.TrackP[n]/gammajet.TrackPt[n];
+	Tmess->EM1 = double(gammajet.TrackEMC1[n]*scale);
+	Tmess->EMF = double(gammajet.TrackEMC3[n]*scale);
+	Tmess->EM5 = double(gammajet.TrackEMC5[n]*scale);
+	Tmess->Had1 = double(gammajet.TrackHAC1[n]*scale);
+	Tmess->HadF = double(gammajet.TrackHAC3[n]*scale);
+	Tmess->Had5 = double(gammajet.TrackHAC5[n]*scale);
+	Tmess->OutF = 0;
+	Tmess->DR = double(gammajet.TrackDR[n]);
+	Tmess->DRout = double(gammajet.TrackDROut[n]);
+	Tmess->eta = double(gammajet.TrackEta[n]);
+	Tmess->etaOut = double(gammajet.TrackEtaOut[n]);
+	Tmess->phi = double(gammajet.TrackPhi[n]);
+	Tmess->phiOut = double(gammajet.TrackPhiOut[n]);
+	Tmess->E = double(gammajet.TrackP[n]);
+	//mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+	//EM+=mess->EMF;
+	//F+=mess->pt;
+	jj_data[nstoredjets]->AddTrack(new TData_TruthMess(
+					      track_index  * p->GetNumberOfTrackParametersPerBin() + p->GetNumberOfTowerParameters() + p->GetNumberOfJetParameters() ,
+					      Tmess,                                                    //mess//
+					      0,                           //truth//
+					      0.05 + 0.00015 * gammajet.TrackPt[n], //error//
+					      1.,                                                      //weight//
+					      p->GetTrackParRef( track_index ),                              //parameter//
+					      p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
+					      p->track_parametrization,                                //function//
+					      track_error_param                                        //error param.func.//
+					      ));
+      }
+      jj_data[nstoredjets]->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization
+      
       if(nstoredjets> 0)  
       	jj_data[0]->AddNewMultMess( jj_data[nstoredjets] );
       ++nstoredjets;
