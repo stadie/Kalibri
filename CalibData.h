@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.47 2008/10/22 14:19:51 thomsen Exp $
+// $Id: CalibData.h,v 1.48 2008/11/13 17:29:14 auterman Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -31,8 +31,8 @@ public:
   double HadF;
   double OutF;
   double E;
-  double eta;//necessary???
-  double phi;//necessary???
+  double eta;
+  double phi;
 };
 
 class TTower : public TMeasurement
@@ -55,6 +55,25 @@ public:
   Flavor flavor;
 };
 
+class TTrack : public TMeasurement
+{
+public:
+  TTrack():TMeasurement(){};
+  TTrack(TMeasurement* tr):TMeasurement(tr){};
+  TTrack(TTrack* tr):TMeasurement(tr){/*further initialization*/};
+//variables specific only to Tracks
+  int TrackId;
+  int TowerId;
+  double DR;
+  double DRout;
+  double etaOut;
+  double phiOut;
+  double EM1;
+  double EM5;
+  double Had1;
+  double Had5;
+};
+
 //virtual data base class -> not directly used!
 class TData
 {
@@ -63,7 +82,7 @@ public:
   TData(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
         double const(*func)(TMeasurement *const,double *const),
 	double const(*err)(double *const,TMeasurement *const,double const))
-  : _index(index),_mess(mess),_truth(truth),_error(error),_weight(weight),_par(par),_n_par(n_par),_func(func),_err(err){};
+  : _index(index), _mess(mess),_truth(truth),_error(error),_weight(weight),_par(par),_n_par(n_par),_func(func),_err(err){};
   virtual ~TData(){
     delete _mess;
   };
@@ -120,9 +139,7 @@ protected:
 class TData_TruthMess : public TData
 {
 public:
-  TData_TruthMess(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
-        double const(*func)(TMeasurement *const,double *const),
-		  double const(*err)(double *const,TMeasurement *const,double const))
+  TData_TruthMess(unsigned short int index,  TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par, double const(*func)(TMeasurement *const,double *const),  double const(*err)(double *const,TMeasurement *const,double const))
   : TData(index, mess, truth, error, weight, par, n_par, func, err ){_type=TrackTower;};
 
   virtual const std::vector<TData*>& GetRef() { 
@@ -131,16 +148,6 @@ public:
     return resultcache;
   };
 
-
-//  virtual double GetParametrizedErr(double *const paramess) const{ 	 
-//    double pmess; 	 
-//    if(std::abs(_mess->eta) < 3.0) 	 
-//      pmess =  paramess[0] * _mess->E / (_mess->pt * _mess->pt) * (_mess->HadF + _mess->OutF); //Et->E hadronic 	 
-//    else 	 
-//      pmess =  paramess[0] * (_mess->E / _mess->pt);  //Et->E 	 
-//    return _err(&pmess,0,0) * _mess->pt / _mess->E; 	 
-//  };     //search 	 
-	 
 
   virtual double chi2() const{ 
     double new_mess  = GetParametrizedMess();
@@ -164,7 +171,8 @@ public:
         	      double const(*func)(TMeasurement *const,double *const),
 		      double const(*err)(double *const,TMeasurement *const,double const),
 		      TMeasurement *mess)
-  : TData_TruthMess(index, mess, truth, error, weight, par, n_par, func, err){_type=GammaJet; };
+  : TData_TruthMess(index,  mess, truth, error, weight, par, n_par, func, err){
+    _type=GammaJet; trackuse = false;};
   virtual ~TData_TruthMultMess() {
     for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	 it!=_vecmess.end(); ++it)
@@ -172,41 +180,159 @@ public:
     _vecmess.clear();	
   };
   void AddMess(TData_TruthMess * m){ _vecmess.push_back(m);};
+  void AddTrack(TData_TruthMess * m){ _vectrack.push_back(m);};
+
+  void UseTracks(bool use){   //check if tracks shall be used in this jet:
+    if((fabs(_mess->eta) < 2.1) &&  ( _vectrack.size() > 0) && use)      //@ eta > 2.1or eta < -2.1 parts of the cone are outside the tracker. 
+      {
+	double TrackError2 = 0;
+	double CaloError2 = 0;
+	double new_error, new_mess;
+	//Calculation of Jet error
+	for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	     it!=_vecmess.end(); ++it) {
+	  new_mess = (*it)->GetMess()->pt;
+	  new_error   = (*it)->GetParametrizedErr(&new_mess);
+	  CaloError2 += new_error * new_error;	  
+	}
+	TJet jet(_mess);
+	new_mess  = _func(&jet, _par);
+	new_error =  _err( &new_mess,_mess,_error );
+	CaloError2 += new_error * new_error;
+	//Calculation of Track error
+	for (std::vector<TData*>::const_iterator it=_vectrack.begin();
+	     it!=_vectrack.end(); ++it) {
+	  new_mess =  (*it)->GetMess()->pt;
+	  new_error   = (*it)->GetParametrizedErr(&new_mess);
+	  TrackError2 += new_error * new_error;	
+	}
+	if(CaloError2 > TrackError2)         trackuse = true;
+	  
+	//std::cout<<CaloError2<<"   T:  "<<TrackError2<<" ETmess: "<<_mess->pt<<std::endl;
+      }
+  };
+  bool GetTrackuse(){return trackuse;};
 
   virtual double GetParametrizedMess() const{
-    double tower_pt_sum=0.0;
-    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
-  	 it!=_vecmess.end(); ++it){
-      tower_pt_sum += (*it)->GetParametrizedMess(); // Sum of tower Pt
-    }
-    TJet jet(_mess);
-    jet.pt = tower_pt_sum;
-
-    return _func(&jet, _par);
+    double result = 0;
+    if(trackuse) 
+      { 
+	result = GetParametrizedTrackMess();
+      }
+    else
+      {    //no tracks are used
+	double tower_pt_sum=0.0;
+	for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	     it!=_vecmess.end(); ++it){
+	  tower_pt_sum += (*it)->GetParametrizedMess(); // Sum of tower Pt
+	}
+	TJet jet(_mess);
+	jet.pt = tower_pt_sum;
+	result = _func(&jet, _par);
+      }
+    return result;
   };
+
   virtual double GetParametrizedErr() const { //returns total jet error and mot only the non-tower part like _err
     double error = 0, new_mess=0, sum_mess=0, new_error=0,sum_error2=0;
-    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
-	 it!=_vecmess.end(); ++it) {
-      new_mess    = (*it)->GetParametrizedMess();
-      sum_mess   += new_mess;
-      new_error   = (*it)->GetParametrizedErr(&new_mess);
-      sum_error2 += new_error * new_error;
-    }
-    TJet jet(_mess);
-    jet.pt    = sum_mess;
-    new_mess  = _func(&jet, _par);
-    new_error =  _err( &new_mess, _mess, _error );
-    sum_error2 += new_error * new_error;
-    
+    if(trackuse)
+      {
+	for (std::vector<TData*>::const_iterator it=_vectrack.begin();
+	     it!=_vectrack.end(); ++it) {
+	  new_mess =  (*it)->GetMess()->pt;
+	  new_error   = (*it)->GetParametrizedErr(&new_mess);
+	  sum_error2 += new_error * new_error;
+	}
+      }
+    else
+      {
+	for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	     it!=_vecmess.end(); ++it) {
+	  new_mess    = (*it)->GetParametrizedMess();
+	  sum_mess   += new_mess;
+	  new_error   = (*it)->GetParametrizedErr(&new_mess);
+	  sum_error2 += new_error * new_error;
+	}
+	TJet jet(_mess);
+	jet.pt    = sum_mess;
+	new_mess  = _func(&jet, _par);
+	new_error =  _err( &new_mess, _mess, _error );
+	sum_error2 += new_error * new_error;
+      }
     error = sqrt(sum_error2);
     return error;
   };
 
   virtual double GetParametrizedMess(double *const paramess) const { // For derivative calculation
-    TJet jet(_mess);
-    jet.pt = paramess[0];
-    return _func(&jet,_par);
+    double result = 0;
+    //When tracks are used, GetParametrizedTrackMess() should have been taken, i.e. no tower correction should have been used before 
+    //if(trackuse)   cout<<"made useless tower correction before track correction<<std""endl;
+    if(trackuse) 	result = GetParametrizedTrackMess();
+    else {
+      TJet jet(_mess);
+      jet.pt = paramess[0];
+      result =  _func(&jet,_par);
+    }
+    return result;
+  };
+
+  virtual double GetParametrizedTrackMess() const{
+    double JetPt = 0, CaloRest, CaloTrackPt;   
+    bool IsMuon;
+    const double ConeRadius = 0.5;      //Jet Cone Radius should not be hard coded or must be changed if Radius != 0.5
+    const double MIPsignal = 4;         //MIP Particle   (stimmt 4 GeV signal?)
+    CaloRest = _mess->pt;
+    for (std::vector<TData*>::const_iterator it=_vectrack.begin();
+	 it!=_vectrack.end(); ++it) {
+      TTrack* temp = (TTrack*)(*it)->GetMess();
+
+      //this:
+      CaloTrackPt = (*it)->GetParametrizedMess();  //Expected Signal of track in Calorimeter
+      //dependents on early or late showering!
+      //is it enough to use a rel. fine binning in EMF (or other variales (which!!!)) of parameters?
+      //only P, Pt, EMC1, HAC1 will be available in  (*it)->GetParametrizedMess(); 
+
+      //Es fehlen :
+      //-Track Reco Efficiency betrachten
+      //-Response lookup   
+
+      if(temp->TrackId == 13)  IsMuon = true;
+      else                     IsMuon = false;
+      if(temp->DR < ConeRadius) 
+	{
+	  if(temp->DRout < ConeRadius)
+	    {
+	      if(!IsMuon) {
+		JetPt += temp->pt;
+		CaloRest -= CaloTrackPt;
+	      } //Non Isolated Muon Correction is left for X-cleaning
+	    }
+	  else //Out of Cone
+	    {
+	      JetPt += temp->pt;
+	    }
+	}
+      else
+	{
+	  if(IsMuon)     CaloRest -= MIPsignal;
+	  else           CaloRest -= CaloTrackPt;
+	}
+
+    //
+    //Question: CaloRest of Jet or single towers (so far only Jet)
+    //////////////////////////////////////////////////////////////////////
+    }
+    //std::cout<<"just a check: CaloRest = "<<CaloRest<<std::endl;//////
+
+    //correction of neutral hadron part:
+    //a tower loop has to be included if this should be done on tower level [ (*it)->GetParametrizedMess() ]
+    if(CaloRest > 0) {
+      TJet jet(_mess);
+      jet.pt = CaloRest;
+      jet.E = -1000;  //signal that this is only the calo rest of a track jet!
+      JetPt += _func(&jet, _par);  //ein anderer Parameter als bei der normalen korrektur nehmen (da hier nur neutr. Had)
+    }
+    return JetPt;
   };
 
   virtual double chi2() const{ 
@@ -214,17 +340,23 @@ public:
     double new_mess, new_error;
     double sum_mess = 0.;
     double sum_error2 = 0.;
-    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
-	 it!=_vecmess.end(); ++it) {
-      new_mess    = (*it)->GetParametrizedMess();
-      sum_mess   += new_mess;
-      new_error   = (*it)->GetParametrizedErr(&new_mess);
-      sum_error2 += new_error * new_error;
+    if(trackuse) {
+      new_error = GetParametrizedErr();
+      new_mess = GetParametrizedTrackMess();
     }
-    TJet jet(_mess);
-    jet.pt    = sum_mess;
-    new_mess  = _func(&jet, _par);
-    new_error =   _err( &new_mess, _mess, _error );
+    else{
+      for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	   it!=_vecmess.end(); ++it) {
+	new_mess    = (*it)->GetParametrizedMess();
+	sum_mess   += new_mess;
+	new_error   = (*it)->GetParametrizedErr(&new_mess);
+	sum_error2 += new_error * new_error;
+      }
+      TJet jet(_mess);
+      jet.pt    = sum_mess;
+      new_mess  = _func(&jet, _par);
+      new_error =  _err( &new_mess, _mess, _error );
+    }
     return (new_error!=0. ? weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) ):0.0);
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;
@@ -236,7 +368,9 @@ public:
   }
 protected:  
   std::vector<TData*> _vecmess; 
-  double JetError2;
+  std::vector<TData*> _vectrack; 
+  bool trackuse;
+  //double JetError2;
 };
 
 //virtual data class for data providing only multiple messurements
@@ -393,7 +527,7 @@ class TData_ParLimit : public TData
 {
  public:
   TData_ParLimit(unsigned short int index, TMeasurement *mess, double error,
-                 double *par,double const(*func)(TMeasurement *const,double *const)) 
+                 double *par,double const(*func)(TMeasurement *const,double *const))
   : TData(index,mess,0,error,1.0,par,1,func,0){ _type=ParLimit; };
     
     virtual const std::vector<TData*>& GetRef() { 

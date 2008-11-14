@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.36 2008/10/02 14:38:32 thomsen Exp $
+// $Id: Parameters.h,v 1.37 2008/11/13 17:29:14 auterman Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -29,19 +29,26 @@ public :
   int GetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity);}
   int GetJetEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity_jet, phi_granularity_jet, eta_symmetry);}
   int GetJetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity_jet);}
+  int GetTrackEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity_track, phi_granularity_track, eta_symmetry);}
+  int GetTrackPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity_jet);}
   int GetBin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity + phibin;}
   int GetJetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return etabin*phi_granularity_jet + phibin;}
+  int GetTrackBin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity_track + phibin;}
 
   int GetNumberOfTowerParameters() const{return p->nTowerPars() *eta_granularity*phi_granularity;}
   int GetNumberOfJetParameters() const{return p->nJetPars()*eta_granularity_jet*phi_granularity_jet;}
-  int GetNumberOfParameters() const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters();}
+  int GetNumberOfTrackParameters() const{return p->nTrackPars()*eta_granularity_track*phi_granularity_track;}
+  int GetNumberOfParameters() const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters() + GetNumberOfTrackParameters();}
   int GetNumberOfTowerParametersPerBin() const {return p->nTowerPars();}
   int GetNumberOfJetParametersPerBin() const {return p->nJetPars();}
+  int GetNumberOfTrackParametersPerBin() const {return p->nTrackPars();}
 
   int GetEtaGranularity() const { return eta_granularity;}
   int GetPhiGranularity() const { return phi_granularity;}
   int GetEtaGranularityJet() const { return eta_granularity_jet;}
   int GetPhiGranularityJet() const { return phi_granularity_jet;}
+  int GetEtaGranularityTrack() const { return eta_granularity_track;}
+  int GetPhiGranularityTrack() const { return phi_granularity_track;}
 
   /// write calibration constants to cfi file
   void Write_CalibrationCfi(const char* name); 
@@ -50,6 +57,7 @@ public :
 
   double* GetTowerParRef(int bin) { return k + bin*p->nTowerPars(); }
   double* GetJetParRef(int jetbin)  { return k + GetNumberOfTowerParameters()+jetbin*p->nJetPars();}
+  double* GetTrackParRef(int trackbin)  { return k + GetNumberOfTowerParameters() + GetNumberOfJetParameters() +trackbin*p->nTrackPars();}
   void SetErrors(double *ne) { std::memcpy(e,ne,GetNumberOfParameters()*sizeof(double));}  
   void SetParameters(double *np) { std::memcpy(k,np,GetNumberOfParameters()*sizeof(double));}
   void SetFitChi2(double chi2) { fitchi2 = chi2;}
@@ -67,6 +75,9 @@ public :
   }
   static const double jet_parametrization(TMeasurement *const x,double *const par) {
     return instance->p->correctedJetEt(x,par);
+  }  
+  static const double track_parametrization(TMeasurement *const x,double *const par) {
+    return instance->p->GetExpectedResponse(x,par);
   }
   static const double dummy_parametrization(TMeasurement *const x,double *const par) {
     return x->pt;
@@ -81,6 +92,20 @@ public :
   }
   static const double jet_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
     return (x[0]>0. ? 0.033*x[0] + 5.6   :   0.033*(-x[0]) + 5.6 ); 
+  }
+
+  static const double track_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) { 
+    double error=0,error2=0;
+    error =  (x[0]>0 ? x[0] *( 0.05 + 0.00015 * x[0])   : (-x[0]) *(  0.05 + 0.00015 * (-x[0]) )); //trackerror
+    //for full error see Grooms paper 0605164v4, p.25
+    error2 = error * error;
+    //Pi0 Fehler
+    error2 += (1-1/1.48)*(1-1/1.48)*0.125*0.125*x[0]*x[0];   //*(x[0]/100)^(-0.076)          //1/1.48 = h/e
+    //folling term has to be checked!!!!
+    double a = 1/(1.48 * 1.48) * 1.25 * 1.25 * pow((fabs(x[0])* (xorig->E / xorig->pt) / 0.96),(0.816 - 1));  // 1- Pi0 * error(h)^2 (h/e)^2
+    error2 += (x[0]>0 ?  a * x[0]  : a * (-x[0]));    //intrinsic term (HCAL)
+    error = sqrt(error2);
+    return error;
   }
 
 
@@ -185,8 +210,8 @@ private:
   unsigned const static eta_ntwr=82, phi_ntwr=72;
   unsigned eta_ntwr_used;
   bool eta_symmetry;
-  unsigned int eta_granularity, phi_granularity,eta_granularity_jet, phi_granularity_jet;
-  std::vector<double> start_values, jet_start_values;
+  unsigned int eta_granularity, phi_granularity,eta_granularity_jet, phi_granularity_jet, eta_granularity_track, phi_granularity_track;
+  std::vector<double> start_values, jet_start_values, track_start_values;
   //The parametrization functions:
   Parametrization* p;
 

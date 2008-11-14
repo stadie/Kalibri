@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.29 2008/09/29 10:15:16 mschrode Exp $
+// $Id: caliber.h,v 1.30 2008/11/13 17:29:14 auterman Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -97,6 +97,7 @@ private:
   bool makeControlPlotsGammaJet2;
   bool makeControlPlotsDiJet;
   bool makeControlPlotsParScan;
+  bool useTracks;
   std::set<std::string> mPlottedQuant;
 
   std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals
@@ -130,6 +131,7 @@ private:
   TParameters * p;    //fit parameters, depend on number of bins & geometry
   double const (*tower_error_param)(double *const x, TMeasurement *const xorig, double const err);
   double const (*jet_error_param)  (double *const x, TMeasurement *const xorig, double const err);
+  double const (*track_error_param)  (double *const x, TMeasurement *const xorig, double const err);
 
   TControlPlots * plots;  //the control plots
 };

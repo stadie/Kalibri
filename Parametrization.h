@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.17 2008/10/13 14:32:08 rwolf Exp $
+// $Id: Parametrization.h,v 1.18 2008/10/13 16:42:41 thomsen Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -15,8 +15,8 @@
 class Parametrization 
 {
 public:
-  Parametrization(unsigned int ntowerpars, unsigned int njetpars) : 
-    ntowerpars_(ntowerpars), njetpars_(njetpars) {}
+  Parametrization(unsigned int ntowerpars, unsigned int njetpars, unsigned int ntrackpars) : 
+    ntowerpars_(ntowerpars), njetpars_(njetpars), ntrackpars_(ntrackpars) {}
   virtual ~Parametrization() {}
   // ----------------------------------------------------------------
   //  correctedTowerEt(TMeasurement *const x, double *const par)
@@ -44,15 +44,18 @@ public:
   //         x->phi  : phi of tower
   //  par:  the correction parameters of this jet
   // ----------------------------------------------------------------
-  virtual double correctedJetEt(TMeasurement *const x,double *const par) const = 0;
+  virtual double correctedJetEt(TMeasurement *const x,double *const par) const = 0; 
+  // GetExpectedResponse returns the expected Signal of a Track in the Calorimeter
+  virtual double GetExpectedResponse(TMeasurement *const x,double *const par) const { return 0;}
   virtual const char * name() const = 0;
 
   unsigned int nTowerPars() const { return ntowerpars_;}
   unsigned int nJetPars() const { return njetpars_;}
+  unsigned int nTrackPars() const { return ntrackpars_;}
 
 private: 
   Parametrization();
-  unsigned int  ntowerpars_, njetpars_;
+  unsigned int  ntowerpars_, njetpars_, ntrackpars_;
 };
 
 // parametrization of the hadronic response 
@@ -60,7 +63,7 @@ private:
 /// -----------------------------------------------------------------
 class StepParametrization : public Parametrization { 
 public:
-  StepParametrization() : Parametrization(12,0) {}
+  StepParametrization() : Parametrization(12,0,0) {}
   const char* name() const { return "StepParametrization";}
   
   double correctedTowerEt(TMeasurement *const x,double *par) const {
@@ -101,7 +104,7 @@ public:
 /// -----------------------------------------------------------------
 class StepParametrizationEnergy : public Parametrization { 
 public:
-  StepParametrizationEnergy() : Parametrization(12,2) {}
+  StepParametrizationEnergy() : Parametrization(12,2,0) {}
   const char* name() const { return "StepParametrizationEnergy";}
   
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -137,7 +140,7 @@ public:
 /// -----------------------------------------------------------------
 class StepEfracParametrization : public Parametrization {
 public:
-  StepEfracParametrization() : Parametrization(36,0) {}  //(36,2) {}
+  StepEfracParametrization() : Parametrization(36,0,0) {}  //(36,2) {}
   const char* name() const { return "StepEfracParametrization";}
 
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -200,7 +203,7 @@ public:
 /// -----------------------------------------------------------------
 class StepJetParametrization : public Parametrization { 
 public:
-  StepJetParametrization() : Parametrization(0,65) {}
+  StepJetParametrization() : Parametrization(0,65,0) {}
   const char* name() const { return "StepJetParametrization";}
 
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -291,7 +294,7 @@ public:
 /// -----------------------------------------------------------------
 class MyParametrization: public Parametrization {
  public:
-  MyParametrization() : Parametrization(3,2) {}
+  MyParametrization() : Parametrization(3,2,0) {}
   const char* name() const { return "MyParametrization";}
   
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -307,7 +310,7 @@ class MyParametrization: public Parametrization {
 /// -----------------------------------------------------------------
 class JetMETParametrization: public Parametrization {
 public:
-  JetMETParametrization() : Parametrization(3,5) {}
+  JetMETParametrization() : Parametrization(3,5,0) {}
   const char* name() const { return "JetMETParametrization";}
   
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -332,7 +335,7 @@ public:
 /// -----------------------------------------------------------------
 class SimpleParametrization: public Parametrization {
 public:
-  SimpleParametrization() : Parametrization(3,3) {}
+  SimpleParametrization() : Parametrization(3,3,0) {}
   const char* name() const { return "SimpleParametrization";}
 
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -354,7 +357,7 @@ public:
 /// -----------------------------------------------------------------
 class ToyParametrization: public Parametrization {
 public:
-  ToyParametrization() : Parametrization(1,0) {}
+  ToyParametrization() : Parametrization(1,0,0) {}
   const char* name() const { return "ToyParametrization";}
 
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -371,7 +374,7 @@ public:
 /// -----------------------------------------------------------------
 class ToyStepParametrization : public Parametrization { 
 public:
-  ToyStepParametrization() : Parametrization(15,0) {}
+  ToyStepParametrization() : Parametrization(15,0,0) {}
   const char* name() const { return "ToyStepParametrization";}
   
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -407,7 +410,7 @@ public:
 /// -----------------------------------------------------------------
 class ToyStepJetParametrization : public Parametrization { 
  public:
-  ToyStepJetParametrization() : Parametrization(0,15) {}
+  ToyStepJetParametrization() : Parametrization(0,15,0) {}
   const char* name() const { return "ToyStepJetParametrization";}
   
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -436,4 +439,71 @@ class ToyStepJetParametrization : public Parametrization {
     return  result;
   }
 };
+
+// Complete Track Parametrization
+// StepEfracParametrization, if outside tracker or track errors too large
+/// -----------------------------------------------------------------
+class TrackParametrization : public Parametrization {
+public:
+  TrackParametrization() : Parametrization(12,3,0) {}  //(36,3,3) {}
+  const char* name() const { return "TrackParametrization";}
+
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
+    double result=0;
+    
+    //double Efrac = x->EMF/(x->HadF+x->OutF+x->EMF);
+    //if( Efrac < 0.2 ) {
+      if(x->HadF>=0.0 && x->HadF<=1.0)            result = x->EMF+x->OutF+par[ 0]*x->HadF;
+      else if (x->HadF>   1.0 && x->HadF<=   2.0) result = x->EMF+x->OutF+par[ 1]*x->HadF;
+      else if (x->HadF>   2.0 && x->HadF<=   5.0) result = x->EMF+x->OutF+par[ 2]*x->HadF;
+      else if (x->HadF>   5.0 && x->HadF<=  10.0) result = x->EMF+x->OutF+par[ 3]*x->HadF;
+      else if (x->HadF>  10.0 && x->HadF<=  20.0) result = x->EMF+x->OutF+par[ 4]*x->HadF;
+      else if (x->HadF>  20.0 && x->HadF<=  40.0) result = x->EMF+x->OutF+par[ 5]*x->HadF;
+      else if (x->HadF>  40.0 && x->HadF<=  80.0) result = x->EMF+x->OutF+par[ 6]*x->HadF;
+      else if (x->HadF>  80.0 && x->HadF<= 160.0) result = x->EMF+x->OutF+par[ 7]*x->HadF;
+      else if (x->HadF> 160.0 && x->HadF<= 300.0) result = x->EMF+x->OutF+par[ 8]*x->HadF;
+      else if (x->HadF> 300.0 && x->HadF<= 600.0) result = x->EMF+x->OutF+par[ 9]*x->HadF;
+      else if (x->HadF> 600.0 && x->HadF<=1000.0) result = x->EMF+x->OutF+par[10]*x->HadF;
+      else if (x->HadF>1000.0 )                   result = x->EMF+x->OutF+par[11]*x->HadF;
+    return result;
+  }
+  
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
+    //im Moment nur pt richtig (der rest ist uncorr messung) pt = rest(HCAL + ECAL)
+    //sicher noch nicht die entgueltige fassung!!!!!!!!! (use EMF?, more pt bins?)
+
+    //if(fabs(x->pt - x->EMF+x->OutF+x->HadF) / x->pt < 0.1)
+    if(x->E < -900) //set to -1000 for track jets! Positive for all others
+      return  par[0] * x->pt; 
+    else
+      return x->pt * ( 1. + 0.295 * par[1] * exp(- 0.02566 * par[2] * x->pt));   
+  }
+
+  double GetExpectedResponse(TMeasurement *const x,double *const par) const {
+    double result=0;
+    double PiFrac;
+    double eh = 1.48;    //will probably be treated as a free parameter soon!
+    double ehECAL = 1.6;
+
+    //Ecal < 1.2 Gev = late showering (usefull?)
+
+    //this is Groom's Parametrization:
+    double TrackEMF = x->EMF / (x->HadF + x->EMF);      //EMF = EMC3, HadF = HMC3 for Tracks
+    //check if EMC1 & HMC1 same size (comparable)
+    //if 1/5 shall be used TMeasurement ->(cast) TTrack
+
+    PiFrac = 1 - pow((x->E / 0.96 ),0.816 );         //0.96 and 0.816 will be free parameter soon!
+    double responseH = (1 + (eh - 1) * PiFrac) / eh;
+    double responseE = (1 + (ehECAL - 1) * PiFrac) / ehECAL;
+
+    //if(!isElec)
+
+    //is this correct: (Pi0 anteil in EMF-fraction?)
+    result = x->pt * (TrackEMF * responseE + (1 - TrackEMF) * responseH);
+
+    return result;
+  }
+};
+
+
 #endif

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.52 2008/10/13 15:10:19 thomsen Exp $
+// $Id: caliber.cc,v 1.53 2008/11/13 17:29:14 auterman Exp $
 //
 //
 // for profiling:
@@ -491,6 +491,7 @@ void TCaliber::Run_GammaJet()
 
     //Find the jets eta & phi index using the nearest tower to jet axis:
     int jet_index=-1;
+    int track_index=-1;
     double min_tower_dr = 10.0;
     double em = 0;
     double had = 0;
@@ -515,10 +516,13 @@ void TCaliber::Run_GammaJet()
       if (dr<min_tower_dr) {
 	jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[n]),
 				 p->GetJetPhiBin(gammajet.TowId_phi[n]));
+	track_index = p->GetJetBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
+				   p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
 	min_tower_dr = dr;
       }
     }
     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
+    if (track_index<0){ cerr<<"WARNING: track_index = " << track_index << endl; continue; }
     if(had/(had + em) < 0.07) { continue;}
     //if(had/(had + em) > 0.92) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
@@ -588,11 +592,54 @@ void TCaliber::Run_GammaJet()
 					   p->GetTowerParRef( index ),                              //parameter//
 					   p->GetNumberOfTowerParametersPerBin(),                   //number of free tower param. p. bin//
 					   p->tower_parametrization,                                //function//
-					   tower_error_param                                        //error param.func.//
+					   tower_error_param                                       //error param.func.//
 					   ));
     } 
-    //if (EM/F<0.05 || EM/F>0.95) continue;
-  
+
+    //Add the jet's tracks to "gj_data":
+    for (int n=0; n<gammajet.NobjTrack; ++n){
+   
+      //one trackindex for all tracks in jet = track_index
+      //int index = p->GetTrackBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
+      //			         p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
+      //create array with multidimensional measurement
+      //TMeasurement * Tmess = new TTrack;
+      TTrack * Tmess = new TTrack;
+      Tmess->TrackId = int(gammajet.TrackId[n]);
+      Tmess->TowerId = int(gammajet.TrackTowId[n]);
+      Tmess->pt = double(gammajet.TrackPt[n]);
+      double scale = gammajet.TrackP[n]/gammajet.TrackPt[n];
+      Tmess->EM1 = double(gammajet.TrackEMC1[n]*scale);
+      Tmess->EMF = double(gammajet.TrackEMC3[n]*scale);
+      Tmess->EM5 = double(gammajet.TrackEMC5[n]*scale);
+      Tmess->Had1 = double(gammajet.TrackHAC1[n]*scale);
+      Tmess->HadF = double(gammajet.TrackHAC3[n]*scale);
+      Tmess->Had5 = double(gammajet.TrackHAC5[n]*scale);
+      Tmess->OutF = 0;
+      Tmess->DR = double(gammajet.TrackDR[n]);
+      Tmess->DRout = double(gammajet.TrackDROut[n]);
+      Tmess->eta = double(gammajet.TrackEta[n]);
+      Tmess->etaOut = double(gammajet.TrackEtaOut[n]);
+      Tmess->phi = double(gammajet.TrackPhi[n]);
+      Tmess->phiOut = double(gammajet.TrackPhiOut[n]);
+      Tmess->E = double(gammajet.TrackP[n]);
+      //mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+      //EM+=mess->EMF;
+      //F+=mess->pt;
+      gj_data->AddTrack(new TData_TruthMess(
+					    track_index  * p->GetNumberOfTrackParametersPerBin() + p->GetNumberOfTowerParameters() + p->GetNumberOfJetParameters() ,
+					   Tmess,                                                    //mess//
+					   0,                           //truth//
+					   0.05 + 0.00015 * gammajet.TrackPt[n], //error//
+					   1.,                                                      //weight//
+					   p->GetTrackParRef( track_index ),                              //parameter//
+					   p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
+					   p->track_parametrization,                                //function//
+					   track_error_param                                        //error param.func.//
+					   ));
+    }
+    gj_data->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization
+ 
     data.push_back( gj_data ); 
    
     if (n_gammajet_events>=0 && i>=n_gammajet_events-1)
@@ -659,20 +706,20 @@ void TCaliber::Run_ZJet()
 			  p->GetJetParRef( jet_index ),             //params
 			  p->GetNumberOfJetParametersPerBin(),      //number of free jet param. p. bin
 			  p->jet_parametrization,                   //function
-			  jet_error_param,                                  //error param. function
+			  jet_error_param,                          //error param. function
 			  jetp
 			  );
-
+    
     //Add the jet's towers to "gj_data":
     for (int n=0; n<zjet.NobjTowCal; ++n){
       //if (zjet.TowEt[n]<0.01) continue;
-   
+      
       int index = p->GetBin(p->GetEtaBin(zjet.TowId_eta[n]),
 			    p->GetPhiBin(zjet.TowId_phi[n]));
       if (index<0){ cerr<<"WARNING: towewer_index = " << index << endl; continue; }
-
+      
       //double dR = deltaR(zjet.JetCalEta, zjet.JetCalPhi, zjet.TowEta[n], zjet.TowPhi[n]);
-	      
+      
       double relativEt = zjet.TowEt[n]/zjet.JetCalEt;  
       //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
       //This relativeE is used *only* for plotting! Therefore no cuts on this var!
@@ -698,6 +745,51 @@ void TCaliber::Run_ZJet()
 					   tower_error_param                                        //error param.func.//
 					   ));
     } 
+
+    /*
+    //Add the jet's tracks to "gj_data":
+    for (int n=0; n<gammajet.NobjTrack; ++n){
+      
+      int index = p->GetBin(p->GetEtaBin(gammajet.TrackTowIdEta[n]),
+			    p->GetPhiBin(gammajet.TrackTowIdPhi[n]));
+      if (index<0){ cerr<<"WARNING: towewer_index = " << index << endl; continue; }
+      //create array with multidimensional measurement
+      //TMeasurement * Tmess = new TTrack;
+      TTrack * Tmess = new TTrack;
+      Tmess->TrackId = int(gammajet.TrackId[n]);
+      Tmess->TowerId = int(gammajet.TrackTowId[n]);
+      Tmess->pt = double(gammajet.TrackPt[n]);
+      double scale = gammajet.TrackP[n]/gammajet.TrackPt[n];
+      Tmess->EM1 = double(gammajet.TrackEMC1[n]*scale);
+      Tmess->EMF = double(gammajet.TrackEMC3[n]*scale);
+      Tmess->EM5 = double(gammajet.TrackEMC5[n]*scale);
+      Tmess->Had1 = double(gammajet.TrackHAC1[n]*scale);
+      Tmess->HadF = double(gammajet.TrackHAC3[n]*scale);
+      Tmess->Had5 = double(gammajet.TrackHAC5[n]*scale);
+      Tmess->OutF = 0;
+      Tmess->DR = double(gammajet.TrackDR[n]);
+      Tmess->DRout = double(gammajet.TrackDROut[n]);
+      Tmess->eta = double(gammajet.TrackEta[n]);
+      Tmess->etaOut = double(gammajet.TrackEtaOut[n]);
+      Tmess->phi = double(gammajet.TrackPhi[n]);
+      Tmess->phiOut = double(gammajet.TrackPhiOut[n]);
+      Tmess->E = double(gammajet.TrackP[n]);
+      //mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+      //EM+=mess->EMF;
+      //F+=mess->pt;
+      gj_data->AddTrack(new TData_TruthMess(index,
+					   Tmess,                                                    //mess//
+					   0,                           //truth//
+					   0.05 + 0.00015 * gammajet.TrackPt[n], //error//
+					   1.,                                                      //weight//
+					   p->GetTowerParRef( index ),                              //parameter//
+					   p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
+					   p->track_parametrization,                                //function//
+					   track_error_param                                        //error param.func.//
+					   ));
+    } 
+    gj_data->UseTracks(); 
+    */
  
     data.push_back( gj_data ); 
    
@@ -748,7 +840,7 @@ void TCaliber::Run_TrackTower()
 					 p->GetTowerParRef( index ),                          //parameter//
 					 p->GetNumberOfTowerParametersPerBin(),               //number of free tower param. p. bin//
 					 p->tower_parametrization,                            //function//
- 				         tower_error_param                                        //error param.func.//
+ 				         tower_error_param                             //function//
 					 ) );
       if((evt++)%1000==0) cout<<"Track-Tower Event: "<<evt<<endl;
       break;//use only one track-tower per event! ->bug in the producer
@@ -1029,7 +1121,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	    p->GetTowerParRef( index ),                             //parameter//
 	    p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
 	    p->tower_parametrization,                               //function//
-	    tower_error_param                                       //error param. function//
+	    tower_error_param                                      //error param. function//
 	  ));
       }
       if(nstoredjets> 0)  
@@ -1236,7 +1328,7 @@ void TCaliber::Run()
     if (n_top_events!=0)              Run_Top();
     if (flatten_spectra){
       FlattenSpectra();
-      //BalanceSpectra();
+      BalanceSpectra();
     }  
     if (! tower_constraints.empty())  AddTowerConstraint();
     if (! par_limits.empty())         AddParameterLimits();
@@ -1538,6 +1630,8 @@ void TCaliber::Init(string file)
   }
   
   //Error Parametrization...
+  //...for tracks:
+  track_error_param = p->track_error_parametrization;
   //...for tower:
   string te = config.read<string>("tower error parametrization","standard"); 
   if (te=="standard")
@@ -1634,6 +1728,8 @@ void TCaliber::Init(string file)
   n_top_events          = config.read<int>("use Top events",-1);
   string default_tree_name = config.read<string>( "Default Tree Name","CalibTree");
   output_file = config.read<string>( "Output file", "calibration_k.cfi" );
+
+  useTracks = config.read<bool>("use Tracks",true);
 
   //--------------------------------------------------------------------------
   //Read Gamma-Jet Tree:
