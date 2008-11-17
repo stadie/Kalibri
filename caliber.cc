@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.57 2008/11/17 13:02:26 thomsen Exp $
+// $Id: caliber.cc,v 1.58 2008/11/17 13:48:06 thomsen Exp $
 //
 //
 // for profiling:
@@ -231,6 +231,7 @@ void TCaliber::FlattenSpectra()
      alltotal+=(*it)->GetWeight();
      for (int type=0; type<7; ++type){
        if ((*it)->GetType()!=type) continue;
+       if ((*it)->GetType()==InvMass) continue;
        double em = 0.;
        double had = 0.;
        int index=0;
@@ -263,6 +264,8 @@ void TCaliber::FlattenSpectra()
      if (tot[type]!=0.)
        for (DataIter it = data.begin(); it!=data.end(); ++it) {
 	 if ((*it)->GetType()!=type) continue;
+         if ((*it)->GetType()==InvMass) continue;
+	 
 	 
 	 double em = 0;
 	 double had = 0;
@@ -1139,7 +1142,7 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       //Add the jet's tracks to "gj_data":
       for (int n=0; n<njet.NobjTrack; ++n){
 	
-        if (njet.Track_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
+//        if (njet.Track_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
 
 	//one trackindex for all tracks in jet = track_index
 	//int index = p->GetTrackBin(p->GetTrackEtaBin(njet.TrackTowIdEta[n]),
@@ -1251,8 +1254,10 @@ void TCaliber::Run_Top()
   //Run Top stuff  
   int nevent = top.fChain->GetEntries();
   int evt=0;
+  
   for (int i=0;i<nevent;i++) {
-    if((i+1)%10000==0) cout<<"Top Event: "<<i+1<<endl;
+    if((i+1)%1000==0) 
+      cout<<"Top Event: "<<i+1<<endl;
     top.fChain->GetEvent(i); 
     if (top.NobjTow>1000 || top.NobjJet>8) {
       cerr << "ERROR: Increase array sizes in topSelector; NobjTow="
@@ -1291,30 +1296,32 @@ void TCaliber::Run_Top()
 	}
       }
       if (jet_index<0){ 
-	 cerr<<"WARNING: JJ jet_index = " << jet_index << endl; 
+	 cerr<<"WARNING: Top jet_index = " << jet_index << endl; 
 	 continue; 
       }
 
-      double * direction = new double[2];
+      double * direction = new double[3];
       direction[0] = sin(top.JetPhi[ij]);
       direction[1] = cos(top.JetPhi[ij]);
-      TMeasurement* jetp  = new TJet;
+      direction[2] = sqrt(top.JetE[ij]*top.JetE[ij] - top.JetEt[ij]*top.JetEt[ij]);
+      TJet* jetp  = new TJet;
       jetp->pt  = top.JetEt[ij];
       jetp->eta = top.JetEta[ij];
       jetp->phi = top.JetPhi[ij];
       jetp->E   = top.JetE[ij];
+      jetp->flavor = (TJet::Flavor)top.JetFlavor[ij];
     //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
       double factor =  top.JetEt[ij] /  top.JetE[ij];
       jetp->HadF = had * factor;
       jetp->EMF = em * factor;
       jetp->OutF = out * factor;
-      //Create an jet/Jet TData event
+      //Create an Top TData event
       top_data[nstoredjets] = new TData_InvMass2( 
           jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
 	  direction,                                     //p_T direction of this jet
-	  172.9,                                           //truth//
-	  sqrt(pow(0.5,2)+pow(0.10*top.JetPt[ij],2)),   //error//
-	  top.Weight,                                   //weight//
+	  172.9,                                         //truth//
+	  sqrt(pow(0.5,2)+pow(0.10*top.JetPt[ij],2)),    //error//
+	  top.Weight,                                    //weight//
 	  //1.,                                          //weight//
 	  p->GetJetParRef( jet_index ),                  //params
 	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
@@ -1331,7 +1338,7 @@ void TCaliber::Run_Top()
 	int index = p->GetBin(p->GetEtaBin(top.TowId_eta[n]),
 			      p->GetPhiBin(top.TowId_phi[n]));
 	//std::cout << "jet:" << ij << "bin index:" << index << "\n";
-	if (index<0){ cerr<<"WARNING: JJ tower_index = " << index << endl; continue; }
+	if (index<0){ cerr<<"WARNING: Top tower_index = " << index << endl; continue; }
 
 	double relativEt = top.TowEt[n]/top.JetEt[ij];  
 	//if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
@@ -1364,11 +1371,13 @@ void TCaliber::Run_Top()
       if(nstoredjets> 0)  
       	top_data[0]->AddNewMultMess( top_data[nstoredjets] );
       ++nstoredjets;
-    }//loop over all n-jets
+    }//loop over all top-jets
 
-    ++evt;    
-    data.push_back( top_data[0] ); 
-    if (evt>=n_top_events)
+    ++evt; 
+    if (top_data[0]->MultMessSize()==2)   
+      data.push_back( top_data[0] ); 
+
+    if (evt>=n_top_events && n_top_events>=0)
       break;
   }
 }
@@ -1390,7 +1399,7 @@ void TCaliber::Run()
     if (n_top_events!=0)              Run_Top();
     if (flatten_spectra){
       FlattenSpectra();
-      BalanceSpectra();
+      //BalanceSpectra();
     }  
     if (! tower_constraints.empty())  AddTowerConstraint();
     if (! par_limits.empty())         AddParameterLimits();

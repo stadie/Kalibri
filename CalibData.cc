@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.23 2008/10/22 14:19:51 thomsen Exp $
+// $Id: CalibData.cc,v 1.24 2008/11/14 12:41:37 thomsen Exp $
 //
 #include "CalibData.h"
 
@@ -278,7 +278,7 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
        *tpars[i] = oldpar;
     }
   }
-
+  //cout << "chi2 = " <<new_chi2<<", temp1="<<temp1<<", temp2="<<temp2<<endl;
   return new_chi2;
 }
 
@@ -364,7 +364,7 @@ double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_deriv
        }
        new_mess  = GetParametrizedMess();
        parascale += new_mess;
-       parascale /= 2;
+       parascale /= 2.;
     //should be changed to ptsum (scalar) of the part projected to leading jet axis devided by 2 for n>2 n-jets 
        new_mess  = combine() / parascale;
        temp2 = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(_error * _error));
@@ -419,6 +419,7 @@ double TData_InvMass2::combine() const{
     z += tz;
     e += sqrt( tx*tx + ty*ty + tz*tz );
   }
+  //cout << "m = "<<sqrt(e*e - x*x - y*y - z*z)<<endl<<endl;
   return sqrt(e*e - x*x - y*y - z*z);     
 };
 

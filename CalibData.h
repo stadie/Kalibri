@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.49 2008/11/14 12:41:37 thomsen Exp $
+// $Id: CalibData.h,v 1.50 2008/11/17 13:02:26 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -401,6 +401,7 @@ public:
   };
   virtual void AddNewMultMess(TData_MessMess * m2 ){assert(m2->_m2.empty());_m2.push_back(m2);};
   void ClearMultMess() { _m2.clear();}
+  unsigned MultMessSize(){return _m2.size();};
   virtual double chi2() const{ 
     double sum_error2=0.0, new_error, new_mess;
     double weight = GetWeight();
