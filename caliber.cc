@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.55 2008/11/14 13:15:53 thomsen Exp $
+// $Id: caliber.cc,v 1.56 2008/11/14 15:45:35 auterman Exp $
 //
 //
 // for profiling:
@@ -623,6 +623,10 @@ void TCaliber::Run_GammaJet()
       Tmess->phi = double(gammajet.TrackPhi[n]);
       Tmess->phiOut = double(gammajet.TrackPhiOut[n]);
       Tmess->E = double(gammajet.TrackP[n]);
+      Tmess->TrackChi2 = double(gammajet.TrackChi2[n]);
+      Tmess->NValidHits = int(gammajet.TrackNHits[n]);
+      Tmess->MuDR = double(gammajet.MuDR[n]);
+      Tmess->MuDE = double(gammajet.MuDE[n]);
       //mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       //EM+=mess->EMF;
       //F+=mess->pt;
@@ -774,6 +778,10 @@ void TCaliber::Run_ZJet()
       Tmess->phi = double(gammajet.TrackPhi[n]);
       Tmess->phiOut = double(gammajet.TrackPhiOut[n]);
       Tmess->E = double(gammajet.TrackP[n]);
+      Tmess->TrackChi2 = double(gammajet.TrackChi2[n]);
+      Tmess->NValidHits = int(gammajet.TrackNHits[n]);
+      Tmess->MuDR = double(gammajet.MuDR[n]);
+      Tmess->MuDE = double(gammajet.MuDE[n]);
       //mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       //EM+=mess->EMF;
       //F+=mess->pt;
@@ -1158,6 +1166,10 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	Tmess->phi = double(gammajet.TrackPhi[n]);
 	Tmess->phiOut = double(gammajet.TrackPhiOut[n]);
 	Tmess->E = double(gammajet.TrackP[n]);
+	Tmess->TrackChi2 = double(gammajet.TrackChi2[n]);
+	Tmess->NValidHits = int(gammajet.TrackNHits[n]);
+	Tmess->MuDR = double(gammajet.MuDR[n]);
+	Tmess->MuDE = double(gammajet.MuDE[n]);
 	//mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
 	//EM+=mess->EMF;
 	//F+=mess->pt;

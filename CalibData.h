@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.48 2008/11/13 17:29:14 auterman Exp $
+// $Id: CalibData.h,v 1.49 2008/11/14 12:41:37 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -72,6 +72,10 @@ public:
   double EM5;
   double Had1;
   double Had5;
+  double TrackChi2;
+  int NValidHits;
+  double MuDR;
+  double MuDE;
 };
 
 //virtual data base class -> not directly used!
@@ -280,7 +284,7 @@ public:
     double JetPt = 0, CaloRest, CaloTrackPt;   
     bool IsMuon;
     const double ConeRadius = 0.5;      //Jet Cone Radius should not be hard coded or must be changed if Radius != 0.5
-    const double MIPsignal = 4;         //MIP Particle   (stimmt 4 GeV signal?)
+    const double MIPsignal = 4;         //MIP Particle 
     CaloRest = _mess->pt;
     for (std::vector<TData*>::const_iterator it=_vectrack.begin();
 	 it!=_vectrack.end(); ++it) {
@@ -322,10 +326,12 @@ public:
     //Question: CaloRest of Jet or single towers (so far only Jet)
     //////////////////////////////////////////////////////////////////////
     }
-    //std::cout<<"just a check: CaloRest = "<<CaloRest<<std::endl;//////
 
     //correction of neutral hadron part:
     //a tower loop has to be included if this should be done on tower level [ (*it)->GetParametrizedMess() ]
+
+    // cout<<"TrackPt: "<<JetPt<<"   Truth: "<<_truth<<"   rel Err: "<<(JetPt - _truth)/_truth<<"    Rest: "<<CaloRest<<"  relErrorIncRest: "<<(JetPt + CaloRest - _truth)/_truth<<"    #Tracks: "<<_vectrack.size()<<endl;
+
     if(CaloRest > 0) {
       TJet jet(_mess);
       jet.pt = CaloRest;

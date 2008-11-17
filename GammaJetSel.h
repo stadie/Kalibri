@@ -49,6 +49,11 @@ public :
    Float_t         TrackHAC1[200];   //[NobjTrack]
    Float_t         TrackHAC3[200];   //[NobjTrack]
    Float_t         TrackHAC5[200];   //[NobjTrack]
+   Float_t         TrackChi2[200];   //[NobjTrack]
+   Int_t           TrackNHits[200];   //[NobjTrack]
+   Float_t         MuDE[200];   //[NobjTrack]
+   Float_t         MuDR[200];   //[NobjTrack]
+
    Float_t         JetCalPt;
    Float_t         JetCalPhi;
    Float_t         JetCalEta;
@@ -107,6 +112,10 @@ public :
    TBranch        *b_TrackHAC1;   //
    TBranch        *b_TrackHAC3;   //
    TBranch        *b_TrackHAC5;   //
+   TBranch        *b_TrackChi2;   //
+   TBranch        *b_TrackNHits;   //
+   TBranch        *b_MuDE;   //
+   TBranch        *b_MuDR;   //
    TBranch        *b_JetCalPt;   //!
    TBranch        *b_JetCalPhi;   //!
    TBranch        *b_JetCalEta;   //!
@@ -203,6 +212,10 @@ void GammaJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("TrackHAC1", TrackHAC1, &b_TrackHAC1);
    fChain->SetBranchAddress("TrackHAC3", TrackHAC3, &b_TrackHAC3);
    fChain->SetBranchAddress("TrackHAC5", TrackHAC5, &b_TrackHAC5);
+   fChain->SetBranchAddress("TrackChi2", TrackChi2, &b_TrackChi2);
+   fChain->SetBranchAddress("TrackNHits", TrackNHits, &b_TrackNHits);
+   fChain->SetBranchAddress("MuDR", MuDR, &b_MuDR);
+   fChain->SetBranchAddress("MuDE", MuDE, &b_MuDE);
    fChain->SetBranchAddress("JetCalPt", &JetCalPt, &b_JetCalPt);
    fChain->SetBranchAddress("JetCalPhi", &JetCalPhi, &b_JetCalPhi);
    fChain->SetBranchAddress("JetCalEta", &JetCalEta, &b_JetCalEta);

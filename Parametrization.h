@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.18 2008/10/13 16:42:41 thomsen Exp $
+// $Id: Parametrization.h,v 1.19 2008/11/14 12:41:37 thomsen Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -476,7 +476,8 @@ public:
     if(x->E < -900) //set to -1000 for track jets! Positive for all others
       return  par[0] * x->pt; 
     else
-      return x->pt * ( 1. + 0.295 * par[1] * exp(- 0.02566 * par[2] * x->pt));   
+      //return x->pt * ( 1. + 0.295 * par[1] * exp(- 0.02566 * par[2] * x->pt));
+      return x->pt;  
   }
 
   double GetExpectedResponse(TMeasurement *const x,double *const par) const {
@@ -492,9 +493,10 @@ public:
     //check if EMC1 & HMC1 same size (comparable)
     //if 1/5 shall be used TMeasurement ->(cast) TTrack
 
-    PiFrac = 1 - pow((x->E / 0.96 ),0.816 );         //0.96 and 0.816 will be free parameter soon!
+    PiFrac = 1 - pow((x->E / 0.96 ),0.816-1 );         //0.96 and 0.816 will be free parameter soon!
     double responseH = (1 + (eh - 1) * PiFrac) / eh;
-    double responseE = (1 + (ehECAL - 1) * PiFrac) / ehECAL;
+    //double responseE = (1 + (ehECAL - 1) * PiFrac) / ehECAL;
+    double responseE = 1;
 
     //if(!isElec)
 
