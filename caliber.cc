@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.59 2008/11/17 14:32:18 auterman Exp $
+// $Id: caliber.cc,v 1.60 2008/11/18 11:18:49 auterman Exp $
 //
 //
 // for profiling:
@@ -1271,11 +1271,9 @@ void TCaliber::Run_Top()
     bool goodevent = false;
     TData_InvMass2 * top_data[3];//two W-jets and one b-jet
     top_data[0] = 0;
-    //std::cout << "reading " << top.NobjJet << " jets\n";
     int nstoredjets = 0;
     for (unsigned int ij = 0; ij<3; ++ij){
-//cout << "processing jet "<<ij<<" with pt="<< top.JetPt[ij]<<endl;
-      if(top.JetPt[ij] < Et_cut_nplus1Jet) continue;
+      if(top.JetPt[ij] < Et_cut_on_jet) continue;
       //Find the jets eta & phi index using the nearest tower to jet axis:
       int jet_index=-1;
       double min_tower_dr = 10.0;
@@ -1334,9 +1332,6 @@ void TCaliber::Run_Top()
 	  jetp                                           //jet momentum for plotting and scale
         );
 
-//cout << "jet "<<nstoredjets<<"'s E="<<top.JetE[ij]
-//     << ", ntower:"<<top.NobjTow<<endl;
-
       //Add the jet's towers to "top_data":
       for (int n=0; n<top.NobjTow; ++n){
         if (top.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
@@ -1345,7 +1340,6 @@ void TCaliber::Run_Top()
 	int index = p->GetBin(p->GetEtaBin(top.TowId_eta[n]),
 			      p->GetPhiBin(top.TowId_phi[n]));
 	//std::cout << "jet:" << ij << "bin index:" << index << "\n";
-//std::cout << "jet:" << ij << ", towid=" << n << ", bin index:" << index;
 	if (index<0){ cerr<<"WARNING: Top tower_index = " << index << endl; continue; }
 
 	double relativEt = top.TowEt[n]/top.JetEt[ij];  
@@ -1376,12 +1370,9 @@ void TCaliber::Run_Top()
 	    p->tower_parametrization,                               //function//
 	    tower_error_param                                       //error param. function//
 	  ));
-//std::cout << "  added." << endl;
-
       }
       if(nstoredjets> 0) {
       	top_data[0]->AddNewMultMess( top_data[nstoredjets] );
-//std::cout << " added jet " <<nstoredjets << " to jet 0." << endl;
       }
       ++nstoredjets;
       goodevent = (nstoredjets==3 ? true : false);
@@ -1390,7 +1381,6 @@ void TCaliber::Run_Top()
     ++evt; 
     if (goodevent) {
       data.push_back( top_data[0] ); 
-//std::cout << " added jet 0 to data vector." << endl;
     }
 
     if (evt>=n_top_events && n_top_events>=0)
