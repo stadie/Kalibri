@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.30 2008/11/13 17:29:14 auterman Exp $
+// $Id: caliber.h,v 1.31 2008/11/14 12:41:37 thomsen Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -91,6 +91,10 @@ private:
   double Et_cut_on_jet, Et_cut_on_gamma, Et_cut_nplus1Jet,     //kin. cuts
          Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster, Et_cut_on_Z,
          Rel_cut_on_gamma, Rel_cut_on_nJet;
+  double massConstraint_W;
+  double massConstraint_Top;
+  bool useMassConstraintW;
+  bool useMassConstraintTop;
   double RelWeight[7];//@@ Replace 7 by something meaningful
   bool makeControlPlotsTowers;
   bool makeControlPlotsGammaJet;
