@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.24 2008/11/14 12:41:37 thomsen Exp $
+// $Id: CalibData.cc,v 1.25 2008/11/17 14:32:18 auterman Exp $
 //
 #include "CalibData.h"
 
@@ -71,7 +71,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
     new_chi2  = weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/( new_error*new_error) );
 
     //Get Track Parameters
-    for (unsigned i=idx; i<idx+(*_vectrack.begin())->GetNumberOfPars() ; i <++i){
+    for (unsigned i=idx; i<idx+(*_vectrack.begin())->GetNumberOfPars() ; ++i){
       std::vector<TData*>::const_iterator it=_vectrack.begin();
       double oldpar = (*it)->GetPar()[i-idx];
 	  

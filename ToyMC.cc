@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.13 2008/10/06 09:13:12 stadie Exp $
+// $Id: ToyMC.cc,v 1.14 2008/11/05 16:44:14 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -26,6 +26,7 @@ ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(
   mTowConst[1] = 0;
   mTowConst[2] = 1;
   mTowConst[3] = 1;
+  mTowConst[4] = 0;
   mRandom = new TRandom3();
   mRandom->SetSeed(0);
 }

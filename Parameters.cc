@@ -2,8 +2,10 @@
 #include <cassert>
 #include <pwd.h>
 #include <unistd.h>
+#include <cstdlib>
 #include <ctime>
 #include <iomanip>
+
 
 #include "Parameters.h"
 #include "ConfigFile.h"
@@ -445,7 +447,7 @@ int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) 
   if (etagranu==2) return (eta_id < 0) ? 0 : 1;
 
   //check if tower is within wanted etarange:
-  if ( eta_symmetry && abs(eta_id)*2>(int)eta_ntwr_used)   return -2; 
+  if ( eta_symmetry && std::abs(eta_id)*2>(int)eta_ntwr_used)   return -2; 
   //calculate an index:
   unsigned index=(unsigned)(41+eta_id);
   if (eta_id>0) --index;
@@ -468,8 +470,8 @@ int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) 
     else if (etagranu==10) return ta_10[index];
     else if (etagranu==6) return ta_6[index];
   } else {
-    if (etagranu==41) return abs(eta_id)-1;
-    else if (etagranu==21) return ts_21[abs(eta_id)-1];
+    if (etagranu==41) return std::abs(eta_id)-1;
+    else if (etagranu==21) return ts_21[std::abs(eta_id)-1];
     else if (etagranu==11) return ts_11[abs(eta_id)-1];
     else if (etagranu== 5) return ts_5[ abs(eta_id)-1];
     else if (etagranu== 3) return ts_3[ abs(eta_id)-1];

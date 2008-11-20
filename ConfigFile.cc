@@ -4,7 +4,7 @@
 
 using std::string;
 
-#include <iostream.h>
+#include <iostream>
 
 bag_of_string::bag_of_string(std::string s) : std::vector<std::string>::vector() {
   std::string buffer;

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.37 2008/11/13 17:29:14 auterman Exp $
+// $Id: Parameters.h,v 1.38 2008/11/14 12:41:37 thomsen Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <cstring>
 
 #include "Parametrization.h"
 

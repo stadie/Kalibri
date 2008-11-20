@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.61 2008/11/18 13:04:21 auterman Exp $
+// $Id: caliber.cc,v 1.62 2008/11/20 16:04:50 snaumann Exp $
 //
 //
 // for profiling:
@@ -1583,7 +1583,7 @@ void TCaliber::Run_Lvmini()
   error_index = lvmind_(error_index);
   p->FillErrors(aux+error_index);
 
-  for( int loop = 0; loop < static_cast<int>(_residualScalingScheme.size()); loop++ ) {
+  for( unsigned int loop = 0; loop < _residualScalingScheme.size() ; ++loop ) {
     cout<<"Updating Di-Jet Errors"<<endl;
     for(DataIter it = data.begin()  ; it < data.end() ; ++it) {
       (*it)->UpdateError();
@@ -1647,7 +1647,7 @@ void TCaliber::Run_Lvmini()
 	if(t[ithreads]->IsDone()) fsum += t[ithreads]->Chi2();
       }
       //fast derivative calculation:
-      for (unsigned param=0; param<abs(npar); ++param) {
+      for( int param = 0 ; param < std::abs(npar) ; ++param ) {
 	aux[param]           = temp_derivative1[param]/(2.0*epsilon);
 	aux[param+abs(npar)] = temp_derivative2[param]/(epsilon*epsilon);
       }

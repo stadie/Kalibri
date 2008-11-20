@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.31 2008/11/14 12:41:37 thomsen Exp $
+// $Id: caliber.h,v 1.32 2008/11/20 16:04:50 snaumann Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -69,7 +69,7 @@ protected:
   void Run_GammaJet();
   void Run_TrackTower();
   void Run_TrackCluster();
-  void Run_NJet(NJetSel & njet, int njet);
+  void Run_NJet(NJetSel & njet, int injet);
   void Run_ZJet();
   void Run_Top();
 

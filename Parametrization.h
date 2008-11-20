@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.19 2008/11/14 12:41:37 thomsen Exp $
+// $Id: Parametrization.h,v 1.20 2008/11/17 13:02:26 thomsen Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -484,7 +484,7 @@ public:
     double result=0;
     double PiFrac;
     double eh = 1.48;    //will probably be treated as a free parameter soon!
-    double ehECAL = 1.6;
+    //double ehECAL = 1.6;
 
     //Ecal < 1.2 Gev = late showering (usefull?)
 

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.50 2008/11/17 13:02:26 thomsen Exp $
+// $Id: CalibData.h,v 1.51 2008/11/17 14:32:18 auterman Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -10,6 +10,7 @@
 using namespace std;
 #include <vector> 
 #include <cmath>
+#include <cassert>
 
 enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
                InvMass, typeTowerConstraint, ParLimit};

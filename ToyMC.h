@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.h,v 1.7 2008/09/17 08:19:23 stadie Exp $
+// $Id: ToyMC.h,v 1.8 2008/11/05 16:44:14 stadie Exp $
 //
 #ifndef TOYMC_H
 #define TOYMC_H
@@ -18,7 +18,7 @@ public:
   double mMinEta, mMaxEta;
   double mMinPt, mMaxPt;
   Spectrum mPtSpectrum;
-  double mTowConst[4];
+  double mTowConst[5];
   double mResoStochastic,mResoNoise;
   double mJetSpreadA,mJetSpreadB;
   bool   mNoOutOfCone;
