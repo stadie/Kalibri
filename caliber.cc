@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.62 2008/11/20 16:04:50 snaumann Exp $
+// $Id: caliber.cc,v 1.63 2008/11/20 16:38:03 stadie Exp $
 //
 //
 // for profiling:
@@ -494,7 +494,6 @@ void TCaliber::Run_GammaJet()
 
     //Find the jets eta & phi index using the nearest tower to jet axis:
     int jet_index=-1;
-    int track_index=-1;
     double min_tower_dr = 10.0;
     double em = 0;
     double had = 0;
@@ -519,13 +518,10 @@ void TCaliber::Run_GammaJet()
       if (dr<min_tower_dr) {
 	jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[n]),
 				 p->GetJetPhiBin(gammajet.TowId_phi[n]));
-	track_index = p->GetJetBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
-				   p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
 	min_tower_dr = dr;
       }
     }
     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
-    if (track_index<0){ cerr<<"WARNING: track_index = " << track_index << endl; continue; }
     if(had/(had + em) < 0.07) { continue;}
     //if(had/(had + em) > 0.92) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
@@ -603,8 +599,8 @@ void TCaliber::Run_GammaJet()
     for (int n=0; n<gammajet.NobjTrack; ++n){
    
       //one trackindex for all tracks in jet = track_index
-      //int index = p->GetTrackBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
-      //			         p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
+      int track_index = p->GetTrackBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
+      			         p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
       //create array with multidimensional measurement
       //TMeasurement * Tmess = new TTrack;
       TTrack * Tmess = new TTrack;
@@ -757,9 +753,9 @@ void TCaliber::Run_ZJet()
     //Add the jet's tracks to "gj_data":
     for (int n=0; n<gammajet.NobjTrack; ++n){
       
-      int index = p->GetBin(p->GetEtaBin(gammajet.TrackTowIdEta[n]),
-			    p->GetPhiBin(gammajet.TrackTowIdPhi[n]));
-      if (index<0){ cerr<<"WARNING: towewer_index = " << index << endl; continue; }
+      int index = p->GetTrackBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
+			    p->GettrackPhiBin(gammajet.TrackTowIdPhi[n]));
+      if (index<0){ cerr<<"WARNING: track_index = " << index << endl; continue; }
       //create array with multidimensional measurement
       //TMeasurement * Tmess = new TTrack;
       TTrack * Tmess = new TTrack;
@@ -1038,14 +1034,13 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
     //--------------
     TData_PtBalance * jj_data[njet.NobjJet];
     jj_data[0] = 0;
-    std::cout << "reading " << njet.NobjJet << " jets\n";
+    //std::cout << "reading " << njet.NobjJet << " jets\n";
 
     int nstoredjets = 0;
     for (unsigned int ij = 0; (int)ij<njet.NobjJet; ++ij){
       if(njet.JetPt[ij] < Et_cut_nplus1Jet) continue;
       //Find the jets eta & phi index using the nearest tower to jet axis:
       int jet_index=-1;
-      int track_index=-1;
       double min_tower_dr = 10.0;
       double em = 0;
       double had = 0;
@@ -1063,17 +1058,13 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
 	if (dr<min_tower_dr) {
 	  jet_index = p->GetJetBin(p->GetJetEtaBin(njet.TowId_eta[n]),
 				   p->GetJetPhiBin(njet.TowId_phi[n]));
-	  track_index = p->GetJetBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
-				     p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
 	  min_tower_dr = dr;
 	}
       }
       if (jet_index<0){ 
-	 cerr<<"WARNING: JJ jet_index = " << jet_index << endl; 
-	 continue; 
+	cerr<<"WARNING: JJ jet_index = " << jet_index << endl; 
+	continue; 
       }
-      if (track_index<0){ cerr<<"WARNING: track_index = " << track_index << endl; continue; }
-
       double * direction = new double[2];
       direction[0] = sin(njet.JetPhi[ij]);
       direction[1] = cos(njet.JetPhi[ij]);
@@ -1144,12 +1135,11 @@ void TCaliber::Run_NJet(NJetSel & njet, int injet=2)
       }
       //Add the jet's tracks to "gj_data":
       for (int n=0; n<njet.NobjTrack; ++n){
-	
-//        if (njet.Track_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
+        if (njet.Track_jetidx[n]!=(int)ij) continue;//look for ij-jet's tracks
 
-	//one trackindex for all tracks in jet = track_index
-	//int index = p->GetTrackBin(p->GetTrackEtaBin(njet.TrackTowIdEta[n]),
-	//			         p->GetTrackPhiBin(njet.TrackTowIdPhi[n]));
+	int track_index = p->GetTrackBin(p->GetTrackEtaBin(njet.TrackTowIdEta[n]),
+					 p->GetTrackPhiBin(njet.TrackTowIdPhi[n]));
+	if (track_index<0){ cerr<<"WARNING: JJ track_index = " << track_index << endl; continue; }
 	//create array with multidimensional measurement
 	//TMeasurement * Tmess = new TTrack;
 	TTrack * Tmess = new TTrack;
