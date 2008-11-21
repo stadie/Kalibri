@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.20 2008/11/17 13:02:26 thomsen Exp $
+// $Id: Parametrization.h,v 1.21 2008/11/20 16:38:03 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -445,7 +445,7 @@ class ToyStepJetParametrization : public Parametrization {
 /// -----------------------------------------------------------------
 class TrackParametrization : public Parametrization {
 public:
-  TrackParametrization() : Parametrization(12,3,0) {}  //(36,3,3) {}
+  TrackParametrization() : Parametrization(12,3,6) {}  //(36,3,3) {}
   const char* name() const { return "TrackParametrization";}
 
   double correctedTowerEt(TMeasurement *const x,double *const par) const {
@@ -480,28 +480,44 @@ public:
       return x->pt;  
   }
 
-  double GetExpectedResponse(TMeasurement *const x,double *const par) const {
-    double result=0;
+  double GetExpectedResponse(TMeasurement *const x,double *const par) const {    double result=0;
     double PiFrac;
-    double eh = 1.48;    //will probably be treated as a free parameter soon!
-    //double ehECAL = 1.6;
+    double eh = 1.48 * par[0];    //will probably be treated as a free parameter soon!
+    //double ehECAL = 1.6 * par[1]; 
+    double TrackEMF = 0;
+    bool LS = false;
 
-    //Ecal < 1.2 Gev = late showering (usefull?)
+    TTrack* temp = (TTrack*)(x);
+
+    if(temp->EM1 < 1.2) LS = true;   //late showering particle
 
     //this is Groom's Parametrization:
-    double TrackEMF = x->EMF / (x->HadF + x->EMF);      //EMF = EMC3, HadF = HMC3 for Tracks
-    //check if EMC1 & HMC1 same size (comparable)
-    //if 1/5 shall be used TMeasurement ->(cast) TTrack
-
-    PiFrac = 1 - pow((x->E / 0.96 ),0.816-1 );         //0.96 and 0.816 will be free parameter soon!
+    /*
+    if(( x->EMF > 0) || (x->HadF > 0))
+      TrackEMF = x->EMF / (x->HadF + x->EMF);      //EMF = EMC3, HadF = HMC3 for Tracks
+    */
+    if(( temp->EM1 > 0) || (temp->Had1 > 0))
+      TrackEMF = temp->EM1 / (temp->Had1 + temp->EM1);   
+    
+    //check if EMC3 & HMC3 same size (comparable)
+    if(!LS)
+      PiFrac = 1 - pow((x->E /(par[2] * 0.96) ),(par[3] * 0.816) - 1 );         //0.96 and 0.816 will be free parameter soon!
+    else
+      PiFrac = 1 - pow((x->E /(par[4] * 0.96) ),(par[5] * 0.816) - 1 );    
+      
     double responseH = (1 + (eh - 1) * PiFrac) / eh;
     //double responseE = (1 + (ehECAL - 1) * PiFrac) / ehECAL;
     double responseE = 1;
 
-    //if(!isElec)
+    double resultE = x->pt * TrackEMF * responseE;
+    if(temp->EM5  < resultE  )  resultE = temp->EM5;
+
+    double resultH = x->pt * (1 - TrackEMF) * responseH;
+    if(temp->Had5  < resultH  )  resultH = temp->Had5;
 
     //is this correct: (Pi0 anteil in EMF-fraction?)
-    result = x->pt * (TrackEMF * responseE + (1 - TrackEMF) * responseH);
+    //result = x->pt * (TrackEMF * responseE + (1 - TrackEMF) * responseH);
+    result = resultE + resultH;
 
     return result;
   }
