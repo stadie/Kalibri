@@ -137,7 +137,7 @@ void TParameters::Init(const ConfigFile& config)
     exit(3);
   }
   track_start_values = bag_of<double>(config.read<string>("track start values","1. 1. 1.")); 
-  if ( jet_start_values.size()< p->nJetPars()){
+  if ( track_start_values.size()< p->nTrackPars()){
     cerr<< "ERROR: Number of track start values and free track parameters does not match!"<<endl
         << "       There must be at least " << p->nTrackPars() << " parameters!" << endl;
     exit(3);
