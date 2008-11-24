@@ -19,6 +19,7 @@ public :
 
    // Declaration of leave types
    Int_t           NobjTowCal;
+   Int_t           NobjTrack;
    Int_t           TowNum[200];   //[NobjTowCal]
    Int_t           TowId[200];   //[NobjTowCal]
    Int_t           TowId_phi[200];   //[NobjTowCal]
@@ -30,6 +31,29 @@ public :
    Float_t         TowEm[200];   //[NobjTowCal]
    Float_t         TowHad[200];   //[NobjTowCal]
    Float_t         TowOE[200];   //[NobjTowCal]
+   Int_t           TrackId[200];   //[NobjTrack]
+   Int_t           TrackTowId[200];   //[NobjTrack]
+   Int_t           TrackTowIdPhi[200];   //[NobjTrack]
+   Int_t           TrackTowIdEta[200];   //[NobjTrack]
+   Float_t         TrackPt[200];   //[NobjTrack]
+   Float_t         TrackEta[200];   //[NobjTrack]
+   Float_t         TrackEtaOut[200];   //[NobjTrack]
+   Float_t         TrackPhi[200];   //[NobjTrack]
+   Float_t         TrackPhiOut[200];   //[NobjTrack]
+   Float_t         TrackDR[200];   //[NobjTrack]
+   Float_t         TrackDROut[200];   //[NobjTrack]
+   Float_t         TrackP[200];   //[NobjTrack]
+   Float_t         TrackEMC1[200];   //[NobjTrack]
+   Float_t         TrackEMC3[200];   //[NobjTrack]
+   Float_t         TrackEMC5[200];   //[NobjTrack]
+   Float_t         TrackHAC1[200];   //[NobjTrack]
+   Float_t         TrackHAC3[200];   //[NobjTrack]
+   Float_t         TrackHAC5[200];   //[NobjTrack]
+   Float_t         TrackChi2[200];   //[NobjTrack]
+   Int_t           TrackNHits[200];   //[NobjTrack]
+   Float_t         MuDE[200];   //[NobjTrack]
+   Float_t         MuDR[200];   //[NobjTrack]
+
    Float_t         JetCalPt;
    Float_t         JetCalPhi;
    Float_t         JetCalEta;
@@ -51,6 +75,7 @@ public :
 
    // List of branches
    TBranch        *b_NobjTowCal;   //!
+   TBranch        *b_NobjTrack;   //!
    TBranch        *b_TowNum;   //!
    TBranch        *b_TowId;   //!
    TBranch        *b_TowId_phi;   //!
@@ -62,6 +87,28 @@ public :
    TBranch        *b_TowEm;   //!
    TBranch        *b_TowHad;   //!
    TBranch        *b_TowOE;   //!
+   TBranch        *b_TrackId;   //
+   TBranch        *b_TrackTowId;   //
+   TBranch        *b_TrackTowIdPhi;   //
+   TBranch        *b_TrackTowIdEta;   //
+   TBranch        *b_TrackPt;   //
+   TBranch        *b_TrackEta;   //
+   TBranch        *b_TrackEtaOut;   //
+   TBranch        *b_TrackPhi;   //
+   TBranch        *b_TrackPhiOut;   //
+   TBranch        *b_TrackDR;   //
+   TBranch        *b_TrackDROut;   //
+   TBranch        *b_TrackP;   //
+   TBranch        *b_TrackEMC1;   //
+   TBranch        *b_TrackEMC3;   //
+   TBranch        *b_TrackEMC5;   //
+   TBranch        *b_TrackHAC1;   //
+   TBranch        *b_TrackHAC3;   //
+   TBranch        *b_TrackHAC5;   //
+   TBranch        *b_TrackChi2;   //
+   TBranch        *b_TrackNHits;   //
+   TBranch        *b_MuDE;   //
+   TBranch        *b_MuDR;   //
    TBranch        *b_JetCalPt;   //!
    TBranch        *b_JetCalPhi;   //!
    TBranch        *b_JetCalEta;   //!
@@ -119,6 +166,7 @@ void ZJetSel::Init(TTree *tree)
    fChain->SetMakeClass(1);
 
    fChain->SetBranchAddress("NobjTowCal", &NobjTowCal, &b_NobjTowCal);
+   fChain->SetBranchAddress("NobjTrack", &NobjTrack, &b_NobjTrack);
    fChain->SetBranchAddress("TowNum", TowNum, &b_TowNum);
    fChain->SetBranchAddress("TowId", TowId, &b_TowId);
    fChain->SetBranchAddress("TowId_phi", TowId_phi, &b_TowId_phi);
@@ -130,6 +178,28 @@ void ZJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("TowEm", TowEm, &b_TowEm);
    fChain->SetBranchAddress("TowHad", TowHad, &b_TowHad);
    fChain->SetBranchAddress("TowOE", TowOE, &b_TowOE);
+   fChain->SetBranchAddress("TrackId", TrackId, &b_TrackId);
+   fChain->SetBranchAddress("TrackTowId", TrackTowId, &b_TrackTowId);
+   fChain->SetBranchAddress("TrackTowIdPhi", TrackTowIdPhi, &b_TrackTowIdPhi);
+   fChain->SetBranchAddress("TrackTowIdEta", TrackTowIdEta, &b_TrackTowIdEta);
+   fChain->SetBranchAddress("TrackPt", TrackPt, &b_TrackPt);
+   fChain->SetBranchAddress("TrackEta", TrackEta, &b_TrackEta);
+   fChain->SetBranchAddress("TrackEtaOut", TrackEtaOut, &b_TrackEtaOut);
+   fChain->SetBranchAddress("TrackPhi", TrackPhi, &b_TrackPhi);
+   fChain->SetBranchAddress("TrackPhiOut", TrackPhiOut, &b_TrackPhiOut);
+   fChain->SetBranchAddress("TrackDR", TrackDR, &b_TrackDR);
+   fChain->SetBranchAddress("TrackDROut", TrackDROut, &b_TrackDROut);
+   fChain->SetBranchAddress("TrackP", TrackP, &b_TrackP);
+   fChain->SetBranchAddress("TrackEMC1", TrackEMC1, &b_TrackEMC1);
+   fChain->SetBranchAddress("TrackEMC3", TrackEMC3, &b_TrackEMC3);
+   fChain->SetBranchAddress("TrackEMC5", TrackEMC5, &b_TrackEMC5);
+   fChain->SetBranchAddress("TrackHAC1", TrackHAC1, &b_TrackHAC1);
+   fChain->SetBranchAddress("TrackHAC3", TrackHAC3, &b_TrackHAC3);
+   fChain->SetBranchAddress("TrackHAC5", TrackHAC5, &b_TrackHAC5);
+   fChain->SetBranchAddress("TrackChi2", TrackChi2, &b_TrackChi2);
+   fChain->SetBranchAddress("TrackNHits", TrackNHits, &b_TrackNHits);
+   fChain->SetBranchAddress("MuDR", MuDR, &b_MuDR);
+   fChain->SetBranchAddress("MuDE", MuDE, &b_MuDE);
    fChain->SetBranchAddress("JetCalPt", &JetCalPt, &b_JetCalPt);
    fChain->SetBranchAddress("JetCalPhi", &JetCalPhi, &b_JetCalPhi);
    fChain->SetBranchAddress("JetCalEta", &JetCalEta, &b_JetCalEta);

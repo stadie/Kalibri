@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.64 2008/11/21 10:46:37 thomsen Exp $
+// $Id: caliber.cc,v 1.65 2008/11/24 14:01:03 thomsen Exp $
 //
 //
 // for profiling:
@@ -749,45 +749,45 @@ void TCaliber::Run_ZJet()
 					   ));
     } 
 
-    /*
+    
     //Add the jet's tracks to "gj_data":
-    for (int n=0; n<gammajet.NobjTrack; ++n){
+    for (int n=0; n<zjet.NobjTrack; ++n){
       
-      int index = p->GetTrackBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
-			    p->GettrackPhiBin(gammajet.TrackTowIdPhi[n]));
+      int index = p->GetTrackBin(p->GetTrackEtaBin(zjet.TrackTowIdEta[n]),
+                            p->GetTrackPhiBin(zjet.TrackTowIdPhi[n]));
       if (index<0){ cerr<<"WARNING: track_index = " << index << endl; continue; }
       //create array with multidimensional measurement
       //TMeasurement * Tmess = new TTrack;
       TTrack * Tmess = new TTrack;
-      Tmess->TrackId = int(gammajet.TrackId[n]);
-      Tmess->TowerId = int(gammajet.TrackTowId[n]);
-      Tmess->pt = double(gammajet.TrackPt[n]);
-      double scale = gammajet.TrackP[n]/gammajet.TrackPt[n];
-      Tmess->EM1 = double(gammajet.TrackEMC1[n]*scale);
-      Tmess->EMF = double(gammajet.TrackEMC3[n]*scale);
-      Tmess->EM5 = double(gammajet.TrackEMC5[n]*scale);
-      Tmess->Had1 = double(gammajet.TrackHAC1[n]*scale);
-      Tmess->HadF = double(gammajet.TrackHAC3[n]*scale);
-      Tmess->Had5 = double(gammajet.TrackHAC5[n]*scale);
+      Tmess->TrackId = int(zjet.TrackId[n]);
+      Tmess->TowerId = int(zjet.TrackTowId[n]);
+      Tmess->pt = double(zjet.TrackPt[n]);
+      double scale = zjet.TrackP[n]/zjet.TrackPt[n];
+      Tmess->EM1 = double(zjet.TrackEMC1[n]*scale);
+      Tmess->EMF = double(zjet.TrackEMC3[n]*scale);
+      Tmess->EM5 = double(zjet.TrackEMC5[n]*scale);
+      Tmess->Had1 = double(zjet.TrackHAC1[n]*scale);
+      Tmess->HadF = double(zjet.TrackHAC3[n]*scale);
+      Tmess->Had5 = double(zjet.TrackHAC5[n]*scale);
       Tmess->OutF = 0;
-      Tmess->DR = double(gammajet.TrackDR[n]);
-      Tmess->DRout = double(gammajet.TrackDROut[n]);
-      Tmess->eta = double(gammajet.TrackEta[n]);
-      Tmess->etaOut = double(gammajet.TrackEtaOut[n]);
-      Tmess->phi = double(gammajet.TrackPhi[n]);
-      Tmess->phiOut = double(gammajet.TrackPhiOut[n]);
-      Tmess->E = double(gammajet.TrackP[n]);
-      Tmess->TrackChi2 = double(gammajet.TrackChi2[n]);
-      Tmess->NValidHits = int(gammajet.TrackNHits[n]);
-      Tmess->MuDR = double(gammajet.MuDR[n]);
-      Tmess->MuDE = double(gammajet.MuDE[n]);
-      //mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+      Tmess->DR = double(zjet.TrackDR[n]);
+      Tmess->DRout = double(zjet.TrackDROut[n]);
+      Tmess->eta = double(zjet.TrackEta[n]);
+      Tmess->etaOut = double(zjet.TrackEtaOut[n]);
+      Tmess->phi = double(zjet.TrackPhi[n]);
+      Tmess->phiOut = double(zjet.TrackPhiOut[n]);
+      Tmess->E = double(zjet.TrackP[n]);
+      Tmess->TrackChi2 = double(zjet.TrackChi2[n]);
+      Tmess->NValidHits = int(zjet.TrackNHits[n]);
+      Tmess->MuDR = double(zjet.MuDR[n]);
+      Tmess->MuDE = double(zjet.MuDE[n]);
+      //mess[7] = double( cos( zjet.JetCalPhi-zjet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       //EM+=mess->EMF;
       //F+=mess->pt;
       gj_data->AddTrack(new TData_TruthMess(index,
 					   Tmess,                                                    //mess//
 					   0,                           //truth//
-					   0.05 + 0.00015 * gammajet.TrackPt[n], //error//
+					   0.05 + 0.00015 * zjet.TrackPt[n], //error//
 					   1.,                                                      //weight//
 					   p->GetTowerParRef( index ),                              //parameter//
 					   p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
@@ -795,9 +795,7 @@ void TCaliber::Run_ZJet()
 					   track_error_param                                        //error param.func.//
 					   ));
     } 
-    gj_data->UseTracks(); 
-    */
- 
+    gj_data->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization
     data.push_back( gj_data ); 
    
     if (n_zjet_events>=0 && i>=n_zjet_events-1)
