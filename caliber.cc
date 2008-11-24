@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.63 2008/11/20 16:38:03 stadie Exp $
+// $Id: caliber.cc,v 1.64 2008/11/21 10:46:37 thomsen Exp $
 //
 //
 // for profiling:
@@ -1933,6 +1933,9 @@ void TCaliber::Init(string file)
   output_file = config.read<string>( "Output file", "calibration_k.cfi" );
 
   useTracks = config.read<bool>("use Tracks",true);
+  if(p->GetNumberOfTrackParameters() < 1) useTracks = false;
+  if(useTracks) cout<<"Tracks are used to calibrate jets"<<endl;
+  else cout<<"Only Calorimeter information is used"<<endl;
 
   //--------------------------------------------------------------------------
   //Read Gamma-Jet Tree:
