@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.51 2008/11/17 14:32:18 auterman Exp $
+// $Id: CalibData.h,v 1.52 2008/11/20 16:38:03 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -193,6 +193,7 @@ public:
 	double TrackError2 = 0;
 	double CaloError2 = 0;
 	double new_error, new_mess;
+	bool qualityTracks = true;
 	//Calculation of Jet error
 	for (std::vector<TData*>::const_iterator it=_vecmess.begin();
 	     it!=_vecmess.end(); ++it) {
@@ -210,8 +211,10 @@ public:
 	  new_mess =  (*it)->GetMess()->pt;
 	  new_error   = (*it)->GetParametrizedErr(&new_mess);
 	  TrackError2 += new_error * new_error;	
+	  if( ((TTrack*)(*it)->GetMess())->TrackChi2 > 10  || ((TTrack*)(*it)->GetMess())->NValidHits < 5) // || TrackQuality != 1)
+	    qualityTracks = false;
 	}
-	if(CaloError2 > TrackError2)         trackuse = true;
+	if((CaloError2 > TrackError2) && qualityTracks)         trackuse = true;
 	  
 	//std::cout<<CaloError2<<"   T:  "<<TrackError2<<" ETmess: "<<_mess->pt<<std::endl;
       }
