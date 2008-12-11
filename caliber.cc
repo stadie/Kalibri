@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.65 2008/11/24 14:01:03 thomsen Exp $
+// $Id: caliber.cc,v 1.66 2008/11/24 14:22:58 thomsen Exp $
 //
 //
 // for profiling:
@@ -57,28 +57,33 @@ struct OutlierRejection {
   double _cut;
 };
 
+/* 
 //ControlCut Selection
 struct ControlCutSelection {
-  ControlCutSelection(double cut):_cut(cut){};
+ControlCutSelection(double cut):_cut(cut){};
   bool operator()(TData *d){
     return d->GetTruth()>_cut && fabs(d->GetMess()->eta)<2.5;
   }
   double _cut;
 };
 
+*/
 //"Not-Balanced" Rejection: Make average-fitting equal to peak-fitting
 struct NotBalancedRejection {
   NotBalancedRejection(double *cut, double min, double max):
     _cut(cut),_min(min),_max(max){};
   bool operator()(TData *d){
     bool result = false;
-    if(d->GetType()!=GammaJet ||
-       d->GetMess()->pt<_min ||
-       d->GetMess()->pt>_max ||
-       d->GetMess()->pt==0.0 ) result = true;
+    TAbstractData *ad = dynamic_cast<TAbstractData*>(d);
+    if(! ad) return true;
+    
+    if(ad->GetType()!=GammaJet ||
+       ad->GetMess()->pt<_min ||
+       ad->GetMess()->pt>_max ||
+       ad->GetMess()->pt==0.0 ) result = true;
     else
-      result = (1.0-d->GetTruth()/d->GetMess()->pt) >
-               _cut[(int)(d->GetMess()->pt-_min)];
+      result = (1.0-ad->GetTruth()/ad->GetMess()->pt) >
+               _cut[(int)(ad->GetMess()->pt-_min)];
     return result;
   }
   double *_cut;
@@ -228,10 +233,12 @@ void TCaliber::FlattenSpectra()
    tot[i]=0.;
  
    for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
-     alltotal+=(*it)->GetWeight();
+     TAbstractData* dt = dynamic_cast<TAbstractData*>(*it);
+     if(! dt) continue;
+     alltotal+=dt->GetWeight();
      for (int type=0; type<7; ++type){
-       if ((*it)->GetType()!=type) continue;
-       if ((*it)->GetType()==InvMass) continue;
+       if (dt->GetType()!=type) continue;
+       if (dt->GetType()==InvMass) continue;
        double em = 0.;
        double had = 0.;
        int index=0;
@@ -239,8 +246,8 @@ void TCaliber::FlattenSpectra()
        //double ptmax=0;
        
        TLorentzVector Ljet(0.,0.,0.,0.);
-       Ljet.SetPtEtaPhiE((*it)->GetMess()->pt,(*it)->GetMess()->eta,(*it)->GetMess()->phi,(*it)->GetMess()->E);
-       for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+       Ljet.SetPtEtaPhiE(dt->GetMess()->pt,dt->GetMess()->eta,dt->GetMess()->phi,dt->GetMess()->E);
+       for(std::vector<TAbstractData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
 	 em  += (*t)->GetMess()->EMF;
 	 had += (*t)->GetMess()->HadF;
 	 had += (*t)->GetMess()->OutF;
@@ -252,19 +259,21 @@ void TCaliber::FlattenSpectra()
 	   min_tower_dr = dr;
 	 }
        }
-       //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
-       //int bin = GetSpectraBin( (*it)->GetScale(), index );
-       int bin = GetSpectraBin( (*it)->GetScale() );
-       double error = 1.;//(*it)->GetParametrizedErr( &(*it)->GetMess()->pt );
-       weights[type][bin]+=(*it)->GetWeight()/error;
-       tot[type]+=(*it)->GetWeight()/error;
+       //int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had)  );
+       //int bin = GetSpectraBin( dt->GetScale(), index );
+       int bin = GetSpectraBin( dt->GetScale() );
+       double error = 1.;//dt->GetParametrizedErr( &dt->GetMess()->pt );
+       weights[type][bin]+=dt->GetWeight()/error;
+       tot[type]+=dt->GetWeight()/error;
      }
    }
    for (int type=0; type<7; ++type){
      if (tot[type]!=0.)
        for (DataIter it = data.begin(); it!=data.end(); ++it) {
-	 if ((*it)->GetType()!=type) continue;
-         if ((*it)->GetType()==InvMass) continue;
+	 TAbstractData* dt = dynamic_cast<TAbstractData*>(*it);
+	 if(! dt) continue;
+	 if (dt->GetType()!=type) continue;
+         if (dt->GetType()==InvMass) continue;
 	 
 	 
 	 double em = 0;
@@ -273,8 +282,8 @@ void TCaliber::FlattenSpectra()
 	 double min_tower_dr = 10.;
 	 TLorentzVector Ljet(0,0,0,0);
 	 
-	 Ljet.SetPtEtaPhiE((*it)->GetMess()->pt,(*it)->GetMess()->eta,(*it)->GetMess()->phi,(*it)->GetMess()->E);
-	 for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+	 Ljet.SetPtEtaPhiE(dt->GetMess()->pt,dt->GetMess()->eta,dt->GetMess()->phi,dt->GetMess()->E);
+	 for(std::vector<TAbstractData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
 	   em  += (*t)->GetMess()->EMF;
 	   had += (*t)->GetMess()->HadF;
 	   had += (*t)->GetMess()->OutF;
@@ -286,29 +295,29 @@ void TCaliber::FlattenSpectra()
 	     min_tower_dr = dr;
 	   }
 	 }
-	 //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
-	 //int bin = GetSpectraBin( (*it)->GetScale(), index );
-	 int bin = GetSpectraBin( (*it)->GetScale() );
-	 //(*it)->SetWeight(1);
+	 //int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had) );
+	 //int bin = GetSpectraBin( dt->GetScale(), index );
+	 int bin = GetSpectraBin( dt->GetScale() );
+	 //dt->SetWeight(1);
 	 
 	 
-	 //(*it)->SetWeight((*it)->GetWeight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
+	 //dt->SetWeight(dt->GetWeight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
 	 
-	 (*it)->SetWeight((*it)->GetWeight()/weights[type][bin] * (alltotal / double(weights[type].size()) )  * RelWeight[type] / allweights );
+	 dt->SetWeight(dt->GetWeight()/weights[type][bin] * (alltotal / double(weights[type].size()) )  * RelWeight[type] / allweights );
 	 
 	 
-	 //(*it)->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
+	 //dt->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
        }
      
     /*
    // Old version using leading tower bin as jet bin
    for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
-   if ((*it)->GetType()!=type) continue;
+   if (dt->GetType()!=type) continue;
    double em = 0;
    double had = 0;
    int index=0;
    double ptmax=0;
-   for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+   for(std::vector<TData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
    em  += (*t)->GetMess()[1];
 	had += (*t)->GetMess()[2];
 	had += (*t)->GetMess()[3];
@@ -317,22 +326,22 @@ void TCaliber::FlattenSpectra()
 	index=(*t)->GetIndex();
 	}
 	}
-	//int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had)  );
-	int bin = GetSpectraBin( (*it)->GetScale(), index );
-	//int bin = GetSpectraBin( (*it)->GetScale() );
-	weights[bin]+=(*it)->GetWeight();
-	tot+=(*it)->GetWeight();
+	//int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had)  );
+	int bin = GetSpectraBin( dt->GetScale(), index );
+	//int bin = GetSpectraBin( dt->GetScale() );
+	weights[bin]+=dt->GetWeight();
+	tot+=dt->GetWeight();
 	}
 	
 	if (tot!=0.)
     for (DataIter it = data.begin(); it!=data.end(); ++it) {
-    if ((*it)->GetType()!=type) continue;
+    if (dt->GetType()!=type) continue;
     
       double em = 0;
       double had = 0;
       int index=0;
       double ptmax=0;
-      for(std::vector<TData*>::const_iterator t=(*it)->GetRef().begin(); t!=(*it)->GetRef().end(); ++t) {
+      for(std::vector<TData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
 	em  += (*t)->GetMess()[1];
 	had += (*t)->GetMess()[2];
 	had += (*t)->GetMess()[3];
@@ -342,12 +351,12 @@ void TCaliber::FlattenSpectra()
 	}
       }
 
-      //int bin = GetSpectraBin( (*it)->GetScale(), index, em/(em+had) );
-      int bin = GetSpectraBin( (*it)->GetScale(), index );
-      //int bin = GetSpectraBin( (*it)->GetScale() );
-      //(*it)->SetWeight(1);
-      //(*it)->SetWeight(1./weights[bin]);
-      (*it)->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
+      //int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had) );
+      int bin = GetSpectraBin( dt->GetScale(), index );
+      //int bin = GetSpectraBin( dt->GetScale() );
+      //dt->SetWeight(1);
+      //dt->SetWeight(1./weights[bin]);
+      dt->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
     }
     */
 
@@ -357,7 +366,7 @@ void TCaliber::FlattenSpectra()
 //further weighting.............................................................
 void TCaliber::BalanceSpectra()
 {
-cout<<"...further weighting"<<endl;
+  cout<<"...further weighting"<<endl;
   double min = Et_cut_on_gamma;
   double max = 100.; //GeV
   int nbins = (int)(max-min);//one bin per GeV
@@ -381,11 +390,12 @@ cout<<"...further weighting"<<endl;
     gauss_forpt_truth[i]->SetTitle(name);
   }
 
-cout<<"...fill truth histograms for each jet-pT bin"<<endl;
+  cout<<"...fill truth histograms for each jet-pT bin"<<endl;
   //loop over all fit-events
   for ( std::vector<TData*>::iterator i = data.begin(); 
         i != data.end() ; ++i )  {
-    TData* jg = *i;
+    TAbstractData* jg = dynamic_cast<TAbstractData*>(*i);
+    if(! jg) continue;
     if (jg->GetType()!=GammaJet) continue;
     
     //double etjetcor = jg->GetParametrizedMess();
@@ -1780,7 +1790,7 @@ void TCaliber::Init(string file)
     }
 
   //initialize temp arrays for fast derivative calculation
-  TData::total_n_pars     = p->GetNumberOfParameters();
+  TAbstractData::total_n_pars     = p->GetNumberOfParameters();
   //--------------------------------------------------------------------------
   //read config file
   fit_method = config.read<int>("Fit method",1);

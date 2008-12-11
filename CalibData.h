@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.52 2008/11/20 16:38:03 stadie Exp $
+// $Id: CalibData.h,v 1.53 2008/12/08 16:50:16 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -79,16 +79,39 @@ public:
   double MuDE;
 };
 
-//virtual data base class -> not directly used!
+//interface to Data
 class TData
 {
 public:
-  TData(){_mess=0; _par=0;};
-  TData(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
+  virtual ~TData() {}
+  virtual TMeasurement *GetMess() const = 0;
+  virtual double GetTruth() const = 0;
+  virtual double GetParametrizedMess() const = 0;
+
+  virtual void ChangeParAddress(double* oldpar, double* newpar) = 0;
+  virtual DataType GetType() const = 0;
+  virtual double GetWeight() const = 0;
+  
+  virtual double chi2() const = 0;
+  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
+  virtual void UpdateError() = 0;
+
+  static double (*ScaleResidual)(double z2);         // Set to one of the following functions to scale the normalized residual z2 = chi2/weight in chi2() or chi2_fast(): 
+  static double ScaleNone(double z2){ return z2; }  // No scaling of residuals in chi2() or chi2_fast() (default)
+  static double ScaleCauchy(double z2);	             // Scaling of residuals with Cauchy-Function in chi2() or chi2_fast()
+  static double ScaleHuber(double z2);               // Scaling of residuals with Huber-Function in chi2() or chi2_fast()
+};
+
+//virtual data base class -> not directly used!
+class TAbstractData : public TData
+{
+public:
+  TAbstractData() : TData() {_par=0;};
+  TAbstractData(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
         double const(*func)(TMeasurement *const,double *const),
 	double const(*err)(double *const,TMeasurement *const,double const))
   : _index(index), _mess(mess),_truth(truth),_error(error),_weight(weight),_par(par),_n_par(n_par),_func(func),_err(err){};
-  virtual ~TData(){
+  virtual ~TAbstractData(){
     delete _mess;
   };
   TMeasurement *GetMess() const { return _mess;};
@@ -112,7 +135,7 @@ public:
   DataType GetType() const {return _type;};
   void SetType(DataType type) {_type=type;};
   unsigned short int GetIndex(){return _index;};
-  virtual const std::vector<TData*>& GetRef() = 0;
+  virtual const std::vector<TAbstractData*>& GetRef() = 0;
   virtual double chi2() const {return 0.;};
   //virtual double chi2() const = 0;
   virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
@@ -121,12 +144,6 @@ public:
   virtual void ChangeParAddress(double* oldpar, double* newpar) { _par += newpar - oldpar;}
 
   static unsigned int total_n_pars;
-
-  static double (*ScaleResidual)(double z2);         // Set to one of the following functions to scale the normalized residual z2 = chi2/weight in chi2() or chi2_fast(): 
-  static double ScaleNone(double z2){ return z2; }  // No scaling of residuals in chi2() or chi2_fast() (default)
-  static double ScaleCauchy(double z2);	             // Scaling of residuals with Cauchy-Function in chi2() or chi2_fast()
-  static double ScaleHuber(double z2);               // Scaling of residuals with Huber-Function in chi2() or chi2_fast()
-
 
 protected:
   unsigned short int _index; //limited from 0 to 65535
@@ -141,13 +158,13 @@ protected:
 
 //data class for data providing one truth and one messurement, 
 //e.g. track-tower
-class TData_TruthMess : public TData
+class TData_TruthMess : public TAbstractData
 {
 public:
   TData_TruthMess(unsigned short int index,  TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par, double const(*func)(TMeasurement *const,double *const),  double const(*err)(double *const,TMeasurement *const,double const))
-  : TData(index, mess, truth, error, weight, par, n_par, func, err ){_type=TrackTower;};
+  : TAbstractData(index, mess, truth, error, weight, par, n_par, func, err ){_type=TrackTower;};
 
-  virtual const std::vector<TData*>& GetRef() { 
+  virtual const std::vector<TAbstractData*>& GetRef() { 
     resultcache.clear();	
     resultcache.push_back( this );
     return resultcache;
@@ -162,7 +179,7 @@ public:
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;
   
 private:
-  static std::vector<TData*> resultcache;
+  static std::vector<TAbstractData*> resultcache;
 };
 
 
@@ -179,7 +196,7 @@ public:
   : TData_TruthMess(index,  mess, truth, error, weight, par, n_par, func, err){
     _type=GammaJet; trackuse = false;};
   virtual ~TData_TruthMultMess() {
-    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+    for (std::vector<TAbstractData*>::const_iterator it=_vecmess.begin();
 	 it!=_vecmess.end(); ++it)
       delete *it;
     _vecmess.clear();	
@@ -195,7 +212,7 @@ public:
 	double new_error, new_mess;
 	bool qualityTracks = true;
 	//Calculation of Jet error
-	for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	for (std::vector<TAbstractData*>::const_iterator it=_vecmess.begin();
 	     it!=_vecmess.end(); ++it) {
 	  new_mess = (*it)->GetMess()->pt;
 	  new_error   = (*it)->GetParametrizedErr(&new_mess);
@@ -206,7 +223,7 @@ public:
 	new_error =  _err( &new_mess,_mess,_error );
 	CaloError2 += new_error * new_error;
 	//Calculation of Track error
-	for (std::vector<TData*>::const_iterator it=_vectrack.begin();
+	for (std::vector<TAbstractData*>::const_iterator it=_vectrack.begin();
 	     it!=_vectrack.end(); ++it) {
 	  new_mess =  (*it)->GetMess()->pt;
 	  new_error   = (*it)->GetParametrizedErr(&new_mess);
@@ -230,7 +247,7 @@ public:
     else
       {    //no tracks are used
 	double tower_pt_sum=0.0;
-	for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	for (std::vector<TAbstractData*>::const_iterator it=_vecmess.begin();
 	     it!=_vecmess.end(); ++it){
 	  tower_pt_sum += (*it)->GetParametrizedMess(); // Sum of tower Pt
 	}
@@ -245,7 +262,7 @@ public:
     double error = 0, new_mess=0, sum_mess=0, new_error=0,sum_error2=0;
     if(trackuse)
       {
-	for (std::vector<TData*>::const_iterator it=_vectrack.begin();
+	for (std::vector<TAbstractData*>::const_iterator it=_vectrack.begin();
 	     it!=_vectrack.end(); ++it) {
 	  new_mess =  (*it)->GetMess()->pt;
 	  new_error   = (*it)->GetParametrizedErr(&new_mess);
@@ -254,7 +271,7 @@ public:
       }
     else
       {
-	for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+	for (std::vector<TAbstractData*>::const_iterator it=_vecmess.begin();
 	     it!=_vecmess.end(); ++it) {
 	  new_mess    = (*it)->GetParametrizedMess();
 	  sum_mess   += new_mess;
@@ -290,7 +307,7 @@ public:
     const double ConeRadius = 0.5;      //Jet Cone Radius should not be hard coded or must be changed if Radius != 0.5
     const double MIPsignal = 4;         //MIP Particle 
     CaloRest = _mess->pt;
-    for (std::vector<TData*>::const_iterator it=_vectrack.begin();
+    for (std::vector<TAbstractData*>::const_iterator it=_vectrack.begin();
 	 it!=_vectrack.end(); ++it) {
       TTrack* temp = (TTrack*)(*it)->GetMess();
 
@@ -355,7 +372,7 @@ public:
       new_mess = GetParametrizedTrackMess();
     }
     else{
-      for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+      for (std::vector<TAbstractData*>::const_iterator it=_vecmess.begin();
 	   it!=_vecmess.end(); ++it) {
 	new_mess    = (*it)->GetParametrizedMess();
 	sum_mess   += new_mess;
@@ -370,15 +387,15 @@ public:
     return (new_error!=0. ? weight*(*TData::ScaleResidual)( (_truth-new_mess)*(_truth-new_mess)/(sum_error2 + new_error*new_error) ):0.0);
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;
-  virtual const std::vector<TData*>& GetRef() {return _vecmess;};
+  virtual const std::vector<TAbstractData*>& GetRef() {return _vecmess;};
   virtual void ChangeParAddress(double* oldpar, double* newpar) { 
-    TData::ChangeParAddress(oldpar,newpar);
-    for (std::vector<TData*>::iterator it=_vecmess.begin();
+    TAbstractData::ChangeParAddress(oldpar,newpar);
+    for (std::vector<TAbstractData*>::iterator it=_vecmess.begin();
 	 it !=_vecmess.end(); ++it) { (*it)->ChangeParAddress(oldpar,newpar);}
   }
 protected:  
-  std::vector<TData*> _vecmess; 
-  std::vector<TData*> _vectrack; 
+  std::vector<TAbstractData*> _vecmess; 
+  std::vector<TAbstractData*> _vectrack; 
   bool trackuse;
   //double JetError2;
 };
@@ -422,8 +439,8 @@ public:
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;
   virtual void ChangeParAddress(double* oldpar, double* newpar) { 
-    TData::ChangeParAddress(oldpar,newpar);
-    for (std::vector<TData*>::iterator it=_vecmess.begin();  it !=_vecmess.end(); ++it) 
+    TAbstractData::ChangeParAddress(oldpar,newpar);
+    for (std::vector<TAbstractData*>::iterator it=_vecmess.begin();  it !=_vecmess.end(); ++it) 
       (*it)->ChangeParAddress(oldpar,newpar);
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin(); it!=_m2.end(); ++it)
       (*it)->ChangeParAddress(oldpar,newpar);
@@ -534,14 +551,14 @@ public:
 };
 
 //data class to limit a parameter
-class TData_ParLimit : public TData
+class TData_ParLimit : public TAbstractData
 {
  public:
   TData_ParLimit(unsigned short int index, TMeasurement *mess, double error,
                  double *par,double const(*func)(TMeasurement *const,double *const))
-  : TData(index,mess,0,error,1.0,par,1,func,0){ _type=ParLimit; };
+  : TAbstractData(index,mess,0,error,1.0,par,1,func,0){ _type=ParLimit; };
     
-    virtual const std::vector<TData*>& GetRef() { 
+    virtual const std::vector<TAbstractData*>& GetRef() { 
       _cache.clear();
       _cache.push_back(this);
       return _cache;
@@ -560,7 +577,7 @@ class TData_ParLimit : public TData
 			     double* temp_derivative2, double const epsilon) const;
     
  private:
-    static std::vector<TData*> _cache;
+    static std::vector<TAbstractData*> _cache;
 };
 
 #endif

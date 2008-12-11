@@ -77,7 +77,7 @@ TControlPlots::~TControlPlots()
 void TControlPlots::MakeControlPlotsTowers()
 {
   std::vector<TObject*> objToBeWritten;
-  std::vector<TData*>::const_iterator data_it,it;
+  std::vector<TData*>::const_iterator data_it;
 
   TCanvas * const c1 = new TCanvas("c1","",600,600);
   TPostScript * const ps = new TPostScript("controlplotsTowers.ps",111);
@@ -286,11 +286,14 @@ void TControlPlots::MakeControlPlotsTowers()
 	  for (; data_it != mData->end();++data_it) // 1. loop over all fit events
 	    {
 	      //if one fit event is composed of multiple towers, than loop over all
-	      const std::vector<TData*>& data_ref = (*data_it)->GetRef();
+	      TAbstractData* ad = dynamic_cast<TAbstractData*>(*data_it);
+	      if(! ad) continue;
+	      const std::vector<TAbstractData*>& data_ref = ad->GetRef();
 
 	      // Get sum of corrected tower Et
 	      Jet = 0.;
-	      for(it = data_ref.begin(); it != data_ref.end(); ++it) //1. loop over towers
+	      for(std::vector<TAbstractData*>::const_iterator it = data_ref.begin(); 
+		  it != data_ref.end(); ++it) //1. loop over towers
 		{
 		  Jet += (*it)->GetParametrizedMess();
 		}
@@ -298,7 +301,8 @@ void TControlPlots::MakeControlPlotsTowers()
 	      // Find tower with max Et
 	      maxTowerET = 0.;	      
 	      thisIndexJet = 0;
-	      for (it = data_ref.begin(); it != data_ref.end(); ++it) //2. loop over towers
+	      for(std::vector<TAbstractData*>::const_iterator it = data_ref.begin(); 
+		  it != data_ref.end(); ++it) //2. loop over towers
 		{
 		  TMeasurement * m = (*it)->GetMess();
 		  int thisIndex = (*it)->GetIndex();
@@ -399,17 +403,22 @@ void TControlPlots::MakeControlPlotsTowers()
 	      mess = 0.;
 	      error=0.;
 
-	      const std::vector<TData*>& data_ref = (*data_it)->GetRef();
+
 	      JetCorr = (*data_it)->GetParametrizedMess(); // Corrected jet Pt
 	      Jet = 0.;		// Sum of corrected tower Et
-	      for (it =data_ref.begin(); it!=data_ref.end(); ++it) // 3. loop over towers
+	      
+	      TAbstractData* ad = dynamic_cast<TAbstractData*>(*data_it);
+	      if(! ad) continue;
+	      const std::vector<TAbstractData*>& data_ref = ad->GetRef();
+	      for(std::vector<TAbstractData*>::const_iterator it =data_ref.begin(); 
+		  it!=data_ref.end(); ++it) // 3. loop over towers
 		{
 		  Jet += (*it)->GetParametrizedMess();
 		}
-
 	      maxTowerET = 0.;
 	      thisIndexJet = 0;
-	      for (it =data_ref.begin(); it!=data_ref.end(); ++it) // 4. loop over towers
+	      for(std::vector<TAbstractData*>::const_iterator it =data_ref.begin(); 
+		  it!=data_ref.end(); ++it) // 4. loop over towers
 		{
 		  double m = (*it)->GetMess()->pt;
 		  double mhad = (*it)->GetMess()->HadF;
@@ -1148,137 +1157,139 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
       double maxTowerPhi=0;
 
       // first loop over tower
-      const std::vector<TData*>& data_ref = jg->GetRef();
-      for(std::vector<TData*>::const_iterator it = data_ref.begin();it != data_ref.end(); ++it)
-	{
-	  TMeasurement * m = (*it)->GetMess();
-	  double  pm = (*it)->GetParametrizedMess();
-	  respvstet[0]->Fill(m->pt,pm/m->pt);
-	  int thisIndex = (*it)->GetIndex();
-	  if (pm>maxTowerET) {
-	    thisIndexJet = thisIndex;
-	    maxTowerET = pm;
-	    maxTowerETraw = m->pt;
-	    maxTowerEta = m->eta;
-	    maxTowerPhi = m->phi;
-	    maxTowerEnergy = m->E;
+      TAbstractData* ad = dynamic_cast<TAbstractData*>(jg);
+      if(ad) {
+	const std::vector<TAbstractData*>& data_ref = ad->GetRef();
+	for(std::vector<TAbstractData*>::const_iterator it = data_ref.begin();it != data_ref.end(); ++it)
+	  {
+	    TMeasurement * m = (*it)->GetMess();
+	    double  pm = (*it)->GetParametrizedMess();
+	    respvstet[0]->Fill(m->pt,pm/m->pt);
+	    int thisIndex = (*it)->GetIndex();
+	    if (pm>maxTowerET) {
+	      thisIndexJet = thisIndex;
+	      maxTowerET = pm;
+	      maxTowerETraw = m->pt;
+	      maxTowerEta = m->eta;
+	      maxTowerPhi = m->phi;
+	      maxTowerEnergy = m->E;
+	    }
+	    
+	    EtaPhiMap->Fill(m->eta,m->phi);
+	    
+	    ++noTower;
+	  } // end of first loop over tower
+	energyjet *= maxTowerEnergy / maxTowerETraw;
+	respvstet[1]->Fill(maxTowerETraw,maxTowerET/maxTowerETraw);
+	double rings[nRings];
+	double ringsRaw[nRings];
+	for(int a=0; a < nRings; ++a)
+	  {
+	    rings[a]=0;
+	    ringsRaw[a]=0;
 	  }
-
-	  EtaPhiMap->Fill(m->eta,m->phi);
-
-	  ++noTower;
-	} // end of first loop over tower
-      energyjet *= maxTowerEnergy / maxTowerETraw;
-      respvstet[1]->Fill(maxTowerETraw,maxTowerET/maxTowerETraw);
-      double rings[nRings];
-      double ringsRaw[nRings];
-      for(int a=0; a < nRings; ++a)
-	{
-	  rings[a]=0;
-	  ringsRaw[a]=0;
-	}
-
-      // second loop over tower
-      for(std::vector<TData*>::const_iterator it = data_ref.begin();it != data_ref.end(); ++it)
-	{
-	  //next to leading towers:
-	  TMeasurement * m  = (*it)->GetMess();
-	  double  pm = (*it)->GetParametrizedMess();
-	  if(m->pt != 0)
-	    {
-	      for(int a=0; a < nRings; ++a)
-		{
-		  double DeltaR = sqrt((deltaPhi(phijet,m->phi) * deltaPhi(phijet,m->phi)) + ((etajet - m->eta) * (etajet - m->eta)));
-		  if(DeltaR <= ((0.6 / nRings) * a))
-		    {
-		      rings[a] += pm / etjet;
-		      ringsRaw[a] += m->pt / etjet;
-		    }
-		}	    
-	    
-	      int index = (*it)->GetIndex();
-	      if((abs(index - thisIndexJet) == 1)      )// || (abs(index - thisIndexJet + phi_granularity) < 2)  || (abs(index - thisIndexJet - phi_granularity) < 2))
-		respvstet[2]->Fill(m->pt, (*it)->GetParametrizedMess()/m->pt);
-	    
-	      if(abs(index - thisIndexJet) == 2)  // different with proper Phi granularity
-		respvstet[3]->Fill(m->pt, (*it)->GetParametrizedMess()/m->pt);
-	    }
-	}  // end of second loop over tower
-
-      // loop over rings
-      for(int a=0; a < nRings; ++a)
-	{
-	  if(a == 0)
-	    {
-	      leadToNext[0]->Fill(a * (0.6 / nRings),rings[0]);
-	      leadToNext[1]->Fill(a * (0.6 / nRings),ringsRaw[0]);
-	      leadToNext[13]->Fill(a * (0.6 / nRings),1);
-	      leadToNext[14]->Fill(a * (0.6 / nRings),1);
-	      if((etjet > 10) && (etjet < 35))
-		{
-		  leadToNext[15]->Fill(a * (0.6 / nRings),rings[0]);
-		  leadToNext[16]->Fill(a * (0.6 / nRings),ringsRaw[0]);
-		}
-	      if((etjet > 35) && (etjet < 90))
-		{
-		  leadToNext[17]->Fill(a * (0.6 / nRings),rings[0]);
-		  leadToNext[18]->Fill(a * (0.6 / nRings),ringsRaw[0]);
-		}
-	      if((etjet > 90) && (etjet < 300))
-		{
-		  leadToNext[19]->Fill(a * (0.6 / nRings),rings[0]);
-		  leadToNext[20]->Fill(a * (0.6 / nRings),ringsRaw[0]);
-		}
-	    }
-	  else
-	    {
-	      leadToNext[0]->Fill(a * (0.6 / nRings),rings[a]-rings[a-1]);
-	      leadToNext[1]->Fill(a * (0.6 / nRings),ringsRaw[a]-ringsRaw[a-1]);
-	      if((etjet > 10) && (etjet < 35))
-		{
-		  leadToNext[15]->Fill(a * (0.6 / nRings),rings[a]-rings[a-1]);
-		  leadToNext[16]->Fill(a * (0.6 / nRings),ringsRaw[a]-ringsRaw[a-1]);
-		}
-	      if((etjet > 35) && (etjet < 90))
-		{
-		  leadToNext[17]->Fill(a * (0.6 / nRings),rings[a]-rings[a-1]);
-		  leadToNext[18]->Fill(a * (0.6 / nRings),ringsRaw[a]-ringsRaw[a-1]);
-		}
-	      if((etjet > 90) && (etjet < 300))
-		{
-		  leadToNext[19]->Fill(a * (0.6 / nRings),rings[a]-rings[a-1]);
-		  leadToNext[20]->Fill(a * (0.6 / nRings),ringsRaw[a]-ringsRaw[a-1]);
-		}
-	      if(rings[0]!=0)
-		{
-		  leadToNext[13]->Fill(a * (0.6 / nRings),(rings[a]-rings[a-1])/rings[0]);
-		  leadToNext[14]->Fill(a * (0.6 / nRings),(ringsRaw[a]-ringsRaw[a-1])/ringsRaw[0]);
-		}
-	    }
-	  ringsSum[0][0] +=rings[0];
-	  ringsRawSum[0][0] +=ringsRaw[0];
-	  for(int b=1;b<11;b++)
-	    {
-	      if((fabs(etajet) > (b-1)*0.5) && (fabs(etajet) < b*0.5))
-		{
-		  ringsSum[b][0] +=rings[0];
-		  ringsRawSum[b][0] +=ringsRaw[0];
-		}
-	    }
-	  if(a>0)
-	    {
-	      ringsSum[0][a] +=rings[a] - rings[a-1];
-	      ringsRawSum[0][a] +=ringsRaw[a] - ringsRaw[a-1];
-	      for(int b=1;b<11;b++)
-		{
-		  if((fabs(etajet) > (b-1)*0.5) && (fabs(etajet) < b*0.5))
-		    {
-		      ringsSum[b][a] +=rings[a] - rings[a-1];
-		      ringsRawSum[b][a] +=ringsRaw[a] - ringsRaw[a-1];
-		    }
-		}
-	    }
-	} // end of loop over rings
+      
+	// second loop over tower
+	for(std::vector<TAbstractData*>::const_iterator it = data_ref.begin();it != data_ref.end(); ++it)
+	  {
+	    //next to leading towers:
+	    TMeasurement * m  = (*it)->GetMess();
+	    double  pm = (*it)->GetParametrizedMess();
+	    if(m->pt != 0)
+	      {
+		for(int a=0; a < nRings; ++a)
+		  {
+		    double DeltaR = sqrt((deltaPhi(phijet,m->phi) * deltaPhi(phijet,m->phi)) + ((etajet - m->eta) * (etajet - m->eta)));
+		    if(DeltaR <= ((0.6 / nRings) * a))
+		      {
+			rings[a] += pm / etjet;
+			ringsRaw[a] += m->pt / etjet;
+		      }
+		  }	    
+		
+		int index = (*it)->GetIndex();
+		if((abs(index - thisIndexJet) == 1)      )// || (abs(index - thisIndexJet + phi_granularity) < 2)  || (abs(index - thisIndexJet - phi_granularity) < 2))
+		  respvstet[2]->Fill(m->pt, (*it)->GetParametrizedMess()/m->pt);
+		
+		if(abs(index - thisIndexJet) == 2)  // different with proper Phi granularity
+		  respvstet[3]->Fill(m->pt, (*it)->GetParametrizedMess()/m->pt);
+	      }
+	  }  // end of second loop over tower
+	// loop over rings
+	for(int a=0; a < nRings; ++a)
+	  {
+	    if(a == 0)
+	      {
+		leadToNext[0]->Fill(a * (0.6 / nRings),rings[0]);
+		leadToNext[1]->Fill(a * (0.6 / nRings),ringsRaw[0]);
+		leadToNext[13]->Fill(a * (0.6 / nRings),1);
+		leadToNext[14]->Fill(a * (0.6 / nRings),1);
+		if((etjet > 10) && (etjet < 35))
+		  {
+		    leadToNext[15]->Fill(a * (0.6 / nRings),rings[0]);
+		    leadToNext[16]->Fill(a * (0.6 / nRings),ringsRaw[0]);
+		  }
+		if((etjet > 35) && (etjet < 90))
+		  {
+		    leadToNext[17]->Fill(a * (0.6 / nRings),rings[0]);
+		    leadToNext[18]->Fill(a * (0.6 / nRings),ringsRaw[0]);
+		  }
+		if((etjet > 90) && (etjet < 300))
+		  {
+		    leadToNext[19]->Fill(a * (0.6 / nRings),rings[0]);
+		    leadToNext[20]->Fill(a * (0.6 / nRings),ringsRaw[0]);
+		  }
+	      }
+	    else
+	      {
+		leadToNext[0]->Fill(a * (0.6 / nRings),rings[a]-rings[a-1]);
+		leadToNext[1]->Fill(a * (0.6 / nRings),ringsRaw[a]-ringsRaw[a-1]);
+		if((etjet > 10) && (etjet < 35))
+		  {
+		    leadToNext[15]->Fill(a * (0.6 / nRings),rings[a]-rings[a-1]);
+		    leadToNext[16]->Fill(a * (0.6 / nRings),ringsRaw[a]-ringsRaw[a-1]);
+		  }
+		if((etjet > 35) && (etjet < 90))
+		  {
+		    leadToNext[17]->Fill(a * (0.6 / nRings),rings[a]-rings[a-1]);
+		    leadToNext[18]->Fill(a * (0.6 / nRings),ringsRaw[a]-ringsRaw[a-1]);
+		  }
+		if((etjet > 90) && (etjet < 300))
+		  {
+		    leadToNext[19]->Fill(a * (0.6 / nRings),rings[a]-rings[a-1]);
+		    leadToNext[20]->Fill(a * (0.6 / nRings),ringsRaw[a]-ringsRaw[a-1]);
+		  }
+		if(rings[0]!=0)
+		  {
+		    leadToNext[13]->Fill(a * (0.6 / nRings),(rings[a]-rings[a-1])/rings[0]);
+		    leadToNext[14]->Fill(a * (0.6 / nRings),(ringsRaw[a]-ringsRaw[a-1])/ringsRaw[0]);
+		  }
+	      }
+	    ringsSum[0][0] +=rings[0];
+	    ringsRawSum[0][0] +=ringsRaw[0];
+	    for(int b=1;b<11;b++)
+	      {
+		if((fabs(etajet) > (b-1)*0.5) && (fabs(etajet) < b*0.5))
+		  {
+		    ringsSum[b][0] +=rings[0];
+		    ringsRawSum[b][0] +=ringsRaw[0];
+		  }
+	      }
+	    if(a>0)
+	      {
+		ringsSum[0][a] +=rings[a] - rings[a-1];
+		ringsRawSum[0][a] +=ringsRaw[a] - ringsRaw[a-1];
+		for(int b=1;b<11;b++)
+		  {
+		    if((fabs(etajet) > (b-1)*0.5) && (fabs(etajet) < b*0.5))
+		      {
+			ringsSum[b][a] +=rings[a] - rings[a-1];
+			ringsRawSum[b][a] +=ringsRaw[a] - ringsRaw[a-1];
+		      }
+		  }
+	      }
+	  } // end of loop over rings
+      }
       towerinjet[0]->Fill(noTower);
       if (jg->GetTruth() > 10 && jg->GetTruth() < 35)
 	{
@@ -1371,15 +1382,17 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
       //em fraction plots     
       if( plottedQuant.count("emf") > 0 )
 	{
-	  double em = 0;
-	  double had = 0;
-	  for(std::vector<TData*>::const_iterator t = jg->GetRef().begin(); t != jg->GetRef().end(); ++t)
+	  double em = jg->GetMess()->EMF;
+	  double had = jg->GetMess()->HadF + jg->GetMess()->OutF;
+	  /*
+	    for(std::vector<TData*>::const_iterator t = jg->GetRef().begin(); t != jg->GetRef().end(); ++t)
 	    {
-	      TData* tt = *t;
-	      em  += tt->GetMess()->EMF;
-	      had += tt->GetMess()->HadF;
-	      had += tt->GetMess()->OutF;
+	    TData* tt = *t;
+	    em  += tt->GetMess()->EMF;
+	    had += tt->GetMess()->HadF;
+	    had += tt->GetMess()->OutF;
 	    }
+	  */
 	  hemf[0]->Fill(em/(em+had),etjet/jg->GetTruth(),jg->GetWeight());
 	  hemf[1]->Fill(em/(em+had),etjetcor/jg->GetTruth(),jg->GetWeight());
 	  hemf[2]->Fill(em/(em+had),etjet/etjetcor,jg->GetWeight());
@@ -2340,7 +2353,8 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 {
   std::vector<TObject*> objToBeWritten;
   std::vector<TObject*> objToBeDeleted;
-  std::vector<TData*>::const_iterator data_it, it;
+  std::vector<TData*>::const_iterator data_it;
+  std::vector<TAbstractData*>::const_iterator it;
 
   TCanvas * const c1 = new TCanvas("c1","",600,600);
   objToBeDeleted.push_back(c1);
@@ -2382,13 +2396,15 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 	  for (; data_it != mData->end();++data_it) // loop over all fit-events
 	    {
 	      if ( (*data_it)->GetType()!=GammaJet ) continue;
+	      TAbstractData* ad = dynamic_cast<TAbstractData*>(*data_it);
+	      if(! ad) continue;
 
 	      int indexTower = 0; // Index of max tower
 	      double Etmax = 0.;
 	      double calib_tower_sum = 0.;
 	      double tower_sum = 0.; //is equivalent to (*data_it)->GetMess(),
 	                             //but since we need the index too, this is faster
-	      const std::vector<TData*>& data_ref = (*data_it)->GetRef();
+	      const std::vector<TAbstractData*>& data_ref = ad->GetRef();
 	      for (it = data_ref.begin(); it != data_ref.end(); ++it) // Loop over towers
 		{
 		  double tow_et = (*it)->GetMess()->pt;
@@ -2403,15 +2419,15 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 
 	      if ( indexTower!=i ) continue; //event belongs to a wrong bin
 
-	      indexJet += (*data_it)->GetIndex();
+	      indexJet += ad->GetIndex();
 	      ++ijets;
 
-	      double JetCorr = (*data_it)->GetParametrizedMess();
+	      double JetCorr = ad->GetParametrizedMess();
 
 	      fit->Fill(      tower_sum, JetCorr/tower_sum );
-	      plot->Fill(     tower_sum, (*data_it)->GetTruth()/tower_sum );
+	      plot->Fill(     tower_sum, ad->GetTruth()/tower_sum );
 	      norm->Fill(     tower_sum ); 
-	      plot_jes->Fill( calib_tower_sum, (*data_it)->GetTruth()/calib_tower_sum );
+	      plot_jes->Fill( calib_tower_sum, ad->GetTruth()/calib_tower_sum );
 	      norm_jes->Fill( calib_tower_sum ); 
 	    } // End of loop over all fit-events
 
@@ -2491,7 +2507,8 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 {
   std::vector<TObject*> objToBeDeleted;
   std::vector<TObject*> objToBeWritten;
-  std::vector<TData*>::const_iterator data_it, it;
+  std::vector<TData*>::const_iterator data_it;
+  std::vector<TAbstractData*>::const_iterator it;
 
   TCanvas * const c1 = new TCanvas("c1","",600,600);
   objToBeDeleted.push_back(c1);
@@ -2525,15 +2542,17 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 	  data_it = mData->begin();
 	  for (; data_it != mData->end();++data_it)
 	    {
-	      if ( (*data_it)->GetType()!=GammaJet ) continue;
-	      if ( (*data_it)->GetIndex()!= i )	  continue; //event belongs to a wrong bin
+	      TAbstractData* ad = dynamic_cast<TAbstractData*>(*data_it);
+	      if(! ad) continue;
+	      if ( ad->GetType()!=GammaJet ) continue;
+	      if ( ad->GetIndex()!= i )	  continue; //event belongs to a wrong bin
 	
-	      double JetCorr = (*data_it)->GetParametrizedMess();
+	      double JetCorr = ad->GetParametrizedMess();
 
 	      double tower_sum = 0.0;
 	      double calib_tower_sum = 0.0;
 
-	      const std::vector<TData*>& data_ref = (*data_it)->GetRef(); // Tower
+	      const std::vector<TAbstractData*>& data_ref = ad->GetRef(); // Tower
 	      for (it = data_ref.begin(); it!=data_ref.end(); ++it)
 		{
 		  tower_sum += (*it)->GetMess()->pt; // * (*it)->GetMess()[7];
@@ -2866,7 +2885,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 
 
       double etparascale = 0.;
-      for(std::vector<TData*>::const_iterator t = jm->GetRef().begin(); t != jm->GetRef().end(); ++t)
+      for(std::vector<TAbstractData*>::const_iterator t = jm->GetRef().begin(); t != jm->GetRef().end(); ++t)
 	{
 	  etparascale += (*t)->GetParametrizedMess();
 	}
@@ -2958,15 +2977,18 @@ void TControlPlots::MakeControlPlotsDiJet()
 
 
       //em fraction plots     
-      double em = 0;
-      double had = 0;
-      for(std::vector<TData*>::const_iterator t = jj->GetRef().begin(); t != jj->GetRef().end(); ++t)
+      double em = jj->GetMess()->EMF;;
+      double had = jj->GetMess()->HadF+jj->GetMess()->OutF;
+      /*
+	for(std::vector<TAbstractData*>::const_iterator t = jj->GetRef().begin(); t != jj->GetRef().end(); ++t)
 	{
-	  TData* tt = *t;
-	  em  += tt->GetMess()->EMF;
-	  had += tt->GetMess()->HadF;
-	  had += tt->GetMess()->OutF;
+	TData* tt = *t;
+	em  += tt->GetMess()->EMF;
+	had += tt->GetMess()->HadF;
+	had += tt->GetMess()->OutF;
 	}
+      */
+      
       Bemf[0]->Fill(em/(em+had),B,jj->GetWeight());
       Bemf[1]->Fill(em/(em+had),Buncor,jj->GetWeight());
             

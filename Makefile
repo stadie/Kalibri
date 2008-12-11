@@ -9,7 +9,7 @@ ifeq ($(F77EXE),)
 endif
 
 #O2 for optimization, g for debugging
-SPECIALFLAGS=-O3 #-g -Wall -pg#-O2
+SPECIALFLAGS= -O3 #-g -Wall -pg#-O2
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 
@@ -57,7 +57,7 @@ CalibData.o: CalibData.cc CalibData.h
 Parameters.o: Parameters.cc Parameters.h Parametrization.h
 	$(C) $(RCXX) -c Parameters.cc
 
-ControlPlots.o: ControlPlots.cc ControlPlots.h
+ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h
 	$(C) $(RCXX) -c ControlPlots.cc
 
 caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ZJetSel.h NJetSel.h TopSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h ToyMC.h

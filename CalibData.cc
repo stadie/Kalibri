@@ -1,16 +1,16 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.25 2008/11/17 14:32:18 auterman Exp $
+// $Id: CalibData.cc,v 1.26 2008/11/20 16:38:03 stadie Exp $
 //
 #include "CalibData.h"
 
 #include <map>
 #include <cmath>
 
-unsigned int TData::total_n_pars = 0;
+unsigned int TAbstractData::total_n_pars = 0;
 double (*TData::ScaleResidual)(double z2) = &TData::ScaleNone;
-std::vector<TData*> TData_TruthMess::resultcache = std::vector<TData*>(1);
+std::vector<TAbstractData*> TData_TruthMess::resultcache = std::vector<TAbstractData*>(1);
 
 double TData_TruthMess::chi2_fast(double *temp_derivative1, double *temp_derivative2, double const epsilon) const
 { 
@@ -72,7 +72,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
 
     //Get Track Parameters
     for (unsigned i=idx; i<idx+(*_vectrack.begin())->GetNumberOfPars() ; ++i){
-      std::vector<TData*>::const_iterator it=_vectrack.begin();
+      std::vector<TAbstractData*>::const_iterator it=_vectrack.begin();
       double oldpar = (*it)->GetPar()[i-idx];
 	  
       (*it)->GetPar()[i-idx]  += epsilon;
@@ -93,7 +93,7 @@ double TData_TruthMultMess::chi2_fast(double* temp_derivative1, double* temp_der
   }
 
   else{
-    for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+    for (std::vector<TAbstractData*>::const_iterator it=_vecmess.begin();
 	 it!=_vecmess.end(); ++it) {
       new_mess    = (*it)->GetParametrizedMess();	 
       sum_mess   += new_mess; 
@@ -201,7 +201,7 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
 
   //Get all tower parameter used in this event:  
   std::map<int,double*> tpars;
-  for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+  for (std::vector<TAbstractData*>::const_iterator it=_vecmess.begin();
        it!=_vecmess.end(); ++it) {
     for (unsigned i= 0 ; i < (*it)->GetNumberOfPars(); ++i) {
       tpars[ (*it)->GetIndex() * (*it)->GetNumberOfPars() + i ] = &((*it)->GetPar()[i]);
@@ -209,8 +209,8 @@ double TData_MessMess::chi2_fast(double * temp_derivative1, double*  temp_deriva
   }
   for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
        mit!=_m2.end();++mit) {
-    std::vector<TData*>::const_iterator mitend=(*mit)->GetRef().end();  
-    for (std::vector<TData*>::const_iterator it=(*mit)->GetRef().begin();
+    std::vector<TAbstractData*>::const_iterator mitend=(*mit)->GetRef().end();  
+    for (std::vector<TAbstractData*>::const_iterator it=(*mit)->GetRef().begin();
 	 it!=mitend; ++it) { 
       for (unsigned i= 0 ; i < (*it)->GetNumberOfPars(); ++i) {
 	tpars[ (*it)->GetIndex() * (*it)->GetNumberOfPars() + i ] = &((*it)->GetPar()[i]);
@@ -310,7 +310,7 @@ double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_deriv
 
   //Get all tower parameter used in this event:  
   std::map<int,double*> tpars;
-  for (std::vector<TData*>::const_iterator it=_vecmess.begin();
+  for (std::vector<TAbstractData*>::const_iterator it=_vecmess.begin();
        it!=_vecmess.end(); ++it) {
     for (unsigned i= 0 ; i < (*it)->GetNumberOfPars(); ++i) {
       tpars[ (*it)->GetIndex() * (*it)->GetNumberOfPars() + i ] = &((*it)->GetPar()[i]);
@@ -318,8 +318,8 @@ double TData_PtBalance::chi2_fast(double * temp_derivative1, double*  temp_deriv
   }
   for (std::vector<TData_MessMess*>::const_iterator mit=_m2.begin();
        mit!=_m2.end();++mit) {
-    std::vector<TData*>::const_iterator mitend=(*mit)->GetRef().end();  
-    for (std::vector<TData*>::const_iterator it=(*mit)->GetRef().begin();
+    std::vector<TAbstractData*>::const_iterator mitend=(*mit)->GetRef().end();  
+    for (std::vector<TAbstractData*>::const_iterator it=(*mit)->GetRef().begin();
 	 it!=mitend; ++it) { 
       for (unsigned i= 0 ; i < (*it)->GetNumberOfPars(); ++i) {
 	tpars[ (*it)->GetIndex() * (*it)->GetNumberOfPars() + i ] = &((*it)->GetPar()[i]);
@@ -423,7 +423,7 @@ double TData_InvMass2::combine() const{
   return sqrt(e*e - x*x - y*y - z*z);     
 };
 
-std::vector<TData*> TData_ParLimit::_cache = std::vector<TData*>(1);
+std::vector<TAbstractData*> TData_ParLimit::_cache = std::vector<TAbstractData*>(1);
 
 double TData_ParLimit::chi2_fast(double* temp_derivative1, 
 				 double* temp_derivative2, double const epsilon) const {
