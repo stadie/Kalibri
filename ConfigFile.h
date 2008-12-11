@@ -49,6 +49,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <cassert>
 
 using std::string;
 
@@ -61,13 +62,16 @@ template<class datatype> class bag_of : public std::vector<datatype> {
 template<class datatype> bag_of<datatype>::bag_of(std::string s) 
                    : std::vector<datatype>::vector() {
   // constructor
-  std::stringstream ss(s);
-  
-  datatype buffer;
-  
-  while (!ss.eof()) {
-     ss >> buffer;
-     this->push_back(buffer);
+  if(s.length()) { 
+    std::stringstream ss(s);
+    datatype buffer;
+    while (!ss.eof()) {
+      ss >> buffer;
+      this->push_back(buffer);
+     //do not read more numbers than characters in strint
+     //this can happen with bag_of<double> and string "0.0."
+      assert(this->size() <= s.length());
+    }
   }
 }
 
