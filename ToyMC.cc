@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.14 2008/11/05 16:44:14 stadie Exp $
+// $Id: ToyMC.cc,v 1.15 2008/11/20 16:38:03 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -416,6 +416,12 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   int towid[kMAX];
   int tow_jetidx[kMAX];
   
+  float ttowet[kMAX];
+  float ttoweta[kMAX];
+  float ttowphi[kMAX];
+  int ttowid_phi[kMAX];
+  int ttowid_eta[kMAX]; 
+
   const int kjMAX = 2;
   int NobjJet = 2;
   float jetpt[kjMAX];
@@ -478,11 +484,6 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       double u2 = mRandom->Uniform(2);
       mTowConst[0] = 1/(2 - std::max(u1,u2));
     }
-    float ttowet[kMAX];
-    float ttoweta[kMAX];
-    float ttowphi[kMAX];
-    int ttowid_phi[kMAX];
-    int ttowid_eta[kMAX]; 
     NobjTow = 0;
     for(int i = 0 ; i < NobjJet ; ++i) {
       genjet[i].SetPtEtaPhiM(jetgenpt[i],jetgeneta[i],jetgenphi[i],0);
@@ -599,7 +600,7 @@ void ToyMC::init(const std::string& configfile) {
      std::cerr << "unknown ToyMC pt spectrum:" << spectrum << '\n';
      exit(1);
    }
-   bag_of<double> auter = bag_of<double>(config.read<string>("ToyMC tower const","1.25, 0, 1, 1, 0"));
+   std::vector<double> auter = bag_of<double>(config.read<string>("ToyMC tower const","1.25 0.0 1.0 1.0 0.0"));
    while(auter.size() < 5) auter.push_back(0);
    assert(auter.size() == 5);
    for(unsigned int i = 0; i < auter.size() ; ++i) mTowConst[i] = auter[i];
@@ -629,6 +630,8 @@ void ToyMC::init(const std::string& configfile) {
    mChunks = config.read<int>("ToyMC chunks",200);
    mMaxPi0Frac = config.read<double>("ToyMC max pi0 fraction",0.5);
    mMaxEmf = config.read<double>("ToyMC tower max EMF",0.5);
+   int seed = config.read<int>("ToyMC seed",0); 
+   mRandom->SetSeed(seed);
 }
 
 void ToyMC::print() const {
