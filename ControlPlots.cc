@@ -19,7 +19,7 @@ using namespace std;
 #include "CalibData.h"
 #include "CalibMath.h"
 #include "Parameters.h"
-
+#include "ConfigFile.h"
 
 //---------------------------------------------------------------
 //  Constructor
@@ -36,8 +36,9 @@ using namespace std;
 //                 0  .ps and .root (default)
 //                 1  .ps
 //---------------------------------------------------------------
-TControlPlots::TControlPlots(const std::vector<TData*> *data, TParameters *par, int outputFormat)
-  : mData(data), mPar(par), mOutFile( outputFormat==0 ? new TFile("controlplots.root","RECREATE","Cal calib control plots") : 0 )
+TControlPlots::TControlPlots(const std::string& configfile, const std::vector<TData*> *data, TParameters *par)
+  : mData(data), mPar(par), mOutFile(0),makeControlPlotsTowers(0),makeControlPlotsGammaJet(0),
+    makeControlPlotsGammaJet2(0),makeControlPlotsDiJet(0),makeControlPlotsParScan(0)
 { 
   mPtRatioName[0] = "p^{jet}_{T}/ E_{T}^{#gamma}";
   mPtRatioName[1] = "p_{T}^{cor. jet}/E_{T}^{#gamma}";
@@ -54,8 +55,30 @@ TControlPlots::TControlPlots(const std::vector<TData*> *data, TParameters *par, 
 
   SetGStyle();
 
-  if( outputFormat == 1 ) mOutputROOT = false;
-  else mOutputROOT = true;
+
+  ConfigFile config(configfile.c_str());
+  
+  if(config.read<bool>("plot output format",0)) {
+    mOutputROOT = false;
+  }
+  else {
+    mOutputROOT = true;
+    mOutFile = new TFile("controlplots.root","RECREATE","Cal calib control plots");
+  }    
+  makeControlPlotsGammaJet = config.read<bool>("create gamma jet plots",false);
+  if( makeControlPlotsGammaJet )
+    { 
+      vector<std::string> tmpPlottedQuant = bag_of_string(config.read<std::string>( "gamma jet plotted quantities", ""));
+      //do we really have to copy the vector and not just use mPlottedQuant in the first place???
+      for(std::vector<std::string>::const_iterator it = tmpPlottedQuant.begin(); it < tmpPlottedQuant.end(); it++)
+	{
+	  mPlottedQuant.insert(*it);
+	}
+    }  				 
+  makeControlPlotsGammaJet2 = config.read<bool>("create more gamma jet plots",false);
+  makeControlPlotsDiJet = config.read<bool>("create dijet plots",false);
+  makeControlPlotsTowers = config.read<bool>("create tower plots",false);
+  makeControlPlotsParScan = config.read<bool>("create parameter scan plots",false);
 }
 
 
@@ -68,7 +91,51 @@ TControlPlots::~TControlPlots()
     }
 }
 
-
+void TControlPlots::MakePlots()
+{
+  cout << endl << "Writing control plots in .ps " << flush;
+  if( mOutputROOT ) cout << "and .root " << flush;
+  cout << "format:" << endl;
+  
+  if( makeControlPlotsTowers )
+    {
+      cout << "Creating tower control plots... " << flush;
+      MakeControlPlotsTowers();
+      cout << "ok" << endl;
+    }
+  if( makeControlPlotsGammaJet )
+    {
+      cout << "Creating more gamma jet control plots... " << flush;
+      MakeControlPlotsGammaJet(mPlottedQuant);
+      cout << "ok" << endl;
+    }
+  if( makeControlPlotsGammaJet2 )
+    {
+      cout << "Creating gamma jet (tower bin) control plots... " << flush;
+      MakeControlPlotsGammaJetPerTowerBin();
+      cout << "ok" << endl;
+      
+      cout << "Creating gamma jet (jet bin) control plots... " << flush;
+      MakeControlPlotsGammaJetPerJetBin();
+      cout << "ok" << endl;
+      
+      cout << "Creating even more gamma jet control plots (sigmas)... " << flush;
+      MakeControlPlotsGammaJetSigmas();
+      cout << "ok" << endl;
+    }
+  if( makeControlPlotsDiJet )
+    {
+      cout << "Creating di-jet control plots... " << flush;
+      MakeControlPlotsDiJet();
+      cout << "ok" << endl;
+    }
+  if( makeControlPlotsParScan ) 
+    {
+      cout << "Creating parameter scan control plots... " << flush;
+      MakeControlPlotsParameterScan();
+      cout << "ok" << endl;
+    }
+}
 
 
 //---------------------------------------------------------------

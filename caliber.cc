@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.68 2008/12/12 13:43:15 stadie Exp $
+// $Id: caliber.cc,v 1.69 2008/12/12 17:06:00 stadie Exp $
 //
 //
 // for profiling:
@@ -668,54 +668,7 @@ void TCaliber::Done()
 
   // Do Plots
   if(plots) {
-    cout << endl << "Writing control plots in .ps " << flush;
-    if( plots->OutputFormatRoot() ) cout << "and .root " << flush;
-    cout << "format:" << endl;
-
-      if( makeControlPlotsTowers )
-	{
-	  cout << "Creating tower control plots... " << flush;
-	  plots->MakeControlPlotsTowers();
-	  cout << "ok" << endl;
-	}
-      if(n_gammajet_events!=0)
-	{
-	  if( makeControlPlotsGammaJet )
-	    {
-	      cout << "Creating more gamma jet control plots... " << flush;
-	      plots->MakeControlPlotsGammaJet(mPlottedQuant);
-	      cout << "ok" << endl;
-	    }
-	  if( makeControlPlotsGammaJet2 )
-	    {
-	      cout << "Creating gamma jet (tower bin) control plots... " << flush;
-	      plots->MakeControlPlotsGammaJetPerTowerBin();
-	      cout << "ok" << endl;
-
-	      cout << "Creating gamma jet (jet bin) control plots... " << flush;
-	      plots->MakeControlPlotsGammaJetPerJetBin();
-	      cout << "ok" << endl;
-	      
-	      cout << "Creating even more gamma jet control plots (sigmas)... " << flush;
-	      plots->MakeControlPlotsGammaJetSigmas();
-	      cout << "ok" << endl;
-	    }
-      }
-    if (n_dijet_events!=0)   
-      {
-	if( makeControlPlotsDiJet )
-	  {
-	    cout << "Creating di-jet control plots... " << flush;
-	    plots->MakeControlPlotsDiJet();
-	    cout << "ok" << endl;
-	  }
-      }
-    if( makeControlPlotsParScan ) 
-      {
-	cout << "Creating parameter scan control plots... " << flush;
-	plots->MakeControlPlotsParameterScan();
-	cout << "ok" << endl;
-      }
+    plots->MakePlots();
   }
   // Clean-up
   cout << endl << "Cleaning up... " << flush;
@@ -736,20 +689,7 @@ void TCaliber::Init()
 
   if(config.read<bool>("create plots",1))
     {
-      plots = new TControlPlots(&data, p, config.read<bool>("plot output format",0));
-      makeControlPlotsGammaJet = config.read<bool>("create gamma jet plots",false);
-      if( makeControlPlotsGammaJet )
-	{ 
-	  vector<std::string> tmpPlottedQuant = bag_of_string(config.read<std::string>( "gamma jet plotted quantities", ""));
-	  for(std::vector<std::string>::const_iterator it = tmpPlottedQuant.begin(); it < tmpPlottedQuant.end(); it++)
-	    {
-	      mPlottedQuant.insert(*it);
-	    }
-	}  				 
-      makeControlPlotsGammaJet2 = config.read<bool>("create more gamma jet plots",false);
-      makeControlPlotsDiJet = config.read<bool>("create dijet plots",false);
-      makeControlPlotsTowers = config.read<bool>("create tower plots",false);
-      makeControlPlotsParScan = config.read<bool>("create parameter scan plots",false);
+      plots = new TControlPlots(configfile,&data, p);
     }
 
   //initialize temp arrays for fast derivative calculation
@@ -795,7 +735,7 @@ void TCaliber::Init()
  
   output_file = config.read<string>( "Output file", "calibration_k.cfi" );
 
-  //file data vector
+  //fill data vector
   PhotonJetReader pjr(configfile,p);
   n_gammajet_events = pjr.readEvents(data);
   
