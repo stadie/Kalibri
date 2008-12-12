@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: caliber.h,v 1.33 2008/11/20 16:38:03 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.1 2008/12/12 13:43:15 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -12,6 +12,8 @@
 #include "ConfigFile.h"
 #include "ToyMC.h"
 #include "Parameters.h"
+
+#include <iostream>
 
 PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) :
   EventReader(configfile,p), Et_cut_on_gamma(0),Et_cut_on_jet(0),
@@ -64,6 +66,7 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
 {
   if(n_gammajet_events == 0) return 0;
   int nevent = gammajet.fChain->GetEntries();
+  int nevents_added = 0;
   for (int i=0;i<nevent;i++) {
     if(i%1000==0) cout<<"Gamma-Jet Event: "<<i<<endl;
     gammajet.fChain->GetEvent(i); 
@@ -234,9 +237,9 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
     gj_data->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization
  
     data.push_back( gj_data ); 
-   
-    if (n_gammajet_events>=0 && i>=n_gammajet_events-1)
+    ++nevents_added;
+    if((n_gammajet_events >= 0) && (nevents_added >= n_gammajet_events-1))
       break;
   }
-  return nevent;
+  return nevents_added;
 }

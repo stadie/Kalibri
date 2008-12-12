@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.33 2008/11/20 16:38:03 stadie Exp $
+// $Id: caliber.h,v 1.34 2008/12/12 13:43:15 stadie Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -26,16 +26,10 @@
 #include "TMinuit.h"
 
 
-//User libs
-#include "CalibData.h"
-#include "TrackTowerSel.h"
-#include "TrackClusterSel.h"
-#include "ZJetSel.h"
-#include "TopSel.h"
-
 class TParameters;
 class TControlPlots;
 class TData;
+class TMeasurement;
 
 class TCaliber {
 public :
@@ -51,23 +45,9 @@ public :
   const char * GetOutputFile(){ return output_file.c_str(); };
 
 protected:  
-  //TSelectors:
-  TrackTowerSel   tracktower;
-  TrackClusterSel trackcluster;
-  ZJetSel         zjet;
-  TopSel          top;
-
   //internal functions
   void Run_Lvmini();
-  void Run_Minuit();
 
-  void Run_TrackTower();
-  void Run_TrackCluster();
-  void Run_ZJet();
-  void Run_Top();
-
-  void AddTowerConstraint();
-  void AddParameterLimits();
   void FlattenSpectra();
   void BalanceSpectra();
 
@@ -76,15 +56,11 @@ private:
   int GetSpectraBin(double m1, double m2, double m3);
   
   //internal variables
-  int fit_method, n_tracktower_events, n_gammajet_events, n_dijet_events,
-      n_trackcluster_events, n_zjet_events, n_top_events;
+  int fit_method, n_gammajet_events, n_dijet_events;
+  int n_trijet_events,n_trackcluster_events, n_zjet_events, n_top_events;
   std::string configfile, output_file;              //input/output
   int use_GammaJetTowerMethod,use_DisplayMethod;    //plots
-  double Et_cut_on_jet, Et_cut_on_gamma, Et_cut_nplus1Jet,     //kin. cuts
-         Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster, Et_cut_on_Z,
-         Rel_cut_on_gamma, Rel_cut_on_nJet;
-  double massConstraint_W;
-  double massConstraint_Top;
+  double Et_cut_on_gamma, Et_cut_on_jet,Et_cut_on_track, Et_cut_on_tower, Et_cut_on_cluster;
   bool useMassConstraintW;
   bool useMassConstraintTop;
   double RelWeight[7];//@@ Replace 7 by something meaningful
@@ -93,41 +69,16 @@ private:
   bool makeControlPlotsGammaJet2;
   bool makeControlPlotsDiJet;
   bool makeControlPlotsParScan;
-  bool useTracks;
+
   std::set<std::string> mPlottedQuant;
 
   std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals
   double OutlierChi2Cut;                            // Cut on outlier when no scaling is chosen
   int nthreads;
-  class TowerConstraint {
-  public:
-    int mineta;
-    int maxeta;
-    double hadEt;
-    double emEt;
-    double weight;
-    TowerConstraint(int mineta,int maxeta,double hadEt, double emEt, double weight) :
-      mineta(mineta),maxeta(maxeta),hadEt(hadEt),emEt(emEt),weight(weight) {}
-  };
-  class ParameterLimit {
-  public:
-    int index;
-    double min;
-    double max;
-    double k;
-    ParameterLimit(int index, double min, double max, double k) 
-      : index(index), min(min), max(max), k(k) {}
-  };
-  
-  std::vector<TowerConstraint> tower_constraints;
-  std::vector<ParameterLimit> par_limits;
   bool flatten_spectra;
   std::vector<TData*> data;
   
   TParameters * p;    //fit parameters, depend on number of bins & geometry
-  double const (*tower_error_param)(double *const x, TMeasurement *const xorig, double const err);
-  double const (*jet_error_param)  (double *const x, TMeasurement *const xorig, double const err);
-  double const (*track_error_param)  (double *const x, TMeasurement *const xorig, double const err);
 
   TControlPlots * plots;  //the control plots
 };
