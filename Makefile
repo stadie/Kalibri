@@ -13,14 +13,14 @@ SPECIALFLAGS= -O3 #-g -Wall -pg#-O2
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 
-CFLAGS = $(SPECIALFLAGS) -I. -I./include -I$(SRT_PUBLIC_CONTEXT)/include -I$(ROOTSYS)/include -Wno-deprecated -Wall
+CFLAGS = $(SPECIALFLAGS) -I. -I./include -I$(SRT_PUBLIC_CONTEXT)/include -Wno-deprecated -Wall
 LFLAGS = $(SPECIALFLAGS) -L../../lib/$(SRT_SUBDIR)/ -lz $(F77LDFLAGS)
 
 
 RCXX=$(CFLAGS) $(ROOTCFLAGS) -I/usr/include/boost
 RLXX=$(LFLAGS) $(ROOTLIBS)  -I/usr/include/boost -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
-SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackTowerSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc
+SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackTowerSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -31,7 +31,7 @@ lbfgs.o: lbfgs.F
 	$(F77) -fno-automatic -fno-backslash -O -c lbfgs.F
 
 ConfigFile.o: ConfigFile.cc ConfigFile.h
-	$(C) $(RCXX) -c ConfigFile.cc
+	$(C) $(CFLAGS) -c ConfigFile.cc
 
 GammaJetSel.o: GammaJetSel.cc GammaJetSel.h
 	$(C) $(RCXX) -c GammaJetSel.cc
@@ -52,15 +52,27 @@ NJetSel.o: NJetSel.cc NJetSel.h
 	$(C) $(RCXX) -c NJetSel.cc
 
 CalibData.o: CalibData.cc CalibData.h
-	$(C) $(RCXX) -c CalibData.cc
+	$(C) $(CFLAGS) -c CalibData.cc
 
 Parameters.o: Parameters.cc Parameters.h Parametrization.h
-	$(C) $(RCXX) -c Parameters.cc
+	$(C) $(CFLAGS) -c Parameters.cc
 
 ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h
 	$(C) $(RCXX) -c ControlPlots.cc
 
-caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ZJetSel.h NJetSel.h TopSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h ToyMC.h
+EventReader.o: EventReader.h EventReader.cc 
+	$(C) $(CFLAGS) -c EventReader.cc
+
+PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h
+	$(C) $(RCXX) -c PhotonJetReader.cc
+
+DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h ToyMC.h Parameters.h
+	$(C) $(RCXX) -c DiJetReader.cc
+
+TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameters.h
+	$(C) $(RCXX) -c TriJetReader.cc
+
+caliber.o: caliber.cc caliber.h CalibMath.h external.h GammaJetSel.h TrackTowerSel.h ZJetSel.h NJetSel.h TopSel.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h ToyMC.h EventReader.h DiJetReader.h TriJetReader.h
 	$(C) $(RCXX) -c caliber.cc 
 
 runjunk: $(SRC:.cc=.o) lbfgs.o

@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.32 2008/11/20 16:04:50 snaumann Exp $
+// $Id: caliber.h,v 1.33 2008/11/20 16:38:03 stadie Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -28,10 +28,8 @@
 
 //User libs
 #include "CalibData.h"
-#include "GammaJetSel.h"
 #include "TrackTowerSel.h"
 #include "TrackClusterSel.h"
-#include "NJetSel.h"
 #include "ZJetSel.h"
 #include "TopSel.h"
 
@@ -41,24 +39,21 @@ class TData;
 
 class TCaliber {
 public :
-  TCaliber()
-    : makeControlPlotsTowers(0), makeControlPlotsGammaJet(0), makeControlPlotsGammaJet2(0),
+  TCaliber(const std::string& f)
+    : configfile(f),makeControlPlotsTowers(0), makeControlPlotsGammaJet(0), makeControlPlotsGammaJet2(0),
       makeControlPlotsDiJet(0), makeControlPlotsParScan(0), plots(0)
  {};
   ~TCaliber(){};
 
-  void Init(std::string f);
+  void Init();
   void Run();
   void Done();
   const char * GetOutputFile(){ return output_file.c_str(); };
 
 protected:  
   //TSelectors:
-  GammaJetSel     gammajet;
   TrackTowerSel   tracktower;
   TrackClusterSel trackcluster;
-  NJetSel         dijet;
-  NJetSel         trijet;
   ZJetSel         zjet;
   TopSel          top;
 
@@ -66,10 +61,8 @@ protected:
   void Run_Lvmini();
   void Run_Minuit();
 
-  void Run_GammaJet();
   void Run_TrackTower();
   void Run_TrackCluster();
-  void Run_NJet(NJetSel & njet, int injet);
   void Run_ZJet();
   void Run_Top();
 
@@ -83,9 +76,8 @@ private:
   int GetSpectraBin(double m1, double m2, double m3);
   
   //internal variables
-  int fit_method, n_gammajet_events, n_tracktower_events, 
-      n_trackcluster_events, n_dijet_events, n_trijet_events, n_zjet_events,
-      n_top_events;
+  int fit_method, n_tracktower_events, n_gammajet_events, n_dijet_events,
+      n_trackcluster_events, n_zjet_events, n_top_events;
   std::string configfile, output_file;              //input/output
   int use_GammaJetTowerMethod,use_DisplayMethod;    //plots
   double Et_cut_on_jet, Et_cut_on_gamma, Et_cut_nplus1Jet,     //kin. cuts
