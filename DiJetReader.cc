@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: caliber.h,v 1.33 2008/11/20 16:38:03 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.1 2008/12/12 13:43:16 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -8,6 +8,8 @@
 #include "ConfigFile.h"
 #include "ToyMC.h"
 #include "Parameters.h"
+
+#include <cstdlib>
 
 DiJetReader::DiJetReader(const std::string& configfile, TParameters* p) 
   : EventReader(configfile,p),Et_cut_nplus1Jet(0),Rel_cut_on_nJet(10),n_dijet_events(0)

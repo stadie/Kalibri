@@ -10,15 +10,17 @@ endif
 
 #O2 for optimization, g for debugging
 SPECIALFLAGS= -O3 #-g -Wall -pg#-O2
+ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 #-I. -I./include -I$(SRT_PUBLIC_CONTEXT)/include 
-CFLAGS = $(SPECIALFLAGS) -Wno-deprecated -Wall -pthread -m64
+CFLAGS = $(SPECIALFLAGS) -Wall $(ROOTAUXCFLAGS)
 #-L../../lib/$(SRT_SUBDIR)/
 LFLAGS = $(SPECIALFLAGS) -lz $(F77LDFLAGS)
 
-RCXX=$(CFLAGS) $(ROOTCFLAGS)
+RCXX=$(SPECIALFLAGS) -Wno-deprecated -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
+
 
 SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc
 
