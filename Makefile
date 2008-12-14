@@ -22,7 +22,7 @@ RCXX=$(SPECIALFLAGS) -Wno-deprecated -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
 
-SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc
+SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -56,40 +56,43 @@ NJetSel.o: NJetSel.cc NJetSel.h
 CalibData.o: CalibData.cc CalibData.h
 	$(C) $(CFLAGS) -c CalibData.cc
 
-Parameters.o: Parameters.cc Parameters.h Parametrization.h
+Parameters.o: Parameters.cc Parameters.h Parametrization.h ConfigFile.h
 	$(C) $(CFLAGS) -c Parameters.cc
 
 ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFile.h
 	$(C) $(RCXX) -c ControlPlots.cc
 
-EventReader.o: EventReader.h EventReader.cc 
+EventReader.o: EventReader.h EventReader.cc ConfigFile.h 
 	$(C) $(CFLAGS) -c EventReader.cc
 
-PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h
+PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c PhotonJetReader.cc
 
-DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h ToyMC.h Parameters.h
+DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h ToyMC.h Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c DiJetReader.cc
 
-TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameters.h
+TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c TriJetReader.cc
 
-ZJetReader.o: EventReader.h ZJetReader.h ZJetReader.cc ZJetSel.h Parameters.h
+ZJetReader.o: EventReader.h ZJetReader.h ZJetReader.cc ZJetSel.h Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c ZJetReader.cc
 
-TopReader.o: EventReader.h TopReader.h TopReader.cc TopSel.h Parameters.h
+TopReader.o: EventReader.h TopReader.h TopReader.cc TopSel.h Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c TopReader.cc
 
-ParameterLimitsReader.o: EventReader.h ParameterLimitsReader.h ParameterLimitsReader.cc Parameters.h
+ParameterLimitsReader.o: EventReader.h ParameterLimitsReader.h ParameterLimitsReader.cc Parameters.h ConfigFile.h
 	$(C) $(CFLAGS) -c ParameterLimitsReader.cc
 
-TowerConstraintsReader.o:  EventReader.h TowerConstraintsReader.h TowerConstraintsReader.cc Parameters.h
+TowerConstraintsReader.o:  EventReader.h TowerConstraintsReader.h TowerConstraintsReader.cc Parameters.h ConfigFile.h
 	$(C) $(CFLAGS) -c TowerConstraintsReader.cc
 
-TrackClusterReader.o: EventReader.h TrackClusterReader.h TrackClusterReader.cc TrackClusterSel.h Parameters.h
+TrackClusterReader.o: EventReader.h TrackClusterReader.h TrackClusterReader.cc TrackClusterSel.h Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c TrackClusterReader.cc
 
-caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h TrackClusterReader.h
+EventProcessor.o: ConfigFile.h Parameters.h EventProcessor.h EventProcessor.cc
+	$(C) $(RCXX) -c EventProcessor.cc
+
+caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h TrackClusterReader.h EventProcessor.h
 	$(C) $(RCXX)  -I/usr/include/boost -c caliber.cc 
 
 runjunk: $(SRC:.cc=.o) lbfgs.o
