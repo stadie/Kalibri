@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.1 2008/12/12 13:43:16 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.2 2008/12/13 16:43:32 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -64,7 +64,7 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
   int nevent = njet.fChain->GetEntries();
   int evt=0;
   for (int i=0;i<nevent;i++) {
-    if((i+1)%10000==0) cout<<injet<<"-Jet Event: "<<i+1<<endl;
+    if((i+1)%1000==0) cout<<injet<<"-Jet Event: "<<i+1<<endl;
     njet.fChain->GetEvent(i); 
     if (njet.NobjTow>10000 || njet.NobjJet>100) {
       cerr << "ERROR: Increase array sizes in NJetSelector; NobjTow="
@@ -277,7 +277,7 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
     } else {
       delete jj_data[0];
     }
-    if(evt>=n_dijet_events) break;
+    if(evt>=n_dijet_events && n_dijet_events>=0 ) break;
   }
   return evt;
 }
