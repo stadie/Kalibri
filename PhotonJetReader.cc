@@ -4,11 +4,13 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.2 2008/12/12 17:06:00 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.3 2008/12/13 16:43:33 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
 #include "CalibData.h"
+#include "JetTruthEvent.h"
+#include "Jet.h"
 #include "ConfigFile.h"
 #include "ToyMC.h"
 #include "Parameters.h"
@@ -18,7 +20,7 @@
 
 PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) :
   EventReader(configfile,p), Et_cut_on_gamma(0),Et_cut_on_jet(0),
-  Rel_cut_on_gamma(10),n_gammajet_events(0)
+  Rel_cut_on_gamma(10),n_gammajet_events(0),dataClass(0)
 {
   n_gammajet_events     = config->read<int>("use Gamma-Jet events",-1); 
   if(n_gammajet_events == 0) {
@@ -33,6 +35,9 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
   Et_cut_on_gamma = config->read<double>("Et cut on gamma",0.0); 
   Rel_cut_on_gamma =  config->read<double>("Relative Rest Jet Cut",0.2);
   
+  dataClass = config->read<int>("Gamma-Jet data class", 0);
+  if((dataClass != 0) && (dataClass != 1)) dataClass = 0;
+
   TTree* tchain_gammajet;
   vector<string> input_gammajet = 
     bag_of_string(config->read<string>( "Gamma-Jet input file", "input/gammajet.root" ));
@@ -86,6 +91,68 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
 
     if (gammajet.NonLeadingJetPt   / gammajet.PhotonPt >  Rel_cut_on_gamma)  continue;    //fraction of unwanted stuff
 
+    TData* ev = 0;
+    if(dataClass == 0) ev = createTruthMultMessEvent();
+    else if(dataClass == 1) ev = createJetTruthEvent();
+    
+    if(ev)  
+      {
+	data.push_back(ev); 
+	++nevents_added;
+	if((n_gammajet_events >= 0) && (nevents_added >= n_gammajet_events-1))
+	  break;
+      }
+  }
+  return nevents_added;
+}
+
+TData* PhotonJetReader::createJetTruthEvent()
+{
+  double em = 0;
+  double had = 0;
+  double out = 0;
+  double err2 = 0;
+  TMeasurement tower;
+  for(int n = 0; n < gammajet.NobjTowCal; ++n) {
+    em += gammajet.TowEm[n];
+    had +=  gammajet.TowHad[n];
+    out +=  gammajet.TowOE[n];  
+    tower.pt = gammajet.TowEt[n];
+    double scale = gammajet.TowEt[n]/gammajet.TowE[n];
+    tower.EMF = gammajet.TowEm[n]*scale;
+    tower.HadF = gammajet.TowHad[n]*scale;
+    tower.OutF = gammajet.TowOE[n]*scale;
+    tower.eta = gammajet.TowEta[n];
+    tower.phi = gammajet.TowPhi[n];
+    tower.E = gammajet.TowE[n];
+    double err = tower_error_param(&tower.pt,&tower,scale * 1.2 * sqrt(tower.E));
+    err2 += err * err;
+  }
+  //calc jet error
+  double factor =  gammajet.JetCalEt /  gammajet.JetCalE;
+  tower.pt = gammajet.JetCalEt;
+  tower.EMF = em * factor;
+  tower.HadF = had * factor;
+  tower.OutF = out * factor;
+  tower.eta = gammajet.JetCalEta;
+  tower.phi = gammajet.JetCalPhi;
+  tower.E   = gammajet.JetCalE;
+  double err =  jet_error_param(&tower.pt,&tower,0);
+  err2 += err * err;
+  //use first tower, as the towers should be sorted in E or Et
+  int jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[0]),
+			       p->GetJetPhiBin(gammajet.TowId_phi[0]));
+  double* firstpar = p->GetJetParRef(jet_index); 
+  Jet *j = new Jet(gammajet.JetCalEt,had * factor,em * factor,out * factor,gammajet.JetCalEta,
+		   gammajet.JetCalPhi,gammajet.JetCalE,TJet::uds,p->jet_parametrization,sqrt(err2),
+		   firstpar,firstpar - p->GetPars(),p->GetNumberOfJetParametersPerBin());
+  
+  JetTruthEvent* jte = new JetTruthEvent(j,gammajet.PhotonEt,gammajet.EventWeight);
+  return jte;
+}
+
+TData* PhotonJetReader::createTruthMultMessEvent() 
+{
     //Find the jets eta & phi index using the nearest tower to jet axis:
     int jet_index=-1;
     double min_tower_dr = 10.0;
@@ -115,8 +182,8 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
 	min_tower_dr = dr;
       }
     }
-    if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
-    if(had/(had + em) < 0.07) { continue;}
+    if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; return 0; }
+    if(had/(had + em) < 0.07) { return 0;}
     //if(had/(had + em) > 0.92) { continue;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
@@ -236,11 +303,5 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
 					   ));
     }
     gj_data->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization
- 
-    data.push_back( gj_data ); 
-    ++nevents_added;
-    if((n_gammajet_events >= 0) && (nevents_added >= n_gammajet_events-1))
-      break;
-  }
-  return nevents_added;
+    return  gj_data;
 }

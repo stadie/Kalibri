@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.53 2008/12/08 16:50:16 thomsen Exp $
+// $Id: CalibData.h,v 1.54 2008/12/11 17:20:25 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -24,6 +24,9 @@ class TMeasurement
 {
 public:
   TMeasurement():pt(0.),EMF(0.),HadF(0.),OutF(0.),E(0.),eta(0.),phi(0.){};
+  TMeasurement(double Et,double EmEt,double HadEt,double OutEt,double E,
+	       double eta,double phi)
+    : pt(Et),EMF(EmEt),HadF(HadEt),OutF(OutEt),E(E),eta(eta),phi(phi) {}
   TMeasurement(TMeasurement* m):pt(m->pt),EMF(m->EMF),HadF(m->HadF),OutF(m->OutF),
                                 E(m->E),eta(m->eta),phi(m->phi){};
   //all common variables
@@ -47,12 +50,15 @@ public:
 
 class TJet : public TMeasurement
 {
-public:
-  TJet():TMeasurement(){};
+public: 
+  enum Flavor{ gluon=0, uds=1, c=2, b=3 };
+  TJet():TMeasurement(){}; 
+  TJet(double Et,double EmEt,double HadEt,double OutEt,double E,double eta,
+       double phi, Flavor flavor)
+    : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi),flavor(flavor) {};
   TJet(TMeasurement* j):TMeasurement(j){};
   TJet(TJet* j):TMeasurement(j){/*further initialization*/};
 //variables specific only to jets (i.e. mass)
-  enum Flavor{ gluon=0, uds=1, c=2, b=3 };
   Flavor flavor;
 };
 

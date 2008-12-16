@@ -22,7 +22,7 @@ RCXX=$(SPECIALFLAGS) -Wno-deprecated -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
 
-SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc
+SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc Jet.cc JetTruthEvent.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -65,7 +65,7 @@ ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFil
 EventReader.o: EventReader.h EventReader.cc ConfigFile.h 
 	$(C) $(CFLAGS) -c EventReader.cc
 
-PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h
+PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h
 	$(C) $(RCXX) -c PhotonJetReader.cc
 
 DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h ToyMC.h Parameters.h ConfigFile.h
@@ -91,6 +91,12 @@ TrackClusterReader.o: EventReader.h TrackClusterReader.h TrackClusterReader.cc T
 
 EventProcessor.o: ConfigFile.h Parameters.h EventProcessor.h EventProcessor.cc
 	$(C) $(RCXX) -c EventProcessor.cc
+
+Jet.o: CalibData.h Jet.h Jet.cc
+	$(C) $(CFLAGS) -c Jet.cc	
+
+JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc
+	$(C) $(CFLAGS) -c JetTruthEvent.cc
 
 caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h TrackClusterReader.h EventProcessor.h
 	$(C) $(RCXX)  -I/usr/include/boost -c caliber.cc 
