@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.26 2008/11/20 16:38:03 stadie Exp $
+// $Id: CalibData.cc,v 1.27 2008/12/11 17:20:25 stadie Exp $
 //
 #include "CalibData.h"
 
@@ -454,7 +454,7 @@ double TData::ScaleCauchy(double const z2)
 //	                       c * ( 2*|z| - c ) for |z| > c
 double TData::ScaleHuber(double const z2)
 {
-  double const c = 1.345;
+  static double const c = 1.345;
   double const z = sqrt(z2);
-  return (  fabs(z) <= c  ?  z2  :  c*(2.*fabs(z) - c)  );
+  return (  std::abs(z) <= c  ?  z2  :  c*(2.*std::abs(z) - c)  );
 }
