@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.15 2008/11/20 16:38:03 stadie Exp $
+// $Id: ToyMC.cc,v 1.16 2008/12/11 16:36:08 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -67,12 +67,14 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
   iphi++;
   if(iphi > 72) iphi = 72; 
   phi = (iphi-0.5) * dPhi;
+  /*
   assert(phi < 2 * M_PI);
   assert(ieta != 0);
   assert(iphi > 0);
   assert(iphi <= 72);
   assert(ieta <= 40);
   assert(ieta >= -40);
+  */
 }
 
 void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout, 
