@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.3 2008/12/13 16:43:33 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.4 2008/12/16 15:21:26 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -113,6 +113,7 @@ TData* PhotonJetReader::createJetTruthEvent()
   double out = 0;
   double err2 = 0;
   TMeasurement tower;
+  double terr;
   for(int n = 0; n < gammajet.NobjTowCal; ++n) {
     em += gammajet.TowEm[n];
     had +=  gammajet.TowHad[n];
@@ -125,7 +126,8 @@ TData* PhotonJetReader::createJetTruthEvent()
     tower.eta = gammajet.TowEta[n];
     tower.phi = gammajet.TowPhi[n];
     tower.E = gammajet.TowE[n];
-    double err = tower_error_param(&tower.pt,&tower,scale * 1.2 * sqrt(tower.E));
+    terr = sqrt(1.3 * 1.3/gammajet.TowHad[n] + 0.056 * 0.056) * tower.HadF;
+    double err = tower_error_param(&tower.pt,&tower,terr);
     err2 += err * err;
   }
   //calc jet error
@@ -143,7 +145,7 @@ TData* PhotonJetReader::createJetTruthEvent()
   int jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[0]),
 			       p->GetJetPhiBin(gammajet.TowId_phi[0]));
   double* firstpar = p->GetJetParRef(jet_index); 
-  Jet *j = new Jet(gammajet.JetCalEt,had * factor,em * factor,out * factor,gammajet.JetCalEta,
+  Jet *j = new Jet(gammajet.JetCalEt,em * factor,had * factor,out * factor,gammajet.JetCalEta,
 		   gammajet.JetCalPhi,gammajet.JetCalE,TJet::uds,p->jet_parametrization,sqrt(err2),
 		   firstpar,firstpar - p->GetPars(),p->GetNumberOfJetParametersPerBin());
   
