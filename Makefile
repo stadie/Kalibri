@@ -8,8 +8,8 @@ ifeq ($(F77EXE),)
   F77LDFLAGS=-lgfortran
 endif
 
-#O2 for optimization, g for debugging
-SPECIALFLAGS= -O3 #-g -Wall -pg#-O2
+#O2 for optimization, g for debugging, pg for profiling
+SPECIALFLAGS= -O3 -g #-g -Wall -pg#-O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
@@ -53,7 +53,7 @@ TrackClusterSel.o: TrackClusterSel.cc TrackClusterSel.h
 NJetSel.o: NJetSel.cc NJetSel.h
 	$(C) $(RCXX) -c NJetSel.cc
 
-CalibData.o: CalibData.cc CalibData.h
+CalibData.o: CalibData.cc CalibData.h Parametrization.h Parameters.h
 	$(C) $(CFLAGS) -c CalibData.cc
 
 Parameters.o: Parameters.cc Parameters.h Parametrization.h ConfigFile.h
@@ -92,7 +92,7 @@ TrackClusterReader.o: EventReader.h TrackClusterReader.h TrackClusterReader.cc T
 EventProcessor.o: ConfigFile.h Parameters.h EventProcessor.h EventProcessor.cc
 	$(C) $(RCXX) -c EventProcessor.cc
 
-Jet.o: CalibData.h Jet.h Jet.cc
+Jet.o: CalibData.h Jet.h Jet.cc Parametrization.h
 	$(C) $(CFLAGS) -c Jet.cc	
 
 JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc
