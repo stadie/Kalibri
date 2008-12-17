@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
+//    $Id: Jet.cc,v 1.1 2008/12/16 15:21:26 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -24,7 +24,6 @@ int Jet::varyPar(int i, double eps, double Et, double &upperEt, double& lowerEt)
   double orig = par[i];
   par[i] += eps;
   upperEt = correctedEt(Et);
-  //std::cout << "id: " << parid+i << "par:" << orig << "," << par[i] << ", " << upperEt << '\n';
   par[i] = orig - eps;
   lowerEt = correctedEt(Et);
   par[i] = orig;
@@ -32,12 +31,14 @@ int Jet::varyPar(int i, double eps, double Et, double &upperEt, double& lowerEt)
 }
 
 double Jet::correctedEt(double Et) {
-  double s = Et/pt;
-  //scale jet properties accordingly
-  temp.pt   = Et;
-  temp.EMF  = EMF * s;
-  temp.HadF = HadF * s;
-  temp.OutF = OutF * s;
-  temp.E    = TJet::E * s;
+  if(std::abs(Et - temp.pt) > 0.05) {
+    double s = Et/pt;
+    //scale jet properties accordingly
+    temp.pt   = Et;
+    temp.EMF  = EMF * s;
+    temp.HadF = HadF * s;
+    temp.OutF = OutF * s;
+    temp.E    = TJet::E * s;
+  }
   return f(&temp,par);
 }
