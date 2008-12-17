@@ -32,6 +32,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new SimpleParametrization();
   }  else if(name == "ToyParametrization") {
     return new ToyParametrization();
+  }  else if(name == "ToyJetParametrization") {
+    return new ToyJetParametrization(); 
   }  else if(name == "ToyStepParametrization") {
     return new ToyStepParametrization();
   }  else if(name == "ToyStepJetParametrization") {
@@ -72,6 +74,8 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "SimpleParametrization";
   }  else if(parclass == "TToyParameters") {
     parclass = "ToyParametrization";
+  }  else if(parclass == "TToyJetParameters") {
+    parclass = "ToyJetParametrization";
   }  else if(parclass == "TToyStepParametersEnergy") {
     parclass = "ToyStepParametrizationEnergy";
   } else if(parclass == "StepJetParametrization") {

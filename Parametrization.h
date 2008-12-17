@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.21 2008/11/20 16:38:03 stadie Exp $
+// $Id: Parametrization.h,v 1.22 2008/11/21 10:51:45 thomsen Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -366,6 +366,20 @@ public:
 
   double correctedJetEt(TMeasurement *const x,double *const par) const {
     return x->pt;  
+  }
+};
+
+class ToyJetParametrization: public Parametrization {
+public:
+  ToyJetParametrization() : Parametrization(0,1,0) {}
+  const char* name() const { return "ToyJetParametrization";}
+
+  double correctedTowerEt(TMeasurement *const x,double *const par) const {
+    return x->pt;
+  }
+
+  double correctedJetEt(TMeasurement *const x,double *const par) const {
+    return par[0] * x->HadF + x->EMF + x->OutF;
   }
 };
 
