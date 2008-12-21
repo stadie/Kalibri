@@ -369,7 +369,7 @@ c      WRITE(*,*) 'Parameter values',X(1),X(2)
       FPLAST=FPITER              ! previous gradient * step vector 
       FPITER=-DBDOT(N,AUX,AUX(ISEA+1))     ! gradient * step vector
 
-      ALPHA=1.0D0                     ! default start value
+      ALPHA=0.1D0                     ! default start value
       IF(ITER.GT.0) THEN 
          ALPHA0=2.0D0*(FCLAST-F)/FPITER
          IF(ALPHA0.GT.0.0D0) ALPHA=MIN(1.0D0,1.01D0*ALPHA0)        
