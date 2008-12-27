@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.70 2008/12/12 17:52:14 stadie Exp $
+// $Id: caliber.cc,v 1.71 2008/12/14 13:38:57 stadie Exp $
 //
 //
 // for profiling:
@@ -35,6 +35,7 @@ boost::mutex io_mutex;
 #include "ParameterLimitsReader.h"
 #include "TowerConstraintsReader.h"
 #include "EventProcessor.h"
+#include "Jet.h"
 
 using namespace std;
 
@@ -175,7 +176,7 @@ void TCaliber::Run_Lvmini()
   naux = lvmdim_(npar,mvec);
   cout<<"array of size "<<naux<<" needed."<<endl;
 
-  double aux[naux], fsum = 0;
+  double* aux = new double[naux], fsum = 0;
 
   double *temp_derivative1 = new double[npar];
   double *temp_derivative2 = new double[npar];
@@ -243,7 +244,7 @@ void TCaliber::Run_Lvmini()
     if (npar>0) npar*=-1; //Show output
     //initialization
     lvmini_( npar, mvec, niter, aux);
-    npar=abs(npar);
+    npar=std::abs(npar);
 
     int n = 0;
 
@@ -265,16 +266,16 @@ void TCaliber::Run_Lvmini()
 	if(t[ithreads]->IsDone()) fsum += t[ithreads]->Chi2();
       }
       //fast derivative calculation:
-      for( int param = 0 ; param < std::abs(npar) ; ++param ) {
-	aux[param]           = temp_derivative1[param]/(2.0*epsilon);
-	aux[param+abs(npar)] = temp_derivative2[param]/(epsilon*epsilon);
+      for( int param = 0 ; param < npar ; ++param ) {
+	aux[param]      = temp_derivative1[param]/(2.0*epsilon);
+	aux[param+npar] = temp_derivative2[param]/(epsilon*epsilon);
       }
 	
       lvmfun_(p->GetPars(),fsum,iret,aux);
       //p->SetParameters(aux + par_index); 
       lvmprt_(2,aux,2); //print out
-    }
-    while (iret<0);
+    } while (iret<0);
+   
     lvmprt_(2,aux,2); //print out
     for (int ithreads=0; ithreads<nthreads; ++ithreads){
       t[ithreads]->ClearData();
@@ -292,6 +293,7 @@ void TCaliber::Run_Lvmini()
   for (int ithreads=0; ithreads<nthreads; ++ithreads){
     delete t[ithreads];
   }
+  delete [] aux;
   delete [] temp_derivative1;
   delete [] temp_derivative2;
 }
@@ -422,7 +424,7 @@ int caliber(int argc, char *argv[])
   Calibration->Init();
   Calibration->Run();  //Run Fit
   Calibration->Done(); //Do Plots & Write Calibration to file
-  
+  Jet::printInversionStats();
   delete Calibration;    
 
   return 0;
