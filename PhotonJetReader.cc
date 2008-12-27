@@ -4,13 +4,14 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.4 2008/12/16 15:21:26 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.5 2008/12/17 08:16:04 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
 #include "CalibData.h"
 #include "JetTruthEvent.h"
 #include "Jet.h"
+#include "JetWithTowers.h"
 #include "ConfigFile.h"
 #include "ToyMC.h"
 #include "Parameters.h"
@@ -36,7 +37,7 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
   Rel_cut_on_gamma =  config->read<double>("Relative Rest Jet Cut",0.2);
   
   dataClass = config->read<int>("Gamma-Jet data class", 0);
-  if((dataClass != 0) && (dataClass != 1)) dataClass = 0;
+  if((dataClass < 0) || (dataClass > 2)) dataClass = 0;
 
   TTree* tchain_gammajet;
   vector<string> input_gammajet = 
@@ -93,7 +94,7 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
 
     TData* ev = 0;
     if(dataClass == 0) ev = createTruthMultMessEvent();
-    else if(dataClass == 1) ev = createJetTruthEvent();
+    else if(dataClass > 0) ev = createJetTruthEvent();
     
     if(ev)  
       {
@@ -113,7 +114,7 @@ TData* PhotonJetReader::createJetTruthEvent()
   double out = 0;
   double err2 = 0;
   TMeasurement tower;
-  double terr;
+  double* terr = new double[gammajet.NobjTowCal];
   for(int n = 0; n < gammajet.NobjTowCal; ++n) {
     em += gammajet.TowEm[n];
     had +=  gammajet.TowHad[n];
@@ -126,9 +127,10 @@ TData* PhotonJetReader::createJetTruthEvent()
     tower.eta = gammajet.TowEta[n];
     tower.phi = gammajet.TowPhi[n];
     tower.E = gammajet.TowE[n];
-    terr = sqrt(1.3 * 1.3/gammajet.TowHad[n] + 0.056 * 0.056) * tower.HadF;
-    double err = tower_error_param(&tower.pt,&tower,terr);
-    err2 += err * err;
+    terr[n] = sqrt(1.3 * 1.3/gammajet.TowHad[n] + 0.056 * 0.056) * tower.HadF;
+    double err = tower_error_param(&tower.pt,&tower,terr[n]);
+    terr[n] = err * err;
+    err2 += terr[n];
   }
   //calc jet error
   double factor =  gammajet.JetCalEt /  gammajet.JetCalE;
@@ -145,11 +147,36 @@ TData* PhotonJetReader::createJetTruthEvent()
   int jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[0]),
 			       p->GetJetPhiBin(gammajet.TowId_phi[0]));
   double* firstpar = p->GetJetParRef(jet_index); 
-  Jet *j = new Jet(gammajet.JetCalEt,em * factor,had * factor,out * factor,gammajet.JetCalEta,
-		   gammajet.JetCalPhi,gammajet.JetCalE,TJet::uds,p->jet_parametrization,sqrt(err2),
-		   firstpar,firstpar - p->GetPars(),p->GetNumberOfJetParametersPerBin());
-  
+  Jet *j;
+  if(dataClass == 2) {
+    JetWithTowers *jt = 
+      new JetWithTowers(gammajet.JetCalEt,em * factor,had * factor,
+			out * factor,gammajet.JetCalE,gammajet.JetCalEta,
+			gammajet.JetCalPhi,TJet::uds,
+			p->jet_parametrization,sqrt(err2),
+			firstpar,firstpar - p->GetPars(),
+			p->GetNumberOfJetParametersPerBin());
+    for(int i = 0; i < gammajet.NobjTowCal; ++i) {
+      double scale = gammajet.TowEt[i]/gammajet.TowE[i];
+      int id =  p->GetBin(p->GetEtaBin(gammajet.TowId_eta[i]),
+			  p->GetPhiBin(gammajet.TowId_phi[i]));
+      jt->addTower(gammajet.TowEt[i],gammajet.TowEm[i]*scale,
+		   gammajet.TowHad[i]*scale,gammajet.TowOE[i]*scale,
+		   gammajet.TowE[i],gammajet.TowEta[i],gammajet.TowPhi[i],
+		   p->tower_parametrization,terr[i],p->GetTowerParRef(id),
+		   id,p->GetNumberOfTowerParametersPerBin());
+    }
+    j = jt;
+  }
+  else { 
+    j = new Jet(gammajet.JetCalEt,em * factor,had * factor,out * factor,
+		gammajet.JetCalE,gammajet.JetCalEta,gammajet.JetCalPhi,
+		TJet::uds,p->jet_parametrization,sqrt(err2),
+		firstpar,firstpar - p->GetPars(),
+		p->GetNumberOfJetParametersPerBin());
+  }
   JetTruthEvent* jte = new JetTruthEvent(j,gammajet.PhotonEt,gammajet.EventWeight);
+  delete [] terr;
   return jte;
 }
 
