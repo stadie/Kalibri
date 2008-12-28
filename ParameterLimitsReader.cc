@@ -4,7 +4,7 @@
 //    This class add user defined parameter limits
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
+//    $Id: ParameterLimitsReader.cc,v 1.1 2008/12/12 17:06:00 stadie Exp $
 //   
 #include "ParameterLimitsReader.h"
 
@@ -66,8 +66,8 @@ int ParameterLimitsReader::readEvents(std::vector<TData*>& data)
     std::cout << "adding limit for parameter " << pl->index+1 << " min:" 
 	      << pl->min << " max:" << pl->max << " k:" << pl->k << '\n';
     TMeasurement* limitp  = new TMeasurement;
-    limitp->pt  = pl->min;//@@Add new TMeasurement derivative
-    limitp->eta = pl->max;
+    limitp->pt  = pl->min;
+    limitp->EMF = pl->max;
     TData_ParLimit * parlim = new TData_ParLimit(pl->index,limitp,pl->k,p->GetPars()+pl->index,p->parameter_limit);
     data.push_back(parlim);
   }

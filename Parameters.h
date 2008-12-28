@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.38 2008/11/14 12:41:37 thomsen Exp $
+// $Id: Parameters.h,v 1.39 2008/11/20 16:38:03 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -176,7 +176,7 @@ public :
   //Limiting parameters
   static const double parameter_limit(TMeasurement *const x, double *const par) {
     double min = x->pt;
-    double max = x->EMF;  //@@ Are you sure this is correct????
+    double max = x->EMF;
     if(par[0] < min) return (min-par[0]);
     if(par[0] > max) return (par[0]-max);
     return 0;
