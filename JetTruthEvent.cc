@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.2 2008/12/17 09:38:36 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.3 2008/12/27 16:39:02 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -29,25 +29,23 @@ double JetTruthEvent::chi2_fast(double * temp_derivative1, double * temp_derivat
   chi2 *= chi2 * err2inv;
   chi2 = weight * TData::ScaleResidual(chi2);
   //calculate chi2 for derivatives
-  int npar = jet->nPar();
-  double et1,et2,temp1,temp2;
-  for(int i = 0 ; i < npar ; ++i) {
-    int parid = jet->varyPar(i,epsilon,truth,scale,et2,et1);
-    //std::cout << truth << ", " << expectedEt << "," << et1 << ", " << et2 << std::endl; 
-    if((std::abs((et1 - expectedEt)/scale) > 0.05) || 
-       (std::abs((et2 - expectedEt)/scale) > 0.05)) {
+  double temp1,temp2;
+  const Jet::VariationColl& varcoll = jet->varyPars(epsilon,truth,scale);
+  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+    if((std::abs((i->lowerEt - expectedEt)/scale) > 0.05) || 
+       (std::abs((i->upperEt - expectedEt)/scale) > 0.05)) {
       std::cout << "strange extrapolation result:" << expectedEt << "; " 
-		<< et1 << "; " << et2 << " jet:" << jet->Et() 
+		<< i->lowerEt << "; " << i->upperEt << " jet:" << jet->Et() 
 		<< " truth:" << truth << std::endl;
     }
-    temp1 = et1 - jet->Et(); 
+    temp1 = i->lowerEt - jet->Et(); 
     temp1 *= temp1 * err2inv;
     temp1 = weight * TData::ScaleResidual(temp1);
-    temp2 = et2 - jet->Et();
+    temp2 = i->upperEt - jet->Et();
     temp2 *= temp2 * err2inv;
     temp2 = weight * TData::ScaleResidual(temp2);
-    temp_derivative1[parid] += (temp2 - temp1); // for 1st derivative
-    temp_derivative2[parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+    temp_derivative1[i->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
   }
   return chi2;
 }

@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: Jet.h,v 1.1 2008/12/16 15:21:27 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.1 2008/12/27 16:39:02 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -65,15 +65,43 @@ int JetWithTowers::varyPar(int i, double eps, double Et, double scale,
   double *p = iter->second;
   int id = iter->first;
   //std::cout << "alternating par:" << id + towpar << "  = " << p[towpar] << std::endl;
-  double orig = p[towpar];
+  double orig = p[towpar]; 
   p[towpar] += eps;
-  upperEt = expectedEt(Et,scale,true);
+  double s = scale;
+  upperEt = expectedEt(Et,s,true);
   p[towpar] = orig - eps;
-  lowerEt = expectedEt(Et,scale,true);
+  s = scale;
+  lowerEt = expectedEt(Et,s,true);
   p[towpar] = orig;
   return id + towpar; 
 }
 
+// varies all parameters for this jet by eps and returns a vector of the
+// parameter id and the Et for the par + eps and par - eps variation
+const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double scale)
+{
+  Jet::varyPars(eps,Et,scale);
+  int i = njetpars;
+  for(std::map<int,double*>::const_iterator iter = towerpars.begin() ;
+      iter != towerpars.end() ; ++iter) {
+    double *p = iter->second;
+    int id = iter->first;
+    for(int towpar = 0 ; i < ntowerpars ; ++towpar) {
+      //std::cout << "alternating par:" << id + towpar << "  = " << p[towpar] << std::endl;
+      double orig = p[towpar]; 
+      p[towpar] += eps;
+      double s = scale;
+      varcoll[i].upperEt = expectedEt(Et,s,true);
+      p[towpar] = orig - eps;
+      s = scale;
+      varcoll[i].lowerEt = expectedEt(Et,s,true);
+      p[towpar] = orig;
+      varcoll[i].parid = id + towpar;
+      ++i;
+    }
+  }
+  return varcoll;
+}
 
   
 void JetWithTowers::addTower(double Et, double EmEt, double HadEt ,
@@ -92,9 +120,10 @@ void JetWithTowers::addTower(double Et, double EmEt, double HadEt ,
   //	    << projection << std::endl;
   towers.push_back(new Tower(Et,EmEt,HadEt,OutEt,E,eta,phi,projection,func,
 			       err,firstpar,id,npars)); 
-  ntowerpars = npars; 
+  ntowerpars = npars;
   towerpars[id] = firstpar;
   Jet::npar = njetpars + towerpars.size() * ntowerpars;
+  varcoll.resize(Jet::npar);
   //std::cout << "tower:" << Et << " projected:" << projection * Et << std::endl;
 }
 
