@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.3 2008/12/27 16:35:13 stadie Exp $
+//    $Id: Jet.cc,v 1.4 2009/01/04 16:21:06 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -217,9 +217,10 @@ int Jet::nwarns = 0;
 
 void Jet::printInversionStats()
 {
-  std::cout << "Inversion statistics for expectedEt:\n";
-  std::cout << "calls: " << ncalls << " average number of iterations:"
-	    << (double)ntries/ncalls << " failures:" << (double)nfails/ntries
-	    << "%    warnings:" << (double)nwarns/ntries << "%" <<std::endl;
-
+  if(ncalls) {
+    std::cout << "Inversion statistics for expectedEt:\n";
+    std::cout << "calls: " << ncalls << " average number of iterations:"
+	      << (double)ntries/ncalls << " failures:" << (double)nfails/ntries
+	      << "%    warnings:" << (double)nwarns/ntries << "%" <<std::endl;
+  }
 }
