@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.22 2008/11/21 10:51:45 thomsen Exp $
+// $Id: Parametrization.h,v 1.23 2008/12/17 09:33:52 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -321,13 +321,13 @@ public:
   }
   
   double correctedJetEt(TMeasurement *const x,double *const par) const {
-    double logx = log(x->pt);
+    double logx = log(x->HadF);
     if(logx < 0) logx = 0;
-    if(par[1] < 0) par[1] *= -1;
-    if(par[2] < 0) par[2] *= -1;
-    if(par[3] < 0) par[3] *= -1;
-    if(par[4] < 0) par[4] *= -1;
-    return (par[0] - par[1]/(pow(logx,par[2]) + par[3]) + par[4]/x->pt) * x->pt;  
+    //if(par[1] < 0) par[1] *= -1;
+    //if(par[2] < 0) par[2] *= -1;
+    //if(par[3] < 0) par[3] *= -1;
+    //if(par[4] < 0) par[4] *= -1;
+    return (par[0] - par[1]/(pow(logx,par[2]) + par[3]) + par[4]/x->HadF) * x->HadF;  
   }
 };
 
@@ -458,15 +458,16 @@ class ToyStepJetParametrization : public Parametrization {
 // StepEfracParametrization, if outside tracker or track errors too large
 /// -----------------------------------------------------------------
 class TrackParametrization : public Parametrization {
-public:
+ public:
   TrackParametrization() : Parametrization(12,3,6) {}  //(36,3,3) {}
   const char* name() const { return "TrackParametrization";}
 
-  double correctedTowerEt(TMeasurement *const x,double *const par) const {
-    double result=0;
-    
-    //double Efrac = x->EMF/(x->HadF+x->OutF+x->EMF);
-    //if( Efrac < 0.2 ) {
+  double correctedTowerEt(TMeasurement *const x,double *const par) const 
+    {
+      double result=0;
+      
+      //double Efrac = x->EMF/(x->HadF+x->OutF+x->EMF);
+      //if( Efrac < 0.2 ) {
       if(x->HadF>=0.0 && x->HadF<=1.0)            result = x->EMF+x->OutF+par[ 0]*x->HadF;
       else if (x->HadF>   1.0 && x->HadF<=   2.0) result = x->EMF+x->OutF+par[ 1]*x->HadF;
       else if (x->HadF>   2.0 && x->HadF<=   5.0) result = x->EMF+x->OutF+par[ 2]*x->HadF;
@@ -479,62 +480,65 @@ public:
       else if (x->HadF> 300.0 && x->HadF<= 600.0) result = x->EMF+x->OutF+par[ 9]*x->HadF;
       else if (x->HadF> 600.0 && x->HadF<=1000.0) result = x->EMF+x->OutF+par[10]*x->HadF;
       else if (x->HadF>1000.0 )                   result = x->EMF+x->OutF+par[11]*x->HadF;
-    return result;
-  }
+      return result;
+    }
   
-  double correctedJetEt(TMeasurement *const x,double *const par) const {
-    //im Moment nur pt richtig (der rest ist uncorr messung) pt = rest(HCAL + ECAL)
-    //sicher noch nicht die entgueltige fassung!!!!!!!!! (use EMF?, more pt bins?)
-
-    //if(fabs(x->pt - x->EMF+x->OutF+x->HadF) / x->pt < 0.1)
-    if(x->E < -900) //set to -1000 for track jets! Positive for all others
-      return  par[0] * x->pt; 
-    else
-      //return x->pt * ( 1. + 0.295 * par[1] * exp(- 0.02566 * par[2] * x->pt));
-      return x->pt;  
-  }
-
-  double GetExpectedResponse(TMeasurement *const x,double *const par) const {    double result=0;
-    double PiFrac;
-    double eh = 1.48 * par[0];    //will probably be treated as a free parameter soon!
-    //double ehECAL = 1.6 * par[1]; 
-    double TrackEMF = 0;
-    bool LS = false;
-
-    TTrack* temp = (TTrack*)(x);
-
-    if(temp->EM1 < 1.2) LS = true;   //late showering particle
-
-    //this is Groom's Parametrization:
-    /*
-    if(( x->EMF > 0) || (x->HadF > 0))
-      TrackEMF = x->EMF / (x->HadF + x->EMF);      //EMF = EMC3, HadF = HMC3 for Tracks
-    */
-    if(( temp->EM1 > 0) || (temp->Had1 > 0))
-      TrackEMF = temp->EM1 / (temp->Had1 + temp->EM1);   
-    
-    //check if EMC3 & HMC3 same size (comparable)
-    if(!LS)
-      PiFrac = 1 - pow((x->E /(par[2] * 0.96) ),(par[3] * 0.816) - 1 );         //0.96 and 0.816 will be free parameter soon!
-    else
-      PiFrac = 1 - pow((x->E /(par[4] * 0.96) ),(par[5] * 0.816) - 1 );    
+  double correctedJetEt(TMeasurement *const x,double *const par) const 
+    {
+      //im Moment nur pt richtig (der rest ist uncorr messung) pt = rest(HCAL + ECAL)
+      //sicher noch nicht die entgueltige fassung!!!!!!!!! (use EMF?, more pt bins?)
       
-    double responseH = (1 + (eh - 1) * PiFrac) / eh;
-    //double responseE = (1 + (ehECAL - 1) * PiFrac) / ehECAL;
-    double responseE = 1;
+      //if(fabs(x->pt - x->EMF+x->OutF+x->HadF) / x->pt < 0.1)
+      if(x->E < -900) //set to -1000 for track jets! Positive for all others
+	return  par[0] * x->pt; 
+      else
+	//return x->pt * ( 1. + 0.295 * par[1] * exp(- 0.02566 * par[2] * x->pt));
+	return x->pt;  
+    }
+  
+  double GetExpectedResponse(TMeasurement *const x,double *const par) const 
+    {    
+      double result=0;
+      double PiFrac;
+      double eh = 1.48 * par[0];    //will probably be treated as a free parameter soon!
+      //double ehECAL = 1.6 * par[1]; 
+      double TrackEMF = 0;
+      bool LS = false;
+      
+      TTrack* temp = (TTrack*)(x);
+      
+      if(temp->EM1 < 1.2) LS = true;   //late showering particle
+      
+      //this is Groom's Parametrization:
+      /*
+	if(( x->EMF > 0) || (x->HadF > 0))
+	TrackEMF = x->EMF / (x->HadF + x->EMF);      //EMF = EMC3, HadF = HMC3 for Tracks
+      */
+      if(( temp->EM1 > 0) || (temp->Had1 > 0))
+	TrackEMF = temp->EM1 / (temp->Had1 + temp->EM1);   
+      
+      //check if EMC3 & HMC3 same size (comparable)
+      if(!LS)
+	PiFrac = 1 - pow((x->E /(par[2] * 0.96) ),(par[3] * 0.816) - 1 );         //0.96 and 0.816 will be free parameter soon!
+      else
+	PiFrac = 1 - pow((x->E /(par[4] * 0.96) ),(par[5] * 0.816) - 1 );    
+      
+      double responseH = (1 + (eh - 1) * PiFrac) / eh;
+      //double responseE = (1 + (ehECAL - 1) * PiFrac) / ehECAL;
+      double responseE = 1;
 
-    double resultE = x->pt * TrackEMF * responseE;
-    if(temp->EM5  < resultE  )  resultE = temp->EM5;
+      double resultE = x->pt * TrackEMF * responseE;
+      if(temp->EM5  < resultE  )  resultE = temp->EM5;
 
-    double resultH = x->pt * (1 - TrackEMF) * responseH;
-    if(temp->Had5  < resultH  )  resultH = temp->Had5;
-
-    //is this correct: (Pi0 anteil in EMF-fraction?)
-    //result = x->pt * (TrackEMF * responseE + (1 - TrackEMF) * responseH);
-    result = resultE + resultH;
-
-    return result;
-  }
+      double resultH = x->pt * (1 - TrackEMF) * responseH;
+      if(temp->Had5  < resultH  )  resultH = temp->Had5;
+      
+      //is this correct: (Pi0 anteil in EMF-fraction?)
+      //result = x->pt * (TrackEMF * responseE + (1 - TrackEMF) * responseH);
+      result = resultE + resultH;
+      
+      return result;
+    }
 };
 
 
