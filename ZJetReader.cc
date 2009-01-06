@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.1 2008/12/12 17:06:00 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.2 2008/12/13 16:43:33 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -62,7 +62,16 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
 	  <<zjet.NobjTowCal<<"!"<<endl;
       exit(8);
     }
- 
+    if (zjet.NobjETowCal>200) {
+      cerr<<"ERROR: Increase array sizes in ZJetSelector; NobjETowCal="
+	  <<zjet.NobjETowCal<<"!"<<endl;
+      exit(8);
+    }   
+    if (zjet.NobjTrack>200) {
+      cerr<<"ERROR: Increase array sizes in ZJetSelector; NobjTrackCal="
+	  <<zjet.NobjTrack<<"!"<<endl;
+      exit(8);
+    }
     //trivial cuts
     if (zjet.ZPt<Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
      
@@ -150,9 +159,12 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
     
     //Add the jet's tracks to "gj_data":
     for (int n=0; n<zjet.NobjTrack; ++n){
-      
+      if((zjet.TrackTowIdEta[n] == 0) || (zjet.TrackTowIdPhi[n] == 0)) {
+	std::cerr << "WARNING: eta or phi id of track is zero!\n";
+	continue;
+      }
       int index = p->GetTrackBin(p->GetTrackEtaBin(zjet.TrackTowIdEta[n]),
-                            p->GetTrackPhiBin(zjet.TrackTowIdPhi[n]));
+				 p->GetTrackPhiBin(zjet.TrackTowIdPhi[n]));
       if (index<0){ cerr<<"WARNING: track_index = " << index << endl; continue; }
       //create array with multidimensional measurement
       //TMeasurement * Tmess = new TTrack;
@@ -182,12 +194,12 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
       //mess[7] = double( cos( zjet.JetCalPhi-zjet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       //EM+=mess->EMF;
       //F+=mess->pt;
-      gj_data->AddTrack(new TData_TruthMess(index,
+       gj_data->AddTrack(new TData_TruthMess(index,
 					   Tmess,                                                    //mess//
 					   0,                           //truth//
 					   0.05 + 0.00015 * zjet.TrackPt[n], //error//
 					   1.,                                                      //weight//
-					   p->GetTowerParRef( index ),                              //parameter//
+					   p->GetTrackParRef( index ),                              //parameter//
 					   p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
 					   p->track_parametrization,                                //function//
 					   track_error_param                                        //error param.func.//

@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.5 2008/12/17 08:16:04 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.6 2008/12/27 16:39:02 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -287,10 +287,13 @@ TData* PhotonJetReader::createTruthMultMessEvent()
 
     //Add the jet's tracks to "gj_data":
     for (int n=0; n<gammajet.NobjTrack; ++n){
-   
+      if((gammajet.TrackTowIdEta[n] == 0) || (gammajet.TrackTowIdPhi[n] == 0)) {
+	std::cerr << "WARNING: eta or phi id of track is zero!\n";
+	continue;
+      }
       //one trackindex for all tracks in jet = track_index
       int track_index = p->GetTrackBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
-      			         p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
+				       p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
       //create array with multidimensional measurement
       //TMeasurement * Tmess = new TTrack;
       TTrack * Tmess = new TTrack;
