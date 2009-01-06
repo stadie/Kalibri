@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.54 2008/12/11 17:20:25 stadie Exp $
+// $Id: CalibData.h,v 1.55 2008/12/16 15:23:32 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -211,7 +211,7 @@ public:
   void AddTrack(TData_TruthMess * m){ _vectrack.push_back(m);};
 
   void UseTracks(bool use){   //check if tracks shall be used in this jet:
-    if((fabs(_mess->eta) < 2.1) &&  ( _vectrack.size() > 0) && use)      //@ eta > 2.1or eta < -2.1 parts of the cone are outside the tracker. 
+    if((std::abs(_mess->eta) < 2.1) &&  ( _vectrack.size() > 0) && use)      //@ eta > 2.1or eta < -2.1 parts of the cone are outside the tracker. 
       {
 	double TrackError2 = 0;
 	double CaloError2 = 0;
@@ -397,7 +397,11 @@ public:
   virtual void ChangeParAddress(double* oldpar, double* newpar) { 
     TAbstractData::ChangeParAddress(oldpar,newpar);
     for (std::vector<TAbstractData*>::iterator it=_vecmess.begin();
-	 it !=_vecmess.end(); ++it) { (*it)->ChangeParAddress(oldpar,newpar);}
+	 it !=_vecmess.end(); ++it) { (*it)->ChangeParAddress(oldpar,newpar);} 
+    if(trackuse) {
+      for (std::vector<TAbstractData*>::iterator it = _vectrack.begin() ;
+	   it !=_vectrack.end() ; ++it) { (*it)->ChangeParAddress(oldpar,newpar);} 
+    }
   }
 protected:  
   std::vector<TAbstractData*> _vecmess; 
@@ -445,9 +449,7 @@ public:
   };
   virtual double chi2_fast(double * temp_derivative1, double*  temp_derivative2, double const epsilon) const;
   virtual void ChangeParAddress(double* oldpar, double* newpar) { 
-    TAbstractData::ChangeParAddress(oldpar,newpar);
-    for (std::vector<TAbstractData*>::iterator it=_vecmess.begin();  it !=_vecmess.end(); ++it) 
-      (*it)->ChangeParAddress(oldpar,newpar);
+    TData_TruthMultMess::ChangeParAddress(oldpar,newpar);
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin(); it!=_m2.end(); ++it)
       (*it)->ChangeParAddress(oldpar,newpar);
   }
