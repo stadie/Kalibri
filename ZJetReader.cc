@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.2 2008/12/13 16:43:33 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.3 2009/01/06 13:35:21 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -108,8 +108,8 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
     //Create an Z/Jet TData event
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
-			  // zjet.ZEt,				    //truth//
-			  zjet.JetGenPt,
+			  zjet.ZPt,				    //truth//
+			  //zjet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*zjet.ZEt,2)),    //error//
 			  //zjet.EventWeight,                       //weight//
 			  1.0,                                      //weight//
@@ -194,10 +194,10 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
       //mess[7] = double( cos( zjet.JetCalPhi-zjet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       //EM+=mess->EMF;
       //F+=mess->pt;
-       gj_data->AddTrack(new TData_TruthMess(index,
+       gj_data->AddTrack(new TData_TruthMess(index  * p->GetNumberOfTrackParametersPerBin() + p->GetNumberOfTowerParameters() + p->GetNumberOfJetParameters() ,
 					   Tmess,                                                    //mess//
 					   0,                           //truth//
-					   0.05 + 0.00015 * zjet.TrackPt[n], //error//
+					   0.015 * zjet.TrackPt[n], //error//
 					   1.,                                                      //weight//
 					   p->GetTrackParRef( index ),                              //parameter//
 					   p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
