@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.h,v 1.1 2008/12/27 16:39:02 stadie Exp $
+//    $Id: JetWithTowers.h,v 1.2 2009/01/04 16:21:06 stadie Exp $
 //   
 #ifndef JETWITHTOWERS_H
 #define JETWITHTOWERS_H
@@ -19,7 +19,8 @@ class JetWithTowers : public Jet
 		double eta,double phi, Flavor flavor,
 		double const(*func)(TMeasurement *const x, double *const par),
 		double err, double* firstpar, int id, int npars);
-  virtual ~JetWithTowers();
+  virtual ~JetWithTowers(); 
+  virtual int nPar() const {return njetpars + towerpars.size() * ntowerpars;}
   virtual void ChangeParAddress(double* oldpar, double* newpar);
   virtual double correctedEt(double Et) const;
   //varies the i'th parameter for this jet by eps and returns its overall 
@@ -32,7 +33,7 @@ class JetWithTowers : public Jet
 		double eta,double phi,
 		double const(*func)(TMeasurement *const x, double *const par),
 		double err, double* firstpar, int id, int npars);
- protected:
+ private:
   class Tower : public TMeasurement {
   public:
     Tower(double Et, double EmEt, double HadEt ,double OutEt, double E,

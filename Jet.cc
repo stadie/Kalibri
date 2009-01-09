@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.4 2009/01/04 16:21:06 stadie Exp $
+//    $Id: Jet.cc,v 1.5 2009/01/06 13:42:36 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -34,12 +34,18 @@ int Jet::varyPar(int i, double eps, double Et, double scale, double &upperEt, do
 // parameter id and the Et for the par + eps and par - eps variation
 const Jet::VariationColl& Jet::varyPars(double eps, double Et, double scale)
 {
+  //scale = Et;
+  double s = scale;
   for(int i = 0 ; i < npar ; ++i) {
     double orig = par[i];
     par[i] += eps;
-    varcoll[i].upperEt = expectedEt(Et,scale,true);
-    par[i] = orig - eps;
-    varcoll[i].lowerEt = expectedEt(Et,scale,true);
+    varcoll[i].upperEt = expectedEt(Et,s,true);
+    //varcoll[i].upperEt = expectedEt(Et,s,false);
+    s = scale;
+    par[i] = orig - eps;;
+    varcoll[i].lowerEt = expectedEt(Et,s,true);
+    //varcoll[i].lowerEt = expectedEt(Et,s,false);
+    s = scale;
     par[i] = orig;
     varcoll[i].parid = parid + i;
   }
@@ -72,7 +78,7 @@ double Jet::expectedEt(double truth, double& scale, bool extrapolate)
   double f2 = correctedEt(x2);
   double y2 = truth - f2;
   if(extrapolate || (std::abs(y2) < eps)) {
-    //std::cout << "extrapolated:" << x2 << ", " << y2 << " at scale " << scale << std::endl;
+    //std::cout << "extrapolated:" << x2 << ", " << y2 << " at scale " << scale << std::endl;  
     return x2;
   }
   x2 = secant(truth,x1,x2,eps);
@@ -81,6 +87,7 @@ double Jet::expectedEt(double truth, double& scale, bool extrapolate)
   f1 = correctedEt(scale);
   x2 = (truth - EMF) * (scale - EMF)/(f1 - EMF) + EMF;
   //std::cout << i << ": scale:" << scale << ", expected:" << (truth - EMF) * (scale - EMF)/(f1 - EMF) + EMF << "  dist for scale:" << truth - f1 << "\n";
+  //assert(std::abs(correctedEt(x2)-truth)/truth < eps); 
   return ((x2 < up )&&(x2 > low)) ? x2 : scale;
 }
 

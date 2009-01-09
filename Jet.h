@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.2 2008/12/27 16:35:13 stadie Exp $
+//    $Id: Jet.h,v 1.3 2009/01/04 16:21:06 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -29,7 +29,7 @@ class Jet : public TJet
   virtual double correctedEt(double Et) const;
   double expectedEt(double truth, double& scale, bool extrapolate = false);
   double Error() const {return error;}
-  int nPar() const {return npar;}
+  virtual int nPar() const {return npar;}
   //varies the i'th parameter for this jet by eps and returns its overall 
   // parameter id and sets the Et for the par + eps and par - eps result
   virtual int varyPar(int i, double eps, double Et, double scale, double& upperEt, double& lowerEt);
@@ -45,15 +45,15 @@ class Jet : public TJet
   virtual const VariationColl& varyPars(double eps, double Et, double scale);
 
   static void printInversionStats();
- protected:
-  double* par;//address to first parameter for this jet
+ private:
+  double* par;//address to first parameter for this jet 
   int npar,parid;
   double error; 
-  mutable TMeasurement temp;
   double const(*f)(TMeasurement *const x, double *const par);
-  //double const(*err)(double *const x, TMeasurement *const x_original, double const error);
+ protected:
   mutable VariationColl varcoll;
  private:
+  mutable TMeasurement temp;
   double secant(double truth, double x1, double x2, double eps);
   double falseposition(double truth, double x1, double x2, double eps);
   static int ncalls, ntries, nfails, nwarns;
