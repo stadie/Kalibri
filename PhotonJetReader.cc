@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.7 2009/01/06 13:35:21 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.8 2009/01/13 16:43:59 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -129,7 +129,12 @@ TData* PhotonJetReader::createJetTruthEvent()
     tower.eta = gammajet.TowEta[n];
     tower.phi = gammajet.TowPhi[n];
     tower.E = gammajet.TowE[n];
-    terr[n] = sqrt(1.3 * 1.3/gammajet.TowHad[n] + 0.056 * 0.056) * tower.HadF;
+    //use errors as are the default in ToyMC
+    //truncate variance accordingly
+    double var = 1.3 * 1.3/gammajet.TowHad[n] + 0.056 * 0.056;
+    double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) +
+      var * TMath::Erf(1/(sqrt(2 * var)));
+    terr[n] = sqrt(truncvar) * tower.HadF;
     double err = tower_error_param(&tower.pt,&tower,terr[n]);
     terr[n] = err * err;
     err2 += terr[n];
