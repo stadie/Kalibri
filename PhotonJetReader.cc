@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.6 2008/12/27 16:39:02 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.7 2009/01/06 13:35:21 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -115,6 +115,8 @@ TData* PhotonJetReader::createJetTruthEvent()
   double err2 = 0;
   TMeasurement tower;
   double* terr = new double[gammajet.NobjTowCal];
+  double dR = 10;
+  int closestTower = 0;
   for(int n = 0; n < gammajet.NobjTowCal; ++n) {
     em += gammajet.TowEm[n];
     had +=  gammajet.TowHad[n];
@@ -131,8 +133,14 @@ TData* PhotonJetReader::createJetTruthEvent()
     double err = tower_error_param(&tower.pt,&tower,terr[n]);
     terr[n] = err * err;
     err2 += terr[n];
-  }
-  //calc jet error
+    double dphi = TVector2::Phi_mpi_pi(gammajet.JetCalPhi-tower.phi);
+    double dr = sqrt((gammajet.JetCalEta-tower.eta)*(gammajet.JetCalEta-tower.eta)+
+		     dphi*dphi);     
+    if(dr < dR) {
+      dR = dr;
+      closestTower = n;
+    }
+  }  //calc jet error
   double factor =  gammajet.JetCalEt /  gammajet.JetCalE;
   tower.pt = gammajet.JetCalEt;
   tower.EMF = em * factor;
@@ -144,8 +152,9 @@ TData* PhotonJetReader::createJetTruthEvent()
   double err =  jet_error_param(&tower.pt,&tower,0);
   err2 += err * err;
   //use first tower, as the towers should be sorted in E or Et
-  int jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[0]),
-			       p->GetJetPhiBin(gammajet.TowId_phi[0]));
+  int jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[closestTower]),
+			       p->GetJetPhiBin(gammajet.TowId_phi[closestTower]));
+  if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; exit(-2) ; return 0; }
   double* firstpar = p->GetJetParRef(jet_index); 
   Jet *j;
   if(dataClass == 2) {
