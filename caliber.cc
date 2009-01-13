@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.72 2008/12/27 16:35:13 stadie Exp $
+// $Id: caliber.cc,v 1.73 2009/01/13 13:02:33 stadie Exp $
 //
 //
 // for profiling:
@@ -194,9 +194,6 @@ void TCaliber::Run_Lvmini()
     t[ithreads] = new ComputeThread(npar, p->GetPars(),temp_derivative1,temp_derivative2,deriv_step);
   }
 
-  float eps =float(1.E-2);//-4
-  float wlf1=1.E-4;
-  float wlf2=0.9;
   lvmeps_(eps,wlf1,wlf2);
 
   //Set errors per default to 0 //@@ doesn't seem to work...
