@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.36 2008/12/12 17:52:14 stadie Exp $
+// $Id: caliber.h,v 1.37 2008/12/14 13:38:57 stadie Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -17,7 +17,8 @@ class TMeasurement;
 class TCaliber {
 public :
   TCaliber(const std::string& f)
-    : configfile(f),p(0),plots(0)
+  : configfile(f),p(0),plots(0),deriv_step(1e-03),eps(1e-02),
+  wlf1(1e-04),wlf2(0.9),print_parnderiv(false)
  {};
   ~TCaliber(){};
 
@@ -49,6 +50,10 @@ private:
   TParameters * p;    //fit parameters, depend on number of bins & geometry
 
   TControlPlots * plots;  //the control plots
+  // control parameters of fit
+  double deriv_step;
+  float eps,wlf1,wlf2;
+  bool print_parnderiv;
 };
 
 #endif

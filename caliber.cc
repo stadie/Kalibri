@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.71 2008/12/14 13:38:57 stadie Exp $
+// $Id: caliber.cc,v 1.72 2008/12/27 16:35:13 stadie Exp $
 //
 //
 // for profiling:
@@ -100,7 +100,8 @@ private:
 	parent->mypar[param] = parent->parorig[param];
       }
       parent->chi2 =0.0;   
-      for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it) {
+      for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it) { 
+	boost::mutex::scoped_lock lock(io_mutex);
 	parent->chi2 += (*it)->chi2_fast(parent->td1, parent->td2, parent->epsilon);
       } 
       boost::mutex::scoped_lock lock(io_mutex);
@@ -117,7 +118,9 @@ public:
   ComputeThread(int npar,double *par, double *temp_derivative1, double *temp_derivative2, double epsilon) 
     : npar(npar), td1(new double[npar]), td2(new double[npar]), parorig(par),
       mypar(new double[npar]), temp_derivative1(temp_derivative1), 
-      temp_derivative2(temp_derivative2), epsilon(epsilon), data_changed(false) {}
+      temp_derivative2(temp_derivative2), epsilon(epsilon), data_changed(false) {
+    //std::cout << "threads par array:" << mypar << '\n';
+  }
   ~ComputeThread() {
     ClearData();
     delete [] td1;
@@ -180,7 +183,6 @@ void TCaliber::Run_Lvmini()
 
   double *temp_derivative1 = new double[npar];
   double *temp_derivative2 = new double[npar];
-  double epsilon = 1.E-3;
 
   cout << "\nFitting " << npar << " parameters; \n";
   p->Print();
@@ -189,7 +191,7 @@ void TCaliber::Run_Lvmini()
   
   ComputeThread *t[nthreads];
   for (int ithreads=0; ithreads<nthreads; ++ithreads){
-    t[ithreads] = new ComputeThread(npar, p->GetPars(),temp_derivative1,temp_derivative2,epsilon);
+    t[ithreads] = new ComputeThread(npar, p->GetPars(),temp_derivative1,temp_derivative2,deriv_step);
   }
 
   float eps =float(1.E-2);//-4
@@ -267,10 +269,17 @@ void TCaliber::Run_Lvmini()
       }
       //fast derivative calculation:
       for( int param = 0 ; param < npar ; ++param ) {
-	aux[param]      = temp_derivative1[param]/(2.0*epsilon);
-	aux[param+npar] = temp_derivative2[param]/(epsilon*epsilon);
+	aux[param]      = temp_derivative1[param]/(2.0*deriv_step);
+	aux[param+npar] = temp_derivative2[param]/(deriv_step*deriv_step);
       }
-	
+      
+      //print derivatives:
+      if(print_parnderiv) {
+	for( int param = 0 ; param < npar ; ++param ) {
+	  std::cout << "par: " << param << ": p = " <<  p->GetPars()[param] << " dp/dx = " 
+		    <<  aux[param] << " dp/dx^2 = " << aux[param+npar] << std::endl;
+	}
+      }
       lvmfun_(p->GetPars(),fsum,iret,aux);
       //p->SetParameters(aux + par_index); 
       lvmprt_(2,aux,2); //print out
@@ -378,7 +387,13 @@ void TCaliber::Init()
     }
   OutlierChi2Cut        = config.read<double>("Outlier Cut on Chi2",100.0);
 
- 
+  //BFGS fit parameters
+  deriv_step = config.read<double>("BFGS derivative step",1e-03);
+  eps        = config.read<double>("BFGS eps",1e-02);
+  wlf1       = config.read<double>("BFGS 1st wolfe parameter",1e-04);
+  wlf2       = config.read<double>("BFGS 2nd wolfe parameter",0.9);
+  print_parnderiv = config.read<bool>("BFGS print derivatives",false);
+
   output_file = config.read<string>( "Output file", "calibration_k.cfi" );
 
   //fill data vector
