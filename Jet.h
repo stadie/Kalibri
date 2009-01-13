@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.3 2009/01/04 16:21:06 stadie Exp $
+//    $Id: Jet.h,v 1.4 2009/01/09 18:09:58 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -26,7 +26,7 @@ class Jet : public TJet
   double phi()    const {return TMeasurement::phi;}
   Flavor flavor() const {return TJet::flavor;}
   virtual void ChangeParAddress(double* oldpar, double* newpar) {par += newpar - oldpar;}
-  virtual double correctedEt(double Et) const;
+  virtual double correctedEt(double Et, bool fast = false) const;
   double expectedEt(double truth, double& scale, bool extrapolate = false);
   double Error() const {return error;}
   virtual int nPar() const {return npar;}
@@ -54,8 +54,8 @@ class Jet : public TJet
   mutable VariationColl varcoll;
  private:
   mutable TMeasurement temp;
-  double secant(double truth, double x1, double x2, double eps);
-  double falseposition(double truth, double x1, double x2, double eps);
+  bool secant(double truth, double& x1, double& x2, double eps);
+  bool falseposition(double truth, double& x1, double& x2, double eps);
   static int ncalls, ntries, nfails, nwarns;
 };
 

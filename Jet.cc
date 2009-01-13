@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.5 2009/01/06 13:42:36 stadie Exp $
+//    $Id: Jet.cc,v 1.6 2009/01/09 18:09:58 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -53,7 +53,7 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double scale)
 }
 
 
-double Jet::correctedEt(double Et) const {
+double Jet::correctedEt(double Et, bool fast) const {
   //assume that only the hadronic energy gets modified!
   temp.pt   = Et;  
   temp.HadF = Et - OutF - EMF;
@@ -71,30 +71,32 @@ double Jet::expectedEt(double truth, double& scale, bool extrapolate)
   // y: truth -  jet->correctedEt(expectedEt)
   // f: jet->correctedEt(expectedEt)
   double x1 = scale;
-  double f1 = correctedEt(x1);
+  double f1 = correctedEt(x1,extrapolate);
   //get second point assuming a constant correction factor
-  double x2 = (truth - EMF) * (x1 - EMF)/(f1 - EMF) + EMF;
+  double x2 = (truth - EMF - OutF) * (x1 - EMF - OutF)/(f1 - EMF - OutF) + EMF;
   if((x2 > up )||(x2 < low)) x2 = scale;
-  double f2 = correctedEt(x2);
+  double f2 = correctedEt(x2,true);
   double y2 = truth - f2;
+  //std::cout << "truth:" << truth << " scale:" << scale << "  f1:" << f1 << " x2:" << x2 
+  //	    << " f2:" << f2 << '\n';
   if(extrapolate || (std::abs(y2) < eps)) {
     //std::cout << "extrapolated:" << x2 << ", " << y2 << " at scale " << scale << std::endl;  
     return x2;
   }
-  x2 = secant(truth,x1,x2,eps);
-  //x2 = falseposition(truth,x1,x2,eps);
+  if(! secant(truth,x1,x2,eps)) return -1;
   scale = x2;
-  f1 = correctedEt(scale);
-  x2 = (truth - EMF) * (scale - EMF)/(f1 - EMF) + EMF;
+  f1 = correctedEt(scale,true);
+  x2 = (truth - EMF - OutF) * (scale - EMF - OutF)/(f1 - EMF - OutF) + EMF + OutF;
   //std::cout << i << ": scale:" << scale << ", expected:" << (truth - EMF) * (scale - EMF)/(f1 - EMF) + EMF << "  dist for scale:" << truth - f1 << "\n";
   //assert(std::abs(correctedEt(x2)-truth)/truth < eps); 
   return ((x2 < up )&&(x2 > low)) ? x2 : scale;
 }
 
-double Jet::falseposition(double truth, double x1, double x2,double eps)
+bool Jet::falseposition(double truth, double& x1, double& x2,double eps)
 {
-  double f1 = correctedEt(x1);
-  double f2 = correctedEt(x2);
+  //x2 is the best estimate!
+  double f1 = correctedEt(x1,true);
+  double f2 = correctedEt(x2,true);
   double temp;
   double step = 0.1 * truth;
   ++ncalls;
@@ -116,13 +118,13 @@ double Jet::falseposition(double truth, double x1, double x2,double eps)
     //      << " y1,2:" << y1 << ", " << y2 << std::endl;
     if(f1 > truth) {
       x1 -= step;
-      f1 = correctedEt(x1);
+      f1 = correctedEt(x1,true);
       y1 = truth - f1;
       ++ntries;
     }
     if(f2 < truth) {
       x2 += step;
-      f2 = correctedEt(x2);
+      f2 = correctedEt(x2,true);
       y2 = truth - f2;
       ++ntries;
     }
@@ -133,7 +135,7 @@ double Jet::falseposition(double truth, double x1, double x2,double eps)
   while(std::abs((x2-x1)/x1) > eps) {
     //std::cout << i << ":" << x1 << ", " << x2 << " : " << y1 << ", " << y2 << std::endl;
     double x3 = x1 + y1 * (x2-x1)/(f2 - f1);
-    double f3 = correctedEt(x3);
+    double f3 = correctedEt(x3,true);
     double y3 = truth - f3;
     ++i;
     if(y1 * y3 < 0) {
@@ -147,25 +149,29 @@ double Jet::falseposition(double truth, double x1, double x2,double eps)
     }
     if(i > 100) {
       ++nfails;
-      break;
+      ntries += i;
+      return false;
     }
   } 
   ntries += i;
-  return 0.5*(x1 + x2);
+  x2 = 0.5*(x1 + x2);
+  return true;
 }
 
-double Jet::secant(double truth, double x1, double x2,double eps)
+
+bool Jet::secant(double truth, double& x1, double& x2,double eps)
 {
+  //x2 is the best estimate!
   const double up = 4 * truth;
   const double low = 0.2 * truth;
-  double f1 = correctedEt(x1);
-  double f2 = correctedEt(x2);
+  double f1 = correctedEt(x1,true);
+  double f2 = correctedEt(x2,true);
   double y2 = truth - f2;
   double y1 = truth - f1;
   ++ncalls;
   int i = 0;
   double dx = std::abs(x1-x2), dx1 = truth, dx2 = truth;
-  while(std::abs(dx/x1) > eps) {
+  while((dx/x1 > eps)&&(i < 100)) {
     //std::cout << i << ":" << x1 << ", " << x2 << " : " << y1 << ", " << y2 << std::endl;
     double x3 = x1 + y1 * (x2-x1)/(f2 - f1);
     if((x3 > up )||(x3 < low)) {
@@ -174,7 +180,7 @@ double Jet::secant(double truth, double x1, double x2,double eps)
     dx2 = dx1;
     dx1 = dx;
     dx = std::abs(x2 - x3);
-    if((i > 0) && (dx2 < dx)) {
+    if(dx2 < dx) {
       //std::cout << "Warning: fit alternating!\n";
       //std::cout << i << ": last three intervall sizes " << dx << ", " 
       //		<< dx1 << ", " << dx2 << std::endl;
@@ -188,7 +194,7 @@ double Jet::secant(double truth, double x1, double x2,double eps)
       ++i;
       continue;
     }
-    double f3 = correctedEt(x3);
+    double f3 = correctedEt(x3,true);
     double y3 = truth - f3;
     //use false position if root is bracketed
     if(y1 * y3 < 0) {
@@ -205,16 +211,23 @@ double Jet::secant(double truth, double x1, double x2,double eps)
     }
     ++i;
     //std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f1 << "; " << truth - f2 << "\n";
-    if(i > 2000) {
-      //std::cout << "failed to find good root\n";
-      //std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
-      x2 = 0.5 * (x2+x1);
-      ++nfails;
-      break;
-    } 
-  }
+    //     if(i > 100) {
+    //       //std::cout << "failed to find good root\n";
+    //       //std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
+    //       x2 = 0.5 * (x2+x1);
+    //       ++nfails;
+    //       ntries += i;
+    //       return false;
+    //     } 
+  } 
   ntries += i;
-  return x2;
+  if(std::abs(y2) > 0.001 * truth) {
+    //std::cout << "failed to find good root\n";
+    //std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
+    ++nfails;
+    return false;
+  }
+  return true;
 }
 
 int Jet::ncalls = 0;

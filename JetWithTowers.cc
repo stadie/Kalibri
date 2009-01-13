@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.2 2009/01/04 16:21:06 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.3 2009/01/09 18:09:58 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -37,17 +37,24 @@ void JetWithTowers::ChangeParAddress(double* oldpar, double* newpar)
   }
 }
 
-double JetWithTowers::correctedEt(double Et) const
+double JetWithTowers::correctedEt(double Et,bool fast) const
 {
-  double cet = 0; 
-  for(TowerCollConstIter i = towers.begin() ; i != towers.end() ; ++i) {
-    cet += (*i)->projectionToJetAxis() * (*i)->correctedEt((*i)->Et());
-  }
-  //std::cout << "jet ET:" << pt << " sum of tower:" << cet << "\n";
-  double ccet = 0;
-  for(TowerCollConstIter i = towers.begin() ; i != towers.end() ; ++i) {
-    ccet += (*i)->projectionToJetAxis() * 
-      (*i)->correctedEt((*i)->lastCorrectedEt()/cet * Et);
+  double ccet = EmEt() + OutEt();
+  double HadEt = Et - ccet;
+  if(! fast) {
+    double chad = 0; 
+    for(TowerCollConstIter i = towers.begin() ; i != towers.end() ; ++i) {
+      chad += (*i)->projectionToJetAxis() * (*i)->correctedHadEt((*i)->HadEt());
+    }  
+    //std::cout << "jet ET:" << pt << " sum of tower:" << chad + EMF + OutF << "\n";
+    for(TowerCollConstIter i = towers.begin() ; i != towers.end() ; ++i) {
+      (*i)->setFractionOfJetHadEt((*i)->lastCorrectedHadEt()/chad);
+      ccet += (*i)->projectionToJetAxis() * (*i)->correctedHadEt((*i)->fractionOfJetHadEt() * HadEt);
+    }
+  } else {
+    for(TowerCollConstIter i = towers.begin() ; i != towers.end() ; ++i) {
+      ccet += (*i)->projectionToJetAxis() * (*i)->correctedHadEt((*i)->fractionOfJetHadEt() * HadEt);
+    }
   }
   //std::cout << "scale ET:" << Et << " cor. sum of tower:" << ccet << "\n";
   return Jet::correctedEt(ccet);
@@ -67,7 +74,7 @@ int JetWithTowers::varyPar(int i, double eps, double Et, double scale,
   for(int i  = 0 ; i < towid ; ++i) ++iter;
   double *p = iter->second;
   int id = iter->first;
-  //std::cout << "alternating par:" << id + towpar << "  = " << p[towpar] << std::endl;
+  //std::cout << "truth: " << Et << "alternating par:" << id + towpar << "  = " << p[towpar] << std::endl;
   double orig = p[towpar]; 
   p[towpar] += eps;
   double s = scale;
@@ -92,7 +99,8 @@ const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double 
     int id = iter->first;
     //std::cout << p << "," << id << " tower[0]:" << towers[0]->Par() << '\n';
     for(int towpar = 0 ; towpar < ntowerpars ; ++towpar) {
-      //std::cout << "alternating par:" << id + towpar << "  = " << p[towpar] << std::endl;
+      //std::cout <<  "truth: " << Et << " alternating par:" << id + towpar << "  = " << p[towpar] 
+      //		<< std::endl;
       double orig = p[towpar]; 
       p[towpar] += eps;
       double s = scale;
@@ -139,19 +147,19 @@ JetWithTowers::Tower::Tower(double Et, double EmEt, double HadEt ,
 			    double alpha,double const(*func)(TMeasurement *const x, double *const par),
 			    double err, double* firstpar, int id, int npars)
   :  TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi), alpha(alpha), par(firstpar), 
-     npar(npars), parid(id), error(err),f(func)
+     npar(npars), parid(id), error(err), lastCorHadEt(0), fraction(0), f(func)
 { 
   temp = *this;
 }
 
-double JetWithTowers::Tower::correctedEt(double Et) const
+double JetWithTowers::Tower::correctedHadEt(double HadEt) const
 {
   //assume that only the hadronic energy gets modified!
-  temp.pt   = Et;  
-  temp.HadF = Et - OutF - EMF;
-  temp.E    = TMeasurement::E * Et/pt;
-  lastCorEt = f(&temp,par);
+  temp.pt   = HadEt + OutF + EMF;  
+  temp.HadF = HadEt;
+  temp.E    = TMeasurement::E * temp.pt/pt;
+  lastCorHadEt = f(&temp,par) - OutF - EMF;
   //std::cout << pt << ", " << Et << ":"  << lastCorEt << " par:" << par[0] << std::endl;
-  return lastCorEt;
+  return lastCorHadEt;
 }
   

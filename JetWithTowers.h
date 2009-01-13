@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.h,v 1.2 2009/01/04 16:21:06 stadie Exp $
+//    $Id: JetWithTowers.h,v 1.3 2009/01/09 18:09:58 stadie Exp $
 //   
 #ifndef JETWITHTOWERS_H
 #define JETWITHTOWERS_H
@@ -22,7 +22,7 @@ class JetWithTowers : public Jet
   virtual ~JetWithTowers(); 
   virtual int nPar() const {return njetpars + towerpars.size() * ntowerpars;}
   virtual void ChangeParAddress(double* oldpar, double* newpar);
-  virtual double correctedEt(double Et) const;
+  virtual double correctedEt(double Et,bool fast = false) const;
   //varies the i'th parameter for this jet by eps and returns its overall 
   // parameter id and sets the Et for the par + eps and par - eps result
   virtual int varyPar(int i, double eps, double Et, double scale, double& upperEt, double& lowerEt);
@@ -48,9 +48,11 @@ class JetWithTowers : public Jet
     double eta()    const {return TMeasurement::eta;}
     double phi()    const {return TMeasurement::phi;}
     double projectionToJetAxis() const {return alpha;}
+    double fractionOfJetHadEt() const { return fraction;}
+    void setFractionOfJetHadEt(double frac) const { fraction = frac;}
     void ChangeParAddress(double* oldpar, double* newpar) {par += newpar - oldpar;}
-    double correctedEt(double Et) const;
-    double lastCorrectedEt() const { return lastCorEt;}
+    double correctedHadEt(double HadEt) const;
+    double lastCorrectedHadEt() const { return lastCorHadEt;}
     double Error() const {return error;}
     int nPar() const {return npar;}
     int FirstPar() const {return parid;}
@@ -61,7 +63,8 @@ class JetWithTowers : public Jet
     int npar,parid;
     double error; 
     mutable TMeasurement temp;
-    mutable double lastCorEt;
+    mutable double lastCorHadEt;
+    mutable double fraction;
     double const(*f)(TMeasurement *const x, double *const par);
   };
   typedef std::vector<Tower*> TowerColl;
