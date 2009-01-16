@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.h,v 1.3 2009/01/09 18:09:58 stadie Exp $
+//    $Id: JetWithTowers.h,v 1.4 2009/01/13 13:39:24 stadie Exp $
 //   
 #ifndef JETWITHTOWERS_H
 #define JETWITHTOWERS_H
@@ -17,12 +17,15 @@ class JetWithTowers : public Jet
  public:
   JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
 		double eta,double phi, Flavor flavor,
-		double const(*func)(TMeasurement *const x, double *const par),
-		double err, double* firstpar, int id, int npars);
+		double (*func)(const TMeasurement *x, const double *par),
+		double (*errfunc)(const double *x, const TMeasurement *xorig, double err),
+		double* firstpar, int id, int npars);
   virtual ~JetWithTowers(); 
   virtual int nPar() const {return njetpars + towerpars.size() * ntowerpars;}
   virtual void ChangeParAddress(double* oldpar, double* newpar);
-  virtual double correctedEt(double Et,bool fast = false) const;
+  virtual double correctedEt(double Et,bool fast = false) const; 
+  virtual double Error() const;
+  virtual double expectedError(double truth) const;
   //varies the i'th parameter for this jet by eps and returns its overall 
   // parameter id and sets the Et for the par + eps and par - eps result
   virtual int varyPar(int i, double eps, double Et, double scale, double& upperEt, double& lowerEt);
@@ -31,15 +34,17 @@ class JetWithTowers : public Jet
   virtual const VariationColl& varyPars(double eps, double Et, double scale);
   void addTower(double Et, double EmEt, double HadEt ,double OutEt, double E,
 		double eta,double phi,
-		double const(*func)(TMeasurement *const x, double *const par),
-		double err, double* firstpar, int id, int npars);
+		double (*func)(const TMeasurement *x, const double *par),
+		double (*errfunc)(const double *x, const TMeasurement *xorig, double err),
+		double* firstpar, int id, int npars);
  private:
   class Tower : public TMeasurement {
   public:
     Tower(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	  double eta,double phi, double alpha,
-	  double const(*func)(TMeasurement *const x, double *const par),
-	  double err, double* firstpar, int id, int npars);
+	  double (*func)(const TMeasurement *x, const double *par),
+	  double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
+	  double* firstpar, int id, int npars);
     double Et()     const {return pt;}
     double EmEt()   const {return EMF;}
     double HadEt()  const {return HadF;}
@@ -52,8 +57,9 @@ class JetWithTowers : public Jet
     void setFractionOfJetHadEt(double frac) const { fraction = frac;}
     void ChangeParAddress(double* oldpar, double* newpar) {par += newpar - oldpar;}
     double correctedHadEt(double HadEt) const;
-    double lastCorrectedHadEt() const { return lastCorHadEt;}
-    double Error() const {return error;}
+    double lastCorrectedHadEt() const { return lastCorHadEt;}  
+    double Error() const {return errf(&(TMeasurement::pt),this,0);}
+    double expectedError(double truth) const { return  errf(&truth,this,0);}
     int nPar() const {return npar;}
     int FirstPar() const {return parid;}
     double *Par() const {return par;}
@@ -65,7 +71,8 @@ class JetWithTowers : public Jet
     mutable TMeasurement temp;
     mutable double lastCorHadEt;
     mutable double fraction;
-    double const(*f)(TMeasurement *const x, double *const par);
+    double (*f)(const TMeasurement *x, const double *par);
+    double (*errf)(const double *x, const TMeasurement *xorig, double err);
   };
   typedef std::vector<Tower*> TowerColl;
   typedef TowerColl::iterator TowerCollIter;

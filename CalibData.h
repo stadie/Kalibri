@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.55 2008/12/16 15:23:32 stadie Exp $
+// $Id: CalibData.h,v 1.56 2009/01/06 13:41:05 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -114,8 +114,8 @@ class TAbstractData : public TData
 public:
   TAbstractData() : TData() {_par=0;};
   TAbstractData(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
-        double const(*func)(TMeasurement *const,double *const),
-	double const(*err)(double *const,TMeasurement *const,double const))
+        double (*func)(const TMeasurement*, const double*),
+	double (*err)(const double *,const TMeasurement *,double))
   : _index(index), _mess(mess),_truth(truth),_error(error),_weight(weight),_par(par),_n_par(n_par),_func(func),_err(err){};
   virtual ~TAbstractData(){
     delete _mess;
@@ -157,8 +157,8 @@ protected:
   double _truth, _error, _weight;
   double *_par;
   unsigned short int _n_par; //limited from 0 to 65535
-  double const(*_func)(TMeasurement *const x, double *const par);
-  double const(*_err)(double *const x, TMeasurement *const x_original, double const error);
+  double (*_func)(const TMeasurement *x, const double *par);
+  double (*_err)(const double *x, const TMeasurement *x_original, double error);
   DataType _type;
 };
 
@@ -167,7 +167,7 @@ protected:
 class TData_TruthMess : public TAbstractData
 {
 public:
-  TData_TruthMess(unsigned short int index,  TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par, double const(*func)(TMeasurement *const,double *const),  double const(*err)(double *const,TMeasurement *const,double const))
+  TData_TruthMess(unsigned short int index,  TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par, double (*func)(const TMeasurement *,const double*),  double (*err)(const double*,const TMeasurement*,double))
   : TAbstractData(index, mess, truth, error, weight, par, n_par, func, err ){_type=TrackTower;};
 
   virtual const std::vector<TAbstractData*>& GetRef() { 
@@ -196,8 +196,8 @@ class TData_TruthMultMess : public TData_TruthMess
 public:
   TData_TruthMultMess(unsigned short int index, double truth, double error, 
 		      double weight, double * par, unsigned short int n_par,
-        	      double const(*func)(TMeasurement *const,double *const),
-		      double const(*err)(double *const,TMeasurement *const,double const),
+        	      double (*func)(const TMeasurement *,const double*),
+		      double (*err)(const double*,const TMeasurement*,double),
 		      TMeasurement *mess)
   : TData_TruthMess(index,  mess, truth, error, weight, par, n_par, func, err){
     _type=GammaJet; trackuse = false;};
@@ -418,8 +418,8 @@ class TData_MessMess : public TData_TruthMultMess
 public:
   TData_MessMess(unsigned short int index, double * dir, double truth, double error, 
                  double weight, double * par, unsigned short int n_par,
-       	         double const(*func)(TMeasurement *const,double *const),
-		 double const(*err)(double *const,TMeasurement *const,double const),
+       	         double (*func)(const TMeasurement *,const double*),
+		 double (*err)(const double*,const TMeasurement*,double),
 		 TMeasurement *mess)
   : TData_TruthMultMess(index, truth, error, weight, par, n_par, func, err,mess),
     _direction(dir){_type=MessMess;};
@@ -469,8 +469,8 @@ class TData_PtBalance : public TData_MessMess
 public:
   TData_PtBalance(unsigned short int index, double * dir, double truth, double error, 
 		  double weight, double * par, unsigned short int n_par,
-        	  double const(*func)(TMeasurement *const,double *const),
-		  double const(*err)(double *const,TMeasurement *const,double const),
+        	  double (*func)(const TMeasurement *,const double*),
+		  double (*err)(const double*,const TMeasurement*,double),
 		  TMeasurement *mess)
   : TData_MessMess(index, dir, truth, error, weight, par, n_par, func, err, mess){_type=PtBalance;};
   virtual ~TData_PtBalance(){};
@@ -549,8 +549,8 @@ class TData_InvMass2 : public TData_MessMess
 public:
   TData_InvMass2(unsigned short int index, double * dir, double truth, double error, double weight,
 		double * par, unsigned short int n_par,
-        	double const(*func)(TMeasurement *const,double *const),
-		double const(*err)(double *const,TMeasurement *const,double const),
+        	double (*func)(const TMeasurement *,const double*),
+		double (*err)(const double*,const TMeasurement*,double),
 		TMeasurement *mess)
   : TData_MessMess(index, dir, truth, error, weight, par, n_par, func, err, mess) { _type=InvMass; };
   virtual ~TData_InvMass2(){};
@@ -563,7 +563,7 @@ class TData_ParLimit : public TAbstractData
 {
  public:
   TData_ParLimit(unsigned short int index, TMeasurement *mess, double error,
-                 double *par,double const(*func)(TMeasurement *const,double *const))
+                 double *par,double (*func)(const TMeasurement *,const double*))
   : TAbstractData(index,mess,0,error,1.0,par,1,func,0){ _type=ParLimit; };
     
     virtual const std::vector<TAbstractData*>& GetRef() { 

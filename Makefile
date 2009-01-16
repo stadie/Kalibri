@@ -54,16 +54,16 @@ NJetSel.o: NJetSel.cc NJetSel.h
 	$(C) $(RCXX) -c NJetSel.cc
 
 CalibData.o: CalibData.cc CalibData.h Parametrization.h Parameters.h
-	$(C) $(CFLAGS) -c CalibData.cc
+	$(C) $(RCXX) -c CalibData.cc
 
 Parameters.o: Parameters.cc Parameters.h Parametrization.h ConfigFile.h
-	$(C) $(CFLAGS) -c Parameters.cc
+	$(C) $(RCXX) -c Parameters.cc
 
 ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFile.h
 	$(C) $(RCXX) -c ControlPlots.cc
 
-EventReader.o: EventReader.h EventReader.cc ConfigFile.h 
-	$(C) $(CFLAGS) -c EventReader.cc
+EventReader.o: EventReader.h EventReader.cc Parameters.h ConfigFile.h 
+	$(C) $(RCXX) -c EventReader.cc
 
 PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h
 	$(C) $(RCXX) -c PhotonJetReader.cc
@@ -81,10 +81,10 @@ TopReader.o: EventReader.h TopReader.h TopReader.cc TopSel.h Parameters.h Config
 	$(C) $(RCXX) -c TopReader.cc
 
 ParameterLimitsReader.o: EventReader.h ParameterLimitsReader.h ParameterLimitsReader.cc Parameters.h ConfigFile.h
-	$(C) $(CFLAGS) -c ParameterLimitsReader.cc
+	$(C) $(RCXX) -c ParameterLimitsReader.cc
 
 TowerConstraintsReader.o:  EventReader.h TowerConstraintsReader.h TowerConstraintsReader.cc Parameters.h ConfigFile.h
-	$(C) $(CFLAGS) -c TowerConstraintsReader.cc
+	$(C) $(RCXX) -c TowerConstraintsReader.cc
 
 TrackClusterReader.o: EventReader.h TrackClusterReader.h TrackClusterReader.cc TrackClusterSel.h Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c TrackClusterReader.cc

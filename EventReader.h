@@ -2,7 +2,7 @@
 //    Base class for all event readers
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: caliber.h,v 1.33 2008/11/20 16:38:03 stadie Exp $
+//    $Id: EventReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
 //   
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -25,9 +25,9 @@ class EventReader
   ConfigFile* config;
   TParameters* p;
   bool useTracks;
-  double const (*tower_error_param)(double *const x, TMeasurement *const xorig, double const err);
-  double const (*jet_error_param)  (double *const x, TMeasurement *const xorig, double const err);
-  double const (*track_error_param)(double *const x, TMeasurement *const xorig, double const err);
+  double (*tower_error_param)(const double *x, const TMeasurement *xorig, double err);
+  double (*jet_error_param)  (const double *x, const TMeasurement *xorig, double err);
+  double (*track_error_param)(const double *x, const TMeasurement *xorig, double err);
 };
 
 

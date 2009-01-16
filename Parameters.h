@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.39 2008/11/20 16:38:03 stadie Exp $
+// $Id: Parameters.h,v 1.40 2008/12/28 15:06:34 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -17,6 +17,8 @@
 #include <cstring>
 
 #include "Parametrization.h"
+
+#include "TMath.h"
 
 class ConfigFile;
 class TParameters {  
@@ -71,31 +73,31 @@ public :
 
   void Print() const;
   
-  static const double tower_parametrization(TMeasurement *const x,double *const par) {
+  static double tower_parametrization(const TMeasurement* x, const double* par) {
     return instance->p->correctedTowerEt(x,par);
   }
-  static const double jet_parametrization(TMeasurement *const x,double *const par) {
+  static double jet_parametrization(const TMeasurement* x, const double* par) {
     return instance->p->correctedJetEt(x,par);
   }  
-  static const double track_parametrization(TMeasurement *const x,double *const par) {
+  static double track_parametrization(const TMeasurement* x, const double* par) {
     return instance->p->GetExpectedResponse(x,par);
   }
-  static const double dummy_parametrization(TMeasurement *const x,double *const par) {
+  static double dummy_parametrization(const TMeasurement* x, const double* par) {
     return x->pt;
   }
 
   //Error parametrization functions:
-  template<int Et> static const double const_error(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
+  template<int Et> static double const_error(const double *x, const TMeasurement *xorig=0, double errorig=0) {
     return Et;
   }
-  static const double tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) { 
+  static double tower_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) { 
     return (x[0]>0 ?  1.25 * sqrt( x[0])   :   1.25 * sqrt(-x[0]) );
   }
-  static const double jet_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
+  static double jet_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) {
     return (x[0]>0. ? 0.033*x[0] + 5.6   :   0.033*(-x[0]) + 5.6 ); 
   }
 
-  static const double track_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) { 
+  static double track_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) { 
     double error=0,error2=0;
     error =  (x[0]>0 ? x[0] *( 0.05 + 0.00015 * x[0])   : (-x[0]) *(  0.05 + 0.00015 * (-x[0]) )); //trackerror
     //for full error see Grooms paper 0605164v4, p.25
@@ -110,13 +112,13 @@ public :
   }
 
 
-  static const double jet_only_tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) { 
+  static double jet_only_tower_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) { 
     return 0;
   }
-  static const double jet_only_jet_error_parametrization_et(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
+  static double jet_only_jet_error_parametrization_et(const double *x, const TMeasurement *xorig=0, double errorig=0) {
     return (x[0]>0. ? 0.033*x[0] + 5.6 + 1.25 * sqrt( x[0])   :   0.033*(-x[0]) + 5.6 + 1.25 * sqrt( -x[0]) ); 
   }
-  static const double jet_only_jet_error_parametrization_energy(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
+  static double jet_only_jet_error_parametrization_energy(const double *x, const TMeasurement *xorig=0, double errorig=0) {
     double pmess;
     if(std::abs(xorig->eta) < 3.0)  
       pmess =  x[0] * xorig->E / (xorig->pt * xorig->pt) * (xorig->HadF + xorig->OutF); //Et->E hadronic
@@ -128,13 +130,13 @@ public :
 
 
 
-  static const double dummy_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {        
+  static double dummy_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) {        
     return x[0];  
   }
-  static const double fast_error_parametrization(double *const x, TMeasurement *const xorig, double const errorig)  {
+  static double fast_error_parametrization(const double *x, const TMeasurement *xorig, double errorig)  {
     return (xorig->pt==0. ? errorig : errorig*x[0]/xorig->pt );  
   }
-  static const double jans_E_tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double errorig=0)  {
+  static double jans_E_tower_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0)  {
     
     // E = x[0]*xorig[7];  x[0]=param. mess;    xorig == _mess
     double pmess;
@@ -147,34 +149,37 @@ public :
     //return 0;
   }
 
-  static const double toy_tower_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {        
-    double hade = x[0] / (xorig->pt *xorig->pt )* xorig->HadF * xorig->E;
-    return sqrt( 1.3 * 1.3 / hade + 0.056 * 0.056) * hade * xorig->pt / xorig->E;
+  static double toy_tower_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) {        
+    double hadet = x[0] - xorig->EMF - xorig->OutF;
+    double hade = hadet * xorig->E / xorig->pt; 
+    //std::cout << "had Et:" << hadet << " , " << "had E:" << hade << '\n';
+    double var = 1.3 * 1.3/hade + 0.056 * 0.056;  
+    //truncate variance accordingly
+    double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
+    return sqrt(truncvar) * hadet;
   }
   
-  static const double toy_jet_error_parametrization(double *const x, TMeasurement *const xorig=0, double const errorig=0) {
+  static double toy_jet_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) {
     return 0;
   }
 
-  static const double const_error_parametrization(double *const x, 
-						  TMeasurement *const xorig, 
-						  double const errorig)  {
+  static double const_error_parametrization(const double *x, const TMeasurement *xorig, double errorig)  {
     return errorig;  
   }
 
   //Plot paramterization stuff
-  static const double plot_parametrization(TMeasurement *const x,double *const par) {
+  static double plot_parametrization(const TMeasurement* x, const double* par) {
     return tower_parametrization(x,par)/x->pt; 
   }
 
-  static const double jes_plot_parametrization(double * x,double * par)  {
+  static double jes_plot_parametrization(double * x,double * par)  {
     //return jet_parametrization(x,par)/x->pt;
     return ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x[0]));   
 
   }
 
   //Limiting parameters
-  static const double parameter_limit(TMeasurement *const x, double *const par) {
+  static double parameter_limit(const TMeasurement* x, const double *par) {
     double min = x->pt;
     double max = x->EMF;
     if(par[0] < min) return (min-par[0]);

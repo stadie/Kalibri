@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.8 2009/01/13 16:43:59 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.9 2009/01/13 17:45:35 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -129,14 +129,12 @@ TData* PhotonJetReader::createJetTruthEvent()
     tower.eta = gammajet.TowEta[n];
     tower.phi = gammajet.TowPhi[n];
     tower.E = gammajet.TowE[n];
-    //use errors as are the default in ToyMC
-    //truncate variance accordingly
-    double var = 1.3 * 1.3/gammajet.TowHad[n] + 0.056 * 0.056;
-    double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) +
-      var * TMath::Erf(1/(sqrt(2 * var)));
-    terr[n] = sqrt(truncvar) * tower.HadF;
-    double err = tower_error_param(&tower.pt,&tower,terr[n]);
-    terr[n] = err * err;
+    terr[n] = tower_error_param(&tower.pt,&tower,0); 
+    if(terr[n] == 0) {
+      //assume toy MC???
+      terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
+    }
+    terr[n] *= terr[n];
     err2 += terr[n];
     double dphi = TVector2::Phi_mpi_pi(gammajet.JetCalPhi-tower.phi);
     double dr = sqrt((gammajet.JetCalEta-tower.eta)*(gammajet.JetCalEta-tower.eta)+
@@ -167,7 +165,7 @@ TData* PhotonJetReader::createJetTruthEvent()
       new JetWithTowers(gammajet.JetCalEt,em * factor,had * factor,
 			out * factor,gammajet.JetCalE,gammajet.JetCalEta,
 			gammajet.JetCalPhi,TJet::uds,
-			p->jet_parametrization,sqrt(err2),
+			p->jet_parametrization,tower_error_param,
 			firstpar,firstpar - p->GetPars(),
 			p->GetNumberOfJetParametersPerBin());
     for(int i = 0; i < gammajet.NobjTowCal; ++i) {
@@ -177,7 +175,7 @@ TData* PhotonJetReader::createJetTruthEvent()
       jt->addTower(gammajet.TowEt[i],gammajet.TowEm[i]*scale,
 		   gammajet.TowHad[i]*scale,gammajet.TowOE[i]*scale,
 		   gammajet.TowE[i],gammajet.TowEta[i],gammajet.TowPhi[i],
-		   p->tower_parametrization,terr[i],p->GetTowerParRef(id),
+		   p->tower_parametrization,tower_error_param,p->GetTowerParRef(id),
 		   id,p->GetNumberOfTowerParametersPerBin());
     }
     j = jt;
@@ -185,7 +183,7 @@ TData* PhotonJetReader::createJetTruthEvent()
   else { 
     j = new Jet(gammajet.JetCalEt,em * factor,had * factor,out * factor,
 		gammajet.JetCalE,gammajet.JetCalEta,gammajet.JetCalPhi,
-		TJet::uds,p->jet_parametrization,sqrt(err2),
+		TJet::uds,p->jet_parametrization,tower_error_param,
 		firstpar,firstpar - p->GetPars(),
 		p->GetNumberOfJetParametersPerBin());
   }

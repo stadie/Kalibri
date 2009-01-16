@@ -2,17 +2,18 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.6 2009/01/09 18:09:58 stadie Exp $
+//    $Id: Jet.cc,v 1.7 2009/01/13 13:39:24 stadie Exp $
 //   
 #include "Jet.h"  
 
 
 Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 double eta,double phi, Flavor flavor,
-	 double const(*func)(TMeasurement *const x, double *const par),
-	 double err,double* firstpar, int id, int npars)
+	 double (*func)(const TMeasurement *x, const double *par),
+	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
+	 double* firstpar, int id, int npars)
   : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor), par(firstpar), npar(npars), parid(id),
-    error(err),f(func),varcoll(npars)
+    f(func),errf(errfunc),varcoll(npars)
 {
   temp = *this;
 }
@@ -40,10 +41,12 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double scale)
     double orig = par[i];
     par[i] += eps;
     varcoll[i].upperEt = expectedEt(Et,s,true);
+    varcoll[i].upperError = expectedError(varcoll[i].upperEt);
     //varcoll[i].upperEt = expectedEt(Et,s,false);
     s = scale;
     par[i] = orig - eps;;
-    varcoll[i].lowerEt = expectedEt(Et,s,true);
+    varcoll[i].lowerEt = expectedEt(Et,s,true); 
+    varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     //varcoll[i].lowerEt = expectedEt(Et,s,false);
     s = scale;
     par[i] = orig;
@@ -171,6 +174,10 @@ bool Jet::secant(double truth, double& x1, double& x2,double eps)
   ++ncalls;
   int i = 0;
   double dx = std::abs(x1-x2), dx1 = truth, dx2 = truth;
+  if(dx < 1e-12) {
+    x2 = 1.0001 * x1;
+    dx = std::abs(x1-x2);
+  }
   while((dx/x1 > eps)&&(i < 100)) {
     //std::cout << i << ":" << x1 << ", " << x2 << " : " << y1 << ", " << y2 << std::endl;
     double x3 = x1 + y1 * (x2-x1)/(f2 - f1);
@@ -238,9 +245,9 @@ int Jet::nwarns = 0;
 void Jet::printInversionStats()
 {
   if(ncalls) {
-    std::cout << "Inversion statistics for expectedEt:\n";
+    std::cout << "Inversion statistics for Jet::expectedEt:\n";
     std::cout << "calls: " << ncalls << " average number of iterations:"
-	      << (double)ntries/ncalls << " failures:" << (double)nfails/ntries
-	      << "%    warnings:" << (double)nwarns/ntries << "%" <<std::endl;
+	      << (double)ntries/ncalls << " failures:" << (double)nfails/ncalls*100
+	      << "%    warnings:" << (double)nwarns/ntries*100 << "%" <<std::endl;
   }
 }

@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.4 2009/01/09 18:09:58 stadie Exp $
+//    $Id: Jet.h,v 1.5 2009/01/13 13:39:24 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -14,8 +14,9 @@ class Jet : public TJet
  public:
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
       double eta,double phi, Flavor flavor,
-      double const(*func)(TMeasurement *const x, double *const par),
-      double err, double* firstpar, int id, int npars);
+      double (*func)(const TMeasurement *x, const double *par),
+      double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
+      double* firstpar, int id, int npars);
   virtual ~Jet() {};
   double Et()     const {return pt;}
   double EmEt()   const {return EMF;}
@@ -28,7 +29,8 @@ class Jet : public TJet
   virtual void ChangeParAddress(double* oldpar, double* newpar) {par += newpar - oldpar;}
   virtual double correctedEt(double Et, bool fast = false) const;
   double expectedEt(double truth, double& scale, bool extrapolate = false);
-  double Error() const {return error;}
+  virtual double Error() const {return errf(&(TMeasurement::pt),this,0);}
+  virtual double expectedError(double truth) const { return  errf(&truth,this,0);}
   virtual int nPar() const {return npar;}
   //varies the i'th parameter for this jet by eps and returns its overall 
   // parameter id and sets the Et for the par + eps and par - eps result
@@ -37,6 +39,8 @@ class Jet : public TJet
     int parid;
     double upperEt;
     double lowerEt;
+    double upperError;
+    double lowerError;
   };
   typedef std::vector<ParameterVariation> VariationColl;
   typedef std::vector<ParameterVariation>::const_iterator VariationCollIter;
@@ -49,7 +53,8 @@ class Jet : public TJet
   double* par;//address to first parameter for this jet 
   int npar,parid;
   double error; 
-  double const(*f)(TMeasurement *const x, double *const par);
+  double (*f)(const TMeasurement *x, const double *par);
+  double (*errf)(const double *x, const TMeasurement *xorig, double err);
  protected:
   mutable VariationColl varcoll;
  private:
