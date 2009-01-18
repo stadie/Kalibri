@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.73 2009/01/13 13:02:33 stadie Exp $
+// $Id: caliber.cc,v 1.74 2009/01/13 13:07:41 stadie Exp $
 //
 //
 // for profiling:
@@ -258,11 +258,35 @@ void TCaliber::Run_Lvmini()
       for (int param=0; param< npar ; ++param) {
 	temp_derivative1[param]=0.0;
 	temp_derivative2[param]=0.0;
-      }  
+      } 
+      //set local parameters to global value
+      for( std::vector<int>::const_iterator iter = globaljetpars.begin();
+	   iter != globaljetpars.end() ; ++ iter) {
+	double val = p->GetPars()[*iter];
+	for(int id = *iter + p->GetNumberOfJetParametersPerBin(); 
+	    id < p->GetNumberOfJetParameters() ; 
+	    id += p->GetNumberOfJetParametersPerBin()) {
+	  p->GetPars()[id] = val;
+	}
+      }
       fsum = 0;
       for (int ithreads=0; ithreads<nthreads; ++ithreads) t[ithreads]->Start();
+      
       for (int ithreads=0; ithreads<nthreads; ++ithreads){
 	if(t[ithreads]->IsDone()) fsum += t[ithreads]->Chi2();
+      }
+      //sum up derivative results for global par
+      for( std::vector<int>::const_iterator iter = globaljetpars.begin();
+	   iter != globaljetpars.end() ; ++ iter) {
+	int gid = *iter;
+	for(int id = *iter + p->GetNumberOfJetParametersPerBin(); 
+	    id < p->GetNumberOfJetParameters() ; 
+	    id += p->GetNumberOfJetParametersPerBin()) {
+	  temp_derivative1[gid] += temp_derivative1[id];
+	  temp_derivative2[gid] += temp_derivative2[id];
+	  temp_derivative1[id] = 0;
+	  temp_derivative2[id] = 0;
+	}
       }
       //fast derivative calculation:
       for( int param = 0 ; param < npar ; ++param ) {
@@ -293,7 +317,18 @@ void TCaliber::Run_Lvmini()
   //Copy Parameter errors from aux array to the TParameter::e array
   error_index=2;
   error_index = lvmind_(error_index);
-  p->SetErrors(aux+error_index); 
+  p->SetErrors(aux+error_index);
+  for( std::vector<int>::const_iterator iter = globaljetpars.begin();
+       iter != globaljetpars.end() ; ++ iter) {
+    double val =  p->GetPars()[*iter];
+    double err = p->GetErrors()[*iter];
+    for(int id = *iter + p->GetNumberOfJetParametersPerBin(); 
+	id < p->GetNumberOfJetParameters() ; 
+	id += p->GetNumberOfJetParametersPerBin()) {
+      p->GetPars()[id] = val;
+      p->GetErrors()[id] = err;
+    }
+  }
   p->SetFitChi2(fsum);
   
   for (int ithreads=0; ithreads<nthreads; ++ithreads){
@@ -390,6 +425,8 @@ void TCaliber::Init()
   wlf1       = config.read<double>("BFGS 1st wolfe parameter",1e-04);
   wlf2       = config.read<double>("BFGS 2nd wolfe parameter",0.9);
   print_parnderiv = config.read<bool>("BFGS print derivatives",false);
+  //global parameters ?
+  globaljetpars = bag_of<int>(config.read<string>("global jet parameters","")); 
 
   output_file = config.read<string>( "Output file", "calibration_k.cfi" );
 

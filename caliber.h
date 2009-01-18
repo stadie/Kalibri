@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.h,v 1.37 2008/12/14 13:38:57 stadie Exp $
+// $Id: caliber.h,v 1.38 2009/01/13 13:02:33 stadie Exp $
 //
 #ifndef caliber_h
 #define caliber_h
@@ -54,6 +54,7 @@ private:
   double deriv_step;
   float eps,wlf1,wlf2;
   bool print_parnderiv;
+  std::vector<int> globaljetpars;
 };
 
 #endif
