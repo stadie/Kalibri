@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.7 2009/01/13 13:39:24 stadie Exp $
+//    $Id: Jet.cc,v 1.8 2009/01/16 08:46:40 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -61,7 +61,9 @@ double Jet::correctedEt(double Et, bool fast) const {
   temp.pt   = Et;  
   temp.HadF = Et - OutF - EMF;
   temp.E    = TJet::E * Et/pt;
-  return f(&temp,par);
+  double corEt = f(&temp,par);
+  if(corEt <  OutF + EMF) corEt = OutF + EMF;
+  return corEt;
 }
 
 double Jet::expectedEt(double truth, double& scale, bool extrapolate)
