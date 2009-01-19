@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.16 2008/12/11 16:36:08 stadie Exp $
+// $Id: ToyMC.cc,v 1.17 2008/12/17 09:31:33 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -436,7 +436,8 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float jetgeneta[kjMAX];
   float jetgenet[kjMAX];
   float jetgene[kjMAX];
-  float weight = 1;
+  float weight = 1; 
+
   // CaloTower branches
   CalibTree->Branch("NobjTow",&NobjTow,"NobjTow/I");
   CalibTree->Branch("TowId",towid,"TowId[NobjTow]/I");
@@ -461,7 +462,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("JetEt",jetet,"JetEt[NobjJet]/F" );
   CalibTree->Branch("JetE",jete,"JetE[NobjJet]/F"  );
   CalibTree->Branch("Weight",&weight,"Weight/F"  );
-
+  CalibTree->Branch("GenJetEt",jetgenet,"GenJetEt[NobjJet]/F" );
 
   TLorentzVector jet[2],genjet[2], tower;
   for(int n = 0; n < nevents ; ++n) {
