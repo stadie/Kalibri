@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.40 2008/12/28 15:06:34 stadie Exp $
+// $Id: Parameters.h,v 1.41 2009/01/16 08:46:40 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -151,6 +151,7 @@ public :
 
   static double toy_tower_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) {        
     double hadet = x[0] - xorig->EMF - xorig->OutF;
+    if(hadet < 0.001) hadet = 0.001;
     double hade = hadet * xorig->E / xorig->pt; 
     //std::cout << "had Et:" << hadet << " , " << "had E:" << hade << '\n';
     double var = 1.3 * 1.3/hade + 0.056 * 0.056;  
