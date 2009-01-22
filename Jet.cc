@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.8 2009/01/16 08:46:40 stadie Exp $
+//    $Id: Jet.cc,v 1.9 2009/01/18 13:06:15 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -55,6 +55,23 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double scale)
   return varcoll;
 }
 
+// varies all parameters for this jet by eps and returns a vector of the
+// parameter id and the Et for the par + eps and par - eps variation
+const Jet::VariationColl& Jet::varyParsDirectly(double eps)
+{
+  for(int i = 0 ; i < npar ; ++i) {
+    double orig = par[i];
+    par[i] += eps;
+    varcoll[i].upperEt = correctedEt(pt);
+    varcoll[i].upperError = expectedError(varcoll[i].upperEt);
+    par[i] = orig - eps;;
+    varcoll[i].lowerEt = correctedEt(pt); 
+    varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
+    par[i] = orig;
+    varcoll[i].parid = parid + i;
+  }
+  return varcoll;
+}
 
 double Jet::correctedEt(double Et, bool fast) const {
   //assume that only the hadronic energy gets modified!

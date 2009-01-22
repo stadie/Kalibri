@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.5 2009/01/13 13:39:24 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.6 2009/01/16 08:46:40 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -14,8 +14,111 @@ double JetTruthEvent::chi2() const
   return weight * diff*diff;
 }
 
+double JetTruthEvent::chi2_fast_blobel(double * temp_derivative1, 
+				       double * temp_derivative2, 
+				       double const epsilon) const
+{
+  double et = jet->correctedEt(jet->Et());
+  double err2inv = jet->expectedError(et);
+  err2inv *= err2inv;
+  err2inv = 1/err2inv;
+  double chi2 = truth - et;
+  chi2 *= chi2 * err2inv;
+  chi2 = weight * TData::ScaleResidual(chi2);
+  double temp1,temp2;
+  const Jet::VariationColl& varcoll = jet->varyParsDirectly(epsilon);
+  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+    temp1 = truth - i->lowerEt;
+    err2inv = jet->expectedError(i->lowerEt);;
+    err2inv *= err2inv;
+    err2inv = 1/err2inv;
+    temp1 *= temp1 * err2inv;
+    temp1 = weight * TData::ScaleResidual(temp1);
+    temp2 = truth - i->upperEt; 
+    err2inv = jet->expectedError(i->upperEt);
+    err2inv *= err2inv;
+    err2inv = 1/err2inv;
+    temp2 *= temp2 * err2inv;
+    temp2 = weight * TData::ScaleResidual(temp2);
+    temp_derivative1[i->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+  }
+  return chi2;
+}
 
-double JetTruthEvent::chi2_fast(double * temp_derivative1, double * temp_derivative2, 
+double JetTruthEvent::chi2_fast_simple_scaled(double * temp_derivative1, 
+					      double * temp_derivative2, 
+					      double const epsilon) const
+{
+  double et = jet->correctedEt(jet->Et());
+  double s = jet->Et()/et;
+  double err2inv = s * jet->expectedError(truth * s);
+  err2inv *= err2inv;
+  err2inv = 1/err2inv;
+  double chi2 = truth - et;
+  chi2 *= chi2 * err2inv;
+  chi2 = weight * TData::ScaleResidual(chi2);
+  if(chi2 != chi2) {//check for NAN
+    std::cout << truth << ", " << jet->Et() << ", " << s << ", " << jet->expectedError(truth/s) << ", " << chi2 << '\n';
+  }
+  double temp1,temp2;
+  const Jet::VariationColl& varcoll = jet->varyParsDirectly(epsilon);
+  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+    temp1 = truth - i->lowerEt;
+    s = jet->Et() / i->lowerEt;
+    err2inv = s * jet->expectedError(truth * s);
+    err2inv *= err2inv;
+    err2inv = 1/err2inv;
+    temp1 *= temp1 * err2inv;
+    temp1 = weight * TData::ScaleResidual(temp1);
+    temp2 = truth - i->upperEt; 
+    s = jet->Et() / i->upperEt;
+    err2inv = s * jet->expectedError(truth * s);
+    err2inv *= err2inv;
+    err2inv = 1/err2inv;
+    temp2 *= temp2 * err2inv;
+    temp2 = weight * TData::ScaleResidual(temp2);
+    temp_derivative1[i->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+  }
+  return chi2;
+}
+
+
+double JetTruthEvent::chi2_fast_simple(double * temp_derivative1, 
+				       double * temp_derivative2, 
+				       double const epsilon) const
+{
+  double et = jet->correctedEt(jet->Et());
+  double err2inv = jet->expectedError(truth * jet->Et() / et);
+  err2inv *= err2inv;
+  err2inv = 1/err2inv;
+  double chi2 = truth - et;
+  chi2 *= chi2 * err2inv;
+  chi2 = weight * TData::ScaleResidual(chi2);
+  double temp1,temp2;
+  const Jet::VariationColl& varcoll = jet->varyParsDirectly(epsilon);
+  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+    temp1 = truth - i->lowerEt;
+    err2inv = jet->expectedError(truth * jet->Et() / i->lowerEt);
+    err2inv *= err2inv;
+    err2inv = 1/err2inv;
+    temp1 *= temp1 * err2inv;
+    temp1 = weight * TData::ScaleResidual(temp1);
+    temp2 = truth - i->upperEt; 
+    err2inv = jet->expectedError(truth * jet->Et() / i->upperEt);
+    err2inv *= err2inv;
+    err2inv = 1/err2inv;
+    temp2 *= temp2 * err2inv;
+    temp2 = weight * TData::ScaleResidual(temp2);
+    temp_derivative1[i->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+  }
+  return chi2;
+}
+
+double JetTruthEvent::chi2_fast_invert(double * temp_derivative1, 
+				double * temp_derivative2, 
 				double const epsilon) const
 {
   //find expected measurement of jet Et 

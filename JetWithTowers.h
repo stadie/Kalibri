@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.h,v 1.4 2009/01/13 13:39:24 stadie Exp $
+//    $Id: JetWithTowers.h,v 1.5 2009/01/16 08:46:40 stadie Exp $
 //   
 #ifndef JETWITHTOWERS_H
 #define JETWITHTOWERS_H
@@ -32,6 +32,8 @@ class JetWithTowers : public Jet
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
   virtual const VariationColl& varyPars(double eps, double Et, double scale);
+  virtual const VariationColl& varyParsDirectly(double eps);
+
   void addTower(double Et, double EmEt, double HadEt ,double OutEt, double E,
 		double eta,double phi,
 		double (*func)(const TMeasurement *x, const double *par),

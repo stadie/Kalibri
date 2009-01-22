@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
+//    $Id: JetTruthEvent.h,v 1.1 2008/12/16 15:21:27 stadie Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -28,7 +28,13 @@ public:
   double GetWeight() const { return weight;}
   
   double chi2() const;
-  double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const { 
+    return chi2_fast_simple_scaled(temp_derivative1,temp_derivative2,epsilon);
+  }
+  double chi2_fast_blobel(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_simple_scaled(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_invert(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   void UpdateError() {}
 
  private:

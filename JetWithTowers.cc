@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.4 2009/01/13 13:39:24 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.5 2009/01/16 08:46:40 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -110,6 +110,36 @@ const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double 
       p[towpar] = orig - eps;
       s = scale;
       varcoll[i].lowerEt = expectedEt(Et,s,true); 
+      varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
+      p[towpar] = orig;
+      varcoll[i].parid = id + towpar;
+      ++i;
+    }
+  }
+  //std::cout << i << " parameters modified.\n";
+  return varcoll;
+}
+// varies all parameters for this jet by eps and returns a vector of the
+// parameter id and the Et for the par + eps and par - eps variation
+const Jet::VariationColl& JetWithTowers::varyParsDirectly(double eps)
+{
+  Jet::varyParsDirectly(eps);
+  int i = njetpars;
+
+  for(std::map<int,double*>::const_iterator iter = towerpars.begin() ;
+      iter != towerpars.end() ; ++iter) {
+    double *p = iter->second;
+    int id = iter->first;
+    //std::cout << p << "," << id << " tower[0]:" << towers[0]->Par() << '\n';
+    for(int towpar = 0 ; towpar < ntowerpars ; ++towpar) {
+      //std::cout <<  "truth: " << Et << " alternating par:" << id + towpar << "  = " << p[towpar] 
+      //		<< std::endl;
+      double orig = p[towpar]; 
+      p[towpar] += eps;
+      varcoll[i].upperEt = correctedEt(pt);
+      varcoll[i].upperError = expectedError(varcoll[i].upperEt);
+      p[towpar] = orig - eps;
+      varcoll[i].lowerEt = correctedEt(pt); 
       varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
       p[towpar] = orig;
       varcoll[i].parid = id + towpar;

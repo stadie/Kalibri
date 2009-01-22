@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.5 2009/01/13 13:39:24 stadie Exp $
+//    $Id: Jet.h,v 1.6 2009/01/16 08:46:40 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -47,6 +47,7 @@ class Jet : public TJet
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
   virtual const VariationColl& varyPars(double eps, double Et, double scale);
+  virtual const VariationColl& varyParsDirectly(double eps);
 
   static void printInversionStats();
  private:
