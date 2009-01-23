@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.74 2009/01/13 13:07:41 stadie Exp $
+// $Id: caliber.cc,v 1.75 2009/01/18 13:13:39 stadie Exp $
 //
 //
 // for profiling:
@@ -72,8 +72,8 @@ private:
   double * td1;
   double * td2;
   double *parorig, *mypar;
-  double *temp_derivative1;
-  double *temp_derivative2;
+  //double *temp_derivative1;
+  //double *temp_derivative2;
   double epsilon;
   std::vector<TData*> data;
   bool data_changed;
@@ -104,12 +104,6 @@ private:
 	boost::mutex::scoped_lock lock(io_mutex);
 	parent->chi2 += (*it)->chi2_fast(parent->td1, parent->td2, parent->epsilon);
       } 
-      boost::mutex::scoped_lock lock(io_mutex);
-      for (int param=0; param< parent->npar ; ++param) {
-	parent->temp_derivative1[param] += parent->td1[param];
-	parent->temp_derivative2[param] += parent->td2[param];
-      }
-      //std::cout << "stop Thread with for " << parent << std::endl;
     }
   };
   boost::thread *thread;
@@ -117,8 +111,7 @@ private:
 public:
   ComputeThread(int npar,double *par, double *temp_derivative1, double *temp_derivative2, double epsilon) 
     : npar(npar), td1(new double[npar]), td2(new double[npar]), parorig(par),
-      mypar(new double[npar]), temp_derivative1(temp_derivative1), 
-      temp_derivative2(temp_derivative2), epsilon(epsilon), data_changed(false) {
+      mypar(new double[npar]), epsilon(epsilon), data_changed(false) {
     //std::cout << "threads par array:" << mypar << '\n';
   }
   ~ComputeThread() {
@@ -143,6 +136,8 @@ public:
     for (int param=0; param< npar ; ++param) mypar[param] = parorig[param];
   }
   double Chi2() const { return chi2;}
+  double TempDeriv1(int i) const { return td1[i];}
+  double TempDeriv2(int i) const { return td2[i];}
 };
 
 
@@ -273,7 +268,13 @@ void TCaliber::Run_Lvmini()
       for (int ithreads=0; ithreads<nthreads; ++ithreads) t[ithreads]->Start();
       
       for (int ithreads=0; ithreads<nthreads; ++ithreads){
-	if(t[ithreads]->IsDone()) fsum += t[ithreads]->Chi2();
+	if(t[ithreads]->IsDone()) {
+	  fsum += t[ithreads]->Chi2();
+	  for (int param=0 ; param < npar ; ++param) {
+	    temp_derivative1[param] += t[ithreads]->TempDeriv1(param);
+	    temp_derivative2[param] += t[ithreads]->TempDeriv2(param);
+	  }
+	}
       }
       //sum up derivative results for global par
       for( std::vector<int>::const_iterator iter = globaljetpars.begin();
