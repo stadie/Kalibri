@@ -45,7 +45,9 @@ public :
    Int_t           TrackTowIdEta[200];   //[NobjTrack]
    Int_t           TrackId[200];   //[NobjTrack]
    Int_t           TrackNHits[200];   //[NobjTrack]
-   Int_t           TrackQuality[200];   //[NobjTrack]
+   Bool_t          TrackQualityL[200];   //[NobjTrack]
+   Bool_t          TrackQualityT[200];   //[NobjTrack]
+   Bool_t          TrackQualityHP[200];   //[NobjTrack]
    Float_t         TrackChi2[200];   //[NobjTrack]
    Float_t         TrackPt[200];   //[NobjTrack]
    Float_t         TrackEta[200];   //[NobjTrack]
@@ -61,15 +63,17 @@ public :
    Float_t         TrackHAC1[200];   //[NobjTrack]
    Float_t         TrackHAC3[200];   //[NobjTrack]
    Float_t         TrackHAC5[200];   //[NobjTrack]
-   Float_t         MuDR[200];   //[NobjTrack]
    Float_t         MuDE[200];   //[NobjTrack]
+   Float_t         MuDR[200];   //[NobjTrack]
    Float_t         JetCalPt;
    Float_t         JetCalPhi;
    Float_t         JetCalEta;
    Float_t         JetCalEt;
    Float_t         JetCalE;
+   Float_t         JetCorrZSP;
    Float_t         JetCorrL2;
    Float_t         JetCorrL3;
+   Float_t         JetCorrJPT;
    Float_t         JetGenPt;
    Float_t         JetGenPhi;
    Float_t         JetGenEta;
@@ -121,7 +125,9 @@ public :
    TBranch        *b_TrackTowIdEta;   //!
    TBranch        *b_TrackId;   //!
    TBranch        *b_TrackNHits;   //!
-   TBranch        *b_TrackQuality;   //!
+   TBranch        *b_TrackQualityL;   //!
+   TBranch        *b_TrackQualityT;   //!
+   TBranch        *b_TrackQualityHP;   //!
    TBranch        *b_TrackChi2;   //!
    TBranch        *b_TrackPt;   //!
    TBranch        *b_TrackEta;   //!
@@ -144,8 +150,10 @@ public :
    TBranch        *b_JetCalEta;   //!
    TBranch        *b_JetCalEt;   //!
    TBranch        *b_JetCalE;   //!
+   TBranch        *b_JetCorrZSP;   //!
    TBranch        *b_JetCorrL2;   //!
    TBranch        *b_JetCorrL3;   //!
+   TBranch        *b_JetCorrJPT;   //!
    TBranch        *b_JetGenPt;   //!
    TBranch        *b_JetGenPhi;   //!
    TBranch        *b_JetGenEta;   //!
@@ -232,7 +240,9 @@ void ZJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("TrackTowIdEta", TrackTowIdEta, &b_TrackTowIdEta);
    fChain->SetBranchAddress("TrackId", TrackId, &b_TrackId);
    fChain->SetBranchAddress("TrackNHits", TrackNHits, &b_TrackNHits);
-   fChain->SetBranchAddress("TrackQuality", TrackQuality, &b_TrackQuality);
+   fChain->SetBranchAddress("TrackQualityL", TrackQualityL, &b_TrackQualityL);
+   fChain->SetBranchAddress("TrackQualityT", TrackQualityT, &b_TrackQualityT);
+   fChain->SetBranchAddress("TrackQualityHP", TrackQualityHP, &b_TrackQualityHP);
    fChain->SetBranchAddress("TrackChi2", TrackChi2, &b_TrackChi2);
    fChain->SetBranchAddress("TrackPt", TrackPt, &b_TrackPt);
    fChain->SetBranchAddress("TrackEta", TrackEta, &b_TrackEta);
@@ -255,8 +265,10 @@ void ZJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetCalEta", &JetCalEta, &b_JetCalEta);
    fChain->SetBranchAddress("JetCalEt", &JetCalEt, &b_JetCalEt);
    fChain->SetBranchAddress("JetCalE", &JetCalE, &b_JetCalE);
+   fChain->SetBranchAddress("JetCorrZSP", &JetCorrZSP, &b_JetCorrZSP);
    fChain->SetBranchAddress("JetCorrL2", &JetCorrL2, &b_JetCorrL2);
    fChain->SetBranchAddress("JetCorrL3", &JetCorrL3, &b_JetCorrL3);
+   fChain->SetBranchAddress("JetCorrJPT", &JetCorrJPT, &b_JetCorrJPT); 
    fChain->SetBranchAddress("JetGenPt", &JetGenPt, &b_JetGenPt);
    fChain->SetBranchAddress("JetGenPhi", &JetGenPhi, &b_JetGenPhi);
    fChain->SetBranchAddress("JetGenEta", &JetGenEta, &b_JetGenEta);

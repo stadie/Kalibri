@@ -51,6 +51,9 @@ public :
    Float_t         TrackHAC5[10000];   //[NobjTrack]
    Float_t         TrackChi2[10000];   //[NobjTrack]
    Int_t           TrackNHits[10000];   //[NobjTrack]
+   Bool_t          TrackQualityL[10000];   //[NobjTrack]
+   Bool_t          TrackQualityT[10000];   //[NobjTrack]
+   Bool_t          TrackQualityHP[10000];   //[NobjTrack]
    Float_t         MuDE[10000];   //[NobjTrack]
    Float_t         MuDR[10000];   //[NobjTrack]
    Int_t           Track_jetidx[10000];   //[NobjTow]
@@ -60,11 +63,19 @@ public :
    Float_t         JetEta[100];   //[NobjJet]
    Float_t         JetEt[100];   //[NobjJet]
    Float_t         JetE[100];   //[NobjJet]
+   Float_t         GenJetPt[100];   //[NobjJet]
+   Float_t         GenJetPhi[100];   //[NobjJet]
+   Float_t         GenJetEta[100];   //[NobjJet]
+   Float_t         GenJetEt[100];   //[NobjJet]
+   Float_t         GenJetE[100];   //[NobjJet]
+   Float_t         JetCorrZSP[100];   //[NobjJet]
+   Float_t         JetCorrL2[100];   //[NobjJet]
+   Float_t         JetCorrL3[100];   //[NobjJet]
+   Float_t         JetCorrJPT[100];   //[NobjJet]
    Float_t         Met;
    Float_t         MetPhi;
    Float_t         MetSum;
    Float_t         Weight;
-   Float_t         GenJetEt[100];  //[NobjJet]
 
    // List of branches
    TBranch        *b_NobjTow;   //!
@@ -100,6 +111,9 @@ public :
    TBranch        *b_TrackHAC5;   //
    TBranch        *b_TrackChi2;   //
    TBranch        *b_TrackNHits;   //
+   TBranch        *b_TrackQualityL;   //!
+   TBranch        *b_TrackQualityT;   //!
+   TBranch        *b_TrackQualityHP;   //!
    TBranch        *b_MuDE;   //
    TBranch        *b_MuDR;   //
    TBranch        *b_Track_jetidx;   //!
@@ -109,11 +123,19 @@ public :
    TBranch        *b_JetEta;   //!
    TBranch        *b_JetEt;   //!
    TBranch        *b_JetE;   //!
+   TBranch        *b_JetCorrZSP;   //!
+   TBranch        *b_JetCorrL2;   //!
+   TBranch        *b_JetCorrL3;   //!
+   TBranch        *b_JetCorrJPT;   //!
+   TBranch        *b_GenJetPt;   //!
+   TBranch        *b_GenJetPhi;   //!
+   TBranch        *b_GenJetEta;   //!
+   TBranch        *b_GenJetEt;   //!
+   TBranch        *b_GenJetE;   //!
    TBranch        *b_Met;   //!
    TBranch        *b_MetPhi;   //!
    TBranch        *b_MetSum;   //!
    TBranch        *b_Weight;   //!
-   TBranch        *b_GenJetEt;   //!
 
    NJetSel(TTree * /*tree*/ =0) { }
    virtual ~NJetSel() { }
@@ -185,6 +207,9 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("TrackHAC5", TrackHAC5, &b_TrackHAC5);
    fChain->SetBranchAddress("TrackChi2", TrackChi2, &b_TrackChi2);
    fChain->SetBranchAddress("TrackNHits", TrackNHits, &b_TrackNHits);
+   fChain->SetBranchAddress("TrackQualityL", TrackQualityL, &b_TrackQualityL);
+   fChain->SetBranchAddress("TrackQualityT", TrackQualityT, &b_TrackQualityT);
+   fChain->SetBranchAddress("TrackQualityHP", TrackQualityHP, &b_TrackQualityHP);
    fChain->SetBranchAddress("MuDR", MuDR, &b_MuDR);
    fChain->SetBranchAddress("MuDE", MuDE, &b_MuDE);
    fChain->SetBranchAddress("Track_jetidx", Track_jetidx, &b_Track_jetidx);
@@ -194,11 +219,19 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetEta", JetEta, &b_JetEta);
    fChain->SetBranchAddress("JetEt", JetEt, &b_JetEt);
    fChain->SetBranchAddress("JetE", JetE, &b_JetE);
+   fChain->SetBranchAddress("JetCorrZSP", JetCorrZSP, &b_JetCorrZSP);
+   fChain->SetBranchAddress("JetCorrL2", JetCorrL2, &b_JetCorrL2);
+   fChain->SetBranchAddress("JetCorrL3", JetCorrL3, &b_JetCorrL3);
+   fChain->SetBranchAddress("JetCorrJPT", JetCorrJPT, &b_JetCorrJPT);
+   fChain->SetBranchAddress("GenJetPt", GenJetPt, &b_GenJetPt);
+   fChain->SetBranchAddress("GenJetPhi", GenJetPhi, &b_GenJetPhi);
+   fChain->SetBranchAddress("GenJetEta", GenJetEta, &b_GenJetEta);
+   fChain->SetBranchAddress("GenJetEt", GenJetEt, &b_GenJetEt);
+   fChain->SetBranchAddress("GenJetE", GenJetE, &b_GenJetE);
    fChain->SetBranchAddress("Met", &Met, &b_Met);
    fChain->SetBranchAddress("MetPhi", &MetPhi, &b_MetPhi);
    fChain->SetBranchAddress("MetSum", &MetSum, &b_MetSum);
    fChain->SetBranchAddress("Weight", &Weight, &b_Weight);
-   fChain->SetBranchAddress("GenJetEt", &GenJetEt, &b_GenJetEt);
 }
 
 Bool_t NJetSel::Notify()
