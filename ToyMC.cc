@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.17 2008/12/17 09:31:33 stadie Exp $
+// $Id: ToyMC.cc,v 1.18 2009/01/19 08:40:20 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -87,7 +87,7 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
   if(mTowConst[1] == 0) {
     thadtrue /= mTowConst[0];
   } else { 
-    double c =  (thadtrue < 1.0) ? mTowConst[0] - mTowConst[1]/mTowConst[3] +  mTowConst[4] :  mTowConst[0] - mTowConst[1]/(pow(log(thadtrue),mTowConst[2]) + mTowConst[3]) + mTowConst[4]/thadtrue;
+    double c =  (thadtrue < 1.0) ? mTowConst[0] - mTowConst[1]/mTowConst[3] +  mTowConst[4] :  mTowConst[0] - mTowConst[1]/(pow(log10(thadtrue),mTowConst[2]) + mTowConst[3]) + mTowConst[4]/thadtrue;
     //std::cout << thadtrue << ",  " << c << '\n';
     thadtrue /= c;
   }

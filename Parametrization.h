@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.24 2009/01/06 13:46:32 stadie Exp $
+// $Id: Parametrization.h,v 1.25 2009/01/16 08:46:40 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -529,5 +529,39 @@ class TrackParametrization : public Parametrization {
     }
 };
 
+
+// parametrization of hadronic response by a step function
+// optimized for ToyMC pt spectrum 0 - 300 GeV
+/// -----------------------------------------------------------------
+class L2L3JetParametrization : public Parametrization { 
+public:
+  L2L3JetParametrization() : Parametrization(0,10,0) {}
+  const char* name() const { return "L2L3JetParametrization";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+    
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    //code from L2RelativeCorrector
+    //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
+    //double logpt = log10(pt);
+    //double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
+   
+    if(x->HadF <= 0) return x->EMF+x->OutF;
+    
+    double pt = (x->HadF < 10.0) ? 10.0 : (x->HadF > 2000.0) ? 2000.0 : x->HadF; 
+    double logpt = log10(pt);
+    double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
+    
+    // code from SimpleL3AbsoluteCorrector
+    //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
+    //double log10pt = log10(pt);
+    //double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
+    logpt = log10(result * x->HadF);
+    result = par[6] + par[7]/(pow(logpt,par[8]) + par[9]);
+    return  x->EMF+x->OutF + result * x->HadF; 
+  }
+};
 
 #endif
