@@ -40,6 +40,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new ToyStepJetParametrization();
   } else if(name == "TrackParametrization") {
     return new TrackParametrization();
+  } else if(name == "L2L3JetParametrization") {
+    return new L2L3JetParametrization();
   }
   
   return 0;
