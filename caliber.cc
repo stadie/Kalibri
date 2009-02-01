@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.75 2009/01/18 13:13:39 stadie Exp $
+// $Id: caliber.cc,v 1.76 2009/01/23 12:48:06 stadie Exp $
 //
 //
 // for profiling:
@@ -289,6 +289,12 @@ void TCaliber::Run_Lvmini()
 	  temp_derivative2[id] = 0;
 	}
       }
+      //zero derivative of fixed pars
+      for( std::vector<int>::const_iterator iter = fixedpars.begin();
+	   iter != fixedpars.end() ; ++ iter) {
+	temp_derivative1[*iter] = 0;
+	temp_derivative2[*iter] = 0;
+      }
       //fast derivative calculation:
       for( int param = 0 ; param < npar ; ++param ) {
 	aux[param]      = temp_derivative1[param]/(2.0*deriv_step);
@@ -428,6 +434,20 @@ void TCaliber::Init()
   print_parnderiv = config.read<bool>("BFGS print derivatives",false);
   //global parameters ?
   globaljetpars = bag_of<int>(config.read<string>("global jet parameters","")); 
+
+  //fixed parameters
+  std::vector<int> fixjetpars = bag_of<int>(config.read<string>("fixed jet parameter",""));
+  if (fixjetpars.size() % 3 == 0) {
+    for(unsigned int i = 0 ; i < fixjetpars.size() ; i += 3) {
+      int etaid = fixjetpars[i];
+      int phiid = fixjetpars[i+1];
+      int parid = fixjetpars[i+2];
+      int jetbin = p->GetJetBin(p->GetJetEtaBin(etaid),p->GetJetPhiBin(phiid));
+      fixedpars.push_back(jetbin * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters() + parid);
+    }
+  } else {
+    cerr << "ERROR: syntax is: fixed jet parameter = <eta_id> <phi_id> <par_id>\n"; 
+  }
 
   output_file = config.read<string>( "Output file", "calibration_k.cfi" );
 
