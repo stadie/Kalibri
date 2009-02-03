@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.76 2009/01/23 12:48:06 stadie Exp $
+// $Id: caliber.cc,v 1.77 2009/02/01 16:38:19 stadie Exp $
 //
 //
 // for profiling:
@@ -101,9 +101,8 @@ private:
       }
       parent->chi2 =0.0;   
       for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it) { 
-	boost::mutex::scoped_lock lock(io_mutex);
 	parent->chi2 += (*it)->chi2_fast(parent->td1, parent->td2, parent->epsilon);
-      } 
+      }
     }
   };
   boost::thread *thread;
@@ -299,6 +298,7 @@ void TCaliber::Run_Lvmini()
       for( int param = 0 ; param < npar ; ++param ) {
 	aux[param]      = temp_derivative1[param]/(2.0*deriv_step);
 	aux[param+npar] = temp_derivative2[param]/(deriv_step*deriv_step);
+	assert(aux[param] == aux[param]);
       }
       
       //print derivatives:
@@ -436,7 +436,7 @@ void TCaliber::Init()
   globaljetpars = bag_of<int>(config.read<string>("global jet parameters","")); 
 
   //fixed parameters
-  std::vector<int> fixjetpars = bag_of<int>(config.read<string>("fixed jet parameter",""));
+  std::vector<int> fixjetpars = bag_of<int>(config.read<string>("fixed jet parameters",""));
   if (fixjetpars.size() % 3 == 0) {
     for(unsigned int i = 0 ; i < fixjetpars.size() ; i += 3) {
       int etaid = fixjetpars[i];
