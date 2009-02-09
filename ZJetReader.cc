@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.3 2009/01/06 13:35:21 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.4 2009/01/06 14:42:18 thomsen Exp $
 //   
 #include "ZJetReader.h"
 
@@ -74,17 +74,22 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
     }
     //trivial cuts
     if (zjet.ZPt<Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
+
+    //temporary solution to get rid of wrong Zs as long as muon cleaning is not applied
+    if(fabs(zjet.ZPt - zjet.GenZPt) > 80) continue;
      
     //Find the jets eta & phi index using the nearest tower to jet axis:
     int jet_index=-1;
     double min_tower_dr = 10.0;
     double em = 0;
     double had = 0;
+    double out = 0;
     TLorentzVector Ljet(0,0,0,0);
     Ljet.SetPtEtaPhiE(zjet.JetCalEt,zjet.JetCalEta,zjet.JetCalPhi,zjet.JetCalE);
     for (int n=0; n<zjet.NobjTowCal; ++n){
       em += zjet.TowEm[n];
       had +=  zjet.TowHad[n];
+      out +=  zjet.TowOE[n];
       TLorentzVector Ltower(0,0,0,0);
       Ltower.SetPtEtaPhiE(zjet.TowEt[n],zjet.TowEta[n],zjet.TowPhi[n],zjet.TowE[n]);
       double dr = Ltower.DeltaR(Ljet);
@@ -100,19 +105,30 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
 
-    TMeasurement* jetp  = new TJet;
+    TJet* jetp  = new TJet;
     jetp->pt  = zjet.JetCalEt;
     jetp->eta = zjet.JetCalEta;
     jetp->phi = zjet.JetCalPhi;
     jetp->E   = zjet.JetCalE;
+    jetp->genPt =zjet.JetGenPt;
+    jetp->ZSPcor =zjet.JetCorrZSP; 
+    jetp->JPTcor =zjet.JetCorrJPT; 
+    jetp->L2cor =zjet.JetCorrL2; 
+    jetp->L3cor =zjet.JetCorrL3; 
+    //the following is not quite correct, as this factor is slightly different for all towers.
+    double factor =  zjet.JetCalEt / zjet.JetCalE;
+    jetp->HadF = had * factor;
+    jetp->EMF = em * factor;
+    jetp->OutF = out * factor;
+
     //Create an Z/Jet TData event
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
 			  zjet.ZPt,				    //truth//
 			  //zjet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*zjet.ZEt,2)),    //error//
-			  //zjet.EventWeight,                       //weight//
-			  1.0,                                      //weight//
+			  zjet.EventWeight,                       //weight//
+			  //1.0,                                      //weight//
 			  p->GetJetParRef( jet_index ),             //params
 			  p->GetNumberOfJetParametersPerBin(),      //number of free jet param. p. bin
 			  p->jet_parametrization,                   //function
@@ -158,13 +174,18 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
 
     
     //Add the jet's tracks to "gj_data":
+    int index;
     for (int n=0; n<zjet.NobjTrack; ++n){
       if((zjet.TrackTowIdEta[n] == 0) || (zjet.TrackTowIdPhi[n] == 0)) {
-	std::cerr << "WARNING: eta or phi id of track is zero!\n";
-	continue;
+	if(zjet.TrackPt[n] > 2){
+	  std::cerr << "WARNING: eta or phi id of track is zero!\n";
+	  continue;
+	}
+	else index = 0; //bent low momentum tracks with no HCAL hit
       }
-      int index = p->GetTrackBin(p->GetTrackEtaBin(zjet.TrackTowIdEta[n]),
-				 p->GetTrackPhiBin(zjet.TrackTowIdPhi[n]));
+      else
+	index = p->GetTrackBin(p->GetTrackEtaBin(zjet.TrackTowIdEta[n]),
+			       p->GetTrackPhiBin(zjet.TrackTowIdPhi[n]));
       if (index<0){ cerr<<"WARNING: track_index = " << index << endl; continue; }
       //create array with multidimensional measurement
       //TMeasurement * Tmess = new TTrack;
@@ -189,6 +210,7 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
       Tmess->E = double(zjet.TrackP[n]);
       Tmess->TrackChi2 = double(zjet.TrackChi2[n]);
       Tmess->NValidHits = int(zjet.TrackNHits[n]);
+      Tmess->TrackQualityT = bool(zjet.TrackQualityT[n]);
       Tmess->MuDR = double(zjet.MuDR[n]);
       Tmess->MuDE = double(zjet.MuDE[n]);
       //mess[7] = double( cos( zjet.JetCalPhi-zjet.TowPhi[n] ) ); // Projection factor for summing tower Pt
