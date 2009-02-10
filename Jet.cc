@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.11 2009/02/10 08:47:25 stadie Exp $
+//    $Id: Jet.cc,v 1.12 2009/02/10 10:25:27 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -87,7 +87,7 @@ double Jet::correctedEt(double Et, bool fast) const {
 
 double Jet::expectedEt(double truth, double start, bool fast)
 {
-  static const double eps = 1.0e-6;
+  static const double eps = 1.0e-10;
   //const double up = 4 * truth;
   //const double low = 0.2 * truth;
   double x1 = start,x2;
