@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.4 2009/01/06 14:42:18 thomsen Exp $
+//    $Id: ZJetReader.cc,v 1.5 2009/02/09 12:23:31 thomsen Exp $
 //   
 #include "ZJetReader.h"
 
@@ -12,6 +12,9 @@
 #include "ConfigFile.h"
 #include "Parameters.h"
 #include "TLorentzVector.h"
+#include "JetTruthEvent.h"
+#include "Jet.h"
+#include "JetWithTowers.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -38,7 +41,10 @@ ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
     tchain_zjet->Add( it->c_str() );
   }  
   zjet.Init( tchain_zjet );
-  
+    
+  dataClass = config->read<int>("Z-Jet data class", 0);
+  if((dataClass < 0) || (dataClass > 3)) dataClass = 0;
+
   delete config;
   config = 0;
 }
@@ -76,9 +82,130 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
     if (zjet.ZPt<Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
 
     //temporary solution to get rid of wrong Zs as long as muon cleaning is not applied
-    if(fabs(zjet.ZPt - zjet.GenZPt) > 80) continue;
+    if(fabs(zjet.ZPt - zjet.GenZPt) > 80) continue;    
+
+    TData* ev = 0;
+    if(dataClass == 0) ev = createTruthMultMessEvent();
+    else if(dataClass > 0) ev = createJetTruthEvent();
      
-    //Find the jets eta & phi index using the nearest tower to jet axis:
+    if(ev) {
+      data.push_back(ev); 
+      ++nevents_added;
+      if((n_zjet_events>=0) && (nevents_added >= n_zjet_events-1))
+	break;
+    }
+  }
+  return nevents_added;
+}
+
+TData* ZJetReader::createJetTruthEvent()
+{
+  double em = 0;
+  double had = 0;
+  double out = 0;
+  double err2 = 0;
+  TMeasurement tower;
+  double* terr = new double[zjet.NobjTowCal];
+  double dR = 10;
+  int closestTower = 0;
+  for(int n = 0; n < zjet.NobjTowCal; ++n) {
+    em += zjet.TowEm[n];
+    had +=  zjet.TowHad[n];
+    out +=  zjet.TowOE[n];  
+    tower.pt = zjet.TowEt[n];
+    double scale = zjet.TowEt[n]/zjet.TowE[n];
+    tower.EMF = zjet.TowEm[n]*scale;
+    tower.HadF = zjet.TowHad[n]*scale;
+    tower.OutF = zjet.TowOE[n]*scale;
+    tower.eta = zjet.TowEta[n];
+    tower.phi = zjet.TowPhi[n];
+    tower.E = zjet.TowE[n];
+    terr[n] = tower_error_param(&tower.pt,&tower,0); 
+    if(terr[n] == 0) {
+      //assume toy MC???
+      terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
+    }
+    terr[n] *= terr[n];
+    err2 += terr[n];
+    double dphi = TVector2::Phi_mpi_pi(zjet.JetCalPhi-tower.phi);
+    double dr = sqrt((zjet.JetCalEta-tower.eta)*(zjet.JetCalEta-tower.eta)+
+		     dphi*dphi);     
+    if(dr < dR) {
+      dR = dr;
+      closestTower = n;
+    }
+  }  //calc jet error
+  if(had/(had + em) < 0.07) { return 0;}
+  if(had/(had + em) > 0.92) { return 0;}
+  double factor =  zjet.JetCalEt /  zjet.JetCalE;
+  tower.pt = zjet.JetCalEt;
+  tower.EMF = em * factor;
+  tower.HadF = had * factor;
+  tower.OutF = out * factor;
+  tower.eta = zjet.JetCalEta;
+  tower.phi = zjet.JetCalPhi;
+  tower.E   = zjet.JetCalE;
+  double err =  jet_error_param(&tower.pt,&tower,0);
+  err2 += err * err;
+  //use first tower, as the towers should be sorted in E or Et
+  int jet_index = p->GetJetBin(p->GetJetEtaBin(zjet.TowId_eta[closestTower]),
+			       p->GetJetPhiBin(zjet.TowId_phi[closestTower]));
+  if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; exit(-2) ; return 0; }
+  double* firstpar = p->GetJetParRef(jet_index); 
+  Jet *j;
+  if(dataClass == 2) {
+    JetWithTowers *jt = 
+      new JetWithTowers(zjet.JetCalEt,em * factor,had * factor,
+			out * factor,zjet.JetCalE,zjet.JetCalEta,
+			zjet.JetCalPhi,TJet::uds,
+			p->jet_parametrization,tower_error_param,
+			firstpar,firstpar - p->GetPars(),
+			p->GetNumberOfJetParametersPerBin());
+    for(int i = 0; i < zjet.NobjTowCal; ++i) {
+      double scale = zjet.TowEt[i]/zjet.TowE[i];
+      int id =  p->GetBin(p->GetEtaBin(zjet.TowId_eta[i]),
+			  p->GetPhiBin(zjet.TowId_phi[i]));
+      jt->addTower(zjet.TowEt[i],zjet.TowEm[i]*scale,
+		   zjet.TowHad[i]*scale,zjet.TowOE[i]*scale,
+		   zjet.TowE[i],zjet.TowEta[i],zjet.TowPhi[i],
+		   p->tower_parametrization,tower_error_param,p->GetTowerParRef(id),
+		   id,p->GetNumberOfTowerParametersPerBin());
+    }
+    j = jt;
+  } else  if(dataClass == 3) {
+    JetWithTowers *jt = 
+      new JetWithTowers(zjet.JetCalEt,0,(had + em +out) * factor,0,
+			zjet.JetCalE,zjet.JetCalEta,
+			zjet.JetCalPhi,TJet::uds,
+			p->jet_parametrization,tower_error_param,
+			firstpar,firstpar - p->GetPars(),
+			p->GetNumberOfJetParametersPerBin());
+    for(int i = 0; i < zjet.NobjTowCal; ++i) {
+      double scale = zjet.TowEt[i]/zjet.TowE[i];
+      int id =  p->GetBin(p->GetEtaBin(zjet.TowId_eta[i]),
+			  p->GetPhiBin(zjet.TowId_phi[i]));
+      jt->addTower(zjet.TowEt[i],0,
+		   (zjet.TowHad[i]+zjet.TowEm[i]+zjet.TowOE[i])*scale,0,
+		   zjet.TowE[i],zjet.TowEta[i],zjet.TowPhi[i],
+		   p->tower_parametrization,tower_error_param,p->GetTowerParRef(id),
+		   id,p->GetNumberOfTowerParametersPerBin());
+    }
+    j = jt;
+  } else { 
+    j = new Jet(zjet.JetCalEt,em * factor,had * factor,out * factor,
+		zjet.JetCalE,zjet.JetCalEta,zjet.JetCalPhi,
+		TJet::uds,p->jet_parametrization,tower_error_param,
+		firstpar,firstpar - p->GetPars(),
+		p->GetNumberOfJetParametersPerBin());
+  }
+  JetTruthEvent* jte = new JetTruthEvent(j,zjet.ZPt,1.0);//zjet.EventWeight);
+  delete [] terr;
+  return jte;
+}
+
+TData* ZJetReader::createTruthMultMessEvent()
+{
+  //Find the jets eta & phi index using the nearest tower to jet axis:
     int jet_index=-1;
     double min_tower_dr = 10.0;
     double em = 0;
@@ -100,8 +227,8 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
       }
     }
 
-    if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; continue; }
-    if(em == 0) { continue;}
+    if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; return 0; }
+    if(em == 0) { return 0;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
 
@@ -228,11 +355,5 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
 					   ));
     } 
     gj_data->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization
-    data.push_back( gj_data ); 
-    ++nevents_added;
-    if((n_zjet_events>=0) && (nevents_added >= n_zjet_events-1))
-      break;
-  }
-  return nevents_added;
+    return gj_data;
 }
-
