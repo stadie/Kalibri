@@ -366,23 +366,23 @@ void TParameters::Read_CalibrationCfi(std::string const& configFile)
       }
     }
     //Read Track Calibration --------------------------------------------------------
-    if ( line.find("block JetCalibConstants = {") != string::npos ) {
+    if ( line.find("block TrackCalibConstants = {") != string::npos ) {
       while (std::getline(file,line)) {
 	if( line.find("block") != string::npos) break;
 	posEqual=line.find('=');
 	name  = line.substr(0,posEqual);
 	//std::cout << name << ".\n";
-	if( name.find("TrkMapEta") != string::npos) 
-	  eta_jet = bag_of<int>(trim(line.substr(posEqual+1)));
-	if( name.find("TrkMapPhi") != string::npos) 
-  	  phi_jet = bag_of<int>(trim(line.substr(posEqual+1)));
+	if( name.find("TrackMapEta") != string::npos) 
+	  eta_track = bag_of<int>(trim(line.substr(posEqual+1)));
+	if( name.find("TrackMapPhi") != string::npos) 
+  	  phi_track = bag_of<int>(trim(line.substr(posEqual+1)));
 	for (unsigned i=0; i<p->nTrackPars(); ++i) {
-	  sprintf(dummy,"JetParam%d ",i);
+	  sprintf(dummy,"TrackParam%d ",i);
 	  if( name.find(dummy) != string::npos) 
-  	    param_jet[i] = bag_of<double>(trim(line.substr(posEqual+1)));
-	  sprintf(dummy,"JetError%d ",i);
+  	    param_track[i] = bag_of<double>(trim(line.substr(posEqual+1)));
+	  sprintf(dummy,"TrackError%d ",i);
 	  if( name.find(dummy) != string::npos) 
-  	    error_jet[i] = bag_of<double>(trim(line.substr(posEqual+1)));
+  	    error_track[i] = bag_of<double>(trim(line.substr(posEqual+1)));
 	}
       }
     }
@@ -861,4 +861,7 @@ void TParameters::Write_CalibrationCfi(const char* name)
     file << " }" << endl; 
   }
   file << " }" << endl; 
+      // complete line
+  file << std::endl;
+  file.close();
 }
