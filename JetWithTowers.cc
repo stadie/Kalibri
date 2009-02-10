@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.5 2009/01/16 08:46:40 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.6 2009/01/22 15:30:30 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -61,37 +61,11 @@ double JetWithTowers::correctedEt(double Et,bool fast) const
   return Jet::correctedEt(ccet);
 }
 
-
-//varies the i'th parameter for this jet by eps and returns its overall 
-// parameter id and sets the Et for the par + eps and par - eps result
-int JetWithTowers::varyPar(int i, double eps, double Et, double scale, 
-			   double& upperEt, double& lowerEt)
-{
-  if(i < njetpars) return Jet::varyPar(i,eps,Et,scale,upperEt,lowerEt);
-  int towid = (i - njetpars)/ntowerpars;
-  int towpar = (i - njetpars) % ntowerpars;
-  //std::cout << "I: " << i << " tow:" << towid << "; " << towpar  << std::endl;
-  std::map<int,double*>::const_iterator iter = towerpars.begin();
-  for(int i  = 0 ; i < towid ; ++i) ++iter;
-  double *p = iter->second;
-  int id = iter->first;
-  //std::cout << "truth: " << Et << "alternating par:" << id + towpar << "  = " << p[towpar] << std::endl;
-  double orig = p[towpar]; 
-  p[towpar] += eps;
-  double s = scale;
-  upperEt = expectedEt(Et,s,true);
-  p[towpar] = orig - eps;
-  s = scale;
-  lowerEt = expectedEt(Et,s,true);
-  p[towpar] = orig;
-  return id + towpar; 
-}
-
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double scale)
+const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double start)
 {
-  Jet::varyPars(eps,Et,scale);
+  Jet::varyPars(eps,Et,start);
   int i = njetpars;
 
   for(std::map<int,double*>::const_iterator iter = towerpars.begin() ;
@@ -104,12 +78,12 @@ const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double 
       //		<< std::endl;
       double orig = p[towpar]; 
       p[towpar] += eps;
-      double s = scale;
-      varcoll[i].upperEt = expectedEt(Et,s,true);
+      varcoll[i].upperEt = expectedEt(Et,start);
+      if( varcoll[i].upperEt < 0) varcoll[i].upperEt = pt;
       varcoll[i].upperError = expectedError(varcoll[i].upperEt);
       p[towpar] = orig - eps;
-      s = scale;
-      varcoll[i].lowerEt = expectedEt(Et,s,true); 
+      varcoll[i].lowerEt = expectedEt(Et,start); 
+      if( varcoll[i].lowerEt < 0) varcoll[i].lowerEt = pt;
       varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
       p[towpar] = orig;
       varcoll[i].parid = id + towpar;

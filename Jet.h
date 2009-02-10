@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.6 2009/01/16 08:46:40 stadie Exp $
+//    $Id: Jet.h,v 1.7 2009/01/22 15:30:30 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -17,6 +17,12 @@ class Jet : public TJet
       double (*func)(const TMeasurement *x, const double *par),
       double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
       double* firstpar, int id, int npars);
+  Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
+      double eta,double phi, Flavor flavor, double genPt, double ZSPcor,
+      double JPTcor, double L2cor, double L3cor,
+      double (*func)(const TMeasurement *x, const double *par),
+      double (*errfunc)(const double *x, const TMeasurement *xorig, double err),
+      double* firstpar, int id, int npars);
   virtual ~Jet() {};
   double Et()     const {return pt;}
   double EmEt()   const {return EMF;}
@@ -28,13 +34,10 @@ class Jet : public TJet
   Flavor flavor() const {return TJet::flavor;}
   virtual void ChangeParAddress(double* oldpar, double* newpar) {par += newpar - oldpar;}
   virtual double correctedEt(double Et, bool fast = false) const;
-  double expectedEt(double truth, double& scale, bool extrapolate = false);
+  double expectedEt(double truth, double start, bool fast = false);
   virtual double Error() const {return errf(&(TMeasurement::pt),this,0);}
   virtual double expectedError(double truth) const { return  errf(&truth,this,0);}
   virtual int nPar() const {return npar;}
-  //varies the i'th parameter for this jet by eps and returns its overall 
-  // parameter id and sets the Et for the par + eps and par - eps result
-  virtual int varyPar(int i, double eps, double Et, double scale, double& upperEt, double& lowerEt);
   struct ParameterVariation {
     int parid;
     double upperEt;
@@ -46,7 +49,7 @@ class Jet : public TJet
   typedef std::vector<ParameterVariation>::const_iterator VariationCollIter;
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
-  virtual const VariationColl& varyPars(double eps, double Et, double scale);
+  virtual const VariationColl& varyPars(double eps, double Et, double start);
   virtual const VariationColl& varyParsDirectly(double eps);
 
   static void printInversionStats();

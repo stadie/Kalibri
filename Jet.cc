@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.9 2009/01/18 13:06:15 stadie Exp $
+//    $Id: Jet.cc,v 1.10 2009/01/22 15:30:30 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -12,43 +12,41 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 double (*func)(const TMeasurement *x, const double *par),
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 	 double* firstpar, int id, int npars)
-  : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor), par(firstpar), npar(npars), parid(id),
-    f(func),errf(errfunc),varcoll(npars)
+  : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,0.0,1.0,1.0,1.0,1.0), par(firstpar), 
+    npar(npars), parid(id), f(func),errf(errfunc),varcoll(npars)
 {
   temp = *this;
 }
 
-//varies the i'th parameter for this jet by eps and returns its overall 
-// parameter id and sets the Et for the par + eps and par - eps result
-int Jet::varyPar(int i, double eps, double Et, double scale, double &upperEt, double& lowerEt) 
+Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
+         double eta,double phi, Flavor flavor, double genPt, double ZSPcor, 
+	 double JPTcor, double L2cor, double L3cor,
+         double (*func)(const TMeasurement *x, const double *par),
+         double (*errfunc)(const double *x, const TMeasurement *xorig, double err),
+         double* firstpar, int id, int npars)
+  : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,ZSPcor,JPTcor,L2cor,L3cor), 
+    par(firstpar), npar(npars), parid(id), f(func),errf(errfunc),varcoll(npars)
 {
-  double orig = par[i];
-  par[i] += eps;
-  upperEt = expectedEt(Et,scale,true);
-  par[i] = orig - eps;
-  lowerEt = expectedEt(Et,scale,true);
-  par[i] = orig;
-  return  parid + i;
+  temp = *this;
 }
  
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& Jet::varyPars(double eps, double Et, double scale)
+const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
 {
-  //scale = Et;
-  double s = scale;
+  //start = Et;
   for(int i = 0 ; i < npar ; ++i) {
     double orig = par[i];
     par[i] += eps;
-    varcoll[i].upperEt = expectedEt(Et,s,true);
+    varcoll[i].upperEt = expectedEt(Et,start);
+    if( varcoll[i].upperEt < 0) varcoll[i].upperEt = 0.999 * pt;
     varcoll[i].upperError = expectedError(varcoll[i].upperEt);
     //varcoll[i].upperEt = expectedEt(Et,s,false);
-    s = scale;
     par[i] = orig - eps;;
-    varcoll[i].lowerEt = expectedEt(Et,s,true); 
+    varcoll[i].lowerEt = expectedEt(Et,start); 
+    if( varcoll[i].lowerEt < 0) varcoll[i].lowerEt = 1.001 * pt;
     varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     //varcoll[i].lowerEt = expectedEt(Et,s,false);
-    s = scale;
     par[i] = orig;
     varcoll[i].parid = parid + i;
   }
@@ -83,35 +81,37 @@ double Jet::correctedEt(double Et, bool fast) const {
   return corEt;
 }
 
-double Jet::expectedEt(double truth, double& scale, bool extrapolate)
+double Jet::expectedEt(double truth, double start, bool fast)
 {
-  static const double eps = 1.0e-5;
-  const double up = 4 * truth;
-  const double low = 0.2 * truth;
+  static const double eps = 1.0e-8;
+  //const double up = 4 * truth;
+  //const double low = 0.2 * truth;
+  double x1 = start,x2;
   //find root of truth - jet->correctedEt(expectedEt)
   // x: expectedEt
   // y: truth -  jet->correctedEt(expectedEt)
   // f: jet->correctedEt(expectedEt)
-  double x1 = scale;
-  double f1 = correctedEt(x1,extrapolate);
+  double f1 = correctedEt(x1,fast);
   //get second point assuming a constant correction factor
-  double x2 = (truth - EMF - OutF) * (x1 - EMF - OutF)/(f1 - EMF - OutF) + EMF;
-  if((x2 > up )||(x2 < low)) x2 = scale;
-  double f2 = correctedEt(x2,true);
-  double y2 = truth - f2;
+  x2 = (truth - EMF - OutF) * (x1 - EMF - OutF)/(f1 - EMF - OutF) + EMF;
+  //if((x2 > up )||(x2 < low)) x2 = x1;
+  ///double f2 = correctedEt(x2,true);
+  //double y2 = truth - f2;
   //std::cout << "truth:" << truth << " scale:" << scale << "  f1:" << f1 << " x2:" << x2 
   //	    << " f2:" << f2 << '\n';
+  /*
   if(extrapolate || (std::abs(y2) < eps)) {
     //std::cout << "extrapolated:" << x2 << ", " << y2 << " at scale " << scale << std::endl;  
     return x2;
   }
-  if(! secant(truth,x1,x2,eps)) return -1;
-  scale = x2;
-  f1 = correctedEt(scale,true);
-  x2 = (truth - EMF - OutF) * (scale - EMF - OutF)/(f1 - EMF - OutF) + EMF + OutF;
+  */
+  if(! secant(truth,x2,x1,eps)) return -1;
+  //f1 = correctedEt(scale,true);
+  //x2 = (truth - EMF - OutF) * (scale - EMF - OutF)/(f1 - EMF - OutF) + EMF + OutF;
   //std::cout << i << ": scale:" << scale << ", expected:" << (truth - EMF) * (scale - EMF)/(f1 - EMF) + EMF << "  dist for scale:" << truth - f1 << "\n";
-  //assert(std::abs(correctedEt(x2)-truth)/truth < eps); 
-  return ((x2 < up )&&(x2 > low)) ? x2 : scale;
+  //std::cout << "x1=" << x1 << "  x2=" << x2 << '\n';
+  assert(std::abs(correctedEt(x2)-truth)/truth < eps); 
+  return x2;
 }
 
 bool Jet::falseposition(double truth, double& x1, double& x2,double eps)
@@ -181,7 +181,7 @@ bool Jet::falseposition(double truth, double& x1, double& x2,double eps)
 }
 
 
-bool Jet::secant(double truth, double& x1, double& x2,double eps)
+bool Jet::secant(double truth, double& x2, double& x1,double eps)
 {
   //x2 is the best estimate!
   const double up = 4 * truth;
@@ -197,6 +197,7 @@ bool Jet::secant(double truth, double& x1, double& x2,double eps)
     x2 = 1.0001 * x1;
     dx = std::abs(x1-x2);
   }
+  //std::cout << "first intervall size:" << dx/x1 << '\n';
   while((dx/x1 > eps)&&(i < 100)) {
     //std::cout << i << ":" << x1 << ", " << x2 << " : " << y1 << ", " << y2 << std::endl;
     double x3 = x1 + y1 * (x2-x1)/(f2 - f1);
@@ -247,7 +248,7 @@ bool Jet::secant(double truth, double& x1, double& x2,double eps)
     //     } 
   } 
   ntries += i;
-  if(std::abs(y2) > 0.001 * truth) {
+  if(std::abs(y2) > eps * truth) {
     //std::cout << "failed to find good root\n";
     //std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
     ++nfails;
