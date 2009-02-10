@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.10 2009/01/22 15:30:30 stadie Exp $
+//    $Id: Jet.cc,v 1.11 2009/02/10 08:47:25 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -75,15 +75,19 @@ double Jet::correctedEt(double Et, bool fast) const {
   //assume that only the hadronic energy gets modified!
   temp.pt   = Et;  
   temp.HadF = Et - OutF - EMF;
+  if(temp.HadF < 0) temp.HadF = 0;
   temp.E    = TJet::E * Et/pt;
   double corEt = f(&temp,par);
+  if(corEt != corEt) 
+    std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
+  assert(corEt == corEt);
   if(corEt <  OutF + EMF) corEt = OutF + EMF;
   return corEt;
 }
 
 double Jet::expectedEt(double truth, double start, bool fast)
 {
-  static const double eps = 1.0e-8;
+  static const double eps = 1.0e-6;
   //const double up = 4 * truth;
   //const double low = 0.2 * truth;
   double x1 = start,x2;
@@ -92,13 +96,16 @@ double Jet::expectedEt(double truth, double start, bool fast)
   // y: truth -  jet->correctedEt(expectedEt)
   // f: jet->correctedEt(expectedEt)
   double f1 = correctedEt(x1,fast);
+  if(std::abs(f1 - truth) < eps) {
+    return x1;
+  }
   //get second point assuming a constant correction factor
-  x2 = (truth - EMF - OutF) * (x1 - EMF - OutF)/(f1 - EMF - OutF) + EMF;
+  //x2 = (truth - EMF - OutF) * (x1 - EMF - OutF)/(f1 - EMF - OutF) + EMF;
+  x2 = truth * x1 / f1;
   //if((x2 > up )||(x2 < low)) x2 = x1;
   ///double f2 = correctedEt(x2,true);
   //double y2 = truth - f2;
-  //std::cout << "truth:" << truth << " scale:" << scale << "  f1:" << f1 << " x2:" << x2 
-  //	    << " f2:" << f2 << '\n';
+  //std::cout << "truth:" << truth << " start:" << start << "  f1:" << f1 << " x2:" << x2	<< '\n';
   /*
   if(extrapolate || (std::abs(y2) < eps)) {
     //std::cout << "extrapolated:" << x2 << ", " << y2 << " at scale " << scale << std::endl;  
@@ -254,6 +261,14 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
     ++nfails;
     return false;
   }
+  /*
+    if(x2 != x2) {
+    std::cout << "failed to find good root\n";
+    std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
+    ++nfails;
+    return false;
+    }
+  */
   return true;
 }
 
