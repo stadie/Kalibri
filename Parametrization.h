@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.26 2009/01/30 17:05:05 stadie Exp $
+// $Id: Parametrization.h,v 1.27 2009/01/31 12:48:35 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -548,9 +548,9 @@ public:
     //double logpt = log10(pt);
     //double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
    
-    if(x->HadF <= 0) return x->EMF+x->OutF;
+    if(x->pt <= 0) return 0;
     
-    double pt = (x->HadF < 4.0) ? 4.0 : (x->HadF > 2000.0) ? 2000.0 : x->HadF; 
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
     double logpt = log10(pt);
     //double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
     double c1 = par[0]+logpt*(par[1]*0.01+logpt*0.001*(par[2]+logpt));
@@ -559,12 +559,12 @@ public:
     //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
     //double log10pt = log10(pt);
     //double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
-    pt = c1 * x->HadF;
+    pt = c1 * x->pt;
     pt = (pt < 4.0) ? 4.0 : (pt > 2000.0) ? 2000.0 : pt; 
     logpt = log10(pt);
     //result = par[6] + par[7]/(pow(logpt,par[8]) + par[9]);
     double c2 = par[3] + par[4]*0.001/(pow(logpt,par[5]) + par[6]);
-    return  x->EMF+x->OutF + c2 * c1 * x->HadF; 
+    return  c2 * c1 * x->pt; 
   }
 };
 
