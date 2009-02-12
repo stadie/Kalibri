@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.6 2009/01/22 15:30:30 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.7 2009/02/10 08:47:25 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -129,8 +129,9 @@ double JetWithTowers::Error() const {
   for(TowerCollConstIter i = towers.begin() ; i != towers.end() ; ++i) {
     err = (*i)->projectionToJetAxis() * (*i)->Error();
     var += err * err;
-  }  
-  return sqrt(var);
+  }   
+  double jeterr = Jet::Error();
+  return sqrt(var + jeterr * jeterr);
 }
 
 double JetWithTowers::expectedError(double truth) const
@@ -145,7 +146,8 @@ double JetWithTowers::expectedError(double truth) const
     //assert(err == err);
     var += err * err;
   }
-  return sqrt(var);
+  double jeterr = Jet::expectedError(truth);
+  return sqrt(var + jeterr * jeterr);
 }
   
 void JetWithTowers::addTower(double Et, double EmEt, double HadEt ,

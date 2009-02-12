@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.8 2009/01/22 17:48:10 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.9 2009/02/10 08:47:26 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -179,7 +179,9 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
     assert( temp_derivative2[i->parid] ==  temp_derivative2[i->parid] );
   }
   assert(chi2 == chi2);
-  //std::cout << "Jet Et:" << jet->Et() << "  expected Et:" << expectedEt << " error:" << sqrt(1/err2inv)  
-  //	    << "  true Et:" << truth << "  chi2:" << chi2 << '\n';
+  if(chi2 > 1000) {
+    std::cout << "from invert: Jet Et:" << jet->Et() << "  expected Et:" << expectedEt << " error:" << sqrt(1/err2inv)  
+	      << "  true Et:" << truth << "  chi2:" << chi2 << '\n';
+  }
   return chi2;
 }

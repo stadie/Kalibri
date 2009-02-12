@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.5 2009/02/09 12:23:31 thomsen Exp $
+//    $Id: ZJetReader.cc,v 1.6 2009/02/10 08:57:45 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -158,7 +158,7 @@ TData* ZJetReader::createJetTruthEvent()
       new JetWithTowers(zjet.JetCalEt,em * factor,had * factor,
 			out * factor,zjet.JetCalE,zjet.JetCalEta,
 			zjet.JetCalPhi,TJet::uds,
-			p->jet_parametrization,tower_error_param,
+			p->jet_parametrization,jet_error_param,
 			firstpar,firstpar - p->GetPars(),
 			p->GetNumberOfJetParametersPerBin());
     for(int i = 0; i < zjet.NobjTowCal; ++i) {
@@ -194,11 +194,11 @@ TData* ZJetReader::createJetTruthEvent()
   } else { 
     j = new Jet(zjet.JetCalEt,em * factor,had * factor,out * factor,
 		zjet.JetCalE,zjet.JetCalEta,zjet.JetCalPhi,
-		TJet::uds,p->jet_parametrization,tower_error_param,
+		TJet::uds,p->jet_parametrization,jet_error_param,
 		firstpar,firstpar - p->GetPars(),
 		p->GetNumberOfJetParametersPerBin());
   }
-  JetTruthEvent* jte = new JetTruthEvent(j,zjet.ZPt,1.0);//zjet.EventWeight);
+  JetTruthEvent* jte = new JetTruthEvent(j,zjet.JetGenEt,1.0);//zjet.EventWeight);
   delete [] terr;
   return jte;
 }

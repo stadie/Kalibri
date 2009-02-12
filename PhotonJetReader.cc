@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.9 2009/01/13 17:45:35 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.10 2009/01/16 08:46:40 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -144,6 +144,8 @@ TData* PhotonJetReader::createJetTruthEvent()
       closestTower = n;
     }
   }  //calc jet error
+  if(had/(had + em) < 0.07) { return 0;}
+  if(had/(had + em) > 0.92) { return 0;}
   double factor =  gammajet.JetCalEt /  gammajet.JetCalE;
   tower.pt = gammajet.JetCalEt;
   tower.EMF = em * factor;
@@ -165,7 +167,7 @@ TData* PhotonJetReader::createJetTruthEvent()
       new JetWithTowers(gammajet.JetCalEt,em * factor,had * factor,
 			out * factor,gammajet.JetCalE,gammajet.JetCalEta,
 			gammajet.JetCalPhi,TJet::uds,
-			p->jet_parametrization,tower_error_param,
+			p->jet_parametrization,jet_error_param,
 			firstpar,firstpar - p->GetPars(),
 			p->GetNumberOfJetParametersPerBin());
     for(int i = 0; i < gammajet.NobjTowCal; ++i) {
@@ -183,7 +185,7 @@ TData* PhotonJetReader::createJetTruthEvent()
   else { 
     j = new Jet(gammajet.JetCalEt,em * factor,had * factor,out * factor,
 		gammajet.JetCalE,gammajet.JetCalEta,gammajet.JetCalPhi,
-		TJet::uds,p->jet_parametrization,tower_error_param,
+		TJet::uds,p->jet_parametrization,jet_error_param,
 		firstpar,firstpar - p->GetPars(),
 		p->GetNumberOfJetParametersPerBin());
   }
