@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.27 2009/01/31 12:48:35 stadie Exp $
+// $Id: Parametrization.h,v 1.28 2009/02/10 10:25:56 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -553,8 +553,8 @@ public:
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
     double logpt = log10(pt);
     //double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
-    double c1 = par[0]+logpt*(par[1]*0.01+logpt*0.001*(par[2]+logpt));
-
+    double c1 = par[0]+logpt*(par[1]*0.01+logpt*0.001*par[2]);
+    
     // code from SimpleL3AbsoluteCorrector
     //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
     //double log10pt = log10(pt);
@@ -563,7 +563,10 @@ public:
     pt = (pt < 4.0) ? 4.0 : (pt > 2000.0) ? 2000.0 : pt; 
     logpt = log10(pt);
     //result = par[6] + par[7]/(pow(logpt,par[8]) + par[9]);
-    double c2 = par[3] + par[4]*0.001/(pow(logpt,par[5]) + par[6]);
+    double c2 = par[3] + par[4]/(pow(logpt,par[5]) + par[6]);
+    //std::cout << par[0] << ", " << par[1] << ", " << par[2] << ", " << par[3] << ", " 
+    //	      <<  par[4] << ", " << par[5] << ", " << par[6]
+    //	      << " c1:" << c1 << " c2:" << c2 << " Et:" << x->pt << '\n';
     return  c2 * c1 * x->pt; 
   }
 };
