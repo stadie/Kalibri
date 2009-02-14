@@ -3882,8 +3882,8 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
 
 	  hresults[2]->SetBinContent(i,mean);
 	  hresults[2]->SetBinError(i,meanerror);
-	  hresults[3]->SetBinContent(i,width);
-	  hresults[3]->SetBinError(i, f->GetParError(2));
+	  hresults[3]->SetBinContent(i,width/mean);
+	  hresults[3]->SetBinError(i, f->GetParError(2)/mean);
 	}
       hresults[5]->SetBinContent(i, f->GetChisquare() / f->GetNumberFreeParameters());
       hresults[5]->SetBinError(i, 0.01);
@@ -3904,8 +3904,8 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
       width = htemp->GetRMS();
       hresults[0]->SetBinContent(i,mean);
       hresults[0]->SetBinError(i,meanerror);
-      hresults[1]->SetBinContent(i,width); 
-      hresults[1]->SetBinError(i,htemp->GetRMSError());
+      hresults[1]->SetBinContent(i,width/mean); 
+      hresults[1]->SetBinError(i,htemp->GetRMSError()/mean);
       htemp->GetQuantiles(nq,yq,xq);
       hresults[4]->SetBinContent(i,yq[0]);
       hresults[4]->SetBinError(i,0.0001);
