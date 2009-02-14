@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.41 2009/01/16 08:46:40 stadie Exp $
+// $Id: Parameters.h,v 1.42 2009/01/22 15:29:29 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -119,6 +119,7 @@ public :
     return (x[0]>0. ? 0.033*x[0] + 5.6 + 1.25 * sqrt( x[0])   :   0.033*(-x[0]) + 5.6 + 1.25 * sqrt( -x[0]) ); 
   }
   static double jet_only_jet_error_parametrization_energy(const double *x, const TMeasurement *xorig=0, double errorig=0) {
+    /*
     double pmess;
     if(std::abs(xorig->eta) < 3.0)  
       pmess =  x[0] * xorig->E / (xorig->pt * xorig->pt) * (xorig->HadF + xorig->OutF); //Et->E hadronic
@@ -126,8 +127,11 @@ public :
       pmess =  x[0] * (xorig->E / xorig->pt);  //Et->E 
     //constant before stochastic term is not properly knowen
     return (x[0]>0. ? 0.033*x[0] + 5.6 + 1.0 * sqrt(pmess)  :   0.033*(-x[0]) + 5.6 + 1.0 * sqrt(-pmess) ); 
+    */
+    double E = x[0] * xorig->E/xorig->pt;
+    //double sqE = sqrt(E);
+    return sqrt(1.3*1.3/E + 0.056 * 0.056) * x[0];
   }
-
 
 
   static double dummy_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) {        
