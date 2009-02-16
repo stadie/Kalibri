@@ -38,7 +38,7 @@ using namespace std;
 //---------------------------------------------------------------
 TControlPlots::TControlPlots(const std::string& configfile, const std::vector<TData*> *data, TParameters *par)
   : mData(data), mPar(par), mOutFile(0),makeControlPlotsTowers(0),makeControlPlotsGammaJet(0),
-    makeControlPlotsGammaJet2(0),makeControlPlotsDiJet(0),makeControlPlotsParScan(0)
+    makeControlPlotsGammaJet2(0),makeControlPlotsDiJet(0),makeControlPlotsTop(0),makeControlPlotsParScan(0)
 { 
   mPtRatioName[0] = "p^{jet}_{T}/ E_{T}^{#gamma}";
   mPtRatioName[1] = "p_{T}^{cor. jet}/E_{T}^{#gamma}";
@@ -54,7 +54,6 @@ TControlPlots::TControlPlots(const std::string& configfile, const std::vector<TD
   mControlQuantityName[7] = "quantiles"; 
 
   SetGStyle();
-
 
   ConfigFile config(configfile.c_str());
   
@@ -76,9 +75,10 @@ TControlPlots::TControlPlots(const std::string& configfile, const std::vector<TD
 	}
     }  				 
   makeControlPlotsGammaJet2 = config.read<bool>("create more gamma jet plots",false);
-  makeControlPlotsDiJet = config.read<bool>("create dijet plots",false);
-  makeControlPlotsTowers = config.read<bool>("create tower plots",false);
-  makeControlPlotsParScan = config.read<bool>("create parameter scan plots",false);
+  makeControlPlotsDiJet     = config.read<bool>("create dijet plots"         ,false);
+  makeControlPlotsTop       = config.read<bool>("create top plots"           ,false);
+  makeControlPlotsTowers    = config.read<bool>("create tower plots"         ,false);
+  makeControlPlotsParScan   = config.read<bool>("create parameter scan plots",false);
 }
 
 
@@ -127,6 +127,12 @@ void TControlPlots::MakePlots()
     {
       cout << "Creating di-jet control plots... " << flush;
       MakeControlPlotsDiJet();
+      cout << "ok" << endl;
+    }
+  if( makeControlPlotsTop )
+    {
+      cout << "Creating top control plots... " << flush;
+      MakeControlPlotsTop();
       cout << "ok" << endl;
     }
   if( makeControlPlotsParScan ) 
@@ -2412,7 +2418,7 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
       
 
 
-      //---------------------------------------------------------------
+//---------------------------------------------------------------
 //   Gamma-Jet Control Histograms per tower bin
 //   orig name: gammajet_plots_per_towerbin.ps
 //---------------------------------------------------------------
@@ -2562,7 +2568,6 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
   if( mOutputROOT ) WriteToRootFile( objToBeWritten, "GammaJetPerTowerBin" );
   objToBeDeleted.clear();
 }
-
 
 
 
@@ -2818,8 +2823,9 @@ void TControlPlots::MakeControlPlotsGammaJetSigmas()
 
 
 
-
-
+//---------------------------------------------------------------
+//   Dijet-Jet Control Histograms
+//---------------------------------------------------------------
 void TControlPlots::MakeControlPlotsDiJet()
 {
   std::vector<TObject*> objToBeWritten;
@@ -3567,6 +3573,144 @@ void TControlPlots::MakeControlPlotsDiJet()
     }
   delete leg;
 }
+
+
+
+//---------------------------------------------------------------
+//   Top Control Histograms
+//---------------------------------------------------------------
+void TControlPlots::MakeControlPlotsTop()
+{
+  std::vector<TObject*> objToBeWritten;
+
+  TCanvas * const c = new TCanvas("c","",600,600);
+
+  TPostScript * const ps = new TPostScript("controlplotsTop.ps",111);
+
+  //book hists
+
+  TH1F* scale        = new TH1F("scale"       ,"Scale"       ,200,   0,200);
+  TH1F* weight       = new TH1F("weight"      ,"Weight"      ,200,   0,200);
+  TH1F* truth        = new TH1F("truth"       ,"Truth"       ,200,   0,200);
+  TH1F* pt           = new TH1F("pt"          ,"Pt"          ,200,   0,200);
+  TH1F* eta          = new TH1F("eta"         ,"Eta"         , 80, -4., 4.);
+  TH1F* phi          = new TH1F("phi"         ,"Phi"         , 68,-3.4,3.4);
+  TH1F* invMass      = new TH1F("invM"        ,"InvMass"     ,200,   0,200);
+  TH1F* messTruth    = new TH1F("messTruth"   ,"MessTruth"   ,200,  0., 2.);
+  TH2F* messTruthPt  = new TH2F("messTruthPt" ,"MessTruthPt" ,200,   0,200, 200, 0., 2.);
+  TH2F* messTruthEta = new TH2F("messTruthEta","MessTruthEta", 80, -4., 4., 200, 0., 2.);
+  TH2F* messTruthPhi = new TH2F("messTruthPhi","MessTruthPhi", 68,-3.4,3.4, 200, 0., 2.);
+
+  //loop over all fit-events and fill hists
+  for( std::vector<TData*>::const_iterator i = mData->begin() ; i != mData->end() ; ++i )  
+    {
+
+      TData* data = *i;
+      if(data->GetType() != InvMass) continue;
+
+      TData_InvMass2 * invM2 = (TData_InvMass2*) data;
+
+      std::vector<TMeasurement> jets;
+
+      jets.push_back( (*invM2->GetMess()) );
+      for(unsigned j=0; j<invM2->MultMessSize(); j++)
+	jets.push_back( (*invM2->GetSecondaryJets())[j]->GetMess() );
+
+      scale ->Fill( invM2->GetScale() );
+      weight->Fill( invM2->GetWeight() );
+      truth ->Fill( invM2->GetTruth() );
+
+      invMass  ->Fill( invM2->GetMessCombination() );
+      messTruth->Fill( invM2->GetMessCombination()/invM2->GetTruth() );
+
+      for(unsigned j=0; j<jets.size(); j++) {
+	pt ->Fill( jets[j].pt  );
+	eta->Fill( jets[j].eta );
+	phi->Fill( jets[j].phi );
+	messTruthPt ->Fill( jets[j].pt  , invM2->GetMessCombination()/invM2->GetTruth() );
+	messTruthEta->Fill( jets[j].eta , invM2->GetMessCombination()/invM2->GetTruth() );
+	messTruthPhi->Fill( jets[j].phi , invM2->GetMessCombination()/invM2->GetTruth() );
+      }
+
+    }  //End of loop over all fit-events
+
+  // draw hists
+
+  c->cd(1);
+
+  scale->Draw();
+  objToBeWritten.push_back(scale);
+  c->Draw();
+  ps->NewPage();
+
+  weight->Draw();
+  objToBeWritten.push_back(weight);
+  c->Draw();
+  ps->NewPage();
+
+  truth->Draw();
+  objToBeWritten.push_back(truth);
+  c->Draw();
+  ps->NewPage();
+
+  pt->Draw();
+  objToBeWritten.push_back(pt);
+  c->Draw();
+  ps->NewPage();
+
+  eta->Draw();
+  objToBeWritten.push_back(eta);
+  c->Draw();
+  ps->NewPage();
+
+  phi->Draw();
+  objToBeWritten.push_back(phi);
+  c->Draw();
+  ps->NewPage();
+
+  invMass->Draw();
+  objToBeWritten.push_back(invMass);
+  c->Draw();
+  ps->NewPage();
+
+  messTruth->Draw();
+  objToBeWritten.push_back(messTruth);
+  c->Draw();
+  ps->NewPage();
+
+  messTruthPt->Draw("box");
+  objToBeWritten.push_back(messTruthPt);
+  c->Draw();
+  ps->NewPage();
+
+  messTruthEta->Draw("box");
+  objToBeWritten.push_back(messTruthEta);
+  c->Draw();
+  ps->NewPage();
+
+  messTruthPhi->Draw("box");
+  objToBeWritten.push_back(messTruthPhi);
+  c->Draw();
+
+  // Clean up
+  ps->Close();
+
+  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "Top" );
+
+  delete scale;
+  delete weight;
+  delete truth;
+  delete pt;
+  delete eta;
+  delete phi;
+  delete invMass;
+  delete messTruth;
+  delete messTruthPt;
+  delete messTruthEta;
+  delete messTruthPhi;
+
+}
+
 
 
 //---------------------------------------------------------------

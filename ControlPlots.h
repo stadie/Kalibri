@@ -30,6 +30,7 @@ public:
   void MakeControlPlotsGammaJetPerTowerBin();
   void MakeControlPlotsGammaJetSigmas();
   void MakeControlPlotsParameterScan();
+  void MakeControlPlotsTop();
   void MakeControlPlotsTowers();
  private:  
   void Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
@@ -46,6 +47,7 @@ public:
   bool makeControlPlotsGammaJet;
   bool makeControlPlotsGammaJet2;
   bool makeControlPlotsDiJet;
+  bool makeControlPlotsTop;
   bool makeControlPlotsParScan;
 
   std::set<std::string> mPlottedQuant;
