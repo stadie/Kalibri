@@ -56,7 +56,7 @@ NJetSel.o: NJetSel.cc NJetSel.h
 CalibData.o: CalibData.cc CalibData.h Parametrization.h Parameters.h
 	$(C) $(RCXX) -c CalibData.cc
 
-Parameters.o: Parameters.cc Parameters.h Parametrization.h ConfigFile.h
+Parameters.o: Parameters.cc Parameters.h Parametrization.h Function.h ConfigFile.h
 	$(C) $(RCXX) -c Parameters.cc
 
 ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFile.h
@@ -65,16 +65,16 @@ ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFil
 EventReader.o: EventReader.h EventReader.cc Parameters.h ConfigFile.h 
 	$(C) $(RCXX) -c EventReader.cc
 
-PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h
+PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h Function.h
 	$(C) $(RCXX) -c PhotonJetReader.cc
 
-DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h ToyMC.h Parameters.h ConfigFile.h
+DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h Function.h
 	$(C) $(RCXX) -c DiJetReader.cc
 
 TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c TriJetReader.cc
 
-ZJetReader.o: EventReader.h ZJetReader.h ZJetReader.cc ZJetSel.h Parameters.h ConfigFile.h
+ZJetReader.o: EventReader.h ZJetReader.h ZJetReader.cc ZJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h Function.h
 	$(C) $(RCXX) -c ZJetReader.cc
 
 TopReader.o: EventReader.h TopReader.h TopReader.cc TopSel.h Parameters.h ConfigFile.h
@@ -92,13 +92,13 @@ TrackClusterReader.o: EventReader.h TrackClusterReader.h TrackClusterReader.cc T
 EventProcessor.o: ConfigFile.h Parameters.h EventProcessor.h EventProcessor.cc
 	$(C) $(RCXX) -c EventProcessor.cc
 
-Jet.o: CalibData.h Jet.h Jet.cc Parametrization.h
+Jet.o: CalibData.h Jet.h Jet.cc Parametrization.h Function.h
 	$(C) $(CFLAGS) -c Jet.cc	
 
-JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc
+JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc 
 	$(C) $(CFLAGS) -c JetTruthEvent.cc
 
-JetWithTowers.o: CalibData.h Jet.h JetWithTowers.h JetWithTowers.cc Parametrization.h
+JetWithTowers.o: CalibData.h Jet.h JetWithTowers.h Function.h JetWithTowers.cc Parametrization.h
 	$(C) $(RCXX) -c JetWithTowers.cc
 
 caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h TrackClusterReader.h EventProcessor.h Jet.h

@@ -130,25 +130,30 @@ void TParameters::Init(const ConfigFile& config)
     exit(1);
   }
 
-  start_values = bag_of<double>(config.read<string>("start values","3.8 -0.7  0.04")); 
+  start_values = bag_of<double>(config.read<string>("start values","")); 
   if ( start_values.size()< p->nTowerPars()){
     cerr<< "ERROR: Number of start values and free parameters does not match!"<<endl
         << "       There must be at least " << p->nTowerPars() << " parameters!" << endl;
     exit(2);    
   }
-  jet_start_values = bag_of<double>(config.read<string>("jet start values","3.8 -0.7  0.04")); 
+  jet_start_values = bag_of<double>(config.read<string>("jet start values","")); 
   if ( jet_start_values.size()< p->nJetPars()){
     cerr<< "ERROR: Number of jet start values and free jet parameters does not match!"<<endl
         << "       There must be at least " << p->nJetPars() << " parameters!" << endl;
     exit(3);
   }
-  track_start_values = bag_of<double>(config.read<string>("track start values","1. 1. 1.")); 
+  track_start_values = bag_of<double>(config.read<string>("track start values","")); 
   if ( track_start_values.size()< p->nTrackPars()){
     cerr<< "ERROR: Number of track start values and free track parameters does not match!"<<endl
         << "       There must be at least " << p->nTrackPars() << " parameters!" << endl;
     exit(3);
   }
-  
+  global_jet_start_values = bag_of<double>(config.read<string>("global jet start values","")); 
+  if( global_jet_start_values.size() < p->nGlobalJetPars() ) {
+    cerr<< "ERROR: Number of global jet start values and free global jet parameters does not match!"<<endl
+        << "       There must be at least " << p->nGlobalJetPars() << " parameters!" << endl;
+    exit(3);
+  }
   k = new double[GetNumberOfParameters()];
   e = new double[GetNumberOfParameters()];
 
@@ -173,7 +178,12 @@ void TParameters::Init(const ConfigFile& config)
       e[i] = 0.0;
     }
   }
-
+  for (unsigned int gjp = 0 ; gjp < p->nGlobalJetPars() ; ++gjp){
+    int i = GetNumberOfTowerParameters() + GetNumberOfJetParameters() + GetNumberOfTrackParameters() + gjp;   
+    k[i] = global_jet_start_values[gjp];
+    e[i] = 0.0;
+  }
+  
   // read predefined calibration contants from cfi
   // or txt file depending on the ending of the name
   cout << "Reading calibration from file '" << input_calibration << endl;
@@ -589,15 +599,16 @@ int TParameters::GetPhiBin(int phi_id, int phigranu) const
 void TParameters::Print() const
 {
   std::cout  << p->name() << " resulting in:\n "
-    << eta_granularity << " x " << phi_granularity << " tower bins with " 
-    << GetNumberOfTowerParametersPerBin() << " free parameters each, or " 
-    << GetNumberOfTowerParameters() << " in total, and\n"
-    << eta_granularity_jet << " x " << phi_granularity_jet << " JES bins with " 
-    << GetNumberOfJetParametersPerBin() << " free parameters each, or " 
-    << GetNumberOfJetParameters() << " in total \n"
-    << eta_granularity_track << " x " << phi_granularity_track << " track bins with " 
-    << GetNumberOfTrackParametersPerBin() << " free parameters each, or " 
-    << GetNumberOfTrackParameters() << " in total \n";
+	     << eta_granularity << " x " << phi_granularity << " tower bins with " 
+	     << GetNumberOfTowerParametersPerBin() << " free parameters each, or " 
+	     << GetNumberOfTowerParameters() << " in total, and\n "
+	     << eta_granularity_jet << " x " << phi_granularity_jet << " JES bins with " 
+	     << GetNumberOfJetParametersPerBin() << " free parameters each, or " 
+	     << GetNumberOfJetParameters() << " in total \n "
+	     << eta_granularity_track << " x " << phi_granularity_track << " track bins with " 
+	     << GetNumberOfTrackParametersPerBin() << " free parameters each, or " 
+	     << GetNumberOfTrackParameters() << " in total \n "
+	     << "and " << GetNumberOfGlobalJetParameters() << " global jet parameters\n"; 
 }
 
 void TParameters::Write_CalibrationTxt(const char* name)
@@ -865,3 +876,35 @@ void TParameters::Write_CalibrationCfi(const char* name)
   file << std::endl;
   file.close();
 }
+
+Function TParameters::tower_function(int etaid, int phiid) {
+  int id = GetBin(GetEtaBin(etaid),GetPhiBin(phiid));
+  if (id <0) { 
+    std::cerr<<"WARNING: TParameters::tower_function::index = " << id << endl; 
+    exit(-2);  
+  }
+  return Function(tower_parametrization,GetTowerParRef(id),id,GetNumberOfTowerParametersPerBin());
+}
+
+Function TParameters::jet_function(int etaid, int phiid) {
+  int id = GetJetBin(GetJetEtaBin(etaid),GetJetPhiBin(phiid));
+  if (id <0) { 
+    std::cerr<<"WARNING: TParameters::jet_function::index = " << id << endl; 
+    exit(-2);  
+  }
+  return Function(jet_parametrization,GetJetParRef(id),id,GetNumberOfJetParametersPerBin());
+}
+
+Function TParameters::track_function(int etaid, int phiid) {
+  int id = GetTrackBin(GetTrackEtaBin(etaid),GetTrackPhiBin(phiid));
+  if (id <0) { 
+    std::cerr<<"WARNING: TParameters::track_function::index = " << id << endl; 
+    exit(-2);  
+  }
+  return Function(track_parametrization,GetTrackParRef(id),id,GetNumberOfTrackParametersPerBin());
+}
+
+Function TParameters::global_jet_function() {
+  return Function(global_jet_parametrization,GetGlobalJetParRef(),0,GetNumberOfGlobalJetParameters());
+}
+

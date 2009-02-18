@@ -2,27 +2,27 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.7 2009/01/22 15:30:30 stadie Exp $
+//    $Id: Jet.h,v 1.8 2009/02/10 08:47:25 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
 
 #include"CalibData.h"
+#include "Function.h"
+
 
 class Jet : public TJet
 {
  public:
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
-      double eta,double phi, Flavor flavor,
-      double (*func)(const TMeasurement *x, const double *par),
+      double eta,double phi, Flavor flavor, const Function& f, 
       double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
-      double* firstpar, int id, int npars);
+      const Function& gf);
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
       double eta,double phi, Flavor flavor, double genPt, double ZSPcor,
-      double JPTcor, double L2cor, double L3cor,
-      double (*func)(const TMeasurement *x, const double *par),
-      double (*errfunc)(const double *x, const TMeasurement *xorig, double err),
-      double* firstpar, int id, int npars);
+      double JPTcor, double L2cor, double L3cor, const Function& f, 
+      double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
+      const Function& gf); 
   virtual ~Jet() {};
   double Et()     const {return pt;}
   double EmEt()   const {return EMF;}
@@ -32,12 +32,15 @@ class Jet : public TJet
   double eta()    const {return TMeasurement::eta;}
   double phi()    const {return TMeasurement::phi;}
   Flavor flavor() const {return TJet::flavor;}
-  virtual void ChangeParAddress(double* oldpar, double* newpar) {par += newpar - oldpar;}
+  virtual void ChangeParAddress(double* oldpar, double* newpar) {
+    f.changeParBase(oldpar,newpar);
+    gf.changeParBase(oldpar,newpar);
+  }
   virtual double correctedEt(double Et, bool fast = false) const;
   double expectedEt(double truth, double start, bool fast = false);
   virtual double Error() const {return errf(&(TMeasurement::pt),this,0);}
   virtual double expectedError(double truth) const { return  errf(&truth,this,0);}
-  virtual int nPar() const {return npar;}
+  virtual int nPar() const {return f.nPars() + gf.nPars();}
   struct ParameterVariation {
     int parid;
     double upperEt;
@@ -54,10 +57,8 @@ class Jet : public TJet
 
   static void printInversionStats();
  private:
-  double* par;//address to first parameter for this jet 
-  int npar,parid;
   double error; 
-  double (*f)(const TMeasurement *x, const double *par);
+  Function f,gf;
   double (*errf)(const double *x, const TMeasurement *xorig, double err);
  protected:
   mutable VariationColl varcoll;

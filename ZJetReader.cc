@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.6 2009/02/10 08:57:45 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.7 2009/02/12 19:38:51 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -147,29 +147,22 @@ TData* ZJetReader::createJetTruthEvent()
   tower.E   = zjet.JetCalE;
   double err =  jet_error_param(&tower.pt,&tower,0);
   err2 += err * err;
-  //use first tower, as the towers should be sorted in E or Et
-  int jet_index = p->GetJetBin(p->GetJetEtaBin(zjet.TowId_eta[closestTower]),
-			       p->GetJetPhiBin(zjet.TowId_phi[closestTower]));
-  if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; exit(-2) ; return 0; }
-  double* firstpar = p->GetJetParRef(jet_index); 
   Jet *j;
   if(dataClass == 2) {
     JetWithTowers *jt = 
       new JetWithTowers(zjet.JetCalEt,em * factor,had * factor,
 			out * factor,zjet.JetCalE,zjet.JetCalEta,
 			zjet.JetCalPhi,TJet::uds,
-			p->jet_parametrization,jet_error_param,
-			firstpar,firstpar - p->GetPars(),
-			p->GetNumberOfJetParametersPerBin());
+			p->jet_function(zjet.TowId_eta[closestTower],
+					zjet.TowId_phi[closestTower]),
+			jet_error_param,p->global_jet_function());
     for(int i = 0; i < zjet.NobjTowCal; ++i) {
       double scale = zjet.TowEt[i]/zjet.TowE[i];
-      int id =  p->GetBin(p->GetEtaBin(zjet.TowId_eta[i]),
-			  p->GetPhiBin(zjet.TowId_phi[i]));
       jt->addTower(zjet.TowEt[i],zjet.TowEm[i]*scale,
 		   zjet.TowHad[i]*scale,zjet.TowOE[i]*scale,
-		   zjet.TowE[i],zjet.TowEta[i],zjet.TowPhi[i],
-		   p->tower_parametrization,tower_error_param,p->GetTowerParRef(id),
-		   id,p->GetNumberOfTowerParametersPerBin());
+		   zjet.TowE[i],zjet.TowEta[i],zjet.TowPhi[i], 
+		   p->tower_function(zjet.TowId_eta[i],zjet.TowId_phi[i]),
+		   tower_error_param);
     }
     j = jt;
   } else  if(dataClass == 3) {
@@ -177,26 +170,25 @@ TData* ZJetReader::createJetTruthEvent()
       new JetWithTowers(zjet.JetCalEt,0,(had + em +out) * factor,0,
 			zjet.JetCalE,zjet.JetCalEta,
 			zjet.JetCalPhi,TJet::uds,
-			p->jet_parametrization,tower_error_param,
-			firstpar,firstpar - p->GetPars(),
-			p->GetNumberOfJetParametersPerBin());
+			p->jet_function(zjet.TowId_eta[closestTower],
+					zjet.TowId_phi[closestTower]),
+			jet_error_param,p->global_jet_function());
     for(int i = 0; i < zjet.NobjTowCal; ++i) {
       double scale = zjet.TowEt[i]/zjet.TowE[i];
-      int id =  p->GetBin(p->GetEtaBin(zjet.TowId_eta[i]),
-			  p->GetPhiBin(zjet.TowId_phi[i]));
       jt->addTower(zjet.TowEt[i],0,
 		   (zjet.TowHad[i]+zjet.TowEm[i]+zjet.TowOE[i])*scale,0,
 		   zjet.TowE[i],zjet.TowEta[i],zjet.TowPhi[i],
-		   p->tower_parametrization,tower_error_param,p->GetTowerParRef(id),
-		   id,p->GetNumberOfTowerParametersPerBin());
+		   p->tower_function(zjet.TowId_eta[i],zjet.TowId_phi[i]),
+		   tower_error_param);
     }
     j = jt;
   } else { 
     j = new Jet(zjet.JetCalEt,em * factor,had * factor,out * factor,
-		zjet.JetCalE,zjet.JetCalEta,zjet.JetCalPhi,
-		TJet::uds,p->jet_parametrization,jet_error_param,
-		firstpar,firstpar - p->GetPars(),
-		p->GetNumberOfJetParametersPerBin());
+		zjet.JetCalE,zjet.JetCalEta,zjet.JetCalPhi,TJet::uds,	
+		p->jet_function(zjet.TowId_eta[closestTower],
+				zjet.TowId_phi[closestTower]),
+		jet_error_param,p->global_jet_function());
+
   }
   JetTruthEvent* jte = new JetTruthEvent(j,zjet.JetGenEt,1.0);//zjet.EventWeight);
   delete [] terr;

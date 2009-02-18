@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.10 2009/01/16 08:46:40 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.11 2009/02/12 19:38:51 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -156,38 +156,34 @@ TData* PhotonJetReader::createJetTruthEvent()
   tower.E   = gammajet.JetCalE;
   double err =  jet_error_param(&tower.pt,&tower,0);
   err2 += err * err;
-  //use first tower, as the towers should be sorted in E or Et
-  int jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[closestTower]),
-			       p->GetJetPhiBin(gammajet.TowId_phi[closestTower]));
-  if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; exit(-2) ; return 0; }
-  double* firstpar = p->GetJetParRef(jet_index); 
+  //use first tower, as the towers should be sorted in E or Et 
   Jet *j;
   if(dataClass == 2) {
     JetWithTowers *jt = 
       new JetWithTowers(gammajet.JetCalEt,em * factor,had * factor,
 			out * factor,gammajet.JetCalE,gammajet.JetCalEta,
 			gammajet.JetCalPhi,TJet::uds,
-			p->jet_parametrization,jet_error_param,
-			firstpar,firstpar - p->GetPars(),
-			p->GetNumberOfJetParametersPerBin());
+			p->jet_function(gammajet.TowId_eta[closestTower],
+					gammajet.TowId_phi[closestTower]),
+			jet_error_param,
+			p->global_jet_function()
+			);
     for(int i = 0; i < gammajet.NobjTowCal; ++i) {
       double scale = gammajet.TowEt[i]/gammajet.TowE[i];
-      int id =  p->GetBin(p->GetEtaBin(gammajet.TowId_eta[i]),
-			  p->GetPhiBin(gammajet.TowId_phi[i]));
       jt->addTower(gammajet.TowEt[i],gammajet.TowEm[i]*scale,
 		   gammajet.TowHad[i]*scale,gammajet.TowOE[i]*scale,
 		   gammajet.TowE[i],gammajet.TowEta[i],gammajet.TowPhi[i],
-		   p->tower_parametrization,tower_error_param,p->GetTowerParRef(id),
-		   id,p->GetNumberOfTowerParametersPerBin());
+		   p->tower_function(gammajet.TowId_eta[i],gammajet.TowId_phi[i]),
+		   tower_error_param);
     }
     j = jt;
   }
   else { 
     j = new Jet(gammajet.JetCalEt,em * factor,had * factor,out * factor,
 		gammajet.JetCalE,gammajet.JetCalEta,gammajet.JetCalPhi,
-		TJet::uds,p->jet_parametrization,jet_error_param,
-		firstpar,firstpar - p->GetPars(),
-		p->GetNumberOfJetParametersPerBin());
+		TJet::uds,p->jet_function(gammajet.TowId_eta[closestTower],
+					  gammajet.TowId_phi[closestTower]),
+		jet_error_param,p->global_jet_function());
   }
   JetTruthEvent* jte = new JetTruthEvent(j,gammajet.PhotonEt,gammajet.EventWeight);
   delete [] terr;

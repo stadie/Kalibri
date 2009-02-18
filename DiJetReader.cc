@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.3 2008/12/15 17:26:59 thomsen Exp $
+//    $Id: DiJetReader.cc,v 1.4 2009/01/19 08:40:20 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -358,39 +358,32 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
     tower.E   = njet.JetE[i];
     double err =  jet_error_param(&tower.pt,&tower,0);
     err2 += err * err;
-    //use first tower, as the towers should be sorted in E or Et
-    int jet_index = p->GetJetBin(p->GetJetEtaBin(njet.TowId_eta[closestTower]),
-				 p->GetJetPhiBin(njet.TowId_phi[closestTower]));
-    if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; exit(-2) ; return 0; }
-    double* firstpar = p->GetJetParRef(jet_index); 
     Jet *jet;
     if(dataClass == 12) {
       JetWithTowers *jt = 
 	new JetWithTowers(njet.JetEt[i],em * factor,had * factor,
 			  out * factor,njet.JetE[i],njet.JetEta[i],
 			  njet.JetPhi[i],TJet::uds,
-			  p->jet_parametrization,tower_error_param,
-			  firstpar,firstpar - p->GetPars(),
-			  p->GetNumberOfJetParametersPerBin());
+			  p->jet_function(njet.TowId_eta[closestTower],
+					  njet.TowId_phi[closestTower]),
+			  jet_error_param,p->global_jet_function());
       for(int j = 0 ; j < njet.NobjTow ; ++j) {
 	if (njet.Tow_jetidx[j]!= i) continue;//look for ij-jet's towers
 	double scale = njet.TowEt[j]/njet.TowE[j];
-	int id =  p->GetBin(p->GetEtaBin(njet.TowId_eta[j]),
-			    p->GetPhiBin(njet.TowId_phi[j]));
 	jt->addTower(njet.TowEt[j],njet.TowEm[j]*scale,
 		     njet.TowHad[j]*scale,njet.TowOE[j]*scale,
 		     njet.TowE[j],njet.TowEta[j],njet.TowPhi[j],
-		     p->tower_parametrization,tower_error_param,p->GetTowerParRef(id),
-		     id,p->GetNumberOfTowerParametersPerBin());
+		     p->tower_function(njet.TowId_eta[i],njet.TowId_phi[i]),
+		     tower_error_param);
       }
       jet = jt;
     }
     else { 
       jet = new Jet(njet.JetEt[i],em * factor,had * factor,out * factor,
 		  njet.JetE[i],njet.JetEta[i],njet.JetPhi[i],
-		  TJet::uds,p->jet_parametrization,tower_error_param,
-		  firstpar,firstpar - p->GetPars(),
-		  p->GetNumberOfJetParametersPerBin());
+		    TJet::uds,p->jet_function(njet.TowId_eta[closestTower],
+					      njet.TowId_phi[closestTower]),
+		    jet_error_param,p->global_jet_function());    
     }
     JetTruthEvent* jte = new JetTruthEvent(jet,njet.GenJetEt[i],njet.Weight);
     data.push_back(jte);

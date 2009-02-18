@@ -2,32 +2,34 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.12 2009/02/10 10:25:27 stadie Exp $
+//    $Id: Jet.cc,v 1.13 2009/02/10 11:04:43 stadie Exp $
 //   
 #include "Jet.h"  
 
 
 Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
-	 double eta,double phi, Flavor flavor,
-	 double (*func)(const TMeasurement *x, const double *par),
+	 double eta,double phi, Flavor flavor,   
+	 const Function& f, 
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
-	 double* firstpar, int id, int npars)
-  : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,0.0,1.0,1.0,1.0,1.0), par(firstpar), 
-    npar(npars), parid(id), f(func),errf(errfunc),varcoll(npars)
+	 const Function& gf) 
+  : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,0.0,1.0,1.0,1.0,1.0), 
+    f(f),gf(gf),errf(errfunc)
 {
   temp = *this;
+  varcoll.resize(f.nPars() + gf.nPars());
 }
 
 Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
          double eta,double phi, Flavor flavor, double genPt, double ZSPcor, 
 	 double JPTcor, double L2cor, double L3cor,
-         double (*func)(const TMeasurement *x, const double *par),
-         double (*errfunc)(const double *x, const TMeasurement *xorig, double err),
-         double* firstpar, int id, int npars)
+	 const Function& f, 
+	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
+	 const Function& gf) 
   : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,ZSPcor,JPTcor,L2cor,L3cor), 
-    par(firstpar), npar(npars), parid(id), f(func),errf(errfunc),varcoll(npars)
+    f(f),gf(gf),errf(errfunc)
 {
   temp = *this;
+  varcoll.resize(f.nPars() + gf.nPars());
 }
  
 // varies all parameters for this jet by eps and returns a vector of the
@@ -35,20 +37,35 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
 {
   //start = Et;
-  for(int i = 0 ; i < npar ; ++i) {
-    double orig = par[i];
-    par[i] += eps;
+  for(int i = 0 ; i < f.nPars() ; ++i) {
+    double orig = f.firstPar()[i];
+    f.firstPar()[i] += eps;
     varcoll[i].upperEt = expectedEt(Et,start);
     if( varcoll[i].upperEt < 0) varcoll[i].upperEt = 0.999 * pt;
     varcoll[i].upperError = expectedError(varcoll[i].upperEt);
     //varcoll[i].upperEt = expectedEt(Et,s,false);
-    par[i] = orig - eps;;
+    f.firstPar()[i] = orig - eps;;
     varcoll[i].lowerEt = expectedEt(Et,start); 
     if( varcoll[i].lowerEt < 0) varcoll[i].lowerEt = 1.001 * pt;
     varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     //varcoll[i].lowerEt = expectedEt(Et,s,false);
-    par[i] = orig;
-    varcoll[i].parid = parid + i;
+    f.firstPar()[i] = orig;
+    varcoll[i].parid = f.parIndex() + i;
+  }
+  for(int i = 0 ; i < gf.nPars() ; ++i) {
+    double orig = gf.firstPar()[i];
+    gf.firstPar()[i] += eps;
+    varcoll[f.nPars()+i].upperEt = expectedEt(Et,start);
+    if( varcoll[f.nPars()+i].upperEt < 0) varcoll[i].upperEt = 0.999 * pt;
+    varcoll[f.nPars()+i].upperError = expectedError(varcoll[i].upperEt);
+    //varcoll[f.nPars()+i].upperEt = expectedEt(Et,s,false);
+    gf.firstPar()[i] = orig - eps;;
+    varcoll[f.nPars()+i].lowerEt = expectedEt(Et,start); 
+    if( varcoll[f.nPars()+i].lowerEt < 0) varcoll[i].lowerEt = 1.001 * pt;
+    varcoll[f.nPars()+i].lowerError = expectedError(varcoll[i].lowerEt);
+    //varcoll[f.nPars()+i].lowerEt = expectedEt(Et,s,false);
+    gf.firstPar()[i] = orig;
+    varcoll[f.nPars()+i].parid = gf.parIndex() + i;
   }
   return varcoll;
 }
@@ -57,16 +74,27 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
 // parameter id and the Et for the par + eps and par - eps variation
 const Jet::VariationColl& Jet::varyParsDirectly(double eps)
 {
-  for(int i = 0 ; i < npar ; ++i) {
-    double orig = par[i];
-    par[i] += eps;
+  for(int i = 0 ; i < f.nPars() ; ++i) {
+    double orig = f.firstPar()[i];
+    f.firstPar()[i] += eps;
     varcoll[i].upperEt = correctedEt(pt);
     varcoll[i].upperError = expectedError(varcoll[i].upperEt);
-    par[i] = orig - eps;;
+    f.firstPar()[i] = orig - eps;;
     varcoll[i].lowerEt = correctedEt(pt); 
     varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
-    par[i] = orig;
-    varcoll[i].parid = parid + i;
+    f.firstPar()[i] = orig;
+    varcoll[i].parid = f.parIndex() + i;
+  }  
+  for(int i = 0 ; i < gf.nPars() ; ++i) {
+    double orig = gf.firstPar()[i];
+    gf.firstPar()[i] += eps;
+    varcoll[i].upperEt = correctedEt(pt);
+    varcoll[i].upperError = expectedError(varcoll[i].upperEt);
+    gf.firstPar()[i] = orig - eps;;
+    varcoll[i].lowerEt = correctedEt(pt); 
+    varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
+    gf.firstPar()[i] = orig;
+    varcoll[i].parid = gf.parIndex() + i;
   }
   return varcoll;
 }
@@ -77,7 +105,16 @@ double Jet::correctedEt(double Et, bool fast) const {
   temp.HadF = Et - OutF - EMF;
   if(temp.HadF < 0) temp.HadF = 0;
   temp.E    = TJet::E * Et/pt;
-  double corEt = f(&temp,par);
+  double corEt = f(&temp);
+  if(corEt != corEt) 
+    std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
+  assert(corEt == corEt);
+  if(corEt <  OutF + EMF) corEt = OutF + EMF;
+  temp.pt   =  corEt;  
+  temp.HadF = corEt  - OutF - EMF;
+  if(temp.HadF < 0) temp.HadF = 0;
+  temp.E    = TJet::E * Et/pt;
+  corEt = gf(&temp);
   if(corEt != corEt) 
     std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
   assert(corEt == corEt);
@@ -95,7 +132,7 @@ double Jet::expectedEt(double truth, double start, bool fast)
   // x: expectedEt
   // y: truth -  jet->correctedEt(expectedEt)
   // f: jet->correctedEt(expectedEt)
-  double f1 = correctedEt(x1,fast);
+  double f1 = correctedEt(x1,false);
   if(std::abs(f1 - truth) < eps) {
     return x1;
   }

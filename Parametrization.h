@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.28 2009/02/10 10:25:56 stadie Exp $
+// $Id: Parametrization.h,v 1.29 2009/02/12 19:36:50 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -15,8 +15,10 @@
 class Parametrization 
 {
 public:
-  Parametrization(unsigned int ntowerpars, unsigned int njetpars, unsigned int ntrackpars) : 
-    ntowerpars_(ntowerpars), njetpars_(njetpars), ntrackpars_(ntrackpars) {}
+  Parametrization(unsigned int ntowerpars, unsigned int njetpars, 
+		  unsigned int ntrackpars, unsigned int nglobaljetpars) : 
+    ntowerpars_(ntowerpars), njetpars_(njetpars), ntrackpars_(ntrackpars), 
+    nglobaljetpars_(nglobaljetpars) {}
   virtual ~Parametrization() {}
   // ----------------------------------------------------------------
   //  correctedTowerEt(TMeasurement *const x, double *const par)
@@ -47,15 +49,17 @@ public:
   virtual double correctedJetEt(const TMeasurement *x,const double *par) const = 0; 
   // GetExpectedResponse returns the expected Signal of a Track in the Calorimeter
   virtual double GetExpectedResponse(const TMeasurement *x,const double *par) const { return 0;}
+  virtual double correctedGlobalJetEt(const TMeasurement *x,const double *par) const { return x->pt;} 
   virtual const char * name() const = 0;
 
   unsigned int nTowerPars() const { return ntowerpars_;}
   unsigned int nJetPars() const { return njetpars_;}
   unsigned int nTrackPars() const { return ntrackpars_;}
+  unsigned int nGlobalJetPars() const { return nglobaljetpars_;}
 
 private: 
   Parametrization();
-  unsigned int  ntowerpars_, njetpars_, ntrackpars_;
+  unsigned int  ntowerpars_, njetpars_, ntrackpars_, nglobaljetpars_;
 };
 
 // parametrization of the hadronic response 
@@ -63,7 +67,7 @@ private:
 /// -----------------------------------------------------------------
 class StepParametrization : public Parametrization { 
 public:
-  StepParametrization() : Parametrization(12,0,0) {}
+  StepParametrization() : Parametrization(12,0,0,0) {}
   const char* name() const { return "StepParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -104,7 +108,7 @@ public:
 /// -----------------------------------------------------------------
 class StepParametrizationEnergy : public Parametrization { 
 public:
-  StepParametrizationEnergy() : Parametrization(12,2,0) {}
+  StepParametrizationEnergy() : Parametrization(12,2,0,0) {}
   const char* name() const { return "StepParametrizationEnergy";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -140,7 +144,7 @@ public:
 /// -----------------------------------------------------------------
 class StepEfracParametrization : public Parametrization {
 public:
-  StepEfracParametrization() : Parametrization(36,0,0) {}  //(36,2) {}
+  StepEfracParametrization() : Parametrization(36,0,0,0) {}  //(36,2) {}
   const char* name() const { return "StepEfracParametrization";}
 
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -203,7 +207,7 @@ public:
 /// -----------------------------------------------------------------
 class StepJetParametrization : public Parametrization { 
 public:
-  StepJetParametrization() : Parametrization(0,65,0) {}
+  StepJetParametrization() : Parametrization(0,65,0,0) {}
   const char* name() const { return "StepJetParametrization";}
 
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -294,7 +298,7 @@ public:
 /// -----------------------------------------------------------------
 class MyParametrization: public Parametrization {
  public:
-  MyParametrization() : Parametrization(0,2,0) {}
+  MyParametrization() : Parametrization(0,2,0,0) {}
   const char* name() const { return "MyParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -311,7 +315,7 @@ class MyParametrization: public Parametrization {
 /// -----------------------------------------------------------------
 class JetMETParametrization: public Parametrization {
 public:
-  JetMETParametrization() : Parametrization(3,5,0) {}
+  JetMETParametrization() : Parametrization(3,5,0,0) {}
   const char* name() const { return "JetMETParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -329,7 +333,7 @@ public:
 /// -----------------------------------------------------------------
 class SimpleParametrization: public Parametrization {
 public:
-  SimpleParametrization() : Parametrization(3,3,0) {}
+  SimpleParametrization() : Parametrization(3,3,0,0) {}
   const char* name() const { return "SimpleParametrization";}
 
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -345,7 +349,7 @@ public:
 /// -----------------------------------------------------------------
 class ToyParametrization: public Parametrization {
 public:
-  ToyParametrization() : Parametrization(1,0,0) {}
+  ToyParametrization() : Parametrization(1,0,0,0) {}
   const char* name() const { return "ToyParametrization";}
 
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -359,7 +363,7 @@ public:
 
 class ToyJetParametrization: public Parametrization {
 public:
-  ToyJetParametrization() : Parametrization(0,1,0) {}
+  ToyJetParametrization() : Parametrization(0,1,0,0) {}
   const char* name() const { return "ToyJetParametrization";}
 
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -376,7 +380,7 @@ public:
 /// -----------------------------------------------------------------
 class ToyStepParametrization : public Parametrization { 
 public:
-  ToyStepParametrization() : Parametrization(15,0,0) {}
+  ToyStepParametrization() : Parametrization(15,0,0,0) {}
   const char* name() const { return "ToyStepParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -412,7 +416,7 @@ public:
 /// -----------------------------------------------------------------
 class ToyStepJetParametrization : public Parametrization { 
  public:
-  ToyStepJetParametrization() : Parametrization(0,15,0) {}
+  ToyStepJetParametrization() : Parametrization(0,15,0,0) {}
   const char* name() const { return "ToyStepJetParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -447,7 +451,7 @@ class ToyStepJetParametrization : public Parametrization {
 /// -----------------------------------------------------------------
 class TrackParametrization : public Parametrization {
  public:
-  TrackParametrization() : Parametrization(12,3,6) {}  //(36,3,3) {}
+  TrackParametrization() : Parametrization(12,3,6,0) {}  //(36,3,3,0) {}
   const char* name() const { return "TrackParametrization";}
 
   double correctedTowerEt(const TMeasurement *x,const double *par) const 
@@ -535,7 +539,7 @@ class TrackParametrization : public Parametrization {
 /// -----------------------------------------------------------------
 class L2L3JetParametrization : public Parametrization { 
 public:
-  L2L3JetParametrization() : Parametrization(0,7,0) {}
+  L2L3JetParametrization() : Parametrization(0,7,0,0) {}
   const char* name() const { return "L2L3JetParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {

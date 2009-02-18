@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.7 2009/02/10 08:47:25 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.8 2009/02/12 19:38:51 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -10,12 +10,11 @@
 
 JetWithTowers::JetWithTowers(double Et, double EmEt, double HadEt,
 			     double OutEt, double E,double eta,double phi, 
-			     Flavor flavor,
-			     double (*func)(const TMeasurement *x, const double *par),
+			     Flavor flavor, const Function& func,
 			     double (*errfunc)(const double *x, const TMeasurement *xorig,double err), 
-			     double* firstpar, int id, int npars)
-  : Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,func,errfunc,firstpar,id,npars),
-    njetpars(npars),ntowerpars(0)
+			     const Function& gfunc)
+  : Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,func,errfunc,gfunc),
+    ntowerpars(0)
 {
 }
 
@@ -66,7 +65,7 @@ double JetWithTowers::correctedEt(double Et,bool fast) const
 const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double start)
 {
   Jet::varyPars(eps,Et,start);
-  int i = njetpars;
+  int i = Jet::nPar();
 
   for(std::map<int,double*>::const_iterator iter = towerpars.begin() ;
       iter != towerpars.end() ; ++iter) {
@@ -98,7 +97,7 @@ const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double 
 const Jet::VariationColl& JetWithTowers::varyParsDirectly(double eps)
 {
   Jet::varyParsDirectly(eps);
-  int i = njetpars;
+  int i = Jet::nPar();
 
   for(std::map<int,double*>::const_iterator iter = towerpars.begin() ;
       iter != towerpars.end() ; ++iter) {
@@ -106,8 +105,8 @@ const Jet::VariationColl& JetWithTowers::varyParsDirectly(double eps)
     int id = iter->first;
     //std::cout << p << "," << id << " tower[0]:" << towers[0]->Par() << '\n';
     for(int towpar = 0 ; towpar < ntowerpars ; ++towpar) {
-      //std::cout <<  "truth: " << Et << " alternating par:" << id + towpar << "  = " << p[towpar] 
-      //		<< std::endl;
+      //std::cout <<  " alternating par:" << id + towpar << "  = " << p[towpar] 
+      //		<< ", " << p << std::endl;
       double orig = p[towpar]; 
       p[towpar] += eps;
       varcoll[i].upperEt = correctedEt(pt);
@@ -117,6 +116,7 @@ const Jet::VariationColl& JetWithTowers::varyParsDirectly(double eps)
       varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
       p[towpar] = orig;
       varcoll[i].parid = id + towpar;
+      //std::cout << "up:" << varcoll[i].upperEt << " low:" << varcoll[i].lowerEt << '\n'; 
       ++i;
     }
   }
@@ -152,24 +152,23 @@ double JetWithTowers::expectedError(double truth) const
   
 void JetWithTowers::addTower(double Et, double EmEt, double HadEt ,
 			     double OutEt, double E,double eta,double phi,
-			     double (*func)(const TMeasurement *x, const double *par),
-			     double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
-			     double* firstpar, int id, int npars)
+			     const Function& func,
+			     double (*errfunc)(const double *x, const TMeasurement *xorig, double err))
 {
   TLorentzVector jet, towp;
   jet.SetPtEtaPhiM(TMeasurement::pt,TMeasurement::eta,TMeasurement::phi,0);
   towp.SetPtEtaPhiM(Et,eta,phi,0);
   jet -= towp;
-  double projection = (TMeasurement::pt-jet.Et())/Et;
-  projection = 1.0;
+  double projection = (TMeasurement::pt - jet.Pt())/Et;
+  //projection = 1.0;
   //std::cout << "Jet:" << jet.Eta() << ", " << jet.Phi()
   //	    << " tower:" << towp.Eta() << ", " << towp.Phi() << " :" 
   //	    << projection << std::endl;
-  towers.push_back(new Tower(Et,EmEt,HadEt,OutEt,E,eta,phi,projection,func,
-			     errfunc,firstpar,id,npars)); 
-  ntowerpars = npars;
-  towerpars[id] = firstpar;
-  varcoll.resize(njetpars + towerpars.size() * ntowerpars);
+  towers.push_back(new Tower(Et,EmEt,HadEt,OutEt,E,eta,phi,projection,func,errfunc)); 
+  ntowerpars = func.nPars();
+  //std::cout << func.parIndex() << ", " << func.firstPar() << ", " <<  ntowerpars << '\n';
+  towerpars[func.parIndex()] = func.firstPar();
+  varcoll.resize(Jet::nPar() + towerpars.size() * ntowerpars);
   //std::cout << "tower:" << Et << " projected:" << projection * Et << std::endl;
 }
 
@@ -177,11 +176,10 @@ void JetWithTowers::addTower(double Et, double EmEt, double HadEt ,
 
 JetWithTowers::Tower::Tower(double Et, double EmEt, double HadEt ,
 			    double OutEt, double E,double eta,double phi, 
-			    double alpha,double (*func)(const TMeasurement *x, const double *par),
-			    double (*errfunc)(const double *x, const TMeasurement *xorig, double err),
-			    double* firstpar, int id, int npars)
-  :  TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi), alpha(alpha), par(firstpar), 
-     npar(npars), parid(id), lastCorHadEt(0), fraction(0), f(func), errf(errfunc)
+			    double alpha,const Function& func,
+			    double (*errfunc)(const double *x, const TMeasurement *xorig, double err))
+  :  TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi), alpha(alpha), lastCorHadEt(0),
+     fraction(0), f(func), errf(errfunc)
 { 
   temp = *this;
 }
@@ -192,9 +190,9 @@ double JetWithTowers::Tower::correctedHadEt(double HadEt) const
   temp.pt   = HadEt + OutF + EMF;  
   temp.HadF = HadEt;
   temp.E    = TMeasurement::E * temp.pt/pt;
-  lastCorHadEt = f(&temp,par) - OutF - EMF;
+  lastCorHadEt = f(&temp) - OutF - EMF;
   if(lastCorHadEt < 0) lastCorHadEt = 0;
-  //std::cout << pt << ", " << Et << ":"  << lastCorEt << " par:" << par[0] << std::endl;
+  //std::cout << temp.HadF << ", " << HadEt << ":"  << lastCorHadEt << " par:" << f.firstPar() << std::endl;
   return lastCorHadEt;
 }
   

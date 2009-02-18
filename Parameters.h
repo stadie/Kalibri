@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.42 2009/01/22 15:29:29 stadie Exp $
+// $Id: Parameters.h,v 1.43 2009/02/14 10:27:08 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -17,6 +17,7 @@
 #include <cstring>
 
 #include "Parametrization.h"
+#include "Function.h"
 
 #include "TMath.h"
 
@@ -41,7 +42,9 @@ public :
   int GetNumberOfTowerParameters() const{return p->nTowerPars() *eta_granularity*phi_granularity;}
   int GetNumberOfJetParameters() const{return p->nJetPars()*eta_granularity_jet*phi_granularity_jet;}
   int GetNumberOfTrackParameters() const{return p->nTrackPars()*eta_granularity_track*phi_granularity_track;}
-  int GetNumberOfParameters() const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters() + GetNumberOfTrackParameters();}
+  int GetNumberOfGlobalJetParameters() const{return p->nGlobalJetPars();}
+
+  int GetNumberOfParameters() const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters() + GetNumberOfTrackParameters()+GetNumberOfGlobalJetParameters();}
   int GetNumberOfTowerParametersPerBin() const {return p->nTowerPars();}
   int GetNumberOfJetParametersPerBin() const {return p->nJetPars();}
   int GetNumberOfTrackParametersPerBin() const {return p->nTrackPars();}
@@ -61,6 +64,8 @@ public :
   double* GetTowerParRef(int bin) { return k + bin*p->nTowerPars(); }
   double* GetJetParRef(int jetbin)  { return k + GetNumberOfTowerParameters()+jetbin*p->nJetPars();}
   double* GetTrackParRef(int trackbin)  { return k + GetNumberOfTowerParameters() + GetNumberOfJetParameters() +trackbin*p->nTrackPars();}
+  double* GetGlobalJetParRef()  { return k + GetNumberOfTowerParameters() + GetNumberOfJetParameters() + GetNumberOfTrackParameters();}
+
   void SetErrors(double *ne) { std::memcpy(e,ne,GetNumberOfParameters()*sizeof(double));}  
   void SetParameters(double *np) { std::memcpy(k,np,GetNumberOfParameters()*sizeof(double));}
   void SetFitChi2(double chi2) { fitchi2 = chi2;}
@@ -82,6 +87,10 @@ public :
   static double track_parametrization(const TMeasurement* x, const double* par) {
     return instance->p->GetExpectedResponse(x,par);
   }
+  static double global_jet_parametrization(const TMeasurement* x, const double* par) {
+    return instance->p->correctedGlobalJetEt(x,par);
+  }
+
   static double dummy_parametrization(const TMeasurement* x, const double* par) {
     return x->pt;
   }
@@ -200,6 +209,11 @@ public :
   /// return lower edge of bin in eta
   float EtaLowerEdge(int const etaBin) { return EtaEdge(etaBin, true ); };
 
+  Function tower_function(int etaid, int phiid);
+  Function jet_function(int etaid, int phiid);
+  Function track_function(int etaid, int phiid);
+  Function global_jet_function();
+
 
 protected:
   TParameters(Parametrization* p) 
@@ -222,7 +236,7 @@ private:
   unsigned eta_ntwr_used;
   bool eta_symmetry;
   unsigned int eta_granularity, phi_granularity,eta_granularity_jet, phi_granularity_jet, eta_granularity_track, phi_granularity_track;
-  std::vector<double> start_values, jet_start_values, track_start_values;
+  std::vector<double> start_values, jet_start_values, track_start_values, global_jet_start_values;
   //The parametrization functions:
   Parametrization* p;
 
