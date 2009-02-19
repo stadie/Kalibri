@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.1 2008/12/12 17:06:00 stadie Exp $
+//    $Id: TopReader.cc,v 1.2 2008/12/13 16:43:33 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -115,6 +115,7 @@ int TopReader::readEvents(std::vector<TData*>& data)
 	direction[0] = sin(top.JetPhi[ij]);
 	direction[1] = cos(top.JetPhi[ij]);
 	direction[2] = sqrt(top.JetE[ij]*top.JetE[ij] - top.JetEt[ij]*top.JetEt[ij]);
+	if(top.JetEta[ij]<0) direction[2] *= -1.;
 	TJet* jetp  = new TJet;
 	jetp->pt  = top.JetEt[ij];
 	jetp->eta = top.JetEta[ij];
