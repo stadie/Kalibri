@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.14 2009/02/18 17:51:37 stadie Exp $
+//    $Id: Jet.cc,v 1.15 2009/02/20 08:31:47 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -41,14 +41,12 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
     double orig = f.firstPar()[i];
     f.firstPar()[i] += eps;
     varcoll[i].upperEt = expectedEt(Et,start);
-    assert(varcoll[i].upperEt > 0);
-    //if( varcoll[i].upperEt < 0) varcoll[i].upperEt = Jet::pt;
+    if( varcoll[i].upperEt < 0) return varcoll;
     varcoll[i].upperError = expectedError(varcoll[i].upperEt);
     //varcoll[i].upperEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig - eps;;
     varcoll[i].lowerEt = expectedEt(Et,start); 
-    assert(varcoll[i].lowerEt > 0);
-    //if( varcoll[i].lowerEt < 0) varcoll[i].lowerEt = Jet::pt;
+    if( varcoll[i].lowerEt < 0) return varcoll;
     varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     //varcoll[i].lowerEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig;
@@ -58,14 +56,12 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
     double orig = gf.firstPar()[i];
     gf.firstPar()[i] += eps;
     varcoll[j].upperEt = expectedEt(Et,start);
-    assert( varcoll[j].upperEt > 0);
-    //if( varcoll[j].upperEt < 0) varcoll[j].upperEt = Jet::pt;
+    if( varcoll[j].upperEt < 0) return varcoll;
     varcoll[j].upperError = expectedError(varcoll[j].upperEt);
     //varcoll[j].upperEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig - eps;;
     varcoll[j].lowerEt = expectedEt(Et,start);
-    assert( varcoll[j].lowerEt > 0);
-    //if( varcoll[j].lowerEt < 0) varcoll[j].lowerEt = Jet::pt;
+    if( varcoll[j].lowerEt < 0) return varcoll;
     varcoll[j].lowerError = expectedError(varcoll[j].lowerEt);
     //varcoll[j].lowerEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig;
@@ -318,10 +314,10 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
   return true;
 }
 
-int Jet::ncalls = 0;
-int Jet::ntries = 0;
-int Jet::nfails = 0;
-int Jet::nwarns = 0;
+long long Jet::ncalls = 0;
+long long Jet::ntries = 0;
+long long Jet::nfails = 0;
+long long Jet::nwarns = 0;
 
 void Jet::printInversionStats()
 {

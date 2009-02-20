@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.8 2009/02/10 08:47:25 stadie Exp $
+//    $Id: Jet.h,v 1.9 2009/02/18 17:51:37 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -66,7 +66,7 @@ class Jet : public TJet
   mutable TMeasurement temp;
   bool secant(double truth, double& x1, double& x2, double eps);
   bool falseposition(double truth, double& x1, double& x2, double eps);
-  static int ncalls, ntries, nfails, nwarns;
+  static long long ncalls, ntries, nfails, nwarns;
 };
 
 #endif
