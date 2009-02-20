@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.77 2009/02/01 16:38:19 stadie Exp $
+// $Id: caliber.cc,v 1.78 2009/02/03 18:11:10 stadie Exp $
 //
 //
 // for profiling:
@@ -200,7 +200,7 @@ void TCaliber::Run_Lvmini()
     for(DataIter it = data.begin()  ; it < data.end() ; ++it) {
       (*it)->UpdateError();
     }
-
+    
     // Setting function to scale residuals in chi2 calculation
     cout << loop+1 << flush;
     if(  loop+1 == 1  ) cout << "st" << flush;
@@ -238,15 +238,15 @@ void TCaliber::Run_Lvmini()
     //initialization
     lvmini_( npar, mvec, niter, aux);
     npar=std::abs(npar);
-
+    
     int n = 0;
-
+    
     for(DataIter it = data.begin()  ; it < data.end() ; ++it) {
       t[n]->AddData(*it);
       n++;
       if(n == nthreads) n = 0;
     }
-
+    
     do {
       //set storage for temporary derivative storage to zero
       for (int param=0; param< npar ; ++param) {
@@ -311,8 +311,8 @@ void TCaliber::Run_Lvmini()
       lvmfun_(p->GetPars(),fsum,iret,aux);
       //p->SetParameters(aux + par_index); 
       lvmprt_(2,aux,2); //print out
-    } while (iret<0);
-   
+    } while (iret<0); 
+
     lvmprt_(2,aux,2); //print out
     for (int ithreads=0; ithreads<nthreads; ++ithreads){
       t[ithreads]->ClearData();
@@ -443,6 +443,11 @@ void TCaliber::Init()
       int phiid = fixjetpars[i+1];
       int parid = fixjetpars[i+2];
       int jetbin = p->GetJetBin(p->GetJetEtaBin(etaid),p->GetJetPhiBin(phiid));
+      if(jetbin < 0) {
+	std::cerr<<"WARNING: fixed jet parameter bin index = " << jetbin << endl; 
+	exit(-2);  
+      }
+      std::cout << "jetbin:" << jetbin << '\n';
       fixedpars.push_back(jetbin * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters() + parid);
     }
   } else {
