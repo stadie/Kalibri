@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.13 2009/02/10 11:04:43 stadie Exp $
+//    $Id: Jet.cc,v 1.14 2009/02/18 17:51:37 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -41,31 +41,35 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
     double orig = f.firstPar()[i];
     f.firstPar()[i] += eps;
     varcoll[i].upperEt = expectedEt(Et,start);
-    if( varcoll[i].upperEt < 0) varcoll[i].upperEt = 0.999 * pt;
+    assert(varcoll[i].upperEt > 0);
+    //if( varcoll[i].upperEt < 0) varcoll[i].upperEt = Jet::pt;
     varcoll[i].upperError = expectedError(varcoll[i].upperEt);
     //varcoll[i].upperEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig - eps;;
     varcoll[i].lowerEt = expectedEt(Et,start); 
-    if( varcoll[i].lowerEt < 0) varcoll[i].lowerEt = 1.001 * pt;
+    assert(varcoll[i].lowerEt > 0);
+    //if( varcoll[i].lowerEt < 0) varcoll[i].lowerEt = Jet::pt;
     varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     //varcoll[i].lowerEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig;
     varcoll[i].parid = f.parIndex() + i;
   }
-  for(int i = 0 ; i < gf.nPars() ; ++i) {
+  for(int i = 0,j =  f.nPars(); i < gf.nPars() ; ++i,++j) {
     double orig = gf.firstPar()[i];
     gf.firstPar()[i] += eps;
-    varcoll[f.nPars()+i].upperEt = expectedEt(Et,start);
-    if( varcoll[f.nPars()+i].upperEt < 0) varcoll[i].upperEt = 0.999 * pt;
-    varcoll[f.nPars()+i].upperError = expectedError(varcoll[i].upperEt);
-    //varcoll[f.nPars()+i].upperEt = expectedEt(Et,s,false);
+    varcoll[j].upperEt = expectedEt(Et,start);
+    assert( varcoll[j].upperEt > 0);
+    //if( varcoll[j].upperEt < 0) varcoll[j].upperEt = Jet::pt;
+    varcoll[j].upperError = expectedError(varcoll[j].upperEt);
+    //varcoll[j].upperEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig - eps;;
-    varcoll[f.nPars()+i].lowerEt = expectedEt(Et,start); 
-    if( varcoll[f.nPars()+i].lowerEt < 0) varcoll[i].lowerEt = 1.001 * pt;
-    varcoll[f.nPars()+i].lowerError = expectedError(varcoll[i].lowerEt);
-    //varcoll[f.nPars()+i].lowerEt = expectedEt(Et,s,false);
+    varcoll[j].lowerEt = expectedEt(Et,start);
+    assert( varcoll[j].lowerEt > 0);
+    //if( varcoll[j].lowerEt < 0) varcoll[j].lowerEt = Jet::pt;
+    varcoll[j].lowerError = expectedError(varcoll[j].lowerEt);
+    //varcoll[j].lowerEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig;
-    varcoll[f.nPars()+i].parid = gf.parIndex() + i;
+    varcoll[j].parid = gf.parIndex() + i;
   }
   return varcoll;
 }
@@ -85,16 +89,16 @@ const Jet::VariationColl& Jet::varyParsDirectly(double eps)
     f.firstPar()[i] = orig;
     varcoll[i].parid = f.parIndex() + i;
   }  
-  for(int i = 0 ; i < gf.nPars() ; ++i) {
+  for(int i = 0, j =  f.nPars(); i < gf.nPars() ; ++i,++j) {
     double orig = gf.firstPar()[i];
     gf.firstPar()[i] += eps;
-    varcoll[i].upperEt = correctedEt(pt);
-    varcoll[i].upperError = expectedError(varcoll[i].upperEt);
+    varcoll[j].upperEt = correctedEt(pt);
+    varcoll[j].upperError = expectedError(varcoll[j].upperEt);
     gf.firstPar()[i] = orig - eps;;
-    varcoll[i].lowerEt = correctedEt(pt); 
-    varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
+    varcoll[j].lowerEt = correctedEt(pt); 
+    varcoll[j].lowerError = expectedError(varcoll[j].lowerEt);
     gf.firstPar()[i] = orig;
-    varcoll[i].parid = gf.parIndex() + i;
+    varcoll[j].parid = gf.parIndex() + i;
   }
   return varcoll;
 }
@@ -104,21 +108,23 @@ double Jet::correctedEt(double Et, bool fast) const {
   temp.pt   = Et;  
   temp.HadF = Et - OutF - EMF;
   if(temp.HadF < 0) temp.HadF = 0;
-  temp.E    = TJet::E * Et/pt;
+  temp.E    = TJet::E * Et/TJet::pt;
   double corEt = f(&temp);
   if(corEt != corEt) 
     std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
   assert(corEt == corEt);
-  if(corEt <  OutF + EMF) corEt = OutF + EMF;
-  temp.pt   =  corEt;  
-  temp.HadF = corEt  - OutF - EMF;
+  //if(corEt <  OutF + EMF) corEt = OutF + EMF;
+  if(corEt < 0) corEt = 0;
+  temp.pt   = corEt;  
+  temp.HadF = corEt - OutF - EMF;
   if(temp.HadF < 0) temp.HadF = 0;
-  temp.E    = TJet::E * Et/pt;
+  temp.E    = TJet::E * corEt/TJet::pt;
   corEt = gf(&temp);
   if(corEt != corEt) 
     std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
   assert(corEt == corEt);
-  if(corEt <  OutF + EMF) corEt = OutF + EMF;
+  //if(corEt <  OutF + EMF) corEt = OutF + EMF;
+  if(corEt <= 1.0) corEt = 1.0;
   return corEt;
 }
 
@@ -229,7 +235,10 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
 {
   //x2 is the best estimate!
   const double up = 4 * truth;
-  const double low = 0.2 * truth;
+  const double low = 0.2 * truth; 
+  if(x2 > up ) x2 = up;
+  if(x2 < low) x2 = low;
+ 
   double f1 = correctedEt(x1,true);
   double f2 = correctedEt(x2,true);
   double y2 = truth - f2;

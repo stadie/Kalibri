@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.9 2009/02/10 08:47:26 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.10 2009/02/12 19:38:51 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -51,9 +51,9 @@ double JetTruthEvent::chi2_fast_simple_scaled(double * temp_derivative1,
 					      double const epsilon) const
 {
   double et = jet->correctedEt(jet->Et());
-  double c = (et - jet->EmEt() - jet->OutEt()) / jet->HadEt();
-  if(c == 0) c = 1.0;
-  double err2inv = c * jet->expectedError((truth - jet->EmEt() - jet->OutEt())/c + jet->EmEt() + jet->OutEt() );
+  double c = et / jet->Et();
+  //if(c <= 0) c = 1.0;
+  double err2inv = c * jet->expectedError(truth/c);
   err2inv *= err2inv;
   err2inv = 1/err2inv;
   double chi2 = truth - et;
@@ -66,18 +66,18 @@ double JetTruthEvent::chi2_fast_simple_scaled(double * temp_derivative1,
   const Jet::VariationColl& varcoll = jet->varyParsDirectly(epsilon);
   for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     temp1 = truth - i->lowerEt;
-    c = (i->lowerEt - jet->EmEt() - jet->OutEt()) / jet->HadEt();  
-    if(c == 0) c = 1.0;
-    err2inv = c*jet->expectedError((truth - jet->EmEt() - jet->OutEt())/c + jet->EmEt() + jet->OutEt() );
+    c = i->lowerEt / jet->Et();  
+    //if(c <= 0) c = 1.0;
+    err2inv = c*jet->expectedError(truth/c );
     err2inv *= err2inv;
     err2inv = 1/err2inv;
     temp1 *= temp1 * err2inv;
     temp1 = weight * TData::ScaleResidual(temp1);
     assert(temp1 == temp1);
     temp2 = truth - i->upperEt;
-    c = (i->upperEt - jet->EmEt() - jet->OutEt()) / jet->HadEt();  
-    if(c == 0) c = 1.0;
-    err2inv = c * jet->expectedError((truth - jet->EmEt() - jet->OutEt())/c + jet->EmEt() + jet->OutEt() ); 
+    c = i->upperEt / jet->HadEt();  
+    //if(c <= 0) c = 1.0;
+    err2inv = c * jet->expectedError(truth/c); 
     err2inv *= err2inv;
     err2inv = 1/err2inv;
     temp2 *= temp2 * err2inv;
@@ -132,7 +132,8 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
   //find expected measurement of jet Et 
   double expectedEt = jet->expectedEt(truth,truth);
   if(expectedEt < 0) {
-    return chi2_fast_simple_scaled(temp_derivative1,temp_derivative2,epsilon);
+    return 0;
+    //return chi2_fast_simple_scaled(temp_derivative1,temp_derivative2,epsilon);
   }
   //calculate chi2
   double err2inv = jet->expectedError(expectedEt);
@@ -152,6 +153,12 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
   double temp1,temp2;
   const Jet::VariationColl& varcoll = jet->varyPars(epsilon,truth,expectedEt);
   for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+    if(( i->lowerEt < 0 ) || ( i->upperEt < 0 )) return 0;
+  }
+
+  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+    //std::cout << i->parid << ":" << i->lowerEt << ";" << i->upperEt << " diff:" 
+    //	      << i->upperEt - i->lowerEt << '\n';
     if((std::abs((i->lowerEt - expectedEt)/expectedEt) > 0.01) || 
        (std::abs((i->upperEt - expectedEt)/expectedEt) > 0.01)) {
       std::cout << "strange extrapolation result modifying par:" << i->parid << ":" 
