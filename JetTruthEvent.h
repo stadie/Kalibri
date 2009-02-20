@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.2 2009/01/22 15:30:30 stadie Exp $
+//    $Id: JetTruthEvent.h,v 1.3 2009/01/22 17:48:10 stadie Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -15,7 +15,7 @@
 class JetTruthEvent : public TData
 {
 public:
-  JetTruthEvent(Jet *j, double t, double w) : jet(j),truth(t),weight(w) {}
+  JetTruthEvent(Jet *j, double t, double w) : jet(j),truth(t),weight(w),flagged_bad(false) {}
   ~JetTruthEvent() { delete jet;}
 
   //interface from TData
@@ -37,10 +37,13 @@ public:
   double chi2_fast_invert(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   void UpdateError() {}
 
+  static void printStats();
  private:
   Jet* jet;
   double truth;
   double weight;
+  mutable bool flagged_bad;
+  static int nflagged;
 };
 
 #endif

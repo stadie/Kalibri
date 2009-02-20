@@ -2,11 +2,12 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.10 2009/02/12 19:38:51 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.11 2009/02/20 08:31:47 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
 
+int JetTruthEvent::nflagged = 0;
 
 double JetTruthEvent::chi2() const
 {
@@ -129,9 +130,13 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
 				double * temp_derivative2, 
 				double const epsilon) const
 {
+  if(flagged_bad) return 0;
   //find expected measurement of jet Et 
   double expectedEt = jet->expectedEt(truth,truth);
   if(expectedEt < 0) {
+    flagged_bad = true;
+    ++nflagged;
+    //std::cout << "Inversion failed: flag event bad.\n";
     return 0;
     //return chi2_fast_simple_scaled(temp_derivative1,temp_derivative2,epsilon);
   }
@@ -153,7 +158,11 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
   double temp1,temp2;
   const Jet::VariationColl& varcoll = jet->varyPars(epsilon,truth,expectedEt);
   for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
-    if(( i->lowerEt < 0 ) || ( i->upperEt < 0 )) return 0;
+    if(( i->lowerEt < 0 ) || ( i->upperEt < 0 )) {
+      flagged_bad = true;
+      ++nflagged;
+      return 0;
+    }
   }
 
   for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
@@ -191,4 +200,10 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
 	      << "  true Et:" << truth << "  chi2:" << chi2 << '\n';
   }
   return chi2;
+}
+ 
+
+void JetTruthEvent::printStats()
+{
+  std::cout << "JetTruthEvent: " << nflagged << " events flagged bad.\n";
 }

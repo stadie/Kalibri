@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.78 2009/02/03 18:11:10 stadie Exp $
+// $Id: caliber.cc,v 1.79 2009/02/20 08:32:24 stadie Exp $
 //
 //
 // for profiling:
@@ -36,6 +36,7 @@ boost::mutex io_mutex;
 #include "TowerConstraintsReader.h"
 #include "EventProcessor.h"
 #include "Jet.h"
+#include "JetTruthEvent.h"
 
 using namespace std;
 
@@ -499,6 +500,7 @@ int caliber(int argc, char *argv[])
   Calibration->Init();
   Calibration->Run();  //Run Fit
   Calibration->Done(); //Do Plots & Write Calibration to file
+  JetTruthEvent::printStats();
   Jet::printInversionStats();
   delete Calibration;    
 
