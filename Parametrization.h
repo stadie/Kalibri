@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.29 2009/02/12 19:36:50 stadie Exp $
+// $Id: Parametrization.h,v 1.30 2009/02/18 17:51:38 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -533,13 +533,10 @@ class TrackParametrization : public Parametrization {
     }
 };
 
-
-// parametrization of hadronic response by a step function
-// optimized for ToyMC pt spectrum 0 - 300 GeV
 /// -----------------------------------------------------------------
 class L2L3JetParametrization : public Parametrization { 
 public:
-  L2L3JetParametrization() : Parametrization(0,7,0,0) {}
+  L2L3JetParametrization() : Parametrization(0,3,0,4) {}
   const char* name() const { return "L2L3JetParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -551,28 +548,53 @@ public:
     //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
     //double logpt = log10(pt);
     //double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
-   
-    if(x->pt <= 0) return 0;
-    
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
     double logpt = log10(pt);
     //double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
-    double c1 = par[0]+logpt*(par[1]*0.01+logpt*0.001*par[2]);
-    
+    double c1 = par[0]+logpt*(0.1 * par[1]+logpt * 0.1* par[2]);
+    return c1 * x->pt;
+  }
+  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
     // code from SimpleL3AbsoluteCorrector
     //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
     //double log10pt = log10(pt);
     //double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
-    pt = c1 * x->pt;
-    pt = (pt < 4.0) ? 4.0 : (pt > 2000.0) ? 2000.0 : pt; 
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
+    double logpt = log10(pt);
+    //result = par[6] + par[7]/(pow(logpt,par[8]) + par[9]);
+    double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
+    //std::cout << par[0] << ", " << par[1] << ", " << par[2] << ", " << par[3] << ", " 
+    //	      <<  par[4] << " c2:" << c2 << " Et:" << x->pt << '\n';
+    return  c2 * x->pt; 
+  }
+};
+
+/// -----------------------------------------------------------------
+class L2L3JetParametrization2 : public Parametrization { 
+public:
+  L2L3JetParametrization2() : Parametrization(0,7,0,0) {}
+  const char* name() const { return "L2L3JetParametrization";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+    
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    //code from L2RelativeCorrector
+    //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
+    //double logpt = log10(pt);
+    //double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
+    double logpt = log10(pt);
+    //double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
+    double c1 = par[0]+logpt*(par[1]*0.01+logpt*0.001*par[2]);
+    pt = (c1 * x->pt < 4.0) ? 4.0 : (c1 * x->pt > 2000.0) ? 2000.0 : c1 * x->pt; 
     logpt = log10(pt);
     //result = par[6] + par[7]/(pow(logpt,par[8]) + par[9]);
     double c2 = par[3] + par[4]/(pow(logpt,par[5]) + par[6]);
     //std::cout << par[0] << ", " << par[1] << ", " << par[2] << ", " << par[3] << ", " 
-    //	      <<  par[4] << ", " << par[5] << ", " << par[6]
-    //	      << " c1:" << c1 << " c2:" << c2 << " Et:" << x->pt << '\n';
+    //	      <<  par[4] << " c2:" << c2 << " Et:" << x->pt << '\n';
     return  c2 * c1 * x->pt; 
   }
 };
-
 #endif

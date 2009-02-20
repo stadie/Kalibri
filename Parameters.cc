@@ -42,8 +42,9 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new TrackParametrization();
   } else if(name == "L2L3JetParametrization") {
     return new L2L3JetParametrization();
+  } else if(name == "L2L3JetParametrization2") {
+    return new L2L3JetParametrization2();
   }
-  
   return 0;
 }
 
@@ -454,9 +455,12 @@ void TParameters::Read_CalibrationCfi(std::string const& configFile)
 }
 
 int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) const
-{
-//This function knows the number of wanted eta-bins and returns 
-//in which eta-bin the tower with eta-ID "eta_id" is located.
+{  
+  assert(eta_id != 0);
+  assert(eta_id <= 41);
+  assert(eta_id >= -41);
+  //This function knows the number of wanted eta-bins and returns 
+  //in which eta-bin the tower with eta-ID "eta_id" is located.
   //Case 1 bin:
   //cout << "eta="<<eta_id<<", etagranu:"<< etagranu<< ", eta_ntwr_used:"<< eta_ntwr_used<< "eta sym:"
   //     << etasym << endl;
@@ -593,6 +597,8 @@ int TParameters::GetPhiBin(int phi_id, int phigranu) const
 //This function knows the number of wanted phi-bins and returns 
 //in which phi-bin the tower with eta-ID "phi_id" is located.
 {
+  assert(phi_id >0);
+  assert(phi_id <= 72);
   return (phi_id-1)*phigranu/phi_ntwr;
 }
 
@@ -883,7 +889,8 @@ Function TParameters::tower_function(int etaid, int phiid) {
     std::cerr<<"WARNING: TParameters::tower_function::index = " << id << endl; 
     exit(-2);  
   }
-  return Function(tower_parametrization,GetTowerParRef(id),id,GetNumberOfTowerParametersPerBin());
+  return Function(tower_parametrization,GetTowerParRef(id),id * GetNumberOfTowerParametersPerBin(),
+		  GetNumberOfTowerParametersPerBin());
 }
 
 Function TParameters::jet_function(int etaid, int phiid) {
@@ -892,7 +899,9 @@ Function TParameters::jet_function(int etaid, int phiid) {
     std::cerr<<"WARNING: TParameters::jet_function::index = " << id << endl; 
     exit(-2);  
   }
-  return Function(jet_parametrization,GetJetParRef(id),id,GetNumberOfJetParametersPerBin());
+  return Function(jet_parametrization,GetJetParRef(id),
+		  id * GetNumberOfJetParametersPerBin() + GetNumberOfTowerParameters(),
+		  GetNumberOfJetParametersPerBin());
 }
 
 Function TParameters::track_function(int etaid, int phiid) {
@@ -901,10 +910,14 @@ Function TParameters::track_function(int etaid, int phiid) {
     std::cerr<<"WARNING: TParameters::track_function::index = " << id << endl; 
     exit(-2);  
   }
-  return Function(track_parametrization,GetTrackParRef(id),id,GetNumberOfTrackParametersPerBin());
+  return Function(track_parametrization,GetTrackParRef(id),
+		  id * GetNumberOfTrackParametersPerBin() + GetNumberOfTowerParameters() + GetNumberOfJetParameters(),
+		  GetNumberOfTrackParametersPerBin());
 }
 
 Function TParameters::global_jet_function() {
-  return Function(global_jet_parametrization,GetGlobalJetParRef(),0,GetNumberOfGlobalJetParameters());
+  return Function(global_jet_parametrization,GetGlobalJetParRef(),
+		  GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters(),
+		  GetNumberOfGlobalJetParameters());
 }
 
