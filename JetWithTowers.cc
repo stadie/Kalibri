@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.8 2009/02/12 19:38:51 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.9 2009/02/18 17:51:37 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -12,8 +12,8 @@ JetWithTowers::JetWithTowers(double Et, double EmEt, double HadEt,
 			     double OutEt, double E,double eta,double phi, 
 			     Flavor flavor, const Function& func,
 			     double (*errfunc)(const double *x, const TMeasurement *xorig,double err), 
-			     const Function& gfunc)
-  : Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,func,errfunc,gfunc),
+			     const Function& gfunc,double Etmin)
+  : Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,func,errfunc,gfunc,Etmin),
     ntowerpars(0)
 {
 }
@@ -77,13 +77,11 @@ const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double 
       //		<< std::endl;
       double orig = p[towpar]; 
       p[towpar] += eps;
-      varcoll[i].upperEt = expectedEt(Et,start);
+      varcoll[i].upperEt = expectedEt(Et,start,varcoll[i].upperError);
       if( varcoll[i].upperEt < 0) varcoll[i].upperEt = pt;
-      varcoll[i].upperError = expectedError(varcoll[i].upperEt);
       p[towpar] = orig - eps;
-      varcoll[i].lowerEt = expectedEt(Et,start); 
+      varcoll[i].lowerEt = expectedEt(Et,start,varcoll[i].lowerError); 
       if( varcoll[i].lowerEt < 0) varcoll[i].lowerEt = pt;
-      varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
       p[towpar] = orig;
       varcoll[i].parid = id + towpar;
       ++i;

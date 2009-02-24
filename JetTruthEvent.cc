@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.11 2009/02/20 08:31:47 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.12 2009/02/20 18:01:44 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -132,7 +132,8 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
 {
   if(flagged_bad) return 0;
   //find expected measurement of jet Et 
-  double expectedEt = jet->expectedEt(truth,truth);
+  double err2inv;
+  double expectedEt = jet->expectedEt(truth,truth,err2inv);
   if(expectedEt < 0) {
     flagged_bad = true;
     ++nflagged;
@@ -141,7 +142,7 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
     //return chi2_fast_simple_scaled(temp_derivative1,temp_derivative2,epsilon);
   }
   //calculate chi2
-  double err2inv = jet->expectedError(expectedEt);
+  //double err2inv = jet->expectedError(expectedEt);
   //std::cout << "Jet Et:" << expectedEt << "," << jet->Et() << " error:" << err2inv 
   //  	    << "  true Et:" << truth << '\n';
   err2inv *= err2inv;

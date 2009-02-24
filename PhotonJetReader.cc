@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.11 2009/02/12 19:38:51 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.12 2009/02/18 17:51:37 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -166,7 +166,7 @@ TData* PhotonJetReader::createJetTruthEvent()
 			p->jet_function(gammajet.TowId_eta[closestTower],
 					gammajet.TowId_phi[closestTower]),
 			jet_error_param,
-			p->global_jet_function()
+			p->global_jet_function(),Et_cut_on_jet
 			);
     for(int i = 0; i < gammajet.NobjTowCal; ++i) {
       double scale = gammajet.TowEt[i]/gammajet.TowE[i];
@@ -183,7 +183,7 @@ TData* PhotonJetReader::createJetTruthEvent()
 		gammajet.JetCalE,gammajet.JetCalEta,gammajet.JetCalPhi,
 		TJet::uds,p->jet_function(gammajet.TowId_eta[closestTower],
 					  gammajet.TowId_phi[closestTower]),
-		jet_error_param,p->global_jet_function());
+		jet_error_param,p->global_jet_function(),Et_cut_on_jet);
   }
   JetTruthEvent* jte = new JetTruthEvent(j,gammajet.PhotonEt,gammajet.EventWeight);
   delete [] terr;

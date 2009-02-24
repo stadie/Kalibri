@@ -93,7 +93,7 @@ EventProcessor.o: ConfigFile.h Parameters.h EventProcessor.h EventProcessor.cc
 	$(C) $(RCXX) -c EventProcessor.cc
 
 Jet.o: CalibData.h Jet.h Jet.cc Parametrization.h Function.h
-	$(C) $(CFLAGS) -c Jet.cc	
+	$(C) $(RCXX) -c Jet.cc	
 
 JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc 
 	$(C) $(CFLAGS) -c JetTruthEvent.cc

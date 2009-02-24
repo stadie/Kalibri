@@ -2,18 +2,19 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.15 2009/02/20 08:31:47 stadie Exp $
+//    $Id: Jet.cc,v 1.16 2009/02/20 18:12:33 stadie Exp $
 //   
 #include "Jet.h"  
+#include "TMath.h"
 
 
 Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 double eta,double phi, Flavor flavor,   
 	 const Function& f, 
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
-	 const Function& gf) 
+	 const Function& gf, double Etmin) 
   : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,0.0,1.0,1.0,1.0,1.0), 
-    f(f),gf(gf),errf(errfunc)
+    f(f),gf(gf),errf(errfunc),etmin(Etmin)
 {
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());
@@ -24,9 +25,9 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 double JPTcor, double L2cor, double L3cor,
 	 const Function& f, 
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
-	 const Function& gf) 
+	 const Function& gf, double Etmin) 
   : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,ZSPcor,JPTcor,L2cor,L3cor), 
-    f(f),gf(gf),errf(errfunc)
+    f(f),gf(gf),errf(errfunc),etmin(Etmin)
 {
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());
@@ -40,14 +41,12 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
   for(int i = 0 ; i < f.nPars() ; ++i) {
     double orig = f.firstPar()[i];
     f.firstPar()[i] += eps;
-    varcoll[i].upperEt = expectedEt(Et,start);
+    varcoll[i].upperEt = expectedEt(Et,start,varcoll[i].upperError);
     if( varcoll[i].upperEt < 0) return varcoll;
-    varcoll[i].upperError = expectedError(varcoll[i].upperEt);
     //varcoll[i].upperEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig - eps;;
-    varcoll[i].lowerEt = expectedEt(Et,start); 
+    varcoll[i].lowerEt = expectedEt(Et,start,varcoll[i].lowerError); 
     if( varcoll[i].lowerEt < 0) return varcoll;
-    varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     //varcoll[i].lowerEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig;
     varcoll[i].parid = f.parIndex() + i;
@@ -55,14 +54,12 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
   for(int i = 0,j =  f.nPars(); i < gf.nPars() ; ++i,++j) {
     double orig = gf.firstPar()[i];
     gf.firstPar()[i] += eps;
-    varcoll[j].upperEt = expectedEt(Et,start);
+    varcoll[j].upperEt = expectedEt(Et,start,varcoll[j].upperError);
     if( varcoll[j].upperEt < 0) return varcoll;
-    varcoll[j].upperError = expectedError(varcoll[j].upperEt);
     //varcoll[j].upperEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig - eps;;
-    varcoll[j].lowerEt = expectedEt(Et,start);
+    varcoll[j].lowerEt = expectedEt(Et,start,varcoll[j].lowerError);
     if( varcoll[j].lowerEt < 0) return varcoll;
-    varcoll[j].lowerError = expectedError(varcoll[j].lowerEt);
     //varcoll[j].lowerEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig;
     varcoll[j].parid = gf.parIndex() + i;
@@ -126,7 +123,7 @@ double Jet::correctedEt(double Et, bool fast) const {
 
 double Jet::expectedEt(double truth, double start, bool fast)
 {
-  static const double eps = 1.0e-10;
+  static const double eps = 1.0e-12;
   //const double up = 4 * truth;
   //const double low = 0.2 * truth;
   double x1 = start,x2;
@@ -159,6 +156,26 @@ double Jet::expectedEt(double truth, double start, bool fast)
   assert(std::abs(correctedEt(x2)-truth)/truth < eps); 
   return x2;
 }
+
+double Jet::expectedEt(double truth, double start, double& error,bool fast)
+{
+  //truncate mean for jet min Et-cut
+  double m = expectedEt(truth, start,fast);
+  if(m < 0) return m;
+  double s = expectedError(m);
+  error = s;
+  return m;
+  double x = (etmin - m)/s;
+  double l = TMath::Gaus(x)/(1-0.5*TMath::Erfc(-x/sqrt(2)));
+  //std::cout << "mean: " << m << " error:" << s << std::endl;
+  m += s * l;
+  //std::cout << " alpha:" << x << " lambda:" << l 
+  //	    << " delta:" <<  l*(l - x) << std::endl;
+  //error = s * sqrt( 1 - l*(l - x) );
+  //std::cout << "new mean: " << m << " error:" << error << std::endl;  
+  return m;
+}
+
 
 bool Jet::falseposition(double truth, double& x1, double& x2,double eps)
 {

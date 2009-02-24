@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.9 2009/02/18 17:51:37 stadie Exp $
+//    $Id: Jet.h,v 1.10 2009/02/20 18:12:33 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -17,12 +17,12 @@ class Jet : public TJet
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
       double eta,double phi, Flavor flavor, const Function& f, 
       double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
-      const Function& gf);
+      const Function& gf, double Etmin = 0);
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
       double eta,double phi, Flavor flavor, double genPt, double ZSPcor,
       double JPTcor, double L2cor, double L3cor, const Function& f, 
       double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
-      const Function& gf); 
+      const Function& gf, double Etmin = 0); 
   virtual ~Jet() {};
   double Et()     const {return pt;}
   double EmEt()   const {return EMF;}
@@ -38,6 +38,8 @@ class Jet : public TJet
   }
   virtual double correctedEt(double Et, bool fast = false) const;
   double expectedEt(double truth, double start, bool fast = false);
+  double expectedEt(double truth, double start, double& error,
+		    bool fast = false);
   virtual double Error() const {return errf(&(TMeasurement::pt),this,0);}
   virtual double expectedError(double truth) const { return  errf(&truth,this,0);}
   virtual int nPar() const {return f.nPars() + gf.nPars();}
@@ -60,6 +62,7 @@ class Jet : public TJet
   double error; 
   Function f,gf;
   double (*errf)(const double *x, const TMeasurement *xorig, double err);
+  double etmin;
  protected:
   mutable VariationColl varcoll;
  private:
