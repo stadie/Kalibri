@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.18 2009/01/19 08:40:20 stadie Exp $
+// $Id: ToyMC.cc,v 1.19 2009/01/30 17:05:05 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -278,7 +278,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
 {
   //make tree 
   const int kMaxTower = 1000;
-  int NobjTowCal;
+  int NobjTowCal,NobjTrack = 0;
   float towet[kMaxTower];
   float toweta[kMaxTower];
   float towphi[kMaxTower];
@@ -291,13 +291,46 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   float towoetrue[kMaxTower];
   int towid_phi[kMaxTower];
   int towid_eta[kMaxTower];
-  int towid [kMaxTower];
+  int towid [kMaxTower];  
+  const int kMaxTracks = 1;
+  float trackpt[kMaxTracks];
+  float tracketa[kMaxTracks];
+  float trackphi[kMaxTracks];
+  float trackp[kMaxTracks];
+  float trackdr[kMaxTracks];
+  float tracketaout[kMaxTracks];
+  float trackphiout[kMaxTracks];
+  float trackdrout[kMaxTracks];
+  float trackemc1[kMaxTracks];
+  float trackemc3[kMaxTracks];
+  float trackemc5[kMaxTracks];
+  float trackhac1[kMaxTracks];
+  float trackhac3[kMaxTracks];
+  float trackhac5[kMaxTracks];
+  int tracktowid[kMaxTracks];
+  int tracktowidphi[kMaxTracks];
+  int tracktowideta[kMaxTracks];
+  int trackid[kMaxTracks];
+  int tracknhits[kMaxTracks];
+  int trackQualityL[kMaxTracks];
+  int trackQualityT[kMaxTracks];
+  int trackQualityHP[kMaxTracks];
+  float trackchi2[kMaxTracks];
+  float muDR[kMaxTracks];
+  float muDE[kMaxTracks];
+
   float jcalpt,jcalphi,jcaleta,jcalet,jcale;
+  float jscaleZSP,jscalel2,jscalel3,jscaleJPT;
+
   float jgenpt,jgenphi,jgeneta,jgenet,jgene;
   float mcalmet,mcalphi,mcalsum;
-  float photonpt,photonphi,photoneta,photonet,photone;
+  float photonpt,photonphi,photoneta,photonet,photone; 
+  float gphotonpt,gphotonphi,gphotoneta,gphotonet,gphotone;
+  float nonleadingjetspt = 0.0;
   float weight = 1.0;
-  CalibTree->Branch("NobjTowCal",&NobjTowCal,"NobjTowCal/I");
+  CalibTree->Branch("NobjTowCal",&NobjTowCal,"NobjTowCal/I");   
+  CalibTree->Branch("NobjTrack", &NobjTrack, "NobjTowCal/I");
+  //tower branches
   CalibTree->Branch("TowId",towid,"TowId[NobjTowCal]/I");
   CalibTree->Branch("TowId_phi",towid_phi,"TowId_phi[NobjTowCal]/I");
   CalibTree->Branch("TowId_eta",towid_eta,"TowId_eta[NobjTowCal]/I");
@@ -311,12 +344,45 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("TowEmTrue",towemtrue,"TowEmTrue[NobjTowCal]/F");
   CalibTree->Branch("TowHadTrue",towhdtrue,"TowHadTrue[NobjTowCal]/F");
   CalibTree->Branch("TowOETrue",towoetrue,"TowOETrue[NobjTowCal]/F");
+  //track branches
+  CalibTree->Branch( "NobjTrack",  &NobjTrack, "NobjTrack/I"             );
+  CalibTree->Branch( "TrackTowId", tracktowid, "TrackTowId[NobjTrack]/I" );
+  CalibTree->Branch( "TrackTowIdPhi", tracktowidphi, "TrackTowIdPhi[NobjTrack]/I" );
+  CalibTree->Branch( "TrackTowIdEta", tracktowideta, "TrackTowIdEta[NobjTrack]/I" );
+  CalibTree->Branch( "TrackId",    trackid,    "TrackId[NobjTrack]/I"    );
+  CalibTree->Branch( "TrackNHits", tracknhits, "TrackNHits[NobjTrack]/I" );
+  CalibTree->Branch( "TrackQualityL",trackQualityL,"TrackQualityL[NobjTrack]/O");
+  CalibTree->Branch( "TrackQualityT",trackQualityT,"TrackQualityT[NobjTrack]/O");
+  CalibTree->Branch( "TrackQualityHP",trackQualityHP,"TrackQualityHP[NobjTrack]/O");
+  CalibTree->Branch( "TrackChi2",  trackchi2,  "TrackChi2[NobjTrack]/F"  );
+  CalibTree->Branch( "TrackPt",    trackpt,    "TrackPt[NobjTrack]/F"    );
+  CalibTree->Branch( "TrackEta",   tracketa,   "TrackEta[NobjTrack]/F"   );
+  CalibTree->Branch( "TrackPhi",   trackphi,   "TrackPhi[NobjTrack]/F"   );
+  CalibTree->Branch( "TrackP" ,    trackp,     "TrackP[NobjTrack]/F"     );
+  CalibTree->Branch( "TrackDR" ,   trackdr,    "TrackDR[NobjTrack]/F"    );
+  CalibTree->Branch( "TrackPhiOut",trackphiout,"TrackPhiout[NobjTrack]/F");
+  CalibTree->Branch( "TrackEtaOut",tracketaout,"TrackEtaout[NobjTrack]/F");
+  CalibTree->Branch( "TrackDROut", trackdrout, "TrackDRout[NobjTrack]/F" );
+  CalibTree->Branch( "TrackEMC1",  trackemc1,  "TrackEMC1[NobjTrack]/F"  );
+  CalibTree->Branch( "TrackEMC3",  trackemc3,  "TrackEMC3[NobjTrack]/F"  );
+  CalibTree->Branch( "TrackEMC5",  trackemc5,  "TrackEMC5[NobjTrack]/F"  );
+  CalibTree->Branch( "TrackHAC1",  trackhac1,  "TrackHAC1[NobjTrack]/F"  );
+  CalibTree->Branch( "TrackHAC3",  trackhac3,  "TrackHAC3[NobjTrack]/F"  );
+  CalibTree->Branch( "TrackHAC5",  trackhac5,  "TrackHAC5[NobjTrack]/F"  );
+  CalibTree->Branch( "MuDR", muDR,  "MuDR[NobjTrack]/F"  );
+  CalibTree->Branch( "MuDE", muDE,  "MuDE[NobjTrack]/F"  );
+
   // Jet- MEt-specific branches of the tree
   CalibTree->Branch("JetCalPt",&jcalpt,"JetCalPt/F");
   CalibTree->Branch("JetCalPhi",&jcalphi,"JetCalPhi/F");
   CalibTree->Branch("JetCalEta",&jcaleta,"JetCalEta/F");
   CalibTree->Branch("JetCalEt",&jcalet,"JetCalEt/F");
-  CalibTree->Branch("JetCalE",&jcale,"JetCalE/F");
+  CalibTree->Branch("JetCalE",&jcale,"JetCalE/F");  
+  CalibTree->Branch( "JetCorrZSP",&jscaleZSP, "JetCorrZSP/F" );
+  CalibTree->Branch( "JetCorrL2", &jscalel2,  "JetCorrL2/F" );
+  CalibTree->Branch( "JetCorrL3", &jscalel3,  "JetCorrL3/F" );
+  CalibTree->Branch( "JetCorrJPT",&jscaleJPT, "JetCorrJPT/F" );
+
   // Gen- Jet- branches of the tree
   CalibTree->Branch("JetGenPt",&jgenpt,"JetGenPt/F");
   CalibTree->Branch("JetGenPhi",&jgenphi,"JetGenPhi/F");
@@ -332,8 +398,18 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("PhotonPhi",&photonphi,"PhotonPhi/F");
   CalibTree->Branch("PhotonEta",&photoneta,"PhotonEta/F");
   CalibTree->Branch("PhotonEt",&photonet,"PhtonEt/F");
-  CalibTree->Branch("PhotonE",&photone,"PhotonE/F");
-  CalibTree->Branch("Weight",&weight,"Weight/F");
+  CalibTree->Branch("PhotonE",&photone,"PhotonE/F");  
+  // GenPhotons branches
+  CalibTree->Branch( "GenPhotonPt",  &gphotonpt,  "GenPhotonPt/F"  );
+  CalibTree->Branch( "GenPhotonPhi", &gphotonphi, "GenPhotonPhi/F" );
+  CalibTree->Branch( "GenPhotonEta", &gphotoneta, "GenPhotonEta/F" );
+  CalibTree->Branch( "GenPhotonEt",  &gphotonet,  "GenPhotonEt/F"   );
+  CalibTree->Branch( "GenPhotonE",   &gphotone,   "GenPhotonE/F"   );
+  // NonLeadingJetPt branch
+  CalibTree->Branch( "NonLeadingJetPt", &nonleadingjetspt,   "NonLeadingJetPt/F"   );
+
+
+  CalibTree->Branch("EventWeight",&weight,"EventWeight/F");
   
 
   TLorentzVector jet,genjet, tower;
@@ -344,6 +420,11 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     photonphi = mPinput.Phi();
     photonet = mPinput.Pt();
     photone = mPinput.E();
+    gphotonpt = photonpt;
+    gphotoneta = photoneta;
+    gphotonphi = photonphi;
+    gphotonet = photonet;
+    gphotone = photone;
     //jgenpt = mRandom->Gaus(photonpt,0.04 * photonpt);
     jgenpt = photonet;
     jgeneta = mRandom->Gaus(photoneta,1.0);
