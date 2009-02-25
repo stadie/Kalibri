@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.h,v 1.8 2009/02/18 17:51:38 stadie Exp $
+//    $Id: JetWithTowers.h,v 1.9 2009/02/24 22:13:52 stadie Exp $
 //   
 #ifndef JETWITHTOWERS_H
 #define JETWITHTOWERS_H
@@ -39,6 +39,7 @@ class JetWithTowers : public Jet
     Tower(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	  double eta,double phi, double alpha, const Function& func,
 	  double (*errfunc)(const double *x, const TMeasurement *xorig, double err));
+    virtual ~Tower() {}
     double Et()     const {return pt;}
     double EmEt()   const {return EMF;}
     double HadEt()  const {return HadF;}

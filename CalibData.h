@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.57 2009/01/16 08:46:40 stadie Exp $
+// $Id: CalibData.h,v 1.58 2009/02/09 15:54:19 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -29,6 +29,7 @@ public:
     : pt(Et),EMF(EmEt),HadF(HadEt),OutF(OutEt),E(E),eta(eta),phi(phi) {}
   TMeasurement(TMeasurement* m):pt(m->pt),EMF(m->EMF),HadF(m->HadF),OutF(m->OutF),
                                 E(m->E),eta(m->eta),phi(m->phi){};
+  virtual ~TMeasurement() {};
   //all common variables
   double pt;
   double EMF;
@@ -45,6 +46,7 @@ public:
   TTower():TMeasurement(){};
   TTower(TMeasurement* t):TMeasurement(t){};
   TTower(TTower* t):TMeasurement(t){/*further initialization*/};
+  virtual ~TTower() {}
 //variables specific only to towers (i.e. # EM cells)
 };
 
@@ -58,6 +60,7 @@ public:
     : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi),flavor(flavor), genPt(genPt) {};
   TJet(TMeasurement* j):TMeasurement(j){};
   TJet(TJet* j):TMeasurement(j){/*further initialization*/};
+  virtual ~TJet() {}
 //variables specific only to jets (i.e. mass)
   Flavor flavor;
   double genPt;
@@ -73,6 +76,7 @@ public:
   TTrack():TMeasurement(){};
   TTrack(TMeasurement* tr):TMeasurement(tr){};
   TTrack(TTrack* tr):TMeasurement(tr){/*further initialization*/};
+  virtual ~TTrack() {}
 //variables specific only to Tracks
   int TrackId;
   int TowerId;

@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.3 2009/01/22 17:48:10 stadie Exp $
+//    $Id: JetTruthEvent.h,v 1.4 2009/02/20 18:01:44 stadie Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -16,7 +16,7 @@ class JetTruthEvent : public TData
 {
 public:
   JetTruthEvent(Jet *j, double t, double w) : jet(j),truth(t),weight(w),flagged_bad(false) {}
-  ~JetTruthEvent() { delete jet;}
+  ~JetTruthEvent();
 
   //interface from TData
   TMeasurement *GetMess() const {return jet;}
