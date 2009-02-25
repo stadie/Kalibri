@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.79 2009/02/20 08:32:24 stadie Exp $
+// $Id: caliber.cc,v 1.80 2009/02/20 18:01:45 stadie Exp $
 //
 //
 // for profiling:
@@ -73,8 +73,6 @@ private:
   double * td1;
   double * td2;
   double *parorig, *mypar;
-  //double *temp_derivative1;
-  //double *temp_derivative2;
   double epsilon;
   std::vector<TData*> data;
   bool data_changed;
@@ -109,7 +107,7 @@ private:
   boost::thread *thread;
   friend class calc_chi2_on;
 public:
-  ComputeThread(int npar,double *par, double *temp_derivative1, double *temp_derivative2, double epsilon) 
+  ComputeThread(int npar,double *par, double epsilon) 
     : npar(npar), td1(new double[npar]), td2(new double[npar]), parorig(par),
       mypar(new double[npar]), epsilon(epsilon), data_changed(false) {
     //std::cout << "threads par array:" << mypar << '\n';
@@ -186,7 +184,7 @@ void TCaliber::Run_Lvmini()
   
   ComputeThread *t[nthreads];
   for (int ithreads=0; ithreads<nthreads; ++ithreads){
-    t[ithreads] = new ComputeThread(npar, p->GetPars(),temp_derivative1,temp_derivative2,deriv_step);
+    t[ithreads] = new ComputeThread(npar, p->GetPars(),deriv_step);
   }
 
   lvmeps_(eps,wlf1,wlf2);
@@ -342,7 +340,7 @@ void TCaliber::Run_Lvmini()
   for (int ithreads=0; ithreads<nthreads; ++ithreads){
     delete t[ithreads];
   }
-  delete [] aux;
+  delete [] aux;  
   delete [] temp_derivative1;
   delete [] temp_derivative2;
 }
@@ -443,12 +441,13 @@ void TCaliber::Init()
       int etaid = fixjetpars[i];
       int phiid = fixjetpars[i+1];
       int parid = fixjetpars[i+2];
+      if(parid >= p->GetNumberOfJetParametersPerBin()) continue;
       int jetbin = p->GetJetBin(p->GetJetEtaBin(etaid),p->GetJetPhiBin(phiid));
       if(jetbin < 0) {
 	std::cerr<<"WARNING: fixed jet parameter bin index = " << jetbin << endl; 
 	exit(-2);  
       }
-      std::cout << "jetbin:" << jetbin << '\n';
+      //std::cout << "jetbin:" << jetbin << '\n';
       fixedpars.push_back(jetbin * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters() + parid);
     }
   } else {
