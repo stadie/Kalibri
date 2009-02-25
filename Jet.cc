@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.16 2009/02/20 18:12:33 stadie Exp $
+//    $Id: Jet.cc,v 1.17 2009/02/24 22:13:52 stadie Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -163,16 +163,19 @@ double Jet::expectedEt(double truth, double start, double& error,bool fast)
   double m = expectedEt(truth, start,fast);
   if(m < 0) return m;
   double s = expectedError(m);
-  error = s;
-  return m;
   double x = (etmin - m)/s;
-  double l = TMath::Gaus(x)/(1-0.5*TMath::Erfc(-x/sqrt(2)));
-  //std::cout << "mean: " << m << " error:" << s << std::endl;
-  m += s * l;
-  //std::cout << " alpha:" << x << " lambda:" << l 
-  //	    << " delta:" <<  l*(l - x) << std::endl;
-  //error = s * sqrt( 1 - l*(l - x) );
-  //std::cout << "new mean: " << m << " error:" << error << std::endl;  
+  if(x < -10) {
+    error = s;
+    return m;
+  }
+  //truncated mean:
+  //m + (E^(-((a - m)^2/(2 s^2))) Sqrt[2/\[Pi]] s)/Erfc[(a - m)/(Sq[2] s)]
+  //truncated RMS
+  //m^2 + s^2 + (E^(-((a - m)^2/(2 s^2))) (a + m) Sqrt[2/\[Pi]] s)/Erfc[(a - m)/(Sqrt[2] s)]
+  double l = exp(-x*x/2) * sqrt(2/M_PI) * s/TMath::Erfc(x/sqrt(2));
+  m += l;
+  s =  expectedError(m);
+  error = sqrt(l*(etmin - m) + s * s);
   return m;
 }
 
