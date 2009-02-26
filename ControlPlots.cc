@@ -29,7 +29,7 @@ using namespace std;
 //  Objects of 'TControlPlots' created by this constructor
 //  can create control plots via the 'MakeControlPlots...()'
 //  methods from several TData objects. The output is in
-//  .ps or both ps. and .root format.
+//  .ps or both .ps and .root format.
 //  
 //  Parameters:
 //  data           TData objects to create controlplots from
@@ -3589,32 +3589,35 @@ void TControlPlots::MakeControlPlotsTop()
 
   TPostScript * const ps = new TPostScript("controlplotsTop.ps",111);
 
+  bool printEps = false;  // just as a temporary solution. don't we want to support this in general?
+
   // book hists
 
-  TH1F* scale        = new TH1F("scale"       , "Scale"       , 200,    0, 200);
-  TH1F* weight       = new TH1F("weight"      , "Weight"      , 200,    0, 200);
-  TH1F* truth        = new TH1F("truth"       , "Truth"       , 200,    0, 200);
-  TH1F* pt           = new TH1F("pt"          , "Pt"          , 200,    0, 200);
-  TH1F* eta          = new TH1F("eta"         , "Eta"         ,  80,  -4.,  4.);
-  TH1F* phi          = new TH1F("phi"         , "Phi"         ,  68, -3.4, 3.4);
+  TH1F* scale  = new TH1F("scale" , "Scale" , 200,    0, 200);
+  TH1F* weight = new TH1F("weight", "Weight", 200,    0, 200);
+  TH1F* truth  = new TH1F("truth" , "Truth" , 200,    0, 200);
+  TH1F* pt     = new TH1F("pt"    , "Pt"    , 200,    0, 200);
+  TH1F* eta    = new TH1F("eta"   , "Eta"   ,  80,  -4.,  4.);
+  TH1F* phi    = new TH1F("phi"   , "Phi"   ,  68, -3.4, 3.4);
+
+  TH1F* meanPt  = new TH1F("meanPt" , "MeanPt" , 200,    0, 200);
+  TH1F* meanEta = new TH1F("meanEta", "MeanEta",  80,  -4.,  4.);
 
   TH1F* invMass         [2];
   TH1F* messTruth       [2];
   TProfile* messTruthPt [2];
   TProfile* messTruthEta[2];
-  TProfile* messTruthPhi[2];
   TString suffix[2] = { "Before", "After" };
   for(unsigned a=0; a<2; a++){
     invMass     [a] = new TH1F("invMass"  +suffix[a], "",  40, 0., 200.);
-    messTruth   [a] = new TH1F("messTruth"+suffix[a], "", 200, 0.,   2.);
-    messTruthPt [a] = new TProfile("messTruthPt" +suffix[a], "", 200,    0, 200);
-    messTruthEta[a] = new TProfile("messTruthEta"+suffix[a], "",  80,  -4.,  4.);
-    messTruthPhi[a] = new TProfile("messTruthPhi"+suffix[a], "",  68, -3.4, 3.4);    
+    messTruth   [a] = new TH1F("messTruth"+suffix[a], "",  40, 0.,   2.);
+    messTruthPt [a] = new TProfile("messTruthPt" +suffix[a], "", 70,    0, 140);
+    messTruthEta[a] = new TProfile("messTruthEta"+suffix[a], "", 80,  -4.,  4.);
   }
 
-  TProfile* corrFacPt    = new TProfile("corrFacPt" , "corrFacPt" , 200,    0, 200);
-  TProfile* corrFacEta   = new TProfile("corrFacEta", "corrFacEta",  80,  -4.,  4.);
-  TProfile* corrFacPhi   = new TProfile("corrFacPhi", "corrFacPhi",  68, -3.4, 3.4);
+  TProfile* responsePt  = new TProfile("responsePt" , "", 70,    0, 140);
+  TProfile* responseEta = new TProfile("responseEta", "", 80,  -4.,  4.);
+  TProfile* responsePhi = new TProfile("responsePhi", "", 68, -3.4, 3.4);
 
   //loop over all fit-events and fill hists
 
@@ -3649,29 +3652,39 @@ void TControlPlots::MakeControlPlotsTop()
       invMass  [1]->Fill( invM2->GetMessCombination() );
       messTruth[1]->Fill( invM2->GetMessCombination()/invM2->GetTruth() );
 
+      double mPt  = 0.;
+      double mEta = 0.;
+
       for(unsigned j=0; j<jets.size(); j++) {
 	pt ->Fill( jets[j].pt  );
 	eta->Fill( jets[j].eta );
 	phi->Fill( jets[j].phi );
 
-	messTruthPt [0]->Fill( jets[j].pt  , combined4Vec.M()/invM2->GetTruth() );
-	messTruthEta[0]->Fill( jets[j].eta , combined4Vec.M()/invM2->GetTruth() );
-	messTruthPhi[0]->Fill( jets[j].phi , combined4Vec.M()/invM2->GetTruth() );
+	mPt  += jets[j].pt;
+	mEta += jets[j].eta;
 
-	messTruthPt [1]->Fill( jets[j].pt  , invM2->GetMessCombination()/invM2->GetTruth() );
-	messTruthEta[1]->Fill( jets[j].eta , invM2->GetMessCombination()/invM2->GetTruth() );
-	messTruthPhi[1]->Fill( jets[j].phi , invM2->GetMessCombination()/invM2->GetTruth() );
-
-	double corrFac;
-	if(j==0) corrFac = invM2->GetParametrizedMess()/invM2->GetMess()->pt;
+	double response;
+	if(j==0) response = invM2->GetMess()->pt / invM2->GetParametrizedMess();
 	else {
 	  const TData_MessMess* mm = (*invM2->GetSecondaryJets())[j-1];
-	  corrFac = mm->GetParametrizedMess()/mm->GetMess()->pt;
+	  response = mm->GetMess()->pt / mm->GetParametrizedMess();
 	}
-	corrFacPt   ->Fill( jets[j].pt  , corrFac );
-	corrFacEta  ->Fill( jets[j].eta , corrFac );
-	corrFacPhi  ->Fill( jets[j].phi , corrFac );
+	responsePt ->Fill( jets[j].pt  , response );
+	responseEta->Fill( jets[j].eta , response );
+	responsePhi->Fill( jets[j].phi , response );
       }
+
+      mPt  /= jets.size();
+      mEta /= jets.size();
+
+      meanPt ->Fill( mPt  );
+      meanEta->Fill( mEta );
+
+      messTruthPt [0]->Fill( mPt  , combined4Vec.M()/invM2->GetTruth() );
+      messTruthEta[0]->Fill( mEta , combined4Vec.M()/invM2->GetTruth() );
+      
+      messTruthPt [1]->Fill( mPt  , invM2->GetMessCombination()/invM2->GetTruth() );
+      messTruthEta[1]->Fill( mEta , invM2->GetMessCombination()/invM2->GetTruth() );
 
     }  //End of loop over all fit-events
 
@@ -3681,51 +3694,70 @@ void TControlPlots::MakeControlPlotsTop()
   int markerStyle[2] = { 22, 20 };
 
   for(unsigned a=0; a<2; a++){
+    invMass     [a]->Fit( "gaus", "Q" );
+    messTruth   [a]->Fit( "gaus", "Q" );
+
+    invMass     [a]->SetLineColor( markerColor[a] );
+    messTruth   [a]->SetLineColor( markerColor[a] );
+
+    invMass     [a]->GetFunction("gaus")->SetLineColor( markerColor[a] );
+    messTruth   [a]->GetFunction("gaus")->SetLineColor( markerColor[a] );
+
+    invMass     [a]->GetFunction("gaus")->SetLineWidth( 1 );
+    messTruth   [a]->GetFunction("gaus")->SetLineWidth( 1 );
+
     invMass     [a]->SetMarkerColor( markerColor[a] );
     messTruth   [a]->SetMarkerColor( markerColor[a] );
     messTruthPt [a]->SetMarkerColor( markerColor[a] );
     messTruthEta[a]->SetMarkerColor( markerColor[a] );
-    messTruthPhi[a]->SetMarkerColor( markerColor[a] );
 
     invMass     [a]->SetMarkerStyle( markerStyle[a] );
     messTruth   [a]->SetMarkerStyle( markerStyle[a] );
     messTruthPt [a]->SetMarkerStyle( markerStyle[a] );
     messTruthEta[a]->SetMarkerStyle( markerStyle[a] );
-    messTruthPhi[a]->SetMarkerStyle( markerStyle[a] );
 
     invMass     [a]->SetStats( 0 );
     messTruth   [a]->SetStats( 0 );
     messTruthPt [a]->SetStats( 0 );
     messTruthEta[a]->SetStats( 0 );
-    messTruthPhi[a]->SetStats( 0 );
+    responsePt     ->SetStats( 0 );
+    responseEta    ->SetStats( 0 );
+    responsePhi    ->SetStats( 0 );
     
     invMass     [a]->SetXTitle( "invariant mass [GeV]" );
-    messTruth   [a]->SetXTitle( "mess/truth" );
-    messTruthPt [a]->SetXTitle( "p_{T} [GeV]" );
-    messTruthEta[a]->SetXTitle( "#eta" );
-    messTruthPhi[a]->SetXTitle( "#phi" );
+    messTruth   [a]->SetXTitle( "measurement/truth" );
+    messTruthPt [a]->SetXTitle( "p_{T}' [GeV]" );
+    messTruthEta[a]->SetXTitle( "#eta'" );
+    responsePt     ->SetXTitle( "p_{T} [GeV]" );
+    responseEta    ->SetXTitle( "#eta" );
+    responsePhi    ->SetXTitle( "#phi" );
 
     invMass     [a]->SetYTitle( "events" );
     messTruth   [a]->SetYTitle( "events" );
-    messTruthPt [a]->SetYTitle( "mess/truth" );
-    messTruthEta[a]->SetYTitle( "mess/truth" );
-    messTruthPhi[a]->SetYTitle( "mess/truth" );
+    messTruthPt [a]->SetYTitle( "measurement/truth" );
+    messTruthEta[a]->SetYTitle( "measurement/truth" );
+    responsePt     ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
+    responseEta    ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
+    responsePhi    ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
 
     messTruthPt [a]->SetMinimum( 0.2 );
     messTruthEta[a]->SetMinimum( 0.2 );
-    messTruthPhi[a]->SetMinimum( 0.2 );
 
     messTruthPt [a]->SetMaximum( 1.8 );
     messTruthEta[a]->SetMaximum( 1.8 );
-    messTruthPhi[a]->SetMaximum( 1.8 );
   }
 
   // create a legend
 
-  TLegend* leg = new TLegend(0.7,0.75,0.91,0.85);
-  leg->SetFillColor(0);
-  leg->AddEntry(invMass[0],"before fit");
-  leg->AddEntry(invMass[1],"after fit");
+  TLegend* legend = new TLegend(0.7,0.75,0.91,0.85);
+  legend->SetFillColor(0);
+  legend->AddEntry(invMass[0],"before fit");
+  legend->AddEntry(invMass[1],"after fit");
+
+  // create a line
+
+  TLine* line = new TLine();
+  line->SetLineStyle(2);
 
   // draw hists
 
@@ -3733,68 +3765,87 @@ void TControlPlots::MakeControlPlotsTop()
 
   scale->Draw();
   c->Draw();
+  if(printEps) c->Print("top_scale.eps");
   ps->NewPage();
 
   weight->Draw();
   c->Draw();
+  if(printEps) c->Print("top_weight.eps");
   ps->NewPage();
 
   truth->Draw();
   c->Draw();
+  if(printEps) c->Print("top_truth.eps");
   ps->NewPage();
 
   pt->Draw();
   c->Draw();
+  if(printEps) c->Print("top_pt.eps");
   ps->NewPage();
 
   eta->Draw();
   c->Draw();
+  if(printEps) c->Print("top_eta.eps");
   ps->NewPage();
 
   phi->Draw();
   c->Draw();
+  if(printEps) c->Print("top_phi.eps");
+  ps->NewPage();
+
+  meanPt->Draw();
+  c->Draw();
+  if(printEps) c->Print("top_meanPt.eps");
+  ps->NewPage();
+
+  meanEta->Draw();
+  c->Draw();
+  if(printEps) c->Print("top_meanEta.eps");
   ps->NewPage();
 
   invMass[0]->Draw("p");
   invMass[1]->Draw("p same");
-  leg->Draw("same");
+  legend->Draw("same");
   c->Draw();
+  if(printEps) c->Print("top_invMass.eps");
   ps->NewPage();
 
   messTruth[0]->Draw("p");
   messTruth[1]->Draw("p same");
-  leg->Draw("same");
+  legend->Draw("same");
   c->Draw();
+  if(printEps) c->Print("top_messTruth.eps");
   ps->NewPage();
 
   messTruthPt[0]->Draw("p");
   messTruthPt[1]->Draw("p same");
-  leg->Draw("same");
+  legend->Draw("same");
+  line->DrawLine(messTruthPt[0]->GetXaxis()->GetXmin(), 1., messTruthPt[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
+  if(printEps) c->Print("top_messTruthPt.eps");
   ps->NewPage();
 
   messTruthEta[0]->Draw("p");
   messTruthEta[1]->Draw("p same");
-  leg->Draw("same");
+  legend->Draw("same");
+  line->DrawLine(messTruthEta[0]->GetXaxis()->GetXmin(), 1., messTruthEta[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
+  if(printEps) c->Print("top_messTruthEta.eps");
   ps->NewPage();
 
-  messTruthPhi[0]->Draw("p");
-  messTruthPhi[1]->Draw("p same");
-  leg->Draw("same");
+  responsePt->Draw();
   c->Draw();
+  if(printEps) c->Print("top_responsePt.eps");
   ps->NewPage();
 
-  corrFacPt->Draw();
+  responseEta->Draw();
   c->Draw();
+  if(printEps) c->Print("top_responseEta.eps");
   ps->NewPage();
 
-  corrFacEta->Draw();
+  responsePhi->Draw();
   c->Draw();
-  ps->NewPage();
-
-  corrFacPhi->Draw();
-  c->Draw();
+  if(printEps) c->Print("top_responsePhi.eps");
 
   ps->Close();
 
@@ -3806,16 +3857,17 @@ void TControlPlots::MakeControlPlotsTop()
   objToBeWritten.push_back( pt  );
   objToBeWritten.push_back( eta );
   objToBeWritten.push_back( phi );
+  objToBeWritten.push_back( meanPt  );
+  objToBeWritten.push_back( meanEta );
   for(unsigned a=0; a<2; a++){
     objToBeWritten.push_back( invMass     [a] );
     objToBeWritten.push_back( messTruth   [a] );
     objToBeWritten.push_back( messTruthPt [a] );
     objToBeWritten.push_back( messTruthEta[a] );
-    objToBeWritten.push_back( messTruthPhi[a] );
-    objToBeWritten.push_back( corrFacPt  );
-    objToBeWritten.push_back( corrFacEta );
-    objToBeWritten.push_back( corrFacPhi );
   }
+  objToBeWritten.push_back( responsePt  );
+  objToBeWritten.push_back( responseEta );
+  objToBeWritten.push_back( responsePhi );
 
   if( mOutputROOT ) WriteToRootFile( objToBeWritten, "Top" );
 
@@ -3827,18 +3879,20 @@ void TControlPlots::MakeControlPlotsTop()
   delete pt;
   delete eta;
   delete phi;
+  delete meanPt;
+  delete meanEta;
   for(unsigned a=0; a<2; a++){
     delete invMass     [a];
     delete messTruth   [a];
     delete messTruthPt [a];
     delete messTruthEta[a];
-    delete messTruthPhi[a];
   }
-  delete corrFacPt;
-  delete corrFacEta;
-  delete corrFacPhi;
+  delete responsePt;
+  delete responseEta;
+  delete responsePhi;
 
-  delete leg;
+  delete legend;
+  delete line;
 
 }
 
