@@ -239,7 +239,7 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
   std::ifstream file(configFile.c_str());
   std::string line; // buffer line
 
-  int      etaBin=-41;
+  int      etaBin=-42;
   unsigned phiBin=  0;
   unsigned iLines=  0;
   while( std::getline(file,line) ){
@@ -247,8 +247,8 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
     phiBin=(iLines%72)+1;      // phi counts from 1...72 for each eta bin
     ++iLines;
     // determine eta bin on the fly
-    if(iLines%72==0) ++etaBin; // increas etaValue by 1 each 72 lines...
-    if(etaBin   ==0) ++etaBin; // and don't forget to skip the 0
+    if(phiBin==1) ++etaBin; // increas etaValue by for the first phi bin
+    if(etaBin==0) ++etaBin; // and don't forget to skip the 0
 
     //cout << "etaBin: " << etaBin << " :: " << "phiBin: " << phiBin << endl;
 
@@ -256,7 +256,7 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
     unsigned nPar=0; //this is not needed but read out for control reasons 
     double etaMax=0; //this is not needed but read out for control reasons  
     double etaMin=0; //this is not needed but read out for control reasons 
-    std::vector<double> twrPars, jetPars, trkPars;
+    std::vector<double> twrPars, jetPars, trkPars,globaljetPars;
     unsigned entry=0; // controls which parameter is to filled
     while( line.length()>line.substr(0, line.find(" ")).size() ){
       if( 0<line.find(" ")){
@@ -272,13 +272,13 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
 	  if((entry-3)<=p->nTowerPars()){
 	    twrPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
 	  }
-	  else{
-	    if((entry-3)<=p->nTowerPars()+p->nJetPars()){
-	      jetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
-	    }
-	    else{
-	      trkPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
-	    }
+	  else if((entry-3)<=p->nTowerPars()+p->nJetPars()){
+	    jetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+	  }
+	  else if((entry-3)<=p->nTowerPars()+p->nJetPars()+p->nTrackPars()) {
+	    trkPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+	  } else {
+	    globaljetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
 	  }
 	  break;
 	}
@@ -293,7 +293,8 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
       }
     }
     // catch last character
-    trkPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+    //trkPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+    globaljetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
 
     // fill parameters
     int towerIdx = GetBin(GetEtaBin(etaBin),GetPhiBin(phiBin));
@@ -309,10 +310,13 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
       //e[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = NOT_READ_OUT;
     }
     int trackIdx = GetTrackBin(GetTrackEtaBin(etaBin),GetTrackPhiBin(phiBin));
-    if( jetIdx<0 ) continue;
+    if( trackIdx<0 ) continue;
     for (unsigned n=0; n<p->nTrackPars(); ++n) {
       k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+trackIdx*p->nTrackPars()+n] = trkPars[n];
       //e[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = NOT_READ_OUT;
+    }
+    for (unsigned n=0; n<p->nGlobalJetPars(); ++n) {
+      k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters() +n] = globaljetPars[n];
     }
   }
 }
@@ -329,6 +333,7 @@ void TParameters::Read_CalibrationCfi(std::string const& configFile)
   std::vector<double> param_jet[p->nJetPars()], error_jet[p->nJetPars()];
   std::vector<int> eta_track, phi_track;
   std::vector<double> param_track[p->nTrackPars()], error_track[p->nTrackPars()];
+  std::vector<double> param_globaljet, error_globaljet;
   int posEqual;
   while (std::getline(file,line)) {
     if (! line.length()) continue;
@@ -374,6 +379,10 @@ void TParameters::Read_CalibrationCfi(std::string const& configFile)
 	  if( name.find(dummy) != string::npos) 
   	    error_jet[i] = bag_of<double>(trim(line.substr(posEqual+1)));
 	}
+	if( name.find("GlobalJetParams") != string::npos) 
+	  param_globaljet = bag_of<double>(trim(line.substr(posEqual+1)));
+	if( name.find("GlobalJetErrors") != string::npos) 
+	  error_globaljet = bag_of<double>(trim(line.substr(posEqual+1)));
       }
     }
     //Read Track Calibration --------------------------------------------------------
@@ -443,12 +452,20 @@ void TParameters::Read_CalibrationCfi(std::string const& configFile)
   //fill Track parameters and errors:  
   if (ok) {
     for (unsigned i=0; i<eta_track.size(); ++i){
-      int index = GetTrackBin(GetTrackEtaBin(eta_jet[i]),GetTrackPhiBin(phi_jet[i]));
+      int index = GetTrackBin(GetTrackEtaBin(eta_track[i]),GetTrackPhiBin(phi_track[i]));
       if (index<0) continue;
-      for (unsigned n=0; n<p->nJetPars(); ++n) {
+      for (unsigned n=0; n<p->nTrackPars(); ++n) {
         k[GetNumberOfTowerParameters() + GetNumberOfJetParameters () + index*p->nTrackPars()+n] = param_track[n][i];
         e[GetNumberOfTowerParameters() + GetNumberOfJetParameters () + index*p->nTrackPars()+n] = error_track[n][i];
       }
+    }
+  }
+  ok =  (param_globaljet.size() == p->nGlobalJetPars());
+  //fill global Jet parameters and errors:  
+  if (ok) {
+    for (unsigned n=0; n<p->nGlobalJetPars(); ++n) {
+      k[GetNumberOfTowerParameters() + GetNumberOfJetParameters () + GetNumberOfTrackParameters()+n] = param_globaljet[n];
+      e[GetNumberOfTowerParameters() + GetNumberOfJetParameters () + GetNumberOfTrackParameters()+n] = error_globaljet[n];
     }
   }
   delete[] dummy;
@@ -633,7 +650,7 @@ void TParameters::Write_CalibrationTxt(const char* name)
       // each eta id of the tower and n times for n phi bins
       file << std::setw(10) << EtaLowerEdge(ieta) 
 	   << std::setw(10) << EtaUpperEdge(ieta)  
-	   << std::setw(10) << p->nTowerPars()+p->nJetPars()+p->nTrackPars();
+	   << std::setw(10) << p->nTowerPars()+p->nJetPars()+p->nTrackPars()+p->nGlobalJetPars();
       // write: each tower parameter
       for(unsigned itower=0; itower<p->nTowerPars(); ++itower){
 	file << std::setw(8) << std::setprecision(4) << k[towerIdx*p->nTowerPars()+itower];
@@ -645,6 +662,9 @@ void TParameters::Write_CalibrationTxt(const char* name)
       // write: each track parameter
       for(unsigned itrack=0; itrack<p->nTrackPars(); ++itrack){
 	file << std::setw(8) << std::setprecision(4) << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+trackIdx*p->nTrackPars()+itrack];
+      }
+      for(unsigned igjet=0; igjet<p->nGlobalJetPars(); ++igjet){
+	file << std::setw(8) << std::setprecision(4) << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters()+igjet];
       }
       // complete line
       file << std::endl;
@@ -672,9 +692,10 @@ void TParameters::Write_CalibrationCfi(const char* name)
   file << buffer << " by " << pw->pw_name << "." << endl 
        << " block CalibParameters = {" << endl
        << "    untracked string  Parametrization    = " << '\"' << p->name() << '\"' <<  endl
-       << "   untracked  int32  NTowerParamsPerBin = " << GetNumberOfTowerParametersPerBin() << endl
+       << "    untracked int32  NTowerParamsPerBin = " << GetNumberOfTowerParametersPerBin() << endl
        << "    untracked int32  NJetParamsPerBin   = " << GetNumberOfJetParametersPerBin() << endl
        << "    untracked int32  NTrackParamsPerBin   = " << GetNumberOfTrackParametersPerBin() << endl
+       << "    untracked int32  NGlobalJetParams   = " << GetNumberOfGlobalJetParameters() << endl
        << "    untracked int32  NEtaBins           = " << eta_granularity << endl
        << "    untracked int32  NPhiBins           = " << phi_granularity << endl
        << "    untracked bool   EtaSymmetryUsed    = " << eta_symmetry << endl
@@ -810,6 +831,20 @@ void TParameters::Write_CalibrationCfi(const char* name)
     }
     file << " }" << endl; 
   }
+  //8a. global jet constants
+  file << "    untracked vdouble GlobalJetParams = { ";
+  for(unsigned int n = 0 ; n < p->nGlobalJetPars() ; ++n) {
+    if(n != 0) file << ", " << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters()+n];
+    else file << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters()+n];
+  } 
+  file << " }" << endl; 
+  file << "    untracked vdouble GlobalJetErrors = { ";
+  for(unsigned int n = 0 ; n < p->nGlobalJetPars() ; ++n) {
+    if(n != 0) file << ", " << e[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters()+n];
+    else file << e[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters()+n];
+  } 
+  file << " }" << endl; 
+  
   file << " }" << endl; 
   //--------------------------------------------------------------------
   file << endl
@@ -877,8 +912,73 @@ void TParameters::Write_CalibrationCfi(const char* name)
     }
     file << " }" << endl; 
   }
-  file << " }" << endl; 
-      // complete line
+  file << " }" << endl;  file << endl
+       << " block TrackCalibConstants = {" << endl
+       << "    InputTag Tracks    = MyFavoriteTrackAlgorithm" << endl
+       << "    string CalibTracks = \"\" " << endl
+       << endl
+       << "    untracked vint32 TrackMapEta     = { ";
+  
+  //9. ieta
+  for (int ieta= -41; ieta<=41; ++ieta){
+    if (ieta==0) continue;
+    for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
+      if (ieta!=-41 || iphi!=1)
+        file << ", " << ieta;
+      else
+        file << ieta;	
+    }
+  }
+  file << " }" << endl << "    untracked vint32 TrackMapPhi     = { ";
+  
+  //10. iphi
+  for (int ieta= -41; ieta<=41; ++ieta){
+    if (ieta==0) continue;
+    for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
+      if (ieta!= -41 || iphi!=1)
+        file << ", " << iphi;
+      else
+        file << iphi;
+    }
+  }
+  file << " }" << endl;
+  file << endl;
+
+  //11. track calibration constants
+  file << "    untracked  int32  TrackParam  = " << GetNumberOfTrackParametersPerBin() << endl;
+  for (unsigned int n=0; n<p->nTrackPars(); ++n) {
+    file << "    untracked vdouble TrackParam"<<n<<" = { ";
+    for (int ieta=-41; ieta<=41; ++ieta){
+      if (ieta==0) continue;
+      for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
+	int index = GetTrackBin(GetTrackEtaBin(ieta),GetTrackPhiBin(iphi));
+	if (index<0) continue;
+	if (ieta!=-41 || iphi!=1)
+          file << ", " << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+index*p->nTrackPars()+n];
+	else
+          file << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+index*p->nTrackPars()+n];
+      }
+    }
+    file << " }" << endl; 
+  }
+  //12. calibration constants errors
+  for (unsigned int n=0; n<p->nTrackPars(); ++n) {
+    file << "    untracked vdouble TrackError"<<n<<" = { ";
+    for (int ieta=-41; ieta<=41; ++ieta){
+      if (ieta==0) continue;
+      for (unsigned int iphi=1; iphi<=phi_ntwr; ++iphi){
+	int index = GetBin(GetTrackEtaBin(ieta),GetTrackPhiBin(iphi));
+	if (index<0) continue;
+	if (ieta!=-41 || iphi!=1)
+          file << ", " << e[GetNumberOfTowerParameters() + GetNumberOfJetParameters() + index*p->nTrackPars()+n];
+	else
+          file << e[GetNumberOfTowerParameters() + GetNumberOfJetParameters() + index*p->nTrackPars()+n];
+      }
+    }
+    file << " }" << endl; 
+  }
+  file << " }" << endl;  
+  // complete line
   file << std::endl;
   file.close();
 }
