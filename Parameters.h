@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.43 2009/02/14 10:27:08 stadie Exp $
+// $Id: Parameters.h,v 1.44 2009/02/18 17:51:38 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -124,9 +124,20 @@ public :
   static double jet_only_tower_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) { 
     return 0;
   }
+
   static double jet_only_jet_error_parametrization_et(const double *x, const TMeasurement *xorig=0, double errorig=0) {
-    return (x[0]>0. ? 0.033*x[0] + 5.6 + 1.25 * sqrt( x[0])   :   0.033*(-x[0]) + 5.6 + 1.25 * sqrt( -x[0]) ); 
+    //use results from V. Chetluru
+    //http://indico.cern.ch/getFile.py/access?contribId=1&resId=1&materialId=slides&confId=52598
+    // rel. sigma^2 = a^2/pt^2 + b^2/pt + c^2
+    const static double a[5] = { 4.44 , 4.35 , 4.34 , 4.08 , 3.90 };
+    const static double b[5] = { 1.11 , 1.17 , 0.85 , 0.45 , 0.29 };
+    const static double c[5] = { 0.03 , 0.04 , 0.03 , 0.04 , 0.09 };
+
+    double abseta = std::abs(xorig->eta);
+    int i = (abseta < 0.8) ? 0 : ((abseta < 1.5) ? 1 : ((abseta < 2.4) ? 2 : (abseta < 3.2) ? 3 : 4));
+    return sqrt(a[i]*a[i]/x[0]/x[0] + b[i]*b[i]/x[0] + c[i]*c[i]) * x[0];
   }
+
   static double jet_only_jet_error_parametrization_energy(const double *x, const TMeasurement *xorig=0, double errorig=0) {
     /*
     double pmess;
