@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Thu May  8 15:44:54 2008 by ROOT version 5.18/00
+// Fri Feb 27 18:11:17 2009 by ROOT version 5.20/00
 // from TTree DiJetTree/
-// found on file: NJet_test.root
+// found on file: /scratch/current/cms/user/stadie/DiJet_Track_230_300_rereco_incomplete.root
 //////////////////////////////////////////////////////////
 
 #ifndef NJetSel_h
@@ -19,7 +19,6 @@ public :
 
    // Declaration of leaf types
    Int_t           NobjTow;
-   Int_t           NobjTrack;
    Int_t           TowId[10000];   //[NobjTow]
    Int_t           TowId_phi[10000];   //[NobjTow]
    Int_t           TowId_eta[10000];   //[NobjTow]
@@ -31,47 +30,50 @@ public :
    Float_t         TowHad[10000];   //[NobjTow]
    Float_t         TowOE[10000];   //[NobjTow]
    Int_t           Tow_jetidx[10000];   //[NobjTow]
-   Int_t           TrackId[10000];   //[NobjTrack]
+   Int_t           NobjTrack;
    Int_t           TrackTowId[10000];   //[NobjTrack]
    Int_t           TrackTowIdPhi[10000];   //[NobjTrack]
    Int_t           TrackTowIdEta[10000];   //[NobjTrack]
+   Int_t           TrackId[10000];   //[NobjTrack]
+   Int_t           TrackNHits[10000];   //[NobjTrack]
+   Bool_t          TrackQualityL[10000];   //[NobjTrack]
+   Bool_t          TrackQualityT[10000];   //[NobjTrack]
+   Bool_t          TrackQualityHP[10000];   //[NobjTrack]
+   Float_t         TrackChi2[10000];   //[NobjTrack]
    Float_t         TrackPt[10000];   //[NobjTrack]
    Float_t         TrackEta[10000];   //[NobjTrack]
-   Float_t         TrackEtaOut[10000];   //[NobjTrack]
    Float_t         TrackPhi[10000];   //[NobjTrack]
-   Float_t         TrackPhiOut[10000];   //[NobjTrack]
-   Float_t         TrackDR[10000];   //[NobjTrack]
-   Float_t         TrackDROut[10000];   //[NobjTrack]
    Float_t         TrackP[10000];   //[NobjTrack]
+   Float_t         TrackDR[10000];   //[NobjTrack]
+   Float_t         TrackPhiOut[10000];   //[NobjTrack]
+   Float_t         TrackEtaOut[10000];   //[NobjTrack]
+   Float_t         TrackDROut[10000];   //[NobjTrack]
    Float_t         TrackEMC1[10000];   //[NobjTrack]
    Float_t         TrackEMC3[10000];   //[NobjTrack]
    Float_t         TrackEMC5[10000];   //[NobjTrack]
    Float_t         TrackHAC1[10000];   //[NobjTrack]
    Float_t         TrackHAC3[10000];   //[NobjTrack]
    Float_t         TrackHAC5[10000];   //[NobjTrack]
-   Float_t         TrackChi2[10000];   //[NobjTrack]
-   Int_t           TrackNHits[10000];   //[NobjTrack]
-   Bool_t          TrackQualityL[10000];   //[NobjTrack]
-   Bool_t          TrackQualityT[10000];   //[NobjTrack]
-   Bool_t          TrackQualityHP[10000];   //[NobjTrack]
-   Float_t         MuDE[10000];   //[NobjTrack]
+   Int_t           Track_jetidx[10000];   //[NobjTrack]
    Float_t         MuDR[10000];   //[NobjTrack]
-   Int_t           Track_jetidx[10000];   //[NobjTow]
+   Float_t         MuDE[10000];   //[NobjTrack]
    Int_t           NobjJet;
    Float_t         JetPt[100];   //[NobjJet]
    Float_t         JetPhi[100];   //[NobjJet]
    Float_t         JetEta[100];   //[NobjJet]
    Float_t         JetEt[100];   //[NobjJet]
    Float_t         JetE[100];   //[NobjJet]
+   Float_t         JetCorrZSP[100];   //[NobjJet]
+   Float_t         JetCorrL2[100];   //[NobjJet]
+   Float_t         JetCorrL3[100];   //[NobjJet]
+   Float_t         JetCorrJPT[100];   //[NobjJet]
+   Float_t         JetCorrL2L3[100];   //[NobjJet]
+   Float_t         JetCorrL2L3JPT[100];   //[NobjJet]
    Float_t         GenJetPt[100];   //[NobjJet]
    Float_t         GenJetPhi[100];   //[NobjJet]
    Float_t         GenJetEta[100];   //[NobjJet]
    Float_t         GenJetEt[100];   //[NobjJet]
    Float_t         GenJetE[100];   //[NobjJet]
-   Float_t         JetCorrZSP[100];   //[NobjJet]
-   Float_t         JetCorrL2[100];   //[NobjJet]
-   Float_t         JetCorrL3[100];   //[NobjJet]
-   Float_t         JetCorrJPT[100];   //[NobjJet]
    Float_t         Met;
    Float_t         MetPhi;
    Float_t         MetSum;
@@ -79,7 +81,6 @@ public :
 
    // List of branches
    TBranch        *b_NobjTow;   //!
-   TBranch        *b_NobjTrack;   //!
    TBranch        *b_TowId;   //!
    TBranch        *b_TowId_phi;   //!
    TBranch        *b_TowId_eta;   //!
@@ -91,32 +92,33 @@ public :
    TBranch        *b_TowHad;   //!
    TBranch        *b_TowOE;   //!
    TBranch        *b_Tow_jetidx;   //!
-   TBranch        *b_TrackId;   //
-   TBranch        *b_TrackTowId;   //
-   TBranch        *b_TrackTowIdPhi;   //
-   TBranch        *b_TrackTowIdEta;   //
-   TBranch        *b_TrackPt;   //
-   TBranch        *b_TrackEta;   //
-   TBranch        *b_TrackEtaOut;   //
-   TBranch        *b_TrackPhi;   //
-   TBranch        *b_TrackPhiOut;   //
-   TBranch        *b_TrackDR;   //
-   TBranch        *b_TrackDROut;   //
-   TBranch        *b_TrackP;   //
-   TBranch        *b_TrackEMC1;   //
-   TBranch        *b_TrackEMC3;   //
-   TBranch        *b_TrackEMC5;   //
-   TBranch        *b_TrackHAC1;   //
-   TBranch        *b_TrackHAC3;   //
-   TBranch        *b_TrackHAC5;   //
-   TBranch        *b_TrackChi2;   //
-   TBranch        *b_TrackNHits;   //
+   TBranch        *b_NobjTrack;   //!
+   TBranch        *b_TrackTowId;   //!
+   TBranch        *b_TrackTowIdPhi;   //!
+   TBranch        *b_TrackTowIdEta;   //!
+   TBranch        *b_TrackId;   //!
+   TBranch        *b_TrackNHits;   //!
    TBranch        *b_TrackQualityL;   //!
    TBranch        *b_TrackQualityT;   //!
    TBranch        *b_TrackQualityHP;   //!
-   TBranch        *b_MuDE;   //
-   TBranch        *b_MuDR;   //
+   TBranch        *b_TrackChi2;   //!
+   TBranch        *b_TrackPt;   //!
+   TBranch        *b_TrackEta;   //!
+   TBranch        *b_TrackPhi;   //!
+   TBranch        *b_TrackP;   //!
+   TBranch        *b_TrackDR;   //!
+   TBranch        *b_TrackPhiOut;   //!
+   TBranch        *b_TrackEtaOut;   //!
+   TBranch        *b_TrackDROut;   //!
+   TBranch        *b_TrackEMC1;   //!
+   TBranch        *b_TrackEMC3;   //!
+   TBranch        *b_TrackEMC5;   //!
+   TBranch        *b_TrackHAC1;   //!
+   TBranch        *b_TrackHAC3;   //!
+   TBranch        *b_TrackHAC5;   //!
    TBranch        *b_Track_jetidx;   //!
+   TBranch        *b_MuDR;   //!
+   TBranch        *b_MuDE;   //!
    TBranch        *b_NobjJet;   //!
    TBranch        *b_JetPt;   //!
    TBranch        *b_JetPhi;   //!
@@ -127,6 +129,8 @@ public :
    TBranch        *b_JetCorrL2;   //!
    TBranch        *b_JetCorrL3;   //!
    TBranch        *b_JetCorrJPT;   //!
+   TBranch        *b_JetCorrL2L3;   //!
+   TBranch        *b_JetCorrL2L3JPT;   //!
    TBranch        *b_GenJetPt;   //!
    TBranch        *b_GenJetPhi;   //!
    TBranch        *b_GenJetEta;   //!
@@ -175,7 +179,6 @@ void NJetSel::Init(TTree *tree)
    fChain->SetMakeClass(1);
 
    fChain->SetBranchAddress("NobjTow", &NobjTow, &b_NobjTow);
-   fChain->SetBranchAddress("NobjTrack", &NobjTrack, &b_NobjTrack);
    fChain->SetBranchAddress("TowId", TowId, &b_TowId);
    fChain->SetBranchAddress("TowId_phi", TowId_phi, &b_TowId_phi);
    fChain->SetBranchAddress("TowId_eta", TowId_eta, &b_TowId_eta);
@@ -187,32 +190,33 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("TowHad", TowHad, &b_TowHad);
    fChain->SetBranchAddress("TowOE", TowOE, &b_TowOE);
    fChain->SetBranchAddress("Tow_jetidx", Tow_jetidx, &b_Tow_jetidx);
-   fChain->SetBranchAddress("TrackId", TrackId, &b_TrackId);
+   fChain->SetBranchAddress("NobjTrack", &NobjTrack, &b_NobjTrack);
    fChain->SetBranchAddress("TrackTowId", TrackTowId, &b_TrackTowId);
    fChain->SetBranchAddress("TrackTowIdPhi", TrackTowIdPhi, &b_TrackTowIdPhi);
    fChain->SetBranchAddress("TrackTowIdEta", TrackTowIdEta, &b_TrackTowIdEta);
+   fChain->SetBranchAddress("TrackId", TrackId, &b_TrackId);
+   fChain->SetBranchAddress("TrackNHits", TrackNHits, &b_TrackNHits);
+   fChain->SetBranchAddress("TrackQualityL", TrackQualityL, &b_TrackQualityL);
+   fChain->SetBranchAddress("TrackQualityT", TrackQualityT, &b_TrackQualityT);
+   fChain->SetBranchAddress("TrackQualityHP", TrackQualityHP, &b_TrackQualityHP);
+   fChain->SetBranchAddress("TrackChi2", TrackChi2, &b_TrackChi2);
    fChain->SetBranchAddress("TrackPt", TrackPt, &b_TrackPt);
    fChain->SetBranchAddress("TrackEta", TrackEta, &b_TrackEta);
-   fChain->SetBranchAddress("TrackEtaOut", TrackEtaOut, &b_TrackEtaOut);
    fChain->SetBranchAddress("TrackPhi", TrackPhi, &b_TrackPhi);
-   fChain->SetBranchAddress("TrackPhiOut", TrackPhiOut, &b_TrackPhiOut);
-   fChain->SetBranchAddress("TrackDR", TrackDR, &b_TrackDR);
-   fChain->SetBranchAddress("TrackDROut", TrackDROut, &b_TrackDROut);
    fChain->SetBranchAddress("TrackP", TrackP, &b_TrackP);
+   fChain->SetBranchAddress("TrackDR", TrackDR, &b_TrackDR);
+   fChain->SetBranchAddress("TrackPhiOut", TrackPhiOut, &b_TrackPhiOut);
+   fChain->SetBranchAddress("TrackEtaOut", TrackEtaOut, &b_TrackEtaOut);
+   fChain->SetBranchAddress("TrackDROut", TrackDROut, &b_TrackDROut);
    fChain->SetBranchAddress("TrackEMC1", TrackEMC1, &b_TrackEMC1);
    fChain->SetBranchAddress("TrackEMC3", TrackEMC3, &b_TrackEMC3);
    fChain->SetBranchAddress("TrackEMC5", TrackEMC5, &b_TrackEMC5);
    fChain->SetBranchAddress("TrackHAC1", TrackHAC1, &b_TrackHAC1);
    fChain->SetBranchAddress("TrackHAC3", TrackHAC3, &b_TrackHAC3);
    fChain->SetBranchAddress("TrackHAC5", TrackHAC5, &b_TrackHAC5);
-   fChain->SetBranchAddress("TrackChi2", TrackChi2, &b_TrackChi2);
-   fChain->SetBranchAddress("TrackNHits", TrackNHits, &b_TrackNHits);
-   fChain->SetBranchAddress("TrackQualityL", TrackQualityL, &b_TrackQualityL);
-   fChain->SetBranchAddress("TrackQualityT", TrackQualityT, &b_TrackQualityT);
-   fChain->SetBranchAddress("TrackQualityHP", TrackQualityHP, &b_TrackQualityHP);
+   fChain->SetBranchAddress("Track_jetidx", Track_jetidx, &b_Track_jetidx);
    fChain->SetBranchAddress("MuDR", MuDR, &b_MuDR);
    fChain->SetBranchAddress("MuDE", MuDE, &b_MuDE);
-   fChain->SetBranchAddress("Track_jetidx", Track_jetidx, &b_Track_jetidx);
    fChain->SetBranchAddress("NobjJet", &NobjJet, &b_NobjJet);
    fChain->SetBranchAddress("JetPt", JetPt, &b_JetPt);
    fChain->SetBranchAddress("JetPhi", JetPhi, &b_JetPhi);
@@ -223,6 +227,8 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetCorrL2", JetCorrL2, &b_JetCorrL2);
    fChain->SetBranchAddress("JetCorrL3", JetCorrL3, &b_JetCorrL3);
    fChain->SetBranchAddress("JetCorrJPT", JetCorrJPT, &b_JetCorrJPT);
+   fChain->SetBranchAddress("JetCorrL2L3", JetCorrL2L3, &b_JetCorrL2L3);
+   fChain->SetBranchAddress("JetCorrL2L3JPT", JetCorrL2L3JPT, &b_JetCorrL2L3JPT);
    fChain->SetBranchAddress("GenJetPt", GenJetPt, &b_GenJetPt);
    fChain->SetBranchAddress("GenJetPhi", GenJetPhi, &b_GenJetPhi);
    fChain->SetBranchAddress("GenJetEta", GenJetEta, &b_GenJetEta);
