@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.4 2009/01/19 08:40:20 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.5 2009/02/18 17:51:37 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -310,7 +310,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 {
   int njets = 0;  
   double* terr = new double[njet.NobjTow];
-  for(int i = 0; i < njet.NobjJet; ++i) {
+  for(int i = 0; i < njet.NobjJet && i < 2; ++i) {
     if(njet.JetPt[i] < Et_cut_nplus1Jet) continue;
     double em = 0;
     double had = 0;
@@ -366,7 +366,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 			  njet.JetPhi[i],TJet::uds,
 			  p->jet_function(njet.TowId_eta[closestTower],
 					  njet.TowId_phi[closestTower]),
-			  jet_error_param,p->global_jet_function());
+			  jet_error_param,p->global_jet_function(),Et_cut_nplus1Jet);
       for(int j = 0 ; j < njet.NobjTow ; ++j) {
 	if (njet.Tow_jetidx[j]!= i) continue;//look for ij-jet's towers
 	double scale = njet.TowEt[j]/njet.TowE[j];
@@ -380,12 +380,12 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
     }
     else { 
       jet = new Jet(njet.JetEt[i],em * factor,had * factor,out * factor,
-		  njet.JetE[i],njet.JetEta[i],njet.JetPhi[i],
+		    njet.JetE[i],njet.JetEta[i],njet.JetPhi[i],
 		    TJet::uds,p->jet_function(njet.TowId_eta[closestTower],
 					      njet.TowId_phi[closestTower]),
-		    jet_error_param,p->global_jet_function());    
+		    jet_error_param,p->global_jet_function(),Et_cut_nplus1Jet);    
     }
-    JetTruthEvent* jte = new JetTruthEvent(jet,njet.GenJetEt[i],njet.Weight);
+    JetTruthEvent* jte = new JetTruthEvent(jet,njet.GenJetEt[i],1.0);//njet.Weight);
     data.push_back(jte);
     ++njets;
   }     
