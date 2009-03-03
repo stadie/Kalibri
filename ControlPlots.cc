@@ -23,6 +23,9 @@ using namespace std;
 #include "Parameters.h"
 #include "ConfigFile.h"
 
+#include "TwoJetsInvMassEvent.h"
+
+
 //---------------------------------------------------------------
 //  Constructor
 // 
@@ -3627,13 +3630,21 @@ void TControlPlots::MakeControlPlotsTop()
       TData* data = *i;
       if(data->GetType() != InvMass) continue;
 
-      TData_InvMass2 * invM2 = (TData_InvMass2*) data;
-
       std::vector<TMeasurement> jets;
-
-      jets.push_back( (*invM2->GetMess()) );
-      for(unsigned j=0; j<invM2->MultMessSize(); j++)
-	jets.push_back( (*invM2->GetSecondaryJets())[j]->GetMess() );
+      
+      TData_InvMass2 *invM2 = dynamic_cast<TData_InvMass2*>(data);	
+      TwoJetsInvMassEvent* ev = (TwoJetsInvMassEvent*)data;
+      if(invM2) {	
+	jets.push_back( (*invM2->GetMess()) );
+	for(unsigned j=0; j<invM2->MultMessSize(); j++)
+	  jets.push_back( (*invM2->GetSecondaryJets())[j]->GetMess() );
+      } 
+      else if(ev) {
+	jets.push_back(ev->GetMess());
+	jets.push_back(ev->GetMess2());
+      } else { 
+      continue;
+      }
 
       TLorentzVector jet4Vec, combined4Vec;
       for(unsigned j=0; j<jets.size(); j++) {
@@ -3641,16 +3652,27 @@ void TControlPlots::MakeControlPlotsTop()
 	if(j==0) combined4Vec = jet4Vec;
 	else combined4Vec += jet4Vec;
       }
-
-      scale ->Fill( invM2->GetScale() );
-      weight->Fill( invM2->GetWeight() );
-      truth ->Fill( invM2->GetTruth() );
-
+      double s,t,w;
+      
+      if(invM2) {
+	s = invM2->GetScale();
+	w = invM2->GetWeight();
+	t = invM2->GetTruth();
+      }
+      if(ev) {
+	s = ev->GetTruth();
+	w = ev->GetWeight();
+	t = ev->GetTruth();
+      }
+      scale ->Fill(s);
+      weight->Fill(w);
+      truth ->Fill(t);
+      
       invMass  [0]->Fill( combined4Vec.M() );
-      messTruth[0]->Fill( combined4Vec.M()/invM2->GetTruth() );
+      messTruth[0]->Fill( combined4Vec.M()/t );
 
-      invMass  [1]->Fill( invM2->GetMessCombination() );
-      messTruth[1]->Fill( invM2->GetMessCombination()/invM2->GetTruth() );
+      invMass  [1]->Fill( invM2 ? invM2->GetMessCombination() : ev->correctedMass() );
+      messTruth[1]->Fill( invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
       double mPt  = 0.;
       double mEta = 0.;
@@ -3664,10 +3686,17 @@ void TControlPlots::MakeControlPlotsTop()
 	mEta += jets[j].eta;
 
 	double response;
-	if(j==0) response = invM2->GetMess()->pt / invM2->GetParametrizedMess();
+	if(j==0) {
+	  response = invM2 ? invM2->GetMess()->pt / invM2->GetParametrizedMess() : 
+	    ev->GetMess()->pt/ev->GetParametrizedMess();
+	}
 	else {
-	  const TData_MessMess* mm = (*invM2->GetSecondaryJets())[j-1];
-	  response = mm->GetMess()->pt / mm->GetParametrizedMess();
+	  if(invM2) {
+	    const TData_MessMess* mm = (*invM2->GetSecondaryJets())[j-1];
+	    response = mm->GetMess()->pt / mm->GetParametrizedMess();
+	  } else {
+	    response = ev->GetMess2()->pt/ev->GetParametrizedMess2();
+	  }
 	}
 	responsePt ->Fill( jets[j].pt  , response );
 	responseEta->Fill( jets[j].eta , response );
@@ -3680,11 +3709,11 @@ void TControlPlots::MakeControlPlotsTop()
       meanPt ->Fill( mPt  );
       meanEta->Fill( mEta );
 
-      messTruthPt [0]->Fill( mPt  , combined4Vec.M()/invM2->GetTruth() );
-      messTruthEta[0]->Fill( mEta , combined4Vec.M()/invM2->GetTruth() );
+      messTruthPt [0]->Fill( mPt  , combined4Vec.M()/t );
+      messTruthEta[0]->Fill( mEta , combined4Vec.M()/t );
       
-      messTruthPt [1]->Fill( mPt  , invM2->GetMessCombination()/invM2->GetTruth() );
-      messTruthEta[1]->Fill( mEta , invM2->GetMessCombination()/invM2->GetTruth() );
+      messTruthPt [1]->Fill( mPt  , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+      messTruthEta[1]->Fill( mEta , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
     }  //End of loop over all fit-events
 
@@ -4196,24 +4225,27 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
 	  htemp->SetBinContent(j,hist->GetBinContent(hist->GetBin(i,j)));
 	  htemp->SetBinError(j,hist->GetBinError(i,j));
 	}  
-      if(htemp->GetSumOfWeights() <= 0) continue;
-      htemp->Fit("gaus","LLQNO","");
+      double mean = htemp->GetMean();
+      double meanerror = htemp->GetMeanError();
+      double width = htemp->GetRMS();
+      if(width < 0.1) width = 0.1;
+      if(htemp->GetSumOfWeights() <= 0) continue; 
+      htemp->Fit("gaus","QNO","", mean - 3 * width,mean + 3 * width);
       TF1 *f = (TF1*)gROOT->GetFunction("gaus")->Clone();
-      double mean = f->GetParameter(1);
-      double meanerror = f->GetParError(1);
-      double width = f->GetParameter(2);
-      if(width < 0.2) width = 0.2;
-      if( (htemp->Fit(f,"LLQNO","goff",mean - 2 * width, mean + 2 * width) == 0) && (f->GetProb() > 0.01) ) 
-	{
-	  mean = f->GetParameter(1);
-	  meanerror = f->GetParError(1);
-	  width = f->GetParameter(2);
-
-	  hresults[2]->SetBinContent(i,mean);
-	  hresults[2]->SetBinError(i,meanerror);
-	  hresults[3]->SetBinContent(i,width/mean);
-	  hresults[3]->SetBinError(i, f->GetParError(2)/mean);
-	}
+      mean = f->GetParameter(1);
+      meanerror = f->GetParError(1);
+      width = f->GetParameter(2);
+      if(width < 0.05) width = 0.05;
+      if( (htemp->Fit(f,"LLQNO","goff",mean - 1.5 * width, mean + 1.5 * width) == 0) && (f->GetProb() > 0.01) ) {
+	mean = f->GetParameter(1);
+	meanerror = f->GetParError(1);
+	width = f->GetParameter(2);
+	
+	hresults[2]->SetBinContent(i,mean);
+	hresults[2]->SetBinError(i,meanerror);
+	hresults[3]->SetBinContent(i,width/mean);
+	hresults[3]->SetBinError(i, f->GetParError(2)/mean);
+      }
       hresults[5]->SetBinContent(i, f->GetChisquare() / f->GetNumberFreeParameters());
       hresults[5]->SetBinError(i, 0.01);
       hresults[6]->SetBinContent(i, f->GetProb());

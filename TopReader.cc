@@ -4,13 +4,16 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.2 2008/12/13 16:43:33 stadie Exp $
+//    $Id: TopReader.cc,v 1.3 2009/02/19 17:47:55 snaumann Exp $
 //   
 #include "TopReader.h"
 
 #include "CalibData.h"
 #include "ConfigFile.h"
 #include "Parameters.h"
+#include "TwoJetsInvMassEvent.h"
+#include "Jet.h"
+#include "JetWithTowers.h"
 
 #include "TLorentzVector.h"
 
@@ -19,7 +22,8 @@
 
 TopReader::TopReader(const std::string& configfile, TParameters* p) :
   EventReader(configfile,p), Et_cut_on_jet(0),useMassConstraintW(false),
-  useMassConstraintTop(false),massConstraint_W(80.4),massConstraint_Top(172.4)
+  useMassConstraintTop(false),massConstraint_W(80.4),massConstraint_Top(172.4),
+  dataClass(0)
 {
   n_top_events     = config->read<int>("use Top events",-1); 
   if(n_top_events == 0) {
@@ -37,6 +41,8 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
     std::cout << "W mass constraint and Top mass constraint were both turned off," << std::endl
 	      << "you should enable at least one of these constraints if you want to run with Top...!" << std::endl;
   }
+  dataClass = config->read<int>("Top data class", 0);
+  if((dataClass != 0)&&(dataClass != 1)&&(dataClass != 2)) dataClass = 0;
   
   string default_tree_name = config->read<string>("Default Tree Name","CalibTree");
   string treename_top    = config->read<string>( "Top tree", default_tree_name );
@@ -74,7 +80,7 @@ int TopReader::readEvents(std::vector<TData*>& data)
     }
     //--------------
     
-    if(useMassConstraintW) {
+    if(useMassConstraintW && (dataClass == 0)) {
       bool goodevent = false;
       TData_InvMass2 * top_data[2]; //two W-jets
       top_data[0] = 0;
@@ -194,7 +200,7 @@ int TopReader::readEvents(std::vector<TData*>& data)
       }
     }
 
-    if(useMassConstraintTop) {
+    if(useMassConstraintTop && (dataClass == 0)) {
       bool goodevent = false;
       TData_InvMass2 * top_data[3]; //two W-jets and one b-jet
       top_data[0] = 0;
@@ -311,10 +317,108 @@ int TopReader::readEvents(std::vector<TData*>& data)
 	data.push_back( top_data[0] );
       }
     }
-    
+    if(dataClass > 0) {
+      TData* ev = createTwoJetsInvMassEvents();
+      if(ev) data.push_back(ev);
+      else continue;
+    }
     ++evt;
     if (evt>=n_top_events && n_top_events>=0)
       break;
   }
   return evt;
+}
+
+TData* TopReader::createTwoJetsInvMassEvents()
+{
+  Jet *jets[2] = {0,0};
+  double* terr = new double[top.NobjTow];
+  for(int i = 0; i < 3; ++i) {
+    if(top.JetPt[i] < Et_cut_on_jet) continue;
+    if((TJet::Flavor)top.JetFlavor[i] != TJet::uds) continue;
+    
+    double em = 0;
+    double had = 0;
+    double out = 0;
+    double err2 = 0;
+    TMeasurement tower;
+    double dR = 10;
+    int closestTower = 0; 
+    for(int n=0; n<top.NobjTow; ++n){
+      if(top.Tow_jetidx[n] != i) continue;//look for ij-jet's towers
+      
+      em += top.TowEm[n];
+      had +=  top.TowHad[n];
+      out +=  top.TowOE[n];  
+      tower.pt = top.TowEt[n];
+      double scale = top.TowEt[n]/top.TowE[n];
+      tower.EMF = top.TowEm[n]*scale;
+      tower.HadF = top.TowHad[n]*scale;
+      tower.OutF = top.TowOE[n]*scale;
+      tower.eta = top.TowEta[n];
+      tower.phi = top.TowPhi[n];
+      tower.E = top.TowE[n];
+      terr[n] = tower_error_param(&tower.pt,&tower,0); 
+      if(terr[n] == 0) {
+	//assume toy MC???
+	terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
+      }
+      terr[n] *= terr[n];
+      err2 += terr[n];
+      double dphi = TVector2::Phi_mpi_pi(top.JetPhi[i]-tower.phi);
+      double dr = sqrt((top.JetEta[i]-tower.eta)*(top.JetEta[i]-tower.eta)+
+		       dphi*dphi);     
+      if(dr < dR) {
+	dR = dr;
+	closestTower = n;
+      }
+    } 
+    if(had/(had + em) < 0.07) { return 0;}
+    if(had/(had + em) > 0.92) { return 0;}
+    double factor =  top.JetEt[i] /  top.JetE[i];
+    tower.pt = top.JetEt[i];
+    tower.EMF = em * factor;
+    tower.HadF = had * factor;
+    tower.OutF = out * factor;
+    tower.eta = top.JetEta[i];
+    tower.phi = top.JetPhi[i];
+    tower.E   = top.JetE[i];
+    double err =  jet_error_param(&tower.pt,&tower,0);
+    err2 += err * err;
+    Jet **jet = jets[0] ? &jets[1] : &jets[0];
+    if(dataClass == 2) {
+      JetWithTowers *jt = 
+	new JetWithTowers(top.JetEt[i],em * factor,had * factor,
+			  out * factor,top.JetE[i],top.JetEta[i],
+			  top.JetPhi[i],TJet::uds,
+			  p->jet_function(top.TowId_eta[closestTower],
+					  top.TowId_phi[closestTower]),
+			  jet_error_param,p->global_jet_function(),Et_cut_on_jet);
+      for(int j = 0 ; j < top.NobjTow ; ++j) {
+	if (top.Tow_jetidx[j]!= i) continue;//look for ij-jet's towers
+	double scale = top.TowEt[j]/top.TowE[j];
+	jt->addTower(top.TowEt[j],top.TowEm[j]*scale,
+		     top.TowHad[j]*scale,top.TowOE[j]*scale,
+		     top.TowE[j],top.TowEta[j],top.TowPhi[j],
+		     p->tower_function(top.TowId_eta[i],top.TowId_phi[i]),
+		     tower_error_param);
+      }
+      *jet = jt;
+    }
+    else { 
+      *jet = new Jet(top.JetEt[i],em * factor,had * factor,out * factor,
+		     top.JetE[i],top.JetEta[i],top.JetPhi[i],
+		     TJet::uds,p->jet_function(top.TowId_eta[closestTower],
+					       top.TowId_phi[closestTower]),
+		     jet_error_param,p->global_jet_function(),Et_cut_on_jet);    
+    }
+  }
+  delete [] terr;
+  if(jets[1]) {
+    return new TwoJetsInvMassEvent(jets[0],jets[1],massConstraint_W,1.0);
+  } else {
+    delete jets[0];
+    delete jets[1];
+  }
+  return 0;
 }

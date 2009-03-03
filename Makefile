@@ -9,7 +9,7 @@ ifeq ($(F77EXE),)
 endif
 
 #O2 for optimization, g for debugging, pg for profiling
-SPECIALFLAGS= -O3 -g #-g -Wall -pg#-O2
+SPECIALFLAGS= -g #-g -Wall -pg#-O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
@@ -22,7 +22,7 @@ RCXX=$(SPECIALFLAGS) -Wno-deprecated -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
 
-SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc
+SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -59,7 +59,7 @@ CalibData.o: CalibData.cc CalibData.h Parametrization.h Parameters.h
 Parameters.o: Parameters.cc Parameters.h Parametrization.h Function.h ConfigFile.h
 	$(C) $(RCXX) -c Parameters.cc
 
-ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFile.h
+ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFile.h TwoJetsInvMassEvent.h
 	$(C) $(RCXX) -c ControlPlots.cc
 
 EventReader.o: EventReader.h EventReader.cc Parameters.h ConfigFile.h 
@@ -95,13 +95,16 @@ EventProcessor.o: ConfigFile.h Parameters.h EventProcessor.h EventProcessor.cc
 Jet.o: CalibData.h Jet.h Jet.cc Parametrization.h Function.h
 	$(C) $(RCXX) -c Jet.cc	
 
-JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc 
+JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc Jet.h
 	$(C) $(CFLAGS) -c JetTruthEvent.cc
+
+TwoJetsInvMassEvent.o: CalibData.h Jet.h TwoJetsInvMassEvent.h TwoJetsInvMassEvent.cc Jet.h 
+	$(C) $(RCXX) -c TwoJetsInvMassEvent.cc
 
 JetWithTowers.o: CalibData.h Jet.h JetWithTowers.h Function.h JetWithTowers.cc Parametrization.h
 	$(C) $(RCXX) -c JetWithTowers.cc
 
-caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h TrackClusterReader.h EventProcessor.h Jet.h
+caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h TrackClusterReader.h EventProcessor.h Jet.h TwoJetsInvMassEvent.h
 	$(C) $(RCXX)  -I/usr/include/boost -c caliber.cc 
 
 runjunk: $(SRC:.cc=.o) lbfgs.o
