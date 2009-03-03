@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.58 2009/02/09 15:54:19 thomsen Exp $
+// $Id: CalibData.h,v 1.59 2009/02/25 15:08:25 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -68,6 +68,8 @@ public:
   double JPTcor;
   double L2cor;
   double L3cor;
+  double L2L3cor;
+  double L2L3JPTcor;
 };
 
 class TTrack : public TMeasurement
@@ -93,6 +95,7 @@ public:
   bool TrackQualityT;
   double MuDR;
   double MuDE;
+  double Efficiency;
 };
 
 //interface to Data
@@ -292,7 +295,7 @@ public:
 
   virtual double GetParametrizedErr() const { //returns total jet error and not only the non-tower part like _err
     double error = 0, new_mess=0, sum_mess=0, new_error=0,sum_error2=0;
-    if(trackuse)
+    if(trackuse) 
       {
 	for (std::vector<TAbstractData*>::const_iterator it=_vectrack.begin();
 	     it!=_vectrack.end(); ++it) {
@@ -322,12 +325,16 @@ public:
 	sum_error2 += new_error * new_error;
 	}
     error = sqrt(sum_error2);
+    /*
+    TJet* myTJet =  (TJet*)(GetMess());
+    double pt =myTJet->genPt;
+    double error = 5.6 + 1.25 * sqrt(pt) + 0.033 * pt;
+    */
     return error;
   };
 
   virtual double GetParametrizedMess(double *const paramess) const { // For derivative calculation
     double result = 0;
-    //When tracks are used, GetParametrizedTrackMess() should have been taken, i.e. no tower correction should have been used before 
     if(trackuse) 	result = GetParametrizedTrackMess();
     else {
       TJet jet(_mess);
@@ -338,19 +345,31 @@ public:
   };
 
   virtual double GetParametrizedTrackMess() const{
-    double JetPt = 0, CaloRest, CaloTrackPt;  
-    int NoUsedTracks = 0; 
+    double JetPt = 0, CaloRest, CaloTrackPt;
+    int NoUsedTracks = 0;
     bool IsMuon;
     const double ConeRadius = 0.5;      //Jet Cone Radius should not be hard coded or must be changed if Radius != 0.5
     const double MIPsignal = 4;      
     CaloRest = _mess->pt;
     TJet* myTJet =  (TJet*)(GetMess());
     CaloRest *= myTJet->ZSPcor;   //ZSP correction
+
+    /*
+    //possible Tower correction here (instead of ZSP?)
+    double tower_pt_sum=0.0;
+    for (std::vector<TAbstractData*>::const_iterator it=_vecmess.begin();
+	 it!=_vecmess.end(); ++it){
+      tower_pt_sum += (*it)->GetParametrizedMess(); // Sum of tower Pt
+    }
+    tower_pt_sum *= myTJet->ZSPcor;   //ZSP correction
+    CaloRest =  tower_pt_sum;
+    */
+
+
     for (std::vector<TAbstractData*>::const_iterator it=_vectrack.begin();
 	 it!=_vectrack.end(); ++it) {
-      //if( ((TTrack*)(*it)->GetMess())->TrackChi2 > 6  || ((TTrack*)(*it)->GetMess())->NValidHits < 9) // || TrackQuality != 1)
       if( !((TTrack*)(*it)->GetMess())->TrackQualityT)
-	continue;  // qualityTracks = false;
+	continue; 
 
       if( (*it)->GetMess()->pt > 100) continue;
 
@@ -359,8 +378,6 @@ public:
 
       CaloTrackPt = (*it)->GetParametrizedMess();  //Expected Signal of track in Calorimeter
 
-      //-Track Reco Efficiency betrachten
-
       if(temp->TrackId == 13)  IsMuon = true;
       else                     IsMuon = false;
       if(temp->DR < ConeRadius) 
@@ -368,13 +385,14 @@ public:
 	  if(temp->DRout < ConeRadius)
 	    {
 	      if(!IsMuon) {
-		JetPt += temp->pt;
+		JetPt +=  temp->pt;
 		CaloRest -= CaloTrackPt;
+		//JetPt += ((1 - temp->Efficiency)/temp->Efficiency) * (temp->pt - CaloTrackPt);  //track reco correction
 	      }
 	    }
 	  else //Out of Cone
-	    {//commet out if correction should be done to genJet level
-	      JetPt += temp->pt;
+	    {
+	      JetPt +=  temp->pt;
 	    }
 	}
       else
@@ -383,7 +401,6 @@ public:
 	  else           CaloRest -= CaloTrackPt;
 	}
     }
-    //cout<<"TrackPt: "<<JetPt<<"   Truth: "<<_truth<<"   rel Err: "<<(JetPt - _truth)/_truth<<"    Rest: "<<CaloRest<<"  relErrorIncRest: "<<(JetPt + CaloRest - _truth)/_truth<<"    #Tracks: "<<_vectrack.size()<<"   #UsedTracks: "<<NoUsedTracks<<endl;
 
     if(CaloRest > 0) {
       TJet jet(_mess);
@@ -391,9 +408,14 @@ public:
       jet.E = -1000;  //signal that this is only the calo rest of a track jet!
       JetPt += _func(&jet, _par);  //ein anderer Parameter als bei der normalen korrektur nehmen (da hier nur neutr. Had + other rest)
     }
+    TJet jet(_mess);
+    jet.pt = JetPt;
+    jet.E = -800; //signal that this is the factor for a track jet!
+    JetPt = _func(&jet, _par);  // factor like JetMET on top of JPT
 
     return JetPt;
   };
+
 
   virtual double chi2() const{ 
     double weight = GetWeight(); 
@@ -538,6 +560,8 @@ public:
 	std::vector<TAbstractData*>::const_iterator tower=_vecmess.begin();
 	if(CaloRest > 0)
 	  _invisError = (*tower)->GetParametrizedErr(&CaloRest);  //Rest Error same as tower error, save this invisible energy error
+	else 
+	  _invisError = 0;
       }
 
     double totalsum = GetParametrizedMess();

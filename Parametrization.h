@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.30 2009/02/18 17:51:38 stadie Exp $
+// $Id: Parametrization.h,v 1.31 2009/02/20 08:30:16 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -472,65 +472,84 @@ class TrackParametrization : public Parametrization {
       else if (x->HadF> 300.0 && x->HadF<= 600.0) result = x->EMF+x->OutF+par[ 9]*x->HadF;
       else if (x->HadF> 600.0 && x->HadF<=1000.0) result = x->EMF+x->OutF+par[10]*x->HadF;
       else if (x->HadF>1000.0 )                   result = x->EMF+x->OutF+par[11]*x->HadF;
+
+      if(result < x->EMF+x->OutF) result = x->EMF+x->OutF;
       return result;
     }
   
   double correctedJetEt(const TMeasurement *x,const double *par) const 
     {
-      //im Moment nur pt richtig (der rest ist uncorr messung) pt = rest(HCAL + ECAL)
-      //sicher noch nicht die entgueltige fassung!!!!!!!!! (use EMF?, more pt bins?)
-      
-      //if(fabs(x->pt - x->EMF+x->OutF+x->HadF) / x->pt < 0.1)
-      if(x->E < -900) //set to -1000 for track jets! Positive for all others
-	return  par[0] * x->pt; 
-      else
-	//return x->pt * ( 1. + 0.295 * par[1] * exp(- 0.02566 * par[2] * x->pt));
-	return x->pt;  
-    }
-  
-  double GetExpectedResponse(const TMeasurement *x,const double *par) const 
-    {    
-      double result=0;
-      double PiFrac;
-      double eh = 1.48 * par[0];    //will probably be treated as a free parameter soon!
-      //double ehECAL = 1.6 * par[1]; 
-      double TrackEMF = 0;
-      bool LS = false;
-      
-      TTrack* temp = (TTrack*)(x);
-      
-      if(temp->EM1 < 1.2) LS = true;   //late showering particle
-      
-      //this is Groom's Parametrization:
-      /*
-	if(( x->EMF > 0) || (x->HadF > 0))
-	TrackEMF = x->EMF / (x->HadF + x->EMF);      //EMF = EMC3, HadF = HMC3 for Tracks
-      */
-      if(( temp->EM1 > 0) || (temp->Had1 > 0))
-	TrackEMF = temp->EM1 / (temp->Had1 + temp->EM1);   
-      
-      //check if EMC3 & HMC3 same size (comparable)
-      if(!LS)
-	PiFrac = 1 - pow((x->E /(par[2] * 0.96) ),(par[3] * 0.816) - 1 );         //0.96 and 0.816 will be free parameter soon!
-      else
-	PiFrac = 1 - pow((x->E /(par[4] * 0.96) ),(par[5] * 0.816) - 1 );    
-      
-      double responseH = (1 + (eh - 1) * PiFrac) / eh;
-      //double responseE = (1 + (ehECAL - 1) * PiFrac) / ehECAL;
-      double responseE = 1;
+    double result;
+    /*
+    //result = x->pt * ( 1. + 0.295 * par[3] * exp(- 0.02566 * par[4] * x->pt));
+    result = x->pt; 
+    */ 
+    if(x->E < -500) //set to -1000 or -800 for track jets! Positive for all others
+      {
+	if(x->E < 900)  //set to -1000 for Calo Rest
+	  result = x->pt; //*par[0];
+	else //set to -800 for complete Track Jet
+	  result = x->pt * par[2];
+      }
+    else 
+      result = par[1] * x->pt;
+    if(result < 0)   result = 0; 
+    return result;
+  }
+   
+  double GetExpectedResponse(const TMeasurement *x,const double *par) const   
+    {
+    double result=0;
+    double PiFrac;
+    //Groom
+    double eh = 1.48  * par[0]; 
+    //Wigman
+    //double eh = 1.39  * par[0]; 
 
-      double resultE = x->pt * TrackEMF * responseE;
-      if(temp->EM5  < resultE  )  resultE = temp->EM5;
+    //double ehECAL = 1.6 ;//* par[1]; 
+    double TrackEMF = 0;
+    bool LS = false;
+    
+    TTrack* temp = (TTrack*)(x);
+    
+    if(temp->EM1 < 1.2) LS = true;   //late showering particle
+    
+    //this is Groom's Parametrization:
+    TrackEMF = temp->EM1 / (temp->Had1 + temp->EM1);  //bei 1X1 EMF ueberschaetzt, da shower schmaler, bei 3X3 zu viele andere Tracks
+    if(TrackEMF > 1) TrackEMF = 1; 
+    if(TrackEMF < 0) TrackEMF = 0;
+    //JPT alg (2004/15):
+    //TrackEMF = 0.4;  //mean value from Test Beam
 
-      double resultH = x->pt * (1 - TrackEMF) * responseH;
-      if(temp->Had5  < resultH  )  resultH = temp->Had5;
-      
-      //is this correct: (Pi0 anteil in EMF-fraction?)
-      //result = x->pt * (TrackEMF * responseE + (1 - TrackEMF) * responseH);
-      result = resultE + resultH;
-      
-      return result;
-    }
+    //Groom
+    PiFrac = 1 - pow(((x->E + par[4]) /(fabs(par[2]) * 0.96) ),(par[3] * 0.816) - 1 );  
+    //Wigman
+    //PiFrac = 0.11*par[2] * log(par[3] * x->E); 
+
+    if(PiFrac > 1)  PiFrac = 1;   //do not allow unphysical results
+    if(PiFrac < 0)  PiFrac = 0;  //happens e.g. for TrackPt<2GeV
+    if(eh < 0.1) eh=0.1; 
+
+    
+    double responseH = (1 + (eh - 1) * PiFrac) / eh;
+    
+    /*
+    //double responseE = (1 + (ehECAL - 1) * PiFrac) / ehECAL;
+    double responseE = 1;
+    
+    double resultE = x->pt * TrackEMF * responseE;
+    //if(LS) resultE = temp->EM1;
+    if((temp->EM5 > 0) && (temp->EM5  < resultE) )  resultE = temp->EM5;
+    
+    double resultH = x->pt * (1 - TrackEMF) * responseH;
+    if((temp->Had5 > 0) && (temp->Had5  < resultH) )  resultH = temp->Had5;
+    result = resultE + resultH;
+    */
+
+    result = x->pt * responseH; 
+ 
+    return result;
+  }
 };
 
 /// -----------------------------------------------------------------
