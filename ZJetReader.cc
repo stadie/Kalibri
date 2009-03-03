@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.7 2009/02/12 19:38:51 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.8 2009/02/18 17:51:37 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -79,10 +79,12 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
       exit(8);
     }
     //trivial cuts
-    if (zjet.ZPt<Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
-
+    //if (zjet.ZPt<Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
+    if(zjet.JetGenEt < Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
     //temporary solution to get rid of wrong Zs as long as muon cleaning is not applied
-    if(fabs(zjet.ZPt - zjet.GenZPt) > 80) continue;    
+    if(std::abs(zjet.ZPt - zjet.GenZPt) > 80) continue;    
+    //cut on Eta to avoid scarcely populated bins
+    //if(std::abs(zjet.JetCalEta) > 3.0) continue;
 
     TData* ev = 0;
     if(dataClass == 0) ev = createTruthMultMessEvent();

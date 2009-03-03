@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.5 2009/02/18 17:51:37 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.6 2009/02/28 11:00:38 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -312,6 +312,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
   double* terr = new double[njet.NobjTow];
   for(int i = 0; i < njet.NobjJet && i < 2; ++i) {
     if(njet.JetPt[i] < Et_cut_nplus1Jet) continue;
+    if(njet.GenJetEt[i] < 20.0) continue;
     double em = 0;
     double had = 0;
     double out = 0;
@@ -347,7 +348,9 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 	dR = dr;
 	closestTower = n;
       }
-    }  //calc jet error
+    } 
+    if(had/(had + em) < 0.07) { return 0;}
+    if(had/(had + em) > 0.92) { return 0;}
     double factor =  njet.JetEt[i] /  njet.JetE[i];
     tower.pt = njet.JetEt[i];
     tower.EMF = em * factor;
