@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.9 2009/02/18 17:51:37 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.10 2009/02/24 22:13:52 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -154,7 +154,11 @@ void JetWithTowers::addTower(double Et, double EmEt, double HadEt ,
 			     double (*errfunc)(const double *x, const TMeasurement *xorig, double err))
 {
   TLorentzVector jet, towp;
-  jet.SetPtEtaPhiM(TMeasurement::pt,TMeasurement::eta,TMeasurement::phi,0);
+  double en = TMeasurement::HadF + TMeasurement::EMF + TMeasurement::OutF;
+  en *= TMeasurement::E/TMeasurement::pt;
+  double m = en > TMeasurement::E ? sqrt(en * en - TMeasurement::E * TMeasurement::E) : 0;
+  //std::cout << "mass:" << m << '\n';
+  jet.SetPtEtaPhiM(TMeasurement::pt,TMeasurement::eta,TMeasurement::phi,m);
   towp.SetPtEtaPhiM(Et,eta,phi,0);
   jet -= towp;
   double projection = (TMeasurement::pt - jet.Pt())/Et;
