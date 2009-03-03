@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.10 2009/02/20 18:12:33 stadie Exp $
+//    $Id: Jet.h,v 1.11 2009/02/24 22:13:52 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -49,6 +49,7 @@ class Jet : public TJet
     double lowerEt;
     double upperError;
     double lowerError;
+    bool operator==(int b) const { return parid == b;}
   };
   typedef std::vector<ParameterVariation> VariationColl;
   typedef std::vector<ParameterVariation>::const_iterator VariationCollIter;
