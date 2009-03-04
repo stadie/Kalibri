@@ -1046,7 +1046,55 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
   respvstet[1]->SetTitle("#gamma-jet,  Response vs. Tower Et (leading Tower);raw tower Et;Correction factor");
   respvstet[2]->SetTitle("#gamma-jet,  Response vs. Tower Et (neighbouring leading Tower);raw tower Et;Correction factor");
   respvstet[3]->SetTitle("#gamma-jet,  Response vs. Tower Et (2 towers next to leading Tower);raw tower Et;Correction factor");
+  TH1F* Chi2Plot[4];
+  Chi2Plot[0] = new TH1F("chi2","#chi2;#chi2",200,0,100);
+  Chi2Plot[1] = (TH1F*)Chi2Plot[0]->Clone("Chi2TrackOnly");
+  Chi2Plot[2] = (TH1F*)Chi2Plot[0]->Clone("Chi2CaloOnly");
+  Chi2Plot[3] = (TH1F*)Chi2Plot[0]->Clone("Chi2TrackOnlyNoWeight");
+  TH2F* Chi2Pt[2];
+  Chi2Pt[0] = new TH2F("chi2Pt","#chi2Pt;Pt;#chi2",100,0,200,100,0,30);
+  Chi2Pt[0]->SetMarkerStyle(22);
+  Chi2Pt[1] = (TH2F*)Chi2Pt[0]->Clone();
+  TH2F* Chi2Eta =  new TH2F("chi2Eta","#chi2Eta;Eta;#chi2",500,-5,5,100,0,30);
+  TH2F* Chi2NoTrack =  new TH2F("chi2NoTrack","#chi2NoTrack;NoTrack;#chi2",25,0,25,100,0,30);
+  TH2F* Chi2Error =  new TH2F("chi2Error","#chi2Error;Error;#chi2",50,0,50,100,0,30);
+  TH2F* Diff2Pt[2];
+  Diff2Pt[0] = new TH2F("diff2PtTrackOnly","diff2Pt;Pt;diff2",100,0,1000,100,0,100);
+  Diff2Pt[0]->SetMarkerStyle(22);
+  Diff2Pt[1] = (TH2F*)Diff2Pt[0]->Clone("diff2PtCaloOnly");
+  TH2F* TrackCalo[3];
+  TrackCalo[0] = new TH2F("TrackPtOverCaloPt",";CaloPt; ",100,0,1000,75,0,1.5);
+  TrackCalo[1] = (TH2F*)TrackCalo[0]->Clone("TrackResponstOverCaloPt");
+  TrackCalo[2] = (TH2F*)TrackCalo[0]->Clone("Part of Energy from TrackPt > 50Gev");
 
+  TH2F *RelResPt[8];
+  RelResPt[0] = new TH2F("hRelResPt0","Z-Jet;p_{T}(gen) [GeV];Jet/genJet",20,0,150,50,0.5,1.5);
+  RelResPt[0]->Sumw2();  
+  RelResPt[1] = (TH2F*)RelResPt[0]->Clone("hRelResPt1"); 
+  RelResPt[2] = (TH2F*)RelResPt[0]->Clone("hRelResPt2");
+  RelResPt[3] = (TH2F*)RelResPt[0]->Clone("hRelResPt3");
+  RelResPt[4] = new TH2F("hRelResPt4","Z-Jet;p_{T}(gen) [GeV];Jet/genJet",20,0,500,50,0.5,1.5);  
+  RelResPt[5] = (TH2F*)RelResPt[4]->Clone("hRelResPt5"); 
+  RelResPt[6] = (TH2F*)RelResPt[4]->Clone("hRelResPt6");
+  RelResPt[7] = (TH2F*)RelResPt[4]->Clone("hRelResPt7");
+
+  TH2F *RelResEMF[4];
+  RelResEMF[0] = new TH2F("hRelResEMF0","Z-Jet;EMF;Jet/genJet",20,0,1,50,0.5,1.5);  
+  RelResEMF[1] = (TH2F*)RelResEMF[0]->Clone("hRelResEMF1"); 
+  RelResEMF[2] = (TH2F*)RelResEMF[0]->Clone("hRelResEMF2");
+  RelResEMF[3] = (TH2F*)RelResEMF[0]->Clone("hRelResEMF3");
+
+  TH2F *RelResEta[4];
+  RelResEta[0] = new TH2F("hRelResEta0","Z-Jet;Eta;Jet/genJet",20,-2.5,2.5,50,0.5,1.5);  
+  RelResEta[1] = (TH2F*)RelResEta[0]->Clone("hRelResEta1"); 
+  RelResEta[2] = (TH2F*)RelResEta[0]->Clone("hRelResEta2"); 
+  RelResEta[3] = (TH2F*)RelResEta[0]->Clone("hRelResEta3");
+
+  TH2F *RelResTrackMult[4];
+  RelResTrackMult[0] = new TH2F("hRelResTrackMult0","Z-Jet;TrackMult;Jet/genJet",20,0,50,50,0.5,1.5);  
+  RelResTrackMult[1] = (TH2F*)RelResTrackMult[0]->Clone("hRelResTrackMult1"); 
+  RelResTrackMult[2] = (TH2F*)RelResTrackMult[0]->Clone("hRelResTrackMult2");
+  RelResTrackMult[3] = (TH2F*)RelResTrackMult[0]->Clone("hRelResTrackMult3");
 
 
   // The following 2D histograms contain different Pt ratios:
@@ -1145,6 +1193,32 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	}
     }
 
+  TH2F* hetaTrack[3];
+  if( plottedQuant.count("eta") > 0 )
+    {
+      hetaTrack[0] = new TH2F("hetaTrack0","#gamma-jet Track only;#eta",20,-5,5,100,0,4);
+      hetaTrack[1] = (TH2F*)hetaTrack[0]->Clone("hetaTrack1");
+      hetaTrack[2] = (TH2F*)hetaTrack[0]->Clone("hetaTrack2");
+      for(int i = 0; i < 3; i++)
+	{
+	  hetaTrack[i]->Sumw2();
+	  objToBeWritten.push_back(hetaTrack[i]);
+	}
+    }
+
+  TH2F* hptTrack[3];
+  if( plottedQuant.count("true jet pt") > 0 )
+    {
+      hptTrack[0] = new TH2F("hptTrack0","#gamma-jet Track only;E^{#gamma}_{T} [GeV]",80,0,400,100,0,4);
+      hptTrack[1] = (TH2F*)hptTrack[0]->Clone("hptTrack1");
+      hptTrack[2] = (TH2F*)hptTrack[0]->Clone("hptTrack2");
+      for(int i = 0; i < 3; i++)
+	{
+	  hptTrack[i]->Sumw2();
+	  objToBeWritten.push_back(hptTrack[i]);
+	}
+    }
+
   TH2F* henergy[3];
   if( plottedQuant.count("uncorrected jet energy") > 0 )
     {
@@ -1212,7 +1286,8 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
   TH2F* hptGamma2DW = new TH2F("hGamma2DW","#gamma-jet,  with weights;p_{T} [GeV];f_{em}",500,0,500,100,0,1);
   objToBeWritten.push_back(hptGamma2DW);
 
-
+  int track=0;
+  int noTrack=0;
 
   // Fill histos
 
@@ -1221,7 +1296,6 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
     {
       TData* jg = *i;
       if( jg->GetType() != GammaJet ) continue;
-
       double etjet = jg->GetMess()->pt;
       double energyjet = jg->GetMess()->pt;  //Et -> E see below
       double etjetcor = jg->GetParametrizedMess();
@@ -1234,10 +1308,35 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
       int thisIndexJet=0;
       double maxTowerEta=0;
       double maxTowerPhi=0;
-
+      double SumTrack=0;
+      double SumTrackOverFifty=0;
+      double SumTrackResp=0;
+      int NoTracks = 0; //number of Tracks in Jet
       // first loop over tower
       TAbstractData* ad = dynamic_cast<TAbstractData*>(jg);
+
+      if(ad->GetTrackuse()) track++;
+      else noTrack++;
+
       if(ad) {
+
+	const std::vector<TAbstractData*>& data_refT = ad->GetRefTrack();
+	for(std::vector<TAbstractData*>::const_iterator it = data_refT.begin();it != data_refT.end(); ++it)
+	  {
+	    TTrack * m = (TTrack*)(*it)->GetMess();
+	    double  pm = (*it)->GetParametrizedMess();
+	    if(m->DRout<0.5){
+	      SumTrack += m->pt;
+	      if( m->pt > 50)
+		SumTrackOverFifty += m->pt;
+	      SumTrackResp += pm;
+	      NoTracks++;
+	    }
+	  }
+	TrackCalo[0]->Fill(etjet,SumTrack/etjet);
+	TrackCalo[1]->Fill(etjet,SumTrackResp/etjet);
+	TrackCalo[2]->Fill(etjet,SumTrackOverFifty/SumTrack);
+
 	const std::vector<TAbstractData*>& data_ref = ad->GetRef();
 	for(std::vector<TAbstractData*>::const_iterator it = data_ref.begin();it != data_ref.end(); ++it)
 	  {
@@ -1369,6 +1468,50 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	      }
 	  } // end of loop over rings
       }
+      Chi2Plot[0]->Fill(ad->chi2());
+      //if(ad->GetTrackuse()) {
+      if(true) {
+	Chi2Plot[1]->Fill(ad->chi2());
+	Chi2Plot[3]->Fill(ad->chi2()/jg->GetWeight());
+	Chi2Pt[0]->Fill(etjet,ad->chi2());
+	Chi2Eta->Fill(etajet,ad->chi2());
+	Chi2NoTrack->Fill(NoTracks,ad->chi2());
+	Chi2Error->Fill(ad->GetParametrizedErr(),ad->chi2());
+	Diff2Pt[0]->Fill(etjet,fabs(etjetcor - jg->GetTruth()));
+
+	TAbstractData* ad = dynamic_cast<TAbstractData*>(jg);
+	const std::vector<TAbstractData*>& data_refT = ad->GetRefTrack();
+	int TrackMult =  data_refT.size();
+	double em1 = jg->GetMess()->EMF;
+	double had1 = jg->GetMess()->HadF+jg->GetMess()->OutF;
+	TJet* jet = (TJet*)(jg->GetMess());
+	double genJet = jet->genPt;
+	RelResPt[0]->Fill(genJet,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
+	RelResPt[1]->Fill(genJet,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResPt[2]->Fill(genJet,( jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResPt[3]->Fill(genJet,(jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResPt[4]->Fill(genJet,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
+	RelResPt[5]->Fill(genJet,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResPt[6]->Fill(genJet,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResPt[7]->Fill(genJet,(jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEMF[0]->Fill(em1/(em1+had1),(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
+	RelResEMF[1]->Fill(em1/(em1+had1),(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEMF[2]->Fill(em1/(em1+had1),(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEMF[3]->Fill(em1/(em1+had1),(jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEta[0]->Fill(jg->GetMess()->eta,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
+	RelResEta[1]->Fill(jg->GetMess()->eta,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEta[2]->Fill(jg->GetMess()->eta,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEta[3]->Fill(jg->GetMess()->eta,(jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResTrackMult[0]->Fill(TrackMult,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
+	RelResTrackMult[1]->Fill(TrackMult,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResTrackMult[2]->Fill(TrackMult,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResTrackMult[3]->Fill(TrackMult,(jg->GetMess()->pt )/genJet,jg->GetWeight());
+      }
+      else {
+	Chi2Plot[2]->Fill(ad->chi2());
+	Chi2Pt[1]->Fill(etjet,ad->chi2());
+	Diff2Pt[1]->Fill(etjet,fabs(etjetcor - jg->GetTruth()));
+      }
       towerinjet[0]->Fill(noTower);
       if (jg->GetTruth() > 10 && jg->GetTruth() < 35)
 	{
@@ -1408,15 +1551,26 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	      heta[10]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
 	      heta[11]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
 	      towerinjet[3]->Fill(noTower);
-	    } 
+	    }
+	  if(ad->GetTrackuse()) 
+	    {
+	      hetaTrack[0]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
+	      hetaTrack[1]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
+	      hetaTrack[2]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
+	    }
 	}
-
 
       if( plottedQuant.count("true jet pt") > 0 )
 	{
 	  hpt[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
 	  hpt[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
-	  hpt[2]->Fill(jg->GetTruth(),etjet/etjetcor,jg->GetWeight());   
+	  hpt[2]->Fill(jg->GetTruth(),etjet/etjetcor,jg->GetWeight());
+	  if(ad->GetTrackuse()) 
+	    {   
+	      hptTrack[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
+	      hptTrack[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
+	      hptTrack[2]->Fill(jg->GetTruth(),etjet/etjetcor,jg->GetWeight());
+	    }
 	}
 
       if( plottedQuant.count("uncorrected jet energy") > 0 )
@@ -1496,9 +1650,47 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	    leadToNext[b+2]->Fill(a * (0.6 / nRings),ringsSum[b][a]/ringsRawSum[b][a]);
 	}
     }
-
   // Draw histos
   c1->cd();
+  c1->SetLogy(1);
+  for(int i=3;i<4;++i)
+    {
+      Chi2Plot[i]->Draw();
+      c1->Draw();
+      ps->NewPage();
+    }
+  /*
+  Chi2Pt[0]->SetMarkerColor(2);
+  Chi2Pt[0]->Draw();
+  Chi2Pt[1]->Draw("Same");
+  c1->Draw();
+  ps->NewPage();
+  Chi2Eta->Draw();
+  c1->Draw();
+  ps->NewPage();
+  Chi2NoTrack->Draw();
+  c1->Draw();
+  ps->NewPage();
+  Chi2Error->Draw();
+  c1->Draw();
+  ps->NewPage();
+  Diff2Pt[0]->SetMarkerColor(2);
+  Diff2Pt[0]->Draw();
+  c1->Draw();
+  ps->NewPage();
+  Diff2Pt[1]->Draw();
+  c1->Draw();
+  ps->NewPage();
+  */
+  c1->SetLogy(0);
+
+  //Basic Track Plots
+  for(int i=0;i<3;++i)
+    {
+      TrackCalo[i]->Draw("box");
+      c1->Draw();
+      ps->NewPage();
+    }
 
   // Number of towers in jets
   for(int i=0;i<4;++i)
@@ -1934,6 +2126,207 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	}
     }
 
+  // Control quantities from the Pt ratio vs Et gamma.
+  // TracksOnly!!!!!!!!!
+  // First dimension 12:
+  //   index i = 0,1,2 indicates plotted pt-ratio
+  //     0: ptjet/etgamma
+  //     1: ptjetcorr/etgamma
+  //     2: ptjet/ptjetcorr
+  // Second dimension 8 is the above specified control
+  // quantity
+  TH1F* hists_ptTrack[3][8];
+
+  // Projected distributions for 4 example eta-bins
+  // and the Gauss fits
+  TH1F* gp_ptTrack[3][4];  
+  TF1* gf_ptTrack[3][4];
+
+  if( plottedQuant.count("true jet pt") > 0 )
+    {
+      for(int a = 0; a < 3; a++) // Loop over Pt ratios
+	{
+	  hptTrack[a]->SetMinimum(0.5);
+	  hptTrack[a]->SetMaximum(1.2);
+	  hptTrack[a]->SetMarkerStyle(markerStyle[a]);
+	  hptTrack[a]->SetMarkerColor(markerColor[a]);
+	  hptTrack[a]->SetLineColor(markerColor[a]);
+	}
+
+      // Do projections and determine control quantities
+      Fit2D(hptTrack[0],hists_ptTrack[0],gp_ptTrack[0], gf_ptTrack[0]);
+      Fit2D(hptTrack[1],hists_ptTrack[1],gp_ptTrack[1], gf_ptTrack[1]);
+      Fit2D(hptTrack[2],hists_ptTrack[2],gp_ptTrack[2], gf_ptTrack[2]); 
+      for(int a = 0; a<3;++a)
+	{
+	  for(int b = 0 ; b < 4 ; ++b)
+	    {
+	      hists_ptTrack[a][b]->SetMinimum(0.2);
+	      hists_ptTrack[a][b]->SetMaximum(1.8);
+	      ++b;
+	      hists_ptTrack[a][b]->SetMinimum(0.0);
+	      hists_ptTrack[a][b]->SetMaximum(0.5);
+	    }
+	  hists_ptTrack[a][4]->SetMinimum(0.4);
+	  hists_ptTrack[a][4]->SetMaximum(1.6);
+	}
+
+      // Draw gaussplots for example pt bins
+      // on multi-canvas
+      for(int a = 0; a < 3; a++) // Loop over ptratios
+	{
+	  for(int b = 0; b < 3; b++) // Loop over example pt bins
+	    {
+	      // Find pt bin of gaussplot
+	      int bin = 0;
+	      if(  b == 0  )  bin = int(hptTrack[a]->GetNbinsX()/6);
+	      else if(  b == 1  )  bin = int(hptTrack[a]->GetNbinsX()/3);
+	      else if(  b == 2  )  bin = int(hptTrack[a]->GetNbinsX()/2);
+	      float min = hptTrack[a]->GetXaxis()->GetBinLowEdge(bin);
+	      float max = min + hptTrack[a]->GetXaxis()->GetBinWidth(bin);
+
+	      // Set title according to pt bin
+	      sprintf(title,"#gamma-jet Track only, %.1f < E^{#gamma}_{T} < %.1f GeV",min,max);
+	      gp_ptTrack[a][b]->SetTitle(title);
+	      gp_ptTrack[a][b]->SetXTitle(mPtRatioName[a]);
+
+	      // Set style and line color according to mPtRatioName
+	      gp_ptTrack[a][b]->SetMarkerStyle(markerStyle[a]);
+	      gp_ptTrack[a][b]->SetMarkerColor(markerColor[a]);
+	      gp_ptTrack[a][b]->SetLineColor(markerColor[a]);
+	      gf_ptTrack[a][b]->SetLineColor(markerColor[a]);
+
+	      // Plot gaussplots
+	      c2->cd(1+b);
+	      gp_ptTrack[a][b]->Draw();
+	      gf_ptTrack[a][b]->Draw("same");
+
+	      objToBeWritten.push_back(gp_ptTrack[a][b]);
+	      objToBeWritten.push_back(gf_ptTrack[a][b]);
+	    } // End of loop over example ptbins
+	  c2->Draw();
+	  ps->NewPage();
+	} // End of loop over ptratios
+
+      c1->cd();
+      for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
+	{
+	  hists_ptTrack[0][j]->Draw("P");
+	  hists_ptTrack[0][j]->SetStats(0);
+	  hists_ptTrack[1][j]->Draw("P SAME");
+	  hists_ptTrack[2][j]->Draw("P SAME");
+	  leg->Draw("SAME");
+	  c1->SetGrid();
+	  c1->Draw();   
+	  ps->NewPage(); 
+
+	  objToBeWritten.push_back(hists_ptTrack[0][j]);
+	  objToBeWritten.push_back(hists_ptTrack[1][j]);
+	  objToBeWritten.push_back(hists_ptTrack[2][j]);
+	}
+    }
+
+
+  // Control quantities from the Pt ratio vs Eta.
+  // TracksOnly!!!!!!!!!
+  // First dimension 12:
+  //   index i = 0,1,2 indicates plotted pt-ratio
+  //     0: ptjet/etgamma
+  //     1: ptjetcorr/etgamma
+  //     2: ptjet/ptjetcorr
+  // Second dimension 8 is the above specified control
+  // quantity
+  TH1F* hists_etaTrack[3][8];
+
+  // Projected distributions for 4 example eta-bins
+  // and the Gauss fits
+  TH1F* gp_etaTrack[3][4];  
+  TF1* gf_etaTrack[3][4];
+
+  if( plottedQuant.count("eta") > 0 )
+    {
+      for(int a = 0; a < 3; a++) // Loop over Pt ratios
+	{
+	  hetaTrack[a]->SetMinimum(0.5);
+	  hetaTrack[a]->SetMaximum(1.2);
+	  hetaTrack[a]->SetMarkerStyle(markerStyle[a]);
+	  hetaTrack[a]->SetMarkerColor(markerColor[a]);
+	  hetaTrack[a]->SetLineColor(markerColor[a]);
+	}
+
+      // Do projections and determine control quantities
+      Fit2D(hetaTrack[0],hists_etaTrack[0],gp_etaTrack[0], gf_etaTrack[0]);
+      Fit2D(hetaTrack[1],hists_etaTrack[1],gp_etaTrack[1], gf_etaTrack[1]);
+      Fit2D(hetaTrack[2],hists_etaTrack[2],gp_etaTrack[2], gf_etaTrack[2]); 
+      for(int a = 0; a<3;++a)
+	{
+	  for(int b = 0 ; b < 4 ; ++b)
+	    {
+	      hists_etaTrack[a][b]->SetMinimum(0.2);
+	      hists_etaTrack[a][b]->SetMaximum(1.8);
+	      ++b;
+	      hists_etaTrack[a][b]->SetMinimum(0.0);
+	      hists_etaTrack[a][b]->SetMaximum(0.5);
+	    }
+	  hists_etaTrack[a][4]->SetMinimum(0.4);
+	  hists_etaTrack[a][4]->SetMaximum(1.6);
+	}
+
+      // Draw gaussplots for example eta bins
+      // on multi-canvas
+      for(int a = 0; a < 3; a++) // Loop over ptratios
+	{
+	  for(int b = 0; b < 3; b++) // Loop over example pt bins
+	    {
+	      // Find eta bin of gaussplot
+	      int bin = 0;
+	      if(  b == 0  )  bin = int(hetaTrack[a]->GetNbinsX()/6);
+	      else if(  b == 1  )  bin = int(hetaTrack[a]->GetNbinsX()/3);
+	      else if(  b == 2  )  bin = int(hetaTrack[a]->GetNbinsX()/2);
+	      float min = hetaTrack[a]->GetXaxis()->GetBinLowEdge(bin);
+	      float max = min + hetaTrack[a]->GetXaxis()->GetBinWidth(bin);
+
+	      // Set title according to eta bin
+	      sprintf(title,"#gamma-jet Track only, %.1f < E^{#gamma}_{T} < %.1f GeV",min,max);
+	      gp_etaTrack[a][b]->SetTitle(title);
+	      gp_etaTrack[a][b]->SetXTitle(mPtRatioName[a]);
+
+	      // Set style and line color according to mEtaRatioName
+	      gp_etaTrack[a][b]->SetMarkerStyle(markerStyle[a]);
+	      gp_etaTrack[a][b]->SetMarkerColor(markerColor[a]);
+	      gp_etaTrack[a][b]->SetLineColor(markerColor[a]);
+	      gf_etaTrack[a][b]->SetLineColor(markerColor[a]);
+
+	      // Plot gaussplots
+	      c2->cd(1+b);
+	      gp_etaTrack[a][b]->Draw();
+	      gf_etaTrack[a][b]->Draw("same");
+
+	      objToBeWritten.push_back(gp_etaTrack[a][b]);
+	      objToBeWritten.push_back(gf_etaTrack[a][b]);
+	    } // End of loop over example etabins
+	  c2->Draw();
+	  ps->NewPage();
+	} // End of loop over ptratios
+
+      c1->cd();
+      for(int j = 0 ; j < 8 ; ++j) // Loop over control quantities
+	{
+	  hists_etaTrack[0][j]->Draw("P");
+	  hists_etaTrack[0][j]->SetStats(0);
+	  hists_etaTrack[1][j]->Draw("P SAME");
+	  hists_etaTrack[2][j]->Draw("P SAME");
+	  leg->Draw("SAME");
+	  c1->SetGrid();
+	  c1->Draw();   
+	  ps->NewPage(); 
+
+	  objToBeWritten.push_back(hists_etaTrack[0][j]);
+	  objToBeWritten.push_back(hists_etaTrack[1][j]);
+	  objToBeWritten.push_back(hists_etaTrack[2][j]);
+	}
+    }
+
 
   // Control quantities from the Pt ratio vs Et gamma
   // in log scale.
@@ -2205,6 +2598,209 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 
 
 
+  int markerColorRes[4] = { 2,1,4,9 };
+  int markerStyleRes[4] = { 22,20,23,21 };
+  //JPT(3), JetMET(2) & MyCalibration(1) & Calo(4)
+  TLegend* legRes = new TLegend(0.7,0.7,0.96,0.9);
+  legRes->SetFillColor(0);
+  legRes->AddEntry(RelResPt[0],"My Calibration");
+  legRes->AddEntry(RelResPt[1],"JetMET Calibration");
+  legRes->AddEntry(RelResPt[2],"JPT Calibration");
+  legRes->AddEntry(RelResPt[3],"Calo Jet");
+
+  TH1F* hists_RelResPt[8][8];
+  TH1F* gp_RelResPt[8][4];  
+  TF1* gf_RelResPt[8][4];     
+  for(int a = 0; a < 4; a++)
+    {
+      RelResPt[a]->SetMarkerStyle(markerStyleRes[a]);
+      RelResPt[a]->SetMarkerColor(markerColorRes[a]);
+      RelResPt[a]->SetLineColor(markerColorRes[a]);
+      RelResPt[a+4]->SetMarkerStyle(markerStyleRes[a]);
+      RelResPt[a+4]->SetMarkerColor(markerColorRes[a]);
+      RelResPt[a+4]->SetLineColor(markerColorRes[a]);
+
+      Fit2DRes(RelResPt[a],hists_RelResPt[a],gp_RelResPt[a], gf_RelResPt[a]);
+      Fit2DRes(RelResPt[a+4],hists_RelResPt[a+4],gp_RelResPt[a+4], gf_RelResPt[a+4]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_RelResPt[a][b]->SetMinimum(0.5);
+	  hists_RelResPt[a][b]->SetMaximum(1.3);
+	  hists_RelResPt[a+4][b]->SetMinimum(0.5);
+	  hists_RelResPt[a+4][b]->SetMaximum(1.3);
+	  ++b;
+	  hists_RelResPt[a][b]->SetMinimum(0.0);
+	  hists_RelResPt[a][b]->SetMaximum(0.25);
+	  hists_RelResPt[a+4][b]->SetMinimum(0.0);
+	  hists_RelResPt[a+4][b]->SetMaximum(0.25);
+	}
+      hists_RelResPt[a][4]->SetMinimum(0.4);
+      hists_RelResPt[a][4]->SetMaximum(1.6);
+      hists_RelResPt[a+4][4]->SetMinimum(0.4);
+      hists_RelResPt[a+4][4]->SetMaximum(1.6);
+    }
+
+  c1->cd();
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResPt[0][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResPt[0][j]);
+      hists_RelResPt[0][j]->SetStats(0);
+      hists_RelResPt[1][j]->Draw("P SAME");
+      hists_RelResPt[2][j]->Draw("P SAME");
+      hists_RelResPt[3][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResPt[1][j]);
+      objToBeWritten.push_back(hists_RelResPt[2][j]);
+      objToBeWritten.push_back(hists_RelResPt[3][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResPt[4][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResPt[4][j]);
+      hists_RelResPt[4][j]->SetStats(0);
+      hists_RelResPt[5][j]->Draw("P SAME");
+      hists_RelResPt[6][j]->Draw("P SAME");
+      hists_RelResPt[7][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResPt[5][j]);
+      objToBeWritten.push_back(hists_RelResPt[6][j]);
+      objToBeWritten.push_back(hists_RelResPt[7][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+
+  TH1F* hists_RelResEMF[4][8];
+  TH1F* gp_RelResEMF[4][4];  
+  TF1* gf_RelResEMF[4][4];     
+  for(int a = 0; a < 4; a++)
+    {
+      RelResEMF[a]->SetMarkerStyle(markerStyleRes[a]);
+      RelResEMF[a]->SetMarkerColor(markerColorRes[a]);
+      RelResEMF[a]->SetLineColor(markerColorRes[a]);
+
+      Fit2DRes(RelResEMF[a],hists_RelResEMF[a],gp_RelResEMF[a], gf_RelResEMF[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_RelResEMF[a][b]->SetMinimum(0.5);
+	  hists_RelResEMF[a][b]->SetMaximum(1.3);
+	  ++b;
+	  hists_RelResEMF[a][b]->SetMinimum(0.0);
+	  hists_RelResEMF[a][b]->SetMaximum(0.3);
+	}
+      hists_RelResEMF[a][4]->SetMinimum(0.4);
+      hists_RelResEMF[a][4]->SetMaximum(1.6);
+    }
+
+  c1->cd();
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResEMF[0][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResEMF[0][j]);
+      hists_RelResEMF[0][j]->SetStats(0);
+      hists_RelResEMF[1][j]->Draw("P SAME");
+      hists_RelResEMF[2][j]->Draw("P SAME");
+      hists_RelResEMF[3][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResEMF[1][j]);
+      objToBeWritten.push_back(hists_RelResEMF[2][j]);
+      objToBeWritten.push_back(hists_RelResEMF[3][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+  TH1F* hists_RelResEta[4][8];
+  TH1F* gp_RelResEta[4][4];  
+  TF1* gf_RelResEta[4][4];     
+  for(int a = 0; a < 4; a++)
+    {
+      RelResEta[a]->SetMarkerStyle(markerStyleRes[a]);
+      RelResEta[a]->SetMarkerColor(markerColorRes[a]);
+      RelResEta[a]->SetLineColor(markerColorRes[a]);
+
+      Fit2DRes(RelResEta[a],hists_RelResEta[a],gp_RelResEta[a], gf_RelResEta[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_RelResEta[a][b]->SetMinimum(0.5);
+	  hists_RelResEta[a][b]->SetMaximum(1.3);
+	  ++b;
+	  hists_RelResEta[a][b]->SetMinimum(0.0);
+	  hists_RelResEta[a][b]->SetMaximum(0.3);
+	}
+      hists_RelResEta[a][4]->SetMinimum(0.4);
+      hists_RelResEta[a][4]->SetMaximum(1.6);
+    }
+
+  c1->cd();
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResEta[0][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResEta[0][j]);
+      hists_RelResEta[0][j]->SetStats(0);
+      hists_RelResEta[1][j]->Draw("P SAME");
+      hists_RelResEta[2][j]->Draw("P SAME");
+      hists_RelResEta[3][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResEta[1][j]);
+      objToBeWritten.push_back(hists_RelResEta[2][j]);
+      objToBeWritten.push_back(hists_RelResEta[3][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+  TH1F* hists_RelResTrackMult[4][8];
+  TH1F* gp_RelResTrackMult[4][4];  
+  TF1* gf_RelResTrackMult[4][4];     
+  for(int a = 0; a < 4; a++)
+    {
+      RelResTrackMult[a]->SetMarkerStyle(markerStyleRes[a]);
+      RelResTrackMult[a]->SetMarkerColor(markerColorRes[a]);
+      RelResTrackMult[a]->SetLineColor(markerColorRes[a]);
+
+      Fit2DRes(RelResTrackMult[a],hists_RelResTrackMult[a],gp_RelResTrackMult[a], gf_RelResTrackMult[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_RelResTrackMult[a][b]->SetMinimum(0.5);
+	  hists_RelResTrackMult[a][b]->SetMaximum(1.3);
+	  ++b;
+	  hists_RelResTrackMult[a][b]->SetMinimum(0.0);
+	  hists_RelResTrackMult[a][b]->SetMaximum(0.3);
+	}
+      hists_RelResTrackMult[a][4]->SetMinimum(0.4);
+      hists_RelResTrackMult[a][4]->SetMaximum(1.6);
+    }
+
+  c1->cd();
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResTrackMult[0][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResTrackMult[0][j]);
+      hists_RelResTrackMult[0][j]->SetStats(0);
+      hists_RelResTrackMult[1][j]->Draw("P SAME");
+      hists_RelResTrackMult[2][j]->Draw("P SAME");
+      hists_RelResTrackMult[3][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResTrackMult[1][j]);
+      objToBeWritten.push_back(hists_RelResTrackMult[2][j]);
+      objToBeWritten.push_back(hists_RelResTrackMult[3][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+
+
 
   // Test TCaliber::FlattenSpectra()
   // Plot number of events per pt, eta, and emf bin
@@ -2303,8 +2899,27 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
       delete respvstet[i];
     }
   for(int i = 0; i < 21; i++) delete leadToNext[i];
+  for(int i = 0; i < 3; i++)  delete Chi2Plot[i];
+  for(int i = 0; i < 2; i++)  delete Chi2Pt[i];
+  delete Chi2Eta;
+  delete Chi2NoTrack;
+  delete Chi2Error;
+  for(int i = 0; i < 2; i++)  delete Diff2Pt[i];
   if( plottedQuant.count("eta") > 0 )
     {
+      delete hetaTrack[0];
+      delete hetaTrack[1];
+      delete hetaTrack[2];
+      for(int i = 0; i < 3; i++)
+	{
+	  for(int j = 0; j < 4; j++)
+	    {
+	      delete hists_etaTrack[i][j];
+	      delete hists_etaTrack[i][j+4];
+	      delete gp_etaTrack[i][j];
+	      delete gf_etaTrack[i][j];
+	    }
+	}
       for(int i = 0; i < 12; i++)
 	{
 	  delete heta[i];
@@ -2338,6 +2953,9 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
       delete hpt[0];
       delete hpt[1];
       delete hpt[2];
+      delete hptTrack[0];
+      delete hptTrack[1];
+      delete hptTrack[2];
       for(int i = 0; i < 3; i++)
 	{
 	  for(int j = 0; j < 4; j++)
@@ -2346,6 +2964,10 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	      delete hists_pttrue[i][j+4];
 	      delete gp_pttrue[i][j];
 	      delete gf_pttrue[i][j];
+	      delete hists_ptTrack[i][j];
+	      delete hists_ptTrack[i][j+4];
+	      delete gp_ptTrack[i][j];
+	      delete gf_ptTrack[i][j];
 	    }
 	}
     }
@@ -2400,7 +3022,8 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	    }
 	}
     }
-	  
+
+  cout<<"Percentage of Jets with Track Calibration: "<<(double)(track*100)/(track+noTrack)<<"%"<<endl;	  
 	  
   delete hptGamma[0];
   delete hptGamma[1];
@@ -2886,6 +3509,19 @@ void TControlPlots::MakeControlPlotsDiJet()
 
   TH2F* difmean[5];
   difmean[0] = new TH2F("hDiJetDif0","di-jet controlplot;scale (Pt);abs. difference in Pt",100,0,2000,100,0,200);
+  TH1F* JetResolutionPlot[12];
+  JetResolutionPlot[0] = new TH1F("CaloJetResolution","CaloJetResolution;genJet-CaloJet",200,-300,500);
+  JetResolutionPlot[1] = new TH1F("JetMetJetResolution","JetMetJetResolution;genJet-JetMetJet",200,-300,500);
+  JetResolutionPlot[2] = new TH1F("JPTJetResolution","JPTJetResolution;genJet-JPTJet",200,-300,500);
+  JetResolutionPlot[3] = new TH1F("MyJetResolution","MyJetResolution;genJet-MyJet",200,-300,500);
+  JetResolutionPlot[4] = new TH1F("CaloJetRelativeResolution","CaloJetRelativeResolution;(genJet-CaloJet)/genJet",100,-1.5,1.5);
+  JetResolutionPlot[5] = new TH1F("JetMetJetRelativeResolution","JetMetJetRelativeResolution;(genJet-JetMetJet)/genJet",100,-1.5,1.5);
+  JetResolutionPlot[6] = new TH1F("JPTJetRelativeResolution","JPTJetRelativeResolution;(genJet-JPTJet)/genJet",100,-1.5,1.5);
+  JetResolutionPlot[7] = new TH1F("MyJetRelativeResolution","MyJetRelativeResolution;(genJet-MyJet)/genJet",100,-1.5,1.5);
+  JetResolutionPlot[8] = new TH1F("CaloJetResponse","CaloJetResponse;CaloJet/genJet",100,0.5,1.5);
+  JetResolutionPlot[9] = new TH1F("JetMetJetResponse","JetMetJetResponse;JetMetJet/genJet",100,0.5,1.5);
+  JetResolutionPlot[10] = new TH1F("JPTJetResponsen","JPTJetResponse;JPTJet/genJet",100,0.5,1.5);
+  JetResolutionPlot[11] = new TH1F("MyJetResponse","MyJetResponse;MyJet/genJet",100,0.5,1.5);
   for(int i=1;i<5;++i)
     {
       sprintf(name,"hDiJet%i",i);
@@ -2940,6 +3576,39 @@ void TControlPlots::MakeControlPlotsDiJet()
   Bptlog[0] = new TH2F("hBptlog0","di-jet;p_{T} [GeV]",100,bins,100,-0.7,0.7); 
   Bptlog[1] = (TH2F*)Bptlog[0]->Clone("hBptlog1");
 
+  TH2F *RelResPt[8];
+  RelResPt[0] = new TH2F("hRelResPt0","di-jet;p_{T}(gen) [GeV];Jet/genJet",20,0,150,50,0.5,1.5);  
+  RelResPt[1] = (TH2F*)RelResPt[0]->Clone("hRelResPt1"); 
+  RelResPt[2] = (TH2F*)RelResPt[0]->Clone("hRelResPt2");
+  RelResPt[3] = (TH2F*)RelResPt[0]->Clone("hRelResPt3");
+  RelResPt[4] = new TH2F("hRelResPt4","di-jet;p_{T}(gen) [GeV];Jet/genJet",20,0,800,50,0.5,1.5);  
+  RelResPt[5] = (TH2F*)RelResPt[4]->Clone("hRelResPt5"); 
+  RelResPt[6] = (TH2F*)RelResPt[4]->Clone("hRelResPt6");
+  RelResPt[7] = (TH2F*)RelResPt[4]->Clone("hRelResPt7");
+
+  TH2F *RelResEMF[4];
+  RelResEMF[0] = new TH2F("hRelResEMF0","di-jet;EMF;Jet/genJet",20,0,1,50,0.5,1.5);  
+  RelResEMF[1] = (TH2F*)RelResEMF[0]->Clone("hRelResEMF1"); 
+  RelResEMF[2] = (TH2F*)RelResEMF[0]->Clone("hRelResEMF2");
+  RelResEMF[3] = (TH2F*)RelResEMF[0]->Clone("hRelResEMF3");
+
+  TH2F *RelResEta[4];
+  RelResEta[0] = new TH2F("hRelResEta0","di-jet;Eta;Jet/genJet",20,-2.5,2.5,50,0.5,1.5);  
+  RelResEta[1] = (TH2F*)RelResEta[0]->Clone("hRelResEta1"); 
+  RelResEta[2] = (TH2F*)RelResEta[0]->Clone("hRelResEta2"); 
+  RelResEta[3] = (TH2F*)RelResEta[0]->Clone("hRelResEta3");
+
+  TH2F *RelResTrackMult[4];
+  RelResTrackMult[0] = new TH2F("hRelResTrackMult0","di-jet;TrackMult;Jet/genJet",20,0,50,50,0.5,1.5);  
+  RelResTrackMult[1] = (TH2F*)RelResTrackMult[0]->Clone("hRelResTrackMult1"); 
+  RelResTrackMult[2] = (TH2F*)RelResTrackMult[0]->Clone("hRelResTrackMult2");
+  RelResTrackMult[3] = (TH2F*)RelResTrackMult[0]->Clone("hRelResTrackMult3");
+
+  //TH1F *TrackOOC[2];
+  //TrackOOC[0] = new TH1F("TrackOOC","Out Of Cone Part;JetGenPt; mean OOC part",50,0,300);
+  //TrackOOC[1] = (TH1F*)TrackOOC[0]->Clone();
+  //TH2F *TrackOOC2D = new TH2F("TrackOOC2D","Out Of Cone Part;JetGenPt; OOC part of genJet",50,0,300,60,0,1.2);
+
   for(int i=0; i<2;++i)
     {
       Beta[4*i]->Sumw2();
@@ -2952,6 +3621,16 @@ void TControlPlots::MakeControlPlotsDiJet()
       Bptlog[i]->Sumw2();
     }
 
+  for(int i=0; i<4;++i)
+    {
+      RelResPt[i]->Sumw2();
+      RelResPt[i+4]->Sumw2();
+      RelResEMF[i]->Sumw2();
+      RelResEta[i]->Sumw2();
+      RelResTrackMult[i]->Sumw2();
+    }
+  int track=0;
+  int noTrack=0;
 
   //loop over all fit-events
   for( std::vector<TData*>::const_iterator i = mData->begin() ; i != mData->end() ; ++i )  
@@ -2962,6 +3641,9 @@ void TControlPlots::MakeControlPlotsDiJet()
       TData_MessMess* jm = (TData_MessMess*) jj;
       double etscale = jm->GetScale();
 
+      //em fraction plots     
+      double em = jj->GetMess()->EMF;
+      double had = jj->GetMess()->HadF+jj->GetMess()->OutF;
 
       double etparascale = 0.;
       for(std::vector<TAbstractData*>::const_iterator t = jm->GetRef().begin(); t != jm->GetRef().end(); ++t)
@@ -2999,6 +3681,110 @@ void TControlPlots::MakeControlPlotsDiJet()
 	}
       double deltaphi = fabs(phiprobe - phijet2);
       double deltaphioff = deltaPhi(phiprobe,phijet2);
+
+
+
+      //if(jm->GetTrackuse()) {
+	if(true) { 
+	TAbstractData* ad = dynamic_cast<TAbstractData*>(jm);
+	const std::vector<TAbstractData*>& data_refT = ad->GetRefTrack();
+	int TrackMult =  data_refT.size();
+	double em1 = jj->GetMess()->EMF;
+	double had1 = jj->GetMess()->HadF+jj->GetMess()->OutF;
+
+	track++;
+	TJet* jet = (TJet*)(jm->GetMess());
+	double genJet = jet->genPt;
+	//TrackOOC[0]->Fill(genJet,jm->GetOOC()/genJet);
+	//TrackOOC[1]->Fill(genJet);
+	//TrackOOC2D->Fill(genJet,jm->GetOOC()/genJet);
+	JetResolutionPlot[0]->Fill(genJet- jm->GetMess()->pt);
+	JetResolutionPlot[1]->Fill(genJet- jet->L2L3cor * jm->GetMess()->pt);
+	JetResolutionPlot[2]->Fill(genJet- jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt);
+	JetResolutionPlot[3]->Fill(genJet- jm->GetParametrizedMess());
+	JetResolutionPlot[4]->Fill((genJet- jm->GetMess()->pt)/genJet);
+	JetResolutionPlot[5]->Fill((genJet- jet->L2L3cor * jm->GetMess()->pt)/genJet);
+	JetResolutionPlot[6]->Fill((genJet- jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt)/genJet);
+	JetResolutionPlot[7]->Fill((genJet- jm->GetParametrizedMess())/genJet);
+	JetResolutionPlot[8]->Fill(jm->GetMess()->pt/genJet);
+	JetResolutionPlot[9]->Fill( jet->L2L3cor * jm->GetMess()->pt/genJet);
+	JetResolutionPlot[10]->Fill( jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt/genJet);
+	JetResolutionPlot[11]->Fill(jm->GetParametrizedMess()/genJet);
+
+	RelResPt[0]->Fill(genJet,(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
+	RelResPt[1]->Fill(genJet,(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResPt[2]->Fill(genJet,( jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResPt[3]->Fill(genJet,(jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResPt[4]->Fill(genJet,(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
+	RelResPt[5]->Fill(genJet,(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResPt[6]->Fill(genJet,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResPt[7]->Fill(genJet,(jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEMF[0]->Fill(em1/(em1+had1),(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
+	RelResEMF[1]->Fill(em1/(em1+had1),(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEMF[2]->Fill(em1/(em1+had1),(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEMF[3]->Fill(em1/(em1+had1),(jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEta[0]->Fill(jm->GetMess()->eta,(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
+	RelResEta[1]->Fill(jm->GetMess()->eta,(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEta[2]->Fill(jm->GetMess()->eta,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEta[3]->Fill(jm->GetMess()->eta,(jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResTrackMult[0]->Fill(TrackMult,(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
+	RelResTrackMult[1]->Fill(TrackMult,(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResTrackMult[2]->Fill(TrackMult,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResTrackMult[3]->Fill(TrackMult,(jm->GetMess()->pt )/genJet,jj->GetWeight());
+      }
+      else noTrack++;
+	//if((*jm->GetSecondaryJets())[0]->GetTrackuse()) {
+      if(true) {
+	track++;
+	TJet* jet = (TJet*)((*jm->GetSecondaryJets())[0]->GetMess());
+	double genJet = jet->genPt;
+	double parametrizedMess = (*jm->GetSecondaryJets())[0]->GetParametrizedMess();
+	double messPt =  (*jm->GetSecondaryJets())[0]->GetMess()->pt;
+	TAbstractData* ad = dynamic_cast<TAbstractData*>((*jm->GetSecondaryJets())[0]);
+	const std::vector<TAbstractData*>& data_refT = ad->GetRefTrack();
+	int TrackMult =  data_refT.size();
+	double em2 = (*jm->GetSecondaryJets())[0]->GetMess()->EMF;
+	double had2 =(*jm->GetSecondaryJets())[0]->GetMess()->HadF+(*jm->GetSecondaryJets())[0]->GetMess()->OutF;
+	double etaJet2 =  (*jm->GetSecondaryJets())[0]->GetMess()->eta;
+
+	//TrackOOC[0]->Fill(genJet,(*jm->GetSecondaryJets())[0]->GetOOC()/genJet);
+	//TrackOOC[1]->Fill(genJet);
+	//TrackOOC2D->Fill(genJet,(*jm->GetSecondaryJets())[0]->GetOOC()/genJet);
+	JetResolutionPlot[0]->Fill(genJet- messPt);
+	JetResolutionPlot[1]->Fill(genJet- jet->L2L3cor * messPt);
+	JetResolutionPlot[2]->Fill(genJet- jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt);
+	JetResolutionPlot[3]->Fill(genJet- parametrizedMess);
+	JetResolutionPlot[4]->Fill((genJet- messPt)/genJet);
+	JetResolutionPlot[5]->Fill((genJet- jet->L2L3cor * messPt)/genJet);
+	JetResolutionPlot[6]->Fill((genJet- jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt)/genJet);
+	JetResolutionPlot[7]->Fill((genJet- parametrizedMess)/genJet);
+	JetResolutionPlot[8]->Fill(messPt/genJet);
+	JetResolutionPlot[9]->Fill( jet->L2L3cor * messPt/genJet);
+	JetResolutionPlot[10]->Fill(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt/genJet);
+	JetResolutionPlot[11]->Fill(parametrizedMess/genJet);
+
+	RelResPt[0]->Fill(genJet,(parametrizedMess )/genJet,jj->GetWeight());
+	RelResPt[1]->Fill(genJet,(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
+	RelResPt[2]->Fill(genJet,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResPt[3]->Fill(genJet,(messPt )/genJet,jj->GetWeight());
+	RelResPt[4]->Fill(genJet,(parametrizedMess )/genJet,jj->GetWeight());
+	RelResPt[5]->Fill(genJet,(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
+	RelResPt[6]->Fill(genJet,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResPt[7]->Fill(genJet,(messPt )/genJet,jj->GetWeight());
+	RelResEMF[0]->Fill(em2/(em2+had2),(parametrizedMess )/genJet,jj->GetWeight());
+	RelResEMF[1]->Fill(em2/(em2+had2),(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
+	RelResEMF[2]->Fill(em2/(em2+had2),(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResEMF[3]->Fill(em2/(em2+had2),(messPt )/genJet,jj->GetWeight());
+	RelResEta[0]->Fill(etaJet2,(parametrizedMess )/genJet,jj->GetWeight());
+	RelResEta[1]->Fill(etaJet2,(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
+	RelResEta[2]->Fill(etaJet2,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResEta[3]->Fill(etaJet2,(messPt )/genJet,jj->GetWeight());
+	RelResTrackMult[0]->Fill(TrackMult,(parametrizedMess )/genJet,jj->GetWeight());
+	RelResTrackMult[1]->Fill(TrackMult,(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
+	RelResTrackMult[2]->Fill(TrackMult,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResTrackMult[3]->Fill(TrackMult,(messPt )/genJet,jj->GetWeight());
+      }
+      else noTrack++;
 
       Scale[0]->Fill(etscale,etparascale - etscale);
       Scale[1]->Fill(etscale,etparascale);
@@ -3055,9 +3841,6 @@ void TControlPlots::MakeControlPlotsDiJet()
       Bptlog[1]->Fill(etscale,Buncor,jj->GetWeight());
 
 
-      //em fraction plots     
-      double em = jj->GetMess()->EMF;;
-      double had = jj->GetMess()->HadF+jj->GetMess()->OutF;
       /*
 	for(std::vector<TAbstractData*>::const_iterator t = jj->GetRef().begin(); t != jj->GetRef().end(); ++t)
 	{
@@ -3080,8 +3863,19 @@ void TControlPlots::MakeControlPlotsDiJet()
 	    }
 	}
     }  //End of loop over all fit-events
+  //TrackOOC[0]->Divide(TrackOOC[1]);
+  /*
+  c1->cd();
+  TrackOOC[0]->Draw();
+  objToBeWritten.push_back(TrackOOC[0]);
+  c1->Draw();
+  ps->NewPage(); 
 
-
+  c1->cd();
+  TrackOOC2D->Draw("box");
+  objToBeWritten.push_back(TrackOOC2D);
+  c1->Draw();
+  ps->NewPage(); */
 
   c1->cd();
   Scale[0]->Draw("box");
@@ -3093,7 +3887,7 @@ void TControlPlots::MakeControlPlotsDiJet()
   objToBeWritten.push_back(Scale[1]);
   c1->Draw();
   ps->NewPage(); 
-
+  /*
   for(int i=0;i<4;++i)
     {
       ptspec[i]->Draw();
@@ -3115,7 +3909,8 @@ void TControlPlots::MakeControlPlotsDiJet()
       c1->Draw();
       ps->NewPage(); 
     }
-
+  */
+  /*
   Bvsdphi->Draw();
   objToBeWritten.push_back(Bvsdphi);
   c1->Draw();
@@ -3125,7 +3920,14 @@ void TControlPlots::MakeControlPlotsDiJet()
   objToBeWritten.push_back(Difvscomb);
   c1->Draw();
   ps->NewPage();  
-
+  */
+  for(int i=0;i<12;++i)
+    {
+      JetResolutionPlot[i]->Draw();
+      objToBeWritten.push_back(JetResolutionPlot[i]);
+      c1->Draw();
+      ps->NewPage(); 
+    }
 
   // Control quantities vs eta
   TH1F* hists_beta[8][8];
@@ -3137,8 +3939,8 @@ void TControlPlots::MakeControlPlotsDiJet()
   leg->AddEntry(Beta[1],"B before fit");
   leg->AddEntry(Beta[0],"B after fit");
 
-  int markerColor[2] = { 2,1 };
-  int markerStyle[2] = { 22,20 };
+  int markerColor[4] = { 2,1,4,9 };
+  int markerStyle[4] = { 22,20,23,21 };
   int etLimit[4] = { 10,35,90,300 };
 
   for(int i = 0 ; i < 8 ; i+=2) // Loop over balance plots
@@ -3490,6 +4292,205 @@ void TControlPlots::MakeControlPlotsDiJet()
     }
   
 
+
+  //JPT(3), JetMET(2) & MyCalibration(1) & Calo(4)
+  TLegend* legRes = new TLegend(0.7,0.7,0.96,0.9);
+  legRes->SetFillColor(0);
+  legRes->AddEntry(RelResPt[0],"My Calibration");
+  legRes->AddEntry(RelResPt[1],"JetMET Calibration");
+  legRes->AddEntry(RelResPt[2],"JPT Calibration");
+  legRes->AddEntry(RelResPt[3],"Calo Jet");
+
+  TH1F* hists_RelResPt[8][8];
+  TH1F* gp_RelResPt[8][4];  
+  TF1* gf_RelResPt[8][4];     
+  for(int a = 0; a < 4; a++)
+    {
+      RelResPt[a]->SetMarkerStyle(markerStyle[a]);
+      RelResPt[a]->SetMarkerColor(markerColor[a]);
+      RelResPt[a]->SetLineColor(markerColor[a]);
+      RelResPt[a+4]->SetMarkerStyle(markerStyle[a]);
+      RelResPt[a+4]->SetMarkerColor(markerColor[a]);
+      RelResPt[a+4]->SetLineColor(markerColor[a]);
+
+      Fit2DRes(RelResPt[a],hists_RelResPt[a],gp_RelResPt[a], gf_RelResPt[a]);
+      Fit2DRes(RelResPt[a+4],hists_RelResPt[a+4],gp_RelResPt[a+4], gf_RelResPt[a+4]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_RelResPt[a][b]->SetMinimum(0.5);
+	  hists_RelResPt[a][b]->SetMaximum(1.3);
+	  hists_RelResPt[a+4][b]->SetMinimum(0.5);
+	  hists_RelResPt[a+4][b]->SetMaximum(1.3);
+	  ++b;
+	  hists_RelResPt[a][b]->SetMinimum(0.0);
+	  hists_RelResPt[a][b]->SetMaximum(0.25);
+	  hists_RelResPt[a+4][b]->SetMinimum(0.0);
+	  hists_RelResPt[a+4][b]->SetMaximum(0.25);
+	}
+      hists_RelResPt[a][4]->SetMinimum(0.4);
+      hists_RelResPt[a][4]->SetMaximum(1.6);
+      hists_RelResPt[a+4][4]->SetMinimum(0.4);
+      hists_RelResPt[a+4][4]->SetMaximum(1.6);
+    }
+
+  c1->cd();
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResPt[0][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResPt[0][j]);
+      hists_RelResPt[0][j]->SetStats(0);
+      hists_RelResPt[1][j]->Draw("P SAME");
+      hists_RelResPt[2][j]->Draw("P SAME");
+      hists_RelResPt[3][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResPt[1][j]);
+      objToBeWritten.push_back(hists_RelResPt[2][j]);
+      objToBeWritten.push_back(hists_RelResPt[3][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResPt[4][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResPt[4][j]);
+      hists_RelResPt[4][j]->SetStats(0);
+      hists_RelResPt[5][j]->Draw("P SAME");
+      hists_RelResPt[6][j]->Draw("P SAME");
+      hists_RelResPt[7][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResPt[5][j]);
+      objToBeWritten.push_back(hists_RelResPt[6][j]);
+      objToBeWritten.push_back(hists_RelResPt[7][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+  TH1F* hists_RelResEMF[4][8];
+  TH1F* gp_RelResEMF[4][4];  
+  TF1* gf_RelResEMF[4][4];     
+  for(int a = 0; a < 4; a++)
+    {
+      RelResEMF[a]->SetMarkerStyle(markerStyle[a]);
+      RelResEMF[a]->SetMarkerColor(markerColor[a]);
+      RelResEMF[a]->SetLineColor(markerColor[a]);
+
+      Fit2DRes(RelResEMF[a],hists_RelResEMF[a],gp_RelResEMF[a], gf_RelResEMF[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_RelResEMF[a][b]->SetMinimum(0.5);
+	  hists_RelResEMF[a][b]->SetMaximum(1.3);
+	  ++b;
+	  hists_RelResEMF[a][b]->SetMinimum(0.0);
+	  hists_RelResEMF[a][b]->SetMaximum(0.3);
+	}
+      hists_RelResEMF[a][4]->SetMinimum(0.4);
+      hists_RelResEMF[a][4]->SetMaximum(1.6);
+    }
+
+  c1->cd();
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResEMF[0][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResEMF[0][j]);
+      hists_RelResEMF[0][j]->SetStats(0);
+      hists_RelResEMF[1][j]->Draw("P SAME");
+      hists_RelResEMF[2][j]->Draw("P SAME");
+      hists_RelResEMF[3][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResEMF[1][j]);
+      objToBeWritten.push_back(hists_RelResEMF[2][j]);
+      objToBeWritten.push_back(hists_RelResEMF[3][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+  TH1F* hists_RelResEta[4][8];
+  TH1F* gp_RelResEta[4][4];  
+  TF1* gf_RelResEta[4][4];     
+  for(int a = 0; a < 4; a++)
+    {
+      RelResEta[a]->SetMarkerStyle(markerStyle[a]);
+      RelResEta[a]->SetMarkerColor(markerColor[a]);
+      RelResEta[a]->SetLineColor(markerColor[a]);
+
+      Fit2DRes(RelResEta[a],hists_RelResEta[a],gp_RelResEta[a], gf_RelResEta[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_RelResEta[a][b]->SetMinimum(0.5);
+	  hists_RelResEta[a][b]->SetMaximum(1.3);
+	  ++b;
+	  hists_RelResEta[a][b]->SetMinimum(0.0);
+	  hists_RelResEta[a][b]->SetMaximum(0.3);
+	}
+      hists_RelResEta[a][4]->SetMinimum(0.4);
+      hists_RelResEta[a][4]->SetMaximum(1.6);
+    }
+
+  c1->cd();
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResEta[0][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResEta[0][j]);
+      hists_RelResEta[0][j]->SetStats(0);
+      hists_RelResEta[1][j]->Draw("P SAME");
+      hists_RelResEta[2][j]->Draw("P SAME");
+      hists_RelResEta[3][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResEta[1][j]);
+      objToBeWritten.push_back(hists_RelResEta[2][j]);
+      objToBeWritten.push_back(hists_RelResEta[3][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
+  TH1F* hists_RelResTrackMult[4][8];
+  TH1F* gp_RelResTrackMult[4][4];  
+  TF1* gf_RelResTrackMult[4][4];     
+  for(int a = 0; a < 4; a++)
+    {
+      RelResTrackMult[a]->SetMarkerStyle(markerStyle[a]);
+      RelResTrackMult[a]->SetMarkerColor(markerColor[a]);
+      RelResTrackMult[a]->SetLineColor(markerColor[a]);
+
+      Fit2DRes(RelResTrackMult[a],hists_RelResTrackMult[a],gp_RelResTrackMult[a], gf_RelResTrackMult[a]);
+
+      for(int b = 0 ; b < 4 ; ++b)
+	{
+	  hists_RelResTrackMult[a][b]->SetMinimum(0.5);
+	  hists_RelResTrackMult[a][b]->SetMaximum(1.3);
+	  ++b;
+	  hists_RelResTrackMult[a][b]->SetMinimum(0.0);
+	  hists_RelResTrackMult[a][b]->SetMaximum(0.3);
+	}
+      hists_RelResTrackMult[a][4]->SetMinimum(0.4);
+      hists_RelResTrackMult[a][4]->SetMaximum(1.6);
+    }
+
+  c1->cd();
+  for(int j = 0 ; j < 5 ; ++j) 
+    {
+      hists_RelResTrackMult[0][j]->Draw("P");
+      objToBeWritten.push_back(hists_RelResTrackMult[0][j]);
+      hists_RelResTrackMult[0][j]->SetStats(0);
+      hists_RelResTrackMult[1][j]->Draw("P SAME");
+      hists_RelResTrackMult[2][j]->Draw("P SAME");
+      hists_RelResTrackMult[3][j]->Draw("P SAME");
+      objToBeWritten.push_back(hists_RelResTrackMult[1][j]);
+      objToBeWritten.push_back(hists_RelResTrackMult[2][j]);
+      objToBeWritten.push_back(hists_RelResTrackMult[3][j]);
+      legRes->Draw("SAME");
+      c1->SetGrid();
+      c1->Draw();   
+      ps->NewPage(); 
+    }
+
 //   TF1* line = new TF1("line","x",0,200);
 //   for(int i=0;i<5;++i)
 //     {
@@ -3577,7 +4578,49 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  delete gf_emf[i][j];
 	}	
     }
+  for(int i = 0; i < 3; i++)
+    {
+      delete RelResPt[i];
+      delete RelResPt[i+3];
+      delete RelResEMF[i];
+      delete RelResEta[i];
+      delete RelResTrackMult[i];
+    }
+  for(int i = 0 ; i < 3 ; ++i)
+    {
+      for(int j = 0 ; j < 4 ; ++j)
+	{
+	  delete hists_RelResPt[i][j];
+	  delete hists_RelResPt[i][j+4];
+	  delete gp_RelResPt[i][j];
+	  delete gf_RelResPt[i][j];
+	  delete hists_RelResPt[i+3][j];
+	  delete hists_RelResPt[i+3][j+4];
+	  delete gp_RelResPt[i+3][j];
+	  delete gf_RelResPt[i+3][j];
+
+	  delete hists_RelResEMF[i][j];
+	  delete hists_RelResEMF[i][j+4];
+	  delete gp_RelResEMF[i][j];
+	  delete gf_RelResEMF[i][j];
+
+	  delete hists_RelResEta[i][j];
+	  delete hists_RelResEta[i][j+4];
+	  delete gp_RelResEta[i][j];
+	  delete gf_RelResEta[i][j];
+
+	  delete hists_RelResTrackMult[i][j];
+	  delete hists_RelResTrackMult[i][j+4];
+	  delete gp_RelResTrackMult[i][j];
+	  delete gf_RelResTrackMult[i][j];
+	}	
+    }
+
+
+  cout<<"Percentage of Jets with Track Calibration: "<<(double)(track*100)/(track+noTrack)<<"%"<<endl;	
+
   delete leg;
+  delete legRes;
 }
 
 
@@ -4303,6 +5346,128 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
   delete htemp;
 }
 
+
+void TControlPlots::Fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const
+{
+  //book hists
+  TString s = hist->GetName();
+  s += "_result0";
+  if( hist->GetXaxis()->GetXbins()->GetSize() == hist->GetNbinsX() +1)
+    {
+      hresults[0] = new TH1F(s,"",hist->GetNbinsX(),hist->GetXaxis()->GetXbins()->GetArray());
+    }
+  else
+    {
+      hresults[0] = new TH1F(s,"",hist->GetNbinsX(),hist->GetXaxis()->GetXmin(),
+			   hist->GetXaxis()->GetXmax());
+    }
+  hresults[0]->SetXTitle(hist->GetXaxis()->GetTitle());
+  hresults[0]->SetMarkerStyle(hist->GetMarkerStyle());
+  hresults[0]->SetMarkerColor(hist->GetMarkerColor());
+  hresults[0]->SetLineColor(hist->GetLineColor());
+  hresults[0]->SetMarkerSize(hist->GetMarkerSize());
+  for(int i = 1; i < 8 ; ++i)
+    {
+      s = hist->GetName();
+      s += "_result";
+      s += i;
+      hresults[i] = (TH1F*) hresults[0]->Clone(s);
+      s = hist->GetTitle();
+      hresults[i]->SetTitle(s + ",  " + mControlQuantityName[i]);
+    }
+  hresults[0]->SetYTitle("Mittelwert von Jet/genJet"); 
+  hresults[2]->SetYTitle("Gauss Peak von Jet/genJet"); 
+  hresults[1]->SetYTitle("(Breite von Jet/genJet) / Mittelwert"); 
+  hresults[3]->SetYTitle("(Gauss Breite von Jet/genJet) / Peak Value"); 
+  s = hist->GetTitle();
+  hresults[0]->SetTitle(s + ",  " + mControlQuantityName[0]); 
+
+  hresults[5]->SetMinimum(0.0);
+  hresults[5]->SetMaximum(100);
+  hresults[6]->SetMinimum(0.0);
+  hresults[6]->SetMaximum(1.05);
+
+
+  TH1F* htemp = new TH1F("htemp","",hist->GetNbinsY(),hist->GetYaxis()->GetXmin(),
+		          hist->GetYaxis()->GetXmax());
+  htemp->Sumw2();
+
+  for(int i=0;i<4;++i) 
+    {
+      s = hist->GetName();
+      s += "_gaussplot";
+      s += i;
+      gaussplots[i] = (TH1F*)htemp->Clone(s);
+      
+      s = hist->GetName();
+      s += "_gaussfit";
+      s += i;
+      gf[i] = new TF1(s,"0");
+    }
+
+
+  const int nq = 2;
+  double yq[2],xq[2];
+  xq[0] = 0.5;
+  xq[1] = 0.90;
+  int index = 0;		// Counting index used for gaussplots
+  for(int i = 1 ; i <= hist->GetNbinsX() ; ++i)
+    {
+      htemp->Reset();
+      for(int j = 1 ; j <= hist->GetNbinsY() ; ++j)
+	{
+	  htemp->SetBinContent(j,hist->GetBinContent(hist->GetBin(i,j)));
+	  htemp->SetBinError(j,hist->GetBinError(i,j));
+	}  
+      if(htemp->GetSumOfWeights() <= 0) continue;
+      htemp->Fit("gaus","LLQNO","");
+      TF1 *f = (TF1*)gROOT->GetFunction("gaus")->Clone();
+      double mean = f->GetParameter(1);
+      double meanerror = f->GetParError(1);
+      double width = f->GetParameter(2);
+      if(width < 0.2) width = 0.2;
+      //if( (htemp->Fit(f,"LLQNO","goff",mean - 2 * width, mean + 2 * width) == 0) && (f->GetProb() > 0.01) ) 
+      if( htemp->Fit(f,"LLQNO","goff",mean - 2 * width, mean + 2 * width) == 0) 
+	{
+	  mean = f->GetParameter(1);
+	  meanerror = f->GetParError(1);
+	  width = f->GetParameter(2);
+
+	  hresults[2]->SetBinContent(i,mean);
+	  hresults[2]->SetBinError(i,meanerror);
+	  hresults[3]->SetBinContent(i,width/mean);
+	  hresults[3]->SetBinError(i, f->GetParError(2)/mean);
+	}
+      hresults[5]->SetBinContent(i, f->GetChisquare() / f->GetNumberFreeParameters());
+      hresults[5]->SetBinError(i, 0.01);
+      hresults[6]->SetBinContent(i, f->GetProb());
+      hresults[6]->SetBinError(i, 0.01);
+
+      if(  i == int(hist->GetNbinsX()/6)
+	   || i == int(hist->GetNbinsX()/3)
+	   ||  i == int(hist->GetNbinsX()/2)  )       
+	{
+	  gaussplots[index] = (TH1F*)htemp->Clone(gaussplots[index]->GetName());
+	  gf[index] = (TF1*)f->Clone(gf[index]->GetName());
+	  index++;
+	}
+
+      mean = htemp->GetMean();
+      meanerror = htemp->GetMeanError();
+      width = htemp->GetRMS();
+      hresults[0]->SetBinContent(i,mean);
+      hresults[0]->SetBinError(i,meanerror);
+      hresults[1]->SetBinContent(i,width/mean); 
+      hresults[1]->SetBinError(i,htemp->GetRMSError()/mean);
+      htemp->GetQuantiles(nq,yq,xq);
+      hresults[4]->SetBinContent(i,yq[0]);
+      hresults[4]->SetBinError(i,0.0001);
+      hresults[7]->SetBinContent(i,yq[1]/yq[0]-1);
+      hresults[7]->SetBinError(i,0.0001);
+      delete f;
+    }
+  delete htemp;
+}
 
 
 
