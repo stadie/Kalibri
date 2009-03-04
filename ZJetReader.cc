@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.8 2009/02/18 17:51:37 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.9 2009/03/03 14:19:46 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -31,7 +31,9 @@ ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
 
   Et_cut_on_Z     = config->read<double>("Et cut on Z",0.0); 
   Et_cut_on_jet   = config->read<double>("Et cut on jet",0.0);
-  
+  Et_cut_on_genJet   = config->read<double>("Et cut on genJet",0.0);
+  Eta_cut_on_jet  = config->read<double>("Eta cut on jet",5.0);
+
   string default_tree_name = config->read<string>("Default Tree Name","CalibTree");
   string treename_zjet      = config->read<string>( "Z-Jet tree", default_tree_name );
   TChain * tchain_zjet      = new TChain( treename_zjet.c_str() );
@@ -78,9 +80,9 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
 	  <<zjet.NobjTrack<<"!"<<endl;
       exit(8);
     }
-    //trivial cuts
     //if (zjet.ZPt<Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
-    if(zjet.JetGenEt < Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
+    //if(zjet.JetGenEt < Et_cut_on_genJet  Et_cut_on_Z || zjet.JetCalPt<Et_cut_on_jet) continue;
+    if(zjet.JetGenEt < Et_cut_on_genJet || zjet.JetCalPt<Et_cut_on_jet) continue;
     //temporary solution to get rid of wrong Zs as long as muon cleaning is not applied
     if(std::abs(zjet.ZPt - zjet.GenZPt) > 80) continue;    
     //cut on Eta to avoid scarcely populated bins
@@ -235,7 +237,9 @@ TData* ZJetReader::createTruthMultMessEvent()
     jetp->ZSPcor =zjet.JetCorrZSP; 
     jetp->JPTcor =zjet.JetCorrJPT; 
     jetp->L2cor =zjet.JetCorrL2; 
-    jetp->L3cor =zjet.JetCorrL3; 
+    jetp->L3cor =zjet.JetCorrL3;  
+    jetp->L2L3cor =zjet.JetCorrL2L3; 
+    jetp->L2L3JPTcor =zjet.JetCorrL2L3JPT; 
     //the following is not quite correct, as this factor is slightly different for all towers.
     double factor =  zjet.JetCalEt / zjet.JetCalE;
     jetp->HadF = had * factor;
@@ -245,11 +249,11 @@ TData* ZJetReader::createTruthMultMessEvent()
     //Create an Z/Jet TData event
     TData_TruthMultMess * gj_data = new 
       TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
-			  zjet.ZPt,				    //truth//
-			  //zjet.JetGenPt,
+			  //zjet.ZPt,				    //truth//
+			  zjet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*zjet.ZEt,2)),    //error//
-			  zjet.EventWeight,                       //weight//
-			  //1.0,                                      //weight//
+			  //zjet.EventWeight,                       //weight//
+			  1.0,                                      //weight//
 			  p->GetJetParRef( jet_index ),             //params
 			  p->GetNumberOfJetParametersPerBin(),      //number of free jet param. p. bin
 			  p->jet_parametrization,                   //function
@@ -296,6 +300,7 @@ TData* ZJetReader::createTruthMultMessEvent()
     
     //Add the jet's tracks to "gj_data":
     int index;
+    double* EfficiencyMap = p->GetEffMap();
     for (int n=0; n<zjet.NobjTrack; ++n){
       if((zjet.TrackTowIdEta[n] == 0) || (zjet.TrackTowIdPhi[n] == 0)) {
 	if(zjet.TrackPt[n] > 2){
@@ -334,6 +339,8 @@ TData* ZJetReader::createTruthMultMessEvent()
       Tmess->TrackQualityT = bool(zjet.TrackQualityT[n]);
       Tmess->MuDR = double(zjet.MuDR[n]);
       Tmess->MuDE = double(zjet.MuDE[n]);
+      int TrackEffBin = p->GetTrackEffBin(zjet.TrackPt[n],zjet.TrackEta[n]);
+      Tmess->Efficiency = EfficiencyMap[TrackEffBin];
       //mess[7] = double( cos( zjet.JetCalPhi-zjet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       //EM+=mess->EMF;
       //F+=mess->pt;

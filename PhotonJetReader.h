@@ -4,7 +4,7 @@
 //    This class reads events according to the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
+//    $Id: PhotonJetReader.h,v 1.2 2008/12/16 15:21:26 stadie Exp $
 //   
 #ifndef PHOTONJETREADER_H
 #define PHOTONJETREADER_H
@@ -25,7 +25,7 @@ class PhotonJetReader : public EventReader{
   TData* createJetTruthEvent();
 
   GammaJetSel gammajet;
-  double Et_cut_on_gamma,Et_cut_on_jet,Rel_cut_on_gamma; 
+  double Et_cut_on_gamma,Et_cut_on_jet,Eta_cut_on_jet,Et_cut_on_genJet,Rel_cut_on_gamma; 
   int n_gammajet_events;
   int dataClass;
 };

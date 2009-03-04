@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.12 2009/02/18 17:51:37 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.13 2009/02/24 22:13:52 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -33,7 +33,9 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
   string treename_gammajet = config->read<string>("Gamma-Jet tree", default_tree_name);
   
   Et_cut_on_jet   = config->read<double>("Et cut on jet",0.0); 
+  Eta_cut_on_jet  = config->read<double>("Eta cut on jet",5.0); 
   Et_cut_on_gamma = config->read<double>("Et cut on gamma",0.0); 
+  Et_cut_on_genJet   = config->read<double>("Et cut on genJet",0.0);
   Rel_cut_on_gamma =  config->read<double>("Relative Rest Jet Cut",0.2);
   
   dataClass = config->read<int>("Gamma-Jet data class", 0);
@@ -86,9 +88,11 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
 
     //trivial cuts
     if (gammajet.PhotonEt<Et_cut_on_gamma || 
-        //gammajet.JetGenPt<Et_cut_on_gamma || 
+        //gammajet.JetGenPt<Et_cut_on_gamma ||
+	gammajet.JetGenPt<Et_cut_on_genJet ||
         gammajet.JetCalPt<Et_cut_on_jet) continue;
 
+    if(fabs(gammajet.JetCalEta) > Eta_cut_on_jet) continue;
 
     if (gammajet.NonLeadingJetPt   / gammajet.PhotonPt >  Rel_cut_on_gamma)  continue;    //fraction of unwanted stuff
 
@@ -227,11 +231,18 @@ TData* PhotonJetReader::createTruthMultMessEvent()
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
 
-    TMeasurement* jetp  = new TJet;
+    TJet* jetp  = new TJet;
     jetp->pt  = gammajet.JetCalEt;
     jetp->eta = gammajet.JetCalEta;
     jetp->phi = gammajet.JetCalPhi;
     jetp->E   = gammajet.JetCalE;
+    jetp->genPt =gammajet.JetGenPt;
+    jetp->ZSPcor =gammajet.JetCorrZSP; 
+    jetp->JPTcor =gammajet.JetCorrJPT; 
+    jetp->L2cor =gammajet.JetCorrL2; 
+    jetp->L3cor =gammajet.JetCorrL3; 
+    jetp->L2L3cor =gammajet.JetCorrL2L3; 
+    jetp->L2L3JPTcor =gammajet.JetCorrL2L3JPT; 
     //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
     double factor =  gammajet.JetCalEt /  gammajet.JetCalE;
     jetp->HadF = had * factor;
@@ -242,8 +253,8 @@ TData* PhotonJetReader::createTruthMultMessEvent()
     TData_TruthMultMess * gj_data = new TData_TruthMultMess
       (
        jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
-       gammajet.PhotonEt,				    //truth//
-       //gammajet.JetGenPt,
+       //gammajet.PhotonEt,				    //truth//
+       gammajet.JetGenPt,
        sqrt(pow(0.5,2)+pow(0.10*gammajet.PhotonEt,2)),   //error//
        //0.10*gammajet.PhotonEt.//error//				    
        gammajet.EventWeight,                             //weight//
@@ -296,14 +307,21 @@ TData* PhotonJetReader::createTruthMultMessEvent()
     } 
 
     //Add the jet's tracks to "gj_data":
+    double* EfficiencyMap = p->GetEffMap();
+    int track_index;
     for (int n=0; n<gammajet.NobjTrack; ++n){
       if((gammajet.TrackTowIdEta[n] == 0) || (gammajet.TrackTowIdPhi[n] == 0)) {
-	std::cerr << "WARNING: eta or phi id of track is zero!\n";
-	continue;
+	if(gammajet.TrackPt[n] > 2){
+	  std::cerr << "WARNING: eta or phi id of track is zero!\n";
+	  continue;
+	}
+	else track_index = 0; //bent low momentum tracks with no HCAL hit
       }
-      //one trackindex for all tracks in jet = track_index
-      int track_index = p->GetTrackBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
-				       p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
+      else
+	//one trackindex for all tracks in jet = track_index
+	track_index = p->GetTrackBin(p->GetTrackEtaBin(gammajet.TrackTowIdEta[n]),
+					 p->GetTrackPhiBin(gammajet.TrackTowIdPhi[n]));
+      if (track_index<0){ cerr<<"WARNING: track_index = " << track_index << endl; continue; }
       //create array with multidimensional measurement
       //TMeasurement * Tmess = new TTrack;
       TTrack * Tmess = new TTrack;
@@ -327,8 +345,11 @@ TData* PhotonJetReader::createTruthMultMessEvent()
       Tmess->E = double(gammajet.TrackP[n]);
       Tmess->TrackChi2 = double(gammajet.TrackChi2[n]);
       Tmess->NValidHits = int(gammajet.TrackNHits[n]);
+      Tmess->TrackQualityT = bool(gammajet.TrackQualityT[n]);
       Tmess->MuDR = double(gammajet.MuDR[n]);
       Tmess->MuDE = double(gammajet.MuDE[n]);
+      int TrackEffBin = p->GetTrackEffBin(gammajet.TrackPt[n],gammajet.TrackEta[n]);
+      Tmess->Efficiency = EfficiencyMap[TrackEffBin];
       //mess[7] = double( cos( gammajet.JetCalPhi-gammajet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       //EM+=mess->EMF;
       //F+=mess->pt;

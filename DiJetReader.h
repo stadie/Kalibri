@@ -4,7 +4,7 @@
 //    This class reads events according to the NJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
+//    $Id: DiJetReader.h,v 1.2 2009/01/19 08:40:20 stadie Exp $
 //   
 #ifndef DIJETREADER_H
 #define DIJETREADER_H
@@ -24,7 +24,7 @@ class DiJetReader : public EventReader{
   TData* createPtBalanceEvent();
   int createJetTruthEvents(std::vector<TData*>& data);
   NJetSel njet;
-  double Et_cut_nplus1Jet,Rel_cut_on_nJet;
+  double Et_cut_nplus1Jet,Rel_cut_on_nJet, GenJetCut, Eta_cut_on_jet;
   int n_dijet_events; 
   int dataClass;
 };

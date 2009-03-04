@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.6 2009/02/28 11:00:38 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.7 2009/03/03 14:19:46 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -25,6 +25,8 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   }
   Et_cut_nplus1Jet = config->read<double>("Et cut on n+1 Jet",10.0);
   Rel_cut_on_nJet  =  config->read<double>("Relative n+1 Jet Et Cut",0.2);
+  GenJetCut        =  config->read<double>("Et cut on genJet both Jets",0.0);
+  Eta_cut_on_jet   = config->read<double>("Eta cut on jet",5.0);
   
   dataClass = config->read<int>("Di-Jet data class", 0);
   if((dataClass != 0)&&(dataClass != 11)&&(dataClass != 12)) dataClass = 0;
@@ -138,120 +140,140 @@ TData* DiJetReader::createPtBalanceEvent()
     double * direction = new double[2];
     direction[0] = sin(njet.JetPhi[ij]);
     direction[1] = cos(njet.JetPhi[ij]);
-    TMeasurement* jetp  = new TJet;
+    TJet* jetp  = new TJet;
     jetp->pt  = njet.JetEt[ij];
     jetp->eta = njet.JetEta[ij];
     jetp->phi = njet.JetPhi[ij];
     jetp->E   = njet.JetE[ij];
+    jetp->genPt =njet.GenJetPt[ij];
+    jetp->ZSPcor =njet.JetCorrZSP[ij]; 
+    jetp->JPTcor =njet.JetCorrJPT[ij]; 
+    jetp->L2cor =njet.JetCorrL2[ij]; 
+    jetp->L3cor =njet.JetCorrL3[ij]; 
+    jetp->L2L3cor =njet.JetCorrL2L3[ij]; 
+    jetp->L2L3JPTcor =njet.JetCorrL2L3JPT[ij]; 
     //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
-    double factor =  njet.JetEt[ij] /  njet.JetE[ij];
-    jetp->HadF = had * factor;
-    jetp->EMF = em * factor;
-    jetp->OutF = out * factor;
-    //Create an jet/Jet TData event
-    jj_data[nstoredjets] = new TData_PtBalance( 
-					       jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
-					       direction,                                     //p_T direction of this jet
-					       0.0,                                           //truth//
-					       sqrt(pow(0.5,2)+pow(0.10*njet.JetPt[ij],2)),   //error//
-					       njet.Weight,                                   //weight//
-					       //1.,                                          //weight//
-					       p->GetJetParRef( jet_index ),                  //params
-					       p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-					       p->jet_parametrization,                        //function
-					       //p->dummy_parametrization,
-					       jet_error_param,                               //error param. function
-					       jetp                                           //jet momentum for plotting and scale
-					       );
-    //cout << "jet "<<nstoredjets<<"'s E="<<njet.JetE[ij]
-    //     << ", ntower:"<<endl;
-    //Add the jet's towers to "jj_data":
-    for (int n=0; n<njet.NobjTow; ++n){
-      if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
-      //if (njet.TowEt[n]<0.01) continue;
-      
-      int index = p->GetBin(p->GetEtaBin(njet.TowId_eta[n]),
-			    p->GetPhiBin(njet.TowId_phi[n]));
-      //std::cout << "jet:" << ij << ", towid=" << n << ", bin index:" << index << "\n";
-      if (index<0){ cerr<<"WARNING: JJ tower_index = " << index << endl; continue; }
-      
-      double relativEt = njet.TowEt[n]/njet.JetEt[ij];  
-      //if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
-      //This relativeE is used *only* for plotting! Therefore no cuts on this var!
-      //create array with multidimensional measurement
-      TMeasurement * mess = new TTower;
-      mess->pt = double(njet.TowEt[n]);
-      double scale = njet.TowEt[n]/njet.TowE[n];
-      mess->EMF = double(njet.TowEm[n]*scale);
-      mess->HadF = double(njet.TowHad[n]*scale);
-      mess->OutF = double(njet.TowOE[n]*scale);
-      mess->eta = double(njet.TowEta[n]);
-      mess->phi = double(njet.TowPhi[n]);
-      mess->E = double(njet.TowE[n]);
-      //mess[7] = double( cos( njet.JetCalPhi-njet.TowPhi[n] ) ); // Projection factor for summing tower Pt
-      
-      jj_data[nstoredjets]->AddMess(new TData_TruthMess(
-							index,
-							mess,                                                   //mess//
-							njet.JetPt[ij] * relativEt,                             //truth//
-							sqrt(pow(0.5,2)+pow(0.1*njet.JetPt[ij]*relativEt,2)),   //error//
-							//1.,                                                   //weight//
-							njet.Weight,                                            //weight//
-							p->GetTowerParRef( index ),                             //parameter//
-							p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
-							p->tower_parametrization,                               //function//
-							tower_error_param                                      //error param. function//
-							));
-    }
-    //Add the jet's tracks to "gj_data":
-    for (int n=0; n<njet.NobjTrack; ++n){
-      if (njet.Track_jetidx[n]!=(int)ij) continue;//look for ij-jet's tracks
-      
-      int track_index = p->GetTrackBin(p->GetTrackEtaBin(njet.TrackTowIdEta[n]),
-				       p->GetTrackPhiBin(njet.TrackTowIdPhi[n]));
-      if (track_index<0){ cerr<<"WARNING: JJ track_index = " << track_index << endl; continue; }
-      //create array with multidimensional measurement
-      //TMeasurement * Tmess = new TTrack;
-      TTrack * Tmess = new TTrack;
-      Tmess->TrackId = int(njet.TrackId[n]);
-      Tmess->TowerId = int(njet.TrackTowId[n]);
-      Tmess->pt = double(njet.TrackPt[n]);
-      double scale = njet.TrackP[n]/njet.TrackPt[n];
-      Tmess->EM1 = double(njet.TrackEMC1[n]*scale);
-      Tmess->EMF = double(njet.TrackEMC3[n]*scale);
-      Tmess->EM5 = double(njet.TrackEMC5[n]*scale);
-      Tmess->Had1 = double(njet.TrackHAC1[n]*scale);
-      Tmess->HadF = double(njet.TrackHAC3[n]*scale);
-      Tmess->Had5 = double(njet.TrackHAC5[n]*scale);
-      Tmess->OutF = 0;
-      Tmess->DR = double(njet.TrackDR[n]);
-      Tmess->DRout = double(njet.TrackDROut[n]);
-      Tmess->eta = double(njet.TrackEta[n]);
-      Tmess->etaOut = double(njet.TrackEtaOut[n]);
-      Tmess->phi = double(njet.TrackPhi[n]);
-      Tmess->phiOut = double(njet.TrackPhiOut[n]);
-      Tmess->E = double(njet.TrackP[n]);
-      Tmess->TrackChi2 = double(njet.TrackChi2[n]);
-      Tmess->NValidHits = int(njet.TrackNHits[n]);
-      Tmess->MuDR = double(njet.MuDR[n]);
-      Tmess->MuDE = double(njet.MuDE[n]);
-      //mess[7] = double( cos( njet.JetCalPhi-njet.TowPhi[n] ) ); // Projection factor for summing tower Pt
-      //EM+=mess->EMF;
-      //F+=mess->pt;
-      jj_data[nstoredjets]->AddTrack(new TData_TruthMess(
-							 track_index  * p->GetNumberOfTrackParametersPerBin() + p->GetNumberOfTowerParameters() + p->GetNumberOfJetParameters() ,
-							 Tmess,                                                    //mess//
-							 0,                           //truth//
-							 0.05 + 0.00015 * njet.TrackPt[n], //error//
-							 1.,                                                      //weight//
-							 p->GetTrackParRef( track_index ),                              //parameter//
-							 p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
-							 p->track_parametrization,                                //function//
-							 track_error_param                                        //error param.func.//
-							 ));
-    }
-    jj_data[nstoredjets]->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization
-    
+      double factor =  njet.JetEt[ij] /  njet.JetE[ij];
+      jetp->HadF = had * factor;
+      jetp->EMF = em * factor;
+      jetp->OutF = out * factor;
+      //Create an jet/Jet TData event
+      jj_data[nstoredjets] = new TData_PtBalance( 
+          jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+	  direction,                                     //p_T direction of this jet
+	  0.0,                                           //truth//
+	  sqrt(pow(0.5,2)+pow(0.10*njet.JetPt[ij],2)),   //error//
+	  //njet.Weight,                                   //weight//
+	  1.,                                          //weight//
+	  p->GetJetParRef( jet_index ),                  //params
+	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
+	  p->jet_parametrization,                        //function
+	  //p->dummy_parametrization,
+          jet_error_param,                               //error param. function
+	  jetp                                           //jet momentum for plotting and scale
+        );
+//cout << "jet "<<nstoredjets<<"'s E="<<njet.JetE[ij]
+//     << ", ntower:"<<endl;
+      //Add the jet's towers to "jj_data":
+      for (int n=0; n<njet.NobjTow; ++n){
+        if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
+	//if (njet.TowEt[n]<0.01) continue;
+
+	int index = p->GetBin(p->GetEtaBin(njet.TowId_eta[n]),
+			      p->GetPhiBin(njet.TowId_phi[n]));
+//std::cout << "jet:" << ij << ", towid=" << n << ", bin index:" << index << "\n";
+	if (index<0){ cerr<<"WARNING: JJ tower_index = " << index << endl; continue; }
+
+	double relativEt = njet.TowEt[n]/njet.JetEt[ij];  
+	//if (relativEt<=0) cerr << "relEt = " <<relativEt << endl; //continue;
+	//This relativeE is used *only* for plotting! Therefore no cuts on this var!
+	//create array with multidimensional measurement
+	TMeasurement * mess = new TTower;
+	mess->pt = double(njet.TowEt[n]);
+	double scale = njet.TowEt[n]/njet.TowE[n];
+	mess->EMF = double(njet.TowEm[n]*scale);
+	mess->HadF = double(njet.TowHad[n]*scale);
+	mess->OutF = double(njet.TowOE[n]*scale);
+	mess->eta = double(njet.TowEta[n]);
+	mess->phi = double(njet.TowPhi[n]);
+	mess->E = double(njet.TowE[n]);
+	//mess[7] = double( cos( njet.JetCalPhi-njet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+
+	jj_data[nstoredjets]->AddMess(new TData_TruthMess(
+	    index,
+	    mess,                                                   //mess//
+	    njet.JetPt[ij] * relativEt,                             //truth//
+	    sqrt(pow(0.5,2)+pow(0.1*njet.JetPt[ij]*relativEt,2)),   //error//
+            //1.,                                                   //weight//
+	    njet.Weight,                                            //weight//
+	    p->GetTowerParRef( index ),                             //parameter//
+	    p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
+	    p->tower_parametrization,                               //function//
+	    tower_error_param                                      //error param. function//
+	  ));
+      }
+      //Add the jet's tracks to "gj_data":
+      double* EfficiencyMap = p->GetEffMap();
+      int track_index;
+      for (int n=0; n<njet.NobjTrack; ++n){
+        if (njet.Track_jetidx[n]!=(int)ij) continue;//look for ij-jet's tracks
+
+	if((njet.TrackTowIdEta[n] == 0) || (njet.TrackTowIdPhi[n] == 0)) {
+	  if(njet.TrackPt[n] > 2){
+	    std::cerr << "WARNING: eta or phi id of track is zero!\n";
+	    continue;
+	  }
+	  else track_index = 0; //bent low momentum tracks with no HCAL hit
+	}
+	else
+	  track_index = p->GetTrackBin(p->GetTrackEtaBin(njet.TrackTowIdEta[n]),
+					   p->GetTrackPhiBin(njet.TrackTowIdPhi[n]));
+	if (track_index<0){ cerr<<"WARNING: JJ track_index = " << track_index << endl; continue; }
+	//create array with multidimensional measurement
+	//TMeasurement * Tmess = new TTrack;
+	TTrack * Tmess = new TTrack;
+	Tmess->TrackId = int(njet.TrackId[n]);
+	Tmess->TowerId = int(njet.TrackTowId[n]);
+	Tmess->pt = double(njet.TrackPt[n]);
+	double scale = njet.TrackP[n]/njet.TrackPt[n];
+	Tmess->EM1 = double(njet.TrackEMC1[n]*scale);
+	Tmess->EMF = double(njet.TrackEMC3[n]*scale);
+	Tmess->EM5 = double(njet.TrackEMC5[n]*scale);
+	Tmess->Had1 = double(njet.TrackHAC1[n]*scale);
+	Tmess->HadF = double(njet.TrackHAC3[n]*scale);
+	Tmess->Had5 = double(njet.TrackHAC5[n]*scale);
+	Tmess->OutF = 0;
+	Tmess->DR = double(njet.TrackDR[n]);
+	Tmess->DRout = double(njet.TrackDROut[n]);
+	Tmess->eta = double(njet.TrackEta[n]);
+	Tmess->etaOut = double(njet.TrackEtaOut[n]);
+	Tmess->phi = double(njet.TrackPhi[n]);
+	Tmess->phiOut = double(njet.TrackPhiOut[n]);
+	Tmess->E = double(njet.TrackP[n]);
+	Tmess->TrackChi2 = double(njet.TrackChi2[n]);
+	Tmess->NValidHits = int(njet.TrackNHits[n]);
+	Tmess->TrackQualityT = bool(njet.TrackQualityT[n]);
+	Tmess->MuDR = double(njet.MuDR[n]);
+	Tmess->MuDE = double(njet.MuDE[n]);
+	int TrackEffBin = p->GetTrackEffBin(njet.TrackPt[n],njet.TrackEta[n]);
+	Tmess->Efficiency = EfficiencyMap[TrackEffBin];
+	//mess[7] = double( cos( njet.JetCalPhi-njet.TowPhi[n] ) ); // Projection factor for summing tower Pt
+	//EM+=mess->EMF;
+	//F+=mess->pt;
+	jj_data[nstoredjets]->AddTrack(new TData_TruthMess(
+					      track_index  * p->GetNumberOfTrackParametersPerBin() + p->GetNumberOfTowerParameters() + p->GetNumberOfJetParameters() ,
+					      Tmess,                                                    //mess//
+					      0,                           //truth//
+					      0.05 + 0.00015 * njet.TrackPt[n], //error//
+					      1.,                                                      //weight//
+					      p->GetTrackParRef( track_index ),                              //parameter//
+					      p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
+					      p->track_parametrization,                                //function//
+					      track_error_param                                        //error param.func.//
+					      ));
+      }
+      jj_data[nstoredjets]->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization  
+
     if(nstoredjets> 0)  
       jj_data[0]->AddNewMultMess( jj_data[nstoredjets] );
     ++nstoredjets;
@@ -273,6 +295,9 @@ TData* DiJetReader::createPtBalanceEvent()
     //cout<<"scale: "<<scale<<endl;
     if ( jj_data[injet]->GetMess()->pt > scale*Rel_cut_on_nJet ) goodevent = false;
   }
+  if ( (((TJet*)(jj_data[0]->GetMess()))->genPt < GenJetCut) || (((TJet*)(jj_data[1]->GetMess()))->genPt  < GenJetCut ))  goodevent = false;
+  if ( (fabs(jj_data[0]->GetMess()->eta) > Eta_cut_on_jet) ||  (fabs(jj_data[1]->GetMess()->eta) > Eta_cut_on_jet) )  goodevent = false;
+  
   /*
   //sort jets. 1st is barrel, 2nd is probe
   if( nstoredjets ==  2) {
