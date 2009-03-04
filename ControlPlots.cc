@@ -13,6 +13,7 @@ using namespace std;
 #include "TLegend.h"
 #include "TLine.h"
 #include "TLorentzVector.h"
+#include "TPaveText.h"
 #include "TPostScript.h"
 #include "TProfile.h"
 #include "TString.h"
@@ -3722,6 +3723,10 @@ void TControlPlots::MakeControlPlotsTop()
   int markerColor[2] = { 2, 1 };
   int markerStyle[2] = { 22, 20 };
 
+  TPaveText *paveText[2];
+  paveText[0] = new TPaveText(0.7, 0.6 , 0.91, 0.75, "NDC");
+  paveText[1] = new TPaveText(0.7, 0.45, 0.91, 0.6 , "NDC");
+
   for(unsigned a=0; a<2; a++){
     invMass     [a]->Fit( "gaus", "Q" );
     messTruth   [a]->Fit( "gaus", "Q" );
@@ -3744,6 +3749,24 @@ void TControlPlots::MakeControlPlotsTop()
     messTruth   [a]->SetMarkerStyle( markerStyle[a] );
     messTruthPt [a]->SetMarkerStyle( markerStyle[a] );
     messTruthEta[a]->SetMarkerStyle( markerStyle[a] );
+
+    paveText[a]->SetFillColor( 0 );
+    paveText[a]->SetBorderSize( 1 );
+    paveText[a]->SetTextColor( markerColor[a] );
+    paveText[a]->SetTextAlign( 12 );
+
+    double mu    = invMass[a]->GetFunction("gaus")->GetParameter(1);
+    double sigma = invMass[a]->GetFunction("gaus")->GetParameter(2);
+    double relSigma = sigma / mu;
+
+    char *tmpTxt = new char[100];
+
+    sprintf(tmpTxt, "#mu = %4.1f GeV", mu);
+    paveText[a]->AddText(tmpTxt);
+    sprintf(tmpTxt, "#sigma = %4.1f GeV", sigma);
+    paveText[a]->AddText(tmpTxt);
+    sprintf(tmpTxt, "#sigma/#mu = %4.2f", relSigma);
+    paveText[a]->AddText(tmpTxt);
 
     invMass     [a]->SetStats( 0 );
     messTruth   [a]->SetStats( 0 );
@@ -3769,16 +3792,16 @@ void TControlPlots::MakeControlPlotsTop()
     responseEta    ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
     responsePhi    ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
 
-    messTruthPt [a]->SetMinimum( 0.2 );
-    messTruthEta[a]->SetMinimum( 0.2 );
+    messTruthPt [a]->SetMinimum( 0.4 );
+    messTruthEta[a]->SetMinimum( 0.4 );
 
-    messTruthPt [a]->SetMaximum( 1.8 );
-    messTruthEta[a]->SetMaximum( 1.8 );
+    messTruthPt [a]->SetMaximum( 1.6 );
+    messTruthEta[a]->SetMaximum( 1.6 );
   }
 
   // create a legend
 
-  TLegend* legend = new TLegend(0.7,0.75,0.91,0.85);
+  TLegend* legend = new TLegend(0.7, 0.75, 0.91, 0.85);
   legend->SetFillColor(0);
   legend->AddEntry(invMass[0],"before fit");
   legend->AddEntry(invMass[1],"after fit");
@@ -3835,6 +3858,8 @@ void TControlPlots::MakeControlPlotsTop()
   invMass[0]->Draw("p");
   invMass[1]->Draw("p same");
   legend->Draw("same");
+  paveText[0]->Draw();
+  paveText[1]->Draw();
   c->Draw();
   if(printEps) c->Print("top_invMass.eps");
   ps->NewPage();
@@ -3911,6 +3936,7 @@ void TControlPlots::MakeControlPlotsTop()
   delete meanPt;
   delete meanEta;
   for(unsigned a=0; a<2; a++){
+    delete paveText    [a];
     delete invMass     [a];
     delete messTruth   [a];
     delete messTruthPt [a];
