@@ -74,6 +74,8 @@ public :
    Float_t         JetCorrL2;
    Float_t         JetCorrL3;
    Float_t         JetCorrJPT;
+   Float_t         JetCorrL2L3;
+   Float_t         JetCorrL2L3JPT;
    Float_t         JetGenPt;
    Float_t         JetGenPhi;
    Float_t         JetGenEta;
@@ -154,6 +156,8 @@ public :
    TBranch        *b_JetCorrL2;   //!
    TBranch        *b_JetCorrL3;   //!
    TBranch        *b_JetCorrJPT;   //!
+   TBranch        *b_JetCorrL2L3;   //!
+   TBranch        *b_JetCorrL2L3JPT;   //!
    TBranch        *b_JetGenPt;   //!
    TBranch        *b_JetGenPhi;   //!
    TBranch        *b_JetGenEta;   //!
@@ -268,7 +272,9 @@ void ZJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetCorrZSP", &JetCorrZSP, &b_JetCorrZSP);
    fChain->SetBranchAddress("JetCorrL2", &JetCorrL2, &b_JetCorrL2);
    fChain->SetBranchAddress("JetCorrL3", &JetCorrL3, &b_JetCorrL3);
-   fChain->SetBranchAddress("JetCorrJPT", &JetCorrJPT, &b_JetCorrJPT); 
+   fChain->SetBranchAddress("JetCorrJPT", &JetCorrJPT, &b_JetCorrJPT);
+   fChain->SetBranchAddress("JetCorrL2L3", &JetCorrL2L3, &b_JetCorrL2L3);
+   fChain->SetBranchAddress("JetCorrL2L3JPT", &JetCorrL2L3JPT, &b_JetCorrL2L3JPT); 
    fChain->SetBranchAddress("JetGenPt", &JetGenPt, &b_JetGenPt);
    fChain->SetBranchAddress("JetGenPhi", &JetGenPhi, &b_JetGenPhi);
    fChain->SetBranchAddress("JetGenEta", &JetGenEta, &b_JetGenEta);
