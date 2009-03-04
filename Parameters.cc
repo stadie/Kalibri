@@ -107,7 +107,8 @@ void TParameters::Init(const ConfigFile& config)
   phi_granularity_jet = config.read<unsigned>("jet granularity in phi",1); 
   eta_granularity_track = config.read<unsigned>("track granularity in eta",1); 
   phi_granularity_track = config.read<unsigned>("track granularity in phi",1); 
-  input_calibration   = config.read<string>("input calibration","");
+  input_calibration   = config.read<string>("input calibration",""); 
+  track_efficiency   = config.read<string>("track efficiency","");
 
   if (eta_ntwr_used%2 !=0){
     cerr << "WARNING: Use even number of eta towers! Forced exit."<< endl;    
@@ -157,6 +158,7 @@ void TParameters::Init(const ConfigFile& config)
   }
   k = new double[GetNumberOfParameters()];
   e = new double[GetNumberOfParameters()];
+  trackEff = new double[169];
 
   for (unsigned int bin=0; bin<eta_granularity*phi_granularity; ++bin){
     for (unsigned int tp=0; tp < p->nTowerPars(); ++tp){
@@ -179,6 +181,15 @@ void TParameters::Init(const ConfigFile& config)
       e[i] = 0.0;
     }
   }
+
+  for(int etabin=0; etabin<13; ++etabin)
+    {
+      for(int ptbin=0; ptbin<13; ++ptbin)
+	{
+	  trackEff[13*etabin+ptbin] = 1;
+	}
+    }
+
   for (unsigned int gjp = 0 ; gjp < p->nGlobalJetPars() ; ++gjp){
     int i = GetNumberOfTowerParameters() + GetNumberOfJetParameters() + GetNumberOfTrackParameters() + gjp;   
     k[i] = global_jet_start_values[gjp];
@@ -201,6 +212,10 @@ void TParameters::Init(const ConfigFile& config)
 	   << input_calibration.substr(input_calibration.rfind("."))
 	   << "'"<< endl;  
     }
+  }
+  if(!track_efficiency.empty()){
+  cout << "Reading Track Efficiency from file '" << track_efficiency << endl;
+  Read_TrackEffTxt(track_efficiency);
   }
 }
 
@@ -469,6 +484,54 @@ void TParameters::Read_CalibrationCfi(std::string const& configFile)
     }
   }
   delete[] dummy;
+}
+
+void TParameters::Read_TrackEffTxt(std::string const& configFile)
+{
+  // ---------------------------------------------------------------
+  //read Track Efficiency as used in JPT Algorithm
+  // ---------------------------------------------------------------
+  std::ifstream file(configFile.c_str());
+  std::string line; // buffer line
+  int      etaBin=  -1;
+  int      ptBin=  0;
+  unsigned iLines=  0; 
+  if(! file) cout<<configFile.c_str()<<" does not exist"<<endl;
+  while( std::getline(file,line) ){
+    // determine pt bin on the fly
+    ptBin=(iLines%13);      // pt counts from 0..12 for each eta bin
+    // determine eta bin on the fly
+    if(iLines%13==0) ++etaBin; // increas etaValue by 1 each 13 lines...
+    ++iLines;
+
+    //cout << "etaBin: " << etaBin << " :: " << "ptBin: " << ptBin << endl;
+
+    unsigned entry=0; // controls which parameter is to filled
+    while( line.length()>line.substr(0, line.find(" ")).size() ){
+      if( 0<line.find(" ")){
+   	// extract value
+	switch(++entry){
+	case 1 : if( std::atof( line.substr(0, line.find(" ")).c_str() ) != etaBin) cout<<"error in Track efficiency file"<<endl;
+	  break;
+	case 2 : if( std::atof( line.substr(0, line.find(" ")).c_str() ) != ptBin) cout<<"error in Track efficiency file"<<endl;
+	  break; 
+	case 3 :  break; 
+	default:
+	  trackEff[iLines-1] = std::atof( line.substr(line.find(" ")).c_str() );
+	  //cout<<iLines-1<<"  "<<etaBin<<"  "<<ptBin<<"  :  "<< trackEff[iLines-1]<<endl;
+	  break;
+	}
+	// cut string
+	line = line.substr(line.find(" "));
+      }
+      else{
+	//cut string
+	if(line.find(" ")<std::string::npos){
+	  line = line.substr(line.find(" ")+1);
+	}
+      }
+    }
+  }
 }
 
 int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) const
@@ -981,6 +1044,26 @@ void TParameters::Write_CalibrationCfi(const char* name)
   // complete line
   file << std::endl;
   file.close();
+}
+
+int TParameters::GetTrackEffBin(double pt, double eta)
+{
+  int bin, etabin, ptbin;
+  etabin = (int)(fabs(eta)/0.2);
+  if (etabin > 12) etabin = 12;
+  if (pt < 5) ptbin = (int)(pt); //bin 0-4
+  else{
+    if(pt < 30) ptbin = (int)(5+(pt-5)/5);  //bin 5-9
+    else{
+      if(pt < 40) ptbin = 10;
+      else{
+	if(pt<50) ptbin = 11;
+	else ptbin = 12;
+      }
+    }
+  }
+  bin = 13 * etabin + ptbin;
+  return bin;
 }
 
 Function TParameters::tower_function(int etaid, int phiid) {

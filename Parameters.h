@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.44 2009/02/18 17:51:38 stadie Exp $
+// $Id: Parameters.h,v 1.45 2009/02/27 13:52:30 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -75,6 +75,8 @@ public :
   }
   double* GetPars() { return k; }
   double* GetErrors() { return e; }
+  double* GetEffMap() {return trackEff;}
+  int GetTrackEffBin(double pt, double eta);
 
   void Print() const;
   
@@ -107,15 +109,20 @@ public :
   }
 
   static double track_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) { 
+    //for full error also see Grooms paper 0605164v4, p.25
     double error=0,error2=0;
-    error =  (x[0]>0 ? x[0] *( 0.05 + 0.00015 * x[0])   : (-x[0]) *(  0.05 + 0.00015 * (-x[0]) )); //trackerror
-    //for full error see Grooms paper 0605164v4, p.25
+    error =  (x[0]>0 ? x[0] *( 0.05 + 0.00015 * x[0])   : (-x[0]) *(  0.05 + 0.00015 * (-x[0]) )); //trackerror  to be checken and dependent on pt, eta, chi2, nohits, ....
     error2 = error * error;
-    //Pi0 Fehler
-    error2 += (1-1/1.48)*(1-1/1.48)*0.125*0.125*x[0]*x[0];   //*(x[0]/100)^(-0.076)          //1/1.48 = h/e
-    //folling term has to be checked!!!!
-    double a = 1/(1.48 * 1.48) * 1.25 * 1.25 * pow((fabs(x[0])* (xorig->E / xorig->pt) / 0.96),(0.816 - 1));  // 1- Pi0 * error(h)^2 (h/e)^2
-    error2 += (x[0]>0 ?  a * x[0]  : a * (-x[0]));    //intrinsic term (HCAL)
+
+    //Pi0 Fehler s.Clemens
+    if(x[0] > 3)      error = x[0] * 0.15 + 3;              //p. 70
+    else              error = x[0] * 1.15;
+    error2 += error * error;
+
+    //error2 += (1-1/1.48)*(1-1/1.48)*0.125*0.125*x[0]*x[0];   //*(x[0]/100)^(-0.076)          //1/1.48 = h/e
+    //following term has to be checked!!!!
+    //double a = 1/(1.48 * 1.48) * 1.25 * 1.25 * pow((fabs(x[0])* (xorig->E / xorig->pt) / 0.96),(0.816 - 1));  // 1- Pi0 * error(h)^2 (h/e)^2
+    //error2 += (x[0]>0 ?  a * x[0]  : a * (-x[0]));    //intrinsic term (HCAL)
     error = sqrt(error2);
     return error;
   }
@@ -228,12 +235,13 @@ public :
 
 protected:
   TParameters(Parametrization* p) 
-    : p(p),k(0),e(0),fitchi2(0) {
+    : p(p),k(0),e(0),trackEff(0),fitchi2(0) {
   };
   virtual ~TParameters() {
     delete p;
     delete [] k;
     delete [] e;
+    delete [] trackEff;
   };
 private:
   TParameters();
@@ -253,6 +261,7 @@ private:
 
   double * k; //all fit-parameters
   double * e; //all fit-parameter errors
+  double * trackEff; //track Efficiency 13eta X 13 ptbins;
   double fitchi2;
 
   /// ------------------------------------------------------
@@ -264,9 +273,12 @@ private:
   void Read_CalibrationCfi(const std::string& file);
   /// read predefined calibration constants from txt file
   void Read_CalibrationTxt(const std::string& file);
+  /// read Track Efficiency from txt file
+  void Read_TrackEffTxt(const std::string& file);
 
   std::string trim(std::string const& source, char const* delims = " {}\t\r\n");
   std::string input_calibration;
+  std::string track_efficiency;
   
 
   static TParameters *instance; 
