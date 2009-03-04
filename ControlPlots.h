@@ -34,6 +34,7 @@ public:
   void MakeControlPlotsTowers();
  private:  
   void Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
+  void Fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
   void SetGStyle() const;
   void WriteToRootFile(std::vector<TObject*> obj, std::string dir);
 
