@@ -1315,10 +1315,9 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
       // first loop over tower
       TAbstractData* ad = dynamic_cast<TAbstractData*>(jg);
 
-      if(ad->GetTrackuse()) track++;
-      else noTrack++;
-
       if(ad) {
+	if(ad->GetTrackuse()) track++;
+	else noTrack++;
 
 	const std::vector<TAbstractData*>& data_refT = ad->GetRefTrack();
 	for(std::vector<TAbstractData*>::const_iterator it = data_refT.begin();it != data_refT.end(); ++it)
@@ -1468,20 +1467,17 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	      }
 	  } // end of loop over rings
       }
-      Chi2Plot[0]->Fill(ad->chi2());
+      Chi2Plot[0]->Fill(jg->chi2());
       //if(ad->GetTrackuse()) {
       if(true) {
-	Chi2Plot[1]->Fill(ad->chi2());
-	Chi2Plot[3]->Fill(ad->chi2()/jg->GetWeight());
-	Chi2Pt[0]->Fill(etjet,ad->chi2());
-	Chi2Eta->Fill(etajet,ad->chi2());
-	Chi2NoTrack->Fill(NoTracks,ad->chi2());
-	Chi2Error->Fill(ad->GetParametrizedErr(),ad->chi2());
-	Diff2Pt[0]->Fill(etjet,fabs(etjetcor - jg->GetTruth()));
+	Chi2Plot[1]->Fill(jg->chi2());
+	Chi2Plot[3]->Fill(jg->chi2()/jg->GetWeight());
+	Chi2Pt[0]->Fill(etjet,jg->chi2());
+	Chi2Eta->Fill(etajet,jg->chi2());
+	Chi2NoTrack->Fill(NoTracks,jg->chi2());
+	if(ad) Chi2Error->Fill(ad->GetParametrizedErr(),jg->chi2());
+	Diff2Pt[0]->Fill(etjet,std::abs(etjetcor - jg->GetTruth()));
 
-	TAbstractData* ad = dynamic_cast<TAbstractData*>(jg);
-	const std::vector<TAbstractData*>& data_refT = ad->GetRefTrack();
-	int TrackMult =  data_refT.size();
 	double em1 = jg->GetMess()->EMF;
 	double had1 = jg->GetMess()->HadF+jg->GetMess()->OutF;
 	TJet* jet = (TJet*)(jg->GetMess());
@@ -1502,15 +1498,20 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	RelResEta[1]->Fill(jg->GetMess()->eta,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
 	RelResEta[2]->Fill(jg->GetMess()->eta,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
 	RelResEta[3]->Fill(jg->GetMess()->eta,(jg->GetMess()->pt )/genJet,jg->GetWeight());
-	RelResTrackMult[0]->Fill(TrackMult,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
-	RelResTrackMult[1]->Fill(TrackMult,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
-	RelResTrackMult[2]->Fill(TrackMult,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
-	RelResTrackMult[3]->Fill(TrackMult,(jg->GetMess()->pt )/genJet,jg->GetWeight());
+	
+	if(ad) {
+	  const std::vector<TAbstractData*>& data_refT = ad->GetRefTrack();
+	  int TrackMult =  data_refT.size();
+	  RelResTrackMult[0]->Fill(TrackMult,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
+	  RelResTrackMult[1]->Fill(TrackMult,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	  RelResTrackMult[2]->Fill(TrackMult,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	  RelResTrackMult[3]->Fill(TrackMult,(jg->GetMess()->pt )/genJet,jg->GetWeight());
+	}
       }
       else {
-	Chi2Plot[2]->Fill(ad->chi2());
-	Chi2Pt[1]->Fill(etjet,ad->chi2());
-	Diff2Pt[1]->Fill(etjet,fabs(etjetcor - jg->GetTruth()));
+	Chi2Plot[2]->Fill(jg->chi2());
+	Chi2Pt[1]->Fill(etjet,jg->chi2());
+	Diff2Pt[1]->Fill(etjet,std::abs(etjetcor - jg->GetTruth()));
       }
       towerinjet[0]->Fill(noTower);
       if (jg->GetTruth() > 10 && jg->GetTruth() < 35)
@@ -1552,7 +1553,7 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	      heta[11]->Fill(etajet,etjet/etjetcor,jg->GetWeight());
 	      towerinjet[3]->Fill(noTower);
 	    }
-	  if(ad->GetTrackuse()) 
+	  if(ad && ad->GetTrackuse()) 
 	    {
 	      hetaTrack[0]->Fill(etajet,etjet/ jg->GetTruth(),jg->GetWeight());
 	      hetaTrack[1]->Fill(etajet,etjetcor/ jg->GetTruth(),jg->GetWeight());
@@ -1565,7 +1566,7 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 	  hpt[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
 	  hpt[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
 	  hpt[2]->Fill(jg->GetTruth(),etjet/etjetcor,jg->GetWeight());
-	  if(ad->GetTrackuse()) 
+	  if(ad && ad->GetTrackuse()) 
 	    {   
 	      hptTrack[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
 	      hptTrack[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
