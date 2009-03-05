@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.10 2009/02/24 22:13:52 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.11 2009/03/03 14:20:28 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -15,6 +15,17 @@ JetWithTowers::JetWithTowers(double Et, double EmEt, double HadEt,
 			     const Function& gfunc,double Etmin)
   : Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,func,errfunc,gfunc,Etmin),
     ntowerpars(0)
+{
+}
+JetWithTowers::JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
+			     double eta,double phi, Flavor flavor, double genPt, double ZSPcor, 
+			     double JPTcor, double L2cor, double L3cor, double L2L3cor, 
+			     double L2L3JPTcor, const Function& func, 
+			     double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
+			     const Function& gfunc, double Etmin) 
+  :  Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,ZSPcor,JPTcor,L2cor,L3cor,L2L3cor,L2L3JPTcor,
+	 func,errfunc,gfunc,Etmin),
+     ntowerpars(0)
 {
 }
 

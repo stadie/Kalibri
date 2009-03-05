@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.7 2009/03/03 14:19:46 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.8 2009/03/04 17:26:51 thomsen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -391,7 +391,10 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
       JetWithTowers *jt = 
 	new JetWithTowers(njet.JetEt[i],em * factor,had * factor,
 			  out * factor,njet.JetE[i],njet.JetEta[i],
-			  njet.JetPhi[i],TJet::uds,
+			  njet.JetPhi[i],TJet::uds,njet.GenJetEt[i],
+			  njet.JetCorrZSP[i],njet.JetCorrJPT[i],
+			  njet.JetCorrL2[i],njet.JetCorrL3[i],
+			  njet.JetCorrL2L3[i],njet.JetCorrL2L3JPT[i],
 			  p->jet_function(njet.TowId_eta[closestTower],
 					  njet.TowId_phi[closestTower]),
 			  jet_error_param,p->global_jet_function(),Et_cut_nplus1Jet);
@@ -409,8 +412,11 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
     else { 
       jet = new Jet(njet.JetEt[i],em * factor,had * factor,out * factor,
 		    njet.JetE[i],njet.JetEta[i],njet.JetPhi[i],
-		    TJet::uds,p->jet_function(njet.TowId_eta[closestTower],
-					      njet.TowId_phi[closestTower]),
+		    TJet::uds,njet.GenJetEt[i],njet.JetCorrZSP[i],
+		    njet.JetCorrJPT[i],njet.JetCorrL2[i],njet.JetCorrL3[i],
+		    njet.JetCorrL2L3[i],njet.JetCorrL2L3JPT[i],
+		    p->jet_function(njet.TowId_eta[closestTower],
+				    njet.TowId_phi[closestTower]),
 		    jet_error_param,p->global_jet_function(),Et_cut_nplus1Jet);    
     }
     JetTruthEvent* jte = new JetTruthEvent(jet,njet.GenJetEt[i],1.0);//njet.Weight);

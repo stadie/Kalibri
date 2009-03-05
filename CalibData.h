@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.59 2009/02/25 15:08:25 stadie Exp $
+// $Id: CalibData.h,v 1.60 2009/03/03 15:19:06 thomsen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -56,10 +56,12 @@ public:
   enum Flavor{ gluon=0, uds=1, c=2, b=3 };
   TJet():TMeasurement(){}; 
   TJet(double Et,double EmEt,double HadEt,double OutEt,double E,double eta,
-       double phi, Flavor flavor, double genPt, double ZSPcor, double JPTcor, double L2cor, double L3cor)
-    : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi),flavor(flavor), genPt(genPt) {};
+       double phi, Flavor flavor, double genPt, double ZSPcor, double JPTcor, double L2cor, double L3cor,
+       double L2L3cor, double L2L3JPTcor)
+    : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi),flavor(flavor), genPt(genPt), ZSPcor(ZSPcor),
+    JPTcor(JPTcor), L2cor(L2cor),L3cor(L3cor),L2L3cor(L2L3cor),L2L3JPTcor(L2L3JPTcor) {};
   TJet(TMeasurement* j):TMeasurement(j){};
-  TJet(TJet* j):TMeasurement(j){/*further initialization*/};
+  //TJet(TJet* j):TMeasurement(j){/*further initialization*/};
   virtual ~TJet() {}
 //variables specific only to jets (i.e. mass)
   Flavor flavor;

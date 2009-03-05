@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.11 2009/02/24 22:13:52 stadie Exp $
+//    $Id: Jet.h,v 1.12 2009/03/03 17:42:23 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -20,7 +20,8 @@ class Jet : public TJet
       const Function& gf, double Etmin = 0);
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
       double eta,double phi, Flavor flavor, double genPt, double ZSPcor,
-      double JPTcor, double L2cor, double L3cor, const Function& f, 
+      double JPTcor, double L2cor, double L3cor,double L2L3cor, 
+      double L2L3JPTcor, const Function& f,
       double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
       const Function& gf, double Etmin = 0); 
   virtual ~Jet() {};

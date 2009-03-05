@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.h,v 1.9 2009/02/24 22:13:52 stadie Exp $
+//    $Id: JetWithTowers.h,v 1.10 2009/02/25 15:08:25 stadie Exp $
 //   
 #ifndef JETWITHTOWERS_H
 #define JETWITHTOWERS_H
@@ -18,7 +18,13 @@ class JetWithTowers : public Jet
   JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
 		double eta,double phi, Flavor flavor,const Function& f, 
 		double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
-		const Function& gf, double Etmin = 0);
+		const Function& gf, double Etmin = 0); 
+ JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
+	       double eta,double phi, Flavor flavor,double genPt, double ZSPcor,
+	       double JPTcor, double L2cor, double L3cor,double L2L3cor, 
+	       double L2L3JPTcor, const Function& f,
+	       double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
+	       const Function& gf, double Etmin = 0); 
   virtual ~JetWithTowers(); 
   virtual int nPar() const {return Jet::nPar() + towerpars.size() * ntowerpars;}
   virtual void ChangeParAddress(double* oldpar, double* newpar);

@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.13 2009/02/24 22:13:52 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.14 2009/03/04 17:26:51 thomsen Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -166,12 +166,13 @@ TData* PhotonJetReader::createJetTruthEvent()
     JetWithTowers *jt = 
       new JetWithTowers(gammajet.JetCalEt,em * factor,had * factor,
 			out * factor,gammajet.JetCalE,gammajet.JetCalEta,
-			gammajet.JetCalPhi,TJet::uds,
+			gammajet.JetCalPhi,TJet::uds,gammajet.JetGenEt,
+			gammajet.JetCorrZSP,gammajet.JetCorrJPT,
+			gammajet.JetCorrL2,gammajet.JetCorrL3,
+			gammajet.JetCorrL2L3,gammajet.JetCorrL2L3JPT,
 			p->jet_function(gammajet.TowId_eta[closestTower],
 					gammajet.TowId_phi[closestTower]),
-			jet_error_param,
-			p->global_jet_function(),Et_cut_on_jet
-			);
+			jet_error_param,p->global_jet_function(),Et_cut_on_jet);
     for(int i = 0; i < gammajet.NobjTowCal; ++i) {
       double scale = gammajet.TowEt[i]/gammajet.TowE[i];
       jt->addTower(gammajet.TowEt[i],gammajet.TowEm[i]*scale,
@@ -185,8 +186,11 @@ TData* PhotonJetReader::createJetTruthEvent()
   else { 
     j = new Jet(gammajet.JetCalEt,em * factor,had * factor,out * factor,
 		gammajet.JetCalE,gammajet.JetCalEta,gammajet.JetCalPhi,
-		TJet::uds,p->jet_function(gammajet.TowId_eta[closestTower],
-					  gammajet.TowId_phi[closestTower]),
+		TJet::uds,gammajet.JetGenEt,gammajet.JetCorrZSP,
+		gammajet.JetCorrJPT,gammajet.JetCorrL2,gammajet.JetCorrL3,
+		gammajet.JetCorrL2L3,gammajet.JetCorrL2L3JPT,
+		p->jet_function(gammajet.TowId_eta[closestTower],
+				gammajet.TowId_phi[closestTower]),
 		jet_error_param,p->global_jet_function(),Et_cut_on_jet);
   }
   JetTruthEvent* jte = new JetTruthEvent(j,gammajet.PhotonEt,gammajet.EventWeight);
