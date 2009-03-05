@@ -4659,12 +4659,12 @@ void TControlPlots::MakeControlPlotsTop()
   for(unsigned a=0; a<2; a++){
     invMass     [a] = new TH1F("invMass"  +suffix[a], "",  40, 0., 200.);
     messTruth   [a] = new TH1F("messTruth"+suffix[a], "",  40, 0.,   2.);
-    messTruthPt [a] = new TProfile("messTruthPt" +suffix[a], "", 70,    0, 140);
-    messTruthEta[a] = new TProfile("messTruthEta"+suffix[a], "", 80,  -4.,  4.);
+    messTruthPt [a] = new TProfile("messTruthPt" +suffix[a], "", 35,    0, 140);
+    messTruthEta[a] = new TProfile("messTruthEta"+suffix[a], "", 40,  -4.,  4.);
   }
 
-  TProfile* responsePt  = new TProfile("responsePt" , "", 70,    0, 140);
-  TProfile* responseEta = new TProfile("responseEta", "", 80,  -4.,  4.);
+  TProfile* responsePt  = new TProfile("responsePt" , "", 35,    0, 140);
+  TProfile* responseEta = new TProfile("responseEta", "", 40,  -4.,  4.);
   TProfile* responsePhi = new TProfile("responsePhi", "", 68, -3.4, 3.4);
 
   //loop over all fit-events and fill hists
@@ -4772,8 +4772,18 @@ void TControlPlots::MakeControlPlotsTop()
   paveText[1] = new TPaveText(0.7, 0.45, 0.91, 0.6 , "NDC");
 
   for(unsigned a=0; a<2; a++){
-    invMass     [a]->Fit( "gaus", "Q" );
-    messTruth   [a]->Fit( "gaus", "Q" );
+
+    invMass     [a]->Fit( "gaus", "Q0" );
+    messTruth   [a]->Fit( "gaus", "Q0" );
+
+    double invMassMu      = invMass[a]->GetFunction("gaus")->GetParameter(1);
+    double invMassSigma   = invMass[a]->GetFunction("gaus")->GetParameter(2);
+
+    double messTruthMu    = messTruth[a]->GetFunction("gaus")->GetParameter(1);
+    double messTruthSigma = messTruth[a]->GetFunction("gaus")->GetParameter(2);
+
+    invMass     [a]->Fit( "gaus", "Q", "", invMassMu  -2*invMassSigma  , invMassMu  +2*invMassSigma   );
+    messTruth   [a]->Fit( "gaus", "Q", "", messTruthMu-2*messTruthSigma, messTruthMu+2*messTruthSigma );
 
     invMass     [a]->SetLineColor( markerColor[a] );
     messTruth   [a]->SetLineColor( markerColor[a] );
@@ -4793,6 +4803,11 @@ void TControlPlots::MakeControlPlotsTop()
     messTruth   [a]->SetMarkerStyle( markerStyle[a] );
     messTruthPt [a]->SetMarkerStyle( markerStyle[a] );
     messTruthEta[a]->SetMarkerStyle( markerStyle[a] );
+
+    invMass     [a]->SetMarkerSize( 1.5 );
+    messTruth   [a]->SetMarkerSize( 1.5 );
+    messTruthPt [a]->SetMarkerSize( 1.5 );
+    messTruthEta[a]->SetMarkerSize( 1.5 );
 
     paveText[a]->SetFillColor( 0 );
     paveText[a]->SetBorderSize( 1 );
@@ -4816,25 +4831,16 @@ void TControlPlots::MakeControlPlotsTop()
     messTruth   [a]->SetStats( 0 );
     messTruthPt [a]->SetStats( 0 );
     messTruthEta[a]->SetStats( 0 );
-    responsePt     ->SetStats( 0 );
-    responseEta    ->SetStats( 0 );
-    responsePhi    ->SetStats( 0 );
     
     invMass     [a]->SetXTitle( "invariant mass [GeV]" );
     messTruth   [a]->SetXTitle( "measurement/truth" );
-    messTruthPt [a]->SetXTitle( "p_{T}' [GeV]" );
-    messTruthEta[a]->SetXTitle( "#eta'" );
-    responsePt     ->SetXTitle( "p_{T} [GeV]" );
-    responseEta    ->SetXTitle( "#eta" );
-    responsePhi    ->SetXTitle( "#phi" );
+    messTruthPt [a]->SetXTitle( "#bar{p}_{T} [GeV]" );
+    messTruthEta[a]->SetXTitle( "#bar{#eta}" );
 
     invMass     [a]->SetYTitle( "events" );
     messTruth   [a]->SetYTitle( "events" );
     messTruthPt [a]->SetYTitle( "measurement/truth" );
     messTruthEta[a]->SetYTitle( "measurement/truth" );
-    responsePt     ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
-    responseEta    ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
-    responsePhi    ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
 
     messTruthPt [a]->SetMinimum( 0.4 );
     messTruthEta[a]->SetMinimum( 0.4 );
@@ -4842,6 +4848,35 @@ void TControlPlots::MakeControlPlotsTop()
     messTruthPt [a]->SetMaximum( 1.6 );
     messTruthEta[a]->SetMaximum( 1.6 );
   }
+
+
+  responsePt ->SetMarkerStyle( markerStyle[1] );
+  responseEta->SetMarkerStyle( markerStyle[1] );
+  responsePhi->SetMarkerStyle( markerStyle[1] );
+
+  responsePt ->SetMarkerSize( 1.5 );
+  responseEta->SetMarkerSize( 1.5 );
+  responsePhi->SetMarkerSize( 1.5 );
+
+  responsePt ->SetStats( 0 );
+  responseEta->SetStats( 0 );
+  responsePhi->SetStats( 0 );
+  
+  responsePt ->SetXTitle( "p_{T} [GeV]" );
+  responseEta->SetXTitle( "#eta" );
+  responsePhi->SetXTitle( "#phi" );
+
+  responsePt ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
+  responseEta->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
+  responsePhi->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
+
+  responsePt ->SetMinimum( 0. );
+  responseEta->SetMinimum( 0. );
+  responsePhi->SetMinimum( 0. );
+
+  responsePt ->SetMaximum( 1.2 );
+  responseEta->SetMaximum( 1.2 );
+  responsePhi->SetMaximum( 1.2 );
 
   // create a legend
 
