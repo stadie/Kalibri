@@ -4730,6 +4730,12 @@ void TControlPlots::MakeControlPlotsTop()
 	mPt  += jets[j].pt;
 	mEta += jets[j].eta;
 
+	messTruthPt [0]->Fill( jets[j].pt  , combined4Vec.M()/t );
+	messTruthEta[0]->Fill( jets[j].eta , combined4Vec.M()/t );
+	
+	messTruthPt [1]->Fill( jets[j].pt  , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	messTruthEta[1]->Fill( jets[j].eta , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+
 	double response;
 	if(j==0) {
 	  response = invM2 ? invM2->GetMess()->pt / invM2->GetParametrizedMess() : 
@@ -4753,12 +4759,6 @@ void TControlPlots::MakeControlPlotsTop()
 
       meanPt ->Fill( mPt  );
       meanEta->Fill( mEta );
-
-      messTruthPt [0]->Fill( mPt  , combined4Vec.M()/t );
-      messTruthEta[0]->Fill( mEta , combined4Vec.M()/t );
-      
-      messTruthPt [1]->Fill( mPt  , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
-      messTruthEta[1]->Fill( mEta , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
     }  //End of loop over all fit-events
 
@@ -4834,8 +4834,8 @@ void TControlPlots::MakeControlPlotsTop()
     
     invMass     [a]->SetXTitle( "invariant mass [GeV]" );
     messTruth   [a]->SetXTitle( "measurement/truth" );
-    messTruthPt [a]->SetXTitle( "#bar{p}_{T} [GeV]" );
-    messTruthEta[a]->SetXTitle( "#bar{#eta}" );
+    messTruthPt [a]->SetXTitle( "p_{T} [GeV]" );
+    messTruthEta[a]->SetXTitle( "#eta" );
 
     invMass     [a]->SetYTitle( "events" );
     messTruth   [a]->SetYTitle( "events" );
