@@ -1,6 +1,9 @@
 #include "TwoJetsInvMassEvent.h"
 
 #include "TLorentzVector.h"
+#include <algorithm>
+
+
 double TwoJetsInvMassEvent::chi2() const
 {
   double et1 = jet1->correctedEt(jet1->Et());
