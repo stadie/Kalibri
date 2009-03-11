@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.3 2009/02/19 17:47:55 snaumann Exp $
+//    $Id: TopReader.cc,v 1.4 2009/03/03 17:40:03 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -388,12 +388,13 @@ TData* TopReader::createTwoJetsInvMassEvents()
     Jet **jet = jets[0] ? &jets[1] : &jets[0];
     if(dataClass == 2) {
       JetWithTowers *jt = 
-	new JetWithTowers(top.JetEt[i],em * factor,had * factor,
-			  out * factor,top.JetE[i],top.JetEta[i],
-			  top.JetPhi[i],TJet::uds,
+	new JetWithTowers(top.JetEt[i], em * factor, had * factor,
+			  out * factor, top.JetE[i], top.JetEta[i],
+			  top.JetPhi[i], TJet::uds, top.GenJetPt[i],
+			  0., 0., 0., 0., 0., 0.,
 			  p->jet_function(top.TowId_eta[closestTower],
 					  top.TowId_phi[closestTower]),
-			  jet_error_param,p->global_jet_function(),Et_cut_on_jet);
+			  jet_error_param, p->global_jet_function(), Et_cut_on_jet);
       for(int j = 0 ; j < top.NobjTow ; ++j) {
 	if (top.Tow_jetidx[j]!= i) continue;//look for ij-jet's towers
 	double scale = top.TowEt[j]/top.TowE[j];
@@ -406,15 +407,17 @@ TData* TopReader::createTwoJetsInvMassEvents()
       *jet = jt;
     }
     else { 
-      *jet = new Jet(top.JetEt[i],em * factor,had * factor,out * factor,
-		     top.JetE[i],top.JetEta[i],top.JetPhi[i],
-		     TJet::uds,p->jet_function(top.TowId_eta[closestTower],
-					       top.TowId_phi[closestTower]),
-		     jet_error_param,p->global_jet_function(),Et_cut_on_jet);    
+      *jet = new Jet(top.JetEt[i], em * factor, had * factor, out * factor,
+		     top.JetE[i], top.JetEta[i], top.JetPhi[i],
+		     TJet::uds, top.GenJetPt[i], 0., 0., 0, 0., 0., 0.,
+		     p->jet_function(top.TowId_eta[closestTower],
+				     top.TowId_phi[closestTower]),
+		     jet_error_param, p->global_jet_function(), Et_cut_on_jet);    
     }
   }
   delete [] terr;
   if(jets[1]) {
+    //    if(0.5*(jets[0]->pt+jets[1]->pt)>40.)
     return new TwoJetsInvMassEvent(jets[0],jets[1],massConstraint_W,1.0);
   } else {
     delete jets[0];

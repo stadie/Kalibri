@@ -36,6 +36,11 @@ public :
    Float_t         JetEta[8];   //[NobjBJet]
    Float_t         JetEt[8];   //[NobjBJet]
    Float_t         JetE[8];   //[NobjBJet]
+   Float_t         GenJetPt[8];   //[NobjJet]
+   Float_t         GenJetPhi[8];   //[NobjJet]
+   Float_t         GenJetEta[8];   //[NobjJet]
+   Float_t         GenJetEt[8];   //[NobjJet]
+   Float_t         GenJetE[8];   //[NobjJet]
    Int_t           JetFlavor[8];   //[NobjBJet]
    Int_t           JetTopID[8];   //[NobjBJet]
    Float_t         Weight;
@@ -59,6 +64,11 @@ public :
    TBranch        *b_JetEta;   //!
    TBranch        *b_JetEt;   //!
    TBranch        *b_JetE;   //!
+   TBranch        *b_GenJetPt;   //!
+   TBranch        *b_GenJetPhi;   //!
+   TBranch        *b_GenJetEta;   //!
+   TBranch        *b_GenJetEt;   //!
+   TBranch        *b_GenJetE;   //!
    TBranch        *b_JetFlavor;   //!
    TBranch        *b_JetTopID;   //!
    TBranch        *b_Weight;   //!
@@ -118,6 +128,11 @@ void TopSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetEta", JetEta, &b_JetEta);
    fChain->SetBranchAddress("JetEt", JetEt, &b_JetEt);
    fChain->SetBranchAddress("JetE", JetE, &b_JetE);
+   fChain->SetBranchAddress("GenJetPt", GenJetPt, &b_GenJetPt);
+   fChain->SetBranchAddress("GenJetPhi", GenJetPhi, &b_GenJetPhi);
+   fChain->SetBranchAddress("GenJetEta", GenJetEta, &b_GenJetEta);
+   fChain->SetBranchAddress("GenJetEt", GenJetEt, &b_GenJetEt);
+   fChain->SetBranchAddress("GenJetE", GenJetE, &b_GenJetE);
    fChain->SetBranchAddress("JetFlavor", JetFlavor, &b_JetFlavor);
    fChain->SetBranchAddress("JetTopID", JetTopID, &b_JetTopID);
    fChain->SetBranchAddress("Weight", &Weight, &b_Weight);

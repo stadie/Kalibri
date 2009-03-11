@@ -4655,17 +4655,17 @@ void TControlPlots::MakeControlPlotsTop()
   TH1F* messTruth       [2];
   TProfile* messTruthPt [2];
   TProfile* messTruthEta[2];
+  TProfile* responsePt  [2];
+  TProfile* responseEta [2];
   TString suffix[2] = { "Before", "After" };
   for(unsigned a=0; a<2; a++){
     invMass     [a] = new TH1F("invMass"  +suffix[a], "",  40, 0., 200.);
     messTruth   [a] = new TH1F("messTruth"+suffix[a], "",  40, 0.,   2.);
     messTruthPt [a] = new TProfile("messTruthPt" +suffix[a], "", 35,    0, 140);
     messTruthEta[a] = new TProfile("messTruthEta"+suffix[a], "", 40,  -4.,  4.);
+    responsePt  [a] = new TProfile("responsePt"  +suffix[a], "", 35,    0, 140);
+    responseEta [a] = new TProfile("responseEta" +suffix[a], "", 40,  -4.,  4.);
   }
-
-  TProfile* responsePt  = new TProfile("responsePt" , "", 35,    0, 140);
-  TProfile* responseEta = new TProfile("responseEta", "", 40,  -4.,  4.);
-  TProfile* responsePhi = new TProfile("responsePhi", "", 68, -3.4, 3.4);
 
   //loop over all fit-events and fill hists
 
@@ -4675,25 +4675,25 @@ void TControlPlots::MakeControlPlotsTop()
       TData* data = *i;
       if(data->GetType() != InvMass) continue;
 
-      std::vector<TMeasurement> jets;
+      std::vector<TJet*> jets;
       
       TData_InvMass2 *invM2 = dynamic_cast<TData_InvMass2*>(data);	
       TwoJetsInvMassEvent* ev = (TwoJetsInvMassEvent*)data;
       if(invM2) {	
-	jets.push_back( (*invM2->GetMess()) );
+	jets.push_back( (TJet*) invM2->GetMess() );
 	for(unsigned j=0; j<invM2->MultMessSize(); j++)
-	  jets.push_back( (*invM2->GetSecondaryJets())[j]->GetMess() );
+	  jets.push_back( (TJet*) (*invM2->GetSecondaryJets())[j]->GetMess() );
       } 
       else if(ev) {
-	jets.push_back(ev->GetMess());
-	jets.push_back(ev->GetMess2());
+	jets.push_back( ev->GetJet1() );
+	jets.push_back( ev->GetJet2() );
       } else { 
       continue;
       }
 
       TLorentzVector jet4Vec, combined4Vec;
       for(unsigned j=0; j<jets.size(); j++) {
-	jet4Vec.SetPtEtaPhiE( jets[j].pt, jets[j].eta, jets[j].phi, jets[j].E );
+	jet4Vec.SetPtEtaPhiE( jets[j]->pt, jets[j]->eta, jets[j]->phi, jets[j]->E );
 	if(j==0) combined4Vec = jet4Vec;
 	else combined4Vec += jet4Vec;
       }
@@ -4713,45 +4713,50 @@ void TControlPlots::MakeControlPlotsTop()
       weight->Fill(w);
       truth ->Fill(t);
       
-      invMass  [0]->Fill( combined4Vec.M() );
+      invMass  [0]->Fill( combined4Vec.M()   );
       messTruth[0]->Fill( combined4Vec.M()/t );
 
-      invMass  [1]->Fill( invM2 ? invM2->GetMessCombination() : ev->correctedMass() );
+      invMass  [1]->Fill( invM2 ? invM2->GetMessCombination()   : ev->correctedMass()   );
       messTruth[1]->Fill( invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
       double mPt  = 0.;
       double mEta = 0.;
 
       for(unsigned j=0; j<jets.size(); j++) {
-	pt ->Fill( jets[j].pt  );
-	eta->Fill( jets[j].eta );
-	phi->Fill( jets[j].phi );
+	pt ->Fill( jets[j]->pt  );
+	eta->Fill( jets[j]->eta );
+	phi->Fill( jets[j]->phi );
 
-	mPt  += jets[j].pt;
-	mEta += jets[j].eta;
+	mPt  += jets[j]->pt;
+	mEta += jets[j]->eta;
 
-	messTruthPt [0]->Fill( jets[j].pt  , combined4Vec.M()/t );
-	messTruthEta[0]->Fill( jets[j].eta , combined4Vec.M()/t );
+	messTruthPt [0]->Fill( jets[j]->pt  , combined4Vec.M()/t );
+	messTruthEta[0]->Fill( jets[j]->eta , combined4Vec.M()/t );
 	
-	messTruthPt [1]->Fill( jets[j].pt  , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
-	messTruthEta[1]->Fill( jets[j].eta , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	messTruthPt [1]->Fill( jets[j]->pt  , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	messTruthEta[1]->Fill( jets[j]->eta , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
-	double response;
+	double response[2];
 	if(j==0) {
-	  response = invM2 ? invM2->GetMess()->pt / invM2->GetParametrizedMess() : 
-	    ev->GetMess()->pt/ev->GetParametrizedMess();
+	  response[0] = invM2 ? invM2->GetMess()->pt / jets[j]->genPt : 
+	                           ev->GetMess()->pt / jets[j]->genPt;
+	  response[1] = invM2 ? invM2->GetParametrizedMess() / jets[j]->genPt : 
+	                           ev->GetParametrizedMess() / jets[j]->genPt;
 	}
 	else {
 	  if(invM2) {
 	    const TData_MessMess* mm = (*invM2->GetSecondaryJets())[j-1];
-	    response = mm->GetMess()->pt / mm->GetParametrizedMess();
+	    response[0] = mm->GetMess()->pt         / jets[j]->genPt;
+	    response[1] = mm->GetParametrizedMess() / jets[j]->genPt;
 	  } else {
-	    response = ev->GetMess2()->pt/ev->GetParametrizedMess2();
+	    response[0] = ev->GetMess2()->pt         / jets[j]->genPt;
+	    response[1] = ev->GetParametrizedMess2() / jets[j]->genPt;
 	  }
 	}
-	responsePt ->Fill( jets[j].pt  , response );
-	responseEta->Fill( jets[j].eta , response );
-	responsePhi->Fill( jets[j].phi , response );
+	for(unsigned a=0; a<2; a++){
+	  responsePt [a]->Fill( jets[j]->pt  , response[a] );
+	  responseEta[a]->Fill( jets[j]->eta , response[a] );
+	}
       }
 
       mPt  /= jets.size();
@@ -4847,36 +4852,32 @@ void TControlPlots::MakeControlPlotsTop()
 
     messTruthPt [a]->SetMaximum( 1.6 );
     messTruthEta[a]->SetMaximum( 1.6 );
+
+    responsePt [a]->SetMarkerColor( markerColor[a] );
+    responseEta[a]->SetMarkerColor( markerColor[a] );
+
+    responsePt [a]->SetMarkerStyle( markerStyle[a] );
+    responseEta[a]->SetMarkerStyle( markerStyle[a] );
+
+    responsePt [a]->SetMarkerSize( 1.5 );
+    responseEta[a]->SetMarkerSize( 1.5 );
+    
+    responsePt [a]->SetStats( 0 );
+    responseEta[a]->SetStats( 0 );
+    
+    responsePt [a]->SetXTitle( "p_{T} [GeV]" );
+    responseEta[a]->SetXTitle( "#eta" );
+
+    responsePt [a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+    responseEta[a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+
+    responsePt [a]->SetMinimum( 0. );
+    responseEta[a]->SetMinimum( 0. );
+
+    responsePt [a]->SetMaximum( 1.2 );
+    responseEta[a]->SetMaximum( 1.2 );
+
   }
-
-
-  responsePt ->SetMarkerStyle( markerStyle[1] );
-  responseEta->SetMarkerStyle( markerStyle[1] );
-  responsePhi->SetMarkerStyle( markerStyle[1] );
-
-  responsePt ->SetMarkerSize( 1.5 );
-  responseEta->SetMarkerSize( 1.5 );
-  responsePhi->SetMarkerSize( 1.5 );
-
-  responsePt ->SetStats( 0 );
-  responseEta->SetStats( 0 );
-  responsePhi->SetStats( 0 );
-  
-  responsePt ->SetXTitle( "p_{T} [GeV]" );
-  responseEta->SetXTitle( "#eta" );
-  responsePhi->SetXTitle( "#phi" );
-
-  responsePt ->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
-  responseEta->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
-  responsePhi->SetYTitle( "p_{T} (uncorr.) / p_{T} (corr.)" );
-
-  responsePt ->SetMinimum( 0. );
-  responseEta->SetMinimum( 0. );
-  responsePhi->SetMinimum( 0. );
-
-  responsePt ->SetMaximum( 1.2 );
-  responseEta->SetMaximum( 1.2 );
-  responsePhi->SetMaximum( 1.2 );
 
   // create a legend
 
@@ -4966,19 +4967,20 @@ void TControlPlots::MakeControlPlotsTop()
   if(printEps) c->Print("top_messTruthEta.eps");
   ps->NewPage();
 
-  responsePt->Draw();
+  responsePt[0]->Draw("p");
+  responsePt[1]->Draw("p same");
+  legend->Draw("same");
+  line->DrawLine(responsePt[0]->GetXaxis()->GetXmin(), 1., responsePt[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_responsePt.eps");
   ps->NewPage();
 
-  responseEta->Draw();
+  responseEta[0]->Draw("p");
+  responseEta[1]->Draw("p same");
+  legend->Draw("same");
+  line->DrawLine(responseEta[0]->GetXaxis()->GetXmin(), 1., responseEta[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_responseEta.eps");
-  ps->NewPage();
-
-  responsePhi->Draw();
-  c->Draw();
-  if(printEps) c->Print("top_responsePhi.eps");
 
   ps->Close();
 
@@ -4997,10 +4999,9 @@ void TControlPlots::MakeControlPlotsTop()
     objToBeWritten.push_back( messTruth   [a] );
     objToBeWritten.push_back( messTruthPt [a] );
     objToBeWritten.push_back( messTruthEta[a] );
+    objToBeWritten.push_back( responsePt  [a] );
+    objToBeWritten.push_back( responseEta [a] );
   }
-  objToBeWritten.push_back( responsePt  );
-  objToBeWritten.push_back( responseEta );
-  objToBeWritten.push_back( responsePhi );
 
   if( mOutputROOT ) WriteToRootFile( objToBeWritten, "Top" );
 
@@ -5020,10 +5021,9 @@ void TControlPlots::MakeControlPlotsTop()
     delete messTruth   [a];
     delete messTruthPt [a];
     delete messTruthEta[a];
+    delete responsePt  [a];
+    delete responseEta [a];
   }
-  delete responsePt;
-  delete responseEta;
-  delete responsePhi;
 
   delete legend;
   delete line;
