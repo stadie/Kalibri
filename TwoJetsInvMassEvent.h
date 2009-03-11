@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: TwoJetsInvMassEvent.h,v 1.3 2009/01/22 17:48:10 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.h,v 1.1 2009/03/03 17:40:03 stadie Exp $
 //   
 #ifndef TWOJETSINVMASSEVENT_H
 #define TWOJETSINVMASSEVENT_H
@@ -26,6 +26,9 @@ public:
   
   TMeasurement *GetMess2() const {return jet2;}
   double GetParametrizedMess2() const { return jet2->correctedEt(jet2->Et());}
+
+  TJet *GetJet1() const {return jet1;}
+  TJet *GetJet2() const {return jet2;}
 
   void ChangeParAddress(double* oldpar, double* newpar) { 
     jet1->ChangeParAddress(oldpar,newpar);
