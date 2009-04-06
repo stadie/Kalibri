@@ -1,7 +1,7 @@
-//  /brief 
-//  /author Christian Autermann
-//  /date Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
+//  \brief 
+//  \author Christian Autermann
+//  \date Wed Jul 18 13:54:50 CEST 2007
+// $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -13,24 +13,24 @@ using namespace std;
 #include <cassert>
 
 
-//!  /brief Type of data
+//!  \brief Type of data
 //!
-//!  /sa TAbstractData 
+//!  \sa TAbstractData 
 enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
                InvMass, typeTowerConstraint, ParLimit};
 
-//!  /brief Base class of a measurement
+//!  \brief Base class of a measurement
 //!
 //!  A measurement can represent a tower, a track, or a jet.
 //!
-//!  /note: The parametrized (pt-)measurement, wich will be compared to the
+//!  \note: The parametrized (pt-)measurement, wich will be compared to the
 //!      'truth' will remain a single 'double' value (i.e. the 
 //!       same type as 'truth')!
 //!
-//!  /sa TJet, TTower, TTrack, Jet, JetWithTowers
+//!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
-//!  /author Christian Autermann
-//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
+//!  \author Christian Autermann
+//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
 class TMeasurement
 {
 public:
@@ -54,12 +54,12 @@ public:
 
 
 
-//!  /brief A tower measurement
+//!  \brief A tower measurement
 //!
-//!  /sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
+//!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
-//!  /author Christian Autermann
-//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
+//!  \author Christian Autermann
+//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
 class TTower : public TMeasurement
 { 
 public:
@@ -73,12 +73,12 @@ public:
 
 
 
-//!  /brief A jet measurement
+//!  \brief A jet measurement
 //!
-//!  /sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
+//!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
-//!  /author Christian Autermann
-//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
+//!  \author Christian Autermann
+//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
 class TJet : public TMeasurement
 {
 public:
@@ -112,14 +112,14 @@ public:
 
 
 
-//!  /brief A track measurement
+//!  \brief A track measurement
 //!
-//!  /sa TMeasurement, TJet, TTower, Jet, JetWithTowers
+//!  \sa TMeasurement, TJet, TTower, Jet, JetWithTowers
 //!
-//!  /todo Document members
+//!  \todo Document members
 //!
-//!  /author Jan Thomsen
-//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
+//!  \author Jan Thomsen
+//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
 class TTrack : public TMeasurement
 {
 public:
@@ -148,7 +148,7 @@ public:
 
 
 
-//!  /brief Interface to the data 
+//!  \brief Interface to the data 
 //!
 //!  A TData object represents one event. It holds the measured
 //!  quantities of that event (see TMeasurement) and allows
@@ -168,9 +168,9 @@ public:
 //!     derive from TAbstractData in this scheme.
 //!  -# New calibration scheme ("Variation of the truth") 
 //!     The available data types are:
-//!  /author Christian Autermann
-//!  /date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
+//!  \author Christian Autermann
+//!  \date Wed Jul 18 13:54:50 CEST 2007
+//! $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
 class TData
 {
 public:
@@ -211,7 +211,7 @@ public:
   //! by reference, where
   //!  \f[
   //!   \frac{\partial \chi^{2}}{\partial p}
-  //!   = \sum \textrm{temp_derivative1}
+  //!   = \sum \textrm{temp\_derivative1}
   //!  \f]
   //!  and alike for the second derivative.
   //!
@@ -256,7 +256,7 @@ public:
 
 
 
-//!  /brief Interface to the data for the original calibration
+//!  \brief Interface to the data for the original calibration
 //!         scheme ("Correction of the measurement")
 //!
 //!  For a description of the functionality see TData
@@ -264,9 +264,9 @@ public:
 //!  TAbstractData is a virtual base class. The derived interfaces are
 //!  specific for a certain type of data.
 //!
-//!  /author Hartmut Stadie
-//!  /date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
+//!  \author Hartmut Stadie
+//!  \date Thu Dec 11 17:20:25 2008 UTC
+//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
 class TAbstractData : public TData
 {
 public:
