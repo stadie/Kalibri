@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.19 2009/01/30 17:05:05 stadie Exp $
+// $Id: ToyMC.h,v 1.9 2008/11/20 16:38:03 stadie Exp $
 //
 #include "ToyMC.h"
 
@@ -18,6 +18,10 @@
 
 #include "ConfigFile.h"
 
+
+//!  \brief Default constructor
+//!  
+//!  Sets up a toy MC with tower constant of 1.24
 ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(Uniform),
 		 mResoStochastic(1.20),mResoNoise(0.05),mJetSpreadA(0.5),mJetSpreadB(0),
 		 mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
@@ -27,10 +31,22 @@ ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(
   mTowConst[2] = 1;
   mTowConst[3] = 1;
   mTowConst[4] = 0;
-  mRandom = new TRandom3();
+  mRandom      = new TRandom3();
   mRandom->SetSeed(0);
-}
+  }
 
+
+//!  \brief Generates the input (truth) of an event
+//!
+//!  Generates a random input lorentz vector of an event 
+//!  (e.g. the lorentz vector of the photon for photon-jet
+//!  events) which is then smeared due to detector response
+//!  and  resolution effects etc.
+//!  The randomly generated components are
+//!  - pt between mMinPt and mMaxPt according to mPtSpectrum
+//!  - eta uniformly between mMinEta and mMaxEta
+//!  - phi uniformly between 0 and 2Pi
+//!  - a zero mass
 void ToyMC::genInput() { 
   static double rand[3];
   mRandom->RndmArray(3,rand);
@@ -46,6 +62,14 @@ void ToyMC::genInput() {
 		       rand[2]*2 * M_PI - M_PI, 0);
 }
 
+
+//!  \brief Transform eta and phi values of the center of
+//!         the corresponding tower and find the tower indices
+//!
+//!  \param eta Eta, is transformed to eta of corresponding tower center
+//!  \param phi Phi, is transformed to phi of corresponding tower center
+//!  \param ieta Index of tower covering eta
+//!  \param iphi Index of tower covering phi
 void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi) 
 {
   const static float dEta = 2.5/30;
@@ -77,19 +101,33 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
   */
 }
 
+
+
+//!  \brief Calculate emf, scale hadronic tower energy with response factor,
+//!         and smear with resolution
+//!
+//!  \param e True tower energy without pi0 part
+//!  \param te Tower energy after scaling
+//!  \param tem Measured em part of tower energy after scaling and smearing
+//!  \param thad Measured had part of tower energy after scaling and smearing
+//!  \param tout Measured HO part of tower energy after scaling and smearing
+//!  \param temtrue True em part of tower energy after scaling
+//!  \param thadtrue True had part of tower energy after scaling
+//!  \param touttrue True HO part of tower energy after scaling
 void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout, 
 		       float& temtrue, float& thadtrue, float& touttrue) 
 {
-  float emf = mRandom->Uniform(mMaxEmf);
-  temtrue = emf * e;
-  tem = temtrue;
-  thadtrue = (1-emf) * e;
+  float emf  = mRandom->Uniform(mMaxEmf);
+  temtrue    = emf * e;
+  tem        = temtrue;
+  thadtrue   = (1-emf) * e;
   if(mTowConst[1] == 0) {
     thadtrue /= mTowConst[0];
   } else { 
-    double c =  (thadtrue < 1.0) ? mTowConst[0] - mTowConst[1]/mTowConst[3] +  mTowConst[4] :  mTowConst[0] - mTowConst[1]/(pow(log10(thadtrue),mTowConst[2]) + mTowConst[3]) + mTowConst[4]/thadtrue;
+    double c =  (mPinput.Pt() < 0.1) ? mTowConst[0] - mTowConst[1]/mTowConst[3] +  mTowConst[4] :  mTowConst[0] - mTowConst[1]/(pow(log10(mPinput.Pt()),mTowConst[2]) + mTowConst[3]) + mTowConst[4]/mPinput.Pt();
+    if( c < 0 ) c = 0;
     //std::cout << thadtrue << ",  " << c << '\n';
-    thadtrue /= c;
+    thadtrue *= c;
   }
   thad = thadtrue;
   touttrue = 0;
@@ -110,6 +148,7 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
     thad *= smear;
   }
   if(thad < 0) thad = 0;
+
   te = tem + thad + tout;
 }
 
@@ -320,7 +359,13 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   float muDE[kMaxTracks];
 
   float jcalpt,jcalphi,jcaleta,jcalet,jcale;
-  float jscaleZSP,jscalel2,jscalel3,jscaleJPT;
+
+  float jscaleZSP    = 1.;
+  float jscalel2     = 1.;
+  float jscalel3     = 1.;
+  float jscalel23    = 1.;
+  float jscaleJPT    = 1.;
+  float jscalel23JPT = 1.;
 
   float jgenpt,jgenphi,jgeneta,jgenet,jgene;
   float mcalmet,mcalphi,mcalsum;
@@ -381,7 +426,9 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch( "JetCorrZSP",&jscaleZSP, "JetCorrZSP/F" );
   CalibTree->Branch( "JetCorrL2", &jscalel2,  "JetCorrL2/F" );
   CalibTree->Branch( "JetCorrL3", &jscalel3,  "JetCorrL3/F" );
+  CalibTree->Branch( "JetCorrL2L3", &jscalel23,  "JetCorrL2L3/F" );
   CalibTree->Branch( "JetCorrJPT",&jscaleJPT, "JetCorrJPT/F" );
+  CalibTree->Branch( "JetCorrL2L3JPT", &jscalel23JPT,  "JetCorrL2L3JPT/F" );
 
   // Gen- Jet- branches of the tree
   CalibTree->Branch("JetGenPt",&jgenpt,"JetGenPt/F");
@@ -437,6 +484,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     NobjTowCal = splitJet(genjet,towet,toweta,towphi,towid_eta,towid_phi);
     jet.SetPtEtaPhiM(0,0,0,0);
     genjet.SetPtEtaPhiM(0,0,0,0);
+
     double towmean = mTowConst[0];
     if(mModel == Flat) mTowConst[0] = 1/mRandom->Uniform(1.5);
     else if(mModel == Exp) mTowConst[0] = 1/mRandom->Exp(0.5);

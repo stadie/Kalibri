@@ -1,8 +1,9 @@
-//
-// Original Author:  Hartmut Stadie
-//         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.h,v 1.8 2008/11/05 16:44:14 stadie Exp $
-//
+//!  \brief Generate toy MC data
+//!
+//!  \author Hartmut Stadie
+//!  \date   Mon Jun 30 11:00:00 CEST 2008
+//!  $Id: ToyMC.cc,v 1.20 2009/02/25 15:09:16 stadie Exp $
+//!  
 #ifndef TOYMC_H
 #define TOYMC_H
 
@@ -26,9 +27,11 @@ public:
   int    mChunks;
   double mMaxPi0Frac;
   double mMaxEmf;
+
+
 private: 
-  TRandom* mRandom;
-  TLorentzVector mPinput;
+  TRandom*        mRandom;       //!< Random generator
+  TLorentzVector  mPinput;       //!< Stores the truth lorentz vector of the current event
 
   void genInput();
   void calIds(float& eta, float &phi, int& ieta, int& iphi);
