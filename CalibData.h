@@ -1,7 +1,7 @@
-//
-// Original Author:  Christian Autermann
-//         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.60 2009/03/03 15:19:06 thomsen Exp $
+//  /brief 
+//  /author Christian Autermann
+//  /date Wed Jul 18 13:54:50 CEST 2007
+// $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -12,34 +12,54 @@ using namespace std;
 #include <cmath>
 #include <cassert>
 
+
+//!  /brief Type of data
+//!
+//!  /sa TAbstractData 
 enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
                InvMass, typeTowerConstraint, ParLimit};
 
-//Note: The "measurement" of a tower or a jet will be stored 
-//      in a multi-dimensional class below. However, the para-
-//      metrized measurement, wich will be compared to the
-//      'truth' will remain a single 'double' value (i.e. the 
-//       same type as 'truth')!
+//!  /brief Base class of a measurement
+//!
+//!  A measurement can represent a tower, a track, or a jet.
+//!
+//!  /note: The parametrized (pt-)measurement, wich will be compared to the
+//!      'truth' will remain a single 'double' value (i.e. the 
+//!       same type as 'truth')!
+//!
+//!  /sa TJet, TTower, TTrack, Jet, JetWithTowers
+//!
+//!  /author Christian Autermann
+//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
 class TMeasurement
 {
 public:
-  TMeasurement():pt(0.),EMF(0.),HadF(0.),OutF(0.),E(0.),eta(0.),phi(0.){};
-  TMeasurement(double Et,double EmEt,double HadEt,double OutEt,double E,
+ TMeasurement():pt(0.),EMF(0.),HadF(0.),OutF(0.),E(0.),eta(0.),phi(0.){};  //!< All quantities are initialized with 0
+ TMeasurement(double Et,double EmEt,double HadEt,double OutEt,double E,
 	       double eta,double phi)
     : pt(Et),EMF(EmEt),HadF(HadEt),OutF(OutEt),E(E),eta(eta),phi(phi) {}
-  TMeasurement(TMeasurement* m):pt(m->pt),EMF(m->EMF),HadF(m->HadF),OutF(m->OutF),
+ TMeasurement(TMeasurement* m):pt(m->pt),EMF(m->EMF),HadF(m->HadF),OutF(m->OutF),
                                 E(m->E),eta(m->eta),phi(m->phi){};
   virtual ~TMeasurement() {};
   //all common variables
-  double pt;
-  double EMF;
-  double HadF;
-  double OutF;
-  double E;
-  double eta;
-  double phi;
+  double pt;     //!< Total transverse momentum (pt = EMF + HadF + OutF)
+  double EMF;    //!< Pt from the ECAL part of the tower(s)		
+  double HadF;   //!< Pt from the HCAL part of the towers(s)		
+  double OutF;   //!< Pt fromt the HO part of the tower(s)		
+  double E;      //!< Total energy					
+  double eta;    //!< Pseudorapidity eta				
+  double phi;    //!< Azimuthal angle phi                               
 };
 
+
+
+
+//!  /brief A tower measurement
+//!
+//!  /sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
+//!
+//!  /author Christian Autermann
+//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
 class TTower : public TMeasurement
 { 
 public:
@@ -50,9 +70,25 @@ public:
 //variables specific only to towers (i.e. # EM cells)
 };
 
+
+
+
+//!  /brief A jet measurement
+//!
+//!  /sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
+//!
+//!  /author Christian Autermann
+//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
 class TJet : public TMeasurement
 {
-public: 
+public:
+  //!  \brief Jet flavor
+  //!
+  //!  The possible flavors are
+  //!  - 0: Gluon
+  //!  - 1: u, d, or s quark
+  //!  - 2: c quark
+  //!  - 3: b quark
   enum Flavor{ gluon=0, uds=1, c=2, b=3 };
   TJet():TMeasurement(){}; 
   TJet(double Et,double EmEt,double HadEt,double OutEt,double E,double eta,
@@ -64,16 +100,26 @@ public:
   //TJet(TJet* j):TMeasurement(j){/*further initialization*/};
   virtual ~TJet() {}
 //variables specific only to jets (i.e. mass)
-  Flavor flavor;
-  double genPt;
-  double ZSPcor;
-  double JPTcor;
-  double L2cor;
-  double L3cor;
-  double L2L3cor;
-  double L2L3JPTcor;
+  Flavor flavor;      //!< The jet's Flavor
+  double genPt;       //!< The generated pt in case of MC data
+  double ZSPcor;      //!< Zero-surpression correction factor (JetMET level 1)
+  double JPTcor;      //!< Jet + Track correction factor
+  double L2cor;       //!< Relative eta correction factor (JetMET level 2)
+  double L3cor;       //!< Absolute pt correction factor (JetMET level 3)
+  double L2L3cor;     //!< Product of L2cor * L3cor
+  double L2L3JPTcor;  //!< Product of L2L3cor * JPTcor
 };
 
+
+
+//!  /brief A track measurement
+//!
+//!  /sa TMeasurement, TJet, TTower, Jet, JetWithTowers
+//!
+//!  /todo Document members
+//!
+//!  /author Jan Thomsen
+//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
 class TTrack : public TMeasurement
 {
 public:
@@ -100,54 +146,245 @@ public:
   double Efficiency;
 };
 
-//interface to Data
+
+
+//!  /brief Interface to the data 
+//!
+//!  A TData object represents one event. It holds the measured
+//!  quantities of that event (see TMeasurement) and allows
+//!  access to the corrected measurement. Moreover, the normalized,
+//!  weighted, squared, and squared residual \f$ z^{2} \f$ of this
+//!  event, which enters the global \f$ \chi^{2} = \sum z^{2} \f$
+//!  function, is calculated.
+//!
+//!  TData is a virtual base class. The derived interfaces are
+//!  specific for a certain type of data.
+//!
+//!  There are currently two different calibration schemes, resulting
+//!  in two different sets of data classes derived from TData:
+//!  -# Original calibration scheme ("Correction of the measurement")
+//!     There is a second base class for this scheme, TAbstractData,
+//!     deriving from TData. All interfaces for specific data types
+//!     derive from TAbstractData in this scheme.
+//!  -# New calibration scheme ("Variation of the truth") 
+//!     The available data types are:
+//!  /author Christian Autermann
+//!  /date Wed Jul 18 13:54:50 CEST 2007
+//! $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
 class TData
 {
 public:
   virtual ~TData() {}
-  virtual TMeasurement *GetMess() const = 0;
-  virtual double GetTruth() const = 0;
-  virtual double GetParametrizedMess() const = 0;
+  virtual TMeasurement *GetMess() const = 0;                           //!< Get TMeasurement object
+  virtual double GetTruth() const = 0;                                 //!< Get truth of measurement
+  virtual double GetParametrizedMess() const = 0;                      //!< Get corrected measurement
+  virtual void ChangeParAddress(double* oldpar, double* newpar) = 0;   //!< Change adress of parameter array
+  virtual DataType GetType() const = 0;                                //!< Get DataType
+  virtual double GetWeight() const = 0;                                //!< Get weight
 
-  virtual void ChangeParAddress(double* oldpar, double* newpar) = 0;
-  virtual DataType GetType() const = 0;
-  virtual double GetWeight() const = 0;
-  
+
+  //!  \brief Get the normalized, squared residual \f$ z^{2} \f$ of this event
+  //!
+  //!  The normalized, squared residual \f$ z^{2} \f$ of
+  //!  this event is calculated. It is weighted with
+  //!  GetWeight(), and scaled with ScaleResidual.
+  //!  It enters the global \f$ \chi^{2} = \sum z^{2} \f$
+  //!  function.
+  //!
+  //!  \return The normalized, squared residual\f$ z^{2} \f$ of this event
   virtual double chi2() const = 0;
-  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
-  virtual void UpdateError() = 0;
 
-  static double (*ScaleResidual)(double z2);         // Set to one of the following functions to scale the normalized residual z2 = chi2/weight in chi2() or chi2_fast(): 
-  static double ScaleNone(double z2){ return z2; }  // No scaling of residuals in chi2() or chi2_fast() (default)
-  static double ScaleCauchy(double z2);	             // Scaling of residuals with Cauchy-Function in chi2() or chi2_fast()
-  static double ScaleHuber(double z2);               // Scaling of residuals with Huber-Function in chi2() or chi2_fast()
+
+  //!  \brief Get the normalized, squared residual\f$ z^{2} \f$ of this event
+  //!         and calculate the first and second derivatives
+  //!
+  //!  The normalized, squared residual \f$ z^{2} \f$ of
+  //!  this event is calculated. It is weighted with
+  //!  GetWeight(), and scaled with ScaleResidual.
+  //!  It enters the global \f$ \chi^{2} = \sum z^{2} \f$
+  //!  function.
+  //!
+  //!  Moreover, the contribution of this event to the 
+  //!  first and second derivative ('temp_derivative1',
+  //!  'temp_derivative2') of the global \f$ \chi^{2} \f$
+  //!  function is calculated numerically and returned
+  //! by reference, where
+  //!  \f[
+  //!   \frac{\partial \chi^{2}}{\partial p}
+  //!   = \sum \textrm{temp_derivative1}
+  //!  \f]
+  //!  and alike for the second derivative.
+  //!
+  //!  \param temp_derivative1 Pointer to first derivative contribution
+  //!  \param temp_derivative2 Pointer to second derivative contribution
+  //!  \param epsilon Step size for derivative calculation
+  //!  \return The normalized, squared residual\f$ z^{2} \f$ of this event
+  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
+
+
+  virtual void UpdateError() = 0;  //!< Update error terms using current corrected energies
+
+
+  //!  \brief Scale residual for outlier treatment
+  //!
+  //!  Points to one of the following functions to
+  //!  scale the squared, normalized, and weighted
+  //!  residual
+  //!  \f$ z^{2} = \chi^{2}/\textrm{weight} \f$:
+  //!   - ScaleNone(double z2)
+  //!   - ScaleCauchy(double z2)
+  //!   - ScaleHuber(double z2)
+  //!
+  //!  \param z2 Normalized and squared residual
+  //!  \return Scaled residual
+  static double (*ScaleResidual)(double z2);
+
+
+  //!  \brief No scaling of residuals
+  //!
+  //!  \note This is the default
+  //!
+  //!  \param z2 Normalized and squared residual
+  //!  \return Scaled residual
+  static double ScaleNone(double z2){ return z2; }
+
+
+  static double ScaleCauchy(double z2);  //!< Scaling of residual with Cauchy function
+  static double ScaleHuber(double z2);   //!< Scaling of residual with Huber function
 };
 
-//virtual data base class -> not directly used!
+
+
+
+//!  /brief Interface to the data for the original calibration
+//!         scheme ("Correction of the measurement")
+//!
+//!  For a description of the functionality see TData
+//!
+//!  TAbstractData is a virtual base class. The derived interfaces are
+//!  specific for a certain type of data.
+//!
+//!  /author Hartmut Stadie
+//!  /date Thu Dec 11 17:20:25 2008 UTC
+//!  $Id: CalibData.h,v 1.61 2009/03/05 08:50:23 stadie Exp $
 class TAbstractData : public TData
 {
 public:
+  //!  \brief Constructor (default)
   TAbstractData() : TData() {_par=0;};
+
+
+  //!  \brief Constructor
+  //!
+  //!  \param index  Index of the first of the successive parameters
+  //!                covered by this event, see TParameters
+  //!  \param mess   Pointer to the measurement, see TMeasurement
+  //!  \param truth  Truth
+  //!  \param error  Error on measurement
+  //!  \param weight Weight of event in \f$ \chi^{2} \f$ sum
+  //!  \param par    Pointer to the first of the successive elements in
+  //!                parameter array covered by this event, see TParameters
+  //!  \param n_par  Number of succesive parameters covered by this event,
+  //!                see TParameters
+  //!  \param *func  Pointer to correction function, see Parametrization
+  //!  \param *err   Pointer to error function, see TParameters
   TAbstractData(unsigned short int index, TMeasurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
         double (*func)(const TMeasurement*, const double*),
 	double (*err)(const double *,const TMeasurement *,double))
   : _index(index), _mess(mess),_truth(truth),_error(error),_weight(weight),_par(par),_n_par(n_par),_func(func),_err(err){};
+
+
+  //!  \brief Destructor
   virtual ~TAbstractData(){
     delete _mess;
   };
-  TMeasurement *GetMess() const { return _mess;};
-  virtual double GetParametrizedMess() const {return _func(_mess,_par);};
-  virtual double GetParametrizedMess(double *const paramess) const { // For derivative calculation
+
+  TMeasurement *GetMess() const { return _mess;}; //!< Get TMeasurement object
+
+
+  //!  \brief Get corrected measurement
+  //!
+  //!  Calculates the corrected measurement from the
+  //!  original measurement as returned byGetMess().
+  //!  The correction is given by the correction function (see
+  //!  Parametrization, TAbstractData) using the parameter
+  //!  values currently stored in the parameter
+  //!  array in TParameters.
+  //!
+  //!  \return Corrected measurement
+  //!
+  //!  \sa GetParametrizedMess(double *const paramess)
+  virtual double GetParametrizedMess() const { return _func(_mess,_par); };  
+
+
+
+  //!  \brief Correct a user defined measurement
+  //!
+  //!  Calculates the corrected measurement from a \e specified
+  //!  measurement 'paramess'.
+  //!  The correction is given by the correction function (see
+  //!  Parametrization, TAbstractData) using the parameter
+  //!  values currently stored in the parameter
+  //!  array in TParameters.
+  //!
+  //!  \note This method is intended for  derivative calculation
+  //!  (see chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) )
+  //!  in a TData_TruthMultMess object. If the tower energies 
+  //!  are corrected with different parameters, a different jet
+  //!  energy (sum of tower energies) enters the jet correction 
+  //!  function. This can be done using this method.
+  //!
+  //!  \param paramess Array of measurements which are to be corrected
+  //!  \return Corrected measurement
+  //!
+  //!  \sa GetParametrizedMess()
+  virtual double GetParametrizedMess(double *const paramess) const {
     TMeasurement m(_mess);
     m.pt = paramess[0];
     return _func(&m,_par);
   };
-  virtual double GetParametrizedErr(double *const paramess) const { return _err(paramess,_mess,_error);};
+
+
+  //!  \brief Get error of measurement 
+  //!
+  //!  Returns the error of the original measurement.
+  //!
+  //!  \note This method might have a different functionality
+  //!  in derived classes. In that case, the error of the
+  //!  corrected measurement is calculated using the error
+  //!  parametrization function _err.
+  //!
+  //!  \return Error of original measurement
   virtual double GetParametrizedErr() const { return _error;};
+
+
+  //!  \brief Get error of a user defined measurement 
+  //!
+  //!  Returns the error of a \e specified measurement.
+  //!  The error of the specified measurement 'paramess'is
+  //!  calculated using the error parametrization function
+  //!  _err.
+  //!
+  //!  \param paramess Pointer to measurements for which the error is to be calculated
+  //!  \return Error of the measurement
+  virtual double GetParametrizedErr(double *const paramess) const { return _err(paramess,_mess,_error);};
+
+
+  //!  \brief Get error square of a user defined measurement 
+  //!
+  //!  Returns the squared error of a \e specified measurement.
+  //!  This is the same as
+  //!  GetParametrizedErr(double *const paramess) * GetParametrizedErr(double *const paramess)
+  //!
+  //!  \param paramess Pointer to measurements for which the error is to be calculated
+  //!  \return Squared error of the measurement
+  //!  \sa GetParametrizedErr(double *const paramess)
   virtual double GetParametrizedErr2(double *const paramess){ 
     double error = GetParametrizedErr(paramess);
     return error *error;
   };
+
+
   double GetTruth() const { return _truth;};
   virtual double GetScale() const {return GetTruth();};//flatten spectrum w.r.t. this
   virtual void UpdateError(){};

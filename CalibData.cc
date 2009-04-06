@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.cc,v 1.27 2008/12/11 17:20:25 stadie Exp $
+// $Id: CalibData.cc,v 1.28 2008/12/17 09:35:58 stadie Exp $
 //
 #include "CalibData.h"
 
@@ -441,17 +441,33 @@ double TData_ParLimit::chi2_fast(double* temp_derivative1,
 }
     
 
-//  Scale the normalized residual 'z^2 = chi^2/weight' using 
-//  the Cauchy-Function:  z^2 --> c^2 * Ln( 1 + (z/c)^2 )
+//!  Scale the normalized, squared residual
+//!  \f$ z^{2} = \chi^{2}/\textrm{weight} \f$
+//!  using the Cauchy-Function
+//!  \f$ z^{2} \rightarrow c^{2}\ln( 1 + (z/c)^{2} ) \f$
+//!
+//!  \param z2 Normalized and squared residual
+//!  \return Scaled residual
 double TData::ScaleCauchy(double const z2)
 {
   double const c = 2.3849;
   return (c*c) * log( 1 + z2*(1.0/(c*c)) );
 }
 
-//  Scale the normalized residual 'z^2 = chi^2/weight' using 
-//  the Huber-Function   z^2 --> z                 for |z| <= c
-//	                       c * ( 2*|z| - c ) for |z| > c
+//!  Scale the normalized, squared residual
+//! \f$ z^{2} = \chi^{2}/\textrm{weight} \f$
+//!  using the Huber-Function
+//!  \f[
+//!  z^{2} \rightarrow 
+//!  \left\{
+//!     \begin{array}{ll}
+//!        z & \textrm{for } |z| <= c \\ c ( 2|z| - c ) & \textrm{for } |z| > c
+//!      \end{array}
+//!    \right.
+//!  \f]
+//!
+//!  \param z2 Normalized and squared residual
+//!  \return Scaled residual
 double TData::ScaleHuber(double const z2)
 {
   static double const c = 1.345;
