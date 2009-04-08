@@ -44,6 +44,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new L2L3JetParametrization();
   } else if(name == "L2L3JetParametrization2") {
     return new L2L3JetParametrization2();
+  } else if(name == "L2L3JetTrackParametrization") {
+    return new L2L3JetTrackParametrization();
   }
   return 0;
 }
@@ -1088,7 +1090,7 @@ Function TParameters::jet_function(int etaid, int phiid) {
 }
 
 Function TParameters::track_function(int etaid, int phiid) {
-  int id = GetTrackBin(GetTrackEtaBin(etaid),GetTrackPhiBin(phiid));
+  int id = (etaid == 0) && (phiid == 0) ? 0: GetTrackBin(GetTrackEtaBin(etaid),GetTrackPhiBin(phiid));
   if (id <0) { 
     std::cerr<<"WARNING: TParameters::track_function::index = " << id << endl; 
     exit(-2);  

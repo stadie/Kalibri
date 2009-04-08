@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.31 2009/02/20 08:30:16 stadie Exp $
+// $Id: Parametrization.h,v 1.32 2009/03/03 15:19:06 thomsen Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -48,7 +48,7 @@ public:
   // ----------------------------------------------------------------
   virtual double correctedJetEt(const TMeasurement *x,const double *par) const = 0; 
   // GetExpectedResponse returns the expected Signal of a Track in the Calorimeter
-  virtual double GetExpectedResponse(const TMeasurement *x,const double *par) const { return 0;}
+  virtual double GetExpectedResponse(const TMeasurement *x,const double *par) const { return x->pt;}
   virtual double correctedGlobalJetEt(const TMeasurement *x,const double *par) const { return x->pt;} 
   virtual const char * name() const = 0;
 
@@ -616,4 +616,97 @@ public:
     return  c2 * c1 * x->pt; 
   }
 };
+
+
+class L2L3JetTrackParametrization : public Parametrization { 
+public:
+  L2L3JetTrackParametrization() : Parametrization(0,3,5,4) {}
+  const char* name() const { return "L2L3JetTrackParametrization";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+    
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    //code from L2RelativeCorrector
+    //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
+    //double logpt = log10(pt);
+    //double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
+    double logpt = log10(pt);
+    //double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
+    double c1 = par[0]+logpt*(0.1 * par[1]+logpt * 0.1* par[2]);
+    return c1 * x->pt;
+  }
+
+  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+    // code from SimpleL3AbsoluteCorrector
+    //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
+    //double log10pt = log10(pt);
+    //double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
+    double logpt = log10(pt);
+    //result = par[6] + par[7]/(pow(logpt,par[8]) + par[9]);
+    double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
+    if(c2 < par[0]) c2 = par[0];
+    //std::cout << par[0] << ", " << par[1] << ", " << par[2] << ", " << par[3] << ", " 
+    //	      << " c2:" << c2 << " Et:" << x->pt << '\n';
+    return  c2 * x->pt; 
+  }
+  
+  double GetExpectedResponse(const TMeasurement *x,const double *par) const {
+    double result=0;
+    //Groom
+    double eh = 1.48 * par[0]; 
+    //Wigman
+    //double eh = 1.39  * par[0]; 
+
+    //double ehECAL = 1.6 ;//* par[1]; 
+    double TrackEMF = 0;
+    bool LS = false;
+    
+    TTrack* temp = (TTrack*)(x);
+    
+    if(temp->EM1 < 1.2) LS = true;   //late showering particle
+    
+    //this is Groom's Parametrization:
+    TrackEMF = temp->EM1 / (temp->Had1 + temp->EM1);  //bei 1X1 EMF ueberschaetzt, da shower schmaler, bei 3X3 zu viele andere Tracks
+    if(TrackEMF > 1) TrackEMF = 1; 
+    if(TrackEMF < 0) TrackEMF = 0;
+    //JPT alg (2004/15):
+    //TrackEMF = 0.4;  //mean value from Test Beam
+    
+    //Groom
+    double Ecor = (x->E + par[4] * 0.01) /par[2] /0.96;
+    double PiFrac = Ecor > 0 ? 1 - pow(Ecor,par[3] * 0.816 - 1 ) : 1.0;  
+    //PiFrac = 1 - pow(Ecor,-0.16);
+    //Wigman
+    //PiFrac = 0.11*par[2] * log(par[3] * x->E); 
+    assert(PiFrac == PiFrac);
+    if(PiFrac > 1)  PiFrac = 1;   //do not allow unphysical results
+    if(PiFrac < 0)  PiFrac = 0;  //happens e.g. for TrackPt<2GeV
+    if(eh < 0.1) eh=0.1; 
+    
+    
+    double responseH = (1 + (eh - 1) * PiFrac) / eh;
+    
+    /*
+    //double responseE = (1 + (ehECAL - 1) * PiFrac) / ehECAL;
+    double responseE = 1;
+    
+    double resultE = x->pt * TrackEMF * responseE;
+    //if(LS) resultE = temp->EM1;
+    if((temp->EM5 > 0) && (temp->EM5  < resultE) )  resultE = temp->EM5;
+    
+    double resultH = x->pt * (1 - TrackEMF) * responseH;
+    if((temp->Had5 > 0) && (temp->Had5  < resultH) )  resultH = temp->Had5;
+    result = resultE + resultH;
+    */
+
+    result = x->pt * responseH; 
+
+    return result;
+  }
+};
+
 #endif
