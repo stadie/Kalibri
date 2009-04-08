@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.11 2009/03/03 14:20:28 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.12 2009/03/05 08:50:24 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -88,10 +88,10 @@ const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double 
       //		<< std::endl;
       double orig = p[towpar]; 
       p[towpar] += eps;
-      varcoll[i].upperEt = expectedEt(Et,start,varcoll[i].upperError);
+      varcoll[i].upperEt = Jet::expectedEt(Et,start,varcoll[i].upperError);
       if( varcoll[i].upperEt < 0) varcoll[i].upperEt = pt;
       p[towpar] = orig - eps;
-      varcoll[i].lowerEt = expectedEt(Et,start,varcoll[i].lowerError); 
+      varcoll[i].lowerEt = Jet::expectedEt(Et,start,varcoll[i].lowerError); 
       if( varcoll[i].lowerEt < 0) varcoll[i].lowerEt = pt;
       p[towpar] = orig;
       varcoll[i].parid = id + towpar;

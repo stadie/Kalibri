@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.18 2009/02/25 15:10:01 stadie Exp $
+//    $Id: Jet.cc,v 1.19 2009/03/05 08:50:23 stadie Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -42,11 +42,11 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
     double orig = f.firstPar()[i];
     f.firstPar()[i] += eps;
     varcoll[i].upperEt = expectedEt(Et,start,varcoll[i].upperError);
-    if( varcoll[i].upperEt < 0) return varcoll;
+    //if( varcoll[i].upperEt < 0) return varcoll;
     //varcoll[i].upperEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig - eps;;
     varcoll[i].lowerEt = expectedEt(Et,start,varcoll[i].lowerError); 
-    if( varcoll[i].lowerEt < 0) return varcoll;
+    //if( varcoll[i].lowerEt < 0) return varcoll;
     //varcoll[i].lowerEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig;
     varcoll[i].parid = f.parIndex() + i;
@@ -55,11 +55,11 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
     double orig = gf.firstPar()[i];
     gf.firstPar()[i] += eps;
     varcoll[j].upperEt = expectedEt(Et,start,varcoll[j].upperError);
-    if( varcoll[j].upperEt < 0) return varcoll;
+    //if( varcoll[j].upperEt < 0) return varcoll;
     //varcoll[j].upperEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig - eps;;
     varcoll[j].lowerEt = expectedEt(Et,start,varcoll[j].lowerError);
-    if( varcoll[j].lowerEt < 0) return varcoll;
+    //if( varcoll[j].lowerEt < 0) return varcoll;
     //varcoll[j].lowerEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig;
     varcoll[j].parid = gf.parIndex() + i;
@@ -97,6 +97,11 @@ const Jet::VariationColl& Jet::varyParsDirectly(double eps)
 }
 
 double Jet::correctedEt(double Et, bool fast) const {
+  
+  //std::cout << "Pars:" << f.firstPar()[0] << ", " << f.firstPar()[1] << ", " << f.firstPar()[2]
+  //	    << ", " << gf.firstPar()[0] << ", " << gf.firstPar()[1] << ", " << gf.firstPar()[2]
+  //	    << ", " <<  gf.firstPar()[3] << '\n';
+  // 
   //assume that only the hadronic energy gets modified!
   temp.pt   = Et;  
   temp.HadF = Et - OutF - EMF;
@@ -251,7 +256,7 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
 {
   //x2 is the best estimate!
   const double up = 4 * truth;
-  const double low = 0.2 * truth; 
+  const double low = 1; 
   if(x2 > up ) x2 = up;
   if(x2 < low) x2 = low;
  
@@ -268,11 +273,11 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
   }
   //std::cout << "first intervall size:" << dx/x1 << '\n';
   while((dx/x1 > eps)&&(i < 100)) {
-    //std::cout << i << ":" << x1 << ", " << x2 << " : " << y1 << ", " << y2 << std::endl;
     double x3 = x1 + y1 * (x2-x1)/(f2 - f1);
-    if((x3 > up )||(x3 < low)) {
-      x3 = 0.5 *(x1 + x2);
-    }
+    //std::cout << i << ":" << x1 << ", " << x2 << " : " << y1 << ", " << y2 << ", " << x3 << std::endl;
+    if(x3 < low) x3 = low;
+    if(x3 > up) x3 = up;
+
     dx2 = dx1;
     dx1 = dx;
     dx = std::abs(x2 - x3);
@@ -319,17 +324,17 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
   ntries += i;
   if(std::abs(y2) > eps * truth) {
     //std::cout << "failed to find good root\n";
-    //std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
+    //std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << " truth:" << truth << "fs:" << f1 << "," << f2 << "\n";
     ++nfails;
     return false;
   }
   /*
-    if(x2 != x2) {
-    std::cout << "failed to find good root\n";
-    std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
-    ++nfails;
-    return false;
-    }
+  if(x2 != x2) {
+  std::cout << "failed to find good root\n";
+  std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
+  ++nfails;
+  return false;
+  }
   */
   return true;
 }

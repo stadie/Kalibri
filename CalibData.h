@@ -1,7 +1,7 @@
 //  \brief 
 //  \author Christian Autermann
 //  \date Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
+// $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -30,7 +30,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
+//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
 class TMeasurement
 {
 public:
@@ -59,13 +59,16 @@ public:
 //!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
+//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
 class TTower : public TMeasurement
 { 
 public:
-  TTower():TMeasurement(){};
+  TTower():TMeasurement(){}; 
+  TTower(double Et,double EmEt,double HadEt,double OutEt,double E,
+	 double eta,double phi)
+    : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi) {}
   TTower(TMeasurement* t):TMeasurement(t){};
-  TTower(TTower* t):TMeasurement(t){/*further initialization*/};
+  //TTower(TTower* t):TMeasurement(t){/*further initialization*/};
   virtual ~TTower() {}
 //variables specific only to towers (i.e. # EM cells)
 };
@@ -78,7 +81,7 @@ public:
 //!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
+//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
 class TJet : public TMeasurement
 {
 public:
@@ -119,13 +122,22 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
+//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
 class TTrack : public TMeasurement
 {
 public:
   TTrack():TMeasurement(){};
+  TTrack(double Et, double EmEt, double HadEt ,double OutEt, double E,double eta,
+	 double phi,int TrackId, int TowerId, double DR, double DRout, 
+	 double etaOut, double phiOut, double EM1, double EM5, double Had1, 
+	 double Had5, double TrackChi2, int NValidHits, bool TrackQualityT, 
+	 double MuDR, double MuDE, double Efficiency) 
+    : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi),TrackId(TrackId),TowerId(TowerId),
+    DR(DR),DRout(DRout),etaOut(etaOut),phiOut(phiOut),EM1(EM1),EM5(EM5),Had1(Had1),
+    Had5(Had5),TrackChi2(TrackChi2),NValidHits(NValidHits),TrackQualityT(TrackQualityT),
+    MuDR(MuDR),MuDE(MuDE),Efficiency(Efficiency) {}
   TTrack(TMeasurement* tr):TMeasurement(tr){};
-  TTrack(TTrack* tr):TMeasurement(tr){/*further initialization*/};
+  //TTrack(TTrack* tr):TMeasurement(tr){/*further initialization*/};
   virtual ~TTrack() {}
 //variables specific only to Tracks
   int TrackId;
@@ -170,7 +182,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
+//! $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
 class TData
 {
 public:
@@ -266,7 +278,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.62 2009/04/06 14:47:35 mschrode Exp $
+//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
 class TAbstractData : public TData
 {
 public:

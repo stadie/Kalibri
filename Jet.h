@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.12 2009/03/03 17:42:23 stadie Exp $
+//    $Id: Jet.h,v 1.13 2009/03/05 08:50:23 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -38,7 +38,6 @@ class Jet : public TJet
     gf.changeParBase(oldpar,newpar);
   }
   virtual double correctedEt(double Et, bool fast = false) const;
-  double expectedEt(double truth, double start, bool fast = false);
   double expectedEt(double truth, double start, double& error,
 		    bool fast = false);
   virtual double Error() const {return errf(&(TMeasurement::pt),this,0);}
@@ -67,6 +66,7 @@ class Jet : public TJet
   double etmin;
  protected:
   mutable VariationColl varcoll;
+  virtual double expectedEt(double truth, double start, bool fast = false);
  private:
   mutable TMeasurement temp;
   bool secant(double truth, double& x1, double& x2, double eps);

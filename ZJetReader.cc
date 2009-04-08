@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.10 2009/03/04 17:26:51 thomsen Exp $
+//    $Id: ZJetReader.cc,v 1.11 2009/03/05 08:50:24 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -15,6 +15,7 @@
 #include "JetTruthEvent.h"
 #include "Jet.h"
 #include "JetWithTowers.h"
+#include "JetWithTracks.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -172,22 +173,26 @@ TData* ZJetReader::createJetTruthEvent()
     }
     j = jt;
   } else  if(dataClass == 3) {
-    JetWithTowers *jt = 
-      new JetWithTowers(zjet.JetCalEt,0,(had + em +out) * factor,0,
-			zjet.JetCalE,zjet.JetCalEta,
+    JetWithTracks *jt = 
+      new JetWithTracks(zjet.JetCalEt,em * factor,had * factor,
+			out * factor, zjet.JetCalE,zjet.JetCalEta,
 			zjet.JetCalPhi,TJet::uds,zjet.JetGenEt,
 			zjet.JetCorrZSP,zjet.JetCorrJPT,zjet.JetCorrL2,
 			zjet.JetCorrL3,zjet.JetCorrL2L3,zjet.JetCorrL2L3JPT,
 			p->jet_function(zjet.TowId_eta[closestTower],
 					zjet.TowId_phi[closestTower]),
 			jet_error_param,p->global_jet_function());
-    for(int i = 0; i < zjet.NobjTowCal; ++i) {
-      double scale = zjet.TowEt[i]/zjet.TowE[i];
-      jt->addTower(zjet.TowEt[i],0,
-		   (zjet.TowHad[i]+zjet.TowEm[i]+zjet.TowOE[i])*scale,0,
-		   zjet.TowE[i],zjet.TowEta[i],zjet.TowPhi[i],
-		   p->tower_function(zjet.TowId_eta[i],zjet.TowId_phi[i]),
-		   tower_error_param);
+    double* EfficiencyMap = p->GetEffMap();
+    for(int i = 0; i < zjet.NobjTrack; ++i) {
+      double scale = zjet.TrackP[i]/zjet.TrackPt[i];  
+      int TrackEffBin = p->GetTrackEffBin(zjet.TrackPt[i],zjet.TrackEta[i]);
+      double eff = EfficiencyMap[TrackEffBin];
+      jt->addTrack(zjet.TrackP[i],zjet.TrackEMC3[i]*scale,zjet.TrackHAC3[i]*scale,0,zjet.TrackP[i],
+		   zjet.TrackEta[i],zjet.TrackPhi[i],zjet.TrackId[i],zjet.TrackTowId[i],
+		   zjet.TrackDR[i],zjet.TrackDROut[i],zjet.TrackEtaOut[i],zjet.TrackPhiOut[i],
+		   zjet.TrackEMC1[i]*scale,zjet.TrackEMC5[i]*scale,zjet.TrackHAC1[i],zjet.TrackHAC5[i],
+		   zjet.TrackChi2[i],zjet.TrackNHits[i],zjet.TrackQualityT[i],zjet.MuDR[i],zjet.MuDE[i],
+		   eff,p->track_function(zjet.TrackTowIdEta[i],zjet.TrackTowIdPhi[i]),track_error_param);
     }
     j = jt;
   } else { 
