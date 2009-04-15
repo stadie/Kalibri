@@ -1,7 +1,7 @@
 //
 // Original Author:  Hartmut Stadie
 //         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.h,v 1.9 2008/11/20 16:38:03 stadie Exp $
+// $Id: ToyMC.cc,v 1.21 2009/04/06 14:51:05 mschrode Exp $
 //
 #include "ToyMC.h"
 
@@ -24,7 +24,8 @@
 //!  Sets up a toy MC with tower constant of 1.24
 ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(Uniform),
 		 mResoStochastic(1.20),mResoNoise(0.05),mJetSpreadA(0.5),mJetSpreadB(0),
-		 mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5)
+		 mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5),
+		 mResponse(Constant)
 {
   mTowConst[0] = 1.24;
   mTowConst[1] = 0;
@@ -121,14 +122,19 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
   temtrue    = emf * e;
   tem        = temtrue;
   thadtrue   = (1-emf) * e;
-  if(mTowConst[1] == 0) {
-    thadtrue /= mTowConst[0];
-  } else { 
+  if( mResponse == L3 ) { 
     double c =  (mPinput.Pt() < 0.1) ? mTowConst[0] - mTowConst[1]/mTowConst[3] +  mTowConst[4] :  mTowConst[0] - mTowConst[1]/(pow(log10(mPinput.Pt()),mTowConst[2]) + mTowConst[3]) + mTowConst[4]/mPinput.Pt();
     if( c < 0 ) c = 0;
-    //std::cout << thadtrue << ",  " << c << '\n';
     thadtrue *= c;
   }
+  else if( mResponse == SimpleInverse ) { 
+    double c = 1 - mTowConst[0]/(mPinput.Pt() + mTowConst[1]);
+    thadtrue *= c;
+  }
+  else {
+    thadtrue /= mTowConst[0];
+  }
+
   thad = thadtrue;
   touttrue = 0;
   tout = touttrue;
@@ -732,6 +738,17 @@ void ToyMC::init(const std::string& configfile) {
      std::cerr << "unknown ToyMC pt spectrum:" << spectrum << '\n';
      exit(1);
    }
+   std::string response = config.read<std::string>("ToyMC response","Constant");
+   if( response == "Constant" ) {
+     mResponse = Constant; 
+   } else if( response == "L3" ) {
+     mResponse = L3;
+   } else if( response == "SimpleInverse" ) {
+     mResponse = SimpleInverse;
+   } else {
+     std::cerr << "unknown ToyMC response:" << response << '\n';
+     exit(1);
+   }
    std::vector<double> auter = bag_of<double>(config.read<string>("ToyMC tower const","1.25 0.0 1.0 1.0 0.0"));
    while(auter.size() < 5) auter.push_back(0);
    assert(auter.size() == 5);
@@ -771,6 +788,7 @@ void ToyMC::print() const {
   std::cout << "  primary: " << mMinEta << " < eta < " << mMaxEta << '\n';
   std::cout << "           " << mMinPt << " < pt < " << mMaxPt 
 	    << " spectrum = " << mPtSpectrum << '\n';
+  std::cout << " response: " << mResponse << '\n';
   std::cout << "    tower: c = (" << mTowConst[0] <<", " << mTowConst[1]
 	    << ", " << mTowConst[2] << ", " << mTowConst[3] << ", "
 	    << mTowConst[4] << ") stoch = " << mResoStochastic << " noise = "
