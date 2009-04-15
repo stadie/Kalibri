@@ -1,70 +1,160 @@
-//
-// Original Author:  Hartmut Stadie
-//         Created:  Thu Apr 03 17:09:50 CEST 2008
-// $Id: Parametrization.h,v 1.32 2009/03/03 15:19:06 thomsen Exp $
-//
+
+//!  \author Hartmut Stadie
+//!  \date Thu Apr 03 17:09:50 CEST 2008
+//!  $Id: Parametrization.h,v 1.33 2009/04/08 14:39:50 stadie Exp $
+
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
 
 #include <cmath>
 #include "CalibData.h"
 
-// keeps different parametrizations for the 
-// underlying hypothesis of the GlobalFit
-/// -----------------------------------------------------------------
+//!  \brief Abstract base class for parametrizations of
+//!         correction functions
+//!
+//!  Interface to different parametrizations for the 
+//!  underlying hypothesis of the GlobalFit. Allows
+//!  to correct a tower or jet measurement.
+// -----------------------------------------------------------------
 class Parametrization 
 {
 public:
+  //!  \brief Constructor
+  //!  \param ntowerpars Number of parameters for tower parametrization
+  //!  \param njetpars Number of parameters for (eta,phi)-dependent jet parametrization
+  //!  \param ntrackpars Number of parameters for track parametrization
+  //!  \param nglobaljetpars Number of parameters for global jet parametrization
   Parametrization(unsigned int ntowerpars, unsigned int njetpars, 
 		  unsigned int ntrackpars, unsigned int nglobaljetpars) : 
     ntowerpars_(ntowerpars), njetpars_(njetpars), ntrackpars_(ntrackpars), 
     nglobaljetpars_(nglobaljetpars) {}
+
   virtual ~Parametrization() {}
-  // ----------------------------------------------------------------
-  //  correctedTowerEt(TMeasurement *const x, double *const par)
-  //  returns the corrected Et of a tower 
-  //  input: x->pt   : et  of whole tower
-  //         x->EMF  : et  of ECAL  part
-  //         x->HadF : et  of HCAL  part
-  //         x->OutF : et  of Outer part
-  //         x->E    : en  of Outer part
-  //         x->eta  : eta of tower
-  //         x->phi  : phi of tower
-  //  par  : the correction parameters of this tower
-  // ----------------------------------------------------------------
+
+
+  //!  \brief Corrects the measured tower Et
+  //!
+  //!  The parameters of the tower correction function
+  //!  may depend on the tower Et, eta, and phi.
+  //!
+  //!  \param x Tower Et measurement that is to be corrected.
+  //!           The measurement contains the following
+  //!           members (see also TMeasurement):
+  //!           - x->pt   : et  of whole tower
+  //!           - x->EMF  : et  of ECAL  part
+  //!           - x->HadF : et  of HCAL  part
+  //!           - x->OutF : et  of Outer part
+  //!           - x->E    : en  of Outer part
+  //!           - x->eta  : eta of tower
+  //!           - x->phi  : phi of tower
+  //!  \param par Parameters of the correction function of this tower
+  //!  \return The corrected Et of a tower 
+  // -----------------------------------------------------------------
   virtual double correctedTowerEt(const TMeasurement *x,const double *par) const = 0;
 
-  // ----------------------------------------------------------------
-  //  correctedJetEt(const TMeasurement *x,const double *par)
-  //  returns the corrected Et of a jet 
-  //  input: x->pt   : et  of uncorrected jet
-  //         x->EMF  : et  of ECAL  part
-  //         x->HadF : et  of HCAL  part
-  //         x->OutF : et  of Outer part
-  //         x->E    : en  of Outer part
-  //         x->eta  : eta of tower
-  //         x->phi  : phi of tower
-  //  par:  the correction parameters of this jet
-  // ----------------------------------------------------------------
-  virtual double correctedJetEt(const TMeasurement *x,const double *par) const = 0; 
-  // GetExpectedResponse returns the expected Signal of a Track in the Calorimeter
+
+  //!  \brief Corrects the measured jet Et
+  //!
+  //!  The parameters of the jet correction function
+  //!  may depend on the jet Et, eta, and phi.
+  //!
+  //!  \param x Jet Et measurement that is to be corrected.
+  //!           The measurement contains the following
+  //!           members (see also TMeasurement):
+  //!           - x->pt   : et  of whole jet
+  //!           - x->EMF  : et  of ECAL  part
+  //!           - x->HadF : et  of HCAL  part
+  //!           - x->OutF : et  of Outer part
+  //!           - x->E    : en  of Outer part
+  //!           - x->eta  : eta of jet
+  //!           - x->phi  : phi of jet
+  //!  \param par Parameters of the correction function of this jet
+  //!  \return The corrected Et of a jet
+  // -----------------------------------------------------------------
+  virtual double correctedJetEt(const TMeasurement *x,const double *par) const = 0;
+
+ 
+  //!  \brief Returns the expected signal of a track in the Calorimeter
+  //!
+  //!  \param x Track Et measurement from which the expected response
+  //!           of the calorimeter is calculated (see also TTrack).
+  //!  \param par Parameters of the response function of this track
+  //!  \return The expected calorimeter response
+  // -----------------------------------------------------------------
   virtual double GetExpectedResponse(const TMeasurement *x,const double *par) const { return x->pt;}
-  virtual double correctedGlobalJetEt(const TMeasurement *x,const double *par) const { return x->pt;} 
+
+
+  //!  \brief Corrects the measured jet Et with global
+  //!         correction function
+  //!
+  //!  The parameters of the global jet correction function
+  //!  are independent of the jet Et, eta, and phi.
+  //!
+  //!  \param x Jet Et measurement that is to be corrected.
+  //!           The measurement contains the following
+  //!           members (see also TMeasurement):
+  //!           - x->pt   : et  of whole jet
+  //!           - x->EMF  : et  of ECAL  part
+  //!           - x->HadF : et  of HCAL  part
+  //!           - x->OutF : et  of Outer part
+  //!           - x->E    : en  of Outer part
+  //!           - x->eta  : eta of jet
+  //!           - x->phi  : phi of jet
+  //!  \param par Parameters of the global correction function
+  //!  \return The corrected Et of a jet
+  // -----------------------------------------------------------------
+  virtual double correctedGlobalJetEt(const TMeasurement *x,const double *par) const { return x->pt;}
+
+
+  //!  \brief Get the name of the parametrization class
+  //!  \return Name of the parametrization class
+  // -----------------------------------------------------------------
   virtual const char * name() const = 0;
 
+
+  //!  \brief Get the number of parameters of the tower parametrization
+  //!  \return Number of parameters of the tower parametrization
+  // -----------------------------------------------------------------
   unsigned int nTowerPars() const { return ntowerpars_;}
+
+
+  //!  \brief Get the number of parameters of the jet parametrization
+  //!  \return Number of parameters of the jet parametrization
+  // -----------------------------------------------------------------
   unsigned int nJetPars() const { return njetpars_;}
+
+
+  //!  \brief Get the number of parameters of the track parametrization
+  //!  \return Number of parameters of the track parametrization
+  // -----------------------------------------------------------------
   unsigned int nTrackPars() const { return ntrackpars_;}
+
+
+  //!  \brief Get the number of parameters of the global jet parametrization
+  //!  \return Number of parameters of the global jet parametrization
+  // -----------------------------------------------------------------
   unsigned int nGlobalJetPars() const { return nglobaljetpars_;}
+
 
 private: 
   Parametrization();
-  unsigned int  ntowerpars_, njetpars_, ntrackpars_, nglobaljetpars_;
+  unsigned int ntowerpars_;      //!< Number of parameters of the tower parametrization
+  unsigned int njetpars_;        //!< Number of parameters of the jet parametrization
+  unsigned int ntrackpars_;      //!< Number of parameters of the track parametrization
+  unsigned int nglobaljetpars_;  //!< Number of parameters of the global jet parametrization
 };
 
-// parametrization of the hadronic response 
-// by a step function in et
-/// -----------------------------------------------------------------
+
+
+//!  \brief Parametrization of the hadronic tower response 
+//!         by a step function in Et
+//!
+//!  The total jet measurement remains unchanged.
+//!
+//!  This parametrization has 12 tower parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class StepParametrization : public Parametrization { 
 public:
   StepParametrization() : Parametrization(12,0,0,0) {}
@@ -103,9 +193,19 @@ public:
   }
 };
 
-// parametrization of hadronic response 
-// by a step function in en
-/// -----------------------------------------------------------------
+
+
+//!  \brief Parametrization of the hadronic tower response 
+//!         by a step function in E
+//!
+//!  Additionally, the total jet measurement is corrected
+//!  by an Et-dependent function.
+//!
+//!  This parametrization has 12 tower parameters and 2
+//!  jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class StepParametrizationEnergy : public Parametrization { 
 public:
   StepParametrizationEnergy() : Parametrization(12,2,0,0) {}
@@ -138,10 +238,21 @@ public:
   }
 };
 
-// parametrization of hadronic response by a step 
-// function with 3 sets of parametrizations for 
-// different em fractions
-/// -----------------------------------------------------------------
+
+
+//!  \brief Parametrization of the hadronic tower
+//!         response by a step function in EMF
+//!
+//!  Parametrization of hadronic response of a tower
+//!  by a step function with 3 sets of parametrizations for 
+//!  different em fractions.
+//!
+//!  This parametrization has 36 tower parameters.
+//!
+//!  The total jet measurement remains unchanged.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class StepEfracParametrization : public Parametrization {
 public:
   StepEfracParametrization() : Parametrization(36,0,0,0) {}  //(36,2) {}
@@ -201,10 +312,20 @@ public:
   }
 };
 
-// parametrization of hadronic response by a step 
-// function with 3 sets of parametrizations for 
-// different em fractions; correction only on jets
-/// -----------------------------------------------------------------
+
+
+//!  \brief Parametrization of the hadronic jet response 
+//!         by a step function in EMF
+//!
+//!  Parametrization of hadronic response of a jet by a step 
+//!  function with 3 sets of parametrizations for 
+//!  different em fractions; the tower response remains
+//!  unchanged.
+//!
+//!  This parametrization has 65 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class StepJetParametrization : public Parametrization { 
 public:
   StepJetParametrization() : Parametrization(0,65,0,0) {}
@@ -294,8 +415,15 @@ public:
 };
 
 
-// parametrization of response by some "clever" function
-/// -----------------------------------------------------------------
+
+//!  \brief Parametrization of tower and jet response
+//!         by some "clever" function
+//!
+//!
+//!  This parametrization has 2 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class MyParametrization: public Parametrization {
  public:
   MyParametrization() : Parametrization(0,2,0,0) {}
@@ -311,8 +439,16 @@ class MyParametrization: public Parametrization {
   }
 };
 
-// Parametrization of response with some ideas from the JetMET group
-/// -----------------------------------------------------------------
+
+
+//!  \brief Parametrization of tower and jet response
+//!         with some ideas from the JetMET group
+//!
+//!  This parametrization has 3 tower parameters and 5
+//!  jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class JetMETParametrization: public Parametrization {
 public:
   JetMETParametrization() : Parametrization(3,5,0,0) {}
@@ -329,8 +465,15 @@ public:
   }
 };
 
-// simple parametrization
-/// -----------------------------------------------------------------
+
+
+//!  \brief Simple tower and jet parametrization
+//!
+//!  This parametrization has 3 tower parameters and 3
+//!  jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class SimpleParametrization: public Parametrization {
 public:
   SimpleParametrization() : Parametrization(3,3,0,0) {}
@@ -345,8 +488,19 @@ public:
   }
 };
 
-// parametrization for toy MC
-/// -----------------------------------------------------------------
+
+
+//!  \brief Parametrization for toy MC with constant response
+//!
+//!  This is the parametrization of the correction for ToyMC
+//!  events with a constant tower response i.e. when specifying
+//!  only one tower constant. In this parametrization, the
+//!  hadronic part of the tower Et is corrected.
+//!
+//!  This parametrization has 1 tower parameter.
+//!
+//!  \sa Parametrization, ToyMC
+// -----------------------------------------------------------------
 class ToyParametrization: public Parametrization {
 public:
   ToyParametrization() : Parametrization(1,0,0,0) {}
@@ -361,6 +515,19 @@ public:
   }
 };
 
+
+
+//!  \brief Parametrization for toy MC with constant response
+//!
+//!  This is the parametrization of the correction for ToyMC
+//!  events with a constant tower response i.e. when specifying
+//!  only one tower constant.  In this parametrization, the
+//!  hadronic part of the jet Et is corrected.
+//!
+//!  This parametrization has 1 jet parameters.
+//!
+//!  \sa Parametrization, ToyMC
+// -----------------------------------------------------------------
 class ToyJetParametrization: public Parametrization {
 public:
   ToyJetParametrization() : Parametrization(0,1,0,0) {}
@@ -375,9 +542,23 @@ public:
   }
 };
 
-// parametrization of hadronic response by a step function
-// optimized for ToyMC pt spectrum 0 - 300 GeV
-/// -----------------------------------------------------------------
+
+
+//!  \brief Parametrization for toy MC with step function of
+//!         hadronic tower Et
+//!
+//!  In this parametrization, the hadronic part of
+//!  tower Et is corrected by a step function. It is
+//!  intended for a pt spectrum from 0 - 300 GeV
+//!
+//!  This parametrization has 15 tower parameters.
+//!
+//!  \note This parametrization is intended for studying
+//!        cutoff and resolution effects on the minimization
+//!        procedure.
+//!
+//!  \sa Parametrization, ToyMC
+// -----------------------------------------------------------------
 class ToyStepParametrization : public Parametrization { 
 public:
   ToyStepParametrization() : Parametrization(15,0,0,0) {}
@@ -411,9 +592,22 @@ public:
 };
 
 
-// parametrization of Jet hadronic response by a step function
-// optimized for ToyMC pt spectrum 0 - 300 GeV
-/// -----------------------------------------------------------------
+
+//!  \brief Parametrization for toy MC with step function of
+//!         hadronic jet Et
+//!
+//!  In this parametrization, the hadronic part of the
+//!  jet Et is corrected by a step function. It is
+//!  intended for a pt spectrum from 0 - 300 GeV
+//!
+//!  This parametrization has 15 jet parameters.
+//!
+//!  \note This parametrization is intended for studying
+//!        cutoff and resolution effects on the minimization
+//!        procedure.
+//!
+//!  \sa Parametrization, ToyMC
+// -----------------------------------------------------------------
 class ToyStepJetParametrization : public Parametrization { 
  public:
   ToyStepJetParametrization() : Parametrization(0,15,0,0) {}
@@ -446,9 +640,18 @@ class ToyStepJetParametrization : public Parametrization {
   }
 };
 
-// Complete Track Parametrization
-// StepEfracParametrization, if outside tracker or track errors too large
-/// -----------------------------------------------------------------
+
+
+//!  \brief Complete Track Parametrization
+//!
+//!  Same parametrization as StepEfracParametrization,
+//!  if track outside tracker or track errors too large
+//!
+//!  This parametrization has 12 tower parameters,
+//!  3 jet parameters, and 6 track parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class TrackParametrization : public Parametrization {
  public:
   TrackParametrization() : Parametrization(12,3,6,0) {}  //(36,3,3,0) {}
@@ -552,43 +755,77 @@ class TrackParametrization : public Parametrization {
   }
 };
 
-/// -----------------------------------------------------------------
+
+
+//!  \brief L2L3 JetMET parametrization
+//!
+//!  This parametrization uses the correction functions
+//!  from the JetMET group:
+//!  - There is no tower correction function
+//!  - The jet Et is corrected eta-dependent with the
+//!    L2 correction function
+//!  - The jet Et is corrected globally with the L3
+//!    correction function
+//!
+//!  This parametrization has 3 jet parameters and
+//!  4 global jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class L2L3JetParametrization : public Parametrization { 
 public:
-  L2L3JetParametrization() : Parametrization(0,3,0,4) {}
+  L2L3JetParametrization() : Parametrization(0,3,0,2) {}
   const char* name() const { return "L2L3JetParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
     return x->pt;
   }
-    
+
+  //!  \brief Code from L2RelativeCorrector
+  //!  \code
+  //!  double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
+  //!  double logpt = log10(pt);
+  //!  double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
+  //!  \endcode   
   double correctedJetEt(const TMeasurement *x,const double *par) const {
-    //code from L2RelativeCorrector
-    //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
-    //double logpt = log10(pt);
-    //double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
     double logpt = log10(pt);
     //double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
     double c1 = par[0]+logpt*(0.1 * par[1]+logpt * 0.1* par[2]);
     return c1 * x->pt;
   }
+
+  //!  \brief Code from SimpleL3AbsoluteCorrector
+  //!  \code
+  //!  double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
+  //!  double log10pt = log10(pt);
+  //!  double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
+  //!  \endcode
   double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
-    // code from SimpleL3AbsoluteCorrector
-    //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
-    //double log10pt = log10(pt);
-    //double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
-    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
-    double logpt = log10(pt);
-    //result = par[6] + par[7]/(pow(logpt,par[8]) + par[9]);
-    double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
-    //std::cout << par[0] << ", " << par[1] << ", " << par[2] << ", " << par[3] << ", " 
-    //	      <<  par[4] << " c2:" << c2 << " Et:" << x->pt << '\n';
-    return  c2 * x->pt; 
+/*     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;  */
+/*     double logpt = log10(pt); */
+/*     double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);// - par[4]/pt; */
+/*     return  c2 * x->pt;  */
+
+    double p = 0.5*(par[1] - par[0] - x->HadF);
+    return x->EMF + x->OutF + sqrt( p*p + par[1]*x->HadF ) - p;
   }
 };
 
-/// -----------------------------------------------------------------
+
+
+//!  \brief L2L3 JetMET parametrization
+//!
+//!  This parametrization uses the correction functions
+//!  from the JetMET group:
+//!  - There is no tower correction function
+//!  - The jet Et is corrected eta-dependent with the
+//!    product of the L2 and L3 correction functions.
+//!
+//!  This parametrization has 7 jet parameters and
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 class L2L3JetParametrization2 : public Parametrization { 
 public:
   L2L3JetParametrization2() : Parametrization(0,7,0,0) {}
@@ -617,6 +854,18 @@ public:
   }
 };
 
+
+
+//!  \brief Complete Track Parametrization
+//!
+//!  Same parametrization as L2L3JetParametrization,
+//!  if track outside tracker or track errors too large
+//!
+//!  This parametrization has 3 jet parameters, 5 track
+//!  parameters, and 4 global jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
 
 class L2L3JetTrackParametrization : public Parametrization { 
 public:
@@ -708,5 +957,42 @@ public:
     return result;
   }
 };
+
+
+//!  \brief Parametrization for Toy MC with ToyMC::Response SimpleInverse
+//!
+//!  This parametrization contains the correction function
+//!  for the ToyMC::Response SimpleInverse
+//!  \f[ C(E_{T}) = \sqrt{ A^{2} + A_{1}E_{T}} - A \f]
+//!  where \f$ A = -0.5(A_{1} - A_{0} - E_{T}) \f$.
+//!  This function was derived by analytical inversion.
+//!  - There is no tower correction function
+//!  - There is no jet Et correction function
+//!  - The hadronic part of the jet Et is corrected
+//!    globally with the correction function given above
+//!
+//!  This parametrization 2 global jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class ToySimpleInverseParametrization : public Parametrization { 
+public:
+  ToySimpleInverseParametrization() : Parametrization(0,0,0,2) {}
+  const char* name() const { return "ToySimpleInverseParametrization";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+
+  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+    double a = 0.5*(par[1] - par[0] - x->HadF);
+    return x->EMF + x->OutF + sqrt( a*a + par[1]*x->HadF ) - a;
+  }
+};
+
 
 #endif

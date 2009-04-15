@@ -46,6 +46,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new L2L3JetParametrization2();
   } else if(name == "L2L3JetTrackParametrization") {
     return new L2L3JetTrackParametrization();
+  } else if(name == "ToySimpleInverseParametrization") {
+    return new ToySimpleInverseParametrization();
   }
   return 0;
 }
