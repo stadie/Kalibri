@@ -1,7 +1,7 @@
 
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.33 2009/04/08 14:39:50 stadie Exp $
+//!  $Id: Parametrization.h,v 1.34 2009/04/15 17:26:59 mschrode Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -774,7 +774,7 @@ class TrackParametrization : public Parametrization {
 // -----------------------------------------------------------------
 class L2L3JetParametrization : public Parametrization { 
 public:
-  L2L3JetParametrization() : Parametrization(0,3,0,2) {}
+  L2L3JetParametrization() : Parametrization(0,3,0,4) {}
   const char* name() const { return "L2L3JetParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -802,13 +802,10 @@ public:
   //!  double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
   //!  \endcode
   double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
-/*     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;  */
-/*     double logpt = log10(pt); */
-/*     double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);// - par[4]/pt; */
-/*     return  c2 * x->pt;  */
-
-    double p = 0.5*(par[1] - par[0] - x->HadF);
-    return x->EMF + x->OutF + sqrt( p*p + par[1]*x->HadF ) - p;
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
+    double logpt = log10(pt);
+    double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
+    return  c2 * x->pt; 
   }
 };
 
