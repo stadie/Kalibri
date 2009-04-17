@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.20 2009/04/08 14:46:18 stadie Exp $
+//    $Id: Jet.cc,v 1.21 2009/04/17 14:03:09 mschrode Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -33,8 +33,18 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
   varcoll.resize(f.nPars() + gf.nPars());
 }
  
-// varies all parameters for this jet by eps and returns a vector of the
-// parameter id and the Et for the par + eps and par - eps variation
+//!  \brief Varies all parameters for this jet by +/-eps
+//!
+//!  The corrected Et and errors obtained by applying the
+//!  correction function with the varied parameters are
+//!  stored in a VariationColl.
+//!
+//!  \param eps Amount by which the parameters are varied
+//!  \param Et Et which is to be corrected after parameter variation
+//!  \param start Start value for expectedEt(double truth, double start, bool fast)
+//!  \return Vector of ParameterVariation
+//!  \sa varyParsDirectly
+// -------------------------------------------------------
 const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
 {
   //start = Et;
@@ -67,8 +77,18 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
   return varcoll;
 }
 
-// varies all parameters for this jet by eps and returns a vector of the
-// parameter id and the Et for the par + eps and par - eps variation
+//!  \brief Varies all parameters for this jet by +/-eps
+//!
+//!  The corrected original Et and errors obtained by applying the
+//!  correction function with the varied parameters are
+//!  stored in a VariationColl.
+//!
+//!  \note In contrast to varyPars, the originally measured
+//!        Et is corrected.
+//!  \param eps Amount by which the parameters are varied
+//!  \return Vector of ParameterVariation
+//!  \sa varyPars
+// -------------------------------------------------------
 const Jet::VariationColl& Jet::varyParsDirectly(double eps)
 {
   for(int i = 0 ; i < f.nPars() ; ++i) {
@@ -97,7 +117,17 @@ const Jet::VariationColl& Jet::varyParsDirectly(double eps)
 }
 
 
-//!  \note Modifies only hadronic part of tower energy
+//!  \brief Correct a given jet Et
+//!
+//!  The given Et is corrected applying successively
+//!  the local and the global jet correction functions
+//!  f and gf (see also Parametrization).
+//!
+//!  \note Modifies only hadronic part of tower Et
+//!  \param Et Jet Et which gets corrected
+//!  \param fast No functionality yet
+//!  \return Corrected jet Et
+// -------------------------------------------------------
 double Jet::correctedEt(double Et, bool fast) const {
   
   //std::cout << "Pars:" << f.firstPar()[0] << ", " << f.firstPar()[1] << ", " << f.firstPar()[2]
@@ -137,11 +167,25 @@ double Jet::correctedEt(double Et, bool fast) const {
 
 //!  \brief Find mean measured Et from correction function for a given truth
 //!
+//!  Finds the mean measured Et \f$ \bar{E}_{T} \f$ corresponding to a
+//!  given truth from the correction function \f$ g_{p} \f$ by solving
+//!  \f[
+//!    0 = E^{\textrm{true}}_{T} - g_{p}(\bar{E}_{T})
+//!  \f]
+//!  Here, \f$ p \f$ is the set of current parameters.
+//!  The mean Et is defined by the (unknown) response \f$ R \f$ by
+//!  \f[
+//!   \bar{E}_{T} = R(E^{\textrm{true}}_{T}) \cdot E^{\textrm{true}}_{T}.
+//!  \f]
+//!  The solution is found numerically using 
+//!  secant(double truth, double& x1, double& x2, double eps) or
+//!  falseposition(double truth, double& x1, double& x2, double eps)
 //!  
 //!  \param truth The true Et
 //!  \param start Start value for inversion procedure
 //!  \param fast No functionality yet
 //!  \return Mean measured Et for given truth
+// -------------------------------------------------------
 double Jet::expectedEt(double truth, double start, bool fast)
 {
   static const double eps = 1.0e-12;
@@ -178,6 +222,24 @@ double Jet::expectedEt(double truth, double start, bool fast)
   return x2;
 }
 
+
+//!  \brief Find mean measured Et and error from correction function for a given truth
+//!
+//!  Finds the mean measured Et and the corresponding error
+//!  corresponding to a given truth from the correction function
+//!  (see expectedEt(double truth, double start, bool fast)).
+//!  The error is calculated from the obtained mean Et using
+//!  expectedError(double et) and returned by reference.
+//!
+//!  Both Et and the error are corrected for effects due to
+//!  a cut on the Et spectrum (etmin).
+//!  
+//!  \param truth The true Et
+//!  \param start Start value for inversion procedure
+//!  \param error Will be filled with the error
+//!  \param fast No functionality yet
+//!  \return Mean measured Et for given truth
+// -------------------------------------------------------
 double Jet::expectedEt(double truth, double start, double& error,bool fast)
 {
   //truncate mean for jet min Et-cut

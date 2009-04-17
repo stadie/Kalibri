@@ -1,9 +1,3 @@
-//
-//    Class for jets with towers 
-//
-//    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTracks.h,v 1.11 2009/03/05 08:50:24 stadie Exp $
-//   
 #ifndef JETWITHTRACKS_H
 #define JETWITHTRACKS_H
 
@@ -12,6 +6,14 @@
 #include <vector>
 #include <map>
 
+
+//!
+//!    \brief Class for jets with towers 
+//!
+//!    \author Hartmut Stadie
+//!    \date 2008/12/25
+//!    $Id: JetWithTracks.h,v 1.1 2009/04/08 14:46:18 stadie Exp $
+// ---------------------------------------------------------------   
 class JetWithTracks : public Jet
 {
  public:
@@ -30,7 +32,7 @@ class JetWithTracks : public Jet
   virtual void ChangeParAddress(double* oldpar, double* newpar);
   virtual double correctedEt(double Et,bool fast = false) const; 
   virtual double Error() const;
-  virtual double expectedError(double truth) const;
+  virtual double expectedError(double et) const;
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
   virtual const VariationColl& varyPars(double eps, double Et, double start);

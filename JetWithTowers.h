@@ -1,9 +1,3 @@
-//
-//    Class for jets with towers 
-//
-//    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.h,v 1.10 2009/02/25 15:08:25 stadie Exp $
-//   
 #ifndef JETWITHTOWERS_H
 #define JETWITHTOWERS_H
 
@@ -12,6 +6,14 @@
 #include <vector>
 #include <map>
 
+
+//!
+//!    \brief Class for jets with towers 
+//!
+//!    \author Hartmut Stadie
+//!    \date 2008/12/25
+//!    $Id: JetWithTowers.h,v 1.11 2009/03/05 08:50:24 stadie Exp $
+// ----------------------------------------------------------------   
 class JetWithTowers : public Jet
 {
  public:
@@ -30,7 +32,7 @@ class JetWithTowers : public Jet
   virtual void ChangeParAddress(double* oldpar, double* newpar);
   virtual double correctedEt(double Et,bool fast = false) const; 
   virtual double Error() const;
-  virtual double expectedError(double truth) const;
+  virtual double expectedError(double et) const;
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
   virtual const VariationColl& varyPars(double eps, double Et, double start);
@@ -60,7 +62,7 @@ class JetWithTowers : public Jet
     double correctedHadEt(double HadEt) const;
     double lastCorrectedHadEt() const { return lastCorHadEt;}  
     double Error() const {return errf(&(TMeasurement::pt),this,0);}
-    double expectedError(double truth) const { return  errf(&truth,this,0);}
+    double expectedError(double et) const { return  errf(&et,this,0);}
     int nPar() const {return f.nPars();}
     int FirstPar() const {return f.parIndex();}
     double *Par() const {return f.firstPar();}
