@@ -1,9 +1,3 @@
-//
-//    Base class for all event readers
-//
-//    first version: Hartmut Stadie 2008/12/12
-//    $Id: EventReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
-//   
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
 
@@ -15,6 +9,14 @@ class TMeasurement;
 #include <vector>
 #include <string>
 
+
+//!
+//!    \brief Abstract base class for all event readers
+//!
+//!    \author Hartmut Stadie
+//!    \date 2008/12/12
+//!    $Id: EventReader.h,v 1.2 2009/01/16 08:46:40 stadie Exp $
+// ----------------------------------------------------------------   
 class EventReader
 {
  public:

@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.14 2009/03/04 17:26:51 thomsen Exp $
+//    $Id: PhotonJetReader.cc,v 1.15 2009/03/05 08:50:24 stadie Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -21,7 +21,8 @@
 
 PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) :
   EventReader(configfile,p), Et_cut_on_gamma(0),Et_cut_on_jet(0),
-  Rel_cut_on_gamma(10),n_gammajet_events(0),dataClass(0)
+  Rel_cut_on_gamma(10),Had_cut_min(0),Had_cut_max(1),n_gammajet_events(0),
+  dataClass(0)
 {
   n_gammajet_events     = config->read<int>("use Gamma-Jet events",-1); 
   if(n_gammajet_events == 0) {
@@ -32,14 +33,19 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
   string default_tree_name = config->read<string>("Default Tree Name","CalibTree");
   string treename_gammajet = config->read<string>("Gamma-Jet tree", default_tree_name);
   
-  Et_cut_on_jet   = config->read<double>("Et cut on jet",0.0); 
-  Eta_cut_on_jet  = config->read<double>("Eta cut on jet",5.0); 
-  Et_cut_on_gamma = config->read<double>("Et cut on gamma",0.0); 
-  Et_cut_on_genJet   = config->read<double>("Et cut on genJet",0.0);
-  Rel_cut_on_gamma =  config->read<double>("Relative Rest Jet Cut",0.2);
+  Et_cut_on_jet     = config->read<double>("Et cut on jet",0.0); 
+  Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0); 
+  Et_cut_on_gamma   = config->read<double>("Et cut on gamma",0.0); 
+  Et_cut_on_genJet  = config->read<double>("Et cut on genJet",0.0);
+  Rel_cut_on_gamma  = config->read<double>("Relative Rest Jet Cut",0.2);
+  Had_cut_min       = config->read<double>("Min had fraction",0.07);
+  Had_cut_max       = config->read<double>("Max had fraction",0.95);
   
   dataClass = config->read<int>("Gamma-Jet data class", 0);
-  if((dataClass < 0) || (dataClass > 2)) dataClass = 0;
+  if((dataClass < 0) || (dataClass > 2)) {
+    std::cout << "PhotonJetReader: Unknown data class " << dataClass << ". Using data class 0." << std::endl;
+    dataClass = 0;
+  }
 
   TTree* tchain_gammajet;
   vector<string> input_gammajet = 
@@ -85,7 +91,6 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
       exit(8);
     }
  
-
     //trivial cuts
     if (gammajet.PhotonEt<Et_cut_on_gamma || 
         //gammajet.JetGenPt<Et_cut_on_gamma ||
@@ -96,17 +101,17 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
 
     if (gammajet.NonLeadingJetPt   / gammajet.PhotonPt >  Rel_cut_on_gamma)  continue;    //fraction of unwanted stuff
 
-    TData* ev = 0;
-    if(dataClass == 0) ev = createTruthMultMessEvent();
+    TData*                 ev = 0;
+    if(dataClass == 0)     ev = createTruthMultMessEvent();
     else if(dataClass > 0) ev = createJetTruthEvent();
     
-    if(ev)  
-      {
-	data.push_back(ev); 
-	++nevents_added;
-	if((n_gammajet_events >= 0) && (nevents_added >= n_gammajet_events-1))
-	  break;
-      }
+    if(ev) {
+      data.push_back(ev); 
+      ++nevents_added;
+      if((n_gammajet_events >= 0) && (nevents_added >= n_gammajet_events))
+	break;
+    }
+
   }
   return nevents_added;
 }
@@ -148,8 +153,8 @@ TData* PhotonJetReader::createJetTruthEvent()
       closestTower = n;
     }
   }  //calc jet error
-  if(had/(had + em) < 0.07) { return 0;}
-  if(had/(had + em) > 0.92) { return 0;}
+  if(had/(had + em) < Had_cut_min) { return 0;}
+  if(had/(had + em) > Had_cut_max) { return 0;}
   double factor =  gammajet.JetCalEt /  gammajet.JetCalE;
   tower.pt = gammajet.JetCalEt;
   tower.EMF = em * factor;
@@ -230,8 +235,8 @@ TData* PhotonJetReader::createTruthMultMessEvent()
       }
     }
     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; return 0; }
-    if(had/(had + em) < 0.07) { return 0;}
-    //if(had/(had + em) > 0.92) { continue;}
+    if(had/(had + em) < Had_cut_min) { return 0;}
+    if(had/(had + em) > Had_cut_max) { return 0;}
     //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
 

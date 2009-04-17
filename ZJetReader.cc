@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.11 2009/03/05 08:50:24 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.12 2009/04/08 14:46:18 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -21,7 +21,7 @@
 #include <iostream>
 
 ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
-  EventReader(configfile,p), Et_cut_on_Z(0),Et_cut_on_jet(0)
+ EventReader(configfile,p),Et_cut_on_Z(0),Et_cut_on_jet(0),Had_cut_min(0),Had_cut_max(1)
 {
   n_zjet_events     = config->read<int>("use Z-Jet events",-1); 
   if(n_zjet_events == 0) {
@@ -30,10 +30,12 @@ ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
     return ;
   }
 
-  Et_cut_on_Z     = config->read<double>("Et cut on Z",0.0); 
-  Et_cut_on_jet   = config->read<double>("Et cut on jet",0.0);
-  Et_cut_on_genJet   = config->read<double>("Et cut on genJet",0.0);
-  Eta_cut_on_jet  = config->read<double>("Eta cut on jet",5.0);
+  Et_cut_on_Z       = config->read<double>("Et cut on Z",0.0); 
+  Et_cut_on_jet     = config->read<double>("Et cut on jet",0.0);
+  Et_cut_on_genJet  = config->read<double>("Et cut on genJet",0.0);
+  Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0);
+  Had_cut_min       = config->read<double>("Min had fraction",0.07);
+  Had_cut_max       = config->read<double>("Max had fraction",0.95);
 
   string default_tree_name = config->read<string>("Default Tree Name","CalibTree");
   string treename_zjet      = config->read<string>( "Z-Jet tree", default_tree_name );
@@ -46,7 +48,10 @@ ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
   zjet.Init( tchain_zjet );
     
   dataClass = config->read<int>("Z-Jet data class", 0);
-  if((dataClass < 0) || (dataClass > 3)) dataClass = 0;
+  if((dataClass < 0) || (dataClass > 3)) {
+    std::cout << "ZJetReader: Unknown data class " << dataClass << ". Using data class 0." << std::endl;
+    dataClass = 0;
+  }
 
   delete config;
   config = 0;
@@ -96,7 +101,7 @@ int ZJetReader::readEvents(std::vector<TData*>& data)
     if(ev) {
       data.push_back(ev); 
       ++nevents_added;
-      if((n_zjet_events>=0) && (nevents_added >= n_zjet_events-1))
+      if((n_zjet_events>=0) && (nevents_added >= n_zjet_events))
 	break;
     }
   }
@@ -140,8 +145,8 @@ TData* ZJetReader::createJetTruthEvent()
       closestTower = n;
     }
   }  //calc jet error
-  if(had/(had + em) < 0.07) { return 0;}
-  if(had/(had + em) > 0.92) { return 0;}
+  if(had/(had + em) < Had_cut_min) { return 0;}
+  if(had/(had + em) > Had_cut_max) { return 0;}
   double factor =  zjet.JetCalEt /  zjet.JetCalE;
   tower.pt = zjet.JetCalEt;
   tower.EMF = em * factor;

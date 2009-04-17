@@ -1,11 +1,3 @@
-//
-//    Reader for Z Jet Events
-//
-//    This class reads events according to the ZJetSel
-//
-//    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.h,v 1.2 2009/02/10 08:57:45 stadie Exp $
-//   
 #ifndef ZJETREADER_H
 #define ZJETREADER_H
 
@@ -15,6 +7,15 @@
 
 #include "ZJetSel.h"
 
+//!
+//!    \brief Reader for Z Jet Events
+//!
+//!    This class reads events according to the ZJetSel
+//!
+//!    \author Hartmut Stadie
+//!    \date 2008/12/12
+//!    $Id: ZJetReader.h,v 1.3 2009/03/04 17:26:51 thomsen Exp $
+// ----------------------------------------------------------------   
 class ZJetReader : public EventReader{
  public:
   ZJetReader(const std::string& configfile, TParameters *p);
@@ -25,9 +26,14 @@ class ZJetReader : public EventReader{
   TData* createJetTruthEvent();
 
   ZJetSel zjet;
-  double Et_cut_on_Z,Et_cut_on_jet,Eta_cut_on_jet,Et_cut_on_genJet;
-  int n_zjet_events;
-  int dataClass;
+  double Et_cut_on_Z;          //!< Minimum Z Et
+  double Et_cut_on_jet;        //!< Minimum jet Et
+  double Eta_cut_on_jet;       //!< Maximum absolute jet eta
+  double Et_cut_on_genJet;     //!< Minimum genJet Et
+  double Had_cut_min;          //!< Minimum jet Had/(Had+EMF)
+  double Had_cut_max;          //!< Maximum jet Had/(Had+EMF)
+  int    n_zjet_events;        //!< Maximum number of read photon jet events
+  int    dataClass;            //!< Data class, see also TData
 };
 
 

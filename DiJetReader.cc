@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.8 2009/03/04 17:26:51 thomsen Exp $
+//    $Id: DiJetReader.cc,v 1.9 2009/03/05 08:50:24 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -15,7 +15,8 @@
 #include <cstdlib>
 
 DiJetReader::DiJetReader(const std::string& configfile, TParameters* p) 
-  : EventReader(configfile,p),Et_cut_nplus1Jet(0),Rel_cut_on_nJet(10),n_dijet_events(0)
+  : EventReader(configfile,p),Et_cut_nplus1Jet(0),Rel_cut_on_nJet(10),
+    Had_cut_min(0), Had_cut_max(1), n_dijet_events(0)
 {
   n_dijet_events = config->read<int>("use Di-Jet events",-1);
   if(n_dijet_events == 0) {
@@ -23,13 +24,19 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
     config = 0;
     return;
   }
-  Et_cut_nplus1Jet = config->read<double>("Et cut on n+1 Jet",10.0);
-  Rel_cut_on_nJet  =  config->read<double>("Relative n+1 Jet Et Cut",0.2);
-  GenJetCut        =  config->read<double>("Et cut on genJet both Jets",0.0);
-  Eta_cut_on_jet   = config->read<double>("Eta cut on jet",5.0);
+  Et_cut_nplus1Jet  = config->read<double>("Et cut on n+1 Jet",10.0);
+  Rel_cut_on_nJet   = config->read<double>("Relative n+1 Jet Et Cut",0.2);
+  GenJetCut         = config->read<double>("Et cut on genJet both Jets",0.0);
+  Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0);
+  Had_cut_min       = config->read<double>("Min had fraction",0.07);
+  Had_cut_max       = config->read<double>("Max had fraction",0.95);
+
   
   dataClass = config->read<int>("Di-Jet data class", 0);
-  if((dataClass != 0)&&(dataClass != 11)&&(dataClass != 12)) dataClass = 0;
+  if((dataClass != 0)&&(dataClass != 11)&&(dataClass != 12)) {
+    std::cout << "DiJetReader: Unknown data class " << dataClass << ". Using data class 0." << std::endl;
+    dataClass = 0;
+  }
 
   string default_tree_name = config->read<string>("Default Tree Name","CalibTree");
   string treename_dijet = config->read<string>("Di-Jet tree",default_tree_name);
@@ -374,8 +381,8 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 	closestTower = n;
       }
     } 
-    if(had/(had + em) < 0.07) { return 0;}
-    if(had/(had + em) > 0.92) { return 0;}
+    if(had/(had + em) < Had_cut_min) { return 0;}
+    if(had/(had + em) > Had_cut_max) { return 0;}
     double factor =  njet.JetEt[i] /  njet.JetE[i];
     tower.pt = njet.JetEt[i];
     tower.EMF = em * factor;
