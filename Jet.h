@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.h,v 1.13 2009/03/05 08:50:23 stadie Exp $
+//    $Id: Jet.h,v 1.14 2009/04/08 14:46:18 stadie Exp $
 //   
 #ifndef JET_H
 #define JET_H
@@ -40,11 +40,12 @@ class Jet : public TJet
   virtual double correctedEt(double Et, bool fast = false) const;
   double expectedEt(double truth, double start, double& error,
 		    bool fast = false);
-  virtual double Error() const {return errf(&(TMeasurement::pt),this,0);}
-  virtual double expectedError(double truth) const { return  errf(&truth,this,0);}
+  virtual double Error() const {return errf(&(TMeasurement::pt),this,0);}  //!< Return error of original measurement
+  virtual double expectedError(double truth) const { return errf(&truth,this,0);}
+  double errorFunction(double pt) const { return errf(&pt,this,0);}
   virtual int nPar() const {return f.nPars() + gf.nPars();}
   struct ParameterVariation {
-    int parid;
+    int    parid;
     double upperEt;
     double lowerEt;
     double upperError;
@@ -58,20 +59,29 @@ class Jet : public TJet
   virtual const VariationColl& varyPars(double eps, double Et, double start);
   virtual const VariationColl& varyParsDirectly(double eps);
 
-  static void printInversionStats();
- private:
-  double error; 
-  Function f,gf;
-  double (*errf)(const double *x, const TMeasurement *xorig, double err);
-  double etmin;
+  void print();                       //!< Print some jet members
+  static void printInversionStats();  //!< Print some info on inversion
+
  protected:
   mutable VariationColl varcoll;
   virtual double expectedEt(double truth, double start, bool fast = false);
+
  private:
+  double    error;                //!< Stores error for constant error mode
+  Function  f;                    //!< Jet correction function
+  Function  gf;                   //!< Global jet correction function
+  double    (*errf)(const double *x, const TMeasurement *xorig, double err);   //!< Error function
+  double    etmin;                //!< Lower cut on measured Et
+
+  bool      secant(double truth, double& x1, double& x2, double eps);
+  bool      falseposition(double truth, double& x1, double& x2, double eps);
+
+  static long long ncalls;        //!< Number of calls of inversion methods secant and falseposition
+  static long long ntries;        //!< Number of tries in iteration during inversion
+  static long long nfails;        //!< Number of failed tries during inversion
+  static long long nwarns;        //!< Number of warnings during inversion
+
   mutable TMeasurement temp;
-  bool secant(double truth, double& x1, double& x2, double eps);
-  bool falseposition(double truth, double& x1, double& x2, double eps);
-  static long long ncalls, ntries, nfails, nwarns;
 };
 
 #endif

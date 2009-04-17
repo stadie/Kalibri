@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.19 2009/03/05 08:50:23 stadie Exp $
+//    $Id: Jet.cc,v 1.20 2009/04/08 14:46:18 stadie Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -96,6 +96,8 @@ const Jet::VariationColl& Jet::varyParsDirectly(double eps)
   return varcoll;
 }
 
+
+//!  \note Modifies only hadronic part of tower energy
 double Jet::correctedEt(double Et, bool fast) const {
   
   //std::cout << "Pars:" << f.firstPar()[0] << ", " << f.firstPar()[1] << ", " << f.firstPar()[2]
@@ -112,7 +114,10 @@ double Jet::correctedEt(double Et, bool fast) const {
     std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
   assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
-  if(corEt < 0) corEt = 0;
+  if(corEt < 0) {
+    //    std::cout << "WARNING: jet cor. Et < 0.0 GeV:" << corEt << '\n';
+    corEt = 1.0;
+  }
   temp.pt   = corEt;  
   temp.HadF = corEt - OutF - EMF;
   if(temp.HadF < 0) temp.HadF = 0;
@@ -122,10 +127,21 @@ double Jet::correctedEt(double Et, bool fast) const {
     std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
   assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
-  if(corEt <= 1.0) corEt = 1.0;
+  if(corEt <= 1.0) {
+    //    std::cout << "WARNING: global jet cor. Et < 1.0 GeV:" << corEt << '\n';
+    corEt = 1.0;
+  }
   return corEt;
 }
 
+
+//!  \brief Find mean measured Et from correction function for a given truth
+//!
+//!  
+//!  \param truth The true Et
+//!  \param start Start value for inversion procedure
+//!  \param fast No functionality yet
+//!  \return Mean measured Et for given truth
 double Jet::expectedEt(double truth, double start, bool fast)
 {
   static const double eps = 1.0e-12;
@@ -165,7 +181,7 @@ double Jet::expectedEt(double truth, double start, bool fast)
 double Jet::expectedEt(double truth, double start, double& error,bool fast)
 {
   //truncate mean for jet min Et-cut
-  double m = expectedEt(truth, start,fast);
+  double m = expectedEt(truth,start,fast);
   if(m < 0) return m;
   double s = expectedError(m);
   double x = (etmin - m)/s;
@@ -273,6 +289,13 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
   }
   //std::cout << "first intervall size:" << dx/x1 << '\n';
   while((dx/x1 > eps)&&(i < 100)) {
+    if(f1 == f2) {
+      //std::cout << "Warning: no difference in corrected Et:" << f1 << "," << f2 << '\n';
+      //print();
+      x2 = 0.5 * (x1 + x2);
+      ++nfails;
+      return false;
+    }
     double x3 = x1 + y1 * (x2-x1)/(f2 - f1);
     //std::cout << i << ":" << x1 << ", " << x2 << " : " << y1 << ", " << y2 << ", " << x3 << std::endl;
     if(x3 < low) x3 = low;
@@ -296,6 +319,7 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
       continue;
     }
     double f3 = correctedEt(x3,true);
+    //std::cout << x1 << ":" << f1 << " " << x2 << ":" << f2 << " " << x3 << ":" << f3 << '\n';
     double y3 = truth - f3;
     //use false position if root is bracketed
     if(y1 * y3 < 0) {
@@ -328,22 +352,33 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
     ++nfails;
     return false;
   }
-  /*
+  
   if(x2 != x2) {
-  std::cout << "failed to find good root\n";
-  std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
-  ++nfails;
-  return false;
+//     std::cout << "failed to find good root\n";
+//     std::cout << i << ":" << x1 << ", " << x2 << ":" << truth - f2 << "\n";
+    ++nfails;
+    return false;
   }
-  */
+  
   return true;
 }
 
+
+
+// ------------------------------------------------------------
+void Jet::print()
+{
+  std::cout << "Jet  Et: " << Et() << " GeV, eta: " << eta() << std::endl;
+}
+
+
+
+
+// ------------------------------------------------------------
 long long Jet::ncalls = 0;
 long long Jet::ntries = 0;
 long long Jet::nfails = 0;
 long long Jet::nwarns = 0;
-
 void Jet::printInversionStats()
 {
   if(ncalls) {
