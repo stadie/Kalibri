@@ -2,7 +2,7 @@
 //    Class for jets with tracks 
 //
 //    first version: Hartmut Stadie 2009/04/08
-//    $Id: JetWithTracks.cc,v 1.12 2009/03/05 08:50:24 stadie Exp $
+//    $Id: JetWithTracks.cc,v 1.1 2009/04/08 14:46:18 stadie Exp $
 //   
 #include"JetWithTracks.h"
 
@@ -154,14 +154,14 @@ double JetWithTracks::Error() const {
   return sqrt(var + jeterr * jeterr);
 }
 
-double JetWithTracks::expectedError(double truth) const
+double JetWithTracks::expectedError(double et) const
 {
   double var = 0, err;
   for(TrackCollConstIter i = tracks.begin() ; i != tracks.end() ; ++i) {
     err = (*i)->Error();
     var += err * err;
   }
-  double jeterr = Jet::expectedError(truth);
+  double jeterr = Jet::expectedError(et);
   return sqrt(var + jeterr * jeterr);
 }
   
