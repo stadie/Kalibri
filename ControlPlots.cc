@@ -467,6 +467,8 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
 //!     compared:
 //!      - Distributions of scaled residuals
 //!      - Scaled residuals vs residuals
+//!   - The \f$ \chi^{2}_{i} \f$ probability
+//!     prob(chi2,1).
 //!
 //!  The plots are written to the file
 //!  "controlplotsChi2.ps" and (if enabled)
@@ -484,6 +486,12 @@ void TControlPlots::MakeControlPlotsChi2()
   h_chi2_last->SetLineColor(1);
   h_chi2_last->SetLineStyle(1);
   objToBeWritten.push_back(h_chi2_last);
+
+  // Distribution of chi2 probability with last scaling
+  // configuration scheme
+  TH1F *h_prob = new TH1F("h_prob",";prob(#chi^{2}_{i},1)",50,0,1);
+  h_prob->SetMarkerStyle(7);
+  objToBeWritten.push_back(h_prob);
 
   // Distribution of chi2 summands (normalized residuals)
   TH1F *h_chi2 = new TH1F("h_chi2","Scaled residuals z^{2} = 1/w #chi^{2};f(z^{2});dN / df(z^{2})",50,0,20);
@@ -517,9 +525,11 @@ void TControlPlots::MakeControlPlotsChi2()
   // Loop over data and fill histograms
   for(  data_it = mData->begin();  data_it != mData->end();  data_it++ )
     {
-      h_chi2_last->Fill((*data_it)->chi2_plots());
+      double weight   = (*data_it)->GetWeight();
+      double lastchi2 = ((*data_it)->chi2_plots())/weight;
 
-      double weight = (*data_it)->GetWeight();
+      h_chi2_last->Fill(lastchi2);
+      h_prob->Fill(TMath::Prob(lastchi2,1));
 
       TData::ScaleResidual = &TData::ScaleNone;
       double res = ( (*data_it)->chi2() / weight );
@@ -543,6 +553,11 @@ void TControlPlots::MakeControlPlotsChi2()
 
   h_chi2_last->Draw();
   c1->SetLogy(1);
+  c1->Draw();
+  ps->NewPage();
+
+  h_prob->Draw("PE1");
+  c1->SetLogy(0);
   c1->Draw();
   ps->NewPage();
 
