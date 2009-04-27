@@ -4,7 +4,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date   Wed Apr  1 18:28:02 CEST 2009
-//!  $Id$
+//!  $Id: makePlots.C,v 1.1 2009/04/07 15:55:15 mschrode Exp $
 //!
 
 #include <iostream>
@@ -16,6 +16,8 @@
 #include "TFile.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include "TLegend.h"
+#include "TMath.h"
 #include "TPad.h"
 #include "TStyle.h"
 
@@ -23,12 +25,17 @@
 namespace makePlots
 {
   // - Function declarations ----------------------------------------------------
-  void AddFileName(const std::string& name);
-  void Resolution(const std::string& type = "GammaJet");
-  void Response(const std::string& type = "GammaJet");
-  void ResponseDistribution(double min, double max, const std::string& type = "GammaJet");
-  void ResponseParametrization(const std::string& className, const std::vector<double>& par, const std::vector<double>& parGlobal);
-  void CorrectionParametrization(const std::string& className, const std::vector<double>& par, const std::vector<double>& parGlobal);
+  void      AddFileName(const std::string& name);
+  void      AddLegendEntry(const std::string& entry);
+  void      CorrectionParametrization(const std::string& className, const std::vector<double>& par, const std::vector<double>& parGlobal);
+  TLegend * CreateLegend(TH1F* hUncorr, const std::vector<TH1F*>& hCorr);
+  void      Resolution(const std::string& type = "GammaJet");
+  void      Response(const std::string& type = "GammaJet", double zoomRange = 0.1, bool showGaussAndMean = false);
+  void      ResponseDistribution(double min, double max, const std::string& type = "GammaJet");
+  void      ResponseParametrization(const std::string& className, const std::vector<double>& par, const std::vector<double>& parGlobal);
+  void      SetOutputFileName(const std::string& suffix);
+  double    Error(double et);
+
 
 
 
@@ -36,6 +43,16 @@ namespace makePlots
 
   //!  List of files to be included
   std::vector<std::string> fileNames;
+
+  //!  List of legend entries corresponding
+  //!  to fileNames
+  std::vector<std::string> legendEntries;
+
+  //!  File name prefix for .eps output
+  std::string outName = "";
+
+  //!  Marker and line colors
+  int kCOLOR[5] = { 2,4,30,38,26 };
 
 
 
@@ -49,6 +66,31 @@ namespace makePlots
   {
     fileNames.push_back(name);
   }
+
+
+
+  //!  \brief Add a legend entry to legendEntries
+  //!  
+  //!  \param entry Legend entry
+  void AddLegendEntry(const std::string& entry)
+  {
+    legendEntries.push_back(entry);
+  }
+
+
+
+  //!  \brief Set an output name prefix
+  //!
+  //!  If 'prefix' is set to a non-empty string,
+  //!  all plotted canvases are written to .eps file.
+  //!  Their file name is "prefix-spec.eps", where
+  //!  "spec" is specific to the kind of plot e.g.
+  //!  "response" for a response plot.
+  void SetOutputFileName(const std::string& suffix)
+  {
+    outName = suffix;
+  }
+
 
 
   //!  \brief Plot resolution
@@ -148,7 +190,7 @@ namespace makePlots
 
     can->cd(1);
     histsUncorr.at(0)->Draw();
-    for(std::vector<TH1F*>::iterator it = histsCorr.begin();
+    for(std::vector<TH1F*>::const_iterator it = histsCorr.begin();
 	it != histsCorr.end(); it++)
       {
 	(*it)->Draw("same");
@@ -157,13 +199,24 @@ namespace makePlots
 
     can->cd(2);
     histsGaussUncorr.at(0)->Draw();
-    for(std::vector<TH1F*>::iterator it = histsGaussCorr.begin();
+    for(std::vector<TH1F*>::const_iterator it = histsGaussCorr.begin();
 	it != histsGaussCorr.end(); it++)
       {
 	(*it)->Draw("same");
       }
     gPad->SetGrid();
 
+    if( legendEntries.size() > 0 )
+      {
+	CreateLegend(histsGaussUncorr.at(0),histsGaussCorr)->Draw("same");
+      }
+
+    if( outName.compare("") )
+      {
+	std::string name = outName;
+	name.append("-resolution.eps");
+	can->Print(name.c_str());
+      }
   }
 
 
@@ -172,10 +225,14 @@ namespace makePlots
   //!
   //!  Plot response \f$ E^{meas}_{T} / E^{gen}_{T} \f$
   //!  vs \f$ E^{gen}_{T} \f$ and vs \f$ \eta_{T} \f$
-  //!  for all files in fileNames .
+  //!  for all files in fileNames. The mean values are
+  //!  means of Gaussian fits. If specified, additionally
+  //!  the arithmetic means are shown.
   //!
-  //!  \param type Name of branch, default is "GammaJet"
-  void Response(const std::string& type)
+  //!  \param type              Name of branch, default is "GammaJet"
+  //!  \param zoomRange         Range of y-axis in zoom plot is 1 +/- zoomRange, default is 0.1
+  //!  \param showGaussAndMean  If true, additionally the aritmetic means are shown, default is false.
+  void Response(const std::string& type, double zoomRange, bool showGaussAndMean)
   {
     // Response vs pt
     std::vector<TH1F*> histsUncorrPt;
@@ -269,150 +326,311 @@ namespace makePlots
       }
 
 
+//     // Correct for truncated mean
+//     double min = 0.;
+//     for(unsigned int i = 0; i < histsUncorrPt.size(); i++)
+//       {
+// 	std::cout << ">>>> " << i << std::endl;
+
+// 	TH1F *h1 = histsUncorrPt.at(i);
+// 	TH1F *h2 = histsCorrPt.at(i);
+// 	for(int bin = 1; bin <= h1->GetNbinsX(); bin++)
+// 	  {
+// 	    double mean     = h1->GetBinContent(bin) * h1->GetBinCenter(bin);
+// 	    double sigma    = Error(h1->GetBinCenter(bin));
+// 	    double x        = (min - mean) / sigma;
+// 	    double l        = exp(-x*x/2) * sqrt(2/M_PI) * sigma/TMath::Erfc(x/sqrt(2));
+// 	    double meanAsym = mean - l;
+// 	    if( mean > 0 ) h1->SetBinContent(bin,meanAsym / h1->GetBinCenter(bin));
+
+// 	    mean     = h2->GetBinContent(bin) * h2->GetBinCenter(bin);
+// 	    sigma    = Error(h2->GetBinCenter(bin));
+// 	    x        = (min - mean) / sigma;
+// 	    l        = exp(-x*x/2) * sqrt(2/M_PI) * sigma/TMath::Erfc(x/sqrt(2));
+// 	    meanAsym = mean - l;
+// 	    if( mean > 0 )
+// 	      {
+// 		h2->SetBinContent(bin,meanAsym / h2->GetBinCenter(bin));
+// 		std::cout << " Bin " << bin << std::endl;
+// 		std::cout << "  Content  " << h2->GetBinContent(bin) << std::endl;
+// 		std::cout << "  Center   " << h2->GetBinCenter(bin) << std::endl;
+// 		std::cout << "  Mean     " << mean << std::endl;
+// 		std::cout << "  Sigma    " << sigma << std::endl;
+// 		std::cout << "  x        " << x << std::endl;
+// 		std::cout << "  l        " << l << std::endl;
+// 		std::cout << "  MeanAsym " << meanAsym << std::endl;
+// 		std::cout << "  norm     " << meanAsym / h2->GetBinCenter(bin) << std::endl;
+// 	      }
+// 	  }
+//       }
+
     // Set nice style
     for(unsigned int i = 0; i < histsUncorrPt.size(); i++)
       {
+	int col = 1;
+	if( i < 5 ) col = kCOLOR[i];
+
+	histsUncorrPt.at(i)->UseCurrentStyle();
 	histsUncorrPt.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	histsUncorrPt.at(i)->SetTitle("Mean");
+	if( showGaussAndMean ) histsUncorrPt.at(i)->SetTitle("Mean");
+	else histsUncorrPt.at(i)->SetTitle("");
 	histsUncorrPt.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsUncorrPt.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
+	histsUncorrPt.at(i)->SetMarkerStyle(20);
 
+	histsCorrPt.at(i)->UseCurrentStyle();
 	histsCorrPt.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	histsCorrPt.at(i)->SetTitle("Mean");
+	if( showGaussAndMean ) histsCorrPt.at(i)->SetTitle("Mean");
+	else histsCorrPt.at(i)->SetTitle("");
 	histsCorrPt.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsCorrPt.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
-	histsCorrPt.at(i)->SetMarkerColor(2+i);
-	histsCorrPt.at(i)->SetLineColor(2+i);
+	histsCorrPt.at(i)->SetMarkerStyle(20);
+	histsCorrPt.at(i)->SetMarkerColor(col);
+	histsCorrPt.at(i)->SetLineColor(col);
 
+	histsGaussUncorrPt.at(i)->UseCurrentStyle();
 	histsGaussUncorrPt.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	histsGaussUncorrPt.at(i)->SetTitle("Mean of Gaussian fit");
+	if( showGaussAndMean ) histsGaussUncorrPt.at(i)->SetTitle("Mean of Gaussian fit");
+	else histsGaussUncorrPt.at(i)->SetTitle("");
 	histsGaussUncorrPt.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsGaussUncorrPt.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
+	histsGaussUncorrPt.at(i)->SetMarkerStyle(20);
 
+	histsGaussCorrPt.at(i)->UseCurrentStyle();
 	histsGaussCorrPt.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	histsGaussCorrPt.at(i)->SetTitle("Mean of Gaussian fit");
+	if( showGaussAndMean ) histsGaussCorrPt.at(i)->SetTitle("Mean of Gaussian fit");
+	else histsGaussCorrPt.at(i)->SetTitle("");
 	histsGaussCorrPt.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsGaussCorrPt.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
-	histsGaussCorrPt.at(i)->SetMarkerColor(2+i);
-	histsGaussCorrPt.at(i)->SetLineColor(2+i);
+	histsGaussCorrPt.at(i)->SetMarkerColor(col);
+	histsGaussCorrPt.at(i)->SetMarkerStyle(20);
+	histsGaussCorrPt.at(i)->SetLineColor(col);
 
+	histsUncorrEta.at(i)->UseCurrentStyle();
 	histsUncorrEta.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	histsUncorrEta.at(i)->SetTitle("Mean");
+	if( showGaussAndMean ) histsUncorrEta.at(i)->SetTitle("Mean");
+	else histsUncorrEta.at(i)->SetTitle("");
 	histsUncorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsUncorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
+	histsUncorrEta.at(i)->SetMarkerStyle(20);
 
+	histsCorrEta.at(i)->UseCurrentStyle();
 	histsCorrEta.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	histsCorrEta.at(i)->SetTitle("Mean");
+	if( showGaussAndMean ) histsCorrEta.at(i)->SetTitle("Mean");
+	else histsCorrEta.at(i)->SetTitle("");
 	histsCorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsCorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
-	histsCorrEta.at(i)->SetMarkerColor(2+i);
-	histsCorrEta.at(i)->SetLineColor(2+i);
+	histsCorrEta.at(i)->SetMarkerColor(col);
+	histsCorrEta.at(i)->SetMarkerStyle(20);
+	histsCorrEta.at(i)->SetLineColor(col);
 
+	histsGaussUncorrEta.at(i)->UseCurrentStyle();
 	histsGaussUncorrEta.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	histsGaussUncorrEta.at(i)->SetTitle("Mean of Gaussian fit");
+	if( showGaussAndMean ) histsGaussUncorrEta.at(i)->SetTitle("Mean of Gaussian fit");
+	else histsGaussUncorrEta.at(i)->SetTitle("");
 	histsGaussUncorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsGaussUncorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
+	histsGaussUncorrEta.at(i)->SetMarkerStyle(20);
 
+	histsGaussCorrEta.at(i)->UseCurrentStyle();
 	histsGaussCorrEta.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	histsGaussCorrEta.at(i)->SetTitle("Mean of Gaussian fit");
+	if( showGaussAndMean ) histsGaussCorrEta.at(i)->SetTitle("Mean of Gaussian fit");
+	else histsGaussCorrEta.at(i)->SetTitle("");
 	histsGaussCorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsGaussCorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
-	histsGaussCorrEta.at(i)->SetMarkerColor(2+i);
-	histsGaussCorrEta.at(i)->SetLineColor(2+i);
+	histsGaussCorrEta.at(i)->SetMarkerColor(col);
+	histsGaussCorrEta.at(i)->SetMarkerStyle(20);
+	histsGaussCorrEta.at(i)->SetLineColor(col);
       }
-
 
     // Plot histograms
-    TCanvas *canPt = new TCanvas("canResponsePt","Response Pt",1000,500);
-    canPt->Divide(2,1);
+    gStyle->SetOptStat(0);
+
+    // Response vs pt
+    TCanvas *canPt = 0;
+    if( showGaussAndMean )
+      {
+	canPt = new TCanvas("canResponsePt","Response Pt",1000,500);
+	canPt->Divide(2,1);
+      }
+    else
+      {
+	canPt = new TCanvas("canResponsePt","Response Pt",600,600);
+      }
 
     canPt->cd(1);
-    histsUncorrPt.at(0)->DrawClone();
-    for(std::vector<TH1F*>::iterator it = histsCorrPt.begin();
-	it != histsCorrPt.end(); it++)
-      {
-	(*it)->DrawClone("same");
-      }
-    gPad->SetGrid();
-
-    canPt->cd(2);
     histsGaussUncorrPt.at(0)->DrawClone();
-    for(std::vector<TH1F*>::iterator it = histsGaussCorrPt.begin();
+    for(std::vector<TH1F*>::const_iterator it = histsGaussCorrPt.begin();
 	it != histsGaussCorrPt.end(); it++)
       {
 	(*it)->DrawClone("same");
       }
     gPad->SetGrid();
 
+    if( showGaussAndMean )
+      {
+	canPt->cd(2);
+	histsUncorrPt.at(0)->DrawClone();
+	for(std::vector<TH1F*>::const_iterator it = histsCorrPt.begin();
+	    it != histsCorrPt.end(); it++)
+	  {
+	    (*it)->DrawClone("same");
+	  }
+	gPad->SetGrid();
+      }
 
-    TCanvas *canPtZ = new TCanvas("canResponsePtZoom","Response Pt Zoom",1000,500);
-    canPtZ->Divide(2,1);
+    if( legendEntries.size() > 0 )
+      {
+	CreateLegend(histsGaussUncorrPt.at(0),histsGaussCorrPt)->Draw("same");
+      }
+
+    if( outName.compare("") )
+      {
+	std::string name = outName;
+	name.append("-response_pt.eps");
+	canPt->Print(name.c_str());
+      }
+
+    // Response vs pt - zoom
+    TCanvas *canPtZ = 0;
+    if( showGaussAndMean )
+      {
+	canPtZ = new TCanvas("canResponsePtZoom","Response Pt Zoom",1000,500);
+	canPtZ->Divide(2,1);
+      }
+    else
+      {
+	canPtZ = new TCanvas("canResponsePtZoom","Response Pt Zoom",600,600);
+      }
 
     canPtZ->cd(1);
-    histsUncorrPt.at(0)->GetYaxis()->SetRangeUser(0.8,1.2);
-    histsUncorrPt.at(0)->Draw();
-    for(std::vector<TH1F*>::iterator it = histsCorrPt.begin();
-	it != histsCorrPt.end(); it++)
-      {
-	(*it)->Draw("same");
-      }
-    gPad->SetGrid();
-
-    canPtZ->cd(2);
-    histsGaussUncorrPt.at(0)->GetYaxis()->SetRangeUser(0.8,1.2);
+    histsGaussUncorrPt.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
     histsGaussUncorrPt.at(0)->Draw();
-    for(std::vector<TH1F*>::iterator it = histsGaussCorrPt.begin();
+    for(std::vector<TH1F*>::const_iterator it = histsGaussCorrPt.begin();
 	it != histsGaussCorrPt.end(); it++)
       {
 	(*it)->Draw("same");
       }
     gPad->SetGrid();
 
+    if( showGaussAndMean )
+      {
+	canPtZ->cd(2);
+	histsUncorrPt.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
+	histsUncorrPt.at(0)->Draw();
+	for(std::vector<TH1F*>::const_iterator it = histsCorrPt.begin();
+	    it != histsCorrPt.end(); it++)
+	  {
+	    (*it)->Draw("same");
+	  }
+	gPad->SetGrid();
+      }
 
-    TCanvas *canEta = new TCanvas("canResponseEta","Response Eta",1000,500);
-    canEta->Divide(2,1);
+    if( legendEntries.size() > 0 )
+      {
+	CreateLegend(histsGaussUncorrPt.at(0),histsGaussCorrPt)->Draw("same");
+      }
+
+    if( outName.compare("") )
+      {
+	std::string name = outName;
+	name.append("-response_pt_zoom.eps");
+	canPtZ->Print(name.c_str());
+      }
+
+
+    // Response vs eta
+    TCanvas *canEta = 0;
+    if( showGaussAndMean )
+      {
+	canEta = new TCanvas("canResponseEta","Response Eta",1000,500);
+	canEta->Divide(2,1);
+      }
+    else
+      {
+	canEta = new TCanvas("canResponseEta","Response Eta",600,600);
+      }
 
     canEta->cd(1);
-    histsUncorrEta.at(0)->DrawClone();
-    for(std::vector<TH1F*>::iterator it = histsCorrEta.begin();
-	it != histsCorrEta.end(); it++)
-      {
-	(*it)->DrawClone("same");
-      }
-    gPad->SetGrid();
-
-    canEta->cd(2);
     histsGaussUncorrEta.at(0)->DrawClone();
-    for(std::vector<TH1F*>::iterator it = histsGaussCorrEta.begin();
+    for(std::vector<TH1F*>::const_iterator it = histsGaussCorrEta.begin();
 	it != histsGaussCorrEta.end(); it++)
       {
 	(*it)->DrawClone("same");
       }
     gPad->SetGrid();
 
+    if( showGaussAndMean )
+      {
+	canEta->cd(2);
+	histsUncorrEta.at(0)->DrawClone();
+	for(std::vector<TH1F*>::const_iterator it = histsCorrEta.begin();
+	    it != histsCorrEta.end(); it++)
+	  {
+	    (*it)->DrawClone("same");
+	  }
+	gPad->SetGrid();
+      }
 
-    TCanvas *canEtaZ = new TCanvas("canResponseEtaZoom","Response Eta Zoom",1000,500);
-    canEtaZ->Divide(2,1);
+    if( legendEntries.size() > 0 )
+      {
+	CreateLegend(histsGaussUncorrEta.at(0),histsGaussCorrEta)->Draw("same");
+      }
+
+    if( outName.compare("") )
+      {
+	std::string name = outName;
+	name.append("-response_eta.eps");
+	canEta->Print(name.c_str());
+      }
+
+
+    // Reponse vs eta - zoom
+    TCanvas *canEtaZ = 0;
+    if( showGaussAndMean )
+      {
+	canEtaZ = new TCanvas("canResponseEtaZoom","Response Eta Zoom",1000,500);
+	canEtaZ->Divide(2,1);
+      }
+    else
+      {
+	canEtaZ = new TCanvas("canResponseEtaZoom","Response Eta Zoom",600,600);
+      }
 
     canEtaZ->cd(1);
-    histsUncorrEta.at(0)->GetYaxis()->SetRangeUser(0.8,1.2);
-    histsUncorrEta.at(0)->Draw();
-    for(std::vector<TH1F*>::iterator it = histsCorrEta.begin();
-	it != histsCorrEta.end(); it++)
-      {
-	(*it)->Draw("same");
-      }
-    gPad->SetGrid();
-
-    canEtaZ->cd(2);
-    histsGaussUncorrEta.at(0)->GetYaxis()->SetRangeUser(0.8,1.2);
+    histsGaussUncorrEta.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
     histsGaussUncorrEta.at(0)->Draw();
-    for(std::vector<TH1F*>::iterator it = histsGaussCorrEta.begin();
+    for(std::vector<TH1F*>::const_iterator it = histsGaussCorrEta.begin();
 	it != histsGaussCorrEta.end(); it++)
       {
 	(*it)->Draw("same");
       }
     gPad->SetGrid();
+
+    if( showGaussAndMean )
+      {
+	canEtaZ->cd(2);
+	histsUncorrEta.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
+	histsUncorrEta.at(0)->Draw();
+	for(std::vector<TH1F*>::const_iterator it = histsCorrEta.begin();
+	    it != histsCorrEta.end(); it++)
+	  {
+	    (*it)->Draw("same");
+	  }
+	gPad->SetGrid();
+      }
+
+    if( legendEntries.size() > 0 )
+      {
+	CreateLegend(histsGaussUncorrEta.at(0),histsGaussCorrEta)->Draw("same");
+      }
+
+    if( outName.compare("") )
+      {
+	std::string name = outName;
+	name.append("-response_eta_zoom.eps");
+	canEtaZ->Print(name.c_str());
+      }
   }
 
 
@@ -520,7 +738,7 @@ namespace makePlots
     TCanvas *can = new TCanvas("canProjection","Projection",500,500);
     can->cd();
     histsUncorr.at(0)->Draw();
-    for(std::vector<TH1F*>::iterator it = histsCorr.begin();
+    for(std::vector<TH1F*>::const_iterator it = histsCorr.begin();
 	it != histsCorr.end(); it++)
       {
 	(*it)->Draw("same");
@@ -634,6 +852,48 @@ namespace makePlots
 	std::cerr << "ERROR makePlots::CorrectionParametrization: " << className << " is not a known parametrization class." << std::endl;
       }
   }
+
+
+
+  //!  \brief Create a TLegend
+  //!
+  //!  Create a TLegend. The first entry for 'hUncorr'
+  //!  is "Uncorrected". For all other histograms in 'hCorr',
+  //!  an entry "Corrected: X" is added, where "X" is the
+  //!  corresponding entry in legendEntries.
+  //!  
+  //!  \param hUncorr Histogram before correction
+  //!  \param hCorr Histograms after correction
+  TLegend * CreateLegend(TH1F* hUncorr, const std::vector<TH1F*>& hCorr)
+  {
+    TLegend *leg = new TLegend(0.49,0.9-(1+hCorr.size())*0.06,0.925,0.915);
+    leg->SetBorderSize(1);
+    leg->SetFillColor(0);
+    leg->SetTextFont(42);
+    if( hUncorr )
+      {
+	leg->AddEntry(hUncorr,"Uncorrected","P");
+	if( hCorr.size() <= legendEntries.size() )
+	  {
+	    for(unsigned int i = 0; i < hCorr.size(); i++)
+	      {
+		std::string entry = "Corrected: ";
+		entry.append(legendEntries.at(i));
+		leg->AddEntry(hCorr.at(i),entry.c_str(),"P");
+	      }
+	  }
+      }
+    return leg;
+  }
+
+
+  double Error(double et)
+  {
+    double b = 1.3;
+    double c = 0.056;
+    return sqrt(b*b/et + c*c)*et;
+  }
+
 }
 
 
