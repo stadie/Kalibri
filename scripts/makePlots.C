@@ -4,7 +4,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date   Wed Apr  1 18:28:02 CEST 2009
-//!  $Id: makePlots.C,v 1.1 2009/04/07 15:55:15 mschrode Exp $
+//!  $Id: makePlots.C,v 1.2 2009/04/27 13:50:56 mschrode Exp $
 //!
 
 #include <iostream>
@@ -30,7 +30,7 @@ namespace makePlots
   void      CorrectionParametrization(const std::string& className, const std::vector<double>& par, const std::vector<double>& parGlobal);
   TLegend * CreateLegend(TH1F* hUncorr, const std::vector<TH1F*>& hCorr);
   void      Resolution(const std::string& type = "GammaJet");
-  void      Response(const std::string& type = "GammaJet", double zoomRange = 0.1, bool showGaussAndMean = false);
+  void      Response(const std::string& type = "GammaJet", double zoomRange = 0.1, const std::string& mean = "m");
   void      ResponseDistribution(double min, double max, const std::string& type = "GammaJet");
   void      ResponseParametrization(const std::string& className, const std::vector<double>& par, const std::vector<double>& parGlobal);
   void      SetOutputFileName(const std::string& suffix);
@@ -229,11 +229,17 @@ namespace makePlots
   //!  means of Gaussian fits. If specified, additionally
   //!  the arithmetic means are shown.
   //!
-  //!  \param type              Name of branch, default is "GammaJet"
-  //!  \param zoomRange         Range of y-axis in zoom plot is 1 +/- zoomRange, default is 0.1
-  //!  \param showGaussAndMean  If true, additionally the aritmetic means are shown, default is false.
-  void Response(const std::string& type, double zoomRange, bool showGaussAndMean)
+  //!  \param type       Name of branch, default is "GammaJet"
+  //!  \param zoomRange  Range of y-axis in zoom plot is 1 +/- zoomRange, default is 0.1
+  //!  \param mean       Definition of mean value. Possible values are:
+  //!                     - "g" : Mean of Gaussian fit (default)
+  //!                     - "m" : Arithmetic mean
+  //!                    The combination "mg" show both.
+  void Response(const std::string& type, double zoomRange, const std::string& mean)
   {
+    bool showGauss = ( mean.find("g") != std::string::npos );
+    bool showMean  = ( mean.find("m") != std::string::npos );
+
     // Response vs pt
     std::vector<TH1F*> histsUncorrPt;
     std::vector<TH1F*> histsCorrPt;
@@ -372,7 +378,7 @@ namespace makePlots
 
 	histsUncorrPt.at(i)->UseCurrentStyle();
 	histsUncorrPt.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	if( showGaussAndMean ) histsUncorrPt.at(i)->SetTitle("Mean");
+	if( showGauss && showMean ) histsUncorrPt.at(i)->SetTitle("Mean");
 	else histsUncorrPt.at(i)->SetTitle("");
 	histsUncorrPt.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsUncorrPt.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
@@ -380,7 +386,7 @@ namespace makePlots
 
 	histsCorrPt.at(i)->UseCurrentStyle();
 	histsCorrPt.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	if( showGaussAndMean ) histsCorrPt.at(i)->SetTitle("Mean");
+	if( showGauss && showMean ) histsCorrPt.at(i)->SetTitle("Mean");
 	else histsCorrPt.at(i)->SetTitle("");
 	histsCorrPt.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsCorrPt.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
@@ -390,7 +396,7 @@ namespace makePlots
 
 	histsGaussUncorrPt.at(i)->UseCurrentStyle();
 	histsGaussUncorrPt.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	if( showGaussAndMean ) histsGaussUncorrPt.at(i)->SetTitle("Mean of Gaussian fit");
+	if( showGauss && showMean ) histsGaussUncorrPt.at(i)->SetTitle("Mean of Gaussian fit");
 	else histsGaussUncorrPt.at(i)->SetTitle("");
 	histsGaussUncorrPt.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsGaussUncorrPt.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
@@ -398,7 +404,7 @@ namespace makePlots
 
 	histsGaussCorrPt.at(i)->UseCurrentStyle();
 	histsGaussCorrPt.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	if( showGaussAndMean ) histsGaussCorrPt.at(i)->SetTitle("Mean of Gaussian fit");
+	if( showGauss && showMean ) histsGaussCorrPt.at(i)->SetTitle("Mean of Gaussian fit");
 	else histsGaussCorrPt.at(i)->SetTitle("");
 	histsGaussCorrPt.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsGaussCorrPt.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
@@ -408,7 +414,7 @@ namespace makePlots
 
 	histsUncorrEta.at(i)->UseCurrentStyle();
 	histsUncorrEta.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	if( showGaussAndMean ) histsUncorrEta.at(i)->SetTitle("Mean");
+	if( showGauss && showMean ) histsUncorrEta.at(i)->SetTitle("Mean");
 	else histsUncorrEta.at(i)->SetTitle("");
 	histsUncorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsUncorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
@@ -416,7 +422,7 @@ namespace makePlots
 
 	histsCorrEta.at(i)->UseCurrentStyle();
 	histsCorrEta.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	if( showGaussAndMean ) histsCorrEta.at(i)->SetTitle("Mean");
+	if( showGauss && showMean ) histsCorrEta.at(i)->SetTitle("Mean");
 	else histsCorrEta.at(i)->SetTitle("");
 	histsCorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsCorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
@@ -426,7 +432,7 @@ namespace makePlots
 
 	histsGaussUncorrEta.at(i)->UseCurrentStyle();
 	histsGaussUncorrEta.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	if( showGaussAndMean ) histsGaussUncorrEta.at(i)->SetTitle("Mean of Gaussian fit");
+	if( showGauss && showMean ) histsGaussUncorrEta.at(i)->SetTitle("Mean of Gaussian fit");
 	else histsGaussUncorrEta.at(i)->SetTitle("");
 	histsGaussUncorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsGaussUncorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
@@ -434,7 +440,7 @@ namespace makePlots
 
 	histsGaussCorrEta.at(i)->UseCurrentStyle();
 	histsGaussCorrEta.at(i)->GetYaxis()->SetRangeUser(0,1.5);
-	if( showGaussAndMean ) histsGaussCorrEta.at(i)->SetTitle("Mean of Gaussian fit");
+	if( showGauss && showMean ) histsGaussCorrEta.at(i)->SetTitle("Mean of Gaussian fit");
 	else histsGaussCorrEta.at(i)->SetTitle("");
 	histsGaussCorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
 	histsGaussCorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
@@ -448,7 +454,7 @@ namespace makePlots
 
     // Response vs pt
     TCanvas *canPt = 0;
-    if( showGaussAndMean )
+    if( showGauss && showMean )
       {
 	canPt = new TCanvas("canResponsePt","Response Pt",1000,500);
 	canPt->Divide(2,1);
@@ -459,15 +465,27 @@ namespace makePlots
       }
 
     canPt->cd(1);
-    histsGaussUncorrPt.at(0)->DrawClone();
-    for(std::vector<TH1F*>::const_iterator it = histsGaussCorrPt.begin();
-	it != histsGaussCorrPt.end(); it++)
+    if( showGauss )
       {
-	(*it)->DrawClone("same");
+	histsGaussUncorrPt.at(0)->DrawClone();
+	for(std::vector<TH1F*>::const_iterator it = histsGaussCorrPt.begin();
+	    it != histsGaussCorrPt.end(); it++)
+	  {
+	    (*it)->DrawClone("same");
+	  }
+      }
+    else if( showMean )
+      {
+	histsUncorrPt.at(0)->DrawClone();
+	for(std::vector<TH1F*>::const_iterator it = histsCorrPt.begin();
+	    it != histsCorrPt.end(); it++)
+	  {
+	    (*it)->DrawClone("same");
+	  }
       }
     gPad->SetGrid();
 
-    if( showGaussAndMean )
+    if( showGauss && showMean )
       {
 	canPt->cd(2);
 	histsUncorrPt.at(0)->DrawClone();
@@ -493,7 +511,7 @@ namespace makePlots
 
     // Response vs pt - zoom
     TCanvas *canPtZ = 0;
-    if( showGaussAndMean )
+    if( showGauss && showMean )
       {
 	canPtZ = new TCanvas("canResponsePtZoom","Response Pt Zoom",1000,500);
 	canPtZ->Divide(2,1);
@@ -504,16 +522,29 @@ namespace makePlots
       }
 
     canPtZ->cd(1);
-    histsGaussUncorrPt.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
-    histsGaussUncorrPt.at(0)->Draw();
-    for(std::vector<TH1F*>::const_iterator it = histsGaussCorrPt.begin();
-	it != histsGaussCorrPt.end(); it++)
+    if( showGauss )
       {
-	(*it)->Draw("same");
+	histsGaussUncorrPt.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
+	histsGaussUncorrPt.at(0)->Draw();
+	for(std::vector<TH1F*>::const_iterator it = histsGaussCorrPt.begin();
+	    it != histsGaussCorrPt.end(); it++)
+	  {
+	    (*it)->Draw("same");
+	  }
+      }
+    else if( showMean )
+      {
+	histsUncorrPt.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
+	histsUncorrPt.at(0)->Draw();
+	for(std::vector<TH1F*>::const_iterator it = histsCorrPt.begin();
+	    it != histsCorrPt.end(); it++)
+	  {
+	    (*it)->Draw("same");
+	  }
       }
     gPad->SetGrid();
 
-    if( showGaussAndMean )
+    if( showGauss && showMean )
       {
 	canPtZ->cd(2);
 	histsUncorrPt.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
@@ -541,7 +572,7 @@ namespace makePlots
 
     // Response vs eta
     TCanvas *canEta = 0;
-    if( showGaussAndMean )
+    if( showGauss && showMean )
       {
 	canEta = new TCanvas("canResponseEta","Response Eta",1000,500);
 	canEta->Divide(2,1);
@@ -552,15 +583,27 @@ namespace makePlots
       }
 
     canEta->cd(1);
-    histsGaussUncorrEta.at(0)->DrawClone();
-    for(std::vector<TH1F*>::const_iterator it = histsGaussCorrEta.begin();
-	it != histsGaussCorrEta.end(); it++)
+    if( showGauss )
       {
-	(*it)->DrawClone("same");
+	histsGaussUncorrEta.at(0)->DrawClone();
+	for(std::vector<TH1F*>::const_iterator it = histsGaussCorrEta.begin();
+	    it != histsGaussCorrEta.end(); it++)
+	  {
+	    (*it)->DrawClone("same");
+	  }
+      }
+    else if( showMean )
+      {
+	histsUncorrEta.at(0)->DrawClone();
+	for(std::vector<TH1F*>::const_iterator it = histsCorrEta.begin();
+	    it != histsCorrEta.end(); it++)
+	  {
+	    (*it)->DrawClone("same");
+	  }
       }
     gPad->SetGrid();
 
-    if( showGaussAndMean )
+    if( showGauss && showMean )
       {
 	canEta->cd(2);
 	histsUncorrEta.at(0)->DrawClone();
@@ -587,7 +630,7 @@ namespace makePlots
 
     // Reponse vs eta - zoom
     TCanvas *canEtaZ = 0;
-    if( showGaussAndMean )
+    if( showGauss && showMean )
       {
 	canEtaZ = new TCanvas("canResponseEtaZoom","Response Eta Zoom",1000,500);
 	canEtaZ->Divide(2,1);
@@ -598,16 +641,29 @@ namespace makePlots
       }
 
     canEtaZ->cd(1);
-    histsGaussUncorrEta.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
-    histsGaussUncorrEta.at(0)->Draw();
-    for(std::vector<TH1F*>::const_iterator it = histsGaussCorrEta.begin();
-	it != histsGaussCorrEta.end(); it++)
+    if( showGauss )
       {
-	(*it)->Draw("same");
+	histsGaussUncorrEta.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
+	histsGaussUncorrEta.at(0)->Draw();
+	for(std::vector<TH1F*>::const_iterator it = histsGaussCorrEta.begin();
+	    it != histsGaussCorrEta.end(); it++)
+	  {
+	    (*it)->Draw("same");
+	  }
+      }
+    else if( showMean)
+      {
+	histsUncorrEta.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
+	histsUncorrEta.at(0)->Draw();
+	for(std::vector<TH1F*>::const_iterator it = histsCorrEta.begin();
+	    it != histsCorrEta.end(); it++)
+	  {
+	    (*it)->Draw("same");
+	  }
       }
     gPad->SetGrid();
 
-    if( showGaussAndMean )
+    if( showGauss && showMean )
       {
 	canEtaZ->cd(2);
 	histsUncorrEta.at(0)->GetYaxis()->SetRangeUser(1-zoomRange,1+zoomRange);
