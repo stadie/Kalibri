@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.13 2009/04/08 14:46:18 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.14 2009/04/22 11:58:47 mschrode Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -196,6 +196,19 @@ JetWithTowers::Tower::Tower(double Et, double EmEt, double HadEt ,
 { 
   temp = *this;
 }
+
+JetWithTowers::Tower::Tower(double Et, double EmEt, double HadEt ,double OutEt, double E,
+			    double EmEttrue, double HadEttrue, double OutEttrue,
+			    double eta,double phi, double alpha, const Function& func,
+			    double (*errfunc)(const double *x, const TMeasurement *xorig, double err))
+  :  TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi), alpha(alpha), error(0),
+     mEmEttrue(EmEttrue), mHadEttrue(HadEttrue), mOutEttrue(OutEttrue),
+     lastCorHadEt(0), fraction(0), f(func), errf(errfunc)
+{ 
+  mEttrue = mEmEttrue + mHadEttrue + mOutEttrue;
+  temp = *this;
+}
+
 
 double JetWithTowers::Tower::correctedHadEt(double HadEt) const
 {

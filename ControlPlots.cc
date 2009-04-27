@@ -24,27 +24,18 @@ using namespace std;
 #include "Parameters.h"
 #include "ConfigFile.h"
 
+#include "JetTruthEvent.h"
 #include "TwoJetsInvMassEvent.h"
 
 
-//---------------------------------------------------------------
-//  Constructor
-// 
-//  Objects of 'TControlPlots' created by this constructor
-//  can create control plots via the 'MakeControlPlots...()'
-//  methods from several TData objects. The output is in
-//  .ps or both .ps and .root format.
-//  
-//  Parameters:
-//  data           TData objects to create controlplots from
-//  par            Parameters
-//  outputFormat   Specify what output format to use:
-//                 0  .ps and .root (default)
-//                 1  .ps
-//---------------------------------------------------------------
+//!  \brief Constructor
+//! 
+//!  \param configfile  Path to config file
+//!  \param data        TData objects to create controlplots from
+//!  \param par         Parameters
+// -------------------------------------------------------------
 TControlPlots::TControlPlots(const std::string& configfile, const std::vector<TData*> *data, TParameters *par)
-  : mData(data), mPar(par), mOutFile(0),makeControlPlotsTowers(0),makeControlPlotsGammaJet(0),
-    makeControlPlotsGammaJet2(0),makeControlPlotsDiJet(0),makeControlPlotsTop(0),makeControlPlotsParScan(0)
+  : mData(data), mPar(par), mOutFile(0)
 { 
   mPtRatioName[0] = "p^{jet}_{T}/ E_{T}^{#gamma}";
   mPtRatioName[1] = "p_{T}^{cor. jet}/E_{T}^{#gamma}";
@@ -80,14 +71,18 @@ TControlPlots::TControlPlots(const std::string& configfile, const std::vector<TD
 	  mPlottedQuant.insert(*it);
 	}
     }  				 
-  makeControlPlotsGammaJet2 = config.read<bool>("create more gamma jet plots",false);
-  makeControlPlotsDiJet     = config.read<bool>("create dijet plots"         ,false);
-  makeControlPlotsTop       = config.read<bool>("create top plots"           ,false);
-  makeControlPlotsTowers    = config.read<bool>("create tower plots"         ,false);
-  makeControlPlotsParScan   = config.read<bool>("create parameter scan plots",false);
+  makeControlPlotsBinnedResponse = config.read<bool>("create binned response plots",false);
+  makeControlPlotsChi2           = config.read<bool>("create chi2 plots"           ,false);
+  makeControlPlotsGammaJet2      = config.read<bool>("create more gamma jet plots" ,false);
+  makeControlPlotsDiJet          = config.read<bool>("create dijet plots"          ,false);
+  makeControlPlotsTop            = config.read<bool>("create top plots"            ,false);
+  makeControlPlotsTowers         = config.read<bool>("create tower plots"          ,false);
+  makeControlPlotsParScan        = config.read<bool>("create parameter scan plots" ,false);
 }
 
 
+
+// -------------------------------------------------------------
 TControlPlots::~TControlPlots()
 {
   if( mOutFile !=0 )
@@ -97,12 +92,28 @@ TControlPlots::~TControlPlots()
     }
 }
 
+
+
+//!  \brief Create all plots as specified in the config file
+// -------------------------------------------------------------
 void TControlPlots::MakePlots()
 {
   cout << endl << "Writing control plots in .ps " << flush;
   if( mOutputROOT ) cout << "and .root " << flush;
   cout << "format:" << endl;
-  
+
+  if( makeControlPlotsBinnedResponse )
+    {
+      cout << "Creating binned control plots... " << flush;
+      MakeControlPlotsBinnedResponse();
+      cout << "ok" << endl;
+    }
+  if( makeControlPlotsChi2 )
+    {
+      cout << "Creating chi2 control plots... " << flush;
+      MakeControlPlotsChi2();
+      cout << "ok" << endl;
+    }
   if( makeControlPlotsTowers )
     {
       cout << "Creating tower control plots... " << flush;
@@ -148,6 +159,453 @@ void TControlPlots::MakePlots()
       cout << "ok" << endl;
     }
 }
+
+
+
+//!  \brief Response distribution in bins of truth Et and eta
+//!
+//!  Creates distributions of the response
+//!  \f$ E^{jet}_{T} / E^{true}_{T} \f$
+//!  in bins of true Et \f$ E^{true}_{T} \f$ and measured
+//!  pseudorapidity \f$ \eta \f$, where \f$ E^{jet}_{T} \f$
+//!  is the corrected jet Et.
+//!
+//!  There are two sets of distributions:
+//!   - Correction from global fit
+//!   - Comparison of correction from global fit
+//!     and JetMET L2L3 correction
+//!
+//!  The plots are written to the file
+//!  "controlplotsBinnedResponse.ps" and (if enabled)
+//!  to the directory "BinnedResponse" in the file
+//!  "controlplots.root".
+// -------------------------------------------------------------
+void TControlPlots::MakeControlPlotsBinnedResponse()
+{
+  std::vector<TObject*>                objToBeWritten;
+  std::vector<TData*>::const_iterator  data_it;
+
+
+  // Create a Et and eta binning
+  // Et = x, eta = y
+  std::vector<double> binEdgesEt;
+  binEdgesEt.push_back( 30.);
+  binEdgesEt.push_back( 40.);
+  binEdgesEt.push_back( 50.);
+  binEdgesEt.push_back( 60.);
+  binEdgesEt.push_back( 70.);
+  binEdgesEt.push_back( 80.);
+  binEdgesEt.push_back( 90.);
+  binEdgesEt.push_back(100.);
+  binEdgesEt.push_back(120.);
+  binEdgesEt.push_back(150.);
+  binEdgesEt.push_back(200.);
+  binEdgesEt.push_back(300.);
+  binEdgesEt.push_back(500.);
+
+  std::vector<double> binEdgesEta;
+  binEdgesEta.push_back(0.0);
+  binEdgesEta.push_back(1.4);
+  binEdgesEta.push_back(3.0);
+
+  Binning bins(binEdgesEt,binEdgesEta);
+
+
+  // Create histograms of response in
+  // Et and eta bins
+  std::vector<TH1F*> hResp;
+  std::vector<TH1F*> hRespJetMet;
+  for(int i = 0; i < bins.NBins(); i++)
+    {
+      char name[50];
+      sprintf(name,"hResponse_Et%i_eta%i",bins.IX(i),bins.IY(i));
+      TH1F * h = new TH1F(name,"",51,0,2);
+      h->SetLineColor(2);
+      h->GetXaxis()->SetTitleSize(0.05);
+      h->GetXaxis()->SetTitleOffset(1.2);
+      h->GetYaxis()->SetTitleSize(0.05);
+      h->GetYaxis()->SetTitleOffset(1.6);
+      hResp.push_back(h);
+      objToBeWritten.push_back(h);
+
+      sprintf(name,"hResponseJetMET_Et%i_eta%i",bins.IX(i),bins.IY(i));
+      h = static_cast<TH1F*>(h->Clone(name));
+      h->SetLineColor(1);
+      hRespJetMet.push_back(h);
+      objToBeWritten.push_back(h);
+    }
+
+
+  // Loop over data and fill response into
+  // the corresponding histogram
+  for(  data_it = mData->begin();  data_it != mData->end();  data_it++ )
+    {
+      double weight = (*data_it)->GetWeight();
+      double etmeas = (*data_it)->GetMess()->pt;
+      double etcorr = (*data_it)->GetParametrizedMess();
+      double eta    = (*data_it)->GetMess()->eta;
+      double ettrue = (*data_it)->GetTruth();
+
+      // Discard events flagged bad
+      JetTruthEvent *jte = dynamic_cast<JetTruthEvent*>(*data_it);
+      if( jte )
+	{
+	  if( jte->FlaggedBad() ) continue;
+	}
+
+      int bin = bins.Bin(ettrue,fabs(eta));
+      if( 0 <= bin && bin < bins.NBins() )
+	{
+	  hResp.at(bin)->Fill(etcorr/ettrue,weight);
+
+	  // For comparison reasons, correct with JetMET
+	  // correction; this works only for data class > 0
+	  TJet *jet = dynamic_cast<TJet*>((*data_it)->GetMess());
+	  if( jet )
+	    {
+	      double cjetmet = jet->L2L3cor;
+	      hRespJetMet.at(bin)->Fill(cjetmet*etmeas/ettrue,weight);
+	    }
+	}
+    }
+
+
+  // Draw histograms into ps file, put 
+  // at the most 6 histograms per page
+  TPostScript * const ps = new TPostScript("controlplotsBinnedResponse.ps",112);
+  ps->Range(25,1);
+
+  double cw  = 300;
+  double mw  = 70;
+
+  double w   = 3*cw + mw;
+  double h   = 2*cw + mw;
+  
+  double crw = cw/w;
+  double mrw = mw/w;
+  double crh = cw/h;
+  double mrh = mw/h;
+
+  TCanvas     * const c1 = new TCanvas("c1","",(int)w,(int)h);
+
+  // Pads for the histograms
+  std::vector<TPad*> cPads;
+  cPads.push_back(new TPad("cPad0","",mrw,mrh+crh,mrw+crw,1.));
+  cPads.push_back(new TPad("cPad1","",mrw+crw,mrh+crh,mrw+2*crw,1.));
+  cPads.push_back(new TPad("cPad2","",mrw+2*crw,mrh+crh,1.,1.));
+  cPads.push_back(new TPad("cPad3","",mrw,mrh,mrw+crw,mrh+crh));
+  cPads.push_back(new TPad("cPad4","",mrw+crw,mrh,mrw+2*crw,mrh+crh));
+  cPads.push_back(new TPad("cPad5","",mrw+2*crw,mrh,1.,mrh+crh));
+  for(unsigned int i = 0; i < cPads.size(); i++)
+    {
+      cPads.at(i)->SetFillStyle(1001);
+      cPads.at(i)->SetFrameFillColor(10);
+      cPads.at(i)->SetFrameBorderMode(0);
+      cPads.at(i)->SetTopMargin(0.04);
+      cPads.at(i)->SetBottomMargin(0.1);
+      cPads.at(i)->SetLeftMargin(0.1);
+      cPads.at(i)->SetRightMargin(0.04);
+
+      c1->cd();
+      cPads.at(i)->Draw();
+    }
+
+  // Pads for margins holding titles
+  TPad * mbPad = new TPad("mbPad","",0.,0.,1.,mrh);
+  mbPad->SetFillStyle(1001);
+  mbPad->SetFrameFillColor(10);
+  mbPad->SetFrameBorderMode(0);
+  TPaveText * bLabel = new TPaveText(0.8,0.5,0.95,1.,"NDC");
+  bLabel->SetFillColor(0);
+  bLabel->SetTextFont(42);
+  bLabel->SetTextSize(0.7);
+  bLabel->SetBorderSize(0);
+  bLabel->AddText("E^{jet}_{T} / E^{true}_{T}");
+  c1->cd();
+  mbPad->Draw();
+  mbPad->cd();
+  bLabel->Draw();
+
+  //   TPad * mlPad = new TPad("mlPad","",0.,mrh,mrw,1.);
+  //   mlPad->SetFillStyle(1001);
+  //   mlPad->SetFrameFillColor(10);
+  //   mlPad->SetFrameBorderMode(0);
+  //   TPaveText * lLabel = new TPaveText(0.1,0.5,0.95,1.,"NDC");
+  //   lLabel->SetFillColor(0);
+  //   lLabel->SetTextFont(42);
+  //   lLabel->SetTextSize(0.7);
+  //   lLabel->SetBorderSize(0);
+  //   lLabel->SetTextAngle(90);
+  //   lLabel->AddText("dN / d( E^{jet}_{T} / E^{true}_{T} )");
+  //   c1->cd();
+  //   mlPad->Draw();
+  //   mlPad->cd();
+  //   lLabel->Draw();
+
+  // For some reason, this prevents the first ps-page
+  // from looking weird...
+  c1->Draw();
+  ps->NewPage();
+  for(unsigned int i = 0; i < hResp.size(); i++)
+    {
+      // Plot histogram
+      int c = ( i % 6 );
+      cPads.at(c)->cd();
+      TH1F *h = hResp.at(i);
+      h->GetYaxis()->SetRangeUser(0,1.6*(h->GetMaximum()));
+      h->Draw();
+
+      // Fit a gaussian in central part
+      h->Fit("gaus","0QIL","",h->GetMean() - 1.5*(h->GetRMS()),h->GetMean() + 1.5*(h->GetRMS()));
+      TF1 *fit = h->GetFunction("gaus");
+      fit->Draw("same");
+
+      // Draw fit parameters
+      char label[100];
+      TPaveText * fitstat = new TPaveText(0.13,0.66,0.93,0.93,"NDC");
+      fitstat->SetFillColor(0);
+      fitstat->SetTextFont(42);
+      fitstat->SetTextAlign(12);
+      sprintf(label,"%.0f < E^{true}_{T} < %.0f GeV, %.1f < #eta < %.1f",
+	      bins.XLow(i),bins.XUp(i),bins.YLow(i),bins.YUp(i));
+      fitstat->AddText(label);
+      sprintf(label,"#mu = %.3f #pm %.3f",fit->GetParameter(1),fit->GetParError(1));
+      fitstat->AddText(label);
+      sprintf(label,"#sigma = %.3f #pm %.3f",fit->GetParameter(2),fit->GetParError(2));
+      fitstat->AddText(label);
+      fitstat->Draw("same");
+
+      if( c == 5 )
+	{
+	  c1->Draw();
+	  ps->NewPage();
+	}
+    }
+
+  // Now the comparison plots to JetMET 
+  TLegend *legComp = new TLegend(0.13,0.66,0.6,0.84);
+  legComp->SetBorderSize(0);
+  legComp->SetFillColor(0);
+  legComp->SetTextFont(42);
+  legComp->AddEntry(hResp.at(0),"Global fit","L");
+  legComp->AddEntry(hRespJetMet.at(0),"JetMET L2L3","L");
+  for(unsigned int i = 0; i < hResp.size(); i++)
+    {
+      int c = ( i % 6 );
+      c1->cd();
+      cPads.at(c)->cd();
+
+      // Set maximum from histo with larger bin content
+      double max = (hResp.at(i)->GetMaximum())/1.6; // Compensate for already setting this maximum above!
+      if( hRespJetMet.at(i)->GetMaximum() > max ) max = hRespJetMet.at(i)->GetMaximum();
+      hResp.at(i)->GetYaxis()->SetRangeUser(0,1.6*max);
+      hResp.at(i)->Draw();
+      hRespJetMet.at(i)->Draw("same");
+
+      // Draw a vertical line at 1
+      TLine *line = new TLine(1.,0.,1.,max);
+      line->SetLineWidth(1);
+      line->SetLineColor(4);
+      line->SetLineStyle(2);
+      line->Draw("same");
+
+      // Label bin
+      char label[100];
+      TPaveText * fitstat = new TPaveText(0.13,0.84,0.93,0.93,"NDC");
+      fitstat->SetFillColor(0);
+      fitstat->SetTextFont(42);
+      fitstat->SetTextAlign(12);
+      sprintf(label,"%.0f < E^{true}_{T} < %.0f GeV, %.1f < #eta < %.1f",
+	      bins.XLow(i),bins.XUp(i),bins.YLow(i),bins.YUp(i));
+      fitstat->AddText(label);
+      fitstat->Draw("same");
+
+      if( c == 5 )
+	{
+	  legComp->Draw("same");
+	  c1->Draw();
+	  ps->NewPage();
+	}
+    }
+
+  if( mOutputROOT ) WriteToRootFile(objToBeWritten,"BinnedResponse");
+
+
+  // Clean up
+  ps->Close();
+  for(std::vector<TH1F*>::iterator it = hResp.begin();
+      it != hResp.end(); it++)
+    {
+      delete *it;
+    }
+  hResp.clear();
+  for(std::vector<TH1F*>::iterator it = hRespJetMet.begin();
+      it != hRespJetMet.end(); it++)
+    {
+      delete *it;
+    }
+  hRespJetMet.clear();
+  objToBeWritten.clear();
+  delete c1;
+  delete ps;
+}
+
+
+
+//!  \brief Chi2 distribution
+//!
+//!  Creates the following distributions of
+//!  \f$ \chi^{2}_{i} \f$ from the sum
+//!  \f[
+//!   \chi^{2} = \sum_{i} w_{i}\chi^{2}_{i}
+//!  \f]
+//!  where \f$ w_{i} \f$ is the event weight
+//!  factor:
+//!   - The residual scaling scheme from the last 
+//!     iteration is used.
+//!   - All three residual scaling schemes are
+//!     compared:
+//!      - Distributions of scaled residuals
+//!      - Scaled residuals vs residuals
+//!
+//!  The plots are written to the file
+//!  "controlplotsChi2.ps" and (if enabled)
+//!  to the directory "Chi2" in the file
+//!  "controlplots.root".
+// -------------------------------------------------------------
+void TControlPlots::MakeControlPlotsChi2()
+{
+  std::vector<TObject*>                objToBeWritten;
+  std::vector<TData*>::const_iterator  data_it;
+
+  // Distribution of chi2 summands with last scaling
+  // configuration scheme
+  TH1F *h_chi2_last = new TH1F("h_chi2last",";#chi^{2}_{i};dN / d#chi^{2}_{i}",50,0,20);
+  h_chi2_last->SetLineColor(1);
+  h_chi2_last->SetLineStyle(1);
+  objToBeWritten.push_back(h_chi2_last);
+
+  // Distribution of chi2 summands (normalized residuals)
+  TH1F *h_chi2 = new TH1F("h_chi2","Scaled residuals z^{2} = 1/w #chi^{2};f(z^{2});dN / df(z^{2})",50,0,20);
+  h_chi2->SetLineColor(1);
+  h_chi2->SetLineStyle(1);
+  objToBeWritten.push_back(h_chi2);
+
+  // Distribution of Cauchy scaled normalized residuals
+  TH1F *h_cauchy = static_cast<TH1F*>(h_chi2->Clone("h_cauchy"));
+  h_cauchy->SetLineColor(2);
+  h_cauchy->SetLineStyle(2);
+  objToBeWritten.push_back(h_cauchy);
+
+  // Distribution of Huber scaled normalized residuals
+  TH1F *h_huber = static_cast<TH1F*>(h_cauchy->Clone("h_huber"));
+  h_huber->SetLineColor(4);
+  h_huber->SetLineStyle(1);
+  objToBeWritten.push_back(h_huber);
+
+  // Cauchy-scaled versus no scaling
+  TH2F *h_none_cauchy = new TH2F("h_none_cauchy","Residuals z^{2};z^{2};f(z^{2})",50,0,10,50,0,10);
+  h_none_cauchy->SetLineColor(2);
+  objToBeWritten.push_back(h_none_cauchy);
+
+  // Huber-scaled versus no scaling
+  TH2F *h_none_huber = static_cast<TH2F*>(h_none_cauchy->Clone("h_none_huber"));
+  h_none_huber->SetLineColor(4);
+  objToBeWritten.push_back(h_none_huber);
+
+
+  // Loop over data and fill histograms
+  for(  data_it = mData->begin();  data_it != mData->end();  data_it++ )
+    {
+      h_chi2_last->Fill((*data_it)->chi2_plots());
+
+      double weight = (*data_it)->GetWeight();
+
+      TData::ScaleResidual = &TData::ScaleNone;
+      double res = ( (*data_it)->chi2() / weight );
+      TData::ScaleResidual = &TData::ScaleCauchy;
+      double res_cauchy = ( (*data_it)->chi2() / weight );
+      TData::ScaleResidual = &TData::ScaleHuber;
+      double res_huber = ( (*data_it)->chi2() / weight );
+
+      h_chi2->Fill(res);
+      h_cauchy->Fill(res_cauchy);
+      h_huber->Fill(res_huber);
+      h_none_cauchy->Fill(res,res_cauchy);
+      h_none_huber->Fill(res,res_huber);
+    } // End loop over data
+
+
+  // Draw histograms
+  TPostScript * const ps = new TPostScript("controlplotsChi2.ps",111);
+  TCanvas     * const c1 = new TCanvas("c1","",500,500);
+  c1->cd();
+
+  h_chi2_last->Draw();
+  c1->SetLogy(1);
+  c1->Draw();
+  ps->NewPage();
+
+  h_cauchy->Draw();
+  h_huber->Draw("same");
+  h_chi2->Draw("same");
+  c1->SetLogy(1);
+
+  TLegend *l_res = new TLegend(0.35,0.68,0.7,0.88);
+  l_res->SetFillColor(0);
+  l_res->SetBorderSize(0);
+  l_res->SetTextFont(42);
+  l_res->SetHeader("Scaling function f");
+  l_res->AddEntry(h_chi2,"None","L");
+  l_res->AddEntry(h_huber,"Huber","L");
+  l_res->AddEntry(h_cauchy,"Cauchy","L");
+  l_res->Draw("same");
+
+  c1->Draw();
+  ps->NewPage();
+
+
+  h_none_cauchy->Draw("box");
+  h_none_huber->Draw("boxsame");
+  c1->SetLogy(0);
+
+  TLine *line1 = new TLine(0,0,7,7);
+  line1->SetLineStyle(2);
+  line1->SetLineColor(1);
+  line1->SetLineWidth(1);
+  line1->Draw("same");
+
+  TLegend *l_res2 = new TLegend(0.35,0.68,0.7,0.88);
+  l_res2->SetFillColor(0);
+  l_res2->SetBorderSize(0);
+  l_res2->SetTextFont(42);
+  l_res2->SetHeader("Scaling function f");
+  l_res2->AddEntry(line1,"None","L");
+  l_res2->AddEntry(h_none_huber,"Huber","L");
+  l_res2->AddEntry(h_none_cauchy,"Cauchy","L");
+  l_res2->Draw("same");
+
+  c1->Draw();
+
+  if( mOutputROOT ) WriteToRootFile(objToBeWritten, "Chi2");
+  
+  ps->Close();
+
+
+  // Clean up
+  delete l_res;
+  delete line1;
+  delete l_res2;
+  delete c1;
+  delete ps;
+  for(std::vector<TObject*>::iterator it = objToBeWritten.begin();
+      it != objToBeWritten.end(); it++)
+    {
+      delete *it;
+    }
+  objToBeWritten.clear();
+}
+
 
 
 //---------------------------------------------------------------
@@ -842,107 +1300,12 @@ void TControlPlots::MakeControlPlotsTowers()
   ps->NewPage();
   objToBeWritten.push_back(constants);
 
-
-  // Distribution of chi2 summands (normalized residuals)
-  TH1F *h_chi2 = new TH1F("h_chi2","Scaled residuals z^{2} = 1/w #chi^{2};f(z^{2});dN / df(z^{2})",50,0,200);
-  h_chi2->SetLineColor(1);
-  h_chi2->SetLineStyle(3);
-  objToBeWritten.push_back(h_chi2);
-
-  // Distribution of Cauchy scaled normalized residuals
-  TH1F *h_cauchy = static_cast<TH1F*>(h_chi2->Clone("h_cauchy"));
-  h_cauchy->SetLineColor(2);
-  h_cauchy->SetLineStyle(2);
-  objToBeWritten.push_back(h_cauchy);
-
-  // Distribution of Huber scaled normalized residuals
-  TH1F *h_huber = static_cast<TH1F*>(h_chi2->Clone("h_huber"));
-  h_huber->SetLineColor(4);
-  h_huber->SetLineStyle(1);
-  objToBeWritten.push_back(h_huber);
-
-  // Cauchy-scaled versus no scaling
-  TH2F *h_none_cauchy = new TH2F("h_none_cauchy","Residuals z^{2};z^{2};f(z^{2})",50,0,10,50,0,10);
-  h_none_cauchy->SetLineColor(2);
-  objToBeWritten.push_back(h_none_cauchy);
-
-  // Huber-scaled versus no scaling
-  TH2F *h_none_huber = static_cast<TH2F*>(h_none_cauchy->Clone("h_none_huber"));
-  h_none_huber->SetLineColor(4);
-  objToBeWritten.push_back(h_none_huber);
-
-  for(  std::vector<TData*>::const_iterator it = mData->begin();  it < mData->end();  ++it )
-    {
-      double weight = (*it)->GetWeight();
-
-      TData::ScaleResidual = &TData::ScaleNone;
-      double res = ( (*it)->chi2() ) / weight;
-      TData::ScaleResidual = &TData::ScaleCauchy;
-      double res_cauchy = ( (*it)->chi2() ) / weight;
-      TData::ScaleResidual = &TData::ScaleHuber;
-      double res_huber = ( (*it)->chi2() ) / weight;
-
-      h_chi2->Fill(res);
-      h_cauchy->Fill(res_cauchy);
-      h_huber->Fill(res_huber);
-      h_none_cauchy->Fill(res,res_cauchy);
-      h_none_huber->Fill(res,res_huber);
-    }
-
-  h_cauchy->Draw();
-  h_huber->Draw("same");
-  h_chi2->Draw("same");
-  c1->SetLogy(1);
-
-  TLegend *l_res = new TLegend(0.35,0.68,0.7,0.88);
-  l_res->SetFillColor(0);
-  l_res->SetBorderSize(0);
-  l_res->SetHeader("Scaling function f");
-  l_res->AddEntry(h_chi2,"None","L");
-  l_res->AddEntry(h_huber,"Huber","L");
-  l_res->AddEntry(h_cauchy,"Cauchy","L");
-  l_res->Draw("same");
-
-  c1->Draw();
-  ps->NewPage();
-
-
-  h_none_cauchy->Draw("box");
-  h_none_huber->Draw("boxsame");
-  c1->SetLogy(0);
-
-  TLine *line1 = new TLine(0,0,7,7);
-  line1->SetLineStyle(2);
-  line1->SetLineColor(1);
-  line1->SetLineWidth(1);
-  line1->Draw("same");
-
-  TLegend *l_res2 = new TLegend(0.35,0.68,0.7,0.88);
-  l_res2->SetFillColor(0);
-  l_res2->SetBorderSize(0);
-  l_res2->SetHeader("Scaling function f");
-  l_res2->AddEntry(line1,"None","L");
-  l_res2->AddEntry(h_none_huber,"Huber","L");
-  l_res2->AddEntry(h_none_cauchy,"Cauchy","L");
-  l_res2->Draw("same");
-
-  c1->Draw();
-
-
   if( mOutputROOT ) WriteToRootFile(objToBeWritten, "Towers");
     
   ps->Close();
 
-  delete h_chi2;
-  delete h_cauchy;
-  delete h_huber;
-  delete l_res;
-  delete h_none_cauchy;
-  delete h_none_huber;
-  delete line1;
-  delete l_res2;
-  delete constants;
   delete latex;
+  delete constants;
   delete testmess;
   delete c1;
   delete ps;
@@ -1563,7 +1926,7 @@ void TControlPlots::MakeControlPlotsGammaJet(const std::set<std::string>& plotte
 
       if( plottedQuant.count("true jet pt") > 0 )
 	{
-	  hpt[0]->Fill(jg->GetTruth(),etjet/ jg->GetTruth(),jg->GetWeight());
+	  hpt[0]->Fill(jg->GetTruth(),etjet/jg->GetTruth(),jg->GetWeight());
 	  hpt[1]->Fill(jg->GetTruth(),etjetcor/jg->GetTruth(),jg->GetWeight());
 	  hpt[2]->Fill(jg->GetTruth(),etjet/etjetcor,jg->GetWeight());
 	  if(ad && ad->GetTrackuse()) 
@@ -5330,7 +5693,7 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
 	  htemp->SetBinContent(j,hist->GetBinContent(hist->GetBin(i,j)));
 	  htemp->SetBinError(j,hist->GetBinError(i,j));
 	}  
-      double mean = htemp->GetMean();
+      double mean = htemp->GetMean(); 
       double meanerror = htemp->GetMeanError();
       double width = htemp->GetRMS();
       if(width < 0.1) width = 0.1;
@@ -5571,7 +5934,8 @@ void TControlPlots::SetGStyle() const
   gStyle->SetHistLineWidth(1);
 
   // For the statistics box:
-  gStyle->SetOptStat("neMR");
+  gStyle->SetOptStat(0);
+  //  gStyle->SetOptStat("neMR");
   gStyle->SetStatColor(kWhite);
   gStyle->SetStatFont(42);
   gStyle->SetStatFontSize(0.03);
@@ -5628,4 +5992,70 @@ void TControlPlots::SetGStyle() const
   gStyle->SetPadTickY(1);
 }
 
+
+
+// -------------------------------------------------------------
+TControlPlots::Binning::Binning(const std::vector<double>& binEdgesX, const std::vector<double>& binEdgesY)
+{
+  assert( binEdgesX.size() > 1 );
+  assert( binEdgesY.size() > 1 );
+
+  for(unsigned int i = 0; i < binEdgesX.size(); i++)
+    {
+      if( i > 0 ) assert( binEdgesX.at(i) > mEdgesX.at(i-1) );
+      mEdgesX.push_back(binEdgesX.at(i));
+    }
+  for(unsigned int i = 0; i < binEdgesY.size(); i++)
+    {
+      if( i > 0 ) assert( binEdgesY.at(i) > mEdgesY.at(i-1) );
+      mEdgesY.push_back(binEdgesY.at(i));
+    }
+}
+
+
+
+// -------------------------------------------------------------
+int TControlPlots::Binning::IX(double x) const
+{
+  int ix = -1;                     // Underflow
+  if( x > mEdgesX.at(NBinsX()) )   // Overflow
+    {
+      ix = NBinsX();
+    }
+  else if( x > mEdgesX.at(0) )
+    {
+      ix = 0;
+      while( x > mEdgesX.at(ix+1) ) ix++;
+    }
+  return ix;
+}
+
+
+
+// -------------------------------------------------------------
+int TControlPlots::Binning::IY(double y) const
+{
+  int iy = -1;                     // Underflow
+  if( y > mEdgesY.at(NBinsY()) )   // Overflow
+    {
+      iy = NBinsY();
+    }
+  else if( y > mEdgesY.at(0) )
+    {
+      iy = 0;
+      while( y > mEdgesY.at(iy+1) ) iy++;
+    }
+  return iy;
+}
+
+
+
+// -------------------------------------------------------------
+void TControlPlots::Binning::Print() const
+{
+  for(int i = 0; i < NBins(); i++)
+    {
+      std::cout << i << ":  " << IX(i) << " (" << XLow(i) << ", " << XUp(i) << "),  " << IY(i) << " (" << YLow(i) << ", " << YUp(i) << ")" << std::endl;
+    }
+}
 

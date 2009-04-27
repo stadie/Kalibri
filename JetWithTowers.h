@@ -12,16 +12,16 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTowers.h,v 1.11 2009/03/05 08:50:24 stadie Exp $
+//!    $Id: JetWithTowers.h,v 1.12 2009/04/17 18:04:26 mschrode Exp $
 // ----------------------------------------------------------------   
 class JetWithTowers : public Jet
 {
  public:
   JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
-		double eta,double phi, Flavor flavor,const Function& f, 
+		double eta,double phi, Flavor flavor, const Function& f, 
 		double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 		const Function& gf, double Etmin = 0); 
- JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
+  JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	       double eta,double phi, Flavor flavor,double genPt, double ZSPcor,
 	       double JPTcor, double L2cor, double L3cor,double L2L3cor, 
 	       double L2L3JPTcor, const Function& f,
@@ -47,6 +47,10 @@ class JetWithTowers : public Jet
     Tower(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	  double eta,double phi, double alpha, const Function& func,
 	  double (*errfunc)(const double *x, const TMeasurement *xorig, double err));
+    Tower(double Et, double EmEt, double HadEt ,double OutEt, double E,
+	  double EmEttrue, double HadEttrue, double OutEttrue,
+	  double eta,double phi, double alpha, const Function& func,
+	  double (*errfunc)(const double *x, const TMeasurement *xorig, double err));
     virtual ~Tower() {}
     double Et()     const {return pt;}
     double EmEt()   const {return EMF;}
@@ -67,8 +71,12 @@ class JetWithTowers : public Jet
     int FirstPar() const {return f.parIndex();}
     double *Par() const {return f.firstPar();}
   private:
-    double alpha;
-    double error; 
+    double alpha;                //!< Projection factor onto jet axis
+    double error;                //!< Error for constant error mode
+    double mEttrue;              //!< True total transverse energy
+    double mEmEttrue;            //!< True Et from the ECAL part of the tower		
+    double mHadEttrue;           //!< True Et from the HCAL part of the towers
+    double mOutEttrue;           //!< True Et from the HO part of the tower
     mutable TMeasurement temp;
     mutable double lastCorHadEt;
     mutable double fraction;

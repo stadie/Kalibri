@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: TwoJetsInvMassEvent.h,v 1.1 2009/03/03 17:40:03 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.h,v 1.2 2009/03/11 07:52:52 snaumann Exp $
 //   
 #ifndef TWOJETSINVMASSEVENT_H
 #define TWOJETSINVMASSEVENT_H
@@ -16,7 +16,7 @@ class TwoJetsInvMassEvent : public TData
 {
 public:
   TwoJetsInvMassEvent(Jet *j1, Jet *j2, double t, double w) 
-    : jet1(j1), jet2(j2),truth(t),weight(w),flagged_bad(false) {}
+    : jet1(j1), jet2(j2),truth(t),weight(w),flagged_bad(false),chi2plots(1000.) {}
   ~TwoJetsInvMassEvent() { delete jet1; delete jet2;}
 
   //interface from TData
@@ -40,8 +40,10 @@ public:
   double correctedMass() const;
   
   double chi2() const;
+  double chi2_plots() const { return chi2plots; }
   double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const { 
-    return chi2_fast_simple(temp_derivative1,temp_derivative2,epsilon);
+    chi2plots = chi2_fast_simple(temp_derivative1,temp_derivative2,epsilon);
+    return chi2plots;
   }
   double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   void UpdateError() {}
@@ -51,6 +53,7 @@ public:
   double truth;
   double weight;
   bool flagged_bad;
+  mutable double chi2plots;   //!< Store chi2 value from last iteration for plots
 };
 
 #endif

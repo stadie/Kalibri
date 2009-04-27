@@ -1,7 +1,7 @@
 //  \brief 
 //  \author Christian Autermann
 //  \date Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
+// $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -30,7 +30,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
+//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
 class TMeasurement
 {
 public:
@@ -48,7 +48,7 @@ public:
   double OutF;   //!< Pt fromt the HO part of the tower(s)		
   double E;      //!< Total energy					
   double eta;    //!< Pseudorapidity eta				
-  double phi;    //!< Azimuthal angle phi                               
+  double phi;    //!< Polar angle phi  
 };
 
 
@@ -59,7 +59,7 @@ public:
 //!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
+//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
 class TTower : public TMeasurement
 { 
 public:
@@ -81,7 +81,7 @@ public:
 //!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
+//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
 class TJet : public TMeasurement
 {
 public:
@@ -122,7 +122,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
+//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
 class TTrack : public TMeasurement
 {
 public:
@@ -182,7 +182,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
+//! $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
 class TData
 {
 public:
@@ -207,6 +207,12 @@ public:
   virtual double chi2() const = 0;
 
 
+  //!  \brief Chi2 value from last iteration
+  //!  \return Chi2 value from last iteration
+  // ------------------------------------------
+  virtual double chi2_plots() const = 0;
+
+
   //!  \brief Get the normalized, squared residual\f$ z^{2} \f$ of this event
   //!         and calculate the first and second derivatives
   //!
@@ -220,7 +226,7 @@ public:
   //!  first and second derivative ('temp_derivative1',
   //!  'temp_derivative2') of the global \f$ \chi^{2} \f$
   //!  function is calculated numerically and returned
-  //! by reference, where
+  //!  by reference, where
   //!  \f[
   //!   \frac{\partial \chi^{2}}{\partial p}
   //!   = \sum \textrm{temp\_derivative1}
@@ -278,7 +284,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.63 2009/04/06 15:16:03 mschrode Exp $
+//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
 class TAbstractData : public TData
 {
 public:
@@ -409,7 +415,7 @@ public:
   virtual const std::vector<TAbstractData*>& GetRef() = 0;
   virtual const std::vector<TAbstractData*>& GetRefTrack() = 0;
   virtual double chi2() const {return 0.;};
-  //virtual double chi2() const = 0;
+  double chi2_plots() const { return chi2(); }
   virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
   double * GetPar(){return _par;};
   unsigned short int GetNumberOfPars() const {return _n_par;};

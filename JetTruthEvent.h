@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.5 2009/02/25 15:08:25 stadie Exp $
+//    $Id: JetTruthEvent.h,v 1.6 2009/04/15 18:10:53 mschrode Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -15,7 +15,7 @@
 class JetTruthEvent : public TData
 {
 public:
-  JetTruthEvent(Jet *j, double t, double w) : jet(j),truth(t),weight(w),flagged_bad(false) {}
+  JetTruthEvent(Jet *j, double t, double w) : jet(j),truth(t),weight(w),chi2plots(1000.),flagged_bad(false) {}
   ~JetTruthEvent();
 
   //interface from TData
@@ -28,8 +28,10 @@ public:
   double GetWeight() const { return weight;}
   
   double chi2() const;
+  double chi2_plots() const { return chi2plots; }
   double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const { 
-    return chi2_log_fast_invert(temp_derivative1,temp_derivative2,epsilon);
+    chi2plots = chi2_fast_invert(temp_derivative1,temp_derivative2,epsilon);
+    return chi2plots;
   }
   double chi2_fast_blobel(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_fast_simple_scaled(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
@@ -37,12 +39,14 @@ public:
   double chi2_fast_invert(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_log_fast_invert(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   void UpdateError() { }
+  bool FlaggedBad() const { return flagged_bad; }  //!< Status from inversion procedure
 
   static void printStats();
  private:
   Jet* jet;
   double truth;
   double weight;
+  mutable double chi2plots;   //!< Store chi2 value from last iteration for plots
   mutable bool flagged_bad;
   static int nflagged;
 };

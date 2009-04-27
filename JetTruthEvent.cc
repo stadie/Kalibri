@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.14 2009/02/25 15:08:25 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.15 2009/04/15 18:10:53 mschrode Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -17,7 +17,7 @@ JetTruthEvent::~JetTruthEvent()
 double JetTruthEvent::chi2() const
 {
   double diff = (jet->correctedEt(jet->Et()) - truth)/jet->Error();
-  return weight * diff*diff;
+  return weight * TData::ScaleResidual(diff*diff);
 }
 
 double JetTruthEvent::chi2_fast_blobel(double * temp_derivative1, 
