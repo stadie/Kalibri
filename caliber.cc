@@ -1,15 +1,15 @@
-//
-// Original Author:  Christian Autermann
-//         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: caliber.cc,v 1.80 2009/02/20 18:01:45 stadie Exp $
-//
-//
-// for profiling:
-//  - to prevent gprof from missing the threads: 
-//      wget http://sam.zoy.org/writings/programming/gprof-helper.c
-//      gcc -shared -fPIC gprof-helper.c -o gprof-helper.so -lpthread -ldl 
-//      LD_PRELOAD=./gprof-helper.so ./junk
-//
+//!
+//!  \author  Christian Autermann
+//!  \date    Wed Jul 18 13:54:50 CEST 2007
+//!  $Id: caliber.cc,v 1.81 2009/02/25 15:04:31 stadie Exp $
+//!
+//!
+//!  \note  For profiling:
+//!         To prevent gprof from missing the threads: 
+//!         wget http://sam.zoy.org/writings/programming/gprof-helper.c
+//!         gcc -shared -fPIC gprof-helper.c -o gprof-helper.so -lpthread -ldl 
+//!         LD_PRELOAD=./gprof-helper.so ./junk
+//!
 #include "caliber.h"
 
 
@@ -43,7 +43,7 @@ using namespace std;
 typedef std::vector<TData*>::iterator DataIter;
 typedef std::vector<TData*>::const_iterator DataConstIter;
 
-//Outlier Rejection
+//!  \brief Outlier Rejection
 struct OutlierRejection {
   OutlierRejection(double cut):_cut(cut){};
   bool operator()(TData *d){
@@ -84,10 +84,10 @@ private:
     calc_chi2_on(ComputeThread *parent) : parent(parent) {}
     void operator()()
     {
-//       {
-// 	boost::mutex::scoped_lock lock(io_mutex);
-// 	std::cout << "start Thread for " << parent << std::endl; 
-//       }   
+      //       {
+      // 	boost::mutex::scoped_lock lock(io_mutex);
+      // 	std::cout << "start Thread for " << parent << std::endl; 
+      //       }   
       if(parent->data_changed) {
 	for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it)
 	  (*it)->ChangeParAddress(parent->parorig,parent->mypar); 

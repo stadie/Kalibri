@@ -1,12 +1,13 @@
-//
-//    Possible base class for all event processors
-//    
-//    Right now we only have the spectrum correctors.
-//    Thus they are implemented directly in this class
-//
-//    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
-//   
+//!
+//!    \brief Possible base class for all event processors
+//!    
+//!    Right now we only have the spectrum correctors.
+//!    Thus they are implemented directly in this class
+//!
+//!    \author Hartmut Stadie
+//!    \date 2008/12/14
+//!    $Id: EventProcessor.h,v 1.1 2008/12/14 13:38:57 stadie Exp $
+//!
 #ifndef EVENTPROCESSOR_H
 #define EVENTPROCESSOR_H
 

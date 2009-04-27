@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.45 2009/02/27 13:52:30 stadie Exp $
+// $Id: Parameters.h,v 1.46 2009/03/04 17:41:52 thomsen Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -132,10 +132,61 @@ public :
     return 0;
   }
 
+
+
+  //!  \brief Parameters from V. Chetluru's fit to L2L3 corrected jets
+  //!
+  //!  Use results from V. Chetluru's talk:
+  //!  <A HREF="http://indico.cern.ch/getFile.py/access?contribId=1&resId=1&materialId=slides&confId=52598">
+  //!  Jet energy resolution studies
+  //!  <\A>.
+  //!
+  //!  The absolute resolution is given by
+  //!  \f[
+  //!   \sigma^{2} = a^{2} + b^{2}p_{T} + c^{2}p^{2}_{T}
+  //!  \f]
+  //!  <TABLE>
+  //!   <TR>
+  //!    <TD>  <\TD>
+  //!    <TD> a <\TD>
+  //!    <TD> b <\TD>
+  //!    <TD> c <\TD>
+  //!   <\TR>
+  //!   <TR>
+  //!    <TD> \f$ 0 < \eta < 0.8 \f$ <\TD>
+  //!    <TD> 4.44 <\TD>
+  //!    <TD> 1.11 <\TD>
+  //!    <TD> 0.03 <\TD>
+  //!   <\TR>
+  //!   <TR>
+  //!    <TD> \f$ 0.8 < \eta < 1.5 \f$ <\TD>
+  //!    <TD> 4.35 <\TD>
+  //!    <TD> 1.17 <\TD>
+  //!    <TD> 0.04 <\TD>
+  //!   <\TR>
+  //!   <TR>
+  //!    <TD> \f$ 1.5 < \eta < 2.4 \f$ <\TD>
+  //!    <TD> 4.34 <\TD>
+  //!    <TD> 0.85 <\TD>
+  //!    <TD> 0.03 <\TD>
+  //!   <\TR>
+  //!   <TR>
+  //!    <TD> \f$ 2.4 < \eta < 3.2 \f$ <\TD>
+  //!    <TD> 4.08 <\TD>
+  //!    <TD> 0.45 <\TD>
+  //!    <TD> 0.04 <\TD>
+  //!   <\TR>
+  //!   <TR>
+  //!    <TD> \f$ 3.2 < \eta \f$ <\TD>
+  //!    <TD> 3.90 <\TD>
+  //!    <TD> 0.29 <\TD>
+  //!    <TD> 0.09 <\TD>
+  //!   <\TR>
+  //!  <\TABLE>
+  //!
+  //!  \return The absolute resolution
+  // -----------------------------------------------------
   static double jet_only_jet_error_parametrization_et(const double *x, const TMeasurement *xorig=0, double errorig=0) {
-    //use results from V. Chetluru
-    //http://indico.cern.ch/getFile.py/access?contribId=1&resId=1&materialId=slides&confId=52598
-    // rel. sigma^2 = a^2/pt^2 + b^2/pt + c^2
     const static double a[5] = { 4.44 , 4.35 , 4.34 , 4.08 , 3.90 };
     const static double b[5] = { 1.11 , 1.17 , 0.85 , 0.45 , 0.29 };
     const static double c[5] = { 0.03 , 0.04 , 0.03 , 0.04 , 0.09 };
@@ -192,7 +243,13 @@ public :
   }
   
   static double toy_jet_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) {
-    return 0;
+    double b = 1.3;
+    double c = 0.0;//56;
+    //return sqrt(b*b/x[0] + c*c)*x[0];
+    double var = b*b/x[0] + c*c;
+    //truncate variance accordingly
+    double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
+    return sqrt(truncvar) * x[0];
   }
 
   static double const_error_parametrization(const double *x, const TMeasurement *xorig, double errorig)  {
