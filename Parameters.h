@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.46 2009/03/04 17:41:52 thomsen Exp $
+// $Id: Parameters.h,v 1.47 2009/04/27 13:50:11 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -139,50 +139,51 @@ public :
   //!  Use results from V. Chetluru's talk:
   //!  <A HREF="http://indico.cern.ch/getFile.py/access?contribId=1&resId=1&materialId=slides&confId=52598">
   //!  Jet energy resolution studies
-  //!  <\A>.
+  //!  </A>.
   //!
   //!  The absolute resolution is given by
   //!  \f[
   //!   \sigma^{2} = a^{2} + b^{2}p_{T} + c^{2}p^{2}_{T}
   //!  \f]
+  //!  with the \f$ \eta \f$ dependent parameters
   //!  <TABLE>
   //!   <TR>
-  //!    <TD>  <\TD>
-  //!    <TD> a <\TD>
-  //!    <TD> b <\TD>
-  //!    <TD> c <\TD>
-  //!   <\TR>
+  //!    <TD>  </TD>
+  //!    <TD> a </TD>
+  //!    <TD> b </TD>
+  //!    <TD> c </TD>
+  //!   </TR>
   //!   <TR>
-  //!    <TD> \f$ 0 < \eta < 0.8 \f$ <\TD>
-  //!    <TD> 4.44 <\TD>
-  //!    <TD> 1.11 <\TD>
-  //!    <TD> 0.03 <\TD>
-  //!   <\TR>
+  //!    <TD> \f$ 0 < \eta < 0.8 \f$ </TD>
+  //!    <TD> 4.44 </TD>
+  //!    <TD> 1.11 </TD>
+  //!    <TD> 0.03 </TD>
+  //!   </TR>
   //!   <TR>
-  //!    <TD> \f$ 0.8 < \eta < 1.5 \f$ <\TD>
-  //!    <TD> 4.35 <\TD>
-  //!    <TD> 1.17 <\TD>
-  //!    <TD> 0.04 <\TD>
-  //!   <\TR>
+  //!    <TD> \f$ 0.8 < \eta < 1.5 \f$ </TD>
+  //!    <TD> 4.35 </TD>
+  //!    <TD> 1.17 </TD>
+  //!    <TD> 0.04 </TD>
+  //!   </TR>
   //!   <TR>
-  //!    <TD> \f$ 1.5 < \eta < 2.4 \f$ <\TD>
-  //!    <TD> 4.34 <\TD>
-  //!    <TD> 0.85 <\TD>
-  //!    <TD> 0.03 <\TD>
-  //!   <\TR>
+  //!    <TD> \f$ 1.5 < \eta < 2.4 \f$ </TD>
+  //!    <TD> 4.34 </TD>
+  //!    <TD> 0.85 </TD>
+  //!    <TD> 0.03 </TD>
+  //!   </TR>
   //!   <TR>
-  //!    <TD> \f$ 2.4 < \eta < 3.2 \f$ <\TD>
-  //!    <TD> 4.08 <\TD>
-  //!    <TD> 0.45 <\TD>
-  //!    <TD> 0.04 <\TD>
-  //!   <\TR>
+  //!    <TD> \f$ 2.4 < \eta < 3.2 \f$ </TD>
+  //!    <TD> 4.08 </TD>
+  //!    <TD> 0.45 </TD>
+  //!    <TD> 0.04 </TD>
+  //!   </TR>
   //!   <TR>
-  //!    <TD> \f$ 3.2 < \eta \f$ <\TD>
-  //!    <TD> 3.90 <\TD>
-  //!    <TD> 0.29 <\TD>
-  //!    <TD> 0.09 <\TD>
-  //!   <\TR>
-  //!  <\TABLE>
+  //!    <TD> \f$ 3.2 < \eta \f$ </TD>
+  //!    <TD> 3.90 </TD>
+  //!    <TD> 0.29 </TD>
+  //!    <TD> 0.09 </TD>
+  //!   </TR>
+  //!  </TABLE>
   //!
   //!  \return The absolute resolution
   // -----------------------------------------------------

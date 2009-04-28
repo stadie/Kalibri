@@ -26,7 +26,7 @@ class TParameters;
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id$
+//!  $Id: ControlPlots.h,v 1.22 2009/04/27 13:49:07 mschrode Exp $
 // -------------------------------------------------------------
 class TControlPlots
 {
@@ -145,7 +145,7 @@ public:
       //!
       //!  Finds the index ix of the bin in x direction that contains
       //!  the value x.
-      //!  \param bin Global bin index
+      //!  \param x x value
       //!  \return ix of the bin containing x
       //!          ( ix == -1 for x < XLow(0): Underflow, 
       //!            ix == NBinsX() for x > XUp(NBins()-1): Overflow )
@@ -165,7 +165,7 @@ public:
       //!
       //!  Finds the index iy of the bin in y direction that contains
       //!  the value y.
-      //!  \param bin Global bin index
+      //!  \param y y value
       //!  \return iy of the bin containing y
       //!          ( iy == -1 for y < YLow(0): Underflow, 
       //!            iy == NBinsyY() for y > YUp(NBins()-1): Overflow )
