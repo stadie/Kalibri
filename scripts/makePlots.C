@@ -4,7 +4,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date   Wed Apr  1 18:28:02 CEST 2009
-//!  $Id: makePlots.C,v 1.2 2009/04/27 13:50:56 mschrode Exp $
+//!  $Id: makePlots.C,v 1.3 2009/04/27 14:38:07 mschrode Exp $
 //!
 
 #include <iostream>
@@ -417,7 +417,7 @@ namespace makePlots
 	if( showGauss && showMean ) histsUncorrEta.at(i)->SetTitle("Mean");
 	else histsUncorrEta.at(i)->SetTitle("");
 	histsUncorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
-	histsUncorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
+	histsUncorrEta.at(i)->GetXaxis()->SetTitle("#eta");
 	histsUncorrEta.at(i)->SetMarkerStyle(20);
 
 	histsCorrEta.at(i)->UseCurrentStyle();
@@ -425,7 +425,7 @@ namespace makePlots
 	if( showGauss && showMean ) histsCorrEta.at(i)->SetTitle("Mean");
 	else histsCorrEta.at(i)->SetTitle("");
 	histsCorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
-	histsCorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
+	histsCorrEta.at(i)->GetXaxis()->SetTitle("#eta");
 	histsCorrEta.at(i)->SetMarkerColor(col);
 	histsCorrEta.at(i)->SetMarkerStyle(20);
 	histsCorrEta.at(i)->SetLineColor(col);
@@ -435,7 +435,7 @@ namespace makePlots
 	if( showGauss && showMean ) histsGaussUncorrEta.at(i)->SetTitle("Mean of Gaussian fit");
 	else histsGaussUncorrEta.at(i)->SetTitle("");
 	histsGaussUncorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
-	histsGaussUncorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
+	histsGaussUncorrEta.at(i)->GetXaxis()->SetTitle("#eta");
 	histsGaussUncorrEta.at(i)->SetMarkerStyle(20);
 
 	histsGaussCorrEta.at(i)->UseCurrentStyle();
@@ -443,7 +443,7 @@ namespace makePlots
 	if( showGauss && showMean ) histsGaussCorrEta.at(i)->SetTitle("Mean of Gaussian fit");
 	else histsGaussCorrEta.at(i)->SetTitle("");
 	histsGaussCorrEta.at(i)->GetYaxis()->SetTitle("Response  < E_{T} / E^{gen}_{T} >");
-	histsGaussCorrEta.at(i)->GetXaxis()->SetTitle("E^{gen}_{T}  (GeV)");
+	histsGaussCorrEta.at(i)->GetXaxis()->SetTitle("#eta");
 	histsGaussCorrEta.at(i)->SetMarkerColor(col);
 	histsGaussCorrEta.at(i)->SetMarkerStyle(20);
 	histsGaussCorrEta.at(i)->SetLineColor(col);
