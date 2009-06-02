@@ -12,8 +12,11 @@
 #include "TObject.h"
 #include "TStyle.h"
 
-class TData;
-class TParameters;
+#include "CalibData.h"
+#include "ConfigFile.h"
+#include "Parameters.h"
+
+
 
 
 //!  \brief Create control plots
@@ -26,7 +29,7 @@ class TParameters;
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.22 2009/04/27 13:49:07 mschrode Exp $
+//!  $Id: ControlPlots.h,v 1.23 2009/04/28 06:48:22 mschrode Exp $
 // -------------------------------------------------------------
 class TControlPlots
 {
@@ -42,10 +45,12 @@ public:
   void MakeControlPlotsBinnedResponse();
   void MakeControlPlotsChi2();
   void MakeControlPlotsDiJet();
-  void MakeControlPlotsGammaJet(const std::set<std::string>& plottedQuant);
+  void MakeControlPlotsGammaJet();
   void MakeControlPlotsGammaJetPerJetBin();
   void MakeControlPlotsGammaJetPerTowerBin();
   void MakeControlPlotsGammaJetSigmas();
+  void MakeControlPlotsL2L3MCTruth();
+  void MakeControlPlotsJetTruthEventResponse();
   void MakeControlPlotsParameterScan();
   void MakeControlPlotsTop();
   void MakeControlPlotsTowers();
@@ -57,20 +62,11 @@ public:
 
   const        std::vector<TData*> *mData;      //!< Pointer to data
   TParameters *mPar;                            //!< Pointer to parameter values
+  ConfigFile  *mConfig;                         //!< Pointer to config file
   TFile       *mOutFile;                        //!< Pointer to root output file
   TString      mPtRatioName[3];	                //!< For histo titles etc
   TString      mControlQuantityName[8];         //!< For histo titles etc
   bool         mOutputROOT;                     //!< If true, histograms are written to ROOT file
-  bool         makeControlPlotsBinnedResponse;
-  bool         makeControlPlotsChi2;
-  bool         makeControlPlotsTowers;
-  bool         makeControlPlotsGammaJet;
-  bool         makeControlPlotsGammaJet2;
-  bool         makeControlPlotsDiJet;
-  bool         makeControlPlotsTop;
-  bool         makeControlPlotsParScan;
-
-  std::set<std::string> mPlottedQuant;
 
 
 

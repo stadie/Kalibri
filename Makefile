@@ -59,7 +59,7 @@ CalibData.o: CalibData.cc CalibData.h Parametrization.h Parameters.h
 Parameters.o: Parameters.cc Parameters.h Parametrization.h Function.h ConfigFile.h
 	$(C) $(RCXX) -c Parameters.cc
 
-ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFile.h TwoJetsInvMassEvent.h
+ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFile.h TwoJetsInvMassEvent.h Parameters.h
 	$(C) $(RCXX) -c ControlPlots.cc
 
 EventReader.o: EventReader.h EventReader.cc Parameters.h ConfigFile.h 
