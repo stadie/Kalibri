@@ -66,7 +66,7 @@ class TMeasurement;
 
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.40 2009/02/01 16:38:19 stadie Exp $
+//!  $Id: caliber.h,v 1.41 2009/04/08 16:39:54 mschrode Exp $
 class TCaliber {
 public :
   TCaliber(const std::string& f)
@@ -105,6 +105,7 @@ private:
   TControlPlots * plots;  //the control plots
   // control parameters of fit
   double deriv_step;
+  int mvec, niter;
   float eps,wlf1,wlf2;
   bool print_parnderiv;
   std::vector<int> globaljetpars;

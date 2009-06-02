@@ -1,7 +1,7 @@
 //!
 //!  \author  Christian Autermann
 //!  \date    Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.cc,v 1.81 2009/02/25 15:04:31 stadie Exp $
+//!  $Id: caliber.cc,v 1.82 2009/04/27 13:50:11 mschrode Exp $
 //!
 //!
 //!  \note  For profiling:
@@ -84,7 +84,7 @@ private:
     calc_chi2_on(ComputeThread *parent) : parent(parent) {}
     void operator()()
     {
-      //       {
+      //      {
       // 	boost::mutex::scoped_lock lock(io_mutex);
       // 	std::cout << "start Thread for " << parent << std::endl; 
       //       }   
@@ -100,6 +100,7 @@ private:
       }
       parent->chi2 =0.0;   
       for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it) { 
+	//boost::mutex::scoped_lock lock(io_mutex);
 	parent->chi2 += (*it)->chi2_fast(parent->td1, parent->td2, parent->epsilon);
       }
     }
@@ -161,11 +162,8 @@ void TCaliber::Run()
 
 void TCaliber::Run_Lvmini()
 { 
-  //int naux = 1000000, niter=1000, iret=0;
-  int naux = 3000000, niter=1000, iret=0;
-  //int mvec = 29;
-  int mvec = 6;
-  //int mvec = 2;
+  //int naux = 1000000, iret=0;
+  int naux = 3000000, iret=0;
   
   int npar = p->GetNumberOfParameters();
 
@@ -299,7 +297,6 @@ void TCaliber::Run_Lvmini()
 	aux[param+npar] = temp_derivative2[param]/(deriv_step*deriv_step);
 	assert(aux[param] == aux[param]);
       }
-      
       //print derivatives:
       if(print_parnderiv) {
 	for( int param = 0 ; param < npar ; ++param ) {
@@ -427,6 +424,8 @@ void TCaliber::Init()
 
   //BFGS fit parameters
   deriv_step = config.read<double>("BFGS derivative step",1e-03);
+  mvec       = config.read<int>("BFGS mvec",6);
+  niter      = config.read<int>("BFGS niter",100);
   eps        = config.read<double>("BFGS eps",1e-02);
   wlf1       = config.read<double>("BFGS 1st wolfe parameter",1e-04);
   wlf2       = config.read<double>("BFGS 2nd wolfe parameter",0.9);
