@@ -1,11 +1,12 @@
-//
-//    Reader for Parameter Limits
-//
-//    This class add user defined parameter limits
-//
-//    first version: Hartmut Stadie 2008/12/12
-//    $Id: ParameterLimitsReader.cc,v 1.1 2008/12/12 17:06:00 stadie Exp $
-//   
+//!
+//!  \brief Reader for Parameter Limits
+//!
+//!  This class add user defined parameter limits
+//!
+//!  \author Hartmut Stadie
+//!  \date  2008/12/12
+//!  $Id: $
+//!   
 #include "ParameterLimitsReader.h"
 
 #include "CalibData.h"
@@ -19,7 +20,9 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TPar
 {
   vector<double> limits = bag_of<double>(config->read<string>( "Jet Parameter Limits",""));
   
+  // In case limits are explicitly set via config file
   if(limits.size() % 4 == 0) {
+    std::cout << "Using user defined parameter limits:" << std::endl;
     for(unsigned int i = 0 ; i < limits.size() ; i += 4) {
       int index = (int)limits[i];
       for(int j = p->GetNumberOfTowerParameters() + index; 
@@ -29,7 +32,52 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TPar
 					    limits[i+3]));
       }
     }
-  } else if(limits.size() > 1) {
+  }
+  // In case default limits are to be used
+  else if( limits.size() == 1 ) {
+    string parclass = config->read<string>("Parametrization Class","");
+
+    // For L2L3JetParametrization
+    if( parclass == "L2L3JetParametrization" ) {
+      std::cout << "Using default parameter limits for '" << parclass << "':" << std::endl;
+
+      // Loop over parameters in one bin
+      for(int i = 0; i < p->GetNumberOfJetParametersPerBin(); i++) {
+	double min = 0.;
+	double max = 10000.;   // No upper limit
+
+	// Loop over eta and phi bins
+	for(int j = p->GetNumberOfTowerParameters() + i; 
+	    j <  p->GetNumberOfParameters(); 
+	    j += p->GetNumberOfJetParametersPerBin()) {
+	  par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
+	} // End of loop over eta and phi bins
+      } // End of loop over parameters in one bin
+    }
+
+    // For SmearHistGauss
+    if( parclass == "SmearParametrizationStepGauss"
+	|| parclass == "SmearParametrizationStepGaussInter"
+	|| parclass == "SmearParametrizationTwoGauss") {
+      std::cout << "Using default parameter limits for '" << parclass << "':" << std::endl;
+
+      // Loop over parameters in one bin
+      for(int i = 0; i < p->GetNumberOfJetParametersPerBin(); i++) {
+	double min = 0.;
+	double max = 10000.;   // Sigma and histogrammed parameters have no upper limit
+	if( i == 0 ) max = 1.; // Normalization constant between 0 and 1
+
+	// Loop over eta and phi bins
+	for(int j = p->GetNumberOfTowerParameters() + i; 
+	    j <  p->GetNumberOfParameters(); 
+	    j += p->GetNumberOfJetParametersPerBin()) {
+	  par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
+	} // End of loop over eta and phi bins
+      } // End of loop over parameters in one bin
+    }
+  }
+  // Catch wrong syntax in config file
+  else if(limits.size() > 1) {
     std::cout << "wrong number of arguments for Jet Parameter Limits:" 
 	      << limits.size() << '\n';
   }
@@ -63,8 +111,14 @@ int ParameterLimitsReader::readEvents(std::vector<TData*>& data)
 {
   for(std::vector<ParameterLimit>::const_iterator pl = par_limits.begin() ;
       pl != par_limits.end() ; ++pl) {
-    std::cout << "adding limit for parameter " << pl->index+1 << " min:" 
-	      << pl->min << " max:" << pl->max << " k:" << pl->k << '\n';
+    std::cout << " Adding limit for parameter " << std::flush;
+    if     ( pl->index+1 < 10   ) std::cout << pl->index+1 << ":  " << std::flush;
+    else if( pl->index+1 < 100  ) std::cout << pl->index+1 << ": "  << std::flush;
+    else if( pl->index+1 < 1000 ) std::cout << pl->index+1 << ":"   << std::flush;
+    std::cout << "  min: " << pl->min << "\t" << std::flush;
+    std::cout <<  " max: " << pl->max << "\t" << std::flush;
+    std::cout <<  " k: "   << pl->k << std::endl;
+
     TMeasurement* limitp  = new TMeasurement;
     limitp->pt  = pl->min;
     limitp->EMF = pl->max;
