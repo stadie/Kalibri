@@ -15,7 +15,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/12
-//!    $Id: DiJetReader.h,v 1.3 2009/03/04 17:26:51 thomsen Exp $
+//!    $Id: DiJetReader.h,v 1.4 2009/04/17 14:28:08 mschrode Exp $
 // ----------------------------------------------------------------   
 class DiJetReader : public EventReader{
  public:
@@ -30,7 +30,8 @@ class DiJetReader : public EventReader{
   NJetSel njet;
   double Et_cut_nplus1Jet;     //!< Maximum pt of other than leading 2 jets in dijet event
   double Rel_cut_on_nJet;      //!< Maximum relative pt  of other than leading 2 jets in dijet event
-  double GenJetCut;            //!< Minimum pt of genJets of dijets
+  double GenJetCutLow;         //!< Minimum pt of genJets of dijets
+  double GenJetCutUp;          //!< Maximum pt of genJets of dijets
   double Eta_cut_on_jet;       //!< Maximum absolute jet eta
   double Had_cut_min;          //!< Minimum jet Had/(Had+EMF)
   double Had_cut_max;          //!< Maximum jet Had/(Had+EMF)

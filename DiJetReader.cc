@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.9 2009/03/05 08:50:24 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.10 2009/04/17 14:28:08 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -13,10 +13,11 @@
 #include "JetWithTowers.h"
 
 #include <cstdlib>
+#include <fstream>
 
-DiJetReader::DiJetReader(const std::string& configfile, TParameters* p) 
+DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   : EventReader(configfile,p),Et_cut_nplus1Jet(0),Rel_cut_on_nJet(10),
-    Had_cut_min(0), Had_cut_max(1), n_dijet_events(0)
+    GenJetCutLow(0.), GenJetCutUp(10000.), Had_cut_min(0), Had_cut_max(1), n_dijet_events(0)
 {
   n_dijet_events = config->read<int>("use Di-Jet events",-1);
   if(n_dijet_events == 0) {
@@ -26,7 +27,8 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   }
   Et_cut_nplus1Jet  = config->read<double>("Et cut on n+1 Jet",10.0);
   Rel_cut_on_nJet   = config->read<double>("Relative n+1 Jet Et Cut",0.2);
-  GenJetCut         = config->read<double>("Et cut on genJet both Jets",0.0);
+  GenJetCutLow      = config->read<double>("Et genJet min both Jets",0.0);
+  GenJetCutUp       = config->read<double>("Et genJet max both Jets",10000.0);
   Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0);
   Had_cut_min       = config->read<double>("Min had fraction",0.07);
   Had_cut_max       = config->read<double>("Max had fraction",0.95);
@@ -51,7 +53,20 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
     tchain_dijet = new TTree(treename_dijet.c_str(),"Di-Jet events");
     mc->generateDiJetTree(tchain_dijet,n_dijet_events);
     delete mc;
-  } else {
+  } else if(input_dijet[0] == "input/dijetlist") {
+    TChain* chain = new TChain(treename_dijet.c_str()); 
+    std::ifstream filelist;
+    filelist.open("input/dijetlist");
+    std::string name = "";
+    while( !filelist.eof() ) {
+      filelist >> name;
+      cout << "...opening root-file " << name << " for Di-Jet analysis." << endl;
+      chain->Add( name.c_str() );
+    }
+    filelist.close();
+    tchain_dijet = chain;
+  }
+  else {
     TChain* chain = new TChain(treename_dijet.c_str()); 
     for (bag_of_string::const_iterator it = input_dijet.begin(); it!=input_dijet.end(); ++it){
       cout << "...opening root-file " << (*it) << " for Di-Jet analysis." << endl;
@@ -102,6 +117,8 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
     }
     if(evt>=n_dijet_events && n_dijet_events>=0 ) break;
   }
+
+  std::cout << "Read " << evt << " " << injet << "-jet events for analysis." << std::endl;
   return evt;
 }
   
@@ -302,7 +319,7 @@ TData* DiJetReader::createPtBalanceEvent()
     //cout<<"scale: "<<scale<<endl;
     if ( jj_data[injet]->GetMess()->pt > scale*Rel_cut_on_nJet ) goodevent = false;
   }
-  if ( (((TJet*)(jj_data[0]->GetMess()))->genPt < GenJetCut) || (((TJet*)(jj_data[1]->GetMess()))->genPt  < GenJetCut ))  goodevent = false;
+  if ( (((TJet*)(jj_data[0]->GetMess()))->genPt < GenJetCutLow) || (((TJet*)(jj_data[1]->GetMess()))->genPt  < GenJetCutLow ))  goodevent = false;
   if ( (fabs(jj_data[0]->GetMess()->eta) > Eta_cut_on_jet) ||  (fabs(jj_data[1]->GetMess()->eta) > Eta_cut_on_jet) )  goodevent = false;
   
   /*
@@ -337,14 +354,42 @@ TData* DiJetReader::createPtBalanceEvent()
   }
   return jj_data[0];
 }
-  
+
+
+
+//!  \brief Use dijet event as jet-truth event where genjet Et
+//!         is truth
+//!  \note The dijets are ordered in genjet Et
+// ----------------------------------------------------------------   
 int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 {
-  int njets = 0;  
-  double* terr = new double[njet.NobjTow];
-  for(int i = 0; i < njet.NobjJet && i < 2; ++i) {
+  if( njet.NobjJet < 2 ) return 0;
+
+  int     njets = 0;  
+  double * terr = new double[njet.NobjTow];
+
+  // Order dijets in genjet Et
+  int genjetidx[2] = { 0, 1 }; // Store index of two genjets with highest Et
+  for(int i = 0; i < njet.NobjJet; ++i) {
+    if( njet.GenJetEt[i] > njet.GenJetEt[genjetidx[0]] ) genjetidx[0] = i;
+  }
+  if( genjetidx[0] == 1 ) genjetidx[1] = 0;
+  for(int i = 0; i < njet.NobjJet; ++i) {
+    if( i != genjetidx[0] ) {
+      if( njet.GenJetEt[i] > njet.GenJetEt[genjetidx[1]] ) genjetidx[1] = i;
+    }
+  }
+  assert( njet.GenJetEt[genjetidx[0]] >= njet.GenJetEt[genjetidx[1]] );
+  
+  // Loop over two jets with highest genjet Et
+  for(int idx = 0; idx < 2; idx++) {
+    int i = genjetidx[idx];
+
+    // Cuts
     if(njet.JetPt[i] < Et_cut_nplus1Jet) continue;
-    if(njet.GenJetEt[i] < 20.0) continue;
+    if( njet.GenJetEt[i] < GenJetCutLow || njet.GenJetEt[i] > GenJetCutUp ) continue;
+
+    // Construct event
     double em = 0;
     double had = 0;
     double out = 0;
@@ -401,7 +446,8 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 			  njet.JetPhi[i],TJet::uds,njet.GenJetEt[i],
 			  njet.JetCorrZSP[i],njet.JetCorrJPT[i],
 			  njet.JetCorrL2[i],njet.JetCorrL3[i],
-			  njet.JetCorrL2L3[i],njet.JetCorrL2L3JPT[i],
+			  njet.JetCorrL2[i]*njet.JetCorrL3[i],
+			  njet.JetCorrL2[i]*njet.JetCorrL3[i],
 			  p->jet_function(njet.TowId_eta[closestTower],
 					  njet.TowId_phi[closestTower]),
 			  jet_error_param,p->global_jet_function(),Et_cut_nplus1Jet);
@@ -421,7 +467,8 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 		    njet.JetE[i],njet.JetEta[i],njet.JetPhi[i],
 		    TJet::uds,njet.GenJetEt[i],njet.JetCorrZSP[i],
 		    njet.JetCorrJPT[i],njet.JetCorrL2[i],njet.JetCorrL3[i],
-		    njet.JetCorrL2L3[i],njet.JetCorrL2L3JPT[i],
+		    njet.JetCorrL2[i]*njet.JetCorrL3[i],
+		    njet.JetCorrL2[i]*njet.JetCorrL3[i],
 		    p->jet_function(njet.TowId_eta[closestTower],
 				    njet.TowId_phi[closestTower]),
 		    jet_error_param,p->global_jet_function(),Et_cut_nplus1Jet);    
