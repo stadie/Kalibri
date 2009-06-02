@@ -736,6 +736,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   // Absolute eta bins
   std::vector<double> binEdgesEta = bag_of<double>(mConfig->read<std::string>("Control plots eta bin edges",""));
   Binning bins(binEdgesPt,binEdgesEta);
+  //  bins.Print();
 
 
   // Create 2D histograms of response vs eta in
@@ -769,7 +770,8 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   for(int etabin = 0; etabin < bins.NBinsY(); etabin++) { // Loop over eta bins
     char name[50];
     sprintf(name,"h2PttrueUncorr_pttrue%i",etabin);
-    TH2F * h2 = new TH2F(name,";#eta;< p^{jet}_{T} / p^{true}_{T} >",30,-5,5,51,0,2);
+    TH2F * h2 = new TH2F(name,";p^{true}_{T} (GeV);< p^{jet}_{T} / p^{true}_{T} >",
+			 30,bins.XLow(0),bins.XUp(bins.NBinsX()-1),51,0,2);
     h2PttrueUncorr.push_back(h2);
     
     sprintf(name,"h2PttrueCorr_pttrue%i",etabin);
@@ -834,7 +836,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
 
   for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) { // Loop over pt bins
     char title[50];
-    sprintf(title,"%.1f < p^{true}_{T} < %.1f GeV",bins.XLow(ptbin),bins.XUp(ptbin));
+    sprintf(title,"%.1f < p^{true}_{T} < %.1f GeV",bins.XLow(bins.Bin(ptbin,0)),bins.XUp(bins.Bin(ptbin,0)));
     int meanIdx  = 2;
     int widthIdx = 3;
     TH1F * hProjection[8];
@@ -960,7 +962,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
 
   for(int etabin = 0; etabin < bins.NBinsY(); etabin++) { // Loop over eta bins
     char title[50];
-    sprintf(title,"%.1f < #eta < %.1f",bins.YLow(etabin),bins.YUp(etabin));
+    sprintf(title,"%.1f <  #eta < %.1f",bins.YLow(bins.Bin(0,etabin)),bins.YUp(bins.Bin(0,etabin)));
     int meanIdx  = 0;
     int widthIdx = 1;
     TH1F * hProjection[8];
@@ -1087,9 +1089,17 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   leg->AddEntry(hRespEtaCorrL2.at(0),"Corrected L2","P");
   leg->AddEntry(hRespEtaCorrL2L3.at(0),"Corrected L3","P");
 
+  TH1F * h = hRespEtaUncorr.at(0);
+  TLine *leta = new TLine(h->GetXaxis()->GetBinLowEdge(1),1,
+			  h->GetXaxis()->GetBinUpEdge(h->GetNbinsX()),1);
+  leta->SetLineColor(1);
+  leta->SetLineWidth(2);
+  leta->SetLineStyle(2);
+
   for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) {
     hRespEtaUncorr.at(ptbin)->GetYaxis()->SetRangeUser(0,2);
     hRespEtaUncorr.at(ptbin)->Draw("PE1");
+    leta->Draw("same");
     hRespEtaCorr.at(ptbin)->Draw("PE1same");
     hRespEtaCorrL2.at(ptbin)->Draw("PE1same");
     hRespEtaCorrL2L3.at(ptbin)->Draw("PE1same");
@@ -1098,9 +1108,17 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     ps->NewPage();
   }
 
-  for(int etabin = 0; etabin < bins.NBinsX(); etabin++) {
+  h = hRespPttrueUncorr.at(0);
+  TLine *lpttrue = new TLine(h->GetXaxis()->GetBinLowEdge(1),1,
+			  h->GetXaxis()->GetBinUpEdge(h->GetNbinsX()),1);
+  lpttrue->SetLineColor(1);
+  lpttrue->SetLineWidth(2);
+  lpttrue->SetLineStyle(2);
+
+  for(int etabin = 0; etabin < bins.NBinsY(); etabin++) {
     hRespPttrueUncorr.at(etabin)->GetYaxis()->SetRangeUser(0,2);
     hRespPttrueUncorr.at(etabin)->Draw("PE1");
+    lpttrue->Draw("same");
     hRespPttrueCorr.at(etabin)->Draw("PE1same");
     hRespPttrueCorrL2.at(etabin)->Draw("PE1same");
     hRespPttrueCorrL2L3.at(etabin)->Draw("PE1same");
@@ -1120,6 +1138,9 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   }
   delete c1;
   delete ps;
+  delete leg;
+  delete leta;
+  delete lpttrue;
 }
 
 
