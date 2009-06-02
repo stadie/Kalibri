@@ -774,13 +774,13 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
 			 30,bins.XLow(0),bins.XUp(bins.NBinsX()-1),51,0,2);
     h2PttrueUncorr.push_back(h2);
     
-    sprintf(name,"h2PttrueCorr_pttrue%i",etabin);
+    sprintf(name,"h2PttrueCorr_eta%i",etabin);
     h2PttrueCorr.push_back(static_cast<TH2F*>(h2->Clone(name)));
     
-    sprintf(name,"h2PttrueCorrL2_pttrue%i",etabin);
+    sprintf(name,"h2PttrueCorrL2_eta%i",etabin);
     h2PttrueCorrL2.push_back(static_cast<TH2F*>(h2->Clone(name)));
     
-    sprintf(name,"h2PttrueCorrL2L3_pttrue%i",etabin);
+    sprintf(name,"h2PttrueCorrL2L3_eta%i",etabin);
     h2PttrueCorrL2L3.push_back(static_cast<TH2F*>(h2->Clone(name)));
   } // End of loop over eta bins
 
@@ -1089,6 +1089,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   leg->AddEntry(hRespEtaCorrL2.at(0),"Corrected L2","P");
   leg->AddEntry(hRespEtaCorrL2L3.at(0),"Corrected L3","P");
 
+  // Mean response vs eta per pttrue bin
   TH1F * h = hRespEtaUncorr.at(0);
   TLine *leta = new TLine(h->GetXaxis()->GetBinLowEdge(1),1,
 			  h->GetXaxis()->GetBinUpEdge(h->GetNbinsX()),1);
@@ -1098,6 +1099,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
 
   for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) {
     hRespEtaUncorr.at(ptbin)->GetYaxis()->SetRangeUser(0,2);
+    hRespEtaUncorr.at(ptbin)->GetYaxis()->SetTitle("< p^{jet}_{T} / p^{true}_{T} >");
     hRespEtaUncorr.at(ptbin)->Draw("PE1");
     leta->Draw("same");
     hRespEtaCorr.at(ptbin)->Draw("PE1same");
@@ -1107,7 +1109,21 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     c1->Draw();
     ps->NewPage();
   }
+  // Resolution vs eta per pttrue bin
+  for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) {
+    hResoEtaUncorr.at(ptbin)->GetYaxis()->SetRangeUser(0,0.8);
+    hResoEtaUncorr.at(ptbin)->GetYaxis()->SetTitle("#sigma( p^{jet}_{T} / p^{true}_{T} )  /  < p^{jet}_{T} / p^{true}_{T} >");
+    hResoEtaUncorr.at(ptbin)->Draw("PE1");
+    hResoEtaCorr.at(ptbin)->Draw("PE1same");
+    hResoEtaCorrL2.at(ptbin)->Draw("PE1same");
+    hResoEtaCorrL2L3.at(ptbin)->Draw("PE1same");
+    leg->Draw("same");
+    c1->Draw();
+    ps->NewPage();
+  }
 
+
+  // Mean response vs pttrue per eta bin
   h = hRespPttrueUncorr.at(0);
   TLine *lpttrue = new TLine(h->GetXaxis()->GetBinLowEdge(1),1,
 			  h->GetXaxis()->GetBinUpEdge(h->GetNbinsX()),1);
@@ -1117,6 +1133,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
 
   for(int etabin = 0; etabin < bins.NBinsY(); etabin++) {
     hRespPttrueUncorr.at(etabin)->GetYaxis()->SetRangeUser(0,2);
+    hRespPttrueUncorr.at(etabin)->GetYaxis()->SetTitle("< p^{jet}_{T} / p^{true}_{T} >");
     hRespPttrueUncorr.at(etabin)->Draw("PE1");
     lpttrue->Draw("same");
     hRespPttrueCorr.at(etabin)->Draw("PE1same");
@@ -1126,8 +1143,20 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     c1->Draw();
     ps->NewPage();
   }
+  // Resolution vs pttrue per eta bin
+  for(int etabin = 0; etabin < bins.NBinsY(); etabin++) {
+    hResoPttrueUncorr.at(etabin)->GetYaxis()->SetRangeUser(0,0.5);
+    hResoPttrueUncorr.at(etabin)->GetYaxis()->SetTitle("#sigma( p^{jet}_{T} / p^{true}_{T} )  /  < p^{jet}_{T} / p^{true}_{T} >");
+    hResoPttrueUncorr.at(etabin)->Draw("PE1");
+    hResoPttrueCorr.at(etabin)->Draw("PE1same");
+    hResoPttrueCorrL2.at(etabin)->Draw("PE1same");
+    hResoPttrueCorrL2L3.at(etabin)->Draw("PE1same");
+    leg->Draw("same");
+    c1->Draw();
+    ps->NewPage();
+  }
 
-  if( mOutputROOT ) WriteToRootFile(objToBeWritten,"BinnedResponse");
+  if( mOutputROOT ) WriteToRootFile(objToBeWritten,"JetTruthEventResponse");
 
 
   // Clean up
