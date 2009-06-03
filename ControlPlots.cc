@@ -167,23 +167,10 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
 
   // Create a Et and eta binning
   // Et = x, eta = y
-  std::vector<double> binEdgesEt;
-  binEdgesEt.push_back( 30.);
-  binEdgesEt.push_back( 40.);
-  binEdgesEt.push_back( 50.);
-  binEdgesEt.push_back( 60.);
-  binEdgesEt.push_back( 70.);
-  binEdgesEt.push_back( 80.);
-  binEdgesEt.push_back( 90.);
-  binEdgesEt.push_back(100.);
-  binEdgesEt.push_back(120.);
-  binEdgesEt.push_back(150.);
-  binEdgesEt.push_back(200.);
-  binEdgesEt.push_back(300.);
-  binEdgesEt.push_back(500.);
-
-  // Absolute eta bins
-  std::vector<double> binEdgesEta = bag_of<double>(mConfig->read<std::string>("Control plots eta bin edges",""));
+  std::vector<double> binEdgesEt
+    = bag_of<double>(mConfig->read<std::string>("Control plots pt bin edges",""));
+  std::vector<double> binEdgesEta
+    = bag_of<double>(mConfig->read<std::string>("Control plots eta bin edges",""));
   Binning bins(binEdgesEt,binEdgesEta);
 
 
@@ -194,7 +181,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
   for(int i = 0; i < bins.NBins(); i++)
     {
       char name[50];
-      sprintf(name,"hResponse_Et%i_eta%i",bins.IX(i),bins.IY(i));
+      sprintf(name,"hResponse_pt%i_eta%i",bins.IX(i),bins.IY(i));
       TH1F * h = new TH1F(name,"",51,0,2);
       h->SetLineColor(2);
       h->GetXaxis()->SetTitleSize(0.05);
@@ -204,7 +191,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
       hResp.push_back(h);
       objToBeWritten.push_back(h);
 
-      sprintf(name,"hResponseJetMET_Et%i_eta%i",bins.IX(i),bins.IY(i));
+      sprintf(name,"hResponseJetMET_pt%i_eta%i",bins.IX(i),bins.IY(i));
       h = static_cast<TH1F*>(h->Clone(name));
       h->SetLineColor(1);
       hRespJetMet.push_back(h);
@@ -229,7 +216,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
 	  if( jte->FlaggedBad() ) continue;
 	}
 
-      int bin = bins.Bin(ettrue,fabs(eta));
+      int bin = bins.Bin(ettrue,eta);
       if( 0 <= bin && bin < bins.NBins() )
 	{
 	  hResp.at(bin)->Fill(etcorr/ettrue,weight);
@@ -296,7 +283,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
   bLabel->SetTextFont(42);
   bLabel->SetTextSize(0.7);
   bLabel->SetBorderSize(0);
-  bLabel->AddText("E^{jet}_{T} / E^{true}_{T}");
+  bLabel->AddText("p^{jet}_{T} / p^{true}_{T}");
   c1->cd();
   mbPad->Draw();
   mbPad->cd();
@@ -342,7 +329,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
       fitstat->SetFillColor(0);
       fitstat->SetTextFont(42);
       fitstat->SetTextAlign(12);
-      sprintf(label,"%.0f < E^{true}_{T} < %.0f GeV, %.1f < #eta < %.1f",
+      sprintf(label,"%.0f < p^{true}_{T} < %.0f GeV, %.1f < #eta < %.1f",
 	      bins.XLow(i),bins.XUp(i),bins.YLow(i),bins.YUp(i));
       fitstat->AddText(label);
       sprintf(label,"#mu = %.3f #pm %.3f",fit->GetParameter(1),fit->GetParError(1));
@@ -391,7 +378,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
       fitstat->SetFillColor(0);
       fitstat->SetTextFont(42);
       fitstat->SetTextAlign(12);
-      sprintf(label,"%.0f < E^{true}_{T} < %.0f GeV, %.1f < #eta < %.1f",
+      sprintf(label,"%.0f < p^{true}_{T} < %.0f GeV, %.1f < #eta < %.1f",
 	      bins.XLow(i),bins.XUp(i),bins.YLow(i),bins.YUp(i));
       fitstat->AddText(label);
       fitstat->Draw("same");
@@ -1109,9 +1096,22 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     c1->Draw();
     ps->NewPage();
   }
+  // Zoom
+  for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) {
+    hRespEtaUncorr.at(ptbin)->GetYaxis()->SetRangeUser(0.8,1.2);
+    hRespEtaUncorr.at(ptbin)->Draw("PE1");
+    leta->Draw("same");
+    hRespEtaCorr.at(ptbin)->Draw("PE1same");
+    hRespEtaCorrL2.at(ptbin)->Draw("PE1same");
+    hRespEtaCorrL2L3.at(ptbin)->Draw("PE1same");
+    leg->Draw("same");
+    c1->Draw();
+    ps->NewPage();
+  }
+
   // Resolution vs eta per pttrue bin
   for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) {
-    hResoEtaUncorr.at(ptbin)->GetYaxis()->SetRangeUser(0,0.8);
+    hResoEtaUncorr.at(ptbin)->GetYaxis()->SetRangeUser(0,0.4);
     hResoEtaUncorr.at(ptbin)->GetYaxis()->SetTitle("#sigma( p^{jet}_{T} / p^{true}_{T} )  /  < p^{jet}_{T} / p^{true}_{T} >");
     hResoEtaUncorr.at(ptbin)->Draw("PE1");
     hResoEtaCorr.at(ptbin)->Draw("PE1same");
@@ -1143,9 +1143,23 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     c1->Draw();
     ps->NewPage();
   }
+  // Zoom
+  for(int etabin = 0; etabin < bins.NBinsY(); etabin++) {
+    hRespPttrueUncorr.at(etabin)->GetYaxis()->SetRangeUser(0.8,1.2);
+    hRespPttrueUncorr.at(etabin)->GetYaxis()->SetTitle("< p^{jet}_{T} / p^{true}_{T} >");
+    hRespPttrueUncorr.at(etabin)->Draw("PE1");
+    lpttrue->Draw("same");
+    hRespPttrueCorr.at(etabin)->Draw("PE1same");
+    hRespPttrueCorrL2.at(etabin)->Draw("PE1same");
+    hRespPttrueCorrL2L3.at(etabin)->Draw("PE1same");
+    leg->Draw("same");
+    c1->Draw();
+    ps->NewPage();
+  }
+
   // Resolution vs pttrue per eta bin
   for(int etabin = 0; etabin < bins.NBinsY(); etabin++) {
-    hResoPttrueUncorr.at(etabin)->GetYaxis()->SetRangeUser(0,0.5);
+    hResoPttrueUncorr.at(etabin)->GetYaxis()->SetRangeUser(0,0.4);
     hResoPttrueUncorr.at(etabin)->GetYaxis()->SetTitle("#sigma( p^{jet}_{T} / p^{true}_{T} )  /  < p^{jet}_{T} / p^{true}_{T} >");
     hResoPttrueUncorr.at(etabin)->Draw("PE1");
     hResoPttrueCorr.at(etabin)->Draw("PE1same");
@@ -6186,8 +6200,8 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!    - 7: Quantiles Q0.9 / (Q0.9 - 1)
 //!   'hresuslts' are newly created (take care of deleting them!);
 //!   their object names are set to:
-//!      "<hist-name>_result<X>",
-//!   where <hist-name> = hist->GetName() and <X> is the index of
+//!      "(hist-name)_result(X)",
+//!   where (hist-name) = hist->GetName() and (X) is the index of
 //!   the above specified property (i.e. 0 for "mean").
 //!
 //!   Also, the projected distributions of 3 example x-bins:
@@ -6198,8 +6212,8 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!   Gauss fits are filled into 'gf'. Both 'gaussplots' and 'gf'
 //!   are newly created (take care of deleting them!) and their
 //!   names are set to:
-//!      "<hist-name>_gaussplot<X>",
-//!      "<hist-name>_gaussfit<X>"
+//!      "(hist-name)_gaussplot(X)",
+//!      "(hist-name)_gaussfit(X)"
 //!   respectively.
 //! ---------------------------------------------------------------
 void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const
@@ -6587,6 +6601,19 @@ TControlPlots::Binning::Binning(const std::vector<double>& binEdgesX, const std:
       if( i > 0 ) assert( binEdgesY.at(i) > mEdgesY.at(i-1) );
       mEdgesY.push_back(binEdgesY.at(i));
     }
+}
+
+
+
+// -------------------------------------------------------------
+int TControlPlots::Binning::Bin(int ix, int iy) const
+{
+  int bin = -1;
+  if( ix >= 0 && ix < NBinsX() && iy >= 0 && iy < NBinsY() )
+    {
+      bin = ix + iy*NBinsX();
+    }
+  return bin;
 }
 
 

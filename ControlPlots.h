@@ -29,7 +29,7 @@
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.23 2009/04/28 06:48:22 mschrode Exp $
+//!  $Id: ControlPlots.h,v 1.24 2009/06/02 16:28:04 mschrode Exp $
 // -------------------------------------------------------------
 class TControlPlots
 {
@@ -173,7 +173,7 @@ public:
       //!  \param iy Bin index in y direction
       //!  \return Global bin index
       // -------------------------------------------------------------
-      int Bin(int ix, int iy) const { return ix + iy*NBinsX(); }
+      int Bin(int ix, int iy) const;
 
       //!  \brief Global bin index of bin containing values x and y
       //!  \param x x value
