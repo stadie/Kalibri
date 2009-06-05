@@ -29,7 +29,7 @@
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.24 2009/06/02 16:28:04 mschrode Exp $
+//!  $Id: ControlPlots.h,v 1.25 2009/06/03 07:55:39 mschrode Exp $
 // -------------------------------------------------------------
 class TControlPlots
 {
@@ -44,6 +44,7 @@ public:
  private:  
   void MakeControlPlotsBinnedResponse();
   void MakeControlPlotsChi2();
+  void MakeControlPlotsCorrectionFunction();
   void MakeControlPlotsDiJet();
   void MakeControlPlotsGammaJet();
   void MakeControlPlotsGammaJetPerJetBin();
@@ -55,6 +56,7 @@ public:
   void MakeControlPlotsTop();
   void MakeControlPlotsTowers();
 
+  bool EquidistLogBins(double * bins, int nBins, double first, double last) const;
   void Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
   void Fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
   void SetGStyle() const;
