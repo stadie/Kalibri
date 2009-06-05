@@ -2,41 +2,48 @@
 //!
 //!  \section label_sec_intro Introduction
 //!  Package for data driven calibration using a global fit (see also the related
-//!  <A HREF="https://twiki.cern.ch/twiki/bin/view/CMS/Calibration">
+//!  <A HREF="https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisCalibration">
 //!  Twiki Page</A>).
-//!  \image html kalibri_workflow.jpg
+//!
+//!  \section label_sec_workflow Workflow
+//!  \image html kalibri_workflow.png
+//!  (Graphic in <A HREF="../graphic/kalibri.eps">eps</A> format.)
 //!
 //!  \section label_sec_src Source Code
 //!  The source code can be found
 //!  <A HREF="http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/Bromo/Calibration/CalibCore/">here</A>.
 //!
 //!  \section label_sec_relinfo Related information
-//!  - C. Autermann:
-//!    <A HREF="http://indico.cern.ch/getFile.py/access?contribId=7&resId=0&materialId=slides&confId=22705">
-//!    A global fit approach to HCAL/jet calibration</A>,
-//!    JetMET Meeting, 18th October 2007
-//!  - R. Wolf:
-//!    <A HREF="http://indico.cern.ch/getFile.py/access?contribId=3&resId=0&materialId=slides&confId=29582">
-//!    Data-Driven Calorimeter Calibration Exploiting a Global-Fit Ansatz</A>,
-//!    JetMET Meeting, 26th February 2008
-//!  - T. Schum:
-//!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=1&amp;resId=0&amp;materialId=slides&amp;confId=627">
-//!    HCAL Calibration using a Global Fit Ansatz</A>,
-//!    Hamburg CMS Meeting, 12th March 2008
-//!  - S. Naumann-Emme: Top as a Calibration Tool,
-//!    2nd "Physics at the Terascale" Workshop, 27th November 2008
 //!  - H. Stadie:
-//!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=1&amp;resId=0&amp;materialId=slides&amp;confId=1683">
-//!    CMS Calorimeter and Jet Calibration</A>,
+//!    <A HREF="http://indico.cern.ch/getFile.py/access?contribId=4&resId=0&materialId=slides&confId=55161">
+//!    Jet Calibraton Activities in Hamburg</A>,
+//!    FSP-CMS Meeting, 28th April 2009
+//!  - S. Naumann-Emme:
+//!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=3&amp;resId=0&amp;materialId=slides&amp;confId=1683">
+//!    Jet Energy Corrections from Top Quark Decays</A>,
 //!    CMS Hamburg Meeting, 28th January 2009
 //!  - M. Schr&ouml;der:
 //!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=2&amp;resId=0&amp;materialId=slides&amp;confId=1683">
 //!    Conceptual Studies for a Jet Energy Correction</A>,
 //!    CMS Hamburg Meeting, 28th January 2009
-//!  - S. Naumann-Emme:
-//!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=3&amp;resId=0&amp;materialId=slides&amp;confId=1683">
-//!    Jet Energy Corrections from Top Quark Decays</A>,
+//!  - H. Stadie:
+//!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=1&amp;resId=0&amp;materialId=slides&amp;confId=1683">
+//!    CMS Calorimeter and Jet Calibration</A>,
 //!    CMS Hamburg Meeting, 28th January 2009
+//!  - S. Naumann-Emme: Top as a Calibration Tool,
+//!    2nd "Physics at the Terascale" Workshop, 27th November 2008
+//!  - T. Schum:
+//!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=1&amp;resId=0&amp;materialId=slides&amp;confId=627">
+//!    HCAL Calibration using a Global Fit Ansatz</A>,
+//!    Hamburg CMS Meeting, 12th March 2008
+//!  - R. Wolf:
+//!    <A HREF="http://indico.cern.ch/getFile.py/access?contribId=3&resId=0&materialId=slides&confId=29582">
+//!    Data-Driven Calorimeter Calibration Exploiting a Global-Fit Ansatz</A>,
+//!    JetMET Meeting, 26th February 2008
+//!  - C. Autermann:
+//!    <A HREF="http://indico.cern.ch/getFile.py/access?contribId=7&resId=0&materialId=slides&confId=22705">
+//!    A global fit approach to HCAL/jet calibration</A>,
+//!    JetMET Meeting, 18th October 2007
 //!
 //!  \section label_sec_authors Authors
 //!  - Christian Autermann
@@ -66,7 +73,7 @@ class TMeasurement;
 
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.41 2009/04/08 16:39:54 mschrode Exp $
+//!  $Id: caliber.h,v 1.42 2009/06/02 16:29:41 mschrode Exp $
 class TCaliber {
 public :
   TCaliber(const std::string& f)

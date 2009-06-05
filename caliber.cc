@@ -1,7 +1,7 @@
 //!
 //!  \author  Christian Autermann
 //!  \date    Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.cc,v 1.82 2009/04/27 13:50:11 mschrode Exp $
+//!  $Id: caliber.cc,v 1.83 2009/06/02 16:29:41 mschrode Exp $
 //!
 //!
 //!  \note  For profiling:
@@ -179,6 +179,13 @@ void TCaliber::Run_Lvmini()
   p->Print();
   cout << " with LVMINI.\n" << "Using " << data.size() << " total events and ";
   cout << nthreads << " threads.\n";
+
+  // Fixed pars
+  if( fixedpars.size() > 0 ) cout << "Fixed parameters:\n";
+  for(unsigned int i = 0; i < fixedpars.size(); i++) {
+    int idx = fixedpars.at(i);
+    cout << "  " << idx+1 << ": " << p->GetPars()[idx] << endl;
+  }
   
   ComputeThread *t[nthreads];
   for (int ithreads=0; ithreads<nthreads; ++ithreads){
