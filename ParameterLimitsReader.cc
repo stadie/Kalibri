@@ -5,7 +5,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date  2008/12/12
-//!  $Id: $
+//!  $Id: ParameterLimitsReader.cc,v 1.3 2009/06/02 16:28:28 mschrode Exp $
 //!   
 #include "ParameterLimitsReader.h"
 
@@ -36,24 +36,6 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TPar
   // In case default limits are to be used
   else if( limits.size() == 1 ) {
     string parclass = config->read<string>("Parametrization Class","");
-
-    // For L2L3JetParametrization
-    if( parclass == "L2L3JetParametrization" ) {
-      std::cout << "Using default parameter limits for '" << parclass << "':" << std::endl;
-
-      // Loop over parameters in one bin
-      for(int i = 0; i < p->GetNumberOfJetParametersPerBin(); i++) {
-	double min = 0.;
-	double max = 10000.;   // No upper limit
-
-	// Loop over eta and phi bins
-	for(int j = p->GetNumberOfTowerParameters() + i; 
-	    j <  p->GetNumberOfParameters(); 
-	    j += p->GetNumberOfJetParametersPerBin()) {
-	  par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
-	} // End of loop over eta and phi bins
-      } // End of loop over parameters in one bin
-    }
 
     // For SmearHistGauss
     if( parclass == "SmearParametrizationStepGauss"
