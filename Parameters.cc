@@ -708,7 +708,7 @@ void TParameters::Write_CalibrationTxt(const char* name)
   ofstream file(name, ofstream::binary);
   for (int ieta= -41; ieta<=41; ++ieta){
     if (ieta==0) continue;
-    for (unsigned iphi=1; iphi<=phi_ntwr; ++iphi){
+    for (unsigned iphi=1; iphi<=1; ++iphi){ // No phi binning
       int towerIdx = GetBin(GetEtaBin(ieta),GetPhiBin(iphi));
       int jetIdx = GetJetBin(GetJetEtaBin(ieta),GetJetPhiBin(iphi));
       int trackIdx = GetTrackBin(GetTrackEtaBin(ieta),GetTrackPhiBin(iphi));
@@ -717,7 +717,10 @@ void TParameters::Write_CalibrationTxt(const char* name)
       // each eta id of the tower and n times for n phi bins
       file << std::setw(10) << EtaLowerEdge(ieta) 
 	   << std::setw(10) << EtaUpperEdge(ieta)  
-	   << std::setw(10) << p->nTowerPars()+p->nJetPars()+p->nTrackPars()+p->nGlobalJetPars();
+	   << std::setw(10) << 2 + p->nTowerPars()+p->nJetPars()+p->nTrackPars()+p->nGlobalJetPars();
+      // Dummy: pt range of validity
+      file << std::setw(8) << std::setprecision(4) << 4;
+      file << std::setw(8) << std::setprecision(4) << 2000;
       // write: each tower parameter
       for(unsigned itower=0; itower<p->nTowerPars(); ++itower){
 	file << std::setw(8) << std::setprecision(4) << k[towerIdx*p->nTowerPars()+itower];
