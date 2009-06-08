@@ -4,7 +4,7 @@
 //    This class reads events according fo the GammaJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.15 2009/03/05 08:50:24 stadie Exp $
+//    $Id: PhotonJetReader.cc,v 1.16 2009/04/17 14:28:08 mschrode Exp $
 //   
 #include "PhotonJetReader.h"
 
@@ -36,7 +36,7 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
   Et_cut_on_jet     = config->read<double>("Et cut on jet",0.0); 
   Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0); 
   Et_cut_on_gamma   = config->read<double>("Et cut on gamma",0.0); 
-  Et_cut_on_genJet  = config->read<double>("Et cut on genJet",0.0);
+  Et_cut_on_genJet  = config->read<double>("Et genJet min",0.0);
   Rel_cut_on_gamma  = config->read<double>("Relative Rest Jet Cut",0.2);
   Had_cut_min       = config->read<double>("Min had fraction",0.07);
   Had_cut_max       = config->read<double>("Max had fraction",0.95);

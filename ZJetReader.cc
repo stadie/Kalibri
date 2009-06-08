@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.12 2009/04/08 14:46:18 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.13 2009/04/17 14:28:08 mschrode Exp $
 //   
 #include "ZJetReader.h"
 
@@ -32,7 +32,7 @@ ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
 
   Et_cut_on_Z       = config->read<double>("Et cut on Z",0.0); 
   Et_cut_on_jet     = config->read<double>("Et cut on jet",0.0);
-  Et_cut_on_genJet  = config->read<double>("Et cut on genJet",0.0);
+  Et_cut_on_genJet  = config->read<double>("Et genJet min",0.0);
   Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0);
   Had_cut_min       = config->read<double>("Min had fraction",0.07);
   Had_cut_max       = config->read<double>("Max had fraction",0.95);
@@ -208,7 +208,6 @@ TData* ZJetReader::createJetTruthEvent()
 		p->jet_function(zjet.TowId_eta[closestTower],
 				zjet.TowId_phi[closestTower]),
 		jet_error_param,p->global_jet_function());
-    
   }
   JetTruthEvent* jte = new JetTruthEvent(j,zjet.JetGenEt,1.0);//zjet.EventWeight);
   delete [] terr;
