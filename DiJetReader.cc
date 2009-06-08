@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.11 2009/06/02 16:29:11 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.12 2009/06/05 15:44:20 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -40,22 +40,26 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   }
 
   // Cuts
+  Et_cut_on_jet     = config->read<double>("Et cut on jet",0.0); 
   Et_cut_nplus1Jet  = config->read<double>("Et cut on n+1 Jet",10.0);
   Rel_cut_on_nJet   = config->read<double>("Relative n+1 Jet Et Cut",0.2);
-  GenJetCutLow      = config->read<double>("Et genJet min both Jets",0.0);
-  GenJetCutUp       = config->read<double>("Et genJet max both Jets",10000.0);
+  GenJetCutLow      = config->read<double>("Et genJet min",0.0);
+  GenJetCutUp       = config->read<double>("Et genJet max",10000.0);
+  DeltaRMatchingCut = config->read<double>("DeltaR cut on jet matching",0.25);
   Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0);
   Had_cut_min       = config->read<double>("Min had fraction",0.07);
   Had_cut_max       = config->read<double>("Max had fraction",0.95);
-
-  nNjet_cut         = 0;
-  nEt_cut_nplus1Jet = 0;
-  nRel_cut_on_nJet  = 0; 
-  nGenJetCutLow     = 0;    
-  nGenJetCutUp      = 0;     
-  nEta_cut_on_jet   = 0;  
-  nHad_cut_min      = 0;     
-  nHad_cut_max      = 0;     
+  // Counter for cutflow
+  nEt_cut_on_jet     = 0;
+  nNjet_cut          = 0;
+  nEt_cut_nplus1Jet  = 0;
+  nRel_cut_on_nJet   = 0; 
+  nGenJetCutLow      = 0;    
+  nGenJetCutUp       = 0;     
+  nDeltaRMatchingCut = 0;
+  nEta_cut_on_jet    = 0;  
+  nHad_cut_min       = 0;     
+  nHad_cut_max       = 0;     
 
   // Data class
   dataClass = config->read<int>("Di-Jet data class", 0);
@@ -122,14 +126,16 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
   if(n_dijet_events == 0) return 0;
 
   // Reset counters of rejected events
-  nNjet_cut         = 0;
-  nEt_cut_nplus1Jet = 0;
-  nRel_cut_on_nJet  = 0; 
-  nGenJetCutLow     = 0;    
-  nGenJetCutUp      = 0;     
-  nEta_cut_on_jet   = 0;  
-  nHad_cut_min      = 0;     
-  nHad_cut_max      = 0;     
+  nNjet_cut          = 0;
+  nEt_cut_on_jet     = 0;
+  nEt_cut_nplus1Jet  = 0;
+  nRel_cut_on_nJet   = 0; 
+  nGenJetCutLow      = 0;    
+  nGenJetCutUp       = 0;     
+  nDeltaRMatchingCut = 0;
+  nEta_cut_on_jet    = 0;  
+  nHad_cut_min       = 0;     
+  nHad_cut_max       = 0;     
 
   //Run jet-Jet stuff  
   int injet     = 2;
@@ -164,6 +170,7 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
     if(nReadEvts>=n_dijet_events && n_dijet_events>=0 ) break;
   }
 
+  // Print cut flow
   std::cout << "Read " << nReadEvts << " " << injet << "-jet events:\n";
   if( dataClass == 11 || dataClass == 12 ) {
     std::cout << "  " << (nReadEvts-=nNjet_cut) << std::flush;
@@ -173,6 +180,10 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
     std::cout << " jet-truth events with ptgen > " << GenJetCutLow << "\n";
     std::cout << "    " << (nReadEvts-=nGenJetCutUp) << std::flush;
     std::cout << " jet-truth events with ptgen < " << GenJetCutUp << "\n";
+    std::cout << "    " << (nReadEvts-=nDeltaRMatchingCut) << std::flush;
+    std::cout << " jet-truth events with DeltaR < " << DeltaRMatchingCut << "\n";
+    std::cout << "    " << (nReadEvts-=nEt_cut_on_jet) << std::flush;
+    std::cout << " jet-truth events Et > " << Et_cut_on_jet << "\n";
     std::cout << "    " << (nReadEvts-=nEta_cut_on_jet) << std::flush;
     std::cout << " jet-truth events with |eta| < " << Eta_cut_on_jet << "\n";
     std::cout << "    " << (nReadEvts-=nHad_cut_min) << std::flush;
@@ -463,12 +474,17 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
     if( njet.GenJetEt[i] < GenJetCutLow ) {
       nGenJetCutLow++;
       continue;
-    }
-    if( njet.GenJetEt[i] > GenJetCutUp ) {
+    } else if( njet.GenJetEt[i] > GenJetCutUp ) {
       nGenJetCutUp++;
       continue;
-    }
-    if( fabs(njet.JetEta[i]) > Eta_cut_on_jet ) {
+    } else if( pow(njet.JetEta[i] - njet.GenJetEta[i],2)
+	+ pow(njet.JetPhi[i] - njet.GenJetPhi[i],2) > pow(DeltaRMatchingCut,2) ) {
+      nDeltaRMatchingCut++;
+      continue;
+    } else if( fabs(njet.JetEt[i]) < Et_cut_on_jet ) {
+      nEt_cut_on_jet++;
+      continue;
+    } else if( fabs(njet.JetEta[i]) > Eta_cut_on_jet ) {
       nEta_cut_on_jet++;
       continue;
     }
@@ -514,8 +530,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
     if(had/(had + em) < Had_cut_min) {
       nHad_cut_min++;
       continue;
-    }
-    if(had/(had + em) > Had_cut_max) { 
+    } else if(had/(had + em) > Had_cut_max) { 
       nHad_cut_max++;
       continue;
     }
@@ -541,7 +556,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 			  njet.JetCorrL2[i]*njet.JetCorrL3[i],
 			  p->jet_function(njet.TowId_eta[closestTower],
 					  njet.TowId_phi[closestTower]),
-			  jet_error_param,p->global_jet_function(),Et_cut_nplus1Jet);
+			  jet_error_param,p->global_jet_function(),Et_cut_on_jet);
       for(int j = 0 ; j < njet.NobjTow ; ++j) {
 	if (njet.Tow_jetidx[j]!= i) continue;//look for ij-jet's towers
 	double scale = njet.TowEt[j]/njet.TowE[j];
@@ -562,7 +577,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 		    njet.JetCorrL2[i]*njet.JetCorrL3[i],
 		    p->jet_function(njet.TowId_eta[closestTower],
 				    njet.TowId_phi[closestTower]),
-		    jet_error_param,p->global_jet_function(),Et_cut_nplus1Jet);    
+		    jet_error_param,p->global_jet_function(),Et_cut_on_jet);    
     }
     JetTruthEvent* jte = new JetTruthEvent(jet,njet.GenJetEt[i],1.0);//njet.Weight);
     data.push_back(jte);
