@@ -28,7 +28,7 @@
 //!    -# \f$ p^{\textrm{gen}}_{T} > \texttt{Et genJet min both Jets} \f$
 //!    -# \f$ p^{\textrm{gen}}_{T} < \texttt{Et genJet max both Jets} \f$
 //!    -# \f$ \Delta R < \texttt{DeltaR cut on jet matching} \f$
-//!    -# \f$ p^{\textrm{jet}}_{T} < \texttt{Et cut on jet}
+//!    -# \f$ p^{\textrm{jet}}_{T} < \texttt{Et cut on jet} \f$
 //!    -# \f$ |\eta| > \texttt{Eta cut on jet} \f$
 //!    -# \f$ \textrm{Hadronic fraction} < \texttt{Max had fraction} \f$
 //!    -# \f$ \textrm{Hadronic fraction} > \texttt{Min had fraction} \f$
@@ -36,7 +36,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.6 2009/06/05 15:44:20 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.7 2009/06/08 16:14:00 mschrode Exp $
 // ----------------------------------------------------------------   
 class DiJetReader : public EventReader{
  public:
