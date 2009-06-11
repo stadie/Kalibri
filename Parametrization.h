@@ -1,13 +1,13 @@
-
-//!  \author Hartmut Stadie
-//!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.34 2009/04/15 17:26:59 mschrode Exp $
+//  $Id: Parametrization.h,v 1.35 2009/04/17 10:18:01 mschrode Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
 
 #include <cmath>
+#include <vector>
+
 #include "CalibData.h"
+
 
 //!  \brief Abstract base class for parametrizations of
 //!         correction functions
@@ -15,6 +15,9 @@
 //!  Interface to different parametrizations for the 
 //!  underlying hypothesis of the GlobalFit. Allows
 //!  to correct a tower or jet measurement.
+//!  \author Hartmut Stadie
+//!  \date Thu Apr 03 17:09:50 CEST 2008
+//!  $Id: Parametrization.h,v 1.35 2009/04/17 10:18:01 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -791,7 +794,7 @@ public:
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
     double logpt = log10(pt);
     //double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
-    double c1 = par[0]+logpt*(0.1 * par[1]+logpt * 0.1* par[2]);
+    double c1 = par[0]+logpt*(0.1 * par[1]+logpt * 0.01* par[2]);
     return c1 * x->pt;
   }
 
@@ -802,10 +805,15 @@ public:
   //!  double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
   //!  \endcode
   double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
-    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
     double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
-    return  c2 * x->pt; 
+    return  c2 * x->pt;
+
+/*     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; */
+/*     double logpt = log10(pt); */
+/*     double c2 = 0.998293 + 5.43056/(pow(logpt,3.3444) + 2.39809); */
+/*     return  c2 * x->pt; */
   }
 };
 
@@ -992,4 +1000,372 @@ public:
 };
 
 
+
+//!  \brief Parametrization used for SmearFunction estimation
+// -----------------------------------------------------------------
+class SmearFermiTail : public Parametrization{
+ public:
+  SmearFermiTail() : Parametrization(0,3,0,0) {}
+  const char * name() const { return "SmearFermiTail"; }
+
+  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+    return 0.;
+  }
+
+  //!  \brief Returns probability density of response
+  //!  \param x   TMeasurement::pt is response for which the 
+  //!             probability density is returned
+  //!  \param par Pointer to parameters
+  //!  \return Probability density of response
+  // ------------------------------------------------------------------------
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    double c      = par[0];
+    double mu     = 1.;
+    double sigma  = par[1];
+    double T      = par[2];
+
+    if(c < 0.) c = 0.;
+    if(c > 1.) c = 1.;
+    if(T < 0.) T = 0.;
+
+    double p = c / sqrt(2.* M_PI ) / sigma * exp(-pow((x->pt - mu) / sigma, 2.) / 2.);
+    p += (1. - c) / (T * log(1 + exp(mu / T))) / (exp((x->pt - mu) / T) + 1.);
+
+    return p;
+  }
+
+  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+    return 0.;
+  }
+};
+
+
+
+//!  \brief Parametrization used for SmearFunction estimation
+//!
+//!  This pdf consists of two Gaussians, a central one around
+//!  1. and a second one describing the tail:
+//!  \f[
+//!   p(r) = c \cdot G_{0}(\mu_{0},\sigma_{0}) + (1-c) \cdot G_{1}(\mu_{1},\sigma_{1})
+//!  \f]
+//!
+//!  Number of free parameters:
+//!   - towers: 0
+//!   - jets:   5
+//!     - 0: Normalization \f$ c \f$
+//!     - 1: Mean \f$ \mu_{0} \f$ of main Gaussian
+//!     - 2: Width \f$ \sigma_{0} \f$ of main Gaussian
+//!     - 3: Mean \f$ \mu_{1} \f$ of tail Gaussian
+//!     - 4: Width \f$ \sigma_{1} \f$ of tail Gaussian
+//!   - tracks: 0
+//!   - global: 0
+// ------------------------------------------------------------------------
+class SmearTwoGauss : public Parametrization { 
+ public:
+  SmearTwoGauss(const std::vector<double>& scale)
+    : Parametrization(0,5,0,0), mScale(scale) { assert( mScale.size() >= nJetPars() ); }
+  const char* name() const { return "SmearTwoGauss";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+
+  //!  \brief Returns probability density of response
+  //!  \param x   TMeasurement::pt is response for which the 
+  //!             probability density is returned
+  //!  \param par Pointer to parameters
+  //!  \return Probability density of response
+  // ------------------------------------------------------------------------
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    double c  = mScale.at(0)*par[0];  // Normalization
+    double u0 = mScale.at(1)*par[1];
+    double s0 = mScale.at(2)*par[2];  // Sigma of main Gaussian
+    double u1 = mScale.at(3)*par[3];  // Mean of Gaussian tail
+    double s1 = mScale.at(4)*par[4];  // Sigma of Gaussian tail
+
+    //Take care of proper normalization
+    if(c < 0.) c = 0.;
+    if(c > 1.) c = 1.;
+
+    double p  =       c  / sqrt(2* M_PI) / s0 * exp(-pow((x->pt - u0) / s0, 2) / 2);
+    p        += (1. - c) / sqrt(2* M_PI) / s1 * exp(-pow((x->pt - u1) / s1, 2) / 2);
+
+    return p;
+  }
+
+ private:
+  const std::vector<double> mScale;    //!< Parameter scales
+};
+
+
+
+//!  \brief Parametrization used for SmearFunction estimation
+//!
+//!  This pdf consists of a central Gaussians around 1 and a
+//!  step function (Histogram) parametrizing the tail:
+//!  \f[
+//!   p(r) = c \cdot G(1,\sigma) + (1-c) \cdot H(b_{i})
+//!  \f]
+//!
+//!  Number of free parameters:
+//!   - towers: 0
+//!   - jets:   12
+//!     - 0:      Normalization \f$ c \f$
+//!     - 1:      Width \f$ \sigma \f$ of main Gaussian
+//!     - 2 - 11: Bin content of histogram
+//!   - tracks: 0
+//!   - global: 0
+// ------------------------------------------------------------------------
+class SmearStepGauss : public Parametrization
+{ 
+ public:
+  SmearStepGauss(double min, double max, int nsteps, const std::vector<double>& scale)
+    : Parametrization(0,nsteps+3,0,0),
+    mNGausPar(3),
+    mMin(min),
+    mMax(max),
+    mNStepPar(nsteps),
+    mStepWidth((mMax - mMin)/mNStepPar),
+    mScale(scale)
+    {
+      for(int i = 0; i < mNStepPar+1; i++) {
+	mBinEdges.push_back( mMin + i*mStepWidth );
+      }
+      assert( 0.0 <= mMin && mMin < mMax );
+      assert( mScale.size() >= nJetPars() );
+    }
+  ~SmearStepGauss() { mBinEdges.clear(); }
+
+  const char* name() const { return "SmearStepGauss";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const { return x->pt; }
+
+  //!  \brief Returns probability density of response
+  //!  \param x   TMeasurement::pt is response for which the 
+  //!             probability density is returned
+  //!  \param par Pointer to parameters
+  //!  \return Probability density of response
+  // ------------------------------------------------------------------------
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    // Probability density from Gaussian part
+    double c = mScale.at(0)*par[0];
+    double u = mScale.at(1)*par[1];
+    double s = mScale.at(2)*par[2];
+    
+    double p = c / sqrt(2* M_PI ) / s * exp(-pow((x->pt - u) / s, 2) / 2);
+    
+    
+    // Probability density from step function part
+    // Copy parameter values to temp array for normalization
+    double norm = 0.;
+    double tmpPar[mNStepPar];
+    for(int i = 0; i < mNStepPar; i++) {
+      tmpPar[i] = mScale.at(mNGausPar+i)*par[mNGausPar+i];
+      if( tmpPar[i] < 0. ) tmpPar[i] = 0.;
+      norm += tmpPar[i];
+    }
+    norm = (1.-c)/norm/mStepWidth;
+
+
+    // Find parameter idx for given response x
+    // and add content to p
+    if( x->pt >= mBinEdges.front() && x->pt < mBinEdges.back() ) {
+      int i = 0;
+      while( x->pt > mBinEdges.at(1+i) ) i++;
+      p += norm*tmpPar[i];
+    }
+
+    return p;
+  }
+
+ private:
+  const int    mNGausPar;              //!< Number of parameters of Gaussian part of pdf
+  const double mMin;                   //!< Minimum of non-zero range of pdf
+  const double mMax;                   //!< Maximum of non-zero range of pdf
+  const int    mNStepPar;              //!< Number of parameters of step part of pdf
+  const double mStepWidth;             //!< Step width
+  const std::vector<double> mScale;    //!< Parameters scales
+  std::vector<double> mBinEdges;       //!< Edges of steps
+};
+
+
+
+//!  \brief Parametrization used for SmearFunction estimation
+//!
+//!  The response pdf consists of a central Gaussians around 1 and an
+//!  interpolated step function (Histogram) parametrizing the tail:
+//!  \f[
+//!   p(r) = c \cdot G(1,\sigma) + (1-c) \cdot H_{inter}(b_{i})
+//!  \f]
+//!
+//!  The truth pdf is \f$ f(t) = N/t^{n} \f$. The normalization
+//!  is such that the dijet probability
+//!  \f[
+//!    p = \int\;dt\;f(t)r(m_{1}/t)r(m_{2}/t)
+//!  \f]
+//!  is normalized to one. Therefore: \f$ n > 3 \f$
+//!
+//!  Number of free parameters:
+//!   - towers: 0
+//!   - jets:   12
+//!     - 0:      Normalization \f$ c \f$
+//!     - 1:      Width \f$ \sigma \f$ of main Gaussian
+//!     - 2 - 11: Bin content of histogram
+//!   - tracks: 0
+//!   - global: 1
+//!     - The exponent of the truth spectrum
+// ------------------------------------------------------------------------
+class SmearStepGaussInter : public Parametrization
+{ 
+ public:
+  //!  \brief Constructor
+  //!  \param rmin    Minimum of binned part of response pdf \f$ H_{inter} \f$
+  //!  \param rmax    Maximum of binned part of response pdf \f$ H_{inter} \f$
+  //!  \param rnsteps Number of bins of binned part of response pdf \f$ H_{inter} \f$
+  //!  \param tmin    Minimum of truth pdf
+  //!  \param tmax    Maximum of truth pdf
+  //!  \param scale   Parameter scales
+  // ------------------------------------------------------------------------
+  SmearStepGaussInter(double rmin, double rmax, int rnsteps, double tmin, double tmax, const std::vector<double>& scale) : Parametrization(0,rnsteps+3,0,1),
+    mNGausPar(3),
+    mRMin(rmin),
+    mRMax(rmax),
+    mNStepPar(rnsteps),
+    mBinWidth((mRMax - mRMin)/mNStepPar),
+    mTMin(tmin),
+    mTMax(tmax),
+    mScale(scale)
+    {
+      for(int i = 0; i < mNStepPar+1; i++) {
+	mBinCenters.push_back( mRMin + (0.5+i)*mBinWidth );
+      }
+      assert( 0.0 <= mRMin && mRMin < mRMax );
+      assert( 0.0 <= mTMin && mTMin < mTMax );
+      assert( mScale.size() >= (nJetPars()+nGlobalJetPars()) );      
+    }
+
+  ~SmearStepGaussInter() { mBinCenters.clear(); }
+
+  const char* name() const { return "SmearStepGaussInter";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const { return x->pt; }
+
+  //!  \brief Returns probability density of response
+  //!  \param x   TMeasurement::pt is response for which the 
+  //!             probability density is returned
+  //!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
+  //!  \return Probability density of response
+  // ------------------------------------------------------------------------
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    // Probability density from Gaussian part
+    double c = mScale.at(0)*par[0];
+    double u = mScale.at(1)*par[1];
+    double s = mScale.at(2)*par[2];
+    
+    double p = c / sqrt(2* M_PI ) / s * exp(-pow((x->pt - u) / s, 2) / 2);
+
+    
+    // Probability density from step function part
+    // Copy parameter values to temp array for normalization
+    double norm = 0.;
+    double tmpPar[mNStepPar];
+    for(int i = 0; i < mNStepPar; i++) {
+      tmpPar[i] = mScale.at(mNGausPar+i)*par[mNGausPar+i];
+      if( tmpPar[i] < 0. ) tmpPar[i] = 0.;
+      norm += tmpPar[i];
+    }
+/*     std::cout << "\n\n"; */
+/*     for(int i = 0; i < mNStepPar; i++) { */
+/*       std::cout << i << ": " << mScale.at(mNGausPar+i) << "  " << tmpPar[i] << std::endl; */
+/*     } */
+    norm = (1.-c)/norm/mBinWidth;
+    
+    p += norm*interpolate(x->pt,tmpPar);
+
+    return p;
+  }
+
+  //!  \brief Returns probability density of truth multiplied by normalization
+  //!         of dijet probability (see also SmearDiJet::TruthPDF(t)).
+  //!  \param x   TMeasurement::pt is truth for which the 
+  //!             probability density is returned
+  //!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
+  //!  \return Probability density of truth times normalization of dijet probability
+  // ------------------------------------------------------------------------
+  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+    double p = 0.;
+    if( mTMin < x->pt && x->pt < mTMax ) {
+      double n    = mScale.at(nJetPars()) * par[0];        // The exponent
+      double k    = n - 3.;
+      double norm = k / ( pow(mTMin,-k) - pow(mTMax,-k) );
+
+      p = norm / pow( x->pt, n );
+    }
+    return p;
+  }
+
+
+ private:
+  const int    mNGausPar;              //!< Number of parameters of Gaussian part of pdf
+  const double mRMin;                  //!< Minimum of non-zero range of response pdf
+  const double mRMax;                  //!< Maximum of non-zero range of response pdf
+  const int    mNStepPar;              //!< Number of parameters of step part of pdf
+  const double mBinWidth;              //!< Bin width
+  const double mTMin;                  //!< Minimum of non-zero range of truth pdf
+  const double mTMax;                  //!< Maximum of non-zero range of truth pdf
+  const std::vector<double> mScale;    //!< Parameter scales
+  std::vector<double> mBinCenters;     //!< Centers of bins
+
+
+
+  //!  \brief Linear interpolation between two bins
+  //!
+  //!  Returns the linearly weighted mean value of two adjacent bin
+  //!  contents, where the two bins are the ones whose bin centers
+  //!  are closest to r. The contents are weighted with the distance
+  //!  of r from the corresponding bin center. The interpolation
+  //!  assumes mNStepPar bins. At the left and right edges of the
+  //!  binned range, the interpolation is done assuming 0 bin content
+  //!  outside the binned range.
+  //!
+  //!  \param r   Response
+  //!  \param par Pointer to paramter array of size mNStepPar
+  //!  \return    Interpolated bin content
+  // ------------------------------------------------------------------------
+  double interpolate(double r, const double * par) const {
+    double p = 0.;     // The interpolated parameter
+
+    // Check that r is in range of binning +/- 0.5*mBinWidth
+    if( r > mRMin - 0.5*mBinWidth  &&  r < mRMax + 0.5*mBinWidth ) {
+      // Find index i of the next larger bin center
+      unsigned int i = 0;                              
+      while( r > mBinCenters.at(i) ) i++;
+      assert( i < mBinCenters.size() );
+
+      double dx  = mBinCenters.at(i) - r;  // Distance to next larger bin center
+      dx        /= mBinWidth;              // dx relative to bin width
+      double a   = 0.;
+      double b   = 0.;
+
+      // Find bin contents to be interpolated
+      if( i == 0 ) { // Left edge
+	a = 0.;
+	b = par[0];
+      }
+      else if( i == mBinCenters.size()-1 ) { // Right edge
+	a = par[mNStepPar-1];
+	b = 0.;
+      }
+      else { // Central part
+	a = par[i-1];
+	b = par[i];
+      }
+
+      // Interpolate contents
+      p = dx * a + (1-dx) * b;
+    }
+
+    return p;
+  }
+};
 #endif

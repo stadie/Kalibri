@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.47 2009/04/27 13:50:11 mschrode Exp $
+// $Id: Parameters.h,v 1.48 2009/04/28 06:48:22 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -22,6 +22,15 @@
 #include "TMath.h"
 
 class ConfigFile;
+
+
+
+//!  \brief Connection between detector geometry and fit parameters,
+//!         interface to response and error parametrizations
+//!  \author Christian Autermann
+//!  \date   Wed Jul 18 13:54:50 CEST 2007
+//!  $Id: Parameters.h,v 1.48 2009/04/28 06:48:22 mschrode Exp $
+// -----------------------------------------------------------------
 class TParameters {  
 public :
   
@@ -341,7 +350,7 @@ private:
 
   static TParameters *instance; 
 
-  static Parametrization* CreateParametrization(const std::string& name);
+  static Parametrization* CreateParametrization(const std::string& name, const ConfigFile& config);
   
   class Cleaner
   {

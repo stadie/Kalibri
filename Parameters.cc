@@ -1,3 +1,5 @@
+// $Id: $
+
 #include <fstream>
 #include <cassert>
 #include <pwd.h>
@@ -15,7 +17,9 @@ using namespace std;
 
 TParameters* TParameters::instance = 0;
 
-Parametrization* TParameters::CreateParametrization(const std::string& name) {
+
+// -----------------------------------------------------------------
+Parametrization* TParameters::CreateParametrization(const std::string& name, const ConfigFile& config) {
   if(name == "StepParametrization") {
     return new StepParametrization();
   } else if(name == "StepParametrizationEnergy") {
@@ -48,6 +52,25 @@ Parametrization* TParameters::CreateParametrization(const std::string& name) {
     return new L2L3JetTrackParametrization();
   } else if(name == "ToySimpleInverseParametrization") {
     return new ToySimpleInverseParametrization();
+  } else if(name == "SmearFermiTail") {
+    return new SmearFermiTail();
+  } else if(name == "SmearTwoGauss") {
+    std::vector<double> scale = bag_of<double>(config.read<string>("Jet parameter scales",""));
+    return new SmearTwoGauss(scale);
+  } else if(name == "SmearStepGauss") {
+    double min    = config.read<double>("Response pdf min",0.);
+    double max    = config.read<double>("Response pdf max",1.8);
+    int    nsteps = config.read<int>("Response pdf nsteps",10);
+    std::vector<double> scale = bag_of<double>(config.read<string>("Jet parameter scales",""));
+    return new SmearStepGauss(min,max,nsteps,scale);
+  } else if(name == "SmearStepGaussInter") {
+    double rmin    = config.read<double>("Response pdf min",0.);
+    double rmax    = config.read<double>("Response pdf max",1.8);
+    int    rnsteps = config.read<int>("Response pdf nsteps",10);
+    double tmin    = config.read<double>("DiJet integration min truth",100.);
+    double tmax    = config.read<double>("DiJet integration max truth",1000.);
+    std::vector<double> scale = bag_of<double>(config.read<string>("Jet parameter scales",""));
+    return new SmearStepGaussInter(rmin,rmax,rnsteps,tmin,tmax,scale);
   }
   return 0;
 }
@@ -89,9 +112,17 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "StepJetParametrization";
   } else if(parclass == "TTrackParameters") {
     parclass = "TrackParametrization";
-  } 
+  } else if(parclass == "SmearParametrizationFermiTail") {
+    parclass = "SmearFermiTail";
+  } else if(parclass == "SmearParametrizationTwoGauss") {
+    parclass = "SmearTwoGauss";
+  } else if(parclass == "SmearParametrizationStepGauss") {
+    parclass = "SmearStepGauss";
+  } else if(parclass == "SmearParametrizationStepGaussInter") {
+    parclass = "SmearStepGaussInter";
+  }
 
-  Parametrization *param = CreateParametrization(parclass);
+  Parametrization *param = CreateParametrization(parclass,config);
   if(! param) {
     cerr << "TParameters::CreateParameters: could not instantiate class " << parclass << '\n';
     exit(1);

@@ -1,7 +1,6 @@
-//  \brief 
 //  \author Christian Autermann
 //  \date Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
+// $Id: $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -17,7 +16,7 @@ using namespace std;
 //!
 //!  \sa TAbstractData 
 enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
-               InvMass, typeTowerConstraint, ParLimit};
+               InvMass, typeTowerConstraint, ParLimit, TypeSmearPhotonJet, TypeSmearDiJet };
 
 //!  \brief Base class of a measurement
 //!
@@ -30,7 +29,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
+//!  $Id: $
 class TMeasurement
 {
 public:
@@ -59,7 +58,7 @@ public:
 //!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
+//!  $Id: $
 class TTower : public TMeasurement
 { 
 public:
@@ -81,7 +80,7 @@ public:
 //!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
+//!  $Id: $
 class TJet : public TMeasurement
 {
 public:
@@ -95,16 +94,18 @@ public:
   enum Flavor{ gluon=0, uds=1, c=2, b=3 };
   TJet():TMeasurement(){}; 
   TJet(double Et,double EmEt,double HadEt,double OutEt,double E,double eta,
-       double phi, Flavor flavor, double genPt, double ZSPcor, double JPTcor, double L2cor, double L3cor,
+       double phi, Flavor flavor, double genPt, double dR,
+       double ZSPcor, double JPTcor, double L2cor, double L3cor,
        double L2L3cor, double L2L3JPTcor)
-    : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi),flavor(flavor), genPt(genPt), ZSPcor(ZSPcor),
-    JPTcor(JPTcor), L2cor(L2cor),L3cor(L3cor),L2L3cor(L2L3cor),L2L3JPTcor(L2L3JPTcor) {};
+    : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi),flavor(flavor), genPt(genPt), dR(dR),
+    ZSPcor(ZSPcor), JPTcor(JPTcor), L2cor(L2cor),L3cor(L3cor),L2L3cor(L2L3cor),L2L3JPTcor(L2L3JPTcor) {};
   TJet(TMeasurement* j):TMeasurement(j){};
   //TJet(TJet* j):TMeasurement(j){/*further initialization*/};
   virtual ~TJet() {}
 //variables specific only to jets (i.e. mass)
   Flavor flavor;      //!< The jet's Flavor
-  double genPt;       //!< The generated pt in case of MC data
+  double genPt;       //!< The genjet pt
+  double dR;          //!< \f$ \Delta R \f$ between jet and genjet
   double ZSPcor;      //!< Zero-surpression correction factor (JetMET level 1)
   double JPTcor;      //!< Jet + Track correction factor
   double L2cor;       //!< Relative eta correction factor (JetMET level 2)
@@ -122,7 +123,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
+//!  $Id: $
 class TTrack : public TMeasurement
 {
 public:
@@ -182,7 +183,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
+//! $Id: $
 class TData
 {
 public:
@@ -228,14 +229,18 @@ public:
   //!  function is calculated numerically and returned
   //!  by reference, where
   //!  \f[
-  //!   \frac{\partial \chi^{2}}{\partial p}
-  //!   = \sum \textrm{temp\_derivative1}
+  //!   \frac{\partial \chi^{2} }{\partial p}
+  //!   = \sum \frac{\textrm{temp\_derivative1}}{2\epsilon}
   //!  \f]
-  //!  and alike for the second derivative.
+  //!  and
+  //!  \f[
+  //!   \frac{\partial^{2} \chi^{2} }{\partial p^{2}}
+  //!   = \sum \frac{\textrm{temp\_derivative2}}{\epsilon^{2}}
+  //!  \f]
   //!
   //!  \param temp_derivative1 Pointer to first derivative contribution
   //!  \param temp_derivative2 Pointer to second derivative contribution
-  //!  \param epsilon Step size for derivative calculation
+  //!  \param epsilon Step size \f$ \epsilon \f$  for derivative calculation
   //!  \return The normalized, squared residual\f$ z^{2} \f$ of this event
   virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
 
@@ -284,7 +289,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.64 2009/04/08 14:46:18 stadie Exp $
+//!  $Id: $
 class TAbstractData : public TData
 {
 public:
@@ -401,7 +406,6 @@ public:
     double error = GetParametrizedErr(paramess);
     return error *error;
   };
-
 
   double GetTruth() const { return _truth;};
   virtual double GetScale() const {return GetTruth();};//flatten spectrum w.r.t. this
@@ -899,7 +903,7 @@ public:
   virtual double combine() const;  
 };
 
-//data class to limit a parameter
+//!  \brief Data class to limit a parameter
 class TData_ParLimit : public TAbstractData
 {
  public:

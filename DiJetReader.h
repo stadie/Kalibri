@@ -36,7 +36,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.7 2009/06/08 16:14:00 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.8 2009/06/09 07:04:25 mschrode Exp $
 // ----------------------------------------------------------------   
 class DiJetReader : public EventReader{
  public:
@@ -46,6 +46,7 @@ class DiJetReader : public EventReader{
 
  private:
   TData* createPtBalanceEvent();
+  TData* createSmearEvent();
   int createJetTruthEvents(std::vector<TData*>& data);
 
   NJetSel njet;                //!< Njet Selector
@@ -73,6 +74,12 @@ class DiJetReader : public EventReader{
   int    nEta_cut_on_jet;      //!< Number of events rejected by Eta_cut_on_jet
   int    nHad_cut_min;         //!< Number of events rejected by Had_cut_min
   int    nHad_cut_max;         //!< Number of events rejected by Had_cut_max
+
+  int    mMaxNIter;            //!< Max number of iterations in integration
+  double mEps;                 //!< Integration precision for convergence
+  double mMin;                 //!< Minimum of truth spectrum in integration
+  double mMax;                 //!< Maximum of truth spectrum in integration
+  double mTruthSpecExp;        //!< Exponent of truth spectrum
 };
 
 

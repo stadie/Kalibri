@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.4 2009/03/03 17:40:03 stadie Exp $
+//    $Id: TopReader.cc,v 1.5 2009/03/11 07:57:12 snaumann Exp $
 //   
 #include "TopReader.h"
 
@@ -391,7 +391,7 @@ TData* TopReader::createTwoJetsInvMassEvents()
 	new JetWithTowers(top.JetEt[i], em * factor, had * factor,
 			  out * factor, top.JetE[i], top.JetEta[i],
 			  top.JetPhi[i], TJet::uds, top.GenJetPt[i],
-			  0., 0., 0., 0., 0., 0.,
+			  0., 0., 0., 0., 0., 0.,0.,
 			  p->jet_function(top.TowId_eta[closestTower],
 					  top.TowId_phi[closestTower]),
 			  jet_error_param, p->global_jet_function(), Et_cut_on_jet);
@@ -409,7 +409,7 @@ TData* TopReader::createTwoJetsInvMassEvents()
     else { 
       *jet = new Jet(top.JetEt[i], em * factor, had * factor, out * factor,
 		     top.JetE[i], top.JetEta[i], top.JetPhi[i],
-		     TJet::uds, top.GenJetPt[i], 0., 0., 0, 0., 0., 0.,
+		     TJet::uds, top.GenJetPt[i], 0., 0., 0., 0, 0., 0., 0.,
 		     p->jet_function(top.TowId_eta[closestTower],
 				     top.TowId_phi[closestTower]),
 		     jet_error_param, p->global_jet_function(), Et_cut_on_jet);    

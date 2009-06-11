@@ -1,14 +1,9 @@
-//
-//    Reader for Photon Jet Events
-//
-//    This class reads events according fo the GammaJetSel
-//
-//    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.cc,v 1.16 2009/04/17 14:28:08 mschrode Exp $
-//   
+//  $Id: PhotonJetReader.cc,v 1.17 2009/06/08 16:14:46 mschrode Exp $
+
 #include "PhotonJetReader.h"
 
 #include "CalibData.h"
+#include "SmearPhotonJet.h"
 #include "JetTruthEvent.h"
 #include "Jet.h"
 #include "JetWithTowers.h"
@@ -19,34 +14,53 @@
 #include <iostream>
 #include <cstdlib>
 
+#include <TVector2.h>
+#include <TLorentzVector.h>
+
+
+
+// ----------------------------------------------------------------   
 PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) :
-  EventReader(configfile,p), Et_cut_on_gamma(0),Et_cut_on_jet(0),
-  Rel_cut_on_gamma(10),Had_cut_min(0),Had_cut_max(1),n_gammajet_events(0),
-  dataClass(0)
+  EventReader(configfile,p)
 {
+  // Maximum number of read events
   n_gammajet_events     = config->read<int>("use Gamma-Jet events",-1); 
   if(n_gammajet_events == 0) {
     delete config;
     config = 0;
     return ;
   }
-  string default_tree_name = config->read<string>("Default Tree Name","CalibTree");
-  string treename_gammajet = config->read<string>("Gamma-Jet tree", default_tree_name);
-  
+  // Cuts
   Et_cut_on_jet     = config->read<double>("Et cut on jet",0.0); 
-  Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0); 
-  Et_cut_on_gamma   = config->read<double>("Et cut on gamma",0.0); 
-  Et_cut_on_genJet  = config->read<double>("Et genJet min",0.0);
+  Et_cut_on_gamma   = config->read<double>("Et cut on gamma",0.0);
   Rel_cut_on_gamma  = config->read<double>("Relative Rest Jet Cut",0.2);
+  GenJetCutLow      = config->read<double>("Et genJet min",0.0);
+  GenJetCutUp       = config->read<double>("Et genJet max",10000.0);
+  DeltaRMatchingCut = config->read<double>("DeltaR cut on jet matching",0.25);
+  Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0);
   Had_cut_min       = config->read<double>("Min had fraction",0.07);
   Had_cut_max       = config->read<double>("Max had fraction",0.95);
-  
+  // Counter for cutflow
+  nEt_cut_on_jet     = 0;
+  nEt_cut_on_gamma   = 0;
+  nRel_cut_on_gamma  = 0;
+  nGenJetCutLow      = 0;    
+  nGenJetCutUp       = 0;     
+  nDeltaRMatchingCut = 0;
+  nEta_cut_on_jet    = 0;  
+  nHad_cut_min       = 0;     
+  nHad_cut_max       = 0;     
+
+  // Data class
   dataClass = config->read<int>("Gamma-Jet data class", 0);
-  if((dataClass < 0) || (dataClass > 2)) {
+  if( !( dataClass == 0 || dataClass == 1 || dataClass == 2 || dataClass == 5) ) {
     std::cout << "PhotonJetReader: Unknown data class " << dataClass << ". Using data class 0." << std::endl;
     dataClass = 0;
   }
 
+  // Input files
+  string default_tree_name = config->read<string>("Default Tree Name","CalibTree");
+  string treename_gammajet = config->read<string>("Gamma-Jet tree", default_tree_name);
   TTree* tchain_gammajet;
   vector<string> input_gammajet = 
     bag_of_string(config->read<string>( "Gamma-Jet input file", "input/gammajet.root" ));
@@ -72,18 +86,33 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
   config = 0;
 }
 
-PhotonJetReader::~PhotonJetReader()
-{
-  
-}
 
+
+// ----------------------------------------------------------------   
 int PhotonJetReader::readEvents(std::vector<TData*>& data)
 {
   if(n_gammajet_events == 0) return 0;
-  int nevent = gammajet.fChain->GetEntries();
-  int nevents_added = 0;
+
+  // Reset counters of rejected events
+  nEt_cut_on_jet     = 0;
+  nEt_cut_on_gamma   = 0;
+  nRel_cut_on_gamma  = 0;
+  nGenJetCutLow      = 0;    
+  nGenJetCutUp       = 0;     
+  nDeltaRMatchingCut = 0;
+  nEta_cut_on_jet    = 0;  
+  nHad_cut_min       = 0;     
+  nHad_cut_max       = 0;     
+
+  int nevent    = gammajet.fChain->GetEntries();  // Number of events in chain
+  int nReadEvts = 0;                              // Number of read events
+  int nGoodEvts = 0;                              // Number of events passing all cuts
+
+  cout << "\nReading Gamma-jet events for data class " << dataClass << "...\n";
   for (int i=0;i<nevent;i++) {
-    if(i%1000==0) cout<<"Gamma-Jet Event: "<<i<<endl;
+    nReadEvts++;
+
+    if(i%10000==0) cout<<"Gamma-Jet Event: "<<i<<endl;
     gammajet.fChain->GetEvent(i); 
     if (gammajet.NobjTowCal>200) {
       cerr<<"ERROR: Increase array sizes in GammaJetSelector; NobjTowCal="
@@ -91,87 +120,124 @@ int PhotonJetReader::readEvents(std::vector<TData*>& data)
       exit(8);
     }
  
-    //trivial cuts
-    if (gammajet.PhotonEt<Et_cut_on_gamma || 
-        //gammajet.JetGenPt<Et_cut_on_gamma ||
-	gammajet.JetGenPt<Et_cut_on_genJet ||
-        gammajet.JetCalPt<Et_cut_on_jet) continue;
-
-    if(fabs(gammajet.JetCalEta) > Eta_cut_on_jet) continue;
-
-    if (gammajet.NonLeadingJetPt   / gammajet.PhotonPt >  Rel_cut_on_gamma)  continue;    //fraction of unwanted stuff
-
-    TData*                 ev = 0;
-    if(dataClass == 0)     ev = createTruthMultMessEvent();
-    else if(dataClass > 0) ev = createJetTruthEvent();
-    
-    if(ev) {
-      data.push_back(ev); 
-      ++nevents_added;
-      if((n_gammajet_events >= 0) && (nevents_added >= n_gammajet_events))
-	break;
+    // Trivial cuts
+    bool goodEvent = true;
+    if( gammajet.JetGenEt < GenJetCutLow ) {
+      nGenJetCutLow++;
+      goodEvent = false;
+    } else if( gammajet.JetGenEt > GenJetCutUp ) {
+      nGenJetCutUp++;
+      goodEvent = false;
+    } else if( pow(gammajet.JetCalEta - gammajet.JetGenEta,2)
+	       + pow(TVector2::Phi_mpi_pi(gammajet.JetCalPhi - gammajet.JetGenPhi),2)
+	       > pow(DeltaRMatchingCut,2) ) {
+      nDeltaRMatchingCut++;
+      goodEvent = false;
+    } else if( gammajet.PhotonEt < Et_cut_on_gamma ) {
+      nEt_cut_on_gamma++;
+      goodEvent = false;
+    } else if( gammajet.JetCalEt < Et_cut_on_jet ) {
+      nEt_cut_on_jet++;
+      goodEvent = false;
+    } else if( gammajet.NonLeadingJetPt / gammajet.PhotonPt > Rel_cut_on_gamma) {
+      nRel_cut_on_gamma++;
+      goodEvent = false;
+    } else if( fabs(gammajet.JetCalEta) > Eta_cut_on_jet ) {
+      nEta_cut_on_jet++;
+      goodEvent = false;
     }
 
+    if( goodEvent ) {
+      
+      TData*                                     ev = 0;
+      if(dataClass == 0)                         ev = createTruthMultMessEvent();
+      else if(dataClass == 1 || dataClass == 2)  ev = createJetTruthEvent();
+      else if(dataClass == 5)                    ev = createSmearEvent();
+      
+      if(ev) {
+	data.push_back(ev); 
+	nGoodEvts++;
+      }
+    }
+
+    if((n_gammajet_events >= 0) && (nReadEvts >= n_gammajet_events)) break;
   }
-  return nevents_added;
+
+  // Print cut flow
+  std::cout << "Read Gamma-jet events:\n";
+  std::cout << "  " << (nReadEvts-=nGenJetCutLow) << std::flush;
+  std::cout << " gamma-jet events with ptgen > " << GenJetCutLow << "\n";
+  std::cout << "  " << (nReadEvts-=nGenJetCutUp) << std::flush;
+  std::cout << " gamma-jet events with ptgen < " << GenJetCutUp << "\n";
+  std::cout << "  " << (nReadEvts-=nDeltaRMatchingCut) << std::flush;
+  std::cout << " gamma-jet events with DeltaR < " << DeltaRMatchingCut << "\n";
+  std::cout << "  " << (nReadEvts-=nEt_cut_on_gamma) << std::flush;
+  std::cout << " gamma-jet events photon Et > " << Et_cut_on_gamma << "\n";
+  std::cout << "  " << (nReadEvts-=nEt_cut_on_jet) << std::flush;
+  std::cout << " gamma-jet events jet Et > " << Et_cut_on_jet << "\n";
+  std::cout << "  " << (nReadEvts-=nRel_cut_on_gamma) << std::flush;
+  std::cout << " gamma-jet events (non-leading jet Et) / (photon Et) > " << Rel_cut_on_gamma << "\n";
+  std::cout << "  " << (nReadEvts-=nEta_cut_on_jet) << std::flush;
+  std::cout << " gamma-jet events with |eta| < " << Eta_cut_on_jet << "\n";
+  std::cout << "  " << (nReadEvts-=nHad_cut_min) << std::flush;
+  std::cout << " gamma-jet events with hadronic fraction > " << Had_cut_min << "\n";
+  std::cout << "  " << (nReadEvts-=nHad_cut_max) << std::flush;
+  std::cout << " gamma-jet events with hadronic fraction < " << Had_cut_max << "\n";
+  std::cout << "Stored " << nGoodEvts << " events for analysis.\n";
+
+  return nGoodEvts;
 }
 
+
+
+// ----------------------------------------------------------------   
 TData* PhotonJetReader::createJetTruthEvent()
 {
-  double em = 0;
-  double had = 0;
-  double out = 0;
-  double err2 = 0;
-  TMeasurement tower;
-  double* terr = new double[gammajet.NobjTowCal];
-  double dR = 10;
+  double em        = 0;
+  double had       = 0;
+  double out       = 0;
+  double dR        = 10;
   int closestTower = 0;
+  TMeasurement tower;
+
+  TLorentzVector LJet(0,0,0,0);
+  LJet.SetPtEtaPhiE(gammajet.JetCalPt,gammajet.JetCalEta,gammajet.JetCalPhi,gammajet.JetCalE);
+  TLorentzVector LGenJet(0,0,0,0);
+  LGenJet.SetPtEtaPhiE(gammajet.JetGenPt,gammajet.JetGenEta,gammajet.JetGenPhi,gammajet.JetGenE);
+
+  // Loop over towers, find closest tower to jet axis,
+  // and sum up emf, hadf, outf
   for(int n = 0; n < gammajet.NobjTowCal; ++n) {
-    em += gammajet.TowEm[n];
-    had +=  gammajet.TowHad[n];
-    out +=  gammajet.TowOE[n];  
-    tower.pt = gammajet.TowEt[n];
-    double scale = gammajet.TowEt[n]/gammajet.TowE[n];
-    tower.EMF = gammajet.TowEm[n]*scale;
-    tower.HadF = gammajet.TowHad[n]*scale;
-    tower.OutF = gammajet.TowOE[n]*scale;
-    tower.eta = gammajet.TowEta[n];
-    tower.phi = gammajet.TowPhi[n];
-    tower.E = gammajet.TowE[n];
-    terr[n] = tower_error_param(&tower.pt,&tower,0); 
-    if(terr[n] == 0) {
-      //assume toy MC???
-      terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
-    }
-    terr[n] *= terr[n];
-    err2 += terr[n];
-    double dphi = TVector2::Phi_mpi_pi(gammajet.JetCalPhi-tower.phi);
-    double dr = sqrt((gammajet.JetCalEta-tower.eta)*(gammajet.JetCalEta-tower.eta)+
-		     dphi*dphi);     
+    em          += gammajet.TowEm[n];
+    had         +=  gammajet.TowHad[n];
+    out         +=  gammajet.TowOE[n];  
+    
+    double dphi  = TVector2::Phi_mpi_pi(gammajet.JetCalPhi-tower.phi);
+    double dr    = sqrt((gammajet.JetCalEta-tower.eta)*(gammajet.JetCalEta-tower.eta)+
+			dphi*dphi);     
     if(dr < dR) {
       dR = dr;
       closestTower = n;
     }
-  }  //calc jet error
-  if(had/(had + em) < Had_cut_min) { return 0;}
-  if(had/(had + em) > Had_cut_max) { return 0;}
-  double factor =  gammajet.JetCalEt /  gammajet.JetCalE;
-  tower.pt = gammajet.JetCalEt;
-  tower.EMF = em * factor;
-  tower.HadF = had * factor;
-  tower.OutF = out * factor;
-  tower.eta = gammajet.JetCalEta;
-  tower.phi = gammajet.JetCalPhi;
-  tower.E   = gammajet.JetCalE;
-  double err =  jet_error_param(&tower.pt,&tower,0);
-  err2 += err * err;
-  //use first tower, as the towers should be sorted in E or Et 
+  } // End of loop over towers
+  
+  // Cuts on hadronic fraction 
+  if(had/(had + em) < Had_cut_min) {
+    nHad_cut_min++;
+    return 0;
+  } else if(had/(had + em) > Had_cut_max) { 
+    nHad_cut_max++;
+    return 0;
+  }
+
+  double factor = gammajet.JetCalEt /  gammajet.JetCalE;
+
   Jet *j;
   if(dataClass == 2) {
     JetWithTowers *jt = 
       new JetWithTowers(gammajet.JetCalEt,em * factor,had * factor,
 			out * factor,gammajet.JetCalE,gammajet.JetCalEta,
-			gammajet.JetCalPhi,TJet::uds,gammajet.JetGenEt,
+			gammajet.JetCalPhi,TJet::uds,gammajet.JetGenEt,LJet.DeltaR(LGenJet),
 			gammajet.JetCorrZSP,gammajet.JetCorrJPT,
 			gammajet.JetCorrL2,gammajet.JetCorrL3,
 			gammajet.JetCorrL2L3,gammajet.JetCorrL2L3JPT,
@@ -191,17 +257,82 @@ TData* PhotonJetReader::createJetTruthEvent()
   else { 
     j = new Jet(gammajet.JetCalEt,em * factor,had * factor,out * factor,
 		gammajet.JetCalE,gammajet.JetCalEta,gammajet.JetCalPhi,
-		TJet::uds,gammajet.JetGenEt,gammajet.JetCorrZSP,
+		TJet::uds,gammajet.JetGenEt,LJet.DeltaR(LGenJet),gammajet.JetCorrZSP,
 		gammajet.JetCorrJPT,gammajet.JetCorrL2,gammajet.JetCorrL3,
 		gammajet.JetCorrL2L3,gammajet.JetCorrL2L3JPT,
 		p->jet_function(gammajet.TowId_eta[closestTower],
 				gammajet.TowId_phi[closestTower]),
 		jet_error_param,p->global_jet_function(),Et_cut_on_jet);
   }
-  JetTruthEvent* jte = new JetTruthEvent(j,gammajet.PhotonEt,gammajet.EventWeight);
-  delete [] terr;
+  JetTruthEvent * jte = new JetTruthEvent(j,gammajet.PhotonEt,gammajet.EventWeight);
+  
   return jte;
 }
+
+
+
+//!  \note Measured pt is L2L3 corrected
+// ----------------------------------------------------------------   
+TData* PhotonJetReader::createSmearEvent()
+{
+  //Find the jets eta & phi index using the nearest tower to jet axis:
+  int    jet_index    = -1;
+  double min_tower_dr = 10.;
+  double em           = 0;
+  double had          = 0;
+  double out          = 0;
+  int    closestTower = 0;
+
+  TLorentzVector LJet(0,0,0,0);
+  LJet.SetPtEtaPhiE(gammajet.JetCalEt,gammajet.JetCalEta,gammajet.JetCalPhi,gammajet.JetCalE);
+  TLorentzVector LGenJet(0,0,0,0);
+  LGenJet.SetPtEtaPhiE(gammajet.JetGenPt,gammajet.JetGenEta,gammajet.JetGenPhi,gammajet.JetGenE);
+
+  for (int n=0; n<gammajet.NobjTowCal; ++n) {
+    em  += gammajet.TowEm[n];
+    had += gammajet.TowHad[n];
+    out += gammajet.TowOE[n];
+    TLorentzVector LTower(0,0,0,0);
+    LTower.SetPtEtaPhiE(gammajet.TowEt[n],gammajet.TowEta[n],gammajet.TowPhi[n],gammajet.TowE[n]);
+    double dr = LTower.DeltaR(LJet);
+    if (dr<min_tower_dr) {
+      min_tower_dr = dr;
+      closestTower = n;
+    }
+  }
+
+  if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; return 0; }
+  if(had/(had + em) < Had_cut_min) { return 0;}
+  if(had/(had + em) > Had_cut_max) { return 0;}
+
+  // Set up measurement
+  TJet * jet      = new TJet;
+  jet->pt         = gammajet.JetCorrL2 * gammajet.JetCorrL3 * gammajet.JetCalEt;
+  jet->eta        = gammajet.JetCalEta;
+  jet->phi        = gammajet.JetCalPhi;
+  jet->E          = gammajet.JetCalE;
+  jet->genPt      = gammajet.JetGenPt;
+  jet->dR         = LJet.DeltaR(LGenJet);
+  jet->ZSPcor     = gammajet.JetCorrZSP; 
+  jet->JPTcor     = gammajet.JetCorrJPT; 
+  jet->L2cor      = gammajet.JetCorrL2; 
+  jet->L3cor      = gammajet.JetCorrL3; 
+  jet->L2L3cor    = gammajet.JetCorrL2 * gammajet.JetCorrL3; 
+  jet->L2L3JPTcor = 1.;//gammajet.JetCorrL2L3JPT[ij]; 
+  //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
+  double factor    = gammajet.JetCalEt /  gammajet.JetCalE;
+  jet->HadF       = had * factor;
+  jet->EMF        = em * factor;
+  jet->OutF       = out * factor;
+
+  SmearPhotonJet * pje = new SmearPhotonJet(jet,gammajet.PhotonEt,1.,
+					    p->jet_function(gammajet.TowId_eta[closestTower],
+							    gammajet.TowId_phi[closestTower]));
+
+  return pje;
+}
+
+
 
 TData* PhotonJetReader::createTruthMultMessEvent() 
 {
@@ -211,8 +342,12 @@ TData* PhotonJetReader::createTruthMultMessEvent()
     double em = 0;
     double had = 0;
     double out = 0;
-    TLorentzVector Ljet(0,0,0,0);
-    Ljet.SetPtEtaPhiE(gammajet.JetCalEt,gammajet.JetCalEta,gammajet.JetCalPhi,gammajet.JetCalE);
+
+    TLorentzVector LJet(0,0,0,0);
+    LJet.SetPtEtaPhiE(gammajet.JetCalEt,gammajet.JetCalEta,gammajet.JetCalPhi,gammajet.JetCalE);
+    TLorentzVector LGenJet(0,0,0,0);
+    LGenJet.SetPtEtaPhiE(gammajet.JetGenPt,gammajet.JetGenEta,gammajet.JetGenPhi,gammajet.JetGenE);
+
     /*
     for (int n=0; n<gammajet.NobjTowCal; ++n){
       TLorentzVector Ltower(0,0,0,0);
@@ -227,7 +362,7 @@ TData* PhotonJetReader::createTruthMultMessEvent()
       out +=  gammajet.TowOE[n];
       TLorentzVector Ltower(0,0,0,0);
       Ltower.SetPtEtaPhiE(gammajet.TowEt[n],gammajet.TowEta[n],gammajet.TowPhi[n],gammajet.TowE[n]);
-      double dr = Ltower.DeltaR(Ljet);
+      double dr = Ltower.DeltaR(LJet);
       if (dr<min_tower_dr) {
 	jet_index = p->GetJetBin(p->GetJetEtaBin(gammajet.TowId_eta[n]),
 				 p->GetJetPhiBin(gammajet.TowId_phi[n]));
@@ -246,6 +381,7 @@ TData* PhotonJetReader::createTruthMultMessEvent()
     jetp->phi = gammajet.JetCalPhi;
     jetp->E   = gammajet.JetCalE;
     jetp->genPt =gammajet.JetGenPt;
+    jetp->dR    = LJet.DeltaR(LGenJet);
     jetp->ZSPcor =gammajet.JetCorrZSP; 
     jetp->JPTcor =gammajet.JetCorrJPT; 
     jetp->L2cor =gammajet.JetCorrL2; 

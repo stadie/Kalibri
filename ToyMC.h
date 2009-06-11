@@ -1,9 +1,12 @@
 #ifndef TOYMC_H
 #define TOYMC_H
 
-#include "TLorentzVector.h"
+#include <vector>
 
-class TRandom;
+#include "TH1F.h"
+#include "TLorentzVector.h"
+#include "TRandom.h"
+
 class TTree;
 
 
@@ -11,14 +14,33 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.10 2009/04/06 14:51:05 mschrode Exp $
+//!  $Id: ToyMC.h,v 1.11 2009/04/15 17:15:23 mschrode Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
  private:
   //!  \brief Resolution model
+  //! 
+  //!  - For calibration
+  //!    - 'Gauss': An energy dependent Gaussian resolution
+  //!      \f[
+  //!       \frac{\sigma}{p_{T}} = \frac{b_{0}}{\sqrt(p_{T})} \oplus b_{1}
+  //!      \f]
+  //!      
+  //!    - 'Landau': An energy dependent Landau resolution
+  //!
+  //!  - For jet smearing:
+  //!    - 'GaussUniform': A Gaussian resolution with a uniform
+  //!      low energy tail.
+  //!      The appropriate parametrizations are
+  //!      - SmearParametrizationFermiTail
+  //!  
+  //!    - 'TwoGauss': Resolution given by a central Gaussian around
+  //!      1 and a second Gaussian to model tails.
+  //!      The appropriate parametrizations are
+  //!      - SmearParametrizationStepGauss
   // ----------------------------------------------------------------  
-  enum Model { Gauss, Landau, Flat, Exp, Slope };
+  enum ResolutionModel { Gauss, Landau, GaussUniform, TwoGauss };
 
 
   //!  \brief Response for generation
@@ -28,66 +50,78 @@ class ToyMC {
   //!   R(E^{\textrm{true}}_{T}) = \frac{E^{\textrm{meas}}_{T}}{E^{\textrm{true}}_{T}}
   //!  \f]
   //!  depends on the parameters \f$ A_{i} \f$ as defined in the config file
-  //!  via the field 'ToyMC tower const'. The parameter values are
-  //!  internally stored in the array mTowConst.
+  //!  via the field 'ToyMC response parameters'. The response model is definded
+  //!  via the field 'ToyMC response model'.
   //!
   //!  Possible response models are:
-  //! 
-  //!  - 'Constant': Apply a constant response factor to the
-  //!    hadronic part of the jet Et:
-  //!    \f[ R = \frac{1}{A_{0}} \f]
-  //!    This is the default.
-  //!    The appropriate correction functions are
-  //!    - ToyParametrization
-  //!    - ToyJetParametrization
-  //!    - ToyStepParametrization
-  //!    - ToyStepJetParametrization
+  //!    - 'Constant': Apply a constant response factor to the
+  //!      hadronic part of the jet Et:
+  //!      \f[ R = \frac{1}{A_{0}} \f]
+  //!      This is the default.
+  //!      The appropriate correction functions are
+  //!      - ToyParametrization
+  //!      - ToyJetParametrization
+  //!      - ToyStepParametrization
+  //!      - ToyStepJetParametrization
   //!
-  //!  - 'L3': Level 3 response from JetMET group. In each event,
-  //!    the response factor is calculated from the total photon pt
-  //!    (i.e. \f$ E^{\textrm{true}}_{T} = P^{\gamma}_{T} \f$)
-  //!    but applied only to the hadronic part of the jet Et:
-  //!    \f[ R = A_{0}
-  //!          - \frac{A_{1}}{\log^{A_{2}}_{10}(E^{\textrm{true}}_{T}) + A_{3}}
-  //!          +\frac{A_{4}}{E^{\textrm{true}}_{T}}  \f]
-  //!    The appropriate correction functions are
-  //!    - L2L3JetParametrization
-  //!    - L2L3JetParametrization2
-  //! 
-  //!  - 'SimpleInverse': In each event,
-  //!    the response factor is calculated from the total photon pt
-  //!    (i.e. \f$ E^{\textrm{true}}_{T} = P^{\gamma}_{T} \f$)
-  //!    but applied only to the hadronic part of the jet Et:
-  //!    \f[ R = 1 - \frac{A_{0}}{E^{\textrm{true}}_{T} + A_{1}} \f]
-  //!    The appropriate correction function is
-  //!    - ToySimpleInverseParametrization
+  //!    - 'L3': Level 3 response from JetMET group. In each event,
+  //!      the response factor is calculated from the total photon pt
+  //!      (i.e. \f$ E^{\textrm{true}}_{T} = P^{\gamma}_{T} \f$)
+  //!      but applied only to the hadronic part of the jet Et:
+  //!      \f[ R = A_{0}
+  //!            - \frac{A_{1}}{\log^{A_{2}}_{10}(E^{\textrm{true}}_{T}) + A_{3}}
+  //!            +\frac{A_{4}}{E^{\textrm{true}}_{T}}  \f]
+  //!      The appropriate correction functions are
+  //!      - L2L3JetParametrization
+  //!      - L2L3JetParametrization2
+  //!   
+  //!    - 'SimpleInverse': In each event,
+  //!      the response factor is calculated from the total photon pt
+  //!      (i.e. \f$ E^{\textrm{true}}_{T} = P^{\gamma}_{T} \f$)
+  //!      but applied only to the hadronic part of the jet Et:
+  //!      \f[ R = 1 - \frac{A_{0}}{E^{\textrm{true}}_{T} + A_{1}} \f]
+  //!      The appropriate correction function is
+  //!      - ToySimpleInverseParametrization
+  //!
+  //!    - 'Flat'
+  //!    - 'Exp'
+  //!    - 'Slope'
   // ----------------------------------------------------------------  
-  enum Response { Constant, L3, SimpleInverse };
+  enum ResponseModel { Constant, L3, SimpleInverse, Flat, Slope, Exp };
 
 
-  //!  \brief Photon (truth) spectrum
+  //!  \brief Truth pt spectrum
   // ----------------------------------------------------------------  
-  enum Spectrum { Uniform, PowerLaw };
+  enum TruthSpectrum { Uniform, PowerLaw };
 
 
-  double          mMinEta;             //!< Minimum photon eta
-  double          mMaxEta;             //!< Maximum photon eta
-  double          mMinPt;              //!< Minimum photon pt
-  double          mMaxPt;              //!< Maximum photon pt
-  Spectrum        mPtSpectrum;         //!< Photon pt spectrum
-  double          mTowConst[5];        //!< Parameters for Response
-  double          mResoStochastic;     //!< Constant of stochastic term in resolution
-  double          mResoNoise;          //!< Constant of noise term in resolution
+  // Global variables
+  TRandom*        mRandom;             //!< Random generator
+  int             mType;               //!< Event type: Photonjet (1), Dijet (2)
+
+  // Parameters for truth
+  double          mMinEta;             //!< Minimum truth eta
+  double          mMaxEta;             //!< Maximum truth eta
+  double          mMinPt;              //!< Minimum truth pt
+  double          mMaxPt;              //!< Maximum truth pt
+  TruthSpectrum   mPtSpectrum;         //!< Truth pt spectrum
+  TLorentzVector  mPinput;             //!< Stores the truth lorentz vector of the current event
+
+  // Parameters for measurement 
+  int             mChunks;
   double          mJetSpreadA;
   double          mJetSpreadB;
   bool            mNoOutOfCone;
-  Model           mModel;
-  int             mChunks;
   double          mMaxPi0Frac;
   double          mMaxEmf;
-  TLorentzVector  mPinput;             //!< Stores the truth lorentz vector of the current event
-  TRandom*        mRandom;             //!< Random generator
-  Response        mResponse;           //!< Response model
+
+  ResponseModel   mResponseModel;      //!< Response model
+  std::vector<double> mParResp;        //!< Parameters for Response
+  TH1F          * mHistResp;           //!< For histogramed response
+
+  ResolutionModel mResolutionModel;    //!< Resolution model
+  std::vector<double> mParReso;        //!< Parameters for Respolution
+
 
 
   void genInput();
@@ -95,11 +129,15 @@ class ToyMC {
   void smearTower(double e, float& te, float& tem, float& thad, float& tout, float& temtrue, 
 		  float& thadtrue, float& touttrue);  
   int  splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi);
+  double GetMeasuredPt(double truePt) const;
 
 
  public:
   ToyMC();
-  ~ToyMC() {}
+  ~ToyMC() {
+    delete mRandom;
+    if( mHistResp ) delete mHistResp;
+  }
   int generatePhotonJetTree(TTree *tree, int nevents);
   int generateTrackClusterTree(TTree *tree, int nevents);
   int generateDiJetTree(TTree* CalibTree, int nevents);

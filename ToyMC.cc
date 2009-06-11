@@ -1,8 +1,5 @@
-//
-// Original Author:  Hartmut Stadie
-//         Created:  Mon Jun 30 11:00:00 CEST 2008
-// $Id: ToyMC.cc,v 1.21 2009/04/06 14:51:05 mschrode Exp $
-//
+// $Id: ToyMC.cc,v 1.22 2009/04/15 17:15:23 mschrode Exp $
+
 #include "ToyMC.h"
 
 #include <cmath>
@@ -11,30 +8,25 @@
 #include <cassert> 
 #include <ext/hash_map>
 
-#include "TRandom.h"
+#include "TF1.h"
+#include "TFile.h"
 #include "TRandom3.h"
 #include "TTree.h"
-#include "TFile.h"
 
 #include "ConfigFile.h"
 
 
 //!  \brief Default constructor
-//!  
-//!  Sets up a toy MC with tower constant of 1.24
-ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(Uniform),
-		 mResoStochastic(1.20),mResoNoise(0.05),mJetSpreadA(0.5),mJetSpreadB(0),
-		 mNoOutOfCone(true),mModel(Gauss),mChunks(200),mMaxPi0Frac(0.5),mMaxEmf(0.5),
-		 mResponse(Constant)
+// -----------------------------------------------------------------
+ToyMC::ToyMC() : mType(1), mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(Uniform),
+		 mChunks(200),mJetSpreadA(0.5),mJetSpreadB(0),mNoOutOfCone(true),mMaxPi0Frac(0.5),
+		 mMaxEmf(0.5),mResponseModel(Constant),mHistResp(0),
+		 mResolutionModel(Gauss)
 {
-  mTowConst[0] = 1.24;
-  mTowConst[1] = 0;
-  mTowConst[2] = 1;
-  mTowConst[3] = 1;
-  mTowConst[4] = 0;
   mRandom      = new TRandom3();
   mRandom->SetSeed(0);
-  }
+  mHistResp = 0;
+}
 
 
 //!  \brief Generates the input (truth) of an event
@@ -48,6 +40,7 @@ ToyMC::ToyMC() : mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(
 //!  - eta uniformly between mMinEta and mMaxEta
 //!  - phi uniformly between 0 and 2Pi
 //!  - a zero mass
+// -----------------------------------------------------------------
 void ToyMC::genInput() { 
   static double rand[3];
   mRandom->RndmArray(3,rand);
@@ -71,6 +64,7 @@ void ToyMC::genInput() {
 //!  \param phi Phi, is transformed to phi of corresponding tower center
 //!  \param ieta Index of tower covering eta
 //!  \param iphi Index of tower covering phi
+// -----------------------------------------------------------------
 void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi) 
 {
   const static float dEta = 2.5/30;
@@ -92,15 +86,71 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
   iphi++;
   if(iphi > 72) iphi = 72; 
   phi = (iphi-0.5) * dPhi;
-  /*
+
   assert(phi < 2 * M_PI);
   assert(ieta != 0);
   assert(iphi > 0);
   assert(iphi <= 72);
   assert(ieta <= 40);
   assert(ieta >= -40);
-  */
 }
+
+
+
+//!  \brief Calculate measured pt from truth i.e.
+//!         apply response and resolution
+//----------------------------------------------------------
+double ToyMC::GetMeasuredPt(double truePt) const {
+
+  // Apply resolution
+  double c = 0.;
+  if( mResponseModel == Constant
+      || (mResponseModel == Flat)
+      || (mResponseModel == Exp)
+      || (mResponseModel == Slope)) {
+    c = mParResp.at(0);
+  }
+  else if( mResponseModel == L3 ) { 
+    if( mPinput.Pt() < 0.1 ) {
+      c = mParResp.at(0) - mParResp.at(1)/mParResp.at(3) +  mParResp.at(4);
+    } else {
+      c = mParResp.at(0) - mParResp.at(1)/(pow(log10(mPinput.Pt()),mParResp.at(2)) + mParResp.at(3)) + mParResp.at(4)/mPinput.Pt();
+    }
+  }
+  else if( mResponseModel == SimpleInverse ) { 
+    c = 1. - mParResp.at(0)/(mPinput.Pt() + mParResp.at(1));
+  }
+  double pt = c * truePt;
+
+  // Apply resolution
+  double smear;
+  if( mResolutionModel == Landau) {
+    do {
+      smear =  mRandom->Landau(1,sqrt(mParReso.at(0)*mParReso.at(0)/pt + mParReso.at(1)*mParReso.at(1)));
+    } while((smear < 0) || (smear > 2));
+    smear = 2 - smear;
+  }
+  else if ( (mResolutionModel == Gauss) ) {
+    do {
+      smear = mRandom->Gaus(1.0,sqrt(mParReso.at(0)*mParReso.at(0)/pt + mParReso.at(1)*mParReso.at(1)));
+    } while((smear < 0) || (smear > 2));
+  }
+  else if( mResolutionModel == GaussUniform ) {
+    do{
+      smear = mRandom->Gaus( 1.0, mParReso.at(0) );
+    } while( smear < 0 || smear > 2 );
+    if( mRandom->Uniform() < mParReso.at(1) )
+      smear = mRandom->Uniform();
+  }
+  else if( mResolutionModel == TwoGauss ) {
+    do {
+      smear = mHistResp->GetRandom();
+    } while ( smear < 0.1 );
+  }
+
+  return smear*pt;
+}
+
 
 
 
@@ -115,49 +165,35 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
 //!  \param temtrue True em part of tower energy after scaling
 //!  \param thadtrue True had part of tower energy after scaling
 //!  \param touttrue True HO part of tower energy after scaling
+// -----------------------------------------------------------------
 void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout, 
 		       float& temtrue, float& thadtrue, float& touttrue) 
 {
+  // Generate emf and set electromagnetic
+  // and hadronic fraction; smear hadronic
+  // fraction with response
+  touttrue   = 0.;
+  tout       = touttrue;
   float emf  = mRandom->Uniform(mMaxEmf);
   temtrue    = emf * e;
   tem        = temtrue;
   thadtrue   = (1-emf) * e;
-  if( mResponse == L3 ) { 
-    double c =  (mPinput.Pt() < 0.1) ? mTowConst[0] - mTowConst[1]/mTowConst[3] +  mTowConst[4] :  mTowConst[0] - mTowConst[1]/(pow(log10(mPinput.Pt()),mTowConst[2]) + mTowConst[3]) + mTowConst[4]/mPinput.Pt();
-    if( c < 0 ) c = 0;
-    thadtrue *= c;
-  }
-  else if( mResponse == SimpleInverse ) { 
-    double c = 1 - mTowConst[0]/(mPinput.Pt() + mTowConst[1]);
-    thadtrue *= c;
-  }
-  else {
-    thadtrue /= mTowConst[0];
-  }
 
-  thad = thadtrue;
-  touttrue = 0;
-  tout = touttrue;
-  if(mModel == Landau) {
-    double smear;
-    do {
-      smear =  mRandom->Landau(1,sqrt(mResoStochastic * mResoStochastic/ thad + mResoNoise * mResoNoise));
-    } while((smear < 0) || (smear > 2));
-    smear = 2 - smear;
-    thad *= smear;
-  } else {
-    double smear;
-    do {
-      smear = mRandom->Gaus(1.0,sqrt(mResoStochastic * mResoStochastic/ thad + 
-				     mResoNoise * mResoNoise));
-    } while((smear < 0) || (smear > 2));
-    thad *= smear;
-  }
-  if(thad < 0) thad = 0;
+  // Apply response and resolution to hadronic fraction
+  thad       = GetMeasuredPt(thadtrue);
 
+  // Add up tower parts to total tower energy
   te = tem + thad + tout;
 }
 
+
+
+//!  \brief Split generated jet into towers
+//!
+//!  Splits generated true jet pt into 'mChunks' portions
+//!  (particles), spreads them in eta and phi and sums up
+//!  tower pt.
+// -----------------------------------------------------------------
 int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi) {
   typedef __gnu_cxx::hash_map<int,int> TowerMap;
 
@@ -242,6 +278,9 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
   return ntowers;
 }
 
+
+
+// -----------------------------------------------------------------
 int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents) 
 {
   //make tree
@@ -309,6 +348,9 @@ int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents)
   return CalibTree->GetEntriesFast(); 
 }
 
+
+
+// -----------------------------------------------------------------
 int ToyMC::makeTrackCluster(const char* filename, int nevents) {
   TFile* file = new TFile(filename,"recreate");
   TTree* CalibTree = new TTree("TrackClusterTree","TrackClusterTre");
@@ -319,6 +361,13 @@ int ToyMC::makeTrackCluster(const char* filename, int nevents) {
   return  nevents;
 }
 
+
+
+//!  \brief Generate photon-jet events and write into tree
+//!  \param CalibTree ROOT tree
+//!  \param nevents Number of photon-jet events
+//!  \return Number of generated events
+// -----------------------------------------------------------------
 int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
 {
   //make tree 
@@ -366,6 +415,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
 
   float jcalpt,jcalphi,jcaleta,jcalet,jcale;
 
+  // All correction factors are 1 in ToyMC
   float jscaleZSP    = 1.;
   float jscalel2     = 1.;
   float jscalel3     = 1.;
@@ -465,74 +515,117 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("EventWeight",&weight,"EventWeight/F");
   
 
-  TLorentzVector jet,genjet, tower;
+  // Generate events
+  TLorentzVector jet;
+  TLorentzVector genjet;
+  TLorentzVector tower;
+
+  // Loop over events
   for(int i = 0; i < nevents ; ++i) {
+    // Generate truth 4-momentum
     genInput();
-    photonpt = mPinput.Pt();
-    photoneta = mPinput.Eta();
-    photonphi = mPinput.Phi();
-    photonet = mPinput.Pt();
-    photone = mPinput.E();
-    gphotonpt = photonpt;
+
+    // Assign it's variables to genphoton
+    // and genphoton (perfectly measured)
+    photonpt   = mPinput.Pt();
+    photoneta  = mPinput.Eta();
+    photonphi  = mPinput.Phi();
+    photonet   = mPinput.Pt();
+    photone    = mPinput.E();
+    gphotonpt  = photonpt;
     gphotoneta = photoneta;
     gphotonphi = photonphi;
-    gphotonet = photonet;
-    gphotone = photone;
-    //jgenpt = mRandom->Gaus(photonpt,0.04 * photonpt);
-    jgenpt = photonet;
-    jgeneta = mRandom->Gaus(photoneta,1.0);
+    gphotonet  = photonet;
+    gphotone   = photone;
+
+    // Gen jet
+    jgenpt     = gphotonpt;
+    jgeneta    = mRandom->Gaus(photoneta,1.0);
     if((jgeneta > 3.0) || (jgeneta < -3.0)) {
       --i;
       continue;
     }
-    jgenphi = photonphi +M_PI;
+    jgenphi    = photonphi + M_PI;
+
+    // Create 4-momentum of genjet (massless)
     genjet.SetPtEtaPhiM(jgenpt,jgeneta,jgenphi,0);
+
+    // Split it into towers and set tower truth
     NobjTowCal = splitJet(genjet,towet,toweta,towphi,towid_eta,towid_phi);
+
+    // Reset jet and genjet 4-momenta. They will
+    // be repopulated by sum of tower 4-momenta
     jet.SetPtEtaPhiM(0,0,0,0);
     genjet.SetPtEtaPhiM(0,0,0,0);
 
-    double towmean = mTowConst[0];
-    if(mModel == Flat) mTowConst[0] = 1/mRandom->Uniform(1.5);
-    else if(mModel == Exp) mTowConst[0] = 1/mRandom->Exp(0.5);
-    else if(mModel == Slope) {
+    // Set random response parameters for this event
+    // if required by response model
+    if      (mResponseModel == Flat) mParResp.at(0) = mRandom->Uniform(1.5);
+    else if (mResponseModel == Exp)  mParResp.at(0) = mRandom->Exp(0.5);
+    else if (mResponseModel == Slope) {
       double u1 = mRandom->Uniform(2);
       double u2 = mRandom->Uniform(2);
-      mTowConst[0] = 1/(2 - std::max(u1,u2));
+      mParResp.at(0) = 2. - std::max(u1,u2);
     }
+
+    // Generate pi0 fraction i.e. non-hadronic fraction
     double p0frac = mRandom->Uniform(mMaxPi0Frac);
+
+    // Loop over towers and smear truth with response factor
     for(int j = 0; j < NobjTowCal ; ++j) {
+      // Set tower truth 4-momentum
       tower.SetPtEtaPhiM(towet[j],toweta[j],towphi[j],0);
-      towen[j] =  tower.E();
-      genjet += tower;
+      towen[j]  =  tower.E();
+
+      // Add tower truth to genjet
+      genjet   += tower;
+
+      // Smear hadronic par of tower energy
       smearTower((1 - p0frac) * tower.E(),towen[j],towem[j],towhd[j],towoe[j],
 		 towemtrue[j],towhdtrue[j],towoetrue[j]); 
-      towen[j] += p0frac * tower.E();
-      towem[j] += p0frac * tower.E();
+
+      // Add remaining em part
+      towen[j]     += p0frac * tower.E();
+      towem[j]     += p0frac * tower.E();
       towemtrue[j] += p0frac * tower.E();
-      tower *= towen[j]/tower.E();
-      towet[j] = tower.Pt();
+
+      // Multiply tower 4-momentum with response
+      tower        *= towen[j]/tower.E();
+      towet[j]      = tower.Pt();
+
+      // Add tower to jet
       jet += tower;
-    }
-    mTowConst[0] = towmean;
-    jcalpt = jet.Pt();
-    jcaleta = jet.Eta();
-    jcalphi = jet.Phi();
-    jcalet = jet.Pt();
-    jcale = jet.E(); 
-    jgenphi = genjet.Phi();
-    jgenet = genjet.Pt();
-    jgenpt = genjet.Pt();
-    jgene = genjet.E();
-    jgeneta = genjet.Eta();
-    mcalmet = 0;
-    mcalphi = 0;
-    mcalsum = 0;
+    } // End loop over towers
+
+    // Set jet and genjet variables
+    jcalpt   = jet.Pt();
+    jcaleta  = jet.Eta();
+    jcalphi  = jet.Phi();
+    jcalet   = jet.Pt();
+    jcale    = jet.E(); 
+    jgenphi  = genjet.Phi();
+    jgenet   = genjet.Pt();
+    jgenpt   = genjet.Pt();
+    jgene    = genjet.E();
+    jgeneta  = genjet.Eta();
+    mcalmet  = 0;
+    mcalphi  = 0;
+    mcalsum  = 0;
+
+    // Fill tree
     CalibTree->Fill();
     if(i % 1000 == 0) std::cout << "generating event " << i << '\n';
   } 
   return CalibTree->GetEntriesFast();
 }
 
+
+
+//!  \brief Generate dijet events and write into tree
+//!  \param CalibTree ROOT tree
+//!  \param nevents Number of dijet events
+//!  \return Number of generated events
+//----------------------------------------------------------
 int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 {
   //make tree 
@@ -599,107 +692,167 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("Weight",&weight,"Weight/F"  );
   CalibTree->Branch("GenJetEt",jetgenet,"GenJetEt[NobjJet]/F" );
 
-  TLorentzVector jet[2],genjet[2], tower;
+
+  // Generate events
+  TLorentzVector jet[2];
+  TLorentzVector genjet[2];
+  TLorentzVector tower;
+
+  // Loop over events
   for(int n = 0; n < nevents ; ++n) {
+    // Generate truth 4-momentum
     genInput();
-    jetgenpt[0] = mPinput.Pt();
+
+    // Assign it's variables to first genjet
+    jetgenpt[0]  = mPinput.Pt();
     jetgeneta[0] = mPinput.Eta();
     jetgenphi[0] = mPinput.Phi();
-    jetgenet[0] = mPinput.Pt();
-    jetgene[0] = mPinput.E();
-    //jgenpt = mRandom->Gaus(photonpt,0.04 * photonpt);
-    jetgenpt[1] = jetgenpt[0];
+    jetgenet[0]  = mPinput.Pt();
+    jetgene[0]   = mPinput.E();
+
+    // Second genjet gets random eta
+    // between -3 and 3, and phi+PI
+    jetgenpt[1]  = jetgenpt[0];
     jetgeneta[1] = mRandom->Gaus(jetgeneta[0],1.0);
     if((jetgeneta[1] > 3.0) || (jetgeneta[1] < -3.0)) {
       --n;
       continue;
     }
-    jetgenphi[1] = jetgenphi[0] +M_PI;
-    if(mModel == Flat) mTowConst[0] = 1/mRandom->Uniform(1.5);
-    else if(mModel == Exp) mTowConst[0] = 1/mRandom->Exp(0.5);
-    else if(mModel == Slope) {
+    jetgenphi[1] = jetgenphi[0] + M_PI;
+
+    // Set random response paramters for this event
+    // if required by response model
+    if     (mResponseModel == Flat) mParResp.at(0) = mRandom->Uniform(1.5);
+    else if(mResponseModel == Exp)  mParResp.at(0) = mRandom->Exp(0.5);
+    else if(mResponseModel == Slope) {
       double u1 = mRandom->Uniform(2);
       double u2 = mRandom->Uniform(2);
-      mTowConst[0] = 1/(2 - std::max(u1,u2));
+      mParResp.at(0) = 2. - std::max(u1,u2);
     }
+
+    // Loop over jets and
+    // split genjets into towers
     NobjTow = 0;
     for(int i = 0 ; i < NobjJet ; ++i) {
+      // Create 4-momentum of genjet (massless)
       genjet[i].SetPtEtaPhiM(jetgenpt[i],jetgeneta[i],jetgenphi[i],0);
-      int ntow = splitJet(genjet[i],ttowet,ttoweta,ttowphi,ttowid_eta,
-			  ttowid_phi);  
+
+      // Split it into towers and set truth of towers
+      int ntow = splitJet(genjet[i],ttowet,ttoweta,ttowphi,ttowid_eta,ttowid_phi);  
+
+      // Reset jet and genjet 4-momenta. They will
+      // be repopulated by sum of tower 4-momenta
       jet[i].SetPtEtaPhiM(0,0,0,0);
       genjet[i].SetPtEtaPhiM(0,0,0,0);
+
+      // Generate pi0 fraction i.e. non-hadronic fraction
       double p0frac = mRandom->Uniform(mMaxPi0Frac);
+
+      // Loop over towers and smear truth with response
+      // and resolution
       for(int j = 0 ; j < ntow ; ++j) {
-	int k = NobjTow + j;
-	towet[k] = ttowet[j];
-	toweta[k] = ttoweta[j];
-	towphi[k] = ttowphi[j];	
-	towid[k] = 0;
-	towid_eta[k] = ttowid_eta[j];
-	towid_phi[k] = ttowid_phi[j];
+	int k         = NobjTow + j;
+
+	// Copy tower truth to tower
+	towet[k]      = ttowet[j];
+	toweta[k]     = ttoweta[j];
+	towphi[k]     = ttowphi[j];	
+	towid[k]      = 0;
+	towid_eta[k]  = ttowid_eta[j];
+	towid_phi[k]  = ttowid_phi[j];
 	tow_jetidx[k] = i;
 	tower.SetPtEtaPhiM(towet[k],toweta[k],towphi[k],0);
-	towen[k] =  tower.E();
-	genjet[i] += tower;
+	towen[k]      = tower.E();
+
+	// Add unsmeared tower to genjet
+	genjet[i]    += tower;
+
+	// Smear hadronic par of tower energy
 	smearTower((1 - p0frac) * tower.E(),towen[k],towem[k],towhd[k],
 		   towoe[k],towemtrue[k],towhdtrue[k],towoetrue[k]); 
-	towen[k] += p0frac * tower.E();
-	towem[k] += p0frac * tower.E();
+
+	// Add remaining em part
+	towen[k]     += p0frac * tower.E();
+	towem[k]     += p0frac * tower.E();
 	towemtrue[k] += p0frac * tower.E();
-	tower *= towen[k]/tower.E();
-	towet[k] = tower.Pt();
-	jet[i] += tower;
-      }
-      NobjTow += ntow; 
-      jetpt[i] = jet[i].Pt();
-      jetphi[i] = jet[i].Phi();
-      jeteta[i] = jet[i].Eta();
-      jetet[i] = jet[i].Pt();
-      jete[i] = jet[i].E(); 
-      jetgenpt[i] = genjet[i].Pt();
+
+	// Multiply tower 4-momentum with response
+	tower        *= towen[k]/tower.E();
+	towet[k]      = tower.Pt();
+
+	// Add tower to jet
+	jet[i]       += tower;
+      } // End loop over towers
+
+      // Set jet and genjet variables
+      NobjTow     += ntow; 
+      jetpt[i]     = jet[i].Pt();
+      jetphi[i]    = jet[i].Phi();
+      jeteta[i]    = jet[i].Eta();
+      jetet[i]     = jet[i].Pt();
+      jete[i]      = jet[i].E(); 
+      jetgenpt[i]  = genjet[i].Pt();
       jetgenphi[i] = genjet[i].Phi();
       jetgeneta[i] = genjet[i].Eta();
-      jetgenet[i] = genjet[i].Pt();
-      jetgene[i] = genjet[i].E();
-    }
+      jetgenet[i]  = genjet[i].Pt();
+      jetgene[i]   = genjet[i].E();
+    } // End of loop over jets
+
+    // Check generated eta measurement
+    // of first jet
     if((jeteta[0] < mMinEta) || (jeteta[0] > mMaxEta)) {
       --n;
       continue;
     }
+
+    // Order jets by pt
     if((jeteta[1] > mMinEta) && (jeteta[1] < mMaxEta)
        && (jetpt[1] > jetpt[0])) {
       //swap jets
-      jetpt[0] = jet[1].Pt();
-      jetphi[0] = jet[1].Phi();
-      jeteta[0] = jet[1].Eta();
-      jetet[0] = jet[1].Pt();
-      jete[0] = jet[1].E(); 
-      jetgenpt[0] = genjet[1].Pt();
+      jetpt[0]     = jet[1].Pt();
+      jetphi[0]    = jet[1].Phi();
+      jeteta[0]    = jet[1].Eta();
+      jetet[0]     = jet[1].Pt();
+      jete[0]      = jet[1].E(); 
+      jetgenpt[0]  = genjet[1].Pt();
       jetgenphi[0] = genjet[1].Phi();
       jetgeneta[0] = genjet[1].Eta();
-      jetgenet[0] = genjet[1].Pt();
-      jetgene[0] = genjet[1].E();
-      jetpt[1] = jet[0].Pt();
-      jetphi[1] = jet[0].Phi();
-      jeteta[1] = jet[0].Eta();
-      jetet[1] = jet[0].Pt();
-      jete[1] = jet[0].E(); 
-      jetgenpt[1] = genjet[0].Pt();
+      jetgenet[0]  = genjet[1].Pt();
+      jetgene[0]   = genjet[1].E();
+      jetpt[1]     = jet[0].Pt();
+      jetphi[1]    = jet[0].Phi();
+      jeteta[1]    = jet[0].Eta();
+      jetet[1]     = jet[0].Pt();
+      jete[1]      = jet[0].E(); 
+      jetgenpt[1]  = genjet[0].Pt();
       jetgenphi[1] = genjet[0].Phi();
       jetgeneta[1] = genjet[0].Eta();
-      jetgenet[1] = genjet[0].Pt();
-      jetgene[1] = genjet[0].E();
+      jetgenet[1]  = genjet[0].Pt();
+      jetgene[1]   = genjet[0].E();
+
+      // Swap towers
       for(int j = 0 ; j < NobjTow ; ++j) {
 	tow_jetidx[j] = (tow_jetidx[j] == 0) ? 1 : 0;
       }
     }
+
+
+    // Fill tree
     CalibTree->Fill();
+
     if(n % 1000 == 0) std::cout << "generating event " << n << '\n';
-  } 
+  }  // End of loop over events
+
   return CalibTree->GetEntriesFast();
 }
 
+
+
+//!  \brief Generate photon-jet events and write into tree
+//!  \param CalibTree ROOT tree
+//!  \param nevents Number of photon-jet events
+//!  \return Number of generated events
+//----------------------------------------------------------
 int ToyMC::makePhotonJet(const char* filename, int nevents) {
   TFile* file = new TFile(filename,"recreate");
   TTree* CalibTree = new TTree("GammaJetTree","GammaJetTree");
@@ -711,6 +864,13 @@ int ToyMC::makePhotonJet(const char* filename, int nevents) {
   return nevents;
 }
 
+
+
+//!  \brief Generate dijet events
+//!  \param filename Name of output file
+//!  \param nevents Number of dijet events
+//!  \return Number of generated events
+//----------------------------------------------------------
 int ToyMC::makeDiJet(const char* filename, int nevents) {
   TFile* file = new TFile(filename,"recreate");
   TTree* CalibTree = new TTree("DiJetTree","DiJetTree");
@@ -722,81 +882,188 @@ int ToyMC::makeDiJet(const char* filename, int nevents) {
   return nevents;
 }
 
+
+
+//----------------------------------------------------------
 void ToyMC::init(const std::string& configfile) {
   ConfigFile config(configfile.c_str());
 
-   mMinEta = config.read<double>("ToyMC min eta",-2.5);
-   mMaxEta = config.read<double>("ToyMC max eta",2.5);
-   mMinPt  = config.read<double>("ToyMC min pt",30);
-   mMaxPt  = config.read<double>("ToyMC max pt",400);
-   std::string spectrum = config.read<std::string>("ToyMC pt spectrum","uniform");
-   if(spectrum == "powerlaw") {
-     mPtSpectrum = PowerLaw; 
-   } else if(spectrum == "uniform") {
-     mPtSpectrum = Uniform;
+  // Ranges
+  mMinEta = config.read<double>("ToyMC min eta",-2.5);
+  mMaxEta = config.read<double>("ToyMC max eta",2.5);
+  mMinPt  = config.read<double>("ToyMC min pt",30);
+  mMaxPt  = config.read<double>("ToyMC max pt",400);
+
+  // Truth spectrum
+  std::string spectrum = config.read<std::string>("ToyMC pt spectrum","uniform");
+  if(spectrum == "powerlaw") {
+    mPtSpectrum = PowerLaw; 
+  } else if(spectrum == "uniform") {
+    mPtSpectrum = Uniform;
+  } else {
+    std::cerr << "unknown ToyMC pt spectrum:" << spectrum << '\n';
+    exit(1);
+  }
+
+  // Response model
+  mParResp             = bag_of<double>(config.read<string>("ToyMC response parameters","1"));
+  std::string response = config.read<std::string>("ToyMC response model","Constant");
+  if        ( response == "Constant" ) {
+    mResponseModel = Constant;
+    assert( mParResp.size() >= 1 );
+  } else if ( response == "Flat" ) {
+    mResponseModel = Flat;
+    assert( mParResp.size() >= 1 );
+  } else if ( response == "Slope" ) {
+    mResponseModel = Slope;
+    assert( mParResp.size() >= 1 );
+  } else if ( response == "Exp" ) {
+    mResponseModel = Exp;
+    assert( mParResp.size() >= 1 );
+  } else if ( response == "L3" ) {
+    mResponseModel = L3;
+    assert( mParResp.size() >= 4 );
+  } else if( response == "SimpleInverse" ) {
+    mResponseModel = SimpleInverse;
+    assert( mParResp.size() >= 2 );
+  } else {
+    std::cerr << "unknown ToyMC response model: " << response << '\n';
+    exit(1);
+  }
+
+  // Resolution model
+  mParReso               = bag_of<double>(config.read<string>("ToyMC resolution parameters","1.2 0.05"));
+  std::string resolution = config.read<std::string>("ToyMC resolution model","Gauss");
+  if(resolution == "Gauss") {
+    mResolutionModel = Gauss;
+    assert( mParReso.size() >= 2 );
+  } else if(resolution  == "Landau") {
+    mResolutionModel = Landau;
+    assert( mParReso.size() >= 2 );
+  } else if( resolution == "GaussUniform" ) {
+    mResolutionModel = GaussUniform; 
+    assert( mParReso.size() >= 3 );
+  } else if( resolution == "TwoGauss" ) {
+    mResolutionModel = TwoGauss;
+    assert( mParReso.size() >= 4 );
+    
+    // Set up sum of two Gaussians as pdf
+    double c  = mParReso.at(0);  // Normalization
+    double u0 = 1.;              // Mean of central Gaussian (scale)
+    double s0 = mParReso.at(1);  // Width of central Gaussian
+    double u1 = mParReso.at(2);  // Mean of second Gaussian
+    double s1 = mParReso.at(3);  // Width of central Gaussian
+
+    double minResp = 0.;
+    double maxResp = 2.;
+
+    TF1 * f = new TF1("f","gaus(0)+gaus(3)",minResp,maxResp);
+    f->SetParameter(0,c/sqrt(2*M_PI)/s0);
+    f->SetParameter(1,u0);
+    f->SetParameter(2,s0);
+    f->SetParameter(3,(1.-c)/sqrt(2*M_PI)/s1);
+    f->SetParameter(4,u1);
+    f->SetParameter(5,s1);
+
+    // Fill response histogram according to f
+    mHistResp = new TH1F("hHistResp",";p^{jet}_{T} / p^{true}_{T};1/(Nw) dN / d(p^{jet}_{T} / p^{true}_{T})",			     1000,minResp,maxResp);
+    for(int bin = 1; bin <= mHistResp->GetNbinsX(); bin++) {
+      double r = f->Eval(mHistResp->GetBinCenter(bin));
+      mHistResp->SetBinContent(bin,r);
+    }
+
+    double norm = mHistResp->Integral("width");
+    mHistResp->Scale(1./norm);
+    delete f;
    } else {
-     std::cerr << "unknown ToyMC pt spectrum:" << spectrum << '\n';
+     std::cerr << "unknown ToyMC resolution model: " << resolution << '\n';
      exit(1);
    }
-   std::string response = config.read<std::string>("ToyMC response","Constant");
-   if( response == "Constant" ) {
-     mResponse = Constant; 
-   } else if( response == "L3" ) {
-     mResponse = L3;
-   } else if( response == "SimpleInverse" ) {
-     mResponse = SimpleInverse;
-   } else {
-     std::cerr << "unknown ToyMC response:" << response << '\n';
-     exit(1);
-   }
-   std::vector<double> auter = bag_of<double>(config.read<string>("ToyMC tower const","1.25 0.0 1.0 1.0 0.0"));
-   while(auter.size() < 5) auter.push_back(0);
-   assert(auter.size() == 5);
-   for(unsigned int i = 0; i < auter.size() ; ++i) mTowConst[i] = auter[i];
-   mResoStochastic = config.read<double>("ToyMC tower resolution stochastic",1.20);
-   mResoNoise = config.read<double>("ToyMC tower resolution noise",0.05);
-   mJetSpreadA = config.read<double>("ToyMC jet spread A",0.5);
-   mJetSpreadB = config.read<double>("ToyMC jet spread B",0);
+
+   // Jets
+   mJetSpreadA  = config.read<double>("ToyMC jet spread A",0.5);
+   mJetSpreadB  = config.read<double>("ToyMC jet spread B",0);
    mNoOutOfCone = config.read<bool>("ToyMC avoid out-of-cone",true);
-   std::string model = config.read<std::string>("ToyMC model","gauss");
-   if(model == "gauss") {
-     mModel = Gauss;
-   } else if(model  == "landau") {
-     mModel = Landau;
-   } else if(model == "flat") {
-     mModel = Flat;
-     mTowConst[1] = 0;
-   } else if(model == "exp") {
-     mModel = Exp;
-     mTowConst[1] = 0;
-   } else if(model == "slope") {
-     mModel = Slope;
-     mTowConst[1] = 0;
-   } else {
-     std::cerr << "unknown ToyMC model:" << model << '\n';
-     exit(1);
-   }
-   mChunks = config.read<int>("ToyMC chunks",200);
-   mMaxPi0Frac = config.read<double>("ToyMC max pi0 fraction",0.5);
-   mMaxEmf = config.read<double>("ToyMC tower max EMF",0.5);
-   int seed = config.read<int>("ToyMC seed",0); 
-   mRandom->SetSeed(seed);
+   mChunks      = config.read<int>("ToyMC chunks",200);
+   mMaxPi0Frac  = config.read<double>("ToyMC max pi0 fraction",0.5);
+   mMaxEmf      = config.read<double>("ToyMC tower max EMF",0.5);
+
+  // General
+  int seed = config.read<int>("ToyMC seed",0); 
+  mRandom->SetSeed(seed);
+  mType = config.read<int>("ToyMC type",1);
+  if( !( mType == 1 || mType == 2 ) ) {
+    std::cout << "unknown ToyMC event type " << mType << std::endl;
+    exit(1);
+  }
 }
 
+
+
+//----------------------------------------------------------
 void ToyMC::print() const {
-  std::cout << "ToyMC configuration:\n";
-  std::cout << "  primary: " << mMinEta << " < eta < " << mMaxEta << '\n';
-  std::cout << "           " << mMinPt << " < pt < " << mMaxPt 
-	    << " spectrum = " << mPtSpectrum << '\n';
-  std::cout << " response: " << mResponse << '\n';
-  std::cout << "    tower: c = (" << mTowConst[0] <<", " << mTowConst[1]
-	    << ", " << mTowConst[2] << ", " << mTowConst[3] << ", "
-	    << mTowConst[4] << ") stoch = " << mResoStochastic << " noise = "
-	    << mResoNoise << " max EMF = " << mMaxEmf << " max piO = "
-	    << mMaxPi0Frac << '\n';
-  std::cout << "     jets: spread A = " << mJetSpreadA << " B = " 
-	    << mJetSpreadB << " avoid out-of-cone = " << mNoOutOfCone
-	    << '\n';
-  std::cout << "    model: n chunks = " <<  mChunks << " model = "
-	    << mModel << '\n';
+  std::cout << "\n  ToyMC configuration:\n";
+  std::cout << " -----------------------------------------\n";
+  std::cout << "  primary:      " << mMinEta << " < eta < " << mMaxEta << '\n';
+  std::cout << "                " << mMinPt << " < pt < " << mMaxPt << "\n";
+
+  std::cout << "  spectrum:     ";
+  if( mPtSpectrum == Uniform )
+    std::cout << "Uniform\n";
+  else if( mPtSpectrum == PowerLaw )
+    std::cout << "PowerLaw\n";
+
+  std::cout << "  response:     ";
+  if( mResponseModel == Constant )
+    std::cout << "Constant\n";
+  else if( mResponseModel == Flat )
+    std::cout << "Flat\n";
+  else if( mResponseModel == Exp )
+    std::cout << "Exp\n";
+  else if( mResponseModel == Slope )
+    std::cout << "Slope\n";
+  else if( mResponseModel == L3 )
+    std::cout << "L3\n";
+  else if( mResponseModel == SimpleInverse )
+    std::cout << "SimpleInverse\n";
+
+  std::cout << "  parameters:   ";
+  for(unsigned int i = 0; i < mParResp.size(); i++)
+    std::cout << mParResp.at(i) << ",  ";
+  std::cout << "\n";
+
+  std::cout << "  resolution:   ";
+  if( mResolutionModel == Gauss )
+    std::cout << "Gauss\n";
+  else if( mResolutionModel == Landau )
+    std::cout << "Landau\n";
+  else if( mResolutionModel == GaussUniform )
+    std::cout << "GaussUniform\n";
+  else if( mResolutionModel == TwoGauss )
+    std::cout << "TwoGauss\n";
+
+  std::cout << "  parameters:   ";
+  for(unsigned int i = 0; i < mParReso.size(); i++)
+    std::cout << mParReso.at(i) << ",  ";
+  std::cout << "\n";
+
+  std::cout << "  max EMF:      " << mMaxEmf << "\n";
+  std::cout << "  max pi0:      " << mMaxPi0Frac << "\n";
+
+  std::cout << "  jet spread:   ";
+  std::cout << "A = " << mJetSpreadA << ",  B = " << mJetSpreadB << "\n";
+  std::cout << "  n chunks:     " << mChunks << "\n";
+  std::cout << "  out-of-cone:  ";
+  if( mNoOutOfCone )
+    std::cout << "no\n";
+  else 
+    std::cout << "yes\n";
+
+  std::cout << "  type:         ";
+  if( mType == 1 )
+    std::cout << "Photon-jet events\n";
+  else if( mType == 2 )
+    std::cout << "Dijet events\n";
+
+  std::cout << "\n";
 }

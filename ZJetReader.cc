@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.13 2009/04/17 14:28:08 mschrode Exp $
+//    $Id: ZJetReader.cc,v 1.14 2009/06/08 16:14:46 mschrode Exp $
 //   
 #include "ZJetReader.h"
 
@@ -19,6 +19,9 @@
 
 #include <cstdlib>
 #include <iostream>
+
+#include "TLorentzVector.h"
+
 
 ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
  EventReader(configfile,p),Et_cut_on_Z(0),Et_cut_on_jet(0),Had_cut_min(0),Had_cut_max(1)
@@ -157,12 +160,18 @@ TData* ZJetReader::createJetTruthEvent()
   tower.E   = zjet.JetCalE;
   double err =  jet_error_param(&tower.pt,&tower,0);
   err2 += err * err;
+
+  TLorentzVector LJet(0,0,0,0);
+  LJet.SetPtEtaPhiE(zjet.JetCalPt,zjet.JetCalEta,zjet.JetCalPhi,zjet.JetCalE);
+  TLorentzVector LGenJet(0,0,0,0);
+  LGenJet.SetPtEtaPhiE(zjet.JetGenPt,zjet.JetGenEta,zjet.JetCalPhi,zjet.JetGenE);
+
   Jet *j;
   if(dataClass == 2) {
     JetWithTowers *jt = 
       new JetWithTowers(zjet.JetCalEt,em * factor,had * factor,
 			out * factor,zjet.JetCalE,zjet.JetCalEta,
-			zjet.JetCalPhi,TJet::uds,zjet.JetGenEt,
+			zjet.JetCalPhi,TJet::uds,zjet.JetGenEt,LJet.DeltaR(LGenJet),
 			zjet.JetCorrZSP,zjet.JetCorrJPT,zjet.JetCorrL2,
 			zjet.JetCorrL3,zjet.JetCorrL2L3,zjet.JetCorrL2L3JPT,
 			p->jet_function(zjet.TowId_eta[closestTower],
@@ -181,7 +190,7 @@ TData* ZJetReader::createJetTruthEvent()
     JetWithTracks *jt = 
       new JetWithTracks(zjet.JetCalEt,em * factor,had * factor,
 			out * factor, zjet.JetCalE,zjet.JetCalEta,
-			zjet.JetCalPhi,TJet::uds,zjet.JetGenEt,
+			zjet.JetCalPhi,TJet::uds,zjet.JetGenEt,LJet.DeltaR(LGenJet),
 			zjet.JetCorrZSP,zjet.JetCorrJPT,zjet.JetCorrL2,
 			zjet.JetCorrL3,zjet.JetCorrL2L3,zjet.JetCorrL2L3JPT,
 			p->jet_function(zjet.TowId_eta[closestTower],
@@ -203,7 +212,7 @@ TData* ZJetReader::createJetTruthEvent()
   } else { 
     j = new Jet(zjet.JetCalEt,em * factor,had * factor,out * factor,
 		zjet.JetCalE,zjet.JetCalEta,zjet.JetCalPhi,TJet::uds,
-		zjet.JetGenEt,zjet.JetCorrZSP,zjet.JetCorrJPT,zjet.JetCorrL2,
+		zjet.JetGenEt,LJet.DeltaR(LGenJet),zjet.JetCorrZSP,zjet.JetCorrJPT,zjet.JetCorrL2,
 		zjet.JetCorrL3,zjet.JetCorrL2L3,zjet.JetCorrL2L3JPT,
 		p->jet_function(zjet.TowId_eta[closestTower],
 				zjet.TowId_phi[closestTower]),

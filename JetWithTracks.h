@@ -12,7 +12,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTracks.h,v 1.1 2009/04/08 14:46:18 stadie Exp $
+//!    $Id: JetWithTracks.h,v 1.2 2009/04/17 18:04:26 mschrode Exp $
 // ---------------------------------------------------------------   
 class JetWithTracks : public Jet
 {
@@ -22,7 +22,7 @@ class JetWithTracks : public Jet
 		double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 		const Function& gf, double Etmin = 0); 
   JetWithTracks(double Et, double EmEt, double HadEt ,double OutEt, double E,
-		double eta,double phi, Flavor flavor,double genPt, double ZSPcor,
+		double eta,double phi, Flavor flavor,double genPt, double dR, double ZSPcor,
 		double JPTcor, double L2cor, double L3cor,double L2L3cor, 
 		double L2L3JPTcor, const Function& f,
 		double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 

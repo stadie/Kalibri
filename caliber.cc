@@ -1,17 +1,6 @@
-//!
-//!  \author  Christian Autermann
-//!  \date    Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.cc,v 1.83 2009/06/02 16:29:41 mschrode Exp $
-//!
-//!
-//!  \note  For profiling:
-//!         To prevent gprof from missing the threads: 
-//!         wget http://sam.zoy.org/writings/programming/gprof-helper.c
-//!         gcc -shared -fPIC gprof-helper.c -o gprof-helper.so -lpthread -ldl 
-//!         LD_PRELOAD=./gprof-helper.so ./junk
-//!
-#include "caliber.h"
+//  $Id: caliber.cc,v 1.84 2009/06/05 15:45:12 mschrode Exp $
 
+#include "caliber.h"
 
 #include <algorithm>
 
@@ -23,6 +12,7 @@ boost::mutex io_mutex;
 #include "ConfigFile.h"
 #include "Parameters.h"
 #include "ControlPlots.h"
+#include "ControlPlotsJetSmearing.h"
 #include "CalibMath.h"
 #include "external.h"
 #include "ToyMC.h"
@@ -43,7 +33,10 @@ using namespace std;
 typedef std::vector<TData*>::iterator DataIter;
 typedef std::vector<TData*>::const_iterator DataConstIter;
 
+
+
 //!  \brief Outlier Rejection
+// -----------------------------------------------------------------
 struct OutlierRejection {
   OutlierRejection(double cut):_cut(cut){};
   bool operator()(TData *d){
@@ -53,19 +46,9 @@ struct OutlierRejection {
   double _cut;
 };
 
-/* 
-//ControlCut Selection
-struct ControlCutSelection {
-ControlCutSelection(double cut):_cut(cut){};
-  bool operator()(TData *d){
-    return d->GetTruth()>_cut && fabs(d->GetMess()->eta)<2.5;
-  }
-  double _cut;
-};
-
-*/
 
 
+// -----------------------------------------------------------------
 class ComputeThread {
 private:
   int npar;
@@ -160,9 +143,11 @@ void TCaliber::Run()
   //Dummy Configuration: Nothing to be done, start-values are written to file
 }
 
+
+
+// -----------------------------------------------------------------
 void TCaliber::Run_Lvmini()
 { 
-  //int naux = 1000000, iret=0;
   int naux = 3000000, iret=0;
   
   int npar = p->GetNumberOfParameters();
@@ -192,6 +177,7 @@ void TCaliber::Run_Lvmini()
     t[ithreads] = new ComputeThread(npar, p->GetPars(),deriv_step);
   }
 
+  lvmeps_(data.size()*eps,wlf1,wlf2);
   lvmeps_(eps,wlf1,wlf2);
 
   //Set errors per default to 0 //@@ doesn't seem to work...
@@ -348,9 +334,10 @@ void TCaliber::Run_Lvmini()
   delete [] temp_derivative1;
   delete [] temp_derivative2;
 }
+
+
+
 //--------------------------------------------------------------------------------------------
-
-
 void TCaliber::Done()
 {
   // write calibration to cfi output file if ending is cfi
@@ -376,13 +363,24 @@ void TCaliber::Done()
     p->Write_CalibrationTxt( (fileName+".txt").c_str() );
   }
 
-  // Do Plots
-  if(plots) {
-    plots->MakePlots();
+
+  // Make control plots
+  ConfigFile config( configfile.c_str() );
+  if( config.read<bool>("create plots",0) ) {
+    int mode = config.read<int>("Mode",0);
+    if( mode == 0 ) {  // Control plots for calibration
+      TControlPlots * plots = new TControlPlots(configfile,&data,p);
+      plots->MakePlots();
+      delete plots;
+    } else if( mode == 1 ) {  // Control plots for jetsmearing
+      ControlPlotsJetSmearing * plotsjs = new ControlPlotsJetSmearing(configfile,&data,p);
+      plotsjs->PlotResponse();
+      delete plotsjs;
+    }
   }
+  
   // Clean-up
   cout << endl << "Cleaning up... " << flush;
-  delete plots; 
   for(DataIter i = data.begin() ; i != data.end() ; ++i) {
     delete *i;
   }
@@ -391,16 +389,13 @@ void TCaliber::Done()
 }
 
 
+
+//--------------------------------------------------------------------------------------------
 void TCaliber::Init()
 {
   ConfigFile config(configfile.c_str() );
 
   p = TParameters::CreateParameters(configfile);
-
-  if(config.read<bool>("create plots",1))
-    {
-      plots = new TControlPlots(configfile,&data, p);
-    }
 
   //initialize temp arrays for fast derivative calculation
   TAbstractData::total_n_pars     = p->GetNumberOfParameters();
@@ -487,11 +482,12 @@ void TCaliber::Init()
   TowerConstraintsReader cr(configfile,p);
   cr.readEvents(data);
 }
-
 //--^-TCaliber class-^------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------
 
+
+
+//--------------------------------------------------------------------------------------------
 int caliber(int argc, char *argv[])
 {
   std::cout << "The University Hamburg Calorimeter Calibration Tool, 2007/08/15." << std::endl;
@@ -512,11 +508,17 @@ int caliber(int argc, char *argv[])
   return 0;
 }
 
+
+
+//--------------------------------------------------------------------------------------------
 void PrintUsage()
 {
   std::cerr << "ERROR: You did something wrong! Better fix it." << std::endl;
 }
 
+
+
+//--------------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
   if (argc>2) {

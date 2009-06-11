@@ -12,7 +12,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTowers.h,v 1.12 2009/04/17 18:04:26 mschrode Exp $
+//!    $Id: JetWithTowers.h,v 1.13 2009/04/27 13:49:07 mschrode Exp $
 // ----------------------------------------------------------------   
 class JetWithTowers : public Jet
 {
@@ -22,7 +22,7 @@ class JetWithTowers : public Jet
 		double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 		const Function& gf, double Etmin = 0); 
   JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
-	       double eta,double phi, Flavor flavor,double genPt, double ZSPcor,
+	       double eta,double phi, Flavor flavor,double genPt, double dR, double ZSPcor,
 	       double JPTcor, double L2cor, double L3cor,double L2L3cor, 
 	       double L2L3JPTcor, const Function& f,
 	       double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 

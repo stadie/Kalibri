@@ -22,7 +22,7 @@ RCXX=$(SPECIALFLAGS) -Wno-deprecated -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
 
-SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc JetWithTracks.cc
+SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -56,11 +56,23 @@ NJetSel.o: NJetSel.cc NJetSel.h
 CalibData.o: CalibData.cc CalibData.h Parametrization.h Parameters.h
 	$(C) $(RCXX) -c CalibData.cc
 
+SmearData.o: SmearData.cc SmearData.h Parametrization.h Parameters.h CalibData.h
+	$(C) $(RCXX) -c SmearData.cc
+
+SmearDiJet.o: SmearDiJet.cc SmearDiJet.h Parametrization.h Parameters.h CalibData.h SmearData.h
+	$(C) $(RCXX) -c SmearDiJet.cc
+
+SmearPhotonJet.o: SmearPhotonJet.cc SmearPhotonJet.h Parametrization.h Parameters.h CalibData.h SmearData.h
+	$(C) $(RCXX) -c SmearPhotonJet.cc
+
 Parameters.o: Parameters.cc Parameters.h Parametrization.h Function.h ConfigFile.h
 	$(C) $(RCXX) -c Parameters.cc
 
 ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFile.h TwoJetsInvMassEvent.h Parameters.h
 	$(C) $(RCXX) -c ControlPlots.cc
+
+ControlPlotsJetSmearing.o: ControlPlotsJetSmearing.cc ControlPlotsJetSmearing.h CalibData.h ConfigFile.h Parameters.h SmearData.h SmearDiJet.h SmearPhotonJet.h
+	$(C) $(RCXX) -c ControlPlotsJetSmearing.cc
 
 EventReader.o: EventReader.h EventReader.cc Parameters.h ConfigFile.h 
 	$(C) $(RCXX) -c EventReader.cc

@@ -1,3 +1,6 @@
+//  $Id: caliber.h,v 1.43 2009/06/05 15:45:12 mschrode Exp $
+
+
 //!  \mainpage
 //!
 //!  \section label_sec_intro Introduction
@@ -71,13 +74,20 @@ class TData;
 class TMeasurement;
 
 
+//!  \brief Main program
+//!  \note  For profiling:
+//!         To prevent gprof from missing the threads: 
+//!         wget http://sam.zoy.org/writings/programming/gprof-helper.c
+//!         gcc -shared -fPIC gprof-helper.c -o gprof-helper.so -lpthread -ldl 
+//!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.42 2009/06/02 16:29:41 mschrode Exp $
+//!  $Id: caliber.h,v 1.43 2009/06/05 15:45:12 mschrode Exp $
+// -----------------------------------------------------------------
 class TCaliber {
 public :
   TCaliber(const std::string& f)
-  : configfile(f),p(0),plots(0),deriv_step(1e-03),eps(1e-02),
+  : configfile(f),p(0),deriv_step(1e-03),mvec(6),niter(100),eps(1e-02),
   wlf1(1e-04),wlf2(0.9),print_parnderiv(false)
  {};
   ~TCaliber(){};
@@ -109,7 +119,6 @@ private:
   
   TParameters * p;    //fit parameters, depend on number of bins & geometry
 
-  TControlPlots * plots;  //the control plots
   // control parameters of fit
   double deriv_step;
   int mvec, niter;
