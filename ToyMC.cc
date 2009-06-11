@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.22 2009/04/15 17:15:23 mschrode Exp $
+// $Id: ToyMC.cc,v 1.23 2009/06/11 17:32:15 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -849,7 +849,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 
 
 //!  \brief Generate photon-jet events and write into tree
-//!  \param CalibTree ROOT tree
+//!  \param filename Name of output file
 //!  \param nevents Number of photon-jet events
 //!  \return Number of generated events
 //----------------------------------------------------------

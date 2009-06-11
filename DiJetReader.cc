@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.13 2009/06/08 16:14:00 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.14 2009/06/11 17:32:15 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -626,6 +626,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 
 
 
+//!  \brief Create SmearDiJet event for jet smearing
 //!  \note Measured pt is L2L3 corrected
 // ----------------------------------------------------------------   
 TData* DiJetReader::createSmearEvent()

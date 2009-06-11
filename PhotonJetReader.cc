@@ -1,4 +1,4 @@
-//  $Id: PhotonJetReader.cc,v 1.17 2009/06/08 16:14:46 mschrode Exp $
+//  $Id: PhotonJetReader.cc,v 1.18 2009/06/11 17:32:15 mschrode Exp $
 
 #include "PhotonJetReader.h"
 
@@ -271,6 +271,7 @@ TData* PhotonJetReader::createJetTruthEvent()
 
 
 
+//!  \brief Create SmearPhotonJet event for jet smearing
 //!  \note Measured pt is L2L3 corrected
 // ----------------------------------------------------------------   
 TData* PhotonJetReader::createSmearEvent()
