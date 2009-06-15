@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.14 2009/06/11 17:32:15 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.15 2009/06/11 17:41:24 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -590,7 +590,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 			  njet.JetCorrZSP[i],njet.JetCorrJPT[i],
 			  njet.JetCorrL2[i],njet.JetCorrL3[i],
 			  njet.JetCorrL2[i]*njet.JetCorrL3[i],
-			  njet.JetCorrL2[i]*njet.JetCorrL3[i],
+			  njet.JetCorrL2[i]*njet.JetCorrL3[i]*njet.JetCorrJPT[i],
 			  p->jet_function(njet.TowId_eta[closestTower],
 					  njet.TowId_phi[closestTower]),
 			  jet_error_param,p->global_jet_function(),Et_cut_on_jet);
@@ -611,7 +611,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 		    TJet::uds,njet.GenJetEt[i],LJet.DeltaR(LGenJet),njet.JetCorrZSP[i],
 		    njet.JetCorrJPT[i],njet.JetCorrL2[i],njet.JetCorrL3[i],
 		    njet.JetCorrL2[i]*njet.JetCorrL3[i],
-		    njet.JetCorrL2[i]*njet.JetCorrL3[i],
+		    njet.JetCorrL2[i]*njet.JetCorrL3[i]*njet.JetCorrJPT[i],
 		    p->jet_function(njet.TowId_eta[closestTower],
 				    njet.TowId_phi[closestTower]),
 		    jet_error_param,p->global_jet_function(),Et_cut_on_jet);    
@@ -682,7 +682,7 @@ TData* DiJetReader::createSmearEvent()
     jetp->L2cor      = njet.JetCorrL2[ij]; 
     jetp->L3cor      = njet.JetCorrL3[ij]; 
     jetp->L2L3cor    = njet.JetCorrL2[ij] * njet.JetCorrL3[ij]; 
-    jetp->L2L3JPTcor = 1.;//njet.JetCorrL2L3JPT[ij]; 
+    jetp->L2L3JPTcor = njet.JetCorrL2[ij] * njet.JetCorrL3[ij] * njet.JetCorrJPT[ij]; 
     //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
     double factor    = njet.JetEt[ij] /  njet.JetE[ij];
     jetp->HadF       = had * factor;
