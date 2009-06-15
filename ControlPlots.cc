@@ -173,9 +173,9 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
   // Create a Et and eta binning
   // Et = x, eta = y
   std::vector<double> binEdgesEt
-    = bag_of<double>(mConfig->read<std::string>("Control plots pt bin edges",""));
+    = bag_of<double>(mConfig->read<std::string>("Control plots pt bin edges","0 100"));
   std::vector<double> binEdgesEta
-    = bag_of<double>(mConfig->read<std::string>("Control plots eta bin edges",""));
+    = bag_of<double>(mConfig->read<std::string>("Control plots eta bin edges","-5 5"));
   Binning bins(binEdgesEt,binEdgesEta);
 
 
