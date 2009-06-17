@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.36 2009/06/11 17:32:15 mschrode Exp $
+//  $Id: Parametrization.h,v 1.37 2009/06/16 13:19:29 mschrode Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -17,7 +17,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.36 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.37 2009/06/16 13:19:29 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1133,7 +1133,6 @@ class SmearStepGauss : public Parametrization
       }
       assert( 0.0 <= mMin && mMin < mMax );
       assert( mScale.size() >= nJetPars() );
-      mStepPar = std::vector<double>(mNStepPar,1.);
     }
   ~SmearStepGauss() { mBinEdges.clear(); }
 
@@ -1157,12 +1156,13 @@ class SmearStepGauss : public Parametrization
     
     
     // Probability density from step function part
-    // Copy parameter values to temp array for normalization
+    // Copy parameter values to temp vector for normalization
+    std::vector<double> stepPar = std::vector<double>(mNStepPar,1.);
     double norm = 0.;
     for(int i = 0; i < mNStepPar; i++) {
-      mStepPar.at(i) = mScale.at(mNGausPar+i)*par[mNGausPar+i];
-      if( mStepPar.at(i) < 0. ) mStepPar.at(i) = 0.;
-      norm += mStepPar.at(i);
+      stepPar.at(i) = mScale.at(mNGausPar+i)*par[mNGausPar+i];
+      if( stepPar.at(i) < 0. ) stepPar.at(i) = 0.;
+      norm += stepPar.at(i);
     }
     norm = (1.-c)/norm/mStepWidth;
 
@@ -1172,7 +1172,7 @@ class SmearStepGauss : public Parametrization
     if( x->pt >= mBinEdges.front() && x->pt < mBinEdges.back() ) {
       int i = 0;
       while( x->pt > mBinEdges.at(1+i) ) i++;
-      p += norm*mStepPar.at(i);
+      p += norm*stepPar.at(i);
     }
 
     return p;
@@ -1186,7 +1186,6 @@ class SmearStepGauss : public Parametrization
   const double mStepWidth;             //!< Step width
   const std::vector<double> mScale;    //!< Parameters scales
   std::vector<double> mBinEdges;       //!< Edges of steps
-  mutable std::vector<double> mStepPar;  //!< Store step parameters
 };
 
 
@@ -1243,7 +1242,6 @@ class SmearStepGaussInter : public Parametrization
       assert( 0.0 <= mRMin && mRMin < mRMax );
       assert( 0.0 <= mTMin && mTMin < mTMax );
       assert( mScale.size() >= (nJetPars()+nGlobalJetPars()) );      
-      mStepPar = std::vector<double>(mNStepPar,1.);
     }
 
   ~SmearStepGaussInter() { mBinCenters.clear(); }
@@ -1268,16 +1266,17 @@ class SmearStepGaussInter : public Parametrization
 
     
     // Probability density from step function part
-    // Copy parameter values to temp array for normalization
+    // Copy parameter values to temp vector for normalization
+    std::vector<double> stepPar = std::vector<double>(mNStepPar,1.);
     double norm = 0.;
     for(int i = 0; i < mNStepPar; i++) {
-      mStepPar.at(i) = mScale.at(mNGausPar+i)*par[mNGausPar+i];
-      if( mStepPar.at(i) < 0. ) mStepPar.at(i) = 0.;
-      norm += mStepPar.at(i);
+      stepPar.at(i) = mScale.at(mNGausPar+i)*par[mNGausPar+i];
+      if( stepPar.at(i) < 0. ) stepPar.at(i) = 0.;
+      norm += stepPar.at(i);
     }
     norm = (1.-c)/norm/mBinWidth;
     
-    p += norm*interpolate(x->pt);
+    p += norm*interpolate(x->pt,stepPar);
 
     return p;
   }
@@ -1312,7 +1311,7 @@ class SmearStepGaussInter : public Parametrization
   const double mTMax;                  //!< Maximum of non-zero range of truth pdf
   const std::vector<double> mScale;    //!< Parameter scales
   std::vector<double> mBinCenters;     //!< Centers of bins
-  mutable std::vector<double> mStepPar;  //!< Store step parameters
+  mutable std::vector<double> stepPar;  //!< Store step parameters
 
 
 
@@ -1329,7 +1328,7 @@ class SmearStepGaussInter : public Parametrization
   //!  \param r   Response
   //!  \return    Interpolated bin content
   // ------------------------------------------------------------------------
-  double interpolate(double r) const {
+  double interpolate(double r, const std::vector<double>& par) const {
     double p = 0.;     // The interpolated parameter
 
     // Check that r is in range of binning +/- 0.5*mBinWidth
@@ -1347,15 +1346,15 @@ class SmearStepGaussInter : public Parametrization
       // Find bin contents to be interpolated
       if( i == 0 ) { // Left edge
 	a = 0.;
-	b = mStepPar.front();
+	b = par.front();
       }
       else if( i == mBinCenters.size()-1 ) { // Right edge
-	a = mStepPar.back();
+	a = par.back();
 	b = 0.;
       }
       else { // Central part
-	a = mStepPar.at(i-1);
-	b = mStepPar.at(i);
+	a = par.at(i-1);
+	b = par.at(i);
       }
 
       // Interpolate contents
