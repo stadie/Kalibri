@@ -1,52 +1,79 @@
-//  $Id: caliber.h,v 1.43 2009/06/05 15:45:12 mschrode Exp $
+//  $Id: caliber.h,v 1.44 2009/06/11 17:32:15 mschrode Exp $
 
 
 //!  \mainpage
 //!
 //!  \section label_sec_intro Introduction
-//!  Package for data driven calibration using a global fit (see also the related
+//!  Package for data driven calibration using an unbinned fit (see also the related
 //!  <A HREF="https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisCalibration">
 //!  Twiki Page</A>).
-//!
-//!  \section label_sec_workflow Workflow
-//!  \image html kalibri_workflow.png
-//!  (Graphic in <A HREF="../graphic/kalibri.eps">eps</A> format.)
 //!
 //!  \section label_sec_src Source Code
 //!  The source code can be found
 //!  <A HREF="http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/Bromo/Calibration/CalibCore/">here</A>.
 //!
-//!  \section label_sec_relinfo Related information
+//!  \section label_sec_workflow Workflow
+//!  \image html kalibri_workflow.png
+//!  (Graphic in <A HREF="../graphic/kalibri.eps">eps</A> format.)
+//!
+//!  \section label_sec_geninfo General information about and results of the calibration method
+//!
+//!  - Jan Thomsen:
+//!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=0&resId=0&materialId=slides&confId=1638">
+//!    Inclusion of track information</A?
+//!    UHH Jetcalibration meeting, 8th May, 2009
+//!
 //!  - H. Stadie:
 //!    <A HREF="http://indico.cern.ch/getFile.py/access?contribId=4&resId=0&materialId=slides&confId=55161">
 //!    Jet Calibraton Activities in Hamburg</A>,
 //!    FSP-CMS Meeting, 28th April 2009
+//!
 //!  - S. Naumann-Emme:
 //!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=3&amp;resId=0&amp;materialId=slides&amp;confId=1683">
 //!    Jet Energy Corrections from Top Quark Decays</A>,
 //!    CMS Hamburg Meeting, 28th January 2009
+//!
 //!  - M. Schr&ouml;der:
 //!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=2&amp;resId=0&amp;materialId=slides&amp;confId=1683">
 //!    Conceptual Studies for a Jet Energy Correction</A>,
 //!    CMS Hamburg Meeting, 28th January 2009
+//!
 //!  - H. Stadie:
 //!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=1&amp;resId=0&amp;materialId=slides&amp;confId=1683">
 //!    CMS Calorimeter and Jet Calibration</A>,
 //!    CMS Hamburg Meeting, 28th January 2009
+//!
 //!  - S. Naumann-Emme: Top as a Calibration Tool,
 //!    2nd "Physics at the Terascale" Workshop, 27th November 2008
+//!
 //!  - T. Schum:
 //!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=1&amp;resId=0&amp;materialId=slides&amp;confId=627">
 //!    HCAL Calibration using a Global Fit Ansatz</A>,
 //!    Hamburg CMS Meeting, 12th March 2008
+//!
 //!  - R. Wolf:
 //!    <A HREF="http://indico.cern.ch/getFile.py/access?contribId=3&resId=0&materialId=slides&confId=29582">
 //!    Data-Driven Calorimeter Calibration Exploiting a Global-Fit Ansatz</A>,
 //!    JetMET Meeting, 26th February 2008
+//!
 //!  - C. Autermann:
 //!    <A HREF="http://indico.cern.ch/getFile.py/access?contribId=7&resId=0&materialId=slides&confId=22705">
 //!    A global fit approach to HCAL/jet calibration</A>,
 //!    JetMET Meeting, 18th October 2007
+//!
+//!  \section label_sec_techinfo Technical information and tutorials
+//!  - <A HREF="https://indico.desy.de/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=1643">
+//!    SmearData: Extension of framework to jet smearing method</A>
+//!    UHH Jetcalibration meeting, 12th June, 2009
+//!
+//!  - <A HREF="https://indico.desy.de/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=1623">
+//!    Inversion technique including towers</A>
+//!    UHH Jetcalibration meeting, 23rd January, 2009
+//!    
+//!  - <A HREF="https://indico.desy.de/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=1622">
+//!    Details of the inversion technique</A>
+//!    UHH Jetcalibration meeting, 16th January, 2009
+//!
 //!
 //!  \section label_sec_authors Authors
 //!  - Christian Autermann
@@ -82,7 +109,7 @@ class TMeasurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.43 2009/06/05 15:45:12 mschrode Exp $
+//!  $Id: caliber.h,v 1.44 2009/06/11 17:32:15 mschrode Exp $
 // -----------------------------------------------------------------
 class TCaliber {
 public :
