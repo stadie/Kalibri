@@ -1,5 +1,4 @@
-//  $Id: caliber.h,v 1.44 2009/06/11 17:32:15 mschrode Exp $
-
+//  $Id: caliber.h,v 1.45 2009/06/19 09:51:50 mschrode Exp $
 
 //!  \mainpage
 //!
@@ -17,10 +16,9 @@
 //!  (Graphic in <A HREF="../graphic/kalibri.eps">eps</A> format.)
 //!
 //!  \section label_sec_geninfo General information about and results of the calibration method
-//!
 //!  - Jan Thomsen:
 //!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=0&resId=0&materialId=slides&confId=1638">
-//!    Inclusion of track information</A?
+//!    Inclusion of track information</A>,
 //!    UHH Jetcalibration meeting, 8th May, 2009
 //!
 //!  - H. Stadie:
@@ -74,7 +72,6 @@
 //!    Details of the inversion technique</A>
 //!    UHH Jetcalibration meeting, 16th January, 2009
 //!
-//!
 //!  \section label_sec_authors Authors
 //!  - Christian Autermann
 //!  - Ulla Gebbert
@@ -87,6 +84,7 @@
 //!  - Hartmut Stadie
 //!  - Jan Thomsen
 //!  - Roger Wolf
+
  
 
 #ifndef caliber_h
@@ -109,7 +107,7 @@ class TMeasurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.44 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: caliber.h,v 1.45 2009/06/19 09:51:50 mschrode Exp $
 // -----------------------------------------------------------------
 class TCaliber {
 public :
