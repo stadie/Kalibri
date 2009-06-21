@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.23 2009/06/11 17:32:15 mschrode Exp $
+// $Id: ToyMC.cc,v 1.24 2009/06/11 17:41:24 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -21,7 +21,7 @@
 ToyMC::ToyMC() : mType(1), mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(Uniform),
 		 mChunks(200),mJetSpreadA(0.5),mJetSpreadB(0),mNoOutOfCone(true),mMaxPi0Frac(0.5),
 		 mMaxEmf(0.5),mResponseModel(Constant),mHistResp(0),
-		 mResolutionModel(Gauss)
+		 mResolutionModel(Gauss), mSmearFactor(1.)
 {
   mRandom      = new TRandom3();
   mRandom->SetSeed(0);
@@ -97,33 +97,34 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
 
 
 
-//!  \brief Calculate measured pt from truth i.e.
-//!         apply response and resolution
+//!  \brief Calculate pt smear factor due to
+//!         response and resolution
+//!  \param pt Pt for calculation of some smear factors
 //----------------------------------------------------------
-double ToyMC::GetMeasuredPt(double truePt) const {
+void ToyMC::CalculateSmearFactor(double pt) {
+  // Reset smear factor
+  mSmearFactor = 1.;
 
   // Apply resolution
-  double c = 0.;
   if( mResponseModel == Constant
       || (mResponseModel == Flat)
       || (mResponseModel == Exp)
       || (mResponseModel == Slope)) {
-    c = mParResp.at(0);
+    mSmearFactor *= mParResp.at(0);
   }
   else if( mResponseModel == L3 ) { 
     if( mPinput.Pt() < 0.1 ) {
-      c = mParResp.at(0) - mParResp.at(1)/mParResp.at(3) +  mParResp.at(4);
+      mSmearFactor *= mParResp.at(0) - mParResp.at(1)/mParResp.at(3) +  mParResp.at(4);
     } else {
-      c = mParResp.at(0) - mParResp.at(1)/(pow(log10(mPinput.Pt()),mParResp.at(2)) + mParResp.at(3)) + mParResp.at(4)/mPinput.Pt();
+      mSmearFactor *= mParResp.at(0) - mParResp.at(1)/(pow(log10(pt),mParResp.at(2)) + mParResp.at(3)) + mParResp.at(4)/pt;
     }
   }
   else if( mResponseModel == SimpleInverse ) { 
-    c = 1. - mParResp.at(0)/(mPinput.Pt() + mParResp.at(1));
+    mSmearFactor *= 1. - mParResp.at(0)/(pt + mParResp.at(1));
   }
-  double pt = c * truePt;
 
   // Apply resolution
-  double smear;
+  double smear = 1.;
   if( mResolutionModel == Landau) {
     do {
       smear =  mRandom->Landau(1,sqrt(mParReso.at(0)*mParReso.at(0)/pt + mParReso.at(1)*mParReso.at(1)));
@@ -148,7 +149,7 @@ double ToyMC::GetMeasuredPt(double truePt) const {
     } while ( smear < 0.1 );
   }
 
-  return smear*pt;
+  mSmearFactor *= smear;
 }
 
 
@@ -158,6 +159,7 @@ double ToyMC::GetMeasuredPt(double truePt) const {
 //!         and smear with resolution
 //!
 //!  \param e True tower energy without pi0 part
+//!  \param calcSmearFactor If true, the smear factor is calculated newly during this function call
 //!  \param te Tower energy after scaling
 //!  \param tem Measured em part of tower energy after scaling and smearing
 //!  \param thad Measured had part of tower energy after scaling and smearing
@@ -166,7 +168,7 @@ double ToyMC::GetMeasuredPt(double truePt) const {
 //!  \param thadtrue True had part of tower energy after scaling
 //!  \param touttrue True HO part of tower energy after scaling
 // -----------------------------------------------------------------
-void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout, 
+void ToyMC::smearTower(double e, bool calcSmearFactor, float& te, float& tem, float& thad, float& tout, 
 		       float& temtrue, float& thadtrue, float& touttrue) 
 {
   // Generate emf and set electromagnetic
@@ -178,9 +180,14 @@ void ToyMC::smearTower(double e, float& te, float& tem, float& thad, float& tout
   temtrue    = emf * e;
   tem        = temtrue;
   thadtrue   = (1-emf) * e;
+  thad       = thadtrue;
 
   // Apply response and resolution to hadronic fraction
-  thad       = GetMeasuredPt(thadtrue);
+  if( calcSmearFactor ) {
+    if( mSmearTowersIndividually ) CalculateSmearFactor(thad);
+    else                           CalculateSmearFactor(mPinput.Pt());
+  }
+  thad      *= mSmearFactor;
 
   // Add up tower parts to total tower energy
   te = tem + thad + tout;
@@ -340,7 +347,12 @@ int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents)
     calIds(toweta[0],towphi[0],towid_eta[0],towid_phi[0]);
     //std::cout << "nachher:" << toweta[0] << ", " << towphi[0] << ", " << towid_eta[0] << ", " 
     //	      << towid_phi[0] << "\n";
-    smearTower(mPinput.E(),towen[0],towem[0],towhd[0],towoe[0],towemtrue[0],towhdtrue[0],towoetrue[0]);
+
+    // Calculate smear factor
+    bool calcSmearFactor = false;
+    if( i == 0 || mSmearTowersIndividually ) calcSmearFactor = true;
+
+    smearTower(mPinput.E(),calcSmearFactor,towen[0],towem[0],towhd[0],towoe[0],towemtrue[0],towhdtrue[0],towoetrue[0]);
     towet[0] = towen[0]/mPinput.E() * mPinput.Pt();
     CalibTree->Fill();
     if(i % 1000 == 0) std::cout << "generated event " << i << '\n';
@@ -580,8 +592,12 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
       // Add tower truth to genjet
       genjet   += tower;
 
+      // Calculate smear factor
+      bool calcSmearFactor = false;
+      if( j == 0 || mSmearTowersIndividually ) calcSmearFactor = true;
+
       // Smear hadronic par of tower energy
-      smearTower((1 - p0frac) * tower.E(),towen[j],towem[j],towhd[j],towoe[j],
+      smearTower((1 - p0frac) * tower.E(),calcSmearFactor,towen[j],towem[j],towhd[j],towoe[j],
 		 towemtrue[j],towhdtrue[j],towoetrue[j]); 
 
       // Add remaining em part
@@ -767,8 +783,12 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 	// Add unsmeared tower to genjet
 	genjet[i]    += tower;
 
+	// Calculate smear factor
+	bool calcSmearFactor = false;
+	if( j == 0 || mSmearTowersIndividually ) calcSmearFactor = true;
+
 	// Smear hadronic par of tower energy
-	smearTower((1 - p0frac) * tower.E(),towen[k],towem[k],towhd[k],
+	smearTower((1 - p0frac) * tower.E(),calcSmearFactor,towen[k],towem[k],towhd[k],
 		   towoe[k],towemtrue[k],towhdtrue[k],towoetrue[k]); 
 
 	// Add remaining em part
@@ -980,9 +1000,12 @@ void ToyMC::init(const std::string& configfile) {
      exit(1);
    }
 
-   // Jets
-   mJetSpreadA  = config.read<double>("ToyMC jet spread A",0.5);
-   mJetSpreadB  = config.read<double>("ToyMC jet spread B",0);
+  // Calculate smear factor for each tower or each jet
+  mSmearTowersIndividually = config.read<bool>("ToyMC smear towers individually",false);
+
+  // Jets
+  mJetSpreadA  = config.read<double>("ToyMC jet spread A",0.5);
+  mJetSpreadB  = config.read<double>("ToyMC jet spread B",0);
    mNoOutOfCone = config.read<bool>("ToyMC avoid out-of-cone",true);
    mChunks      = config.read<int>("ToyMC chunks",200);
    mMaxPi0Frac  = config.read<double>("ToyMC max pi0 fraction",0.5);
@@ -1046,6 +1069,10 @@ void ToyMC::print() const {
   for(unsigned int i = 0; i < mParReso.size(); i++)
     std::cout << mParReso.at(i) << ",  ";
   std::cout << "\n";
+
+  std::cout << "  Smear factor is calculated for each ";
+  if( mSmearTowersIndividually ) std::cout << "tower\n";
+  else                           std::cout << "jet\n";
 
   std::cout << "  max EMF:      " << mMaxEmf << "\n";
   std::cout << "  max pi0:      " << mMaxPi0Frac << "\n";

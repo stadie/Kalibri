@@ -14,7 +14,7 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.11 2009/04/15 17:15:23 mschrode Exp $
+//!  $Id: ToyMC.h,v 1.12 2009/06/11 17:32:15 mschrode Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -122,14 +122,17 @@ class ToyMC {
   ResolutionModel mResolutionModel;    //!< Resolution model
   std::vector<double> mParReso;        //!< Parameters for Respolution
 
+  double          mSmearFactor;        //!< Combined smear factor from response and resolution
+  bool            mSmearTowersIndividually;  //!< If true, mSmearTowersIndividually is determined individually for each tower, else for each jet
+
 
 
   void genInput();
   void calIds(float& eta, float &phi, int& ieta, int& iphi);
-  void smearTower(double e, float& te, float& tem, float& thad, float& tout, float& temtrue, 
+  void smearTower(double e, bool calcSmearFactor, float& te, float& tem, float& thad, float& tout, float& temtrue, 
 		  float& thadtrue, float& touttrue);  
   int  splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi);
-  double GetMeasuredPt(double truePt) const;
+  void CalculateSmearFactor(double pt);
 
 
  public:
