@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.24 2009/06/11 17:41:24 mschrode Exp $
+// $Id: ToyMC.cc,v 1.25 2009/06/21 18:16:00 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -49,7 +49,7 @@ void ToyMC::genInput() {
     mRandom->RndmArray(3,rand);
     pt = rand[0]*(mMaxPt - mMinPt)+mMinPt;
   } else if(mPtSpectrum == PowerLaw) {
-    pt = mMinPt * pow(rand[0],-1.0/3.5);
+    pt = mMinPt * pow(rand[0],-1.0/5.5);
   }
   mPinput.SetPtEtaPhiM(pt,
 		       rand[1]*(mMaxEta - mMinEta)+mMinEta,
@@ -146,7 +146,7 @@ void ToyMC::CalculateSmearFactor(double pt) {
   else if( mResolutionModel == TwoGauss ) {
     do {
       smear = mHistResp->GetRandom();
-    } while ( smear < 0.1 );
+    } while ( smear < 0.3 );
   }
 
   mSmearFactor *= smear;
@@ -682,6 +682,14 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float jetgene[kjMAX];
   float weight = 1; 
 
+  // All correction factors are 1 in ToyMC
+  float jscaleZSP[2] = { 1., 1. };
+  float jscalel2[2] = { 1., 1. };
+  float jscalel3[2] = { 1., 1. };
+  float jscalel23[2] = { 1., 1. };
+  float jscaleJPT[2] = { 1., 1. };
+  float jscalel23JPT[2] = { 1., 1. };
+
   // CaloTower branches
   CalibTree->Branch("NobjTow",&NobjTow,"NobjTow/I");
   CalibTree->Branch("TowId",towid,"TowId[NobjTow]/I");
@@ -707,6 +715,14 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("JetE",jete,"JetE[NobjJet]/F"  );
   CalibTree->Branch("Weight",&weight,"Weight/F"  );
   CalibTree->Branch("GenJetEt",jetgenet,"GenJetEt[NobjJet]/F" );
+  CalibTree->Branch("GenJetPt",jetgenpt,"GenJetPt[NobjJet]/F" );
+
+  CalibTree->Branch( "JetCorrZSP",     jscaleZSP, "JetCorrZSP[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrL2",      jscalel2,  "JetCorrL2[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrL3",      jscalel3,  "JetCorrL3[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrL2L3",    jscalel23,  "JetCorrL2L3[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrJPT",     jscaleJPT, "JetCorrJPT[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrL2L3JPT", jscalel23JPT,  "JetCorrL2L3JPT[NobjJet]/F" );
 
 
   // Generate events
