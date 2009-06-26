@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: Parameters.cc,v 1.27 2009/06/11 17:32:15 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -10,7 +10,6 @@
 
 
 #include "Parameters.h"
-#include "ConfigFile.h"
 
 
 using namespace std;
@@ -277,15 +276,16 @@ std::string TParameters::trim(std::string const& source, char const* delims)
   return result;
 }
 
+
+
+//! fills start parameters for fit when read from txt file; expects 
+//! 72 lines for 72 bins in phi for each eta bin ranging from -41
+//! to 41 (skipping the 0) and the following parameter format:
+//! maxEta minEta nPar towerParameters jetParameters separated by
+//! blanks
+// ---------------------------------------------------------------
 void TParameters::Read_CalibrationTxt(std::string const& configFile)
 {
-  // ---------------------------------------------------------------
-  // fills start parameters for fit when read from txt file; expects 
-  // 72 lines for 72 bins in phi for each eta bin ranging from -41
-  // to 41 (skipping the 0) and the following parameter format:
-  // maxEta minEta nPar towerParameters jetParameters separated by
-  // blanks
-  // ---------------------------------------------------------------
   std::ifstream file(configFile.c_str());
   std::string line; // buffer line
 
@@ -1084,6 +1084,85 @@ void TParameters::Write_CalibrationCfi(const char* name)
   file.close();
 }
 
+
+
+//-----------------------------------------------------
+void TParameters::Write_CalibrationTex(const char* name, const ConfigFile& config)
+{
+  cout << "Writing calibration to file '" << name << "'" << endl;
+
+  // Getting fitted values from TParameters
+  std::vector<double> pJetFit;
+  for(int i = 0; i < GetNumberOfJetParameters(); i++) {
+    int jetbin = 0;
+    pJetFit.push_back(GetJetParRef(jetbin)[i]);
+  }
+  
+  // Getting start values and scales from config file
+  std::vector<double> pJetStart = bag_of<double>(config.read<string>("jet start values","")); 
+  
+  // Getting scales from config file
+  std::vector<double> pJetScale = bag_of<double>(config.read<string>("Jet parameter scales","")); 
+
+  // Write to tex file
+  ofstream outfile(name, ofstream::binary);
+  if(outfile.is_open()) {
+    outfile << "\\documentclass{article}\n";
+    outfile << "\\begin{document}\n";
+
+    // Parametriaztion
+    outfile << "Parametrization class: \\texttt{";
+    outfile << config.read<string>("Parametrization Class","");
+    outfile << "}\n";
+
+    // BFGS parameters
+    outfile << "\\begin{flushleft}\n\\begin{tabular}{lcl}\n";
+    outfile << TexTabularLine<double>(config,"BFGS derivative step");
+    outfile << TexTabularLine<int>(config,"BFGS mvec");
+    outfile << TexTabularLine<int>(config,"BFGS niter");
+    outfile << TexTabularLine<double>(config,"BFGS eps");
+    outfile << TexTabularLine<double>(config,"BFGS 1st wolfe parameter");
+    outfile << TexTabularLine<double>(config,"BFGS 2nd wolfe parameter");
+    outfile << "\\end{tabular}\\end{flushleft}\n";
+
+    // Event selection cuts
+    outfile << "\\begin{flushleft}\n\\begin{tabular}{lcl}\n";
+    outfile << TexTabularLine<double>(config,"Et genJet min");
+    outfile << TexTabularLine<double>(config,"Et genJet max");
+    outfile << TexTabularLine<double>(config,"DeltaR cut on jet matching");
+    outfile << TexTabularLine<int>(config,"Et cut on jet");
+    outfile << TexTabularLine<int>(config,"Eta cut on jet");
+    outfile << TexTabularLine<double>(config,"Min had fraction");
+    outfile << TexTabularLine<double>(config,"Max had fraction");
+    outfile << TexTabularLine<double>(config,"Relative n+1 Jet Et Cut");
+    outfile << "\\end{tabular}\\end{flushleft}\n";
+
+    // Dijet integration parameters
+    outfile << "\\begin{flushleft}\n\\begin{tabular}{lcl}\n";
+    outfile << TexTabularLine<int>(config,"DiJet integration number of iterations");
+    outfile << TexTabularLine<double>(config,"DiJet integration epsilon");
+    outfile << TexTabularLine<double>(config,"DiJet integration min truth");
+    outfile << TexTabularLine<double>(config,"DiJet integration max truth");
+    outfile << "\\end{tabular}\\end{flushleft}\n";
+
+    // Start and fitted parameters
+    outfile << "\\begin{center}\n";
+    outfile << "\\begin{tabular}{cccc}\n";
+    outfile << "\\hline\n\\hline\n";
+    outfile << "Index & Scale & Start value & Fitted value \\\\ \n\\hline \n";
+    for(unsigned int i = 0; i < pJetFit.size(); i++) {
+      outfile << i << " & " << pJetScale.at(i) << " & " << pJetStart.at(i) << " & " << pJetFit.at(i) << " \\\\ \n";
+    }
+    outfile << "\\hline\n\\hline\n";
+    outfile << "\\end{tabular}\n";
+    outfile << "\\end{center}\n";
+    outfile << "\\end{document}\n";
+    outfile.close();
+  }
+}
+
+
+
 int TParameters::GetTrackEffBin(double pt, double eta)
 {
   int bin, etabin, ptbin;
@@ -1142,3 +1221,20 @@ Function TParameters::global_jet_function() {
 		  GetNumberOfGlobalJetParameters());
 }
 
+
+
+//!  \brief Return one line of LaTeX tabular containing the
+//!         name and value of a given parameter from config file
+//!
+//!  The line is the following: "\texttt{<fieldname>} & = & <value> \\"
+//!
+//!  \param fieldname Name of parameter in config file
+//!  \return The line for the LaTeX tabular
+// --------------------------------------------------
+template<class T> std::string TParameters::TexTabularLine(const ConfigFile& config, const std::string& fieldname) const {
+  std::stringstream line;
+  line << "\\texttt{" << fieldname << "} & = & $";
+  line << config.read<T>(fieldname.c_str(),-1) << "$ \\\\ \n";
+  
+  return line.str();
+}

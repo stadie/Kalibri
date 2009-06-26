@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.48 2009/04/28 06:48:22 mschrode Exp $
+// $Id: Parameters.h,v 1.49 2009/06/11 17:32:15 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -16,12 +16,11 @@
 #include <cmath>
 #include <cstring>
 
+#include "ConfigFile.h"
 #include "Parametrization.h"
 #include "Function.h"
 
 #include "TMath.h"
-
-class ConfigFile;
 
 
 
@@ -29,7 +28,7 @@ class ConfigFile;
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.48 2009/04/28 06:48:22 mschrode Exp $
+//!  $Id: Parameters.h,v 1.49 2009/06/11 17:32:15 mschrode Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -65,10 +64,9 @@ public :
   int GetEtaGranularityTrack() const { return eta_granularity_track;}
   int GetPhiGranularityTrack() const { return phi_granularity_track;}
 
-  /// write calibration constants to cfi file
-  void Write_CalibrationCfi(const char* name); 
-  /// write calibration constants to txt file
-  void Write_CalibrationTxt(const char* name); 
+  void Write_CalibrationCfi(const char* name); //!< write calibration constants to cfi file
+  void Write_CalibrationTxt(const char* name); //!< write calibration constants to txt file
+  void Write_CalibrationTex(const char* name, const ConfigFile& config); //!< write calibration constants and some paraemters of the fit to tex file
 
   double* GetTowerParRef(int bin) { return k + bin*p->nTowerPars(); }
   double* GetJetParRef(int jetbin)  { return k + GetNumberOfTowerParameters()+jetbin*p->nJetPars();}
@@ -315,6 +313,9 @@ private:
   TParameters(const TParameters&) {}
   int GetEtaBin(int phi_id, int etagranu, int phigranu, bool etasym) const;
   int GetPhiBin(int phi_id, int phigranu) const;
+
+  template<class T> std::string TexTabularLine(const ConfigFile& config, const std::string& fieldname) const;
+
   
 
   //Towers in Eta-, Phi- direction (according to PTDR Vol I, p.201)

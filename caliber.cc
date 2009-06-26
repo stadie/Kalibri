@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.84 2009/06/05 15:45:12 mschrode Exp $
+//  $Id: caliber.cc,v 1.85 2009/06/11 17:32:15 mschrode Exp $
 
 #include "caliber.h"
 
@@ -340,9 +340,12 @@ void TCaliber::Run_Lvmini()
 //--------------------------------------------------------------------------------------------
 void TCaliber::Done()
 {
+  ConfigFile config( configfile.c_str() );
+
   // write calibration to cfi output file if ending is cfi
   bool cfi=false;
   bool txt=false;
+  bool tex=false;
   std::string fileName(GetOutputFile());
   if( fileName.find(".cfi")!=std::string::npos ){
     if( fileName.substr(fileName.find(".cfi")).compare(".cfi")==0 ){
@@ -357,15 +360,23 @@ void TCaliber::Done()
       txt=true; // file has a real .txt ending
     }
   }
+  // write calibration to cfi output file if ending is txt
+  if( fileName.find(".tex")!=std::string::npos ){
+    if( fileName.substr(fileName.find(".tex")).compare(".tex")==0 ){
+      p->Write_CalibrationTex( fileName.c_str(), config );
+      tex=true; // file has a real .txt ending
+    }
+  }
+
   // write calibration to cfi & txt output file if w/o ending
-  if( !cfi && !txt ){
+  if( !cfi && !txt && !tex ){
     p->Write_CalibrationCfi( (fileName+".cfi").c_str() );
     p->Write_CalibrationTxt( (fileName+".txt").c_str() );
+    p->Write_CalibrationTex( (fileName+".tex").c_str(), config );
   }
 
 
   // Make control plots
-  ConfigFile config( configfile.c_str() );
   if( config.read<bool>("create plots",0) ) {
     int mode = config.read<int>("Mode",0);
     if( mode == 0 ) {  // Control plots for calibration
