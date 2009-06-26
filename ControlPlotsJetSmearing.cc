@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: ControlPlotsJetSmearing.cc,v 1.1 2009/06/11 17:34:05 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -10,6 +10,7 @@
 #include "TFile.h"
 #include "TH1F.h"
 #include "TH1D.h"
+#include "TLegend.h"
 #include "TLine.h"
 #include "TPostScript.h"
 #include "TStyle.h"
@@ -24,7 +25,7 @@ ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, 
   : mData(data), mConfig(new ConfigFile(configfile.c_str())), mParam(param),
     mDijetNBins(100), mDijetMin(50), mDijetMax(1000),
     mPhotonJetNBins(100), mPhotonJetMin(50), mPhotonJetMax(1000),
-    mRespNBins(200), mRespMin(0.), mRespMax(6.),
+    mRespNBins(150), mRespMin(0.), mRespMax(6.),
     mDir("./controlplots")
 {
   SetGStyle();
@@ -164,7 +165,6 @@ void ControlPlotsJetSmearing::PlotResponse() const
   hDijetTruthPDF->SetLineColor(2);
   hDijetTruthPDF->SetLineWidth(2);
 
-
   // Fill histogram of measured response
   for(DataIt datait = mData->begin(); datait != mData->end(); datait++) {
     // Select DiJet events
@@ -174,7 +174,7 @@ void ControlPlotsJetSmearing::PlotResponse() const
 	TJet * jet = static_cast<TJet*>(dijet->GetMess());
 	if( i == 1 ) jet = static_cast<TJet*>(dijet->GetSecondMess());
 	hDijetGenJetPt->Fill(jet->genPt);
-	hRespMeas->Fill(jet->pt / jet->genPt);		    
+	hRespMeas->Fill(jet->pt / jet->genPt);
       }
     }
 
@@ -186,7 +186,8 @@ void ControlPlotsJetSmearing::PlotResponse() const
       hRespMeas->Fill( jetpt / photonpt );		    
     }
   } // End of loop over data
-  hRespMeas->Scale(1./hRespMeas->Integral("width"));
+
+  if( hRespMeas->Integral("width") ) hRespMeas->Scale(1./hRespMeas->Integral("width"));
   if( hDijetGenJetPt->Integral("width") ) hDijetGenJetPt->Scale(1./hDijetGenJetPt->Integral("width"));
 
 
@@ -257,9 +258,9 @@ void ControlPlotsJetSmearing::PlotResponse() const
     }
   }
 
-
   // Fill histogram of assumed dijet truth pdf
   // and fit with 1/x^n function
+  double n      = 6.5;
   DataIt datait = mData->begin();
   while( (*datait)->GetType() != TypeSmearDiJet  &&  datait != mData->end() ) datait++;
   if( datait != mData->end() ) {
@@ -268,14 +269,17 @@ void ControlPlotsJetSmearing::PlotResponse() const
       double t = hDijetTruthPDF->GetBinCenter(bin);
       hDijetTruthPDF->SetBinContent(bin,dijet->TruthPDF(t));
     }
-  }
-  double n     = 6.5;
-  double k     = n - 3.;
-  double m     = n - 1.;
-  double norm1 = k / ( pow(mingpt,-k) - pow(maxgpt,-k) );
-  double norm2 = m / ( pow(mingpt,-m) - pow(maxgpt,-m) );
-  hDijetTruthPDF->Scale(norm2/norm1);
 
+    n            = (dijet->GetTruthPar()[0]);
+    double k     = n - 3.;
+    double m     = n - 1.;
+    double norm1 = k / ( pow(mingpt,-k) - pow(maxgpt,-k) );
+    double norm2 = m / ( pow(mingpt,-m) - pow(maxgpt,-m) );
+    hDijetTruthPDF->Scale(norm2/norm1);
+
+    //   double norm = ( pow(maxgpt,3) + pow(mingpt,3) ) / 3.;
+    //   hDijetTruthPDF->Scale(norm/(maxgpt-mingpt));
+  }
 
   // Find populated x-axis range
   int maxBin = 0;
@@ -315,6 +319,16 @@ void ControlPlotsJetSmearing::PlotResponse() const
   c1->cd();
   hDijetGenJetPt->Draw();
   hDijetTruthPDF->Draw("SAME");
+
+  TLegend *leg = new TLegend(0.4,0.75,0.89,0.89);
+  leg->SetBorderSize(0);
+  leg->SetFillColor(0);
+  leg->SetTextFont(42);
+  char entry[50];
+  sprintf(entry,"Fit #propto 1 / (p^{true}_{T})^{%.1f}",n);
+  leg->AddEntry(hDijetTruthPDF,entry,"L");
+  leg->Draw("same");
+
   c1->SetLogy();
   c1->SaveAs((mDir+"/DiJetTruth.eps").c_str());
 
@@ -338,6 +352,7 @@ void ControlPlotsJetSmearing::PlotResponse() const
   delete hRespFitSum;
   delete hDijetGenJetPt;
   delete hDijetTruthPDF;
+  delete leg;
 
   std::cout << "Done" << std::endl;
 }
@@ -469,10 +484,11 @@ void ControlPlotsJetSmearing::SetGStyle() const
   // For the legend
   gStyle->SetLegendBorderSize(1);
 
-  // Margins:
-  gStyle->SetPadTopMargin(0.10);
-  gStyle->SetPadBottomMargin(0.14);
-  gStyle->SetPadLeftMargin(0.2);
+  //  Margins
+  // -------------------------------------------
+  gStyle->SetPadTopMargin(0.05);
+  gStyle->SetPadBottomMargin(0.18);
+  gStyle->SetPadLeftMargin(0.19);
   gStyle->SetPadRightMargin(0.04);
 
   // For the Global title:
@@ -489,25 +505,23 @@ void ControlPlotsJetSmearing::SetGStyle() const
   gStyle->SetTitleYOffset(0);
   gStyle->SetTitleBorderSize(0);
 
-  // For the axis titles:
-  gStyle->SetTitleColor(1,"XYZ");
-  gStyle->SetTitleFont(42,"XYZ");
-  gStyle->SetTitleSize(0.04,"XYZ");
-  gStyle->SetTitleXOffset(1.5);
-  gStyle->SetTitleYOffset(2.0);
-
   // For the axis labels:
+  //  For the axis labels and titles
+  // -------------------------------------------
+  gStyle->SetTitleColor(1,"XYZ");
   gStyle->SetLabelColor(1,"XYZ");
+  // For the axis labels:
   gStyle->SetLabelFont(42,"XYZ");
   gStyle->SetLabelOffset(0.007,"XYZ");
-  gStyle->SetLabelSize(0.04,"XYZ");
+  gStyle->SetLabelSize(0.045,"XYZ");
+  
+  // For the axis titles:
+  gStyle->SetTitleFont(42,"XYZ");
+  gStyle->SetTitleSize(0.06,"XYZ");
+  gStyle->SetTitleXOffset(1.2);
+  gStyle->SetTitleYOffset(1.5);
 
-  // For the axis:
-  gStyle->SetAxisColor(1,"XYZ");
-  gStyle->SetStripDecimals(kTRUE);
-  gStyle->SetTickLength(0.03,"XYZ");
-  gStyle->SetNdivisions(510,"XYZ");
-  gStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
+  gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
 }
 
