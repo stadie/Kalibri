@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.15 2009/06/11 17:41:24 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.16 2009/06/15 12:28:41 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -675,7 +675,7 @@ TData* DiJetReader::createSmearEvent()
     jetp->eta        = njet.JetEta[ij];
     jetp->phi        = njet.JetPhi[ij];
     jetp->E          = njet.JetE[ij];
-    jetp->genPt      = njet.GenJetPt[ij];
+    jetp->genPt      = njet.GenEvtScale;//njet.GenJetPt[ij];
     jetp->dR         = LJet.DeltaR(LGenJet);
     jetp->ZSPcor     = njet.JetCorrZSP[ij]; 
     jetp->JPTcor     = njet.JetCorrJPT[ij]; 

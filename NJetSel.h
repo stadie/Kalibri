@@ -74,6 +74,7 @@ public :
    Float_t         GenJetEta[100];   //[NobjJet]
    Float_t         GenJetEt[100];   //[NobjJet]
    Float_t         GenJetE[100];   //[NobjJet]
+   Float_t         GenEvtScale;
    Float_t         Met;
    Float_t         MetPhi;
    Float_t         MetSum;
@@ -136,6 +137,7 @@ public :
    TBranch        *b_GenJetEta;   //!
    TBranch        *b_GenJetEt;   //!
    TBranch        *b_GenJetE;   //!
+   TBranch        *b_GenEvtScale; //!
    TBranch        *b_Met;   //!
    TBranch        *b_MetPhi;   //!
    TBranch        *b_MetSum;   //!
@@ -234,6 +236,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("GenJetEta", GenJetEta, &b_GenJetEta);
    fChain->SetBranchAddress("GenJetEt", GenJetEt, &b_GenJetEt);
    fChain->SetBranchAddress("GenJetE", GenJetE, &b_GenJetE);
+   fChain->SetBranchAddress("GenEvtScale", &GenEvtScale, &b_GenEvtScale);
    fChain->SetBranchAddress("Met", &Met, &b_Met);
    fChain->SetBranchAddress("MetPhi", &MetPhi, &b_MetPhi);
    fChain->SetBranchAddress("MetSum", &MetSum, &b_MetSum);
