@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.27 2009/06/11 17:32:15 mschrode Exp $
+// $Id: Parameters.cc,v 1.28 2009/06/26 11:49:54 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -291,21 +291,24 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
 
   int      etaBin=-42;
   unsigned phiBin=  0;
-  unsigned iLines=  0;
+  //  unsigned iLines=  0;
   while( std::getline(file,line) ){
+    phiBin = 1; // Only 1 phibin is written to the file
     // determine phi bin on the fly
-    phiBin=(iLines%72)+1;      // phi counts from 1...72 for each eta bin
-    ++iLines;
+    //    phiBin=(iLines%72)+1;      // phi counts from 1...72 for each eta bin
+//     ++iLines;
     // determine eta bin on the fly
     if(phiBin==1) ++etaBin; // increas etaValue by for the first phi bin
     if(etaBin==0) ++etaBin; // and don't forget to skip the 0
 
-    //cout << "etaBin: " << etaBin << " :: " << "phiBin: " << phiBin << endl;
+    //    cout << "etaBin: " << etaBin << " :: " << "phiBin: " << phiBin << endl;
 
     // buffers for input parameters
     unsigned nPar=0; //this is not needed but read out for control reasons 
     double etaMax=0; //this is not needed but read out for control reasons  
     double etaMin=0; //this is not needed but read out for control reasons 
+    double etMin=0;
+    double etMax=0;
     std::vector<double> twrPars, jetPars, trkPars,globaljetPars;
     unsigned entry=0; // controls which parameter is to filled
     while( line.length()>line.substr(0, line.find(" ")).size() ){
@@ -318,14 +321,18 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
 	  break; 
 	case 3 : nPar   = std::atoi( line.substr(0, line.find(" ")).c_str() ); 
 	  break; 
+	case 4 : etMin  = std::atoi( line.substr(0, line.find(" ")).c_str() ); 
+	  break; 
+	case 5 : etMax  = std::atoi( line.substr(0, line.find(" ")).c_str() ); 
+	  break; 
 	default:
-	  if((entry-3)<=p->nTowerPars()){
+	  if((entry-5)<=p->nTowerPars()){
 	    twrPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
 	  }
-	  else if((entry-3)<=p->nTowerPars()+p->nJetPars()){
+	  else if((entry-5)<=p->nTowerPars()+p->nJetPars()){
 	    jetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
 	  }
-	  else if((entry-3)<=p->nTowerPars()+p->nJetPars()+p->nTrackPars()) {
+	  else if((entry-5)<=p->nTowerPars()+p->nJetPars()+p->nTrackPars()) {
 	    trkPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
 	  } else {
 	    globaljetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
@@ -347,26 +354,28 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
     globaljetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
 
     // fill parameters
-    int towerIdx = GetBin(GetEtaBin(etaBin),GetPhiBin(phiBin));
-    if( towerIdx<0 ) continue;
-    for (unsigned n=0; n< p->nTowerPars(); ++n) {
-      k[towerIdx*p->nTowerPars()+n] = twrPars[n];
-      //e[towerIdx*p->nTowerPars()+n] = NOT_READ_OUT;
-    }
-    int jetIdx = GetJetBin(GetJetEtaBin(etaBin),GetJetPhiBin(phiBin));
-    if( jetIdx<0 ) continue;
-    for (unsigned n=0; n<p->nJetPars(); ++n) {
-      k[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = jetPars[n];
-      //e[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = NOT_READ_OUT;
-    }
-    int trackIdx = GetTrackBin(GetTrackEtaBin(etaBin),GetTrackPhiBin(phiBin));
-    if( trackIdx<0 ) continue;
-    for (unsigned n=0; n<p->nTrackPars(); ++n) {
-      k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+trackIdx*p->nTrackPars()+n] = trkPars[n];
-      //e[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = NOT_READ_OUT;
-    }
-    for (unsigned n=0; n<p->nGlobalJetPars(); ++n) {
-      k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters() +n] = globaljetPars[n];
+    for(phiBin = 1; phiBin <= 72; phiBin++) {
+      int towerIdx = GetBin(GetEtaBin(etaBin),GetPhiBin(phiBin));
+      if( towerIdx<0 ) continue;
+      for (unsigned n=0; n< p->nTowerPars(); ++n) {
+	k[towerIdx*p->nTowerPars()+n] = twrPars[n];
+	//e[towerIdx*p->nTowerPars()+n] = NOT_READ_OUT;
+      }
+      int jetIdx = GetJetBin(GetJetEtaBin(etaBin),GetJetPhiBin(phiBin));
+      if( jetIdx<0 ) continue;
+      for (unsigned n=0; n<p->nJetPars(); ++n) {
+	k[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = jetPars[n];
+	//e[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = NOT_READ_OUT;
+      }
+      int trackIdx = GetTrackBin(GetTrackEtaBin(etaBin),GetTrackPhiBin(phiBin));
+      if( trackIdx<0 ) continue;
+      for (unsigned n=0; n<p->nTrackPars(); ++n) {
+	k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+trackIdx*p->nTrackPars()+n] = trkPars[n];
+	//e[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+n] = NOT_READ_OUT;
+      }
+      for (unsigned n=0; n<p->nGlobalJetPars(); ++n) {
+	k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters() +n] = globaljetPars[n];
+      }
     }
   }
 }
