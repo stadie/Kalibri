@@ -764,7 +764,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   std::vector<TH2F*> h2PttrueCorrL2;    // Response corrected by JetMET L2 correction vs pttrue
   std::vector<TH2F*> h2PttrueCorrL2L3;  // Response corrected by JetMET L2L3 correction vs pttru
   // Logarithmic binning
-  const int nLogBins = 20;
+  const int nLogBins = 15;
   double logBins[nLogBins+1];
   EquidistLogBins(logBins,nLogBins,bins.XLow(0),bins.XUp(bins.NBinsX()-1));
   for(int etabin = 0; etabin < bins.NBinsY(); etabin++) { // Loop over eta bins
