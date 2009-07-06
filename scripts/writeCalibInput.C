@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: writeCalibInput.C,v 1.1 2009/07/04 17:06:08 mschrode Exp $
 //
 // This script reads L2L3 calibration constants
 // from a txt file with the same format as in
@@ -97,6 +97,11 @@ ParsL3 readL3Correction(const std::string& filename) {
 ParsL2 readL2Correction(const std::string& filename) {
   std::cout << "Reading parameters for L2 correction\n";
 
+  // There are scaling factors in "L2L3JetParametrization"
+  std::vector<double> scale(5,1.);
+  scale.at(1) = 10.;
+  scale.at(2) = 100.;
+
   ParsL2 parL2;
 
   std::ifstream file;
@@ -121,7 +126,7 @@ ParsL2 readL2Correction(const std::string& filename) {
       file >> val;                       // Et max
       for(int i = 0; i < nPar; i++) {    // Store L2 parameters
 	file >> val;
-	par.at(i) = val;
+	par.at(i) = scale.at(i) * val;
       }
       for(int i = 0; i < 3; i++) {       // Last 3 parameters are 0
 	file >> val;
