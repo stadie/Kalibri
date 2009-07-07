@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.28 2009/06/26 11:49:54 mschrode Exp $
+// $Id: Parameters.cc,v 1.29 2009/07/02 12:57:16 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -1109,7 +1109,7 @@ void TParameters::Write_CalibrationTex(const char* name, const ConfigFile& confi
   
   // Getting start values and scales from config file
   std::vector<double> pJetStart = bag_of<double>(config.read<string>("jet start values","")); 
-  
+
   // Getting scales from config file
   std::vector<double> pJetScale = bag_of<double>(config.read<string>("Jet parameter scales","")); 
 
@@ -1159,7 +1159,7 @@ void TParameters::Write_CalibrationTex(const char* name, const ConfigFile& confi
     outfile << "\\begin{tabular}{cccc}\n";
     outfile << "\\hline\n\\hline\n";
     outfile << "Index & Scale & Start value & Fitted value \\\\ \n\\hline \n";
-    for(unsigned int i = 0; i < pJetFit.size(); i++) {
+    for(unsigned int i = 0; i < pJetScale.size() && i < pJetStart.size() && i < pJetFit.size(); i++) {
       outfile << i << " & " << pJetScale.at(i) << " & " << pJetStart.at(i) << " & " << pJetFit.at(i) << " \\\\ \n";
     }
     outfile << "\\hline\n\\hline\n";
