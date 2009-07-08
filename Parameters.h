@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.49 2009/06/11 17:32:15 mschrode Exp $
+// $Id: Parameters.h,v 1.50 2009/06/26 11:49:54 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -28,7 +28,7 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.49 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: Parameters.h,v 1.50 2009/06/26 11:49:54 mschrode Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -244,20 +244,29 @@ public :
     if(hadet < 0.001) hadet = 0.001;
     double hade = hadet * xorig->E / xorig->pt; 
     //std::cout << "had Et:" << hadet << " , " << "had E:" << hade << '\n';
-    double var = 1.3 * 1.3/hade + 0.056 * 0.056;  
+
+    double a = 4.44;
+    double b = 1.11;
+    double c = 0.03;
+
+    double var = a*a/hade/hade + b*b/hade + c*c;
     //truncate variance accordingly
     double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
-    return sqrt(truncvar) * hadet;
+    return sqrt(truncvar) * hade;
   }
   
   static double toy_jet_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) {
-    double b = 1.3;
-    double c = 0.0;//56;
-    //return sqrt(b*b/x[0] + c*c)*x[0];
-    double var = b*b/x[0] + c*c;
+    double a = 4.44;
+    double b = 1.11;
+    double c = 0.03;
+
+    //return sqrt(a*a/x[0]/x[0] + b*b/x[0] + c*c)*x[0];
+
+    double e   = x[0] * xorig->E / xorig->pt;
+    double var = a*a/e/e + b*b/e + c*c;
     //truncate variance accordingly
     double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
-    return sqrt(truncvar) * x[0];
+    return sqrt(truncvar) * e;
   }
 
   static double const_error_parametrization(const double *x, const TMeasurement *xorig, double errorig)  {
