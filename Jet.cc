@@ -2,11 +2,13 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.22 2009/04/17 18:04:26 mschrode Exp $
+//    $Id: Jet.cc,v 1.23 2009/06/11 17:32:15 mschrode Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
 
+#include <iostream>
+#include <iomanip>
 
 Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 double eta,double phi, Flavor flavor,   
@@ -145,22 +147,25 @@ double Jet::correctedEt(double Et, bool fast) const {
   assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
   if(corEt < 0) {
-    //    std::cout << "WARNING: jet cor. Et < 0.0 GeV:" << corEt << '\n';
+    std::cout << "WARNING: jet cor. Et < 0.0 GeV:" << corEt << '\n';
     corEt = 1.0;
   }
   temp.pt   = corEt;  
   temp.HadF = corEt - OutF - EMF;
   if(temp.HadF < 0) temp.HadF = 0;
   temp.E    = TJet::E * corEt/TJet::pt;
+
   corEt = gf(&temp);
   if(corEt != corEt) 
     std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
   assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
   if(corEt <= 1.0) {
-    //    std::cout << "WARNING: global jet cor. Et < 1.0 GeV:" << corEt << '\n';
+    std::cout << "WARNING: global jet cor. Et < 1.0 GeV:" << corEt << '\n';
     corEt = 1.0;
   }
+
+
   return corEt;
 }
 
@@ -431,6 +436,15 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
 void Jet::print()
 {
   std::cout << "Jet  Et: " << Et() << " GeV, eta: " << eta() << std::endl;
+  std::cout << "Jet par: ";
+  for(int i = 0; i < f.nPars(); i++) {
+    std::cout << f.firstPar()[i] << "  ";
+  }
+  std::cout << "\nGlobal par: ";
+  for(int i = 0; i < gf.nPars(); i++) {
+    std::cout << gf.firstPar()[i] << "  ";
+  }
+  std::cout << "\n";
 }
 
 
