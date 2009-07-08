@@ -14,7 +14,7 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.12 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: ToyMC.h,v 1.13 2009/06/21 18:16:00 mschrode Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -24,7 +24,7 @@ class ToyMC {
   //!  - For calibration
   //!    - 'Gauss': An energy dependent Gaussian resolution
   //!      \f[
-  //!       \frac{\sigma}{p_{T}} = \frac{b_{0}}{\sqrt(p_{T})} \oplus b_{1}
+  //!       \frac{\sigma}{E} = \frac{b}{E} \oplus \frac{b}{\sqrt{E}} \oplus b
   //!      \f]
   //!      
   //!    - 'Landau': An energy dependent Landau resolution

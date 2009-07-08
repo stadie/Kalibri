@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.25 2009/06/21 18:16:00 mschrode Exp $
+// $Id: ToyMC.cc,v 1.26 2009/06/26 11:51:44 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -99,11 +99,14 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
 
 //!  \brief Calculate pt smear factor due to
 //!         response and resolution
-//!  \param pt Pt for calculation of some smear factors
+//!  \param E  Energy for calculation of some smear factors
 //----------------------------------------------------------
-void ToyMC::CalculateSmearFactor(double pt) {
+void ToyMC::CalculateSmearFactor(double E) {
   // Reset smear factor
   mSmearFactor = 1.;
+
+  // Pt
+  double pt    = E * mPinput.Pt()/mPinput.E();
 
   // Apply resolution
   if( mResponseModel == Constant
@@ -112,8 +115,8 @@ void ToyMC::CalculateSmearFactor(double pt) {
       || (mResponseModel == Slope)) {
     mSmearFactor *= mParResp.at(0);
   }
-  else if( mResponseModel == L3 ) { 
-    if( mPinput.Pt() < 0.1 ) {
+  else if( mResponseModel == L3 ) {
+    if( pt < 0.1 ) {
       mSmearFactor *= mParResp.at(0) - mParResp.at(1)/mParResp.at(3) +  mParResp.at(4);
     } else {
       mSmearFactor *= mParResp.at(0) - mParResp.at(1)/(pow(log10(pt),mParResp.at(2)) + mParResp.at(3)) + mParResp.at(4)/pt;
@@ -127,14 +130,18 @@ void ToyMC::CalculateSmearFactor(double pt) {
   double smear = 1.;
   if( mResolutionModel == Landau) {
     do {
-      smear =  mRandom->Landau(1,sqrt(mParReso.at(0)*mParReso.at(0)/pt + mParReso.at(1)*mParReso.at(1)));
+      smear =  mRandom->Landau(1,sqrt(mParReso.at(0)*mParReso.at(0)/E/E +
+				      mParReso.at(1)*mParReso.at(1)/E   +
+				      mParReso.at(2)*mParReso.at(2))      );
     } while((smear < 0) || (smear > 2));
     smear = 2 - smear;
   }
   else if ( (mResolutionModel == Gauss) ) {
     do {
-      smear = mRandom->Gaus(1.0,sqrt(mParReso.at(0)*mParReso.at(0)/pt + mParReso.at(1)*mParReso.at(1)));
-    } while((smear < 0) || (smear > 2));
+      smear = mRandom->Gaus(1.0,sqrt(mParReso.at(0)*mParReso.at(0)/E/E +
+				     mParReso.at(1)*mParReso.at(1)/E   +
+				     mParReso.at(2)*mParReso.at(2))      );
+    } while((smear < 0));// || (smear > 2));
   }
   else if( mResolutionModel == GaussUniform ) {
     do{
@@ -185,7 +192,7 @@ void ToyMC::smearTower(double e, bool calcSmearFactor, float& te, float& tem, fl
   // Apply response and resolution to hadronic fraction
   if( calcSmearFactor ) {
     if( mSmearTowersIndividually ) CalculateSmearFactor(thad);
-    else                           CalculateSmearFactor(mPinput.Pt());
+    else                           CalculateSmearFactor(mPinput.E());
   }
   thad      *= mSmearFactor;
 
@@ -675,19 +682,23 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float jeteta[kjMAX];
   float jetet[kjMAX];
   float jete[kjMAX]; 
+
+  float genevtscale;
   float jetgenpt[kjMAX];
   float jetgenphi[kjMAX];
   float jetgeneta[kjMAX];
   float jetgenet[kjMAX];
   float jetgene[kjMAX];
+  float jetgenjetidx[kjMAX];
+
   float weight = 1; 
 
   // All correction factors are 1 in ToyMC
-  float jscaleZSP[2] = { 1., 1. };
-  float jscalel2[2] = { 1., 1. };
-  float jscalel3[2] = { 1., 1. };
-  float jscalel23[2] = { 1., 1. };
-  float jscaleJPT[2] = { 1., 1. };
+  float jscaleZSP[2]    = { 1., 1. };
+  float jscalel2[2]     = { 1., 1. };
+  float jscalel3[2]     = { 1., 1. };
+  float jscalel23[2]    = { 1., 1. };
+  float jscaleJPT[2]    = { 1., 1. };
   float jscalel23JPT[2] = { 1., 1. };
 
   // CaloTower branches
@@ -706,6 +717,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("TowHadTrue",towhdtrue,"TowHadTrue[NobjTowCal]/F");
   CalibTree->Branch("TowOETrue",towoetrue,"TowOETrue[NobjTowCal]/F");
   CalibTree->Branch("Tow_jetidx",tow_jetidx,"Tow_jetidx[NobjTow]/I");
+
   // Jet-specific branches of the tree
   CalibTree->Branch("NobjJet",&NobjJet,"NobjJet/I"             );
   CalibTree->Branch("JetPt",jetpt,"JetPt[NobjJet]/F" );
@@ -713,16 +725,31 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("JetEta",jeteta,"JetEta[NobjJet]/F");
   CalibTree->Branch("JetEt",jetet,"JetEt[NobjJet]/F" );
   CalibTree->Branch("JetE",jete,"JetE[NobjJet]/F"  );
-  CalibTree->Branch("Weight",&weight,"Weight/F"  );
   CalibTree->Branch("GenJetEt",jetgenet,"GenJetEt[NobjJet]/F" );
   CalibTree->Branch("GenJetPt",jetgenpt,"GenJetPt[NobjJet]/F" );
+  CalibTree->Branch("GenJetEta",jetgeneta,"GenJetEta[NobjJet]/F" );
+  CalibTree->Branch("GenJetPhi",jetgenphi,"GenJetPhi[NobjJet]/F" );
+  CalibTree->Branch("GenJetJetIdx",jetgenjetidx,"GenJetJetIdx[NobjJet]/F");
 
+  // Correction factors
   CalibTree->Branch( "JetCorrZSP",     jscaleZSP, "JetCorrZSP[NobjJet]/F" );
   CalibTree->Branch( "JetCorrL2",      jscalel2,  "JetCorrL2[NobjJet]/F" );
   CalibTree->Branch( "JetCorrL3",      jscalel3,  "JetCorrL3[NobjJet]/F" );
   CalibTree->Branch( "JetCorrL2L3",    jscalel23,  "JetCorrL2L3[NobjJet]/F" );
   CalibTree->Branch( "JetCorrJPT",     jscaleJPT, "JetCorrJPT[NobjJet]/F" );
   CalibTree->Branch( "JetCorrL2L3JPT", jscalel23JPT,  "JetCorrL2L3JPT[NobjJet]/F" );
+
+  // Genjet collection
+  CalibTree->Branch("NobjGenJet",&NobjJet,"NobjGenJet/I");
+  CalibTree->Branch("GenJetColEt",jetgenet,"GenJetColEt[NobjGenJet]/F" );
+  CalibTree->Branch("GenJetColPt",jetgenpt,"GenJetColPt[NobjGenJet]/F" );
+  CalibTree->Branch("GenJetColEta",jetgeneta,"GenJetColEta[NobjGenJet]/F" );
+  CalibTree->Branch("GenJetColPhi",jetgenphi,"GenJetColPhi[NobjGenJet]/F" );
+  CalibTree->Branch("GenJetColJetIdx",jetgenjetidx,"GenJetColJetIdx[NobjJet]/F");
+
+  // Event branches
+  CalibTree->Branch("GenEvtScale",&genevtscale,"GenEvtScale/F" );
+  CalibTree->Branch("Weight",&weight,"Weight/F"  );
 
 
   // Generate events
@@ -734,6 +761,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   for(int n = 0; n < nevents ; ++n) {
     // Generate truth 4-momentum
     genInput();
+    genevtscale  = mPinput.Pt();
 
     // Assign it's variables to first genjet
     jetgenpt[0]  = mPinput.Pt();
@@ -821,17 +849,18 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       } // End loop over towers
 
       // Set jet and genjet variables
-      NobjTow     += ntow; 
-      jetpt[i]     = jet[i].Pt();
-      jetphi[i]    = jet[i].Phi();
-      jeteta[i]    = jet[i].Eta();
-      jetet[i]     = jet[i].Pt();
-      jete[i]      = jet[i].E(); 
-      jetgenpt[i]  = genjet[i].Pt();
-      jetgenphi[i] = genjet[i].Phi();
-      jetgeneta[i] = genjet[i].Eta();
-      jetgenet[i]  = genjet[i].Pt();
-      jetgene[i]   = genjet[i].E();
+      NobjTow        += ntow; 
+      jetpt[i]        = jet[i].Pt();
+      jetphi[i]       = jet[i].Phi();
+      jeteta[i]       = jet[i].Eta();
+      jetet[i]        = jet[i].Pt();
+      jete[i]         = jet[i].E(); 
+      jetgenpt[i]     = genjet[i].Pt();
+      jetgenphi[i]    = genjet[i].Phi();
+      jetgeneta[i]    = genjet[i].Eta();
+      jetgenet[i]     = genjet[i].Pt();
+      jetgene[i]      = genjet[i].E();
+      jetgenjetidx[i] = i;
     } // End of loop over jets
 
     // Check generated eta measurement
@@ -855,6 +884,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       jetgeneta[0] = genjet[1].Eta();
       jetgenet[0]  = genjet[1].Pt();
       jetgene[0]   = genjet[1].E();
+
       jetpt[1]     = jet[0].Pt();
       jetphi[1]    = jet[0].Phi();
       jeteta[1]    = jet[0].Eta();
@@ -968,14 +998,14 @@ void ToyMC::init(const std::string& configfile) {
   }
 
   // Resolution model
-  mParReso               = bag_of<double>(config.read<string>("ToyMC resolution parameters","1.2 0.05"));
+  mParReso               = bag_of<double>(config.read<string>("ToyMC resolution parameters","4.44 1.11 0.03"));
   std::string resolution = config.read<std::string>("ToyMC resolution model","Gauss");
   if(resolution == "Gauss") {
     mResolutionModel = Gauss;
-    assert( mParReso.size() >= 2 );
+    assert( mParReso.size() >= 3 );
   } else if(resolution  == "Landau") {
     mResolutionModel = Landau;
-    assert( mParReso.size() >= 2 );
+    assert( mParReso.size() >= 3 );
   } else if( resolution == "GaussUniform" ) {
     mResolutionModel = GaussUniform; 
     assert( mParReso.size() >= 3 );
