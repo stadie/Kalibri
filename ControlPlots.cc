@@ -784,15 +784,14 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   } // End of loop over eta bins
 
 
-
   // Loop over data and fill response into
   // the corresponding 2D histogram
   for( data_it = mData->begin(); data_it != mData->end(); data_it++ ) {
     JetTruthEvent *jte = dynamic_cast<JetTruthEvent*>(*data_it);
     if( jte ) {
       if( jte->FlaggedBad() ) continue;   // Discard events flagged bad
-
-      TJet * jet        = static_cast<TJet*>(jte->GetMess());
+      
+      Jet * jet        = static_cast<Jet*>(jte->GetMess());
       double weight     = jte->GetWeight();
       double ptmeas     = jet->pt;
       double ptcorr     = jte->GetParametrizedMess();
@@ -800,7 +799,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
       double ptcorrL2L3 = jet->L2L3cor * jet->pt;
       double eta        = jte->GetMess()->eta;
       double pttrue     = jte->GetTruth();
-    
+
       // Find pttrue bin for response vs eta plot
       int ptbin = bins.IX(pttrue);
       if( 0 <= ptbin && ptbin < bins.NBinsX() ) {
@@ -6408,7 +6407,7 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
       meanerror = f->GetParError(1);
       width = f->GetParameter(2);
       if(width < 0.05) width = 0.05;
-      if( (htemp->Fit(f,"LLQNO","goff",mean - 1.5 * width, mean + 1.5 * width) == 0) && (f->GetProb() > 0.01) ) {
+      if( (htemp->Fit(f,"LLQNO","goff",mean - 1.5 * width, mean + 1.5 * width) == 0) ) {
 	mean = f->GetParameter(1);
 	meanerror = f->GetParError(1);
 	width = f->GetParameter(2);
