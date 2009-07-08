@@ -74,6 +74,13 @@ public :
    Float_t         GenJetEta[100];   //[NobjJet]
    Float_t         GenJetEt[100];   //[NobjJet]
    Float_t         GenJetE[100];   //[NobjJet]
+   Int_t           NobjGenJet;
+   Float_t         GenJetColPt[100];   //[NobjJet]
+   Float_t         GenJetColPhi[100];   //[NobjJet]
+   Float_t         GenJetColEta[100];   //[NobjJet]
+   Float_t         GenJetColEt[100];   //[NobjJet]
+   Float_t         GenJetColE[100];   //[NobjJet]
+   Int_t           GenJetColJetIdx[100];
    Float_t         GenEvtScale;
    Float_t         Met;
    Float_t         MetPhi;
@@ -137,6 +144,13 @@ public :
    TBranch        *b_GenJetEta;   //!
    TBranch        *b_GenJetEt;   //!
    TBranch        *b_GenJetE;   //!
+   TBranch        *b_NobjGenJet;
+   TBranch        *b_GenJetColPt;   //!
+   TBranch        *b_GenJetColPhi;   //!
+   TBranch        *b_GenJetColEta;   //!
+   TBranch        *b_GenJetColEt;   //!
+   TBranch        *b_GenJetColE;   //!
+   TBranch        *b_GenJetColJetIdx; //!
    TBranch        *b_GenEvtScale; //!
    TBranch        *b_Met;   //!
    TBranch        *b_MetPhi;   //!
@@ -236,6 +250,13 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("GenJetEta", GenJetEta, &b_GenJetEta);
    fChain->SetBranchAddress("GenJetEt", GenJetEt, &b_GenJetEt);
    fChain->SetBranchAddress("GenJetE", GenJetE, &b_GenJetE);
+   fChain->SetBranchAddress("NobjGenJet", &NobjGenJet, &b_NobjGenJet);
+   fChain->SetBranchAddress("GenJetColPt", GenJetColPt, &b_GenJetColPt);
+   fChain->SetBranchAddress("GenJetColPhi", GenJetColPhi, &b_GenJetColPhi);
+   fChain->SetBranchAddress("GenJetColEta", GenJetColEta, &b_GenJetColEta);
+   fChain->SetBranchAddress("GenJetColEt", GenJetColEt, &b_GenJetColEt);
+   fChain->SetBranchAddress("GenJetColE", GenJetColE, &b_GenJetColE);
+   fChain->SetBranchAddress("GenJetColJetIdx", GenJetColJetIdx, &b_GenJetColJetIdx);
    fChain->SetBranchAddress("GenEvtScale", &GenEvtScale, &b_GenEvtScale);
    fChain->SetBranchAddress("Met", &Met, &b_Met);
    fChain->SetBranchAddress("MetPhi", &MetPhi, &b_MetPhi);

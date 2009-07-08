@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.16 2009/06/15 12:28:41 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.17 2009/06/26 11:50:32 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -13,10 +13,12 @@
 #include "Jet.h"
 #include "JetWithTowers.h"
 
+#include <iostream>
+#include <iomanip>
 #include <cstdlib>
 #include <fstream>
 
-#include <TLorentzVector.h>
+#include "TLorentzVector.h"
 
 
 
@@ -188,7 +190,7 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
   std::cout << "Read " << nReadEvts << " " << injet << "-jet events:\n";
   if( dataClass == 11 || dataClass == 12 ) {
     std::cout << "  " << (nReadEvts-=nNjet_cut) << std::flush;
-    std::cout << " events with more than " << injet << " jets\n";
+    std::cout << " events with " << injet << " or more jets\n";
     std::cout << "  That are " << (nReadEvts*=2) << " jet-truth events:\n";
     std::cout << "    " << (nReadEvts-=nGenJetCutLow) << std::flush;
     std::cout << " jet-truth events with ptgen > " << GenJetCutLow << "\n";
@@ -432,7 +434,7 @@ TData* DiJetReader::createPtBalanceEvent()
     if ( jj_data[injet]->GetMess()->pt > scale*Rel_cut_on_nJet ) goodevent = false;
   }
   if ( (((TJet*)(jj_data[0]->GetMess()))->genPt < GenJetCutLow) || (((TJet*)(jj_data[1]->GetMess()))->genPt  < GenJetCutLow ))  goodevent = false;
-  if ( (fabs(jj_data[0]->GetMess()->eta) > Eta_cut_on_jet) ||  (fabs(jj_data[1]->GetMess()->eta) > Eta_cut_on_jet) )  goodevent = false;
+  if ( (std::abs(jj_data[0]->GetMess()->eta) > Eta_cut_on_jet) ||  (std::abs(jj_data[1]->GetMess()->eta) > Eta_cut_on_jet) )  goodevent = false;
   
   /*
   //sort jets. 1st is barrel, 2nd is probe
@@ -478,50 +480,41 @@ TData* DiJetReader::createPtBalanceEvent()
 int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 {
   int injet = 2;
-  if( njet.NobjJet < injet ) {
+  if( njet.NobjGenJet < injet ) {
     nNjet_cut++;
     return 0;
   }
 
-  int     njets = 0;  
+  int     njets = 0;   // Number of stored JetTruthEvents; 0 or 2
   double * terr = new double[njet.NobjTow];
 
-  // Order dijets in genjet Et
-  int genjetidx[2] = { 0, 1 }; // Store index of two genjets with highest Et
-  for(int i = 0; i < njet.NobjJet; ++i) {
-    if( njet.GenJetEt[i] > njet.GenJetEt[genjetidx[0]] ) genjetidx[0] = i;
-  }
-  if( genjetidx[0] == 1 ) genjetidx[1] = 0;
-  for(int i = 0; i < njet.NobjJet; ++i) {
-    if( i != genjetidx[0] ) {
-      if( njet.GenJetEt[i] > njet.GenJetEt[genjetidx[1]] ) genjetidx[1] = i;
-    }
-  }
-  assert( njet.GenJetEt[genjetidx[0]] >= njet.GenJetEt[genjetidx[1]] );
-  
-  // Loop over two jets with highest genjet Et
-  TLorentzVector LJet(0,0,0,0);
-  TLorentzVector LGenJet(0,0,0,0);
-  for(int idx = 0; idx < 2; idx++) {
-    int i = genjetidx[idx];
 
-    LJet.SetPtEtaPhiE(njet.JetPt[i],njet.JetEta[i],njet.JetPhi[i],njet.JetE[i]);
-    LGenJet.SetPtEtaPhiE(njet.GenJetPt[i],njet.GenJetEta[i],njet.GenJetPhi[i],njet.GenJetE[i]);
+  // Loop over two jets with highest genjet Et
+  for(int genJetIdx = 0; genJetIdx < 2; genJetIdx++) {
+    int calJetIdx = njet.GenJetColJetIdx[genJetIdx]; // Closest (DeltaR) calo jet
+    if( njet.NobjJet <= calJetIdx ) {
+      nNjet_cut++;
+      return 0;
+    }
 
     // Cuts
-    if( njet.GenJetEt[i] < GenJetCutLow ) {
+    if( njet.GenJetColEt[genJetIdx] < GenJetCutLow ) {
       nGenJetCutLow++;
       continue;
-    } else if( njet.GenJetEt[i] > GenJetCutUp ) {
+    } else if( njet.GenJetColEt[genJetIdx] > GenJetCutUp ) {
       nGenJetCutUp++;
       continue;
-    } else if( LJet.DeltaR(LGenJet) > DeltaRMatchingCut ) {
+    }
+    double dphi        = TVector2::Phi_mpi_pi( njet.JetPhi[calJetIdx] - njet.GenJetColPhi[genJetIdx] );
+    double deta        = njet.JetEta[calJetIdx] - njet.GenJetColEta[genJetIdx];
+    double drJetGenjet = sqrt( deta*deta + dphi*dphi );
+    if( drJetGenjet > DeltaRMatchingCut ) {
       nDeltaRMatchingCut++;
       continue;
-    } else if( njet.JetEt[i] < Et_cut_on_jet ) {
+    } else if( njet.JetEt[calJetIdx] < Et_cut_on_jet ) {
       nEt_cut_on_jet++;
       continue;
-    } else if( fabs(njet.JetEta[i]) > Eta_cut_on_jet ) {
+    } else if( std::abs(njet.JetEta[calJetIdx]) > Eta_cut_on_jet ) {
       nEta_cut_on_jet++;
       continue;
     }
@@ -535,7 +528,7 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
     double dR = 10;
     int closestTower = 0; 
     for(int n=0; n<njet.NobjTow; ++n){
-      if(njet.Tow_jetidx[n] != i) continue;//look for ij-jet's towers
+      if(njet.Tow_jetidx[n] != calJetIdx) continue;//look for ij-jet's towers
 
       em += njet.TowEm[n];
       had +=  njet.TowHad[n];
@@ -555,9 +548,9 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
       }
       terr[n] *= terr[n];
       err2 += terr[n];
-      double dphi = TVector2::Phi_mpi_pi(njet.JetPhi[i]-tower.phi);
-      double dr = sqrt((njet.JetEta[i]-tower.eta)*(njet.JetEta[i]-tower.eta)+
-		       dphi*dphi);     
+      dphi = TVector2::Phi_mpi_pi(njet.JetPhi[calJetIdx]-tower.phi);
+      deta = njet.JetEta[calJetIdx]-tower.eta;
+      double dr = sqrt( deta*deta + dphi*dphi );     
       if(dr < dR) {
 	dR = dr;
 	closestTower = n;
@@ -571,52 +564,54 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
       nHad_cut_max++;
       continue;
     }
-    double factor =  njet.JetEt[i] /  njet.JetE[i];
-    tower.pt = njet.JetEt[i];
-    tower.EMF = em * factor;
-    tower.HadF = had * factor;
-    tower.OutF = out * factor;
-    tower.eta = njet.JetEta[i];
-    tower.phi = njet.JetPhi[i];
-    tower.E   = njet.JetE[i];
-    double err =  jet_error_param(&tower.pt,&tower,0);
-    err2 += err * err;
+    double factor = njet.JetEt[calJetIdx] /  njet.JetE[calJetIdx];
+    tower.pt      = njet.JetEt[calJetIdx];
+    tower.EMF     = em * factor;
+    tower.HadF    = had * factor;
+    tower.OutF    = out * factor;
+    tower.eta     = njet.JetEta[calJetIdx];
+    tower.phi     = njet.JetPhi[calJetIdx];
+    tower.E       = njet.JetE[calJetIdx];
+    double err    = jet_error_param(&tower.pt,&tower,0);
+    err2         += err * err;
+
     Jet *jet;
     if(dataClass == 12) {
       JetWithTowers *jt = 
-	new JetWithTowers(njet.JetEt[i],em * factor,had * factor,
-			  out * factor,njet.JetE[i],njet.JetEta[i],
-			  njet.JetPhi[i],TJet::uds,njet.GenJetEt[i],LJet.DeltaR(LGenJet),
-			  njet.JetCorrZSP[i],njet.JetCorrJPT[i],
-			  njet.JetCorrL2[i],njet.JetCorrL3[i],
-			  njet.JetCorrL2[i]*njet.JetCorrL3[i],
-			  njet.JetCorrL2[i]*njet.JetCorrL3[i]*njet.JetCorrJPT[i],
+	new JetWithTowers(njet.JetEt[calJetIdx],em * factor,had * factor,
+			  out * factor,njet.JetE[calJetIdx],njet.JetEta[calJetIdx],
+			  njet.JetPhi[calJetIdx],TJet::uds,njet.GenJetColEt[genJetIdx],drJetGenjet,
+			  njet.JetCorrZSP[calJetIdx],njet.JetCorrJPT[calJetIdx],
+			  njet.JetCorrL2[calJetIdx],njet.JetCorrL3[calJetIdx],
+			  njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx],
+			  njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx]*njet.JetCorrJPT[calJetIdx],
 			  p->jet_function(njet.TowId_eta[closestTower],
 					  njet.TowId_phi[closestTower]),
 			  jet_error_param,p->global_jet_function(),Et_cut_on_jet);
       for(int j = 0 ; j < njet.NobjTow ; ++j) {
-	if (njet.Tow_jetidx[j]!= i) continue;//look for ij-jet's towers
+	if (njet.Tow_jetidx[j]!= calJetIdx) continue;//look for ij-jet's towers
 	double scale = njet.TowEt[j]/njet.TowE[j];
 	jt->addTower(njet.TowEt[j],njet.TowEm[j]*scale,
 		     njet.TowHad[j]*scale,njet.TowOE[j]*scale,
 		     njet.TowE[j],njet.TowEta[j],njet.TowPhi[j],
-		     p->tower_function(njet.TowId_eta[i],njet.TowId_phi[i]),
+		     p->tower_function(njet.TowId_eta[calJetIdx],njet.TowId_phi[calJetIdx]),
 		     tower_error_param);
       }
       jet = jt;
     }
     else { 
-      jet = new Jet(njet.JetEt[i],em * factor,had * factor,out * factor,
-		    njet.JetE[i],njet.JetEta[i],njet.JetPhi[i],
-		    TJet::uds,njet.GenJetEt[i],LJet.DeltaR(LGenJet),njet.JetCorrZSP[i],
-		    njet.JetCorrJPT[i],njet.JetCorrL2[i],njet.JetCorrL3[i],
-		    njet.JetCorrL2[i]*njet.JetCorrL3[i],
-		    njet.JetCorrL2[i]*njet.JetCorrL3[i]*njet.JetCorrJPT[i],
+      jet = new Jet(njet.JetEt[calJetIdx],em * factor,had * factor,out * factor,
+		    njet.JetE[calJetIdx],njet.JetEta[calJetIdx],njet.JetPhi[calJetIdx],
+		    TJet::uds,njet.GenJetColEt[genJetIdx],drJetGenjet,njet.JetCorrZSP[calJetIdx],
+		    njet.JetCorrJPT[calJetIdx],njet.JetCorrL2[calJetIdx],njet.JetCorrL3[calJetIdx],
+		    njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx],
+		    njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx]*njet.JetCorrJPT[calJetIdx],
 		    p->jet_function(njet.TowId_eta[closestTower],
 				    njet.TowId_phi[closestTower]),
 		    jet_error_param,p->global_jet_function(),Et_cut_on_jet);    
     }
-    JetTruthEvent* jte = new JetTruthEvent(jet,njet.GenJetEt[i],1.0);//njet.Weight);
+
+    JetTruthEvent* jte = new JetTruthEvent(jet,njet.GenJetColEt[genJetIdx],1.);//njet.Weight);
     data.push_back(jte);
     ++njets;
   }     
@@ -631,38 +626,43 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 // ----------------------------------------------------------------   
 TData* DiJetReader::createSmearEvent()
 {
+  if( njet.NobjGenJet < 2 ) {
+    nNjet_cut++;
+    return 0;
+  }
+
   SmearDiJet * jj_data;
   
   int      nstoredjets = 0;
   double   scale       = 0;
   TJet   * jet1        = 0;
 
-  // Loop over jets
-  for(int ij = 0; ij < njet.NobjJet; ij++) {
-    // Find the jets eta & phi index using the nearest tower to jet axis,
-    // sum up the jets em, had and out fraction to get the according jet's
-    // fractions
+  // Loop over two jets with highest genjet Et
+  for(int genJetIdx = 0; genJetIdx < 2; genJetIdx++) {
+    int calJetIdx = njet.GenJetColJetIdx[genJetIdx]; // Closest (DeltaR) calo jet
+    if( njet.NobjJet <= calJetIdx ) {
+      nNjet_cut++;
+      return 0;
+    }
+
+    double dphi         = TVector2::Phi_mpi_pi( njet.JetPhi[calJetIdx] - njet.GenJetColPhi[genJetIdx] );
+    double deta         = njet.JetEta[calJetIdx] - njet.GenJetColEta[genJetIdx];
+    double drJetGenjet  = sqrt( deta*deta - dphi*dphi );
     double min_tower_dr = 10.;
     double em           = 0;
     double had          = 0;
     double out          = 0;
     int    closestTower = 0; 
 
-    TLorentzVector LJet(0,0,0,0);
-    LJet.SetPtEtaPhiE(njet.JetPt[ij],njet.JetEta[ij],njet.JetPhi[ij],njet.JetE[ij]);
-
-    TLorentzVector LGenJet(0,0,0,0);
-    LGenJet.SetPtEtaPhiE(njet.GenJetPt[ij],njet.GenJetEta[ij],njet.GenJetPhi[ij],njet.GenJetE[ij]);
-
     // Loop over towers
     for (int n=0; n<njet.NobjTow; ++n) {
-      if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
+      if (njet.Tow_jetidx[n]!=(int)calJetIdx) continue;//look for calJetIdx-jet's towers
       em  += njet.TowEm[n];
       had += njet.TowHad[n];
       out += njet.TowOE[n];
-      TLorentzVector LTower(0,0,0,0);
-      LTower.SetPtEtaPhiE(njet.TowEt[n],njet.TowEta[n],njet.TowPhi[n],njet.TowE[n]);
-      double dr = LTower.DeltaR(LJet);
+      dphi = TVector2::Phi_mpi_pi( njet.JetPhi[calJetIdx] - njet.TowPhi[n] );
+      deta = njet.JetEta[calJetIdx] - njet.TowEta[n];
+      double dr = sqrt( deta*deta + dphi*dphi );     
       if (dr < min_tower_dr) {
 	min_tower_dr = dr;
 	closestTower = n;
@@ -671,20 +671,20 @@ TData* DiJetReader::createSmearEvent()
 
     // Set up measurement
     TJet * jetp      = new TJet;
-    jetp->pt         = njet.JetCorrL2[ij] * njet.JetCorrL3[ij] * njet.JetEt[ij];
-    jetp->eta        = njet.JetEta[ij];
-    jetp->phi        = njet.JetPhi[ij];
-    jetp->E          = njet.JetE[ij];
-    jetp->genPt      = njet.GenEvtScale;//njet.GenJetPt[ij];
-    jetp->dR         = LJet.DeltaR(LGenJet);
-    jetp->ZSPcor     = njet.JetCorrZSP[ij]; 
-    jetp->JPTcor     = njet.JetCorrJPT[ij]; 
-    jetp->L2cor      = njet.JetCorrL2[ij]; 
-    jetp->L3cor      = njet.JetCorrL3[ij]; 
-    jetp->L2L3cor    = njet.JetCorrL2[ij] * njet.JetCorrL3[ij]; 
-    jetp->L2L3JPTcor = njet.JetCorrL2[ij] * njet.JetCorrL3[ij] * njet.JetCorrJPT[ij]; 
+    jetp->pt         = njet.JetCorrL2[calJetIdx] * njet.JetCorrL3[calJetIdx] * njet.JetEt[calJetIdx];
+    jetp->eta        = njet.JetEta[calJetIdx];
+    jetp->phi        = njet.JetPhi[calJetIdx];
+    jetp->E          = njet.JetE[calJetIdx];
+    jetp->genPt      = njet.GenEvtScale;//njet.GenJetPt[genJetIdx];
+    jetp->dR         = drJetGenjet;
+    jetp->ZSPcor     = njet.JetCorrZSP[calJetIdx]; 
+    jetp->JPTcor     = njet.JetCorrJPT[calJetIdx]; 
+    jetp->L2cor      = njet.JetCorrL2[calJetIdx]; 
+    jetp->L3cor      = njet.JetCorrL3[calJetIdx]; 
+    jetp->L2L3cor    = njet.JetCorrL2[calJetIdx] * njet.JetCorrL3[calJetIdx]; 
+    jetp->L2L3JPTcor = njet.JetCorrL2[calJetIdx] * njet.JetCorrL3[calJetIdx] * njet.JetCorrJPT[calJetIdx]; 
     //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
-    double factor    = njet.JetEt[ij] /  njet.JetE[ij];
+    double factor    = njet.JetEt[calJetIdx] /  njet.JetE[calJetIdx];
     jetp->HadF       = had * factor;
     jetp->EMF        = em * factor;
     jetp->OutF       = out * factor;
@@ -703,7 +703,7 @@ TData* DiJetReader::createSmearEvent()
 			       mEps,                                          // Integration step length
 			       mMaxNIter);                                    // Integration n iterations
     } else { // Adjust scale
-      scale += njet.JetEt[ij];  
+      scale += njet.JetEt[calJetIdx];  
     }
       
     ++nstoredjets;
@@ -730,7 +730,7 @@ TData* DiJetReader::createSmearEvent()
     } else if ( j1->pt < Et_cut_on_jet || j2->pt < Et_cut_on_jet ) {
       nEt_cut_on_jet++;
       goodevent = false;
-    } else if ( fabs(j1->eta) > Eta_cut_on_jet || fabs(j2->eta) > Eta_cut_on_jet ) {
+    } else if ( std::abs(j1->eta) > Eta_cut_on_jet || std::abs(j2->eta) > Eta_cut_on_jet ) {
       nEta_cut_on_jet++;
       goodevent = false;
     } else if ( j1->HadF/(j1->HadF + j1->EMF) < Had_cut_min ||
