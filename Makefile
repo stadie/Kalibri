@@ -1,11 +1,12 @@
 C=g++
 LD=g++
-F77=g77
-F77LDFLAGS=-lg2c
-F77EXE=$(shell which $(F77) )
-ifeq ($(F77EXE),)
-  F77=gfortran
-  F77LDFLAGS=-lgfortran
+GCC_VERSION=$(shell g++ --version | head -1 | cut -f 3 -d' ' | cut -f 1 -d'.')
+ifeq ($(GCC_VERSION), 3)
+ F77=g77
+ F77LDFLAGS=-lg2c
+else
+ F77=gfortran
+ F77LDFLAGS=-lgfortran
 endif
 
 #O2 for optimization, g for debugging, pg for profiling
@@ -14,9 +15,9 @@ ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 #-I. -I./include -I$(SRT_PUBLIC_CONTEXT)/include 
-CFLAGS = $(SPECIALFLAGS) -Wall $(ROOTAUXCFLAGS)
+CFLAGS= $(SPECIALFLAGS) -Wall $(ROOTAUXCFLAGS)
 #-L../../lib/$(SRT_SUBDIR)/
-LFLAGS = $(SPECIALFLAGS) -lz $(F77LDFLAGS)
+LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS)
 
 RCXX=$(SPECIALFLAGS) -Wno-deprecated -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
