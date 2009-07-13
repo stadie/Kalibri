@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.23 2009/06/11 17:32:15 mschrode Exp $
+//    $Id: Jet.cc,v 1.24 2009/07/08 12:26:57 mschrode Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -251,20 +251,25 @@ double Jet::expectedEt(double truth, double start, double& error,bool fast)
   double m = expectedEt(truth,start,fast);
   if(m < 0) return m;
   double s = expectedError(m);
-  double x = (etmin - m)/s;
-  if(x < -10) {
-    error = s;
-    return m;
-  }
-  //truncated mean:
-  //m + (E^(-((a - m)^2/(2 s^2))) Sqrt[2/\[Pi]] s)/Erfc[(a - m)/(Sq[2] s)]
-  //truncated RMS
-  //m^2 + s^2 + (E^(-((a - m)^2/(2 s^2))) (a + m) Sqrt[2/\[Pi]] s)/Erfc[(a - m)/(Sqrt[2] s)]
-  double l = exp(-x*x/2) * sqrt(2/M_PI) * s/TMath::Erfc(x/sqrt(2));
-  m += l;
-  s =  expectedError(m);
-  error = sqrt(l*(etmin - m) + s * s);
+
+  // hack
+  error = s;
   return m;
+
+//   double x = (etmin - m)/s;
+//   if(x < -10) {
+//     error = s;
+//     return m;
+//   }
+//   //truncated mean:
+//   //m + (E^(-((a - m)^2/(2 s^2))) Sqrt[2/\[Pi]] s)/Erfc[(a - m)/(Sq[2] s)]
+//   //truncated RMS
+//   //m^2 + s^2 + (E^(-((a - m)^2/(2 s^2))) (a + m) Sqrt[2/\[Pi]] s)/Erfc[(a - m)/(Sqrt[2] s)]
+//   double l = exp(-x*x/2) * sqrt(2/M_PI) * s/TMath::Erfc(x/sqrt(2));
+//   m += l;
+//   s =  expectedError(m);
+//   error = sqrt(l*(etmin - m) + s * s);
+//   return m;
 }
 
 
