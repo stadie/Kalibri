@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.24 2009/07/08 12:26:57 mschrode Exp $
+//    $Id: Jet.cc,v 1.25 2009/07/13 08:25:24 mschrode Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -15,7 +15,7 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 const Function& f, 
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 	 const Function& gf, double Etmin) 
-  : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,0.0,0.0,1.0,1.0,1.0,1.0,1.0,1.0), 
+  : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,0.0,0.0,TJet::CorFactors()), 
     f(f),gf(gf),errf(errfunc),etmin(Etmin)
 {
   temp = *this;
@@ -23,12 +23,11 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 }
 
 Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
-         double eta,double phi, Flavor flavor, double genPt, double dR, double ZSPcor, 
-	 double JPTcor, double L2cor, double L3cor,double L2L3cor, 
-	 double L2L3JPTcor, const Function& f, 
+         double eta,double phi, Flavor flavor, double genPt, double dR,
+	 TJet::CorFactors corFactors, const Function& f, 
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 	 const Function& gf, double Etmin) 
-  : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,dR,ZSPcor,JPTcor,L2cor,L3cor,L2L3cor,L2L3JPTcor), 
+  : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,dR,corFactors),
     f(f),gf(gf),errf(errfunc),etmin(Etmin)
 {
   temp = *this;

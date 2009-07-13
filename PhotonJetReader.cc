@@ -1,4 +1,4 @@
-//  $Id: PhotonJetReader.cc,v 1.18 2009/06/11 17:32:15 mschrode Exp $
+//  $Id: PhotonJetReader.cc,v 1.19 2009/06/11 17:41:24 mschrode Exp $
 
 #include "PhotonJetReader.h"
 
@@ -238,9 +238,13 @@ TData* PhotonJetReader::createJetTruthEvent()
       new JetWithTowers(gammajet.JetCalEt,em * factor,had * factor,
 			out * factor,gammajet.JetCalE,gammajet.JetCalEta,
 			gammajet.JetCalPhi,TJet::uds,gammajet.JetGenEt,LJet.DeltaR(LGenJet),
-			gammajet.JetCorrZSP,gammajet.JetCorrJPT,
-			gammajet.JetCorrL2,gammajet.JetCorrL3,
-			gammajet.JetCorrL2L3,gammajet.JetCorrL2L3JPT,
+			TJet::CorFactors(gammajet.JetCorrZSP, // L1
+					 gammajet.JetCorrL2,  // L2
+					 gammajet.JetCorrL3,  // L3
+					 1.,                  // L4
+					 1.,                  // L5
+					 gammajet.JetCorrJPT,
+					 gammajet.JetCorrL2L3JPT),
 			p->jet_function(gammajet.TowId_eta[closestTower],
 					gammajet.TowId_phi[closestTower]),
 			jet_error_param,p->global_jet_function(),Et_cut_on_jet);
@@ -257,9 +261,14 @@ TData* PhotonJetReader::createJetTruthEvent()
   else { 
     j = new Jet(gammajet.JetCalEt,em * factor,had * factor,out * factor,
 		gammajet.JetCalE,gammajet.JetCalEta,gammajet.JetCalPhi,
-		TJet::uds,gammajet.JetGenEt,LJet.DeltaR(LGenJet),gammajet.JetCorrZSP,
-		gammajet.JetCorrJPT,gammajet.JetCorrL2,gammajet.JetCorrL3,
-		gammajet.JetCorrL2L3,gammajet.JetCorrL2L3JPT,
+		TJet::uds,gammajet.JetGenEt,LJet.DeltaR(LGenJet),
+		TJet::CorFactors(gammajet.JetCorrZSP, // L1
+				 gammajet.JetCorrL2,  // L2
+				 gammajet.JetCorrL3,  // L3
+				 1.,                  // L4
+				 1.,                  // L5
+				 gammajet.JetCorrJPT,
+				 gammajet.JetCorrL2L3JPT),
 		p->jet_function(gammajet.TowId_eta[closestTower],
 				gammajet.TowId_phi[closestTower]),
 		jet_error_param,p->global_jet_function(),Et_cut_on_jet);
@@ -314,12 +323,12 @@ TData* PhotonJetReader::createSmearEvent()
   jet->E          = gammajet.JetCalE;
   jet->genPt      = gammajet.JetGenPt;
   jet->dR         = LJet.DeltaR(LGenJet);
-  jet->ZSPcor     = gammajet.JetCorrZSP; 
-  jet->JPTcor     = gammajet.JetCorrJPT; 
-  jet->L2cor      = gammajet.JetCorrL2; 
-  jet->L3cor      = gammajet.JetCorrL3; 
-  jet->L2L3cor    = gammajet.JetCorrL2 * gammajet.JetCorrL3; 
-  jet->L2L3JPTcor = 1.;//gammajet.JetCorrL2L3JPT[ij]; 
+  jet->corFactors = TJet::CorFactors(gammajet.JetCorrZSP, // L1
+				     gammajet.JetCorrL2,  // L2
+				     gammajet.JetCorrL3,  // L3
+				     1.,                  // L4
+				     1.,                  // L5
+				     gammajet.JetCorrJPT);
   //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
   double factor    = gammajet.JetCalEt /  gammajet.JetCalE;
   jet->HadF       = had * factor;
@@ -383,12 +392,13 @@ TData* PhotonJetReader::createTruthMultMessEvent()
     jetp->E   = gammajet.JetCalE;
     jetp->genPt =gammajet.JetGenPt;
     jetp->dR    = LJet.DeltaR(LGenJet);
-    jetp->ZSPcor =gammajet.JetCorrZSP; 
-    jetp->JPTcor =gammajet.JetCorrJPT; 
-    jetp->L2cor =gammajet.JetCorrL2; 
-    jetp->L3cor =gammajet.JetCorrL3; 
-    jetp->L2L3cor =gammajet.JetCorrL2L3; 
-    jetp->L2L3JPTcor =gammajet.JetCorrL2L3JPT; 
+    jetp->corFactors = TJet::CorFactors(gammajet.JetCorrZSP, // L1
+					gammajet.JetCorrL2,  // L2
+					gammajet.JetCorrL3,  // L3
+					1.,                  // L4
+					1.,                  // L5
+					gammajet.JetCorrJPT,
+					gammajet.JetCorrL2L3JPT);
     //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
     double factor =  gammajet.JetCalEt /  gammajet.JetCalE;
     jetp->HadF = had * factor;

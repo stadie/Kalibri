@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.17 2009/06/26 11:50:32 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.18 2009/07/08 12:14:16 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -284,12 +284,13 @@ TData* DiJetReader::createPtBalanceEvent()
     jetp->phi = njet.JetPhi[ij];
     jetp->E   = njet.JetE[ij];
     jetp->genPt =njet.GenJetPt[ij];
-    jetp->ZSPcor =njet.JetCorrZSP[ij]; 
-    jetp->JPTcor =njet.JetCorrJPT[ij]; 
-    jetp->L2cor =njet.JetCorrL2[ij]; 
-    jetp->L3cor =njet.JetCorrL3[ij]; 
-    jetp->L2L3cor =njet.JetCorrL2L3[ij]; 
-    jetp->L2L3JPTcor =njet.JetCorrL2L3JPT[ij]; 
+    jetp->corFactors = TJet::CorFactors(njet.JetCorrZSP[ij], // L1
+					njet.JetCorrL2[ij],  // L2
+					njet.JetCorrL3[ij],  // L3
+					1.,              // L4
+					1.,              // L5
+					njet.JetCorrJPT[ij],
+					njet.JetCorrL2L3JPT[ij]);
     //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
       double factor =  njet.JetEt[ij] /  njet.JetE[ij];
       jetp->HadF = had * factor;
@@ -581,10 +582,13 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 	new JetWithTowers(njet.JetEt[calJetIdx],em * factor,had * factor,
 			  out * factor,njet.JetE[calJetIdx],njet.JetEta[calJetIdx],
 			  njet.JetPhi[calJetIdx],TJet::uds,njet.GenJetColEt[genJetIdx],drJetGenjet,
-			  njet.JetCorrZSP[calJetIdx],njet.JetCorrJPT[calJetIdx],
-			  njet.JetCorrL2[calJetIdx],njet.JetCorrL3[calJetIdx],
-			  njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx],
-			  njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx]*njet.JetCorrJPT[calJetIdx],
+			  TJet::CorFactors(njet.JetCorrZSP[calJetIdx], // L1
+					   njet.JetCorrL2[calJetIdx],  // L2
+					   njet.JetCorrL3[calJetIdx],  // L3
+					   1.,                         // L4
+					   1.,                         // L5
+					   njet.JetCorrJPT[calJetIdx],
+					   njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx]), //not the JPT specific L2L3 factors?
 			  p->jet_function(njet.TowId_eta[closestTower],
 					  njet.TowId_phi[closestTower]),
 			  jet_error_param,p->global_jet_function(),Et_cut_on_jet);
@@ -602,10 +606,14 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
     else { 
       jet = new Jet(njet.JetEt[calJetIdx],em * factor,had * factor,out * factor,
 		    njet.JetE[calJetIdx],njet.JetEta[calJetIdx],njet.JetPhi[calJetIdx],
-		    TJet::uds,njet.GenJetColEt[genJetIdx],drJetGenjet,njet.JetCorrZSP[calJetIdx],
-		    njet.JetCorrJPT[calJetIdx],njet.JetCorrL2[calJetIdx],njet.JetCorrL3[calJetIdx],
-		    njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx],
-		    njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx]*njet.JetCorrJPT[calJetIdx],
+		    TJet::uds,njet.GenJetColEt[genJetIdx],drJetGenjet,
+		    TJet::CorFactors(njet.JetCorrZSP[calJetIdx], // L1
+				     njet.JetCorrL2[calJetIdx],  // L2
+				     njet.JetCorrL3[calJetIdx],  // L3
+				     1.,                         // L4
+				     1.,                         // L5
+				     njet.JetCorrJPT[calJetIdx],
+				     njet.JetCorrL2[calJetIdx]*njet.JetCorrL3[calJetIdx]), //not the JPT specific L2L3 factors?
 		    p->jet_function(njet.TowId_eta[closestTower],
 				    njet.TowId_phi[closestTower]),
 		    jet_error_param,p->global_jet_function(),Et_cut_on_jet);    
@@ -677,12 +685,13 @@ TData* DiJetReader::createSmearEvent()
     jetp->E          = njet.JetE[calJetIdx];
     jetp->genPt      = njet.GenEvtScale;//njet.GenJetPt[genJetIdx];
     jetp->dR         = drJetGenjet;
-    jetp->ZSPcor     = njet.JetCorrZSP[calJetIdx]; 
-    jetp->JPTcor     = njet.JetCorrJPT[calJetIdx]; 
-    jetp->L2cor      = njet.JetCorrL2[calJetIdx]; 
-    jetp->L3cor      = njet.JetCorrL3[calJetIdx]; 
-    jetp->L2L3cor    = njet.JetCorrL2[calJetIdx] * njet.JetCorrL3[calJetIdx]; 
-    jetp->L2L3JPTcor = njet.JetCorrL2[calJetIdx] * njet.JetCorrL3[calJetIdx] * njet.JetCorrJPT[calJetIdx]; 
+    jetp->corFactors = TJet::CorFactors(njet.JetCorrZSP[calJetIdx], // L1
+					njet.JetCorrL2[calJetIdx],  // L2
+					njet.JetCorrL3[calJetIdx],  // L3
+					1.,              // L4
+					1.,              // L5
+					njet.JetCorrJPT[calJetIdx],
+					njet.JetCorrL2[calJetIdx] * njet.JetCorrL3[calJetIdx]); //not the JPT specific L2L3 factors?
     //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
     double factor    = njet.JetEt[calJetIdx] /  njet.JetE[calJetIdx];
     jetp->HadF       = had * factor;

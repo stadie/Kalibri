@@ -231,7 +231,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
 	  TJet *jet = dynamic_cast<TJet*>((*data_it)->GetMess());
 	  if( jet )
 	    {
-	      double cjetmet = jet->L2L3cor;
+	      double cjetmet = jet->corFactors.getToL3();
 	      hRespJetMet.at(bin)->Fill(cjetmet*etmeas/ettrue,weight);
 	    }
 	}
@@ -795,8 +795,8 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
       double weight     = jte->GetWeight();
       double ptmeas     = jet->pt;
       double ptcorr     = jte->GetParametrizedMess();
-      double ptcorrL2   = jet->L2cor * jet->pt;
-      double ptcorrL2L3 = jet->L2L3cor * jet->pt;
+      double ptcorrL2   = jet->corFactors.getToL2() * jet->pt;
+      double ptcorrL2L3 = jet->corFactors.getToL3() * jet->pt;
       double eta        = jte->GetMess()->eta;
       double pttrue     = jte->GetTruth();
 
@@ -2548,28 +2548,28 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	TJet* jet = (TJet*)(jg->GetMess());
 	double genJet = jet->genPt;
 	RelResPt[0]->Fill(genJet,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
-	RelResPt[1]->Fill(genJet,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
-	RelResPt[2]->Fill(genJet,( jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResPt[1]->Fill(genJet,(jet->corFactors.getToL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResPt[2]->Fill(genJet,(jet->corFactors.getToJPTL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
 	RelResPt[3]->Fill(genJet,(jg->GetMess()->pt )/genJet,jg->GetWeight());
 	RelResPt[4]->Fill(genJet,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
-	RelResPt[5]->Fill(genJet,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
-	RelResPt[6]->Fill(genJet,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResPt[5]->Fill(genJet,(jet->corFactors.getToL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResPt[6]->Fill(genJet,(jet->corFactors.getToJPTL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
 	RelResPt[7]->Fill(genJet,(jg->GetMess()->pt )/genJet,jg->GetWeight());
 	RelResEMF[0]->Fill(em1/(em1+had1),(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
-	RelResEMF[1]->Fill(em1/(em1+had1),(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
-	RelResEMF[2]->Fill(em1/(em1+had1),(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEMF[1]->Fill(em1/(em1+had1),(jet->corFactors.getToL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEMF[2]->Fill(em1/(em1+had1),(jet->corFactors.getToJPTL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
 	RelResEMF[3]->Fill(em1/(em1+had1),(jg->GetMess()->pt )/genJet,jg->GetWeight());
 	RelResEta[0]->Fill(jg->GetMess()->eta,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
-	RelResEta[1]->Fill(jg->GetMess()->eta,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
-	RelResEta[2]->Fill(jg->GetMess()->eta,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEta[1]->Fill(jg->GetMess()->eta,(jet->corFactors.getToL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	RelResEta[2]->Fill(jg->GetMess()->eta,(jet->corFactors.getToJPTL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
 	RelResEta[3]->Fill(jg->GetMess()->eta,(jg->GetMess()->pt )/genJet,jg->GetWeight());
 	
 	if(ad) {
 	  const std::vector<TAbstractData*>& data_refT = ad->GetRefTrack();
 	  int TrackMult =  data_refT.size();
 	  RelResTrackMult[0]->Fill(TrackMult,(jg->GetParametrizedMess() )/genJet,jg->GetWeight());
-	  RelResTrackMult[1]->Fill(TrackMult,(jet->L2L3cor * jg->GetMess()->pt )/genJet,jg->GetWeight());
-	  RelResTrackMult[2]->Fill(TrackMult,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	  RelResTrackMult[1]->Fill(TrackMult,(jet->corFactors.getToL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
+	  RelResTrackMult[2]->Fill(TrackMult,(jet->corFactors.getToJPTL3() * jg->GetMess()->pt )/genJet,jg->GetWeight());
 	  RelResTrackMult[3]->Fill(TrackMult,(jg->GetMess()->pt )/genJet,jg->GetWeight());
 	}
       }
@@ -4765,37 +4765,37 @@ void TControlPlots::MakeControlPlotsDiJet()
 	//TrackOOC[1]->Fill(genJet);
 	//TrackOOC2D->Fill(genJet,jm->GetOOC()/genJet);
 	JetResolutionPlot[0]->Fill(genJet- jm->GetMess()->pt);
-	JetResolutionPlot[1]->Fill(genJet- jet->L2L3cor * jm->GetMess()->pt);
-	JetResolutionPlot[2]->Fill(genJet- jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt);
+	JetResolutionPlot[1]->Fill(genJet- jet->corFactors.getToL3() * jm->GetMess()->pt);
+	JetResolutionPlot[2]->Fill(genJet- jet->corFactors.getToJPTL3() * jm->GetMess()->pt);
 	JetResolutionPlot[3]->Fill(genJet- jm->GetParametrizedMess());
 	JetResolutionPlot[4]->Fill((genJet- jm->GetMess()->pt)/genJet);
-	JetResolutionPlot[5]->Fill((genJet- jet->L2L3cor * jm->GetMess()->pt)/genJet);
-	JetResolutionPlot[6]->Fill((genJet- jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt)/genJet);
+	JetResolutionPlot[5]->Fill((genJet- jet->corFactors.getToL3() * jm->GetMess()->pt)/genJet);
+	JetResolutionPlot[6]->Fill((genJet- jet->corFactors.getToJPTL3() * jm->GetMess()->pt)/genJet);
 	JetResolutionPlot[7]->Fill((genJet- jm->GetParametrizedMess())/genJet);
 	JetResolutionPlot[8]->Fill(jm->GetMess()->pt/genJet);
-	JetResolutionPlot[9]->Fill( jet->L2L3cor * jm->GetMess()->pt/genJet);
-	JetResolutionPlot[10]->Fill( jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt/genJet);
+	JetResolutionPlot[9]->Fill( jet->corFactors.getToL3() * jm->GetMess()->pt/genJet);
+	JetResolutionPlot[10]->Fill( jet->corFactors.getToJPTL3() * jm->GetMess()->pt/genJet);
 	JetResolutionPlot[11]->Fill(jm->GetParametrizedMess()/genJet);
 
 	RelResPt[0]->Fill(genJet,(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
-	RelResPt[1]->Fill(genJet,(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
-	RelResPt[2]->Fill(genJet,( jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResPt[1]->Fill(genJet,(jet->corFactors.getToL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResPt[2]->Fill(genJet,( jet->corFactors.getToJPTL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
 	RelResPt[3]->Fill(genJet,(jm->GetMess()->pt )/genJet,jj->GetWeight());
 	RelResPt[4]->Fill(genJet,(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
-	RelResPt[5]->Fill(genJet,(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
-	RelResPt[6]->Fill(genJet,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResPt[5]->Fill(genJet,(jet->corFactors.getToL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResPt[6]->Fill(genJet,(jet->corFactors.getToJPTL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
 	RelResPt[7]->Fill(genJet,(jm->GetMess()->pt )/genJet,jj->GetWeight());
 	RelResEMF[0]->Fill(em1/(em1+had1),(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
-	RelResEMF[1]->Fill(em1/(em1+had1),(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
-	RelResEMF[2]->Fill(em1/(em1+had1),(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEMF[1]->Fill(em1/(em1+had1),(jet->corFactors.getToL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEMF[2]->Fill(em1/(em1+had1),(jet->corFactors.getToJPTL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
 	RelResEMF[3]->Fill(em1/(em1+had1),(jm->GetMess()->pt )/genJet,jj->GetWeight());
 	RelResEta[0]->Fill(jm->GetMess()->eta,(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
-	RelResEta[1]->Fill(jm->GetMess()->eta,(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
-	RelResEta[2]->Fill(jm->GetMess()->eta,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEta[1]->Fill(jm->GetMess()->eta,(jet->corFactors.getToL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResEta[2]->Fill(jm->GetMess()->eta,(jet->corFactors.getToJPTL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
 	RelResEta[3]->Fill(jm->GetMess()->eta,(jm->GetMess()->pt )/genJet,jj->GetWeight());
 	RelResTrackMult[0]->Fill(TrackMult,(jm->GetParametrizedMess() )/genJet,jj->GetWeight());
-	RelResTrackMult[1]->Fill(TrackMult,(jet->L2L3cor * jm->GetMess()->pt )/genJet,jj->GetWeight());
-	RelResTrackMult[2]->Fill(TrackMult,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResTrackMult[1]->Fill(TrackMult,(jet->corFactors.getToL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
+	RelResTrackMult[2]->Fill(TrackMult,(jet->corFactors.getToJPTL3() * jm->GetMess()->pt )/genJet,jj->GetWeight());
 	RelResTrackMult[3]->Fill(TrackMult,(jm->GetMess()->pt )/genJet,jj->GetWeight());
       }
       else noTrack++;
@@ -4817,37 +4817,37 @@ void TControlPlots::MakeControlPlotsDiJet()
 	//TrackOOC[1]->Fill(genJet);
 	//TrackOOC2D->Fill(genJet,(*jm->GetSecondaryJets())[0]->GetOOC()/genJet);
 	JetResolutionPlot[0]->Fill(genJet- messPt);
-	JetResolutionPlot[1]->Fill(genJet- jet->L2L3cor * messPt);
-	JetResolutionPlot[2]->Fill(genJet- jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt);
+	JetResolutionPlot[1]->Fill(genJet- jet->corFactors.getToL3() * messPt);
+	JetResolutionPlot[2]->Fill(genJet- jet->corFactors.getToJPTL3() * messPt);
 	JetResolutionPlot[3]->Fill(genJet- parametrizedMess);
 	JetResolutionPlot[4]->Fill((genJet- messPt)/genJet);
-	JetResolutionPlot[5]->Fill((genJet- jet->L2L3cor * messPt)/genJet);
-	JetResolutionPlot[6]->Fill((genJet- jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt)/genJet);
+	JetResolutionPlot[5]->Fill((genJet- jet->corFactors.getToL3() * messPt)/genJet);
+	JetResolutionPlot[6]->Fill((genJet- jet->corFactors.getToJPTL3() * messPt)/genJet);
 	JetResolutionPlot[7]->Fill((genJet- parametrizedMess)/genJet);
 	JetResolutionPlot[8]->Fill(messPt/genJet);
-	JetResolutionPlot[9]->Fill( jet->L2L3cor * messPt/genJet);
-	JetResolutionPlot[10]->Fill(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt/genJet);
+	JetResolutionPlot[9]->Fill( jet->corFactors.getToL3() * messPt/genJet);
+	JetResolutionPlot[10]->Fill(jet->corFactors.getToJPTL3() * messPt/genJet);
 	JetResolutionPlot[11]->Fill(parametrizedMess/genJet);
 
 	RelResPt[0]->Fill(genJet,(parametrizedMess )/genJet,jj->GetWeight());
-	RelResPt[1]->Fill(genJet,(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
-	RelResPt[2]->Fill(genJet,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResPt[1]->Fill(genJet,(jet->corFactors.getToL3() * messPt )/genJet,jj->GetWeight());
+	RelResPt[2]->Fill(genJet,(jet->corFactors.getToJPTL3() * messPt )/genJet,jj->GetWeight());
 	RelResPt[3]->Fill(genJet,(messPt )/genJet,jj->GetWeight());
 	RelResPt[4]->Fill(genJet,(parametrizedMess )/genJet,jj->GetWeight());
-	RelResPt[5]->Fill(genJet,(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
-	RelResPt[6]->Fill(genJet,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResPt[5]->Fill(genJet,(jet->corFactors.getToL3() * messPt )/genJet,jj->GetWeight());
+	RelResPt[6]->Fill(genJet,(jet->corFactors.getToJPTL3() * messPt )/genJet,jj->GetWeight());
 	RelResPt[7]->Fill(genJet,(messPt )/genJet,jj->GetWeight());
 	RelResEMF[0]->Fill(em2/(em2+had2),(parametrizedMess )/genJet,jj->GetWeight());
-	RelResEMF[1]->Fill(em2/(em2+had2),(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
-	RelResEMF[2]->Fill(em2/(em2+had2),(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResEMF[1]->Fill(em2/(em2+had2),(jet->corFactors.getToL3() * messPt )/genJet,jj->GetWeight());
+	RelResEMF[2]->Fill(em2/(em2+had2),(jet->corFactors.getToJPTL3() * messPt )/genJet,jj->GetWeight());
 	RelResEMF[3]->Fill(em2/(em2+had2),(messPt )/genJet,jj->GetWeight());
 	RelResEta[0]->Fill(etaJet2,(parametrizedMess )/genJet,jj->GetWeight());
-	RelResEta[1]->Fill(etaJet2,(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
-	RelResEta[2]->Fill(etaJet2,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResEta[1]->Fill(etaJet2,(jet->corFactors.getToL3() * messPt )/genJet,jj->GetWeight());
+	RelResEta[2]->Fill(etaJet2,(jet->corFactors.getToJPTL3() * messPt )/genJet,jj->GetWeight());
 	RelResEta[3]->Fill(etaJet2,(messPt )/genJet,jj->GetWeight());
 	RelResTrackMult[0]->Fill(TrackMult,(parametrizedMess )/genJet,jj->GetWeight());
-	RelResTrackMult[1]->Fill(TrackMult,(jet->L2L3cor * messPt )/genJet,jj->GetWeight());
-	RelResTrackMult[2]->Fill(TrackMult,(jet->L2L3JPTcor * jet->ZSPcor * jet->JPTcor * messPt )/genJet,jj->GetWeight());
+	RelResTrackMult[1]->Fill(TrackMult,(jet->corFactors.getToL3() * messPt )/genJet,jj->GetWeight());
+	RelResTrackMult[2]->Fill(TrackMult,(jet->corFactors.getToJPTL3() * messPt )/genJet,jj->GetWeight());
 	RelResTrackMult[3]->Fill(TrackMult,(messPt )/genJet,jj->GetWeight());
       }
       else noTrack++;
@@ -5936,11 +5936,11 @@ void TControlPlots::MakeControlPlotsTop()
     responsePt [a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
     responseEta[a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
 
-    responsePt [a]->SetMinimum( 0. );
-    responseEta[a]->SetMinimum( 0. );
+    responsePt [a]->SetMinimum( 0.4 );
+    responseEta[a]->SetMinimum( 0.4 );
 
-    responsePt [a]->SetMaximum( 1.2 );
-    responseEta[a]->SetMaximum( 1.2 );
+    responsePt [a]->SetMaximum( 1.6 );
+    responseEta[a]->SetMaximum( 1.6 );
 
   }
 

@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.5 2009/03/11 07:57:12 snaumann Exp $
+//    $Id: TopReader.cc,v 1.6 2009/06/11 17:32:15 mschrode Exp $
 //   
 #include "TopReader.h"
 
@@ -390,8 +390,12 @@ TData* TopReader::createTwoJetsInvMassEvents()
       JetWithTowers *jt = 
 	new JetWithTowers(top.JetEt[i], em * factor, had * factor,
 			  out * factor, top.JetE[i], top.JetEta[i],
-			  top.JetPhi[i], TJet::uds, top.GenJetPt[i],
-			  0., 0., 0., 0., 0., 0.,0.,
+			  top.JetPhi[i], TJet::uds, top.GenJetPt[i], 0.,
+			  TJet::CorFactors(top.JetCorrL1[i],
+					   top.JetCorrL2[i],
+					   top.JetCorrL3[i],
+					   top.JetCorrL4[i],            
+					   top.JetCorrL5[i]),
 			  p->jet_function(top.TowId_eta[closestTower],
 					  top.TowId_phi[closestTower]),
 			  jet_error_param, p->global_jet_function(), Et_cut_on_jet);
@@ -409,7 +413,12 @@ TData* TopReader::createTwoJetsInvMassEvents()
     else { 
       *jet = new Jet(top.JetEt[i], em * factor, had * factor, out * factor,
 		     top.JetE[i], top.JetEta[i], top.JetPhi[i],
-		     TJet::uds, top.GenJetPt[i], 0., 0., 0., 0, 0., 0., 0.,
+		     TJet::uds, top.GenJetPt[i], 0.,
+		     TJet::CorFactors(top.JetCorrL1[i],
+				      top.JetCorrL2[i],
+				      top.JetCorrL3[i],
+				      top.JetCorrL4[i],            
+				      top.JetCorrL5[i]),
 		     p->jet_function(top.TowId_eta[closestTower],
 				     top.TowId_phi[closestTower]),
 		     jet_error_param, p->global_jet_function(), Et_cut_on_jet);    

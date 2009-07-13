@@ -11,7 +11,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.16 2009/04/17 18:04:26 mschrode Exp $
+//!    $Id: Jet.h,v 1.17 2009/06/11 17:32:15 mschrode Exp $
 class Jet : public TJet
 {
  public:
@@ -20,9 +20,8 @@ class Jet : public TJet
       double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
       const Function& gf, double Etmin = 0);
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
-      double eta,double phi, Flavor flavor, double genPt, double dR, double ZSPcor,
-      double JPTcor, double L2cor, double L3cor,double L2L3cor, 
-      double L2L3JPTcor, const Function& f,
+      double eta,double phi, Flavor flavor, double genPt, double dR,
+      TJet::CorFactors corFactors, const Function& f,
       double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
       const Function& gf, double Etmin = 0); 
   virtual ~Jet() {};

@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.14 2009/06/08 16:14:46 mschrode Exp $
+//    $Id: ZJetReader.cc,v 1.15 2009/06/11 17:32:15 mschrode Exp $
 //   
 #include "ZJetReader.h"
 
@@ -172,8 +172,13 @@ TData* ZJetReader::createJetTruthEvent()
       new JetWithTowers(zjet.JetCalEt,em * factor,had * factor,
 			out * factor,zjet.JetCalE,zjet.JetCalEta,
 			zjet.JetCalPhi,TJet::uds,zjet.JetGenEt,LJet.DeltaR(LGenJet),
-			zjet.JetCorrZSP,zjet.JetCorrJPT,zjet.JetCorrL2,
-			zjet.JetCorrL3,zjet.JetCorrL2L3,zjet.JetCorrL2L3JPT,
+			TJet::CorFactors(zjet.JetCorrZSP, // L1
+					 zjet.JetCorrL2,  // L2
+					 zjet.JetCorrL3,  // L3
+					 1.,              // L4
+					 1.,              // L5
+					 zjet.JetCorrJPT,
+					 zjet.JetCorrL2L3JPT),
 			p->jet_function(zjet.TowId_eta[closestTower],
 					zjet.TowId_phi[closestTower]),
 			jet_error_param,p->global_jet_function());
@@ -191,8 +196,13 @@ TData* ZJetReader::createJetTruthEvent()
       new JetWithTracks(zjet.JetCalEt,em * factor,had * factor,
 			out * factor, zjet.JetCalE,zjet.JetCalEta,
 			zjet.JetCalPhi,TJet::uds,zjet.JetGenEt,LJet.DeltaR(LGenJet),
-			zjet.JetCorrZSP,zjet.JetCorrJPT,zjet.JetCorrL2,
-			zjet.JetCorrL3,zjet.JetCorrL2L3,zjet.JetCorrL2L3JPT,
+			TJet::CorFactors(zjet.JetCorrZSP, // L1
+					 zjet.JetCorrL2,  // L2
+					 zjet.JetCorrL3,  // L3
+					 1.,              // L4
+					 1.,              // L5
+					 zjet.JetCorrJPT,
+					 zjet.JetCorrL2L3JPT),
 			p->jet_function(zjet.TowId_eta[closestTower],
 					zjet.TowId_phi[closestTower]),
 			jet_error_param,p->global_jet_function());
@@ -212,8 +222,14 @@ TData* ZJetReader::createJetTruthEvent()
   } else { 
     j = new Jet(zjet.JetCalEt,em * factor,had * factor,out * factor,
 		zjet.JetCalE,zjet.JetCalEta,zjet.JetCalPhi,TJet::uds,
-		zjet.JetGenEt,LJet.DeltaR(LGenJet),zjet.JetCorrZSP,zjet.JetCorrJPT,zjet.JetCorrL2,
-		zjet.JetCorrL3,zjet.JetCorrL2L3,zjet.JetCorrL2L3JPT,
+		zjet.JetGenEt,LJet.DeltaR(LGenJet),
+		TJet::CorFactors(zjet.JetCorrZSP, // L1
+				 zjet.JetCorrL2,  // L2
+				 zjet.JetCorrL3,  // L3
+				 1.,              // L4
+				 1.,              // L5
+				 zjet.JetCorrJPT,
+				 zjet.JetCorrL2L3JPT),
 		p->jet_function(zjet.TowId_eta[closestTower],
 				zjet.TowId_phi[closestTower]),
 		jet_error_param,p->global_jet_function());
@@ -258,12 +274,13 @@ TData* ZJetReader::createTruthMultMessEvent()
     jetp->phi = zjet.JetCalPhi;
     jetp->E   = zjet.JetCalE;
     jetp->genPt =zjet.JetGenPt;
-    jetp->ZSPcor =zjet.JetCorrZSP; 
-    jetp->JPTcor =zjet.JetCorrJPT; 
-    jetp->L2cor =zjet.JetCorrL2; 
-    jetp->L3cor =zjet.JetCorrL3;  
-    jetp->L2L3cor =zjet.JetCorrL2L3; 
-    jetp->L2L3JPTcor =zjet.JetCorrL2L3JPT; 
+    jetp->corFactors = TJet::CorFactors(zjet.JetCorrZSP, // L1
+					zjet.JetCorrL2,  // L2
+					zjet.JetCorrL3,  // L3
+					1.,              // L4
+					1.,              // L5
+					zjet.JetCorrJPT,
+					zjet.JetCorrL2L3JPT);
     //the following is not quite correct, as this factor is slightly different for all towers.
     double factor =  zjet.JetCalEt / zjet.JetCalE;
     jetp->HadF = had * factor;

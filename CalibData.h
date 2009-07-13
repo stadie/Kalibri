@@ -1,6 +1,6 @@
 //  \author Christian Autermann
 //  \date Wed Jul 18 13:54:50 CEST 2007
-// $Id: $
+// $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -29,7 +29,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: $
+//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
 class TMeasurement
 {
 public:
@@ -58,7 +58,7 @@ public:
 //!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: $
+//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
 class TTower : public TMeasurement
 { 
 public:
@@ -80,10 +80,39 @@ public:
 //!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: $
+//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
 class TJet : public TMeasurement
 {
 public:
+  //!  \brief   Container class for jet correction factors
+  class CorFactors
+  {
+  public :
+    CorFactors(double L1=1.0, double L2=1.0, double L3=1.0, double L4=1.0, double L5=1.0,
+	       double JPT=1.0, double JPTL2L3=1.0) :
+      L1(L1), L2(L2), L3(L3), L4(L4), L5(L5), JPT(JPT), JPTL2L3(JPTL2L3) {};
+    double getL1()  const { return L1; }    //!< Return L1 correction factor (zero-suppression)
+    double getL2()  const { return L2; }    //!< Return L2 correction factor (relative, in eta)
+    double getL3()  const { return L3; }    //!< Return L3 correction factor (absolute, in pt)
+    double getL4()  const { return L4; }    //!< Return L4 correction factor (electromagnetic fraction)
+    double getL5()  const { return L5; }    //!< Return L5 correction factor (flavor)
+    double getJPT() const { return JPT; }   //!< Return Jet+Track correction factor
+    double getJPTL2L3() const { return JPTL2L3; }   //!< Return product of L2 and L3 correction factors for Jet+Track
+    double getToL2() const { return L1*L2; }          //!< Return factor needed to get L2 corrected from raw jets: L1*L2
+    double getToL3() const { return getToL2()*L3; }   //!< Return factor needed to get L3 corrected from raw jets: L1*L2*L3
+    double getToL4() const { return getToL3()*L4; }   //!< Return factor needed to get L4 corrected from raw jets: L1*L2*L3*L4
+    double getToL5() const { return getToL4()*L5; }   //!< Return factor needed to get L5 corrected from raw jets: L1*L2*L3*L4*L5
+    double getToJPTL3()
+      const { return JPT*L1*JPTL2L3; }   //!< Return factor needed to get L3 corrected from raw jets for JPT: JPT*L1*JPTL2L3
+  private :
+    double L1;    //!< Level 1 correction factor (zero-suppression)
+    double L2;    //!< Level 2 correction factor (relative, in eta)
+    double L3;    //!< Level 3 correction factor (absolute, in pt)
+    double L4;    //!< Level 4 correction factor (electromagnetic fraction)
+    double L5;    //!< Level 5 correction factor (flavor)
+    double JPT;       //!< Jet+Track correction factor
+    double JPTL2L3;   //!< Product of level 2 and level 3 correction factors for Jet+Track
+  };
   //!  \brief Jet flavor
   //!
   //!  The possible flavors are
@@ -95,23 +124,17 @@ public:
   TJet():TMeasurement(){}; 
   TJet(double Et,double EmEt,double HadEt,double OutEt,double E,double eta,
        double phi, Flavor flavor, double genPt, double dR,
-       double ZSPcor, double JPTcor, double L2cor, double L3cor,
-       double L2L3cor, double L2L3JPTcor)
-    : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi),flavor(flavor), genPt(genPt), dR(dR),
-    ZSPcor(ZSPcor), JPTcor(JPTcor), L2cor(L2cor),L3cor(L3cor),L2L3cor(L2L3cor),L2L3JPTcor(L2L3JPTcor) {};
+       CorFactors corFactors)
+    : TMeasurement(Et,EmEt,HadEt,OutEt,E,eta,phi), flavor(flavor), genPt(genPt), dR(dR),
+      corFactors(corFactors) {};
   TJet(TMeasurement* j):TMeasurement(j){};
   //TJet(TJet* j):TMeasurement(j){/*further initialization*/};
   virtual ~TJet() {}
 //variables specific only to jets (i.e. mass)
-  Flavor flavor;      //!< The jet's Flavor
-  double genPt;       //!< The genjet pt
-  double dR;          //!< \f$ \Delta R \f$ between jet and genjet
-  double ZSPcor;      //!< Zero-surpression correction factor (JetMET level 1)
-  double JPTcor;      //!< Jet + Track correction factor
-  double L2cor;       //!< Relative eta correction factor (JetMET level 2)
-  double L3cor;       //!< Absolute pt correction factor (JetMET level 3)
-  double L2L3cor;     //!< Product of L2cor * L3cor
-  double L2L3JPTcor;  //!< Product of L2L3cor * JPTcor
+  Flavor flavor;           //!< The jet's Flavor
+  double genPt;            //!< The genjet pt
+  double dR;               //!< \f$ \Delta R \f$ between jet and genjet
+  CorFactors corFactors;   //!< The correction factors
 };
 
 
@@ -123,7 +146,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: $
+//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
 class TTrack : public TMeasurement
 {
 public:
@@ -183,7 +206,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: $
+//! $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
 class TData
 {
 public:
@@ -289,7 +312,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: $
+//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
 class TAbstractData : public TData
 {
 public:
@@ -613,7 +636,7 @@ public:
     const double MIPsignal = 4;      
     CaloRest = _mess->pt;
     TJet* myTJet =  (TJet*)(GetMess());
-    CaloRest *= myTJet->ZSPcor;   //ZSP correction
+    CaloRest *= myTJet->corFactors.getL1();   //ZSP correction
 
     /*
     //possible Tower correction here (instead of ZSP?)
