@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.37 2009/06/16 13:19:29 mschrode Exp $
+//  $Id: Parametrization.h,v 1.38 2009/06/17 06:46:37 mschrode Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -17,7 +17,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.37 2009/06/16 13:19:29 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.38 2009/06/17 06:46:37 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1326,6 +1326,7 @@ class SmearStepGaussInter : public Parametrization
   //!  outside the binned range.
   //!
   //!  \param r   Response
+  //!  \param par Parameters / bin content to be interpolated
   //!  \return    Interpolated bin content
   // ------------------------------------------------------------------------
   double interpolate(double r, const std::vector<double>& par) const {

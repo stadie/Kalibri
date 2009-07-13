@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.29 2009/07/02 12:57:16 mschrode Exp $
+// $Id: Parameters.cc,v 1.30 2009/07/07 14:24:57 snaumann Exp $
 
 #include <fstream>
 #include <cassert>
@@ -1237,6 +1237,7 @@ Function TParameters::global_jet_function() {
 //!
 //!  The line is the following: "\texttt{<fieldname>} & = & <value> \\"
 //!
+//!  \param config Configfile
 //!  \param fieldname Name of parameter in config file
 //!  \return The line for the LaTeX tabular
 // --------------------------------------------------
