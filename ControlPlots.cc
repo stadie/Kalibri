@@ -5732,6 +5732,20 @@ void TControlPlots::MakeControlPlotsTop()
     responseEta [a] = new TProfile("responseEta" +suffix[a], "", 40,  -4.,  4.);
   }
 
+  TProfile* corrFacsPt [5];
+  TProfile* corrFacsEta[5];
+  TProfile* correctedResponsePt [6];
+  TProfile* correctedResponseEta[6];
+  TString corrLevels[6] = { "Raw", "L1", "L2", "L3", "L4", "L5" };
+  for(unsigned i=0; i<5; i++){
+    corrFacsPt [i] = new TProfile("corrFacsPt" +corrLevels[i+1], "", 35,    0, 140);
+    corrFacsEta[i] = new TProfile("corrFacsEta"+corrLevels[i+1], "", 40,  -4.,  4.);
+  }
+  for(unsigned i=0; i<6; i++){
+    correctedResponsePt [i] = new TProfile("correctedResponsePt" +corrLevels[i], "", 35,    0, 140);
+    correctedResponseEta[i] = new TProfile("correctedResponseEta"+corrLevels[i], "", 40,  -4.,  4.);
+  }
+
   //loop over all fit-events and fill hists
 
   for( std::vector<TData*>::const_iterator i = mData->begin() ; i != mData->end() ; ++i )  
@@ -5801,7 +5815,7 @@ void TControlPlots::MakeControlPlotsTop()
 	messTruthPt [1]->Fill( jets[j]->pt  , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 	messTruthEta[1]->Fill( jets[j]->eta , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
-	double response[2];
+	double response[2]; // before and after Kalibri fit
 	if(j==0) {
 	  response[0] = invM2 ? invM2->GetMess()->pt / jets[j]->genPt : 
 	                           ev->GetMess()->pt / jets[j]->genPt;
@@ -5822,6 +5836,32 @@ void TControlPlots::MakeControlPlotsTop()
 	  responsePt [a]->Fill( jets[j]->pt  , response[a] );
 	  responseEta[a]->Fill( jets[j]->eta , response[a] );
 	}
+
+	corrFacsPt [0]->Fill( jets[j]->pt  , jets[j]->corFactors.getL1() );
+	corrFacsPt [1]->Fill( jets[j]->pt  , jets[j]->corFactors.getL2() );
+	corrFacsPt [2]->Fill( jets[j]->pt  , jets[j]->corFactors.getL3() );
+	corrFacsPt [3]->Fill( jets[j]->pt  , jets[j]->corFactors.getL4() );
+	corrFacsPt [4]->Fill( jets[j]->pt  , jets[j]->corFactors.getL5() );
+
+	corrFacsEta[0]->Fill( jets[j]->eta , jets[j]->corFactors.getL1() );
+	corrFacsEta[1]->Fill( jets[j]->eta , jets[j]->corFactors.getL2() );
+	corrFacsEta[2]->Fill( jets[j]->eta , jets[j]->corFactors.getL3() );
+	corrFacsEta[3]->Fill( jets[j]->eta , jets[j]->corFactors.getL4() );
+	corrFacsEta[4]->Fill( jets[j]->eta , jets[j]->corFactors.getL5() );
+
+	correctedResponsePt [0]->Fill( jets[j]->pt  ,                               jets[j]->pt/jets[j]->genPt );
+	correctedResponsePt [1]->Fill( jets[j]->pt  , jets[j]->corFactors.getL1()  *jets[j]->pt/jets[j]->genPt );
+	correctedResponsePt [2]->Fill( jets[j]->pt  , jets[j]->corFactors.getToL2()*jets[j]->pt/jets[j]->genPt );
+	correctedResponsePt [3]->Fill( jets[j]->pt  , jets[j]->corFactors.getToL3()*jets[j]->pt/jets[j]->genPt );
+	correctedResponsePt [4]->Fill( jets[j]->pt  , jets[j]->corFactors.getToL4()*jets[j]->pt/jets[j]->genPt );
+	correctedResponsePt [5]->Fill( jets[j]->pt  , jets[j]->corFactors.getToL5()*jets[j]->pt/jets[j]->genPt );
+
+	correctedResponseEta[0]->Fill( jets[j]->eta ,                               jets[j]->pt/jets[j]->genPt );
+	correctedResponseEta[1]->Fill( jets[j]->eta , jets[j]->corFactors.getL1()  *jets[j]->pt/jets[j]->genPt );
+	correctedResponseEta[2]->Fill( jets[j]->eta , jets[j]->corFactors.getToL2()*jets[j]->pt/jets[j]->genPt );
+	correctedResponseEta[3]->Fill( jets[j]->eta , jets[j]->corFactors.getToL3()*jets[j]->pt/jets[j]->genPt );
+	correctedResponseEta[4]->Fill( jets[j]->eta , jets[j]->corFactors.getToL4()*jets[j]->pt/jets[j]->genPt );
+	correctedResponseEta[5]->Fill( jets[j]->eta , jets[j]->corFactors.getToL5()*jets[j]->pt/jets[j]->genPt );
       }
 
       mPt  /= jets.size();
@@ -5944,12 +5984,71 @@ void TControlPlots::MakeControlPlotsTop()
 
   }
 
-  // create a legend
+  int markerColorCorr[6] = { 2, 3, 4, 6, 28, 1 };
+  int markerStyleCorr[6] = { 22, 24, 21, 23, 25, 20 };
+
+  for(unsigned i=0; i<5; i++){
+    corrFacsPt [i]->SetMarkerColor( markerColorCorr[i+1] );
+    corrFacsEta[i]->SetMarkerColor( markerColorCorr[i+1] );
+
+    corrFacsPt [i]->SetMarkerStyle( markerStyleCorr[i+1] );
+    corrFacsEta[i]->SetMarkerStyle( markerStyleCorr[i+1] );
+
+    corrFacsPt [i]->SetMarkerSize( 1.5 );
+    corrFacsEta[i]->SetMarkerSize( 1.5 );
+
+    corrFacsPt [i]->SetXTitle( "p_{T} [GeV]" );
+    corrFacsEta[i]->SetXTitle( "#eta" );
+
+    corrFacsPt [i]->SetYTitle( "JEC factor" );
+    corrFacsEta[i]->SetYTitle( "JEC factor" );
+
+    corrFacsPt [i]->SetMinimum( 0.7 );
+    corrFacsEta[i]->SetMinimum( 0.7 );
+
+    corrFacsPt [i]->SetMaximum( 2.2 );
+    corrFacsEta[i]->SetMaximum( 2.2 );
+  }
+
+  for(unsigned i=0; i<6; i++){
+    correctedResponsePt [i]->SetMarkerColor( markerColorCorr[i] );
+    correctedResponseEta[i]->SetMarkerColor( markerColorCorr[i] );
+
+    correctedResponsePt [i]->SetMarkerStyle( markerStyleCorr[i] );
+    correctedResponseEta[i]->SetMarkerStyle( markerStyleCorr[i] );
+
+    correctedResponsePt [i]->SetMarkerSize( 1.5 );
+    correctedResponseEta[i]->SetMarkerSize( 1.5 );
+
+    correctedResponsePt [i]->SetXTitle( "p_{T} [GeV]" );
+    correctedResponseEta[i]->SetXTitle( "#eta" );
+
+    correctedResponsePt [i]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+    correctedResponseEta[i]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+
+    correctedResponsePt [i]->SetMinimum( 0.4 );
+    correctedResponseEta[i]->SetMinimum( 0.4 );
+
+    correctedResponsePt [i]->SetMaximum( 1.6 );
+    correctedResponseEta[i]->SetMaximum( 1.6 );
+  }
+
+  // create legends
 
   TLegend* legend = new TLegend(0.7, 0.75, 0.91, 0.85);
   legend->SetFillColor(0);
   legend->AddEntry(invMass[0],"before fit");
   legend->AddEntry(invMass[1],"after fit");
+
+  TLegend* legendCorrFacs = new TLegend(0.8, 0.7, 0.91, 0.85);
+  legendCorrFacs->SetFillColor(0);
+  for(unsigned i=0; i<5; i++)
+    legendCorrFacs->AddEntry(corrFacsPt[i], corrLevels[i+1]);
+
+  TLegend* legendCorrResponse = new TLegend(0.8, 0.67, 0.91, 0.85);
+  legendCorrResponse->SetFillColor(0);
+  for(unsigned i=0; i<6; i++)
+    legendCorrResponse->AddEntry(correctedResponsePt[i], corrLevels[i]);
 
   // create a line
 
@@ -6046,6 +6145,42 @@ void TControlPlots::MakeControlPlotsTop()
   line->DrawLine(responseEta[0]->GetXaxis()->GetXmin(), 1., responseEta[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_responseEta.eps");
+  ps->NewPage();
+
+  corrFacsPt[0]->Draw("p");
+  for(unsigned int i=1; i<5; i++)
+    corrFacsPt[i]->Draw("p same");
+  legendCorrFacs->Draw("same");
+  line->DrawLine(corrFacsPt[0]->GetXaxis()->GetXmin(), 1., corrFacsPt[0]->GetXaxis()->GetXmax(), 1.);
+  c->Draw();
+  if(printEps) c->Print("top_corrFacsPt.eps");
+  ps->NewPage();
+
+  corrFacsEta[0]->Draw("p");
+  for(unsigned int i=1; i<5; i++)
+    corrFacsEta[i]->Draw("p same");
+  legendCorrFacs->Draw("same");
+  line->DrawLine(corrFacsEta[0]->GetXaxis()->GetXmin(), 1., corrFacsEta[0]->GetXaxis()->GetXmax(), 1.);
+  c->Draw();
+  if(printEps) c->Print("top_corrFacsEta.eps");
+  ps->NewPage();
+
+  correctedResponsePt[0]->Draw("p");
+  for(unsigned int i=1; i<6; i++)
+    correctedResponsePt[i]->Draw("p same");
+  legendCorrResponse->Draw("same");
+  line->DrawLine(correctedResponsePt[0]->GetXaxis()->GetXmin(), 1., correctedResponsePt[0]->GetXaxis()->GetXmax(), 1.);
+  c->Draw();
+  if(printEps) c->Print("top_correctedResponsePt.eps");
+  ps->NewPage();
+
+  correctedResponseEta[0]->Draw("p");
+  for(unsigned int i=1; i<6; i++)
+    correctedResponseEta[i]->Draw("p same");
+  legendCorrResponse->Draw("same");
+  line->DrawLine(correctedResponseEta[0]->GetXaxis()->GetXmin(), 1., correctedResponseEta[0]->GetXaxis()->GetXmax(), 1.);
+  c->Draw();
+  if(printEps) c->Print("top_correctedResponseEta.eps");
 
   ps->Close();
 
@@ -6066,6 +6201,14 @@ void TControlPlots::MakeControlPlotsTop()
     objToBeWritten.push_back( messTruthEta[a] );
     objToBeWritten.push_back( responsePt  [a] );
     objToBeWritten.push_back( responseEta [a] );
+  }
+  for(unsigned i=0; i<5; i++){
+    objToBeWritten.push_back( corrFacsPt [i] );
+    objToBeWritten.push_back( corrFacsEta[i] );
+  }
+  for(unsigned i=0; i<6; i++){
+    objToBeWritten.push_back( correctedResponsePt [i] );
+    objToBeWritten.push_back( correctedResponseEta[i] );
   }
 
   if( mOutputROOT ) WriteToRootFile( objToBeWritten, "Top" );
@@ -6088,6 +6231,14 @@ void TControlPlots::MakeControlPlotsTop()
     delete messTruthEta[a];
     delete responsePt  [a];
     delete responseEta [a];
+  }
+  for(unsigned i=0; i<5; i++){
+    delete corrFacsPt [i];
+    delete corrFacsEta[i];
+  }
+  for(unsigned i=0; i<6; i++){
+    delete correctedResponsePt [i];
+    delete correctedResponseEta[i];
   }
 
   delete legend;
