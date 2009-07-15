@@ -1,6 +1,6 @@
 //  \author Christian Autermann
 //  \date Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
+// $Id: CalibData.h,v 1.67 2009/07/13 12:04:39 snaumann Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -29,7 +29,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: CalibData.h,v 1.67 2009/07/13 12:04:39 snaumann Exp $
 class TMeasurement
 {
 public:
@@ -58,7 +58,7 @@ public:
 //!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: CalibData.h,v 1.67 2009/07/13 12:04:39 snaumann Exp $
 class TTower : public TMeasurement
 { 
 public:
@@ -80,7 +80,7 @@ public:
 //!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: CalibData.h,v 1.67 2009/07/13 12:04:39 snaumann Exp $
 class TJet : public TMeasurement
 {
 public:
@@ -97,6 +97,7 @@ public:
     double getL4()  const { return L4; }    //!< Return L4 correction factor (electromagnetic fraction)
     double getL5()  const { return L5; }    //!< Return L5 correction factor (flavor)
     double getJPT() const { return JPT; }   //!< Return Jet+Track correction factor
+    double getL2L3() const { return L2*L3; }   //!< Return product of L2 and L3 correction factors
     double getJPTL2L3() const { return JPTL2L3; }   //!< Return product of L2 and L3 correction factors for Jet+Track
     double getToL2() const { return L1*L2; }          //!< Return factor needed to get L2 corrected from raw jets: L1*L2
     double getToL3() const { return getToL2()*L3; }   //!< Return factor needed to get L3 corrected from raw jets: L1*L2*L3
@@ -146,7 +147,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: CalibData.h,v 1.67 2009/07/13 12:04:39 snaumann Exp $
 class TTrack : public TMeasurement
 {
 public:
@@ -206,7 +207,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
+//! $Id: CalibData.h,v 1.67 2009/07/13 12:04:39 snaumann Exp $
 class TData
 {
 public:
@@ -312,7 +313,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.66 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: CalibData.h,v 1.67 2009/07/13 12:04:39 snaumann Exp $
 class TAbstractData : public TData
 {
 public:
