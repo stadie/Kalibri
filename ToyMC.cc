@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.26 2009/06/26 11:51:44 mschrode Exp $
+// $Id: ToyMC.cc,v 1.27 2009/07/08 12:13:51 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -141,7 +141,7 @@ void ToyMC::CalculateSmearFactor(double E) {
       smear = mRandom->Gaus(1.0,sqrt(mParReso.at(0)*mParReso.at(0)/E/E +
 				     mParReso.at(1)*mParReso.at(1)/E   +
 				     mParReso.at(2)*mParReso.at(2))      );
-    } while((smear < 0));// || (smear > 2));
+    } while((smear < 0) || (smear > 2));
   }
   else if( mResolutionModel == GaussUniform ) {
     do{
@@ -675,6 +675,34 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   int ttowid_phi[kMAX];
   int ttowid_eta[kMAX]; 
 
+  int NobjTrack = 0;
+  float trackpt[kMAX];
+  float tracketa[kMAX];
+  float trackphi[kMAX];
+  float trackp[kMAX];
+  float trackdr[kMAX];
+  float tracketaout[kMAX];
+  float trackphiout[kMAX];
+  float trackdrout[kMAX];
+  float trackemc1[kMAX];
+  float trackemc3[kMAX];
+  float trackemc5[kMAX];
+  float trackhac1[kMAX];
+  float trackhac3[kMAX];
+  float trackhac5[kMAX];
+  int tracktowid[kMAX];
+  int tracktowidphi[kMAX];
+  int tracktowideta[kMAX];
+  int track_jetidx[kMAX];
+  int trackid[kMAX]; // abs(PiD) if available, guess: muons only; =0: unknown
+  int tracknhits[kMAX]; 
+  bool trackQualityL[kMAX];
+  bool trackQualityT[kMAX];
+  bool trackQualityHP[kMAX];
+  float trackchi2[ kMAX];
+  float muDR[kMAX];
+  float muDE[kMAX];
+
   const int kjMAX = 2;
   int NobjJet = 2;
   float jetpt[kjMAX];
@@ -689,7 +717,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float jetgeneta[kjMAX];
   float jetgenet[kjMAX];
   float jetgene[kjMAX];
-  float jetgenjetidx[kjMAX];
+  int jetgenjetidx[kjMAX];
 
   float weight = 1; 
 
@@ -700,6 +728,11 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float jscalel23[2]    = { 1., 1. };
   float jscaleJPT[2]    = { 1., 1. };
   float jscalel23JPT[2] = { 1., 1. };
+
+  // fill zero MET which is wrong....
+  float mmet = 0;
+  float mphi = 0;
+  float msum = 0;
 
   // CaloTower branches
   CalibTree->Branch("NobjTow",&NobjTow,"NobjTow/I");
@@ -713,11 +746,39 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("TowEm",towem,"TowEm[NobjTow]/F");
   CalibTree->Branch("TowHad",towhd,"TowHad[NobjTow]/F");
   CalibTree->Branch("TowOE",towoe,"TowOE[NobjTow]/F"); 
-  CalibTree->Branch("TowEmTrue",towemtrue,"TowEmTrue[NobjTowCal]/F");
-  CalibTree->Branch("TowHadTrue",towhdtrue,"TowHadTrue[NobjTowCal]/F");
-  CalibTree->Branch("TowOETrue",towoetrue,"TowOETrue[NobjTowCal]/F");
+  CalibTree->Branch("TowEmTrue",towemtrue,"TowEmTrue[NobjTow]/F");
+  CalibTree->Branch("TowHadTrue",towhdtrue,"TowHadTrue[NobjTow]/F");
+  CalibTree->Branch("TowOETrue",towoetrue,"TowOETrue[NobjTow]/F");
   CalibTree->Branch("Tow_jetidx",tow_jetidx,"Tow_jetidx[NobjTow]/I");
 
+  // track branches
+  CalibTree->Branch("NobjTrack",&NobjTrack,"NobjTrack/I");
+  CalibTree->Branch("TrackTowId",tracktowid,"TrackTowId[NobjTrack]/I");
+  CalibTree->Branch("TrackTowIdPhi",tracktowidphi,"TrackTowIdPhi[NobjTrack]/I");
+  CalibTree->Branch("TrackTowIdEta",tracktowideta,"TrackTowIdEta[NobjTrack]/I");
+  CalibTree->Branch("TrackId",trackid,"TrackId[NobjTrack]/I");
+  CalibTree->Branch("TrackNHits",tracknhits,"TrackNHits[NobjTrack]/I");
+  CalibTree->Branch("TrackQualityL",trackQualityL,"TrackQualityL[NobjTrack]/O");
+  CalibTree->Branch("TrackQualityT",trackQualityT,"TrackQualityT[NobjTrack]/O");
+  CalibTree->Branch("TrackQualityHP",trackQualityHP,"TrackQualityHP[NobjTrack]/O");
+  CalibTree->Branch("TrackChi2",trackchi2,"TrackChi2[NobjTrack]/F");
+  CalibTree->Branch("TrackPt",trackpt,"TrackPt[NobjTrack]/F");
+  CalibTree->Branch("TrackEta",tracketa,"TrackEta[NobjTrack]/F");
+  CalibTree->Branch("TrackPhi",trackphi,"TrackPhi[NobjTrack]/F");
+  CalibTree->Branch("TrackP",trackp,"TrackP[NobjTrack]/F");
+  CalibTree->Branch("TrackDR",trackdr,"TrackDR[NobjTrack]/F");
+  CalibTree->Branch("TrackPhiOut",trackphiout,"TrackPhiout[NobjTrack]/F");
+  CalibTree->Branch("TrackEtaOut",tracketaout,"TrackEtaout[NobjTrack]/F");
+  CalibTree->Branch("TrackDROut",trackdrout,"TrackDRout[NobjTrack]/F");
+  CalibTree->Branch("TrackEMC1",trackemc1,"TrackEMC1[NobjTrack]/F");
+  CalibTree->Branch("TrackEMC3",trackemc3,"TrackEMC3[NobjTrack]/F");
+  CalibTree->Branch("TrackEMC5",trackemc5,"TrackEMC5[NobjTrack]/F");
+  CalibTree->Branch("TrackHAC1",trackhac1,"TrackHAC1[NobjTrack]/F");
+  CalibTree->Branch("TrackHAC3",trackhac3,"TrackHAC3[NobjTrack]/F");
+  CalibTree->Branch("TrackHAC5",trackhac5,"TrackHAC5[NobjTrack]/F");
+  CalibTree->Branch("Track_jetidx",track_jetidx,"Track_jetidx[NobjTrack]/I");
+  CalibTree->Branch("MuDR",muDR,"MuDR[NobjTrack]/F");
+  CalibTree->Branch("MuDE",muDE,"MuDE[NobjTrack]/F");
   // Jet-specific branches of the tree
   CalibTree->Branch("NobjJet",&NobjJet,"NobjJet/I"             );
   CalibTree->Branch("JetPt",jetpt,"JetPt[NobjJet]/F" );
@@ -727,9 +788,9 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("JetE",jete,"JetE[NobjJet]/F"  );
   CalibTree->Branch("GenJetEt",jetgenet,"GenJetEt[NobjJet]/F" );
   CalibTree->Branch("GenJetPt",jetgenpt,"GenJetPt[NobjJet]/F" );
+  CalibTree->Branch("GenJetE",jetgene,"GenJetE[NobjJet]/F"  );
   CalibTree->Branch("GenJetEta",jetgeneta,"GenJetEta[NobjJet]/F" );
   CalibTree->Branch("GenJetPhi",jetgenphi,"GenJetPhi[NobjJet]/F" );
-  CalibTree->Branch("GenJetJetIdx",jetgenjetidx,"GenJetJetIdx[NobjJet]/F");
 
   // Correction factors
   CalibTree->Branch( "JetCorrZSP",     jscaleZSP, "JetCorrZSP[NobjJet]/F" );
@@ -742,14 +803,20 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   // Genjet collection
   CalibTree->Branch("NobjGenJet",&NobjJet,"NobjGenJet/I");
   CalibTree->Branch("GenJetColEt",jetgenet,"GenJetColEt[NobjGenJet]/F" );
+  CalibTree->Branch("GenJetColE",jetgene,"GenJetColE[NobjGenJet]/F"     );
   CalibTree->Branch("GenJetColPt",jetgenpt,"GenJetColPt[NobjGenJet]/F" );
   CalibTree->Branch("GenJetColEta",jetgeneta,"GenJetColEta[NobjGenJet]/F" );
   CalibTree->Branch("GenJetColPhi",jetgenphi,"GenJetColPhi[NobjGenJet]/F" );
-  CalibTree->Branch("GenJetColJetIdx",jetgenjetidx,"GenJetColJetIdx[NobjJet]/F");
+  CalibTree->Branch("GenJetColJetIdx",jetgenjetidx,"GenJetColJetIdx[NobjJet]/I");
 
   // Event branches
   CalibTree->Branch("GenEvtScale",&genevtscale,"GenEvtScale/F" );
   CalibTree->Branch("Weight",&weight,"Weight/F"  );
+
+  // MET
+  CalibTree->Branch("Met",&mmet,"Met/F");
+  CalibTree->Branch("MetPhi",&mphi,"MetPhi/F");
+  CalibTree->Branch("MetSum",&msum,"MetSum/F");
 
 
   // Generate events
@@ -1052,11 +1119,11 @@ void ToyMC::init(const std::string& configfile) {
   // Jets
   mJetSpreadA  = config.read<double>("ToyMC jet spread A",0.5);
   mJetSpreadB  = config.read<double>("ToyMC jet spread B",0);
-   mNoOutOfCone = config.read<bool>("ToyMC avoid out-of-cone",true);
-   mChunks      = config.read<int>("ToyMC chunks",200);
-   mMaxPi0Frac  = config.read<double>("ToyMC max pi0 fraction",0.5);
-   mMaxEmf      = config.read<double>("ToyMC tower max EMF",0.5);
-
+  mNoOutOfCone = config.read<bool>("ToyMC avoid out-of-cone",true);
+  mChunks      = config.read<int>("ToyMC chunks",200);
+  mMaxPi0Frac  = config.read<double>("ToyMC max pi0 fraction",0.5);
+  mMaxEmf      = config.read<double>("ToyMC tower max EMF",0.5);
+  
   // General
   int seed = config.read<int>("ToyMC seed",0); 
   mRandom->SetSeed(seed);
