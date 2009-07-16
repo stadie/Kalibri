@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.85 2009/06/11 17:32:15 mschrode Exp $
+//  $Id: caliber.cc,v 1.86 2009/06/26 11:49:54 mschrode Exp $
 
 #include "caliber.h"
 
@@ -385,7 +385,8 @@ void TCaliber::Done()
       delete plots;
     } else if( mode == 1 ) {  // Control plots for jetsmearing
       ControlPlotsJetSmearing * plotsjs = new ControlPlotsJetSmearing(configfile,&data,p);
-      plotsjs->PlotResponse();
+      plotsjs->plotResponse();
+      plotsjs->plotDijets();
       delete plotsjs;
     }
   }
