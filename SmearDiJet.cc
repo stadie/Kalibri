@@ -1,13 +1,46 @@
-// $Id: SmearDiJet.cc,v 1.1 2009/06/10 14:20:49 mschrode Exp $
+// $Id: SmearDiJet.cc,v 1.1 2009/06/11 17:29:25 mschrode Exp $
 
 #include "SmearDiJet.h"
 
 
 
+//!  \brief Constructor
+//!  \param mess First jet
+//!  \param mess Second jet
+//!  \param mess Third jet (for cuts)
+//!  \param weight Event weight
+//!  \param respPDF Response probability density
+//!  \param truthPDF True pt probability density
+//!  \param min Minimum true pt in integration range
+//!  \param max Maximum true pt in integration range
+//!  \param eps Integration precision for convergence
+//!  \param niter Maximum number of iterations in integration
+// --------------------------------------------------
+SmearDiJet::SmearDiJet(TMeasurement * mess,
+		       TMeasurement * secndMess,
+		       TMeasurement * thirdMess,
+		       double weight,
+		       const Function& respPDF,
+		       const Function& truthPDF,
+		       double min,
+		       double max,
+		       double eps,
+		       int niter)
+  : SmearData(TypeSmearDiJet,mess,0,weight,respPDF),
+    kMaxNIter_(niter),
+    kEps_(eps),
+    kMin_(min),
+    kMax_(max),
+    secndMess_(secndMess),
+    thirdMess_(thirdMess),
+    truthPDF_(truthPDF) {};
+
+
+
 // --------------------------------------------------
 void SmearDiJet::ChangeParAddress(double* oldpar, double* newpar) {
-  mRespPDF.changeParBase(oldpar,newpar);
-  mTruthPDF.changeParBase(oldpar,newpar);
+  respPDF_.changeParBase(oldpar,newpar);
+  truthPDF_.changeParBase(oldpar,newpar);
 }
 
 
@@ -31,7 +64,7 @@ void SmearDiJet::ChangeParAddress(double* oldpar, double* newpar) {
 // --------------------------------------------------
 double SmearDiJet::chi2() const
 {
-  double         h         = kMax - kMin;     // Integration interval
+  double         h         = kMax_ - kMin_;     // Integration interval
   double         pint      = 0.;              // Current value of integral over response pdfs
   double         pint_old  = 1.;              // Value of integral over response pdfs from previous iteration
   int            nIter     = 0;               // Current iteration in interval splitting
@@ -41,7 +74,7 @@ double SmearDiJet::chi2() const
   TJet mess;
 
   // Iterate until precision or max. number iterations reached
-  while(fabs((pint - pint_old) / pint_old) > kEps && nIter < kMaxNIter) {
+  while(fabs((pint - pint_old) / pint_old) > kEps_ && nIter < kMaxNIter_) {
     pint_old = pint;
     pint     = 0;
     pp_old   = pp;
@@ -50,7 +83,7 @@ double SmearDiJet::chi2() const
     
     // Loop over nodes xi i.e. interval borders
     for(int i = 0; i <= pow(3.0,nIter+1); ++i){
-      double t = kMin + i * h;  // Pt at node
+      double t = kMin_ + i * h;  // Pt at node
       
       // Calculate probability only at new nodes
       if(nIter == 0 || i % 3 != 0) {
@@ -119,9 +152,9 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
   double   temp2;
 
   // Vary parameters of response pdf
-  idx = mRespPDF.parIndex();
-  par = mRespPDF.firstPar();
-  for(int i = 0; i < mRespPDF.nPars(); i++) {
+  idx = respPDF_.parIndex();
+  par = respPDF_.firstPar();
+  for(int i = 0; i < respPDF_.nPars(); i++) {
     oldpar = par[i];
 
     par[i] += epsilon;
@@ -137,9 +170,9 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
   }
 
   // Vary parameters of truth pdf
-  idx = mTruthPDF.parIndex();
-  par = mTruthPDF.firstPar();
-  for(int i = 0; i < mTruthPDF.nPars(); i++) {
+  idx = truthPDF_.parIndex();
+  par = truthPDF_.firstPar();
+  for(int i = 0; i < truthPDF_.nPars(); i++) {
     oldpar = par[i];
 
     par[i] += epsilon;
@@ -171,7 +204,7 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
 double SmearDiJet::TruthPDF(double t) const {
   TJet jet;
   jet.pt = t;
-  return mTruthPDF(&jet);
+  return truthPDF_(&jet);
 }
 
 
@@ -181,8 +214,8 @@ double SmearDiJet::TruthPDF(double t) const {
 void SmearDiJet::PrintInitStats() const {
   std::cout << "Event type: " << GetType() << "\n";
   std::cout << "Integration parameters\n";
-  std::cout << "  niter: " << kMaxNIter << "\n";
-  std::cout << "  eps:   " << kEps << "\n";
-  std::cout << "  range: " << kMin << " < truth < " << kMax << " (GeV)\n";
+  std::cout << "  niter: " << kMaxNIter_ << "\n";
+  std::cout << "  eps:   " << kEps_ << "\n";
+  std::cout << "  range: " << kMin_ << " < truth < " << kMax_ << " (GeV)\n";
 }
 
