@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.27 2009/07/08 12:13:51 mschrode Exp $
+// $Id: ToyMC.cc,v 1.28 2009/07/15 08:07:12 stadie Exp $
 
 #include "ToyMC.h"
 
@@ -18,14 +18,14 @@
 
 //!  \brief Default constructor
 // -----------------------------------------------------------------
-ToyMC::ToyMC() : mType(1), mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mPtSpectrum(Uniform),
-		 mChunks(200),mJetSpreadA(0.5),mJetSpreadB(0),mNoOutOfCone(true),mMaxPi0Frac(0.5),
-		 mMaxEmf(0.5),mResponseModel(Constant),mHistResp(0),
-		 mResolutionModel(Gauss), mSmearFactor(1.)
+ToyMC::ToyMC() : type_(1), minEta_(-2.5),maxEta_(2.5),minPt_(30), maxPt_(400),ptSpectrum_(Uniform),
+		 chunks_(200),jetSpreadA_(0.5),jetSpreadB_(0),noOutOfCone_(true),maxPi0Frac_(0.5),
+		 maxEmf_(0.5),responseModel_(Constant),histResp_(0),
+		 resolutionModel_(Gauss), smearFactor_(1.), smearTowersIndividually_(true)
 {
-  mRandom      = new TRandom3();
-  mRandom->SetSeed(0);
-  mHistResp = 0;
+  random_      = new TRandom3();
+  random_->SetSeed(0);
+  histResp_ = 0;
 }
 
 
@@ -36,23 +36,23 @@ ToyMC::ToyMC() : mType(1), mMinEta(-2.5),mMaxEta(2.5),mMinPt(30), mMaxPt(400),mP
 //!  events) which is then smeared due to detector response
 //!  and  resolution effects etc.
 //!  The randomly generated components are
-//!  - pt between mMinPt and mMaxPt according to mPtSpectrum
-//!  - eta uniformly between mMinEta and mMaxEta
+//!  - pt between minPt_ and maxPt_ according to ptSpectrum_
+//!  - eta uniformly between minEta_ and maxEta_
 //!  - phi uniformly between 0 and 2Pi
 //!  - a zero mass
 // -----------------------------------------------------------------
 void ToyMC::genInput() { 
   static double rand[3];
-  mRandom->RndmArray(3,rand);
+  random_->RndmArray(3,rand);
   double pt = 0;  
-  if(mPtSpectrum == Uniform) {
-    mRandom->RndmArray(3,rand);
-    pt = rand[0]*(mMaxPt - mMinPt)+mMinPt;
-  } else if(mPtSpectrum == PowerLaw) {
-    pt = mMinPt * pow(rand[0],-1.0/5.5);
+  if(ptSpectrum_ == Uniform) {
+    random_->RndmArray(3,rand);
+    pt = rand[0]*(maxPt_ - minPt_)+minPt_;
+  } else if(ptSpectrum_ == PowerLaw) {
+    pt = minPt_ * pow(rand[0],-1.0/5.5);
   }
-  mPinput.SetPtEtaPhiM(pt,
-		       rand[1]*(mMaxEta - mMinEta)+mMinEta,
+  pInput_.SetPtEtaPhiM(pt,
+		       rand[1]*(maxEta_ - minEta_)+minEta_,
 		       rand[2]*2 * M_PI - M_PI, 0);
 }
 
@@ -101,62 +101,62 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
 //!         response and resolution
 //!  \param E  Energy for calculation of some smear factors
 //----------------------------------------------------------
-void ToyMC::CalculateSmearFactor(double E) {
+void ToyMC::calculateSmearFactor(double E) {
   // Reset smear factor
-  mSmearFactor = 1.;
+  smearFactor_ = 1.;
 
   // Pt
-  double pt    = E * mPinput.Pt()/mPinput.E();
+  double pt    = E * pInput_.Pt()/pInput_.E();
 
   // Apply resolution
-  if( mResponseModel == Constant
-      || (mResponseModel == Flat)
-      || (mResponseModel == Exp)
-      || (mResponseModel == Slope)) {
-    mSmearFactor *= mParResp.at(0);
+  if( responseModel_ == Constant
+      || (responseModel_ == Flat)
+      || (responseModel_ == Exp)
+      || (responseModel_ == Slope)) {
+    smearFactor_ *= parResp_.at(0);
   }
-  else if( mResponseModel == L3 ) {
+  else if( responseModel_ == L3 ) {
     if( pt < 0.1 ) {
-      mSmearFactor *= mParResp.at(0) - mParResp.at(1)/mParResp.at(3) +  mParResp.at(4);
+      smearFactor_ *= parResp_.at(0) - parResp_.at(1)/parResp_.at(3) +  parResp_.at(4);
     } else {
-      mSmearFactor *= mParResp.at(0) - mParResp.at(1)/(pow(log10(pt),mParResp.at(2)) + mParResp.at(3)) + mParResp.at(4)/pt;
+      smearFactor_ *= parResp_.at(0) - parResp_.at(1)/(pow(log10(pt),parResp_.at(2)) + parResp_.at(3)) + parResp_.at(4)/pt;
     }
   }
-  else if( mResponseModel == SimpleInverse ) { 
-    mSmearFactor *= 1. - mParResp.at(0)/(pt + mParResp.at(1));
+  else if( responseModel_ == SimpleInverse ) { 
+    smearFactor_ *= 1. - parResp_.at(0)/(pt + parResp_.at(1));
   }
 
   // Apply resolution
   double smear = 1.;
-  if( mResolutionModel == Landau) {
+  if( resolutionModel_ == Landau) {
     do {
-      smear =  mRandom->Landau(1,sqrt(mParReso.at(0)*mParReso.at(0)/E/E +
-				      mParReso.at(1)*mParReso.at(1)/E   +
-				      mParReso.at(2)*mParReso.at(2))      );
+      smear =  random_->Landau(1,sqrt(parReso_.at(0)*parReso_.at(0)/E/E +
+				      parReso_.at(1)*parReso_.at(1)/E   +
+				      parReso_.at(2)*parReso_.at(2))      );
     } while((smear < 0) || (smear > 2));
     smear = 2 - smear;
   }
-  else if ( (mResolutionModel == Gauss) ) {
+  else if ( (resolutionModel_ == Gauss) ) {
     do {
-      smear = mRandom->Gaus(1.0,sqrt(mParReso.at(0)*mParReso.at(0)/E/E +
-				     mParReso.at(1)*mParReso.at(1)/E   +
-				     mParReso.at(2)*mParReso.at(2))      );
+      smear = random_->Gaus(1.0,sqrt(parReso_.at(0)*parReso_.at(0)/E/E +
+				     parReso_.at(1)*parReso_.at(1)/E   +
+				     parReso_.at(2)*parReso_.at(2))      );
     } while((smear < 0) || (smear > 2));
   }
-  else if( mResolutionModel == GaussUniform ) {
+  else if( resolutionModel_ == GaussUniform ) {
     do{
-      smear = mRandom->Gaus( 1.0, mParReso.at(0) );
+      smear = random_->Gaus( 1.0, parReso_.at(0) );
     } while( smear < 0 || smear > 2 );
-    if( mRandom->Uniform() < mParReso.at(1) )
-      smear = mRandom->Uniform();
+    if( random_->Uniform() < parReso_.at(1) )
+      smear = random_->Uniform();
   }
-  else if( mResolutionModel == TwoGauss ) {
+  else if( resolutionModel_ == TwoGauss ) {
     do {
-      smear = mHistResp->GetRandom();
+      smear = histResp_->GetRandom();
     } while ( smear < 0.3 );
   }
 
-  mSmearFactor *= smear;
+  smearFactor_ *= smear;
 }
 
 
@@ -183,7 +183,7 @@ void ToyMC::smearTower(double e, bool calcSmearFactor, float& te, float& tem, fl
   // fraction with response
   touttrue   = 0.;
   tout       = touttrue;
-  float emf  = mRandom->Uniform(mMaxEmf);
+  float emf  = random_->Uniform(maxEmf_);
   temtrue    = emf * e;
   tem        = temtrue;
   thadtrue   = (1-emf) * e;
@@ -191,10 +191,10 @@ void ToyMC::smearTower(double e, bool calcSmearFactor, float& te, float& tem, fl
 
   // Apply response and resolution to hadronic fraction
   if( calcSmearFactor ) {
-    if( mSmearTowersIndividually ) CalculateSmearFactor(thad);
-    else                           CalculateSmearFactor(mPinput.E());
+    if( smearTowersIndividually_ ) calculateSmearFactor(thad);
+    else                           calculateSmearFactor(pInput_.E());
   }
-  thad      *= mSmearFactor;
+  thad      *= smearFactor_;
 
   // Add up tower parts to total tower energy
   te = tem + thad + tout;
@@ -204,7 +204,7 @@ void ToyMC::smearTower(double e, bool calcSmearFactor, float& te, float& tem, fl
 
 //!  \brief Split generated jet into towers
 //!
-//!  Splits generated true jet pt into 'mChunks' portions
+//!  Splits generated true jet pt into 'chunks_' portions
 //!  (particles), spreads them in eta and phi and sums up
 //!  tower pt.
 // -----------------------------------------------------------------
@@ -215,21 +215,21 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
   double jphi = jet.Phi();
   if(jphi < 0) jphi += 2 * M_PI;
   //std::cout << "jet: Pt:" << jet.Pt() << " Phi:" << jet.Phi() << " Eta:" << jet.Eta() << '\n';
-  //double de = jet.E() / mChunks;
+  //double de = jet.E() / chunks_;
   int ntowers = 0;
   TLorentzVector rec(0,0,0,0);
   TLorentzVector tow;
   double lostPt = 0;
-  double dpt = jet.Pt() / mChunks;
-  if(mChunks < 0) {
+  double dpt = jet.Pt() / chunks_;
+  if(chunks_ < 0) {
     dpt = 0.3;
-    mChunks = (int)std::ceil(jet.Pt() / dpt);
+    chunks_ = (int)std::ceil(jet.Pt() / dpt);
   }
-  for(int i = 0 ; i < mChunks ; ++i) {
-    //float teta = mRandom->Gaus(jet.Eta(), jetspread);
-    //float tphi = mRandom->Gaus(jet.Phi(), jetspread);
-    float R = mRandom->Exp(1/(mJetSpreadA +mJetSpreadB * jet.E()));
-    float PHI = mRandom->Uniform(2 * M_PI);
+  for(int i = 0 ; i < chunks_ ; ++i) {
+    //float teta = random_->Gaus(jet.Eta(), jetspread);
+    //float tphi = random_->Gaus(jet.Phi(), jetspread);
+    float R = random_->Exp(1/(jetSpreadA_ +jetSpreadB_ * jet.E()));
+    float PHI = random_->Uniform(2 * M_PI);
     //std::cout << "E:" << jet.E() << "  R:" << R << '\n';
     float teta = jet.Eta() + R * cos(PHI);
     float tphi = jet.Phi() + R * sin(PHI);
@@ -237,7 +237,7 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
     tphi = TVector2::Phi_0_2pi(tphi);
     if(std::abs(teta) > 3.33333) {
       //std::cout << "chunk outside simulated calo\n";
-      if(mNoOutOfCone) --i;
+      if(noOutOfCone_) --i;
       else lostPt += dpt;
       continue;
     }
@@ -250,7 +250,7 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
     float deta = teta-jet.Eta();
     if(sqrt(deta*deta + dphi*dphi) > 0.5) {
       //std::cout << "Out of cone:" << teta << ":" << jet.Eta() << " , " << dphi << '\n';
-      if(mNoOutOfCone) --i;
+      if(noOutOfCone_) --i;
       else lostPt += dpt;
       continue;
     }
@@ -277,7 +277,7 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
   }
   //std::cout  << "Eta:" << jet.Eta() <<  "       : " << rec.Pt() << "," << rec.E() << "  == " << jet.Pt() << "," << jet.E() << '\n';
   //std::cout << "lost energy:" << lostE/jet.E() << '\n';
-  if(mNoOutOfCone) {
+  if(noOutOfCone_) {
     double scale = jet.Pt()/rec.Pt();
     assert(scale < 1.1); 
     TLorentzVector rec2(0,0,0,0);
@@ -340,14 +340,14 @@ int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents)
 
   for(int i = 0; i < nevents ; ++i) {
     genInput();
-    tracket = mPinput.Pt();
+    tracket = pInput_.Pt();
     tracketerr = 0;
-    tracketa = mPinput.Eta();
-    trackphi = mPinput.Phi();
-    tracken = mPinput.E();
+    tracketa = pInput_.Eta();
+    trackphi = pInput_.Phi();
+    tracken = pInput_.E();
     NobjTowCal = 1;
-    towphi[0] = mPinput.Phi(); 
-    toweta[0] = mPinput.Eta();
+    towphi[0] = pInput_.Phi(); 
+    toweta[0] = pInput_.Eta();
     towid[0] = 0;
     //std::cout << "vorher:" << toweta[0] << ", " << towphi[0] << ", " << towid_eta[0] << ", " 
     //	      << towid_phi[0] << "\n";
@@ -357,10 +357,10 @@ int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents)
 
     // Calculate smear factor
     bool calcSmearFactor = false;
-    if( i == 0 || mSmearTowersIndividually ) calcSmearFactor = true;
+    if( i == 0 || smearTowersIndividually_ ) calcSmearFactor = true;
 
-    smearTower(mPinput.E(),calcSmearFactor,towen[0],towem[0],towhd[0],towoe[0],towemtrue[0],towhdtrue[0],towoetrue[0]);
-    towet[0] = towen[0]/mPinput.E() * mPinput.Pt();
+    smearTower(pInput_.E(),calcSmearFactor,towen[0],towem[0],towhd[0],towoe[0],towemtrue[0],towhdtrue[0],towoetrue[0]);
+    towet[0] = towen[0]/pInput_.E() * pInput_.Pt();
     CalibTree->Fill();
     if(i % 1000 == 0) std::cout << "generated event " << i << '\n';
   }
@@ -546,11 +546,11 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
 
     // Assign it's variables to genphoton
     // and genphoton (perfectly measured)
-    photonpt   = mPinput.Pt();
-    photoneta  = mPinput.Eta();
-    photonphi  = mPinput.Phi();
-    photonet   = mPinput.Pt();
-    photone    = mPinput.E();
+    photonpt   = pInput_.Pt();
+    photoneta  = pInput_.Eta();
+    photonphi  = pInput_.Phi();
+    photonet   = pInput_.Pt();
+    photone    = pInput_.E();
     gphotonpt  = photonpt;
     gphotoneta = photoneta;
     gphotonphi = photonphi;
@@ -559,7 +559,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
 
     // Gen jet
     jgenpt     = gphotonpt;
-    jgeneta    = mRandom->Gaus(photoneta,1.0);
+    jgeneta    = random_->Gaus(photoneta,1.0);
     if((jgeneta > 3.0) || (jgeneta < -3.0)) {
       --i;
       continue;
@@ -579,16 +579,16 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
 
     // Set random response parameters for this event
     // if required by response model
-    if      (mResponseModel == Flat) mParResp.at(0) = mRandom->Uniform(1.5);
-    else if (mResponseModel == Exp)  mParResp.at(0) = mRandom->Exp(0.5);
-    else if (mResponseModel == Slope) {
-      double u1 = mRandom->Uniform(2);
-      double u2 = mRandom->Uniform(2);
-      mParResp.at(0) = 2. - std::max(u1,u2);
+    if      (responseModel_ == Flat) parResp_.at(0) = random_->Uniform(1.5);
+    else if (responseModel_ == Exp)  parResp_.at(0) = random_->Exp(0.5);
+    else if (responseModel_ == Slope) {
+      double u1 = random_->Uniform(2);
+      double u2 = random_->Uniform(2);
+      parResp_.at(0) = 2. - std::max(u1,u2);
     }
 
     // Generate pi0 fraction i.e. non-hadronic fraction
-    double p0frac = mRandom->Uniform(mMaxPi0Frac);
+    double p0frac = random_->Uniform(maxPi0Frac_);
 
     // Loop over towers and smear truth with response factor
     for(int j = 0; j < NobjTowCal ; ++j) {
@@ -601,7 +601,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
 
       // Calculate smear factor
       bool calcSmearFactor = false;
-      if( j == 0 || mSmearTowersIndividually ) calcSmearFactor = true;
+      if( j == 0 || smearTowersIndividually_ ) calcSmearFactor = true;
 
       // Smear hadronic par of tower energy
       smearTower((1 - p0frac) * tower.E(),calcSmearFactor,towen[j],towem[j],towhd[j],towoe[j],
@@ -645,6 +645,11 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
 
 
 //!  \brief Generate dijet events and write into tree
+//!
+//!  The dijet event contains two real jets and a third
+//!  dummy jet with Et = 0 GeV to fit to the DiJetReader
+//!  which reads a third jet for potential cuts.
+//!
 //!  \param CalibTree ROOT tree
 //!  \param nevents Number of dijet events
 //!  \return Number of generated events
@@ -703,8 +708,8 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float muDR[kMAX];
   float muDE[kMAX];
 
-  const int kjMAX = 2;
-  int NobjJet = 2;
+  const int kjMAX = 3;
+  int NobjJet = 3;
   float jetpt[kjMAX];
   float jetphi[kjMAX];
   float jeteta[kjMAX];
@@ -717,17 +722,17 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float jetgeneta[kjMAX];
   float jetgenet[kjMAX];
   float jetgene[kjMAX];
-  int jetgenjetidx[kjMAX];
+  int   jetgenjetidx[kjMAX];
 
   float weight = 1; 
 
   // All correction factors are 1 in ToyMC
-  float jscaleZSP[2]    = { 1., 1. };
-  float jscalel2[2]     = { 1., 1. };
-  float jscalel3[2]     = { 1., 1. };
-  float jscalel23[2]    = { 1., 1. };
-  float jscaleJPT[2]    = { 1., 1. };
-  float jscalel23JPT[2] = { 1., 1. };
+  float jscaleZSP[3]    = { 1., 1., 1. };
+  float jscalel2[3]     = { 1., 1., 1. };
+  float jscalel3[3]     = { 1., 1., 1. };
+  float jscalel23[3]    = { 1., 1., 1. };
+  float jscaleJPT[3]    = { 1., 1., 1. };
+  float jscalel23JPT[3] = { 1., 1., 1. };
 
   // fill zero MET which is wrong....
   float mmet = 0;
@@ -828,39 +833,40 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   for(int n = 0; n < nevents ; ++n) {
     // Generate truth 4-momentum
     genInput();
-    genevtscale  = mPinput.Pt();
+    genevtscale  = pInput_.Pt();
 
     // Assign it's variables to first genjet
-    jetgenpt[0]  = mPinput.Pt();
-    jetgeneta[0] = mPinput.Eta();
-    jetgenphi[0] = mPinput.Phi();
-    jetgenet[0]  = mPinput.Pt();
-    jetgene[0]   = mPinput.E();
+    jetgenpt[0]  = pInput_.Pt();
+    jetgeneta[0] = pInput_.Eta();
+    jetgenphi[0] = pInput_.Phi();
+    jetgenet[0]  = pInput_.Pt();
+    jetgene[0]   = pInput_.E();
 
     // Second genjet gets random eta
     // between -3 and 3, and phi+PI
     jetgenpt[1]  = jetgenpt[0];
-    jetgeneta[1] = mRandom->Gaus(jetgeneta[0],1.0);
+    jetgeneta[1] = random_->Gaus(jetgeneta[0],1.0);
     if((jetgeneta[1] > 3.0) || (jetgeneta[1] < -3.0)) {
       --n;
       continue;
     }
     jetgenphi[1] = jetgenphi[0] + M_PI;
 
+
     // Set random response paramters for this event
     // if required by response model
-    if     (mResponseModel == Flat) mParResp.at(0) = mRandom->Uniform(1.5);
-    else if(mResponseModel == Exp)  mParResp.at(0) = mRandom->Exp(0.5);
-    else if(mResponseModel == Slope) {
-      double u1 = mRandom->Uniform(2);
-      double u2 = mRandom->Uniform(2);
-      mParResp.at(0) = 2. - std::max(u1,u2);
+    if     (responseModel_ == Flat) parResp_.at(0) = random_->Uniform(1.5);
+    else if(responseModel_ == Exp)  parResp_.at(0) = random_->Exp(0.5);
+    else if(responseModel_ == Slope) {
+      double u1 = random_->Uniform(2);
+      double u2 = random_->Uniform(2);
+      parResp_.at(0) = 2. - std::max(u1,u2);
     }
 
-    // Loop over jets and
+    // Loop over first two jets and
     // split genjets into towers
     NobjTow = 0;
-    for(int i = 0 ; i < NobjJet ; ++i) {
+    for(int i = 0 ; i < 2 ; ++i) {
       // Create 4-momentum of genjet (massless)
       genjet[i].SetPtEtaPhiM(jetgenpt[i],jetgeneta[i],jetgenphi[i],0);
 
@@ -873,7 +879,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       genjet[i].SetPtEtaPhiM(0,0,0,0);
 
       // Generate pi0 fraction i.e. non-hadronic fraction
-      double p0frac = mRandom->Uniform(mMaxPi0Frac);
+      double p0frac = random_->Uniform(maxPi0Frac_);
 
       // Loop over towers and smear truth with response
       // and resolution
@@ -896,7 +902,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 
 	// Calculate smear factor
 	bool calcSmearFactor = false;
-	if( j == 0 || mSmearTowersIndividually ) calcSmearFactor = true;
+	if( j == 0 || smearTowersIndividually_ ) calcSmearFactor = true;
 
 	// Smear hadronic par of tower energy
 	smearTower((1 - p0frac) * tower.E(),calcSmearFactor,towen[k],towem[k],towhd[k],
@@ -932,13 +938,13 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 
     // Check generated eta measurement
     // of first jet
-    if((jeteta[0] < mMinEta) || (jeteta[0] > mMaxEta)) {
+    if((jeteta[0] < minEta_) || (jeteta[0] > maxEta_)) {
       --n;
       continue;
     }
 
     // Order jets by pt
-    if((jeteta[1] > mMinEta) && (jeteta[1] < mMaxEta)
+    if((jeteta[1] > minEta_) && (jeteta[1] < maxEta_)
        && (jetpt[1] > jetpt[0])) {
       //swap jets
       jetpt[0]     = jet[1].Pt();
@@ -967,6 +973,19 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       for(int j = 0 ; j < NobjTow ; ++j) {
 	tow_jetidx[j] = (tow_jetidx[j] == 0) ? 1 : 0;
       }
+
+      // Set third dummy jet to zero
+      jetpt[2]        = 0.;
+      jetphi[2]       = 0.;
+      jeteta[2]       = 0.;
+      jetet[2]        = 0.;
+      jete[2]         = 0.; 
+      jetgenpt[2]     = 0.;
+      jetgenphi[2]    = 0.;
+      jetgeneta[2]    = 0.;
+      jetgenet[2]     = 0.;
+      jetgene[2]      = 0.;
+      jetgenjetidx[2] = 2;
     }
 
 
@@ -1022,70 +1041,70 @@ void ToyMC::init(const std::string& configfile) {
   ConfigFile config(configfile.c_str());
 
   // Ranges
-  mMinEta = config.read<double>("ToyMC min eta",-2.5);
-  mMaxEta = config.read<double>("ToyMC max eta",2.5);
-  mMinPt  = config.read<double>("ToyMC min pt",30);
-  mMaxPt  = config.read<double>("ToyMC max pt",400);
+  minEta_ = config.read<double>("ToyMC min eta",-2.5);
+  maxEta_ = config.read<double>("ToyMC max eta",2.5);
+  minPt_  = config.read<double>("ToyMC min pt",30);
+  maxPt_  = config.read<double>("ToyMC max pt",400);
 
   // Truth spectrum
   std::string spectrum = config.read<std::string>("ToyMC pt spectrum","uniform");
   if(spectrum == "powerlaw") {
-    mPtSpectrum = PowerLaw; 
+    ptSpectrum_ = PowerLaw; 
   } else if(spectrum == "uniform") {
-    mPtSpectrum = Uniform;
+    ptSpectrum_ = Uniform;
   } else {
     std::cerr << "unknown ToyMC pt spectrum:" << spectrum << '\n';
     exit(1);
   }
 
   // Response model
-  mParResp             = bag_of<double>(config.read<string>("ToyMC response parameters","1"));
+  parResp_             = bag_of<double>(config.read<string>("ToyMC response parameters","1"));
   std::string response = config.read<std::string>("ToyMC response model","Constant");
   if        ( response == "Constant" ) {
-    mResponseModel = Constant;
-    assert( mParResp.size() >= 1 );
+    responseModel_ = Constant;
+    assert( parResp_.size() >= 1 );
   } else if ( response == "Flat" ) {
-    mResponseModel = Flat;
-    assert( mParResp.size() >= 1 );
+    responseModel_ = Flat;
+    assert( parResp_.size() >= 1 );
   } else if ( response == "Slope" ) {
-    mResponseModel = Slope;
-    assert( mParResp.size() >= 1 );
+    responseModel_ = Slope;
+    assert( parResp_.size() >= 1 );
   } else if ( response == "Exp" ) {
-    mResponseModel = Exp;
-    assert( mParResp.size() >= 1 );
+    responseModel_ = Exp;
+    assert( parResp_.size() >= 1 );
   } else if ( response == "L3" ) {
-    mResponseModel = L3;
-    assert( mParResp.size() >= 4 );
+    responseModel_ = L3;
+    assert( parResp_.size() >= 4 );
   } else if( response == "SimpleInverse" ) {
-    mResponseModel = SimpleInverse;
-    assert( mParResp.size() >= 2 );
+    responseModel_ = SimpleInverse;
+    assert( parResp_.size() >= 2 );
   } else {
     std::cerr << "unknown ToyMC response model: " << response << '\n';
     exit(1);
   }
 
   // Resolution model
-  mParReso               = bag_of<double>(config.read<string>("ToyMC resolution parameters","4.44 1.11 0.03"));
+  parReso_               = bag_of<double>(config.read<string>("ToyMC resolution parameters","4.44 1.11 0.03"));
   std::string resolution = config.read<std::string>("ToyMC resolution model","Gauss");
   if(resolution == "Gauss") {
-    mResolutionModel = Gauss;
-    assert( mParReso.size() >= 3 );
+    resolutionModel_ = Gauss;
+    assert( parReso_.size() >= 3 );
   } else if(resolution  == "Landau") {
-    mResolutionModel = Landau;
-    assert( mParReso.size() >= 3 );
+    resolutionModel_ = Landau;
+    assert( parReso_.size() >= 3 );
   } else if( resolution == "GaussUniform" ) {
-    mResolutionModel = GaussUniform; 
-    assert( mParReso.size() >= 3 );
+    resolutionModel_ = GaussUniform; 
+    assert( parReso_.size() >= 3 );
   } else if( resolution == "TwoGauss" ) {
-    mResolutionModel = TwoGauss;
-    assert( mParReso.size() >= 4 );
+    resolutionModel_ = TwoGauss;
+    assert( parReso_.size() >= 4 );
     
     // Set up sum of two Gaussians as pdf
-    double c  = mParReso.at(0);  // Normalization
+    double c  = parReso_.at(0);  // Normalization
     double u0 = 1.;              // Mean of central Gaussian (scale)
-    double s0 = mParReso.at(1);  // Width of central Gaussian
-    double u1 = mParReso.at(2);  // Mean of second Gaussian
-    double s1 = mParReso.at(3);  // Width of central Gaussian
+    double s0 = parReso_.at(1);  // Width of central Gaussian
+    double u1 = parReso_.at(2);  // Mean of second Gaussian
+    double s1 = parReso_.at(3);  // Width of central Gaussian
 
     double minResp = 0.;
     double maxResp = 2.;
@@ -1099,14 +1118,14 @@ void ToyMC::init(const std::string& configfile) {
     f->SetParameter(5,s1);
 
     // Fill response histogram according to f
-    mHistResp = new TH1F("hHistResp",";p^{jet}_{T} / p^{true}_{T};1/(Nw) dN / d(p^{jet}_{T} / p^{true}_{T})",			     1000,minResp,maxResp);
-    for(int bin = 1; bin <= mHistResp->GetNbinsX(); bin++) {
-      double r = f->Eval(mHistResp->GetBinCenter(bin));
-      mHistResp->SetBinContent(bin,r);
+    histResp_ = new TH1F("hHistResp",";p^{jet}_{T} / p^{true}_{T};1/(Nw) dN / d(p^{jet}_{T} / p^{true}_{T})",			     1000,minResp,maxResp);
+    for(int bin = 1; bin <= histResp_->GetNbinsX(); bin++) {
+      double r = f->Eval(histResp_->GetBinCenter(bin));
+      histResp_->SetBinContent(bin,r);
     }
 
-    double norm = mHistResp->Integral("width");
-    mHistResp->Scale(1./norm);
+    double norm = histResp_->Integral("width");
+    histResp_->Scale(1./norm);
     delete f;
    } else {
      std::cerr << "unknown ToyMC resolution model: " << resolution << '\n';
@@ -1114,22 +1133,22 @@ void ToyMC::init(const std::string& configfile) {
    }
 
   // Calculate smear factor for each tower or each jet
-  mSmearTowersIndividually = config.read<bool>("ToyMC smear towers individually",false);
+  smearTowersIndividually_ = config.read<bool>("ToyMC smear towers individually",false);
 
   // Jets
-  mJetSpreadA  = config.read<double>("ToyMC jet spread A",0.5);
-  mJetSpreadB  = config.read<double>("ToyMC jet spread B",0);
-  mNoOutOfCone = config.read<bool>("ToyMC avoid out-of-cone",true);
-  mChunks      = config.read<int>("ToyMC chunks",200);
-  mMaxPi0Frac  = config.read<double>("ToyMC max pi0 fraction",0.5);
-  mMaxEmf      = config.read<double>("ToyMC tower max EMF",0.5);
+  jetSpreadA_  = config.read<double>("ToyMC jet spread A",0.5);
+  jetSpreadB_  = config.read<double>("ToyMC jet spread B",0);
+  noOutOfCone_ = config.read<bool>("ToyMC avoid out-of-cone",true);
+  chunks_      = config.read<int>("ToyMC chunks",200);
+  maxPi0Frac_  = config.read<double>("ToyMC max pi0 fraction",0.5);
+  maxEmf_      = config.read<double>("ToyMC tower max EMF",0.5);
   
   // General
   int seed = config.read<int>("ToyMC seed",0); 
-  mRandom->SetSeed(seed);
-  mType = config.read<int>("ToyMC type",1);
-  if( !( mType == 1 || mType == 2 ) ) {
-    std::cout << "unknown ToyMC event type " << mType << std::endl;
+  random_->SetSeed(seed);
+  type_ = config.read<int>("ToyMC type",1);
+  if( !( type_ == 1 || type_ == 2 ) ) {
+    std::cout << "unknown ToyMC event type " << type_ << std::endl;
     exit(1);
   }
 }
@@ -1140,69 +1159,69 @@ void ToyMC::init(const std::string& configfile) {
 void ToyMC::print() const {
   std::cout << "\n  ToyMC configuration:\n";
   std::cout << " -----------------------------------------\n";
-  std::cout << "  primary:      " << mMinEta << " < eta < " << mMaxEta << '\n';
-  std::cout << "                " << mMinPt << " < pt < " << mMaxPt << "\n";
+  std::cout << "  primary:      " << minEta_ << " < eta < " << maxEta_ << '\n';
+  std::cout << "                " << minPt_ << " < pt < " << maxPt_ << "\n";
 
   std::cout << "  spectrum:     ";
-  if( mPtSpectrum == Uniform )
+  if( ptSpectrum_ == Uniform )
     std::cout << "Uniform\n";
-  else if( mPtSpectrum == PowerLaw )
+  else if( ptSpectrum_ == PowerLaw )
     std::cout << "PowerLaw\n";
 
   std::cout << "  response:     ";
-  if( mResponseModel == Constant )
+  if( responseModel_ == Constant )
     std::cout << "Constant\n";
-  else if( mResponseModel == Flat )
+  else if( responseModel_ == Flat )
     std::cout << "Flat\n";
-  else if( mResponseModel == Exp )
+  else if( responseModel_ == Exp )
     std::cout << "Exp\n";
-  else if( mResponseModel == Slope )
+  else if( responseModel_ == Slope )
     std::cout << "Slope\n";
-  else if( mResponseModel == L3 )
+  else if( responseModel_ == L3 )
     std::cout << "L3\n";
-  else if( mResponseModel == SimpleInverse )
+  else if( responseModel_ == SimpleInverse )
     std::cout << "SimpleInverse\n";
 
   std::cout << "  parameters:   ";
-  for(unsigned int i = 0; i < mParResp.size(); i++)
-    std::cout << mParResp.at(i) << ",  ";
+  for(unsigned int i = 0; i < parResp_.size(); i++)
+    std::cout << parResp_.at(i) << ",  ";
   std::cout << "\n";
 
   std::cout << "  resolution:   ";
-  if( mResolutionModel == Gauss )
+  if( resolutionModel_ == Gauss )
     std::cout << "Gauss\n";
-  else if( mResolutionModel == Landau )
+  else if( resolutionModel_ == Landau )
     std::cout << "Landau\n";
-  else if( mResolutionModel == GaussUniform )
+  else if( resolutionModel_ == GaussUniform )
     std::cout << "GaussUniform\n";
-  else if( mResolutionModel == TwoGauss )
+  else if( resolutionModel_ == TwoGauss )
     std::cout << "TwoGauss\n";
 
   std::cout << "  parameters:   ";
-  for(unsigned int i = 0; i < mParReso.size(); i++)
-    std::cout << mParReso.at(i) << ",  ";
+  for(unsigned int i = 0; i < parReso_.size(); i++)
+    std::cout << parReso_.at(i) << ",  ";
   std::cout << "\n";
 
   std::cout << "  Smear factor is calculated for each ";
-  if( mSmearTowersIndividually ) std::cout << "tower\n";
+  if( smearTowersIndividually_ ) std::cout << "tower\n";
   else                           std::cout << "jet\n";
 
-  std::cout << "  max EMF:      " << mMaxEmf << "\n";
-  std::cout << "  max pi0:      " << mMaxPi0Frac << "\n";
+  std::cout << "  max EMF:      " << maxEmf_ << "\n";
+  std::cout << "  max pi0:      " << maxPi0Frac_ << "\n";
 
   std::cout << "  jet spread:   ";
-  std::cout << "A = " << mJetSpreadA << ",  B = " << mJetSpreadB << "\n";
-  std::cout << "  n chunks:     " << mChunks << "\n";
+  std::cout << "A = " << jetSpreadA_ << ",  B = " << jetSpreadB_ << "\n";
+  std::cout << "  n chunks:     " << chunks_ << "\n";
   std::cout << "  out-of-cone:  ";
-  if( mNoOutOfCone )
+  if( noOutOfCone_ )
     std::cout << "no\n";
   else 
     std::cout << "yes\n";
 
   std::cout << "  type:         ";
-  if( mType == 1 )
+  if( type_ == 1 )
     std::cout << "Photon-jet events\n";
-  else if( mType == 2 )
+  else if( type_ == 2 )
     std::cout << "Dijet events\n";
 
   std::cout << "\n";

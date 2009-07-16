@@ -14,7 +14,7 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.13 2009/06/21 18:16:00 mschrode Exp $
+//!  $Id: ToyMC.h,v 1.14 2009/07/08 12:13:51 mschrode Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -96,34 +96,34 @@ class ToyMC {
 
 
   // Global variables
-  TRandom*        mRandom;             //!< Random generator
-  int             mType;               //!< Event type: Photonjet (1), Dijet (2)
+  TRandom*        random_;             //!< Random generator
+  int             type_;               //!< Event type: Photonjet (1), Dijet (2)
 
   // Parameters for truth
-  double          mMinEta;             //!< Minimum truth eta
-  double          mMaxEta;             //!< Maximum truth eta
-  double          mMinPt;              //!< Minimum truth pt
-  double          mMaxPt;              //!< Maximum truth pt
-  TruthSpectrum   mPtSpectrum;         //!< Truth pt spectrum
-  TLorentzVector  mPinput;             //!< Stores the truth lorentz vector of the current event
+  double          minEta_;             //!< Minimum truth eta
+  double          maxEta_;             //!< Maximum truth eta
+  double          minPt_;              //!< Minimum truth pt
+  double          maxPt_;              //!< Maximum truth pt
+  TruthSpectrum   ptSpectrum_;         //!< Truth pt spectrum
+  TLorentzVector  pInput_;             //!< Stores the truth lorentz vector of the current event
 
   // Parameters for measurement 
-  int             mChunks;
-  double          mJetSpreadA;
-  double          mJetSpreadB;
-  bool            mNoOutOfCone;
-  double          mMaxPi0Frac;
-  double          mMaxEmf;
+  int             chunks_;
+  double          jetSpreadA_;
+  double          jetSpreadB_;
+  bool            noOutOfCone_;
+  double          maxPi0Frac_;
+  double          maxEmf_;
 
-  ResponseModel   mResponseModel;      //!< Response model
-  std::vector<double> mParResp;        //!< Parameters for Response
-  TH1F          * mHistResp;           //!< For histogramed response
+  ResponseModel   responseModel_;      //!< Response model
+  std::vector<double> parResp_;        //!< Parameters for Response
+  TH1F          * histResp_;           //!< For histogramed response
 
-  ResolutionModel mResolutionModel;    //!< Resolution model
-  std::vector<double> mParReso;        //!< Parameters for Respolution
+  ResolutionModel resolutionModel_;    //!< Resolution model
+  std::vector<double> parReso_;        //!< Parameters for Respolution
 
-  double          mSmearFactor;        //!< Combined smear factor from response and resolution
-  bool            mSmearTowersIndividually;  //!< If true, mSmearTowersIndividually is determined individually for each tower, else for each jet
+  double          smearFactor_;        //!< Combined smear factor from response and resolution
+  bool            smearTowersIndividually_;  //!< If true, mSmearTowersIndividually is determined individually for each tower, else for each jet
 
 
 
@@ -132,14 +132,14 @@ class ToyMC {
   void smearTower(double e, bool calcSmearFactor, float& te, float& tem, float& thad, float& tout, float& temtrue, 
 		  float& thadtrue, float& touttrue);  
   int  splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi);
-  void CalculateSmearFactor(double pt);
+  void calculateSmearFactor(double pt);
 
 
  public:
   ToyMC();
   ~ToyMC() {
-    delete mRandom;
-    if( mHistResp ) delete mHistResp;
+    delete random_;
+    if( histResp_ ) delete histResp_;
   }
   int generatePhotonJetTree(TTree *tree, int nevents);
   int generateTrackClusterTree(TTree *tree, int nevents);
