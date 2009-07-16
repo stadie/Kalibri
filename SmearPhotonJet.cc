@@ -1,4 +1,4 @@
-// $Id: SmearPhotonJet.cc,v 1.1 2009/06/10 14:21:13 mschrode Exp $
+// $Id: SmearPhotonJet.cc,v 1.1 2009/06/11 17:29:25 mschrode Exp $
 
 #include "SmearPhotonJet.h"
 
@@ -11,7 +11,7 @@ double SmearPhotonJet::chi2() const {
   TJet mess(GetMess());
   mess.pt = GetMess()->pt / GetTruth();
   
-  return -1.*log( mRespPDF(&mess) / GetTruth() ); // Need to divide by _truth to have probability (!= density)
+  return -1.*log( respPDF_(&mess) / GetTruth() ); // Need to divide by _truth to have probability (!= density)
 }
 
 
@@ -52,9 +52,9 @@ double SmearPhotonJet::chi2_fast(double * temp_derivative1,
   double   temp2;
 
   // Vary parameters of response pdf
-  idx = mRespPDF.parIndex();
-  par = mRespPDF.firstPar();
-  for(int i = 0; i < mRespPDF.nPars(); i++) {
+  idx = respPDF_.parIndex();
+  par = respPDF_.firstPar();
+  for(int i = 0; i < respPDF_.nPars(); i++) {
     oldpar = par[i];
 
     par[i] += epsilon;

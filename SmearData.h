@@ -1,4 +1,4 @@
-// $Id: SmearData.h,v 1.7 2009/06/10 14:19:56 mschrode Exp $
+// $Id: SmearData.h,v 1.1 2009/06/11 17:29:25 mschrode Exp $
 
 #ifndef SmearData_h
 #define SmearData_h
@@ -10,18 +10,12 @@
 //!  \brief Abstract base class for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 15:24:49 CEST 2009
-//!  $Id: SmearData.h,v 1.7 2009/06/10 14:19:56 mschrode Exp $
+//!  $Id: SmearData.h,v 1.1 2009/06/11 17:29:25 mschrode Exp $
 // --------------------------------------------------
 class SmearData : public TData {
  public:
-  SmearData(DataType type, TMeasurement * mess, double truth, double weight, const Function& respPDF)
-    : TData(),
-    mRespPDF(respPDF),
-    kTruth(truth),
-    kType(type),
-    kWeight(weight),
-    mMess(mess) {};
-  virtual ~SmearData() { delete mMess; }
+  SmearData(DataType type, TMeasurement * mess, double truth, double weight, const Function& respPDF);
+  virtual ~SmearData() { delete mMess_; }
 
   //!  \brief Get the negative log-likelihood of this event
   //!  \return The negative log-likelihood of this event
@@ -31,12 +25,12 @@ class SmearData : public TData {
   virtual void PrintInitStats() const = 0;
 
 
-  virtual void ChangeParAddress(double* oldpar, double* newpar) { mRespPDF.changeParBase(oldpar,newpar); }
-  virtual TMeasurement * GetMess() const { return mMess; }
-  virtual double GetTruth() const { return kTruth; }
-  virtual DataType GetType() const { return kType; }
-  virtual double GetWeight() const { return kWeight; }
-  double * GetRespPar() { return mRespPDF.firstPar(); }
+  virtual void ChangeParAddress(double* oldpar, double* newpar) { respPDF_.changeParBase(oldpar,newpar); }
+  virtual TMeasurement * GetMess() const { return mMess_; }
+  virtual double GetTruth() const { return kTruth_; }
+  virtual DataType GetType() const { return kType_; }
+  virtual double GetWeight() const { return kWeight_; }
+  double * GetRespPar() { return respPDF_.firstPar(); }
   double RespPDF(double r) const;
 
   virtual double chi2_plots() const { return 0.; }                 //!< Dummy, no functionality
@@ -45,14 +39,14 @@ class SmearData : public TData {
 
 
  protected:
-  Function       mRespPDF;                    //!< Response pdf
+  Function       respPDF_;                    //!< Response pdf
 
 
  private:
-  const double    kTruth;                     //!< Truth
-  const DataType  kType;                      //!< Event type
-  const double    kWeight;                    //!< Event weight
-  TMeasurement * mMess;                       //!< The measurement
+  const double    kTruth_;                     //!< Truth
+  const DataType  kType_;                      //!< Event type
+  const double    kWeight_;                    //!< Event weight
+  TMeasurement  * mMess_;                      //!< The measurement
 };
 
 #endif
