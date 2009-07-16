@@ -36,7 +36,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.8 2009/06/09 07:04:25 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.9 2009/06/11 17:32:15 mschrode Exp $
 // ----------------------------------------------------------------   
 class DiJetReader : public EventReader{
  public:
@@ -44,42 +44,44 @@ class DiJetReader : public EventReader{
   virtual ~DiJetReader();
   int readEvents(std::vector<TData*>& data);
 
+
  private:
   TData* createPtBalanceEvent();
   TData* createSmearEvent();
   int createJetTruthEvents(std::vector<TData*>& data);
 
-  NJetSel njet;                //!< Njet Selector
+  NJetSel nJet_;                //!< Njet Selector
 
-  int    dataClass;            //!< Data class, see also TData
-  int    n_dijet_events;       //!< Maximum number of read dijet events
+  int    dataClass_;            //!< Data class, see also TData
+  int    nDijetEvents_;         //!< Maximum number of read dijet events
 
-  double Et_cut_on_jet;        //!< Minimum pt of jet
-  double Et_cut_nplus1Jet;     //!< Maximum pt of other than leading 2 jets in dijet event
-  double Rel_cut_on_nJet;      //!< Maximum relative pt  of other than leading 2 jets in dijet event
-  double GenJetCutLow;         //!< Minimum pt of genJets of dijets
-  double GenJetCutUp;          //!< Maximum pt of genJets of dijets
-  double DeltaRMatchingCut;    //!< Maximum DeltaR
-  double Eta_cut_on_jet;       //!< Maximum absolute jet eta
-  double Had_cut_min;          //!< Minimum jet Had/(Had+EMF)
-  double Had_cut_max;          //!< Maximum jet Had/(Had+EMF)
+  double minJetEt_;             //!< Minimum pt of jet
+  double max3rdJetEt_;          //!< Maximum pt of 3rd jet in dijet event
+  double maxRel3rdJetEt_;       //!< Maximum relative pt of 3rd jet in dijet event
+  double minDeltaPhi_;          //!< Minimum DeltaPhi for 0 < DeltaPhi < Pi
+  double maxJetEta_;            //!< Maximum absolute jet eta
+  double minJetHadFraction_;    //!< Minimum jet Had/(Had+EMF)
+  double maxJetHadFraction_;    //!< Maximum jet Had/(Had+EMF)
+  double minGenJetEt_;          //!< Minimum pt of genJets of dijets
+  double maxGenJetEt_;          //!< Maximum pt of genJets of dijets
+  double maxDeltaR_;            //!< Maximum DeltaR
 
-  int    nNjet_cut;            //!< Number of events with less than 2 jets
-  int    nEt_cut_on_jet;       //!< Number of events rejected by Et_cut_on_jet
-  int    nEt_cut_nplus1Jet;    //!< Number of events rejected by Et_cut_nplus1Jet cut
-  int    nRel_cut_on_nJet;     //!< Number of events rejected by Rel_cut_on_nJet cut
-  int    nGenJetCutLow;        //!< Number of events rejected by GenJetCutLow cut
-  int    nGenJetCutUp;         //!< Number of events rejected by GenJetCutUp
-  int    nDeltaRMatchingCut;   //!< Number of events rejected by DeltaRMatchingCut
-  int    nEta_cut_on_jet;      //!< Number of events rejected by Eta_cut_on_jet
-  int    nHad_cut_min;         //!< Number of events rejected by Had_cut_min
-  int    nHad_cut_max;         //!< Number of events rejected by Had_cut_max
+  int    nDiJetCut_;            //!< Number of events with less than 2 jets
+  int    nMinJetEt_;            //!< Number of events rejected by minJetEt_ cut
+  int    nCutOn3rdJet_;         //!< Number of events rejected by max3rdJetEt_ or maxRelJetEt_ cut
+  int    nMinDeltaPhi_;         //!< Number of events rejected by maxDeltaPhi_ cut
+  int    nMaxJetEta_;           //!< Number of events rejected by maxJetEta_ cut
+  int    nMinJetHadFraction_;   //!< Number of events rejected by minJetHadFraction_ cut
+  int    nMaxJetHadFraction_;   //!< Number of events rejected by maxJetHadFraction_ cut
+  int    nMaxGenJetEt_;         //!< Number of events rejected by maxGenJetEt_ cut
+  int    nMinGenJetEt_;         //!< Number of events rejected by minGenJetEt_ cut
+  int    nMaxDeltaR_;           //!< Number of events rejected by maxDeltaR_ cut
 
-  int    mMaxNIter;            //!< Max number of iterations in integration
-  double mEps;                 //!< Integration precision for convergence
-  double mMin;                 //!< Minimum of truth spectrum in integration
-  double mMax;                 //!< Maximum of truth spectrum in integration
-  double mTruthSpecExp;        //!< Exponent of truth spectrum
+  int    maxNIter_;             //!< Max number of iterations in integration
+  double eps_;                  //!< Integration precision for convergence
+  double min_;                  //!< Minimum of truth spectrum in integration
+  double max_;                  //!< Maximum of truth spectrum in integration
+  double truthSpecExp_;         //!< Exponent of truth spectrum
 };
 
 
