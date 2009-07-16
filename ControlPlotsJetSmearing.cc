@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.2 2009/06/26 11:49:25 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.3 2009/07/16 14:49:10 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -35,6 +35,8 @@ ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, 
 
 
 
+//!  \brief Draw response control plots for events
+//!         of type \p SmearData
 // --------------------------------------------------
 void ControlPlotsJetSmearing::plotResponse() const
 {
@@ -352,6 +354,8 @@ void ControlPlotsJetSmearing::plotParameterScan(const std::vector<unsigned int>&
 
 
 
+//!  \brief Draw control plots for events
+//!         of type \p TypeSmearDiJet
 // --------------------------------------------------
 void ControlPlotsJetSmearing::plotDijets() const
 {
@@ -457,6 +461,9 @@ void ControlPlotsJetSmearing::plotDijets() const
   // Response correlations
   TH2F * hRvsDeltaPhi = new TH2F("hRvsDeltaPhi",";#Delta#Phi;p^{jet}_{T} / p^{gen}_{T}",
 				 25,1.5,M_PI,25,0,1.4);
+  TH2F * hRvsRel3rdJetPt = new TH2F("hRvsRel3rdJetPt",
+				    ";p^{jet3}_{T,rel} = p^{jet3}_{T} / p^{dijet}_{T};p^{jet}_{T} / p^{gen}_{T}",
+				    50,0,1.4,25,0,1.4);
   TH2F * hRvsEMF = new TH2F("hRvsEMF",";EMF;p^{jet}_{T} / p^{gen}_{T}",
 			    25,0,1,25,0,1.4);
 
@@ -479,6 +486,9 @@ void ControlPlotsJetSmearing::plotDijets() const
 
       hRvsEMF->Fill( jet1->EMF / jet1->pt, jet1->pt / jet1->genPt);
       hRvsEMF->Fill( jet2->EMF / jet2->pt, jet2->pt / jet2->genPt);
+
+      hRvsRel3rdJetPt->Fill( jet3->pt / dijet->dijetPt(), jet1->pt / jet1->genPt );
+      hRvsRel3rdJetPt->Fill( jet3->pt / dijet->dijetPt(), jet2->pt / jet2->genPt );
 
       hGenJetPt.at(0)->Fill( jet1->genPt );
       hGenJetPt.at(0)->Fill( jet2->genPt );
@@ -545,6 +555,7 @@ void ControlPlotsJetSmearing::plotDijets() const
   drawPSPage(ps,c1,h3rdJetvsDijetPt,"BOX",false);
   drawPSPage(ps,c1,hRel3rdJetPt,"",true);
   drawPSPage(ps,c1,hDeltaPhi,"",true);
+  drawPSPage(ps,c1,hRvsRel3rdJetPt,"BOX",false);
   drawPSPage(ps,c1,hRvsDeltaPhi,"BOX",false);
   drawPSPage(ps,c1,hRvsEMF,"BOX",false);
 
@@ -555,9 +566,16 @@ void ControlPlotsJetSmearing::plotDijets() const
     delete hGenJetPt.at(i);
     delete hCalJetPt.at(i);
   }
+  delete leg;
+  delete hCalJet2vsCalJet1Pt;
   delete hDijetPt;
   delete h3rdJetPt;
+  delete h3rdJetvsDijetPt;
+  delete hRel3rdJetPt;
   delete hDeltaPhi;
+  delete hRvsRel3rdJetPt;
+  delete hRvsDeltaPhi;
+  delete hRvsEMF;
   delete c1;
   delete ps;
 
@@ -566,6 +584,7 @@ void ControlPlotsJetSmearing::plotDijets() const
 
 
 
+//!  \brief Set default gStyle options
 // --------------------------------------------------
 void ControlPlotsJetSmearing::setGStyle() const
 {
@@ -660,6 +679,17 @@ void ControlPlotsJetSmearing::setGStyle() const
 
 
 
+//!  \brief Draw TObject on one page of a ps file
+//!
+//!  Opens a new page in the PostScript file \p ps
+//!  and draws the TObject \p obj on it.
+//!
+//!  \param ps     A new page is added to this file
+//!                containing the TObject \p obj
+//!  \param can    The \p obj is drawn on this canvas
+//!  \param obj    The TObject to be drawn
+//!  \param option Draw options
+//!  \param logy   Sets log-scale on y-axis if true
 // --------------------------------------------------
 void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, TObject * obj, std::string option, bool logy) const {
   std::vector<TObject*> objs;
@@ -669,6 +699,20 @@ void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, TObjec
 
 
 
+//!  \brief Draw TObjects on one page of a ps file
+//!
+//!  Opens a new page in the PostScript file \p ps
+//!  and draws all TObjects in \p obs on it. If \p objs
+//!  contains more than one TObject, the draw option
+//!  "same" is automatically used.
+//!
+//!  \param ps     A new page is added to this file
+//!                containing all TObjects in \p objs
+//!  \param can    The \p objs are drawn on this canvas
+//!  \param objs   Contains the objects that are drawn
+//!  \param option Draw options (except for "same",
+//!                see above)
+//!  \param logy   Sets log-scale on y-axis if true
 // --------------------------------------------------
 void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, std::vector<TObject*> objs, std::string option, bool logy) const {
   ps->NewPage();
