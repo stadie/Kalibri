@@ -5706,6 +5706,9 @@ void TControlPlots::MakeControlPlotsTop()
 
   // book hists
 
+  double binningLogPt[20] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
+			     120, 150, 200, 250, 300, 400, 500, 700, 1000, 2000};
+
   TH1F* scale  = new TH1F("scale" , "Scale" , 200,    0, 200);
   TH1F* weight = new TH1F("weight", "Weight", 200,    0, 200);
   TH1F* truth  = new TH1F("truth" , "Truth" , 200,    0, 200);
@@ -5739,11 +5742,11 @@ void TControlPlots::MakeControlPlotsTop()
   TProfile* correctedResponseEta[6];
   TString corrLevels[6] = { "Raw", "L1", "L2", "L3", "L4", "L5" };
   for(unsigned i=0; i<5; i++){
-    corrFacsPt [i] = new TProfile("corrFacsPt" +corrLevels[i+1], "", 40,    0, 200);
+    corrFacsPt [i] = new TProfile("corrFacsPt" +corrLevels[i+1], "", 19, binningLogPt);
     corrFacsEta[i] = new TProfile("corrFacsEta"+corrLevels[i+1], "", 40,  -4.,  4.);
   }
   for(unsigned i=0; i<6; i++){
-    correctedResponsePt [i] = new TProfile("correctedResponsePt" +corrLevels[i], "", 40,    0, 200);
+    correctedResponsePt [i] = new TProfile("correctedResponsePt" +corrLevels[i], "", 19, binningLogPt);
     correctedResponseEta[i] = new TProfile("correctedResponseEta"+corrLevels[i], "", 40,  -4.,  4.);
   }
 
@@ -6044,6 +6047,10 @@ void TControlPlots::MakeControlPlotsTop()
     correctedResponseEta[i]->SetMaximum( 1.6 );
   }
 
+  TF1 *fL5 = new TF1("fL5", "[0]+[1]*log10(x)+[2]*log10(x)*log10(x)", 10., 2000.);
+  fL5->SetParameters(0.695, 0.174, -0.026); //paramters from AN-2009/010
+  fL5->SetLineWidth(1);
+
   // create legends
 
   TLegend* legend = new TLegend(0.7, 0.75, 0.91, 0.85);
@@ -6163,15 +6170,18 @@ void TControlPlots::MakeControlPlotsTop()
   if(printEps) c->Print("top_responseEta.eps");
   ps->NewPage();
 
+  c->SetLogx(1);
   corrFacsPt[0]->Draw("p");
-  for(unsigned int i=1; i<5; i++)
+  line->DrawLine(corrFacsPt[0]->GetXaxis()->GetXmin(), 1., corrFacsPt[0]->GetXaxis()->GetXmax(), 1.);
+  fL5->Draw("same");
+  for(unsigned int i=1; i<6; i++)
     corrFacsPt[i]->Draw("p same");
   legendCorrFacs->Draw("same");
-  line->DrawLine(corrFacsPt[0]->GetXaxis()->GetXmin(), 1., corrFacsPt[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_corrFacsPt.eps");
   ps->NewPage();
 
+  c->SetLogx(0);
   corrFacsEta[0]->Draw("p");
   for(unsigned int i=1; i<5; i++)
     corrFacsEta[i]->Draw("p same");
@@ -6181,6 +6191,7 @@ void TControlPlots::MakeControlPlotsTop()
   if(printEps) c->Print("top_corrFacsEta.eps");
   ps->NewPage();
 
+  c->SetLogx(1);
   correctedResponsePt[0]->Draw("p");
   for(unsigned int i=1; i<6; i++)
     correctedResponsePt[i]->Draw("p same");
@@ -6190,6 +6201,7 @@ void TControlPlots::MakeControlPlotsTop()
   if(printEps) c->Print("top_correctedResponsePt.eps");
   ps->NewPage();
 
+  c->SetLogx(0);
   correctedResponseEta[0]->Draw("p");
   for(unsigned int i=1; i<6; i++)
     correctedResponseEta[i]->Draw("p same");
@@ -6258,6 +6270,8 @@ void TControlPlots::MakeControlPlotsTop()
     delete correctedResponsePt [i];
     delete correctedResponseEta[i];
   }
+
+  delete fL5;
 
   delete legend;
   delete line;
