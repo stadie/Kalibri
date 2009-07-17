@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.30 2009/07/07 14:24:57 snaumann Exp $
+// $Id: Parameters.cc,v 1.31 2009/07/13 08:20:40 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -31,6 +31,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     return new MyParametrization();
   }  else if(name == "JetMETParametrization") {
     return new JetMETParametrization();
+  }  else if(name == "GlobalScaleFactorParametrization") {
+    return new GlobalScaleFactorParametrization();
   }  else if(name == "SimpleParametrization") {
     return new SimpleParametrization();
   }  else if(name == "ToyParametrization") {
@@ -99,6 +101,8 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "StepEfracParametrization";
   } else if(parclass == "TJetMETParameters") {
     parclass = "JetMETParametrization";
+  }  else if(parclass == "TGlobalScaleFactorParameters") {
+    parclass = "GlobalScaleFactorParametrization";
   }  else if(parclass == "TSimpleParameters") {
     parclass = "SimpleParametrization";
   }  else if(parclass == "TToyParameters") {

@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.38 2009/06/17 06:46:37 mschrode Exp $
+//  $Id: Parametrization.h,v 1.39 2009/07/13 08:20:40 mschrode Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -17,7 +17,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.38 2009/06/17 06:46:37 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.39 2009/07/13 08:20:40 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -470,6 +470,34 @@ public:
 
 
 
+//!  \brief Simple parametrization that uses a global scale factor
+//!
+//!  This parametrization has 0 tower parameters, 0 track parameters
+//!  and 1 global jet parameter, no eta or phi dependence.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class GlobalScaleFactorParametrization: public Parametrization {
+public:
+  GlobalScaleFactorParametrization() : Parametrization(0,0,0,1) {}
+  const char* name() const { return "GlobalScaleFactorParametrization";}
+
+  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+  
+  double correctedGlobalJetEt(const TMeasurement *x, const double *par) const {
+    return  par[0] * x->pt;
+  }
+
+};
+
+
+
 //!  \brief Simple tower and jet parametrization
 //!
 //!  This parametrization has 3 tower parameters and 3
@@ -827,7 +855,7 @@ public:
 //!  - The jet Et is corrected eta-dependent with the
 //!    product of the L2 and L3 correction functions.
 //!
-//!  This parametrization has 7 jet parameters and
+//!  This parametrization has 7 jet parameters.
 //!
 //!  \sa Parametrization
 // -----------------------------------------------------------------
