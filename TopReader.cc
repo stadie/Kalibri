@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.7 2009/07/13 12:04:39 snaumann Exp $
+//    $Id: TopReader.cc,v 1.8 2009/07/17 09:57:27 snaumann Exp $
 //   
 #include "TopReader.h"
 
@@ -22,7 +22,8 @@
 
 TopReader::TopReader(const std::string& configfile, TParameters* p) :
   EventReader(configfile,p),
-  etCutOnJet_(0),
+  minJetEt_(0),
+  maxJetEta_(0),
   useToL3CorrectedJets_(false),
   useMassConstraintW_  (false),
   useMassConstraintTop_(false),
@@ -37,7 +38,8 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
     return ;
   }
 
-  etCutOnJet_   = config->read<double>("Et cut on jet",0.0);
+  minJetEt_  = config->read<double>("Et cut on jet",0.0);
+  maxJetEta_ = config->read<double>("Eta cut on jet",100.0);
   useToL3CorrectedJets_ = config->read<bool>("use to L3 corrected jets",false);
   useMassConstraintW_   = config->read<bool>("use W mass constraint",true);
   useMassConstraintTop_ = config->read<bool>("use Top mass constraint",false);
@@ -92,7 +94,7 @@ int TopReader::readEvents(std::vector<TData*>& data)
       top_data[0] = 0;
       int nstoredjets = 0;
       for (unsigned int ij = 0; ij<3; ++ij){
-	if(top_.JetPt[ij] < etCutOnJet_) continue;
+	if(top_.JetPt[ij] < minJetEt_ || fabs(top_.JetEta[ij]) > maxJetEta_) continue;
 	if((TJet::Flavor)top_.JetFlavor[ij] != TJet::uds) continue;
 	
 	//Find the jets eta & phi index using the nearest tower to jet axis:
@@ -212,7 +214,7 @@ int TopReader::readEvents(std::vector<TData*>& data)
       top_data[0] = 0;
       int nstoredjets = 0;
       for (unsigned int ij = 0; ij<3; ++ij){
-	if(top_.JetPt[ij] < etCutOnJet_) continue;
+	if(top_.JetPt[ij] < minJetEt_ || fabs(top_.JetEta[ij]) > maxJetEta_) continue;
 	
 	//Find the jets eta & phi index using the nearest tower to jet axis:
 	int jet_index=-1;
@@ -340,7 +342,7 @@ TData* TopReader::createTwoJetsInvMassEvents()
   Jet *jets[2] = {0,0};
   double* terr = new double[top_.NobjTow];
   for(int i = 0; i < 3; ++i) {
-    if(top_.JetPt[i] < etCutOnJet_) continue;
+    if(top_.JetPt[i] < minJetEt_ || fabs(top_.JetEta[i]) > maxJetEta_) continue;
     if((TJet::Flavor)top_.JetFlavor[i] != TJet::uds) continue;
     
     double em = 0;
@@ -413,7 +415,7 @@ TData* TopReader::createTwoJetsInvMassEvents()
 			  corFactors,
 			  p->jet_function(top_.TowId_eta[closestTower],
 					  top_.TowId_phi[closestTower]),
-			  jet_error_param, p->global_jet_function(), etCutOnJet_);
+			  jet_error_param, p->global_jet_function(), minJetEt_);
       for(int j = 0 ; j < top_.NobjTow ; ++j) {
 	if (top_.Tow_jetidx[j]!= i) continue;//look for ij-jet's towers
 	double scale = top_.TowEt[j]/top_.TowE[j];
@@ -436,7 +438,7 @@ TData* TopReader::createTwoJetsInvMassEvents()
 		     corFactors,
 		     p->jet_function(top_.TowId_eta[closestTower],
 				     top_.TowId_phi[closestTower]),
-		     jet_error_param, p->global_jet_function(), etCutOnJet_);    
+		     jet_error_param, p->global_jet_function(), minJetEt_);    
     }
   }
   delete [] terr;
