@@ -29,7 +29,7 @@
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.25 2009/06/03 07:55:39 mschrode Exp $
+//!  $Id: ControlPlots.h,v 1.26 2009/06/05 15:44:43 mschrode Exp $
 // -------------------------------------------------------------
 class TControlPlots
 {
@@ -57,7 +57,8 @@ public:
   void MakeControlPlotsTowers();
 
   bool EquidistLogBins(double * bins, int nBins, double first, double last) const;
-  void Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
+  void Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool gausplots=true) const;
+  void Fit2D(const TH2F* hist, TH1F* hresults[8]) const { Fit2D(hist, hresults, 0, 0, false); };
   void Fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
   void SetGStyle() const;
   void WriteToRootFile(std::vector<TObject*> obj, std::string dir);

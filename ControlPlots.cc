@@ -15,7 +15,6 @@ using namespace std;
 #include "TLorentzVector.h"
 #include "TPaveText.h"
 #include "TPostScript.h"
-#include "TProfile.h"
 #include "TString.h"
 #include "TROOT.h"
 
@@ -5720,35 +5719,43 @@ void TControlPlots::MakeControlPlotsTop()
   TH1F* meanPt  = new TH1F("meanPt" , "MeanPt" , 200,    0, 200);
   TH1F* meanEta = new TH1F("meanEta", "MeanEta",  80,  -4.,  4.);
 
-  TH1F* invMass         [2];
-  TH1F* messTruth       [2];
-  TProfile* messTruthPt [2];
-  TProfile* messTruthEta[2];
-  TProfile* responsePt  [2];
-  TProfile* responseEta [2];
+  TH1F* invMass     [2];
+  TH1F* messTruth   [2];
+  TH2F* messTruthPt [2];
+  TH2F* messTruthEta[2];
+  TH2F* responsePt  [2];
+  TH2F* responseEta [2];
   TString suffix[2] = { "Before", "After" };
   for(unsigned a=0; a<2; a++){
     invMass     [a] = new TH1F("invMass"  +suffix[a], "",  40, 0., 200.);
     messTruth   [a] = new TH1F("messTruth"+suffix[a], "",  40, 0.,   2.);
-    messTruthPt [a] = new TProfile("messTruthPt" +suffix[a], "", 35,    0, 140);
-    messTruthEta[a] = new TProfile("messTruthEta"+suffix[a], "", 40,  -4.,  4.);
-    responsePt  [a] = new TProfile("responsePt"  +suffix[a], "", 35,    0, 140);
-    responseEta [a] = new TProfile("responseEta" +suffix[a], "", 40,  -4.,  4.);
+    messTruthPt [a] = new TH2F("messTruthPt" +suffix[a], "", 35,    0, 140, 51, 0., 2.);
+    messTruthEta[a] = new TH2F("messTruthEta"+suffix[a], "", 40,  -4.,  4., 51, 0., 2.);
+    responsePt  [a] = new TH2F("responsePt"  +suffix[a], "", 35,    0, 140, 51, 0., 2.);
+    responseEta [a] = new TH2F("responseEta" +suffix[a], "", 40,  -4.,  4., 51, 0., 2.);
   }
+  TH1F* messTruthPt_mgf [2];
+  TH1F* messTruthEta_mgf[2];
+  TH1F* responsePt_mgf  [2];
+  TH1F* responseEta_mgf[2];
 
-  TProfile* corrFacsPt [5];
-  TProfile* corrFacsEta[5];
-  TProfile* correctedResponsePt [6];
-  TProfile* correctedResponseEta[6];
+  TH2F* corrFacsPt [5];
+  TH2F* corrFacsEta[5];
+  TH2F* correctedResponsePt [6];
+  TH2F* correctedResponseEta[6];
   TString corrLevels[6] = { "Raw", "L1", "L2", "L3", "L4", "L5" };
   for(unsigned i=0; i<5; i++){
-    corrFacsPt [i] = new TProfile("corrFacsPt" +corrLevels[i+1], "", 19, binningLogPt);
-    corrFacsEta[i] = new TProfile("corrFacsEta"+corrLevels[i+1], "", 40,  -4.,  4.);
+    corrFacsPt [i] = new TH2F("corrFacsPt" +corrLevels[i+1], "", 19, binningLogPt, 51, 0., 2.);
+    corrFacsEta[i] = new TH2F("corrFacsEta"+corrLevels[i+1], "", 40,  -4.,  4.   , 51, 0., 2.);
   }
   for(unsigned i=0; i<6; i++){
-    correctedResponsePt [i] = new TProfile("correctedResponsePt" +corrLevels[i], "", 19, binningLogPt);
-    correctedResponseEta[i] = new TProfile("correctedResponseEta"+corrLevels[i], "", 40,  -4.,  4.);
+    correctedResponsePt [i] = new TH2F("correctedResponsePt" +corrLevels[i], "", 19, binningLogPt, 51, 0., 2.);
+    correctedResponseEta[i] = new TH2F("correctedResponseEta"+corrLevels[i], "", 40,  -4.,  4.   , 51, 0., 2.);
   }
+  TH1F* corrFacsPt_mgf [5];
+  TH1F* corrFacsEta_mgf[5];
+  TH1F* correctedResponsePt_mgf [6];
+  TH1F* correctedResponseEta_mgf[6];
 
   //loop over all fit-events and fill hists
 
@@ -5880,6 +5887,88 @@ void TControlPlots::MakeControlPlotsTop()
 
     }  //End of loop over all fit-events
 
+  // perform Gauss fits for bins in 2-dim. hists
+
+  for(unsigned i=0; i<2; i++){
+
+    TH1F* results_pt [8];
+    TH1F* results_eta[8];
+
+    Fit2D(messTruthPt [i], results_pt);
+    Fit2D(messTruthEta[i], results_eta);
+    for(int j=0; j<8; j++) {
+      if(j==2) { //mean of Gauss fits
+	messTruthPt_mgf [i] = results_pt [j];
+	messTruthEta_mgf[i] = results_eta[j];
+      }
+      else {
+	delete results_pt [j];
+	delete results_eta[j];
+      }
+    }
+
+  }
+
+  for(unsigned i=0; i<2; i++){
+
+    TH1F* results_pt [8];
+    TH1F* results_eta[8];
+
+    Fit2D(responsePt [i], results_pt);
+    Fit2D(responseEta[i], results_eta);
+    for(int j=0; j<8; j++) {
+      if(j==2) { //mean of Gauss fits
+	responsePt_mgf [i] = results_pt [j];
+	responseEta_mgf[i] = results_eta[j];
+      }
+      else {
+	delete results_pt [j];
+	delete results_eta[j];
+      }
+    }
+
+  }
+
+  for(unsigned i=0; i<5; i++){
+
+    TH1F* results_pt [8];
+    TH1F* results_eta[8];
+
+    Fit2D(corrFacsPt [i], results_pt);
+    Fit2D(corrFacsEta[i], results_eta);
+    for(int j=0; j<8; j++) {
+      if(j==2) { //mean of Gauss fits
+	corrFacsPt_mgf [i] = results_pt [j];
+	corrFacsEta_mgf[i] = results_eta[j];
+      }
+      else {
+	delete results_pt [j];
+	delete results_eta[j];
+      }
+    }
+
+  }
+
+  for(unsigned i=0; i<6; i++){
+
+    TH1F* results_pt [8];
+    TH1F* results_eta[8];
+
+    Fit2D(correctedResponsePt [i], results_pt);
+    Fit2D(correctedResponseEta[i], results_eta);
+    for(int j=0; j<8; j++) {
+      if(j==2) { //mean of Gauss fits
+	correctedResponsePt_mgf [i] = results_pt [j];
+	correctedResponseEta_mgf[i] = results_eta[j];
+      }
+      else {
+	delete results_pt [j];
+	delete results_eta[j];
+      }
+    }
+
+  }
+
   // configure hists
 
   pt   ->SetXTitle( "p_{T} (rec) [GeV]" );
@@ -5918,20 +6007,20 @@ void TControlPlots::MakeControlPlotsTop()
     invMass     [a]->GetFunction("gaus")->SetLineWidth( 1 );
     messTruth   [a]->GetFunction("gaus")->SetLineWidth( 1 );
 
-    invMass     [a]->SetMarkerColor( markerColor[a] );
-    messTruth   [a]->SetMarkerColor( markerColor[a] );
-    messTruthPt [a]->SetMarkerColor( markerColor[a] );
-    messTruthEta[a]->SetMarkerColor( markerColor[a] );
+    invMass         [a]->SetMarkerColor( markerColor[a] );
+    messTruth       [a]->SetMarkerColor( markerColor[a] );
+    messTruthPt_mgf [a]->SetMarkerColor( markerColor[a] );
+    messTruthEta_mgf[a]->SetMarkerColor( markerColor[a] );
 
-    invMass     [a]->SetMarkerStyle( markerStyle[a] );
-    messTruth   [a]->SetMarkerStyle( markerStyle[a] );
-    messTruthPt [a]->SetMarkerStyle( markerStyle[a] );
-    messTruthEta[a]->SetMarkerStyle( markerStyle[a] );
+    invMass         [a]->SetMarkerStyle( markerStyle[a] );
+    messTruth       [a]->SetMarkerStyle( markerStyle[a] );
+    messTruthPt_mgf [a]->SetMarkerStyle( markerStyle[a] );
+    messTruthEta_mgf[a]->SetMarkerStyle( markerStyle[a] );
 
-    invMass     [a]->SetMarkerSize( 1.5 );
-    messTruth   [a]->SetMarkerSize( 1.5 );
-    messTruthPt [a]->SetMarkerSize( 1.5 );
-    messTruthEta[a]->SetMarkerSize( 1.5 );
+    invMass         [a]->SetMarkerSize( 1.5 );
+    messTruth       [a]->SetMarkerSize( 1.5 );
+    messTruthPt_mgf [a]->SetMarkerSize( 1.5 );
+    messTruthEta_mgf[a]->SetMarkerSize( 1.5 );
 
     paveText[a]->SetFillColor( 0 );
     paveText[a]->SetBorderSize( 1 );
@@ -5951,50 +6040,48 @@ void TControlPlots::MakeControlPlotsTop()
     sprintf(tmpTxt, "#sigma/#mu = %4.2f", relSigma);
     paveText[a]->AddText(tmpTxt);
 
-    invMass     [a]->SetStats( 0 );
-    messTruth   [a]->SetStats( 0 );
-    messTruthPt [a]->SetStats( 0 );
-    messTruthEta[a]->SetStats( 0 );
+    messTruthPt_mgf [a]->SetTitle( "" );
+    messTruthEta_mgf[a]->SetTitle( "" );
     
-    invMass     [a]->SetXTitle( "invariant mass [GeV]" );
-    messTruth   [a]->SetXTitle( "measurement/truth" );
-    messTruthPt [a]->SetXTitle( "p_{T} [GeV]" );
-    messTruthEta[a]->SetXTitle( "#eta" );
+    invMass         [a]->SetXTitle( "invariant mass [GeV]" );
+    messTruth       [a]->SetXTitle( "measurement/truth" );
+    messTruthPt_mgf [a]->SetXTitle( "p_{T} [GeV]" );
+    messTruthEta_mgf[a]->SetXTitle( "#eta" );
 
-    invMass     [a]->SetYTitle( "events" );
-    messTruth   [a]->SetYTitle( "events" );
-    messTruthPt [a]->SetYTitle( "measurement/truth" );
-    messTruthEta[a]->SetYTitle( "measurement/truth" );
+    invMass         [a]->SetYTitle( "events" );
+    messTruth       [a]->SetYTitle( "events" );
+    messTruthPt_mgf [a]->SetYTitle( "measurement/truth" );
+    messTruthEta_mgf[a]->SetYTitle( "measurement/truth" );
 
-    messTruthPt [a]->SetMinimum( 0.4 );
-    messTruthEta[a]->SetMinimum( 0.4 );
+    messTruthPt_mgf [a]->SetMinimum( 0.4 );
+    messTruthEta_mgf[a]->SetMinimum( 0.4 );
 
-    messTruthPt [a]->SetMaximum( 1.6 );
-    messTruthEta[a]->SetMaximum( 1.6 );
+    messTruthPt_mgf [a]->SetMaximum( 1.6 );
+    messTruthEta_mgf[a]->SetMaximum( 1.6 );
 
-    responsePt [a]->SetMarkerColor( markerColor[a] );
-    responseEta[a]->SetMarkerColor( markerColor[a] );
+    responsePt_mgf [a]->SetMarkerColor( markerColor[a] );
+    responseEta_mgf[a]->SetMarkerColor( markerColor[a] );
 
-    responsePt [a]->SetMarkerStyle( markerStyle[a] );
-    responseEta[a]->SetMarkerStyle( markerStyle[a] );
+    responsePt_mgf [a]->SetMarkerStyle( markerStyle[a] );
+    responseEta_mgf[a]->SetMarkerStyle( markerStyle[a] );
 
-    responsePt [a]->SetMarkerSize( 1.5 );
-    responseEta[a]->SetMarkerSize( 1.5 );
+    responsePt_mgf [a]->SetMarkerSize( 1.5 );
+    responseEta_mgf[a]->SetMarkerSize( 1.5 );
+
+    responsePt_mgf [a]->SetTitle( "" );
+    responseEta_mgf[a]->SetTitle( "" );
     
-    responsePt [a]->SetStats( 0 );
-    responseEta[a]->SetStats( 0 );
-    
-    responsePt [a]->SetXTitle( "p_{T} (gen) [GeV]" );
-    responseEta[a]->SetXTitle( "#eta" );
+    responsePt_mgf [a]->SetXTitle( "p_{T} (gen) [GeV]" );
+    responseEta_mgf[a]->SetXTitle( "#eta" );
 
-    responsePt [a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
-    responseEta[a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+    responsePt_mgf [a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+    responseEta_mgf[a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
 
-    responsePt [a]->SetMinimum( 0.4 );
-    responseEta[a]->SetMinimum( 0.4 );
+    responsePt_mgf [a]->SetMinimum( 0.4 );
+    responseEta_mgf[a]->SetMinimum( 0.4 );
 
-    responsePt [a]->SetMaximum( 1.6 );
-    responseEta[a]->SetMaximum( 1.6 );
+    responsePt_mgf [a]->SetMaximum( 1.6 );
+    responseEta_mgf[a]->SetMaximum( 1.6 );
 
   }
 
@@ -6002,49 +6089,55 @@ void TControlPlots::MakeControlPlotsTop()
   int markerStyleCorr[6] = { 22, 24, 21, 23, 25, 20 };
 
   for(unsigned i=0; i<5; i++){
-    corrFacsPt [i]->SetMarkerColor( markerColorCorr[i+1] );
-    corrFacsEta[i]->SetMarkerColor( markerColorCorr[i+1] );
+    corrFacsPt_mgf [i]->SetMarkerColor( markerColorCorr[i+1] );
+    corrFacsEta_mgf[i]->SetMarkerColor( markerColorCorr[i+1] );
 
-    corrFacsPt [i]->SetMarkerStyle( markerStyleCorr[i+1] );
-    corrFacsEta[i]->SetMarkerStyle( markerStyleCorr[i+1] );
+    corrFacsPt_mgf [i]->SetMarkerStyle( markerStyleCorr[i+1] );
+    corrFacsEta_mgf[i]->SetMarkerStyle( markerStyleCorr[i+1] );
 
-    corrFacsPt [i]->SetMarkerSize( 1.5 );
-    corrFacsEta[i]->SetMarkerSize( 1.5 );
+    corrFacsPt_mgf [i]->SetMarkerSize( 1.5 );
+    corrFacsEta_mgf[i]->SetMarkerSize( 1.5 );
 
-    corrFacsPt [i]->SetXTitle( "p_{T} (gen) [GeV]" );
-    corrFacsEta[i]->SetXTitle( "#eta" );
+    corrFacsPt_mgf [i]->SetTitle( "" );
+    corrFacsEta_mgf[i]->SetTitle( "" );
 
-    corrFacsPt [i]->SetYTitle( "JEC factor" );
-    corrFacsEta[i]->SetYTitle( "JEC factor" );
+    corrFacsPt_mgf [i]->SetXTitle( "p_{T} (gen) [GeV]" );
+    corrFacsEta_mgf[i]->SetXTitle( "#eta" );
 
-    corrFacsPt [i]->SetMinimum( 0.7 );
-    corrFacsEta[i]->SetMinimum( 0.7 );
+    corrFacsPt_mgf [i]->SetYTitle( "JEC factor" );
+    corrFacsEta_mgf[i]->SetYTitle( "JEC factor" );
 
-    corrFacsPt [i]->SetMaximum( 2.2 );
-    corrFacsEta[i]->SetMaximum( 2.2 );
+    corrFacsPt_mgf [i]->SetMinimum( 0.7 );
+    corrFacsEta_mgf[i]->SetMinimum( 0.7 );
+
+    corrFacsPt_mgf [i]->SetMaximum( 2.2 );
+    corrFacsEta_mgf[i]->SetMaximum( 2.2 );
   }
 
   for(unsigned i=0; i<6; i++){
-    correctedResponsePt [i]->SetMarkerColor( markerColorCorr[i] );
-    correctedResponseEta[i]->SetMarkerColor( markerColorCorr[i] );
+    correctedResponsePt_mgf [i]->SetMarkerColor( markerColorCorr[i] );
+    correctedResponseEta_mgf[i]->SetMarkerColor( markerColorCorr[i] );
 
-    correctedResponsePt [i]->SetMarkerStyle( markerStyleCorr[i] );
-    correctedResponseEta[i]->SetMarkerStyle( markerStyleCorr[i] );
+    correctedResponsePt_mgf [i]->SetMarkerStyle( markerStyleCorr[i] );
+    correctedResponseEta_mgf[i]->SetMarkerStyle( markerStyleCorr[i] );
 
-    correctedResponsePt [i]->SetMarkerSize( 1.5 );
-    correctedResponseEta[i]->SetMarkerSize( 1.5 );
+    correctedResponsePt_mgf [i]->SetMarkerSize( 1.5 );
+    correctedResponseEta_mgf[i]->SetMarkerSize( 1.5 );
 
-    correctedResponsePt [i]->SetXTitle( "p_{T} (gen) [GeV]" );
-    correctedResponseEta[i]->SetXTitle( "#eta" );
+    correctedResponsePt_mgf [i]->SetTitle( "" );
+    correctedResponseEta_mgf[i]->SetTitle( "" );
 
-    correctedResponsePt [i]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
-    correctedResponseEta[i]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+    correctedResponsePt_mgf [i]->SetXTitle( "p_{T} (gen) [GeV]" );
+    correctedResponseEta_mgf[i]->SetXTitle( "#eta" );
 
-    correctedResponsePt [i]->SetMinimum( 0.4 );
-    correctedResponseEta[i]->SetMinimum( 0.4 );
+    correctedResponsePt_mgf [i]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+    correctedResponseEta_mgf[i]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
 
-    correctedResponsePt [i]->SetMaximum( 1.6 );
-    correctedResponseEta[i]->SetMaximum( 1.6 );
+    correctedResponsePt_mgf [i]->SetMinimum( 0.4 );
+    correctedResponseEta_mgf[i]->SetMinimum( 0.4 );
+
+    correctedResponsePt_mgf [i]->SetMaximum( 1.6 );
+    correctedResponseEta_mgf[i]->SetMaximum( 1.6 );
   }
 
   TF1 *fL5 = new TF1("fL5", "[0]+[1]*log10(x)+[2]*log10(x)*log10(x)", 10., 2000.);
@@ -6061,12 +6154,12 @@ void TControlPlots::MakeControlPlotsTop()
   TLegend* legendCorrFacs = new TLegend(0.8, 0.7, 0.91, 0.85);
   legendCorrFacs->SetFillColor(0);
   for(unsigned i=0; i<5; i++)
-    legendCorrFacs->AddEntry(corrFacsPt[i], corrLevels[i+1]);
+    legendCorrFacs->AddEntry(corrFacsPt_mgf[i], corrLevels[i+1]);
 
   TLegend* legendCorrResponse = new TLegend(0.8, 0.67, 0.91, 0.85);
   legendCorrResponse->SetFillColor(0);
   for(unsigned i=0; i<6; i++)
-    legendCorrResponse->AddEntry(correctedResponsePt[i], corrLevels[i]);
+    legendCorrResponse->AddEntry(correctedResponsePt_mgf[i], corrLevels[i]);
 
   // create a line
 
@@ -6138,75 +6231,83 @@ void TControlPlots::MakeControlPlotsTop()
   if(printEps) c->Print("top_messTruth.eps");
   ps->NewPage();
 
-  messTruthPt[0]->Draw("p");
-  messTruthPt[1]->Draw("p same");
+  messTruthPt_mgf[0]->Draw("p");
+  messTruthPt_mgf[1]->Draw("p same");
   legend->Draw("same");
-  line->DrawLine(messTruthPt[0]->GetXaxis()->GetXmin(), 1., messTruthPt[0]->GetXaxis()->GetXmax(), 1.);
+  line->DrawLine(messTruthPt_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 messTruthPt_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_messTruthPt.eps");
   ps->NewPage();
 
-  messTruthEta[0]->Draw("p");
-  messTruthEta[1]->Draw("p same");
+  messTruthEta_mgf[0]->Draw("p");
+  messTruthEta_mgf[1]->Draw("p same");
   legend->Draw("same");
-  line->DrawLine(messTruthEta[0]->GetXaxis()->GetXmin(), 1., messTruthEta[0]->GetXaxis()->GetXmax(), 1.);
+  line->DrawLine(messTruthEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 messTruthEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_messTruthEta.eps");
   ps->NewPage();
 
-  responsePt[0]->Draw("p");
-  responsePt[1]->Draw("p same");
+  responsePt_mgf[0]->Draw("p");
+  responsePt_mgf[1]->Draw("p same");
   legend->Draw("same");
-  line->DrawLine(responsePt[0]->GetXaxis()->GetXmin(), 1., responsePt[0]->GetXaxis()->GetXmax(), 1.);
+  line->DrawLine(responsePt_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 responsePt_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_responsePt.eps");
   ps->NewPage();
 
-  responseEta[0]->Draw("p");
-  responseEta[1]->Draw("p same");
+  responseEta_mgf[0]->Draw("p");
+  responseEta_mgf[1]->Draw("p same");
   legend->Draw("same");
-  line->DrawLine(responseEta[0]->GetXaxis()->GetXmin(), 1., responseEta[0]->GetXaxis()->GetXmax(), 1.);
+  line->DrawLine(responseEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 responseEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_responseEta.eps");
   ps->NewPage();
 
   c->SetLogx(1);
-  corrFacsPt[0]->Draw("p");
-  line->DrawLine(corrFacsPt[0]->GetXaxis()->GetXmin(), 1., corrFacsPt[0]->GetXaxis()->GetXmax(), 1.);
+  corrFacsPt_mgf[0]->Draw("p");
+  line->DrawLine(corrFacsPt_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 corrFacsPt_mgf[0]->GetXaxis()->GetXmax(), 1.);
   fL5->Draw("same");
-  for(unsigned int i=1; i<6; i++)
-    corrFacsPt[i]->Draw("p same");
+  for(unsigned int i=1; i<5; i++)
+    corrFacsPt_mgf[i]->Draw("p same");
   legendCorrFacs->Draw("same");
   c->Draw();
   if(printEps) c->Print("top_corrFacsPt.eps");
   ps->NewPage();
 
   c->SetLogx(0);
-  corrFacsEta[0]->Draw("p");
+  corrFacsEta_mgf[0]->Draw("p");
   for(unsigned int i=1; i<5; i++)
-    corrFacsEta[i]->Draw("p same");
+    corrFacsEta_mgf[i]->Draw("p same");
   legendCorrFacs->Draw("same");
-  line->DrawLine(corrFacsEta[0]->GetXaxis()->GetXmin(), 1., corrFacsEta[0]->GetXaxis()->GetXmax(), 1.);
+  line->DrawLine(corrFacsEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 corrFacsEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_corrFacsEta.eps");
   ps->NewPage();
 
   c->SetLogx(1);
-  correctedResponsePt[0]->Draw("p");
+  correctedResponsePt_mgf[0]->Draw("p");
   for(unsigned int i=1; i<6; i++)
-    correctedResponsePt[i]->Draw("p same");
+    correctedResponsePt_mgf[i]->Draw("p same");
   legendCorrResponse->Draw("same");
-  line->DrawLine(correctedResponsePt[0]->GetXaxis()->GetXmin(), 1., correctedResponsePt[0]->GetXaxis()->GetXmax(), 1.);
+  line->DrawLine(correctedResponsePt_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 correctedResponsePt_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_correctedResponsePt.eps");
   ps->NewPage();
 
   c->SetLogx(0);
-  correctedResponseEta[0]->Draw("p");
+  correctedResponseEta_mgf[0]->Draw("p");
   for(unsigned int i=1; i<6; i++)
-    correctedResponseEta[i]->Draw("p same");
+    correctedResponseEta_mgf[i]->Draw("p same");
   legendCorrResponse->Draw("same");
-  line->DrawLine(correctedResponseEta[0]->GetXaxis()->GetXmin(), 1., correctedResponseEta[0]->GetXaxis()->GetXmax(), 1.);
+  line->DrawLine(correctedResponseEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 correctedResponseEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
   if(printEps) c->Print("top_correctedResponseEta.eps");
 
@@ -6230,14 +6331,22 @@ void TControlPlots::MakeControlPlotsTop()
     objToBeWritten.push_back( messTruthEta[a] );
     objToBeWritten.push_back( responsePt  [a] );
     objToBeWritten.push_back( responseEta [a] );
+    objToBeWritten.push_back( messTruthPt_mgf [a] );
+    objToBeWritten.push_back( messTruthEta_mgf[a] );
+    objToBeWritten.push_back( responsePt_mgf  [a] );
+    objToBeWritten.push_back( responseEta_mgf [a] );
   }
   for(unsigned i=0; i<5; i++){
     objToBeWritten.push_back( corrFacsPt [i] );
     objToBeWritten.push_back( corrFacsEta[i] );
+    objToBeWritten.push_back( corrFacsPt_mgf [i] );
+    objToBeWritten.push_back( corrFacsEta_mgf[i] );
   }
   for(unsigned i=0; i<6; i++){
     objToBeWritten.push_back( correctedResponsePt [i] );
     objToBeWritten.push_back( correctedResponseEta[i] );
+    objToBeWritten.push_back( correctedResponsePt_mgf [i] );
+    objToBeWritten.push_back( correctedResponseEta_mgf[i] );
   }
 
   if( mOutputROOT ) WriteToRootFile( objToBeWritten, "Top" );
@@ -6261,14 +6370,22 @@ void TControlPlots::MakeControlPlotsTop()
     delete messTruthEta[a];
     delete responsePt  [a];
     delete responseEta [a];
+    delete messTruthPt_mgf [a];
+    delete messTruthEta_mgf[a];
+    delete responsePt_mgf  [a];
+    delete responseEta_mgf [a];
   }
   for(unsigned i=0; i<5; i++){
     delete corrFacsPt [i];
     delete corrFacsEta[i];
+    delete corrFacsPt_mgf [i];
+    delete corrFacsEta_mgf[i];
   }
   for(unsigned i=0; i<6; i++){
     delete correctedResponsePt [i];
     delete correctedResponseEta[i];
+    delete correctedResponsePt_mgf [i];
+    delete correctedResponseEta_mgf[i];
   }
 
   delete fL5;
@@ -6484,7 +6601,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!
 //!   Some properties of these projected
 //!   distributions are filled, per x-bin, into 8 1D histograms
-//!   'hresuslts':
+//!   'hresults':
 //!    - 0: Mean value
 //!    - 1: Standard deviation
 //!    - 2: Mean of Gauss fit
@@ -6493,7 +6610,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!    - 5: chi2 / n.d.f.
 //!    - 6: Probability of Gauss fit
 //!    - 7: Quantiles Q0.9 / (Q0.9 - 1)
-//!   'hresuslts' are newly created (take care of deleting them!);
+//!   'hresults' are newly created (take care of deleting them!);
 //!   their object names are set to:
 //!      "(hist-name)_result(X)",
 //!   where (hist-name) = hist->GetName() and (X) is the index of
@@ -6511,7 +6628,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!      "(hist-name)_gaussfit(X)"
 //!   respectively.
 //! ---------------------------------------------------------------
-void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const
+void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool gausplots) const
 {
   //book hists
   TString s = hist->GetName();
@@ -6547,24 +6664,24 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
   hresults[6]->SetMinimum(0.0);
   hresults[6]->SetMaximum(1.05);
 
-
   TH1F* htemp = new TH1F("htemp","",hist->GetNbinsY(),hist->GetYaxis()->GetXmin(),
-		          hist->GetYaxis()->GetXmax());
+			   hist->GetYaxis()->GetXmax());
   htemp->Sumw2();
 
-  for(int i=0;i<4;++i) 
-    {
-      s = hist->GetName();
-      s += "_gaussplot";
-      s += i;
-      gaussplots[i] = (TH1F*)htemp->Clone(s);
-      
-      s = hist->GetName();
-      s += "_gaussfit";
-      s += i;
-      gf[i] = new TF1(s,"0");
-    }
-
+  if(gausplots) {
+    for(int i=0;i<4;++i) 
+      {
+	s = hist->GetName();
+	s += "_gaussplot";
+	s += i;
+	gaussplots[i] = (TH1F*)htemp->Clone(s);
+	
+	s = hist->GetName();
+	s += "_gaussfit";
+	s += i;
+	gf[i] = new TF1(s,"0");
+      }
+  }
 
   const int nq = 2;
   double yq[2],xq[2];
@@ -6605,14 +6722,16 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
       hresults[6]->SetBinContent(i, f->GetProb());
       hresults[6]->SetBinError(i, 0.01);
 
-      if(  i == int(hist->GetNbinsX()/6)
-	   || i == int(hist->GetNbinsX()/3)
-	   ||  i == int(hist->GetNbinsX()/2)  )       
-	{
-	  gaussplots[index] = (TH1F*)htemp->Clone(gaussplots[index]->GetName());
-	  gf[index] = (TF1*)f->Clone(gf[index]->GetName());
-	  index++;
-	}
+      if(gausplots) {
+	if(  i == int(hist->GetNbinsX()/6)
+	     || i == int(hist->GetNbinsX()/3)
+	     ||  i == int(hist->GetNbinsX()/2)  )       
+	  {
+	    gaussplots[index] = (TH1F*)htemp->Clone(gaussplots[index]->GetName());
+	    gf[index] = (TF1*)f->Clone(gf[index]->GetName());
+	    index++;
+	  }
+      }
 
       mean = htemp->GetMean();
       meanerror = htemp->GetMeanError();
