@@ -6628,7 +6628,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!      "(hist-name)_gaussfit(X)"
 //!   respectively.
 //! ---------------------------------------------------------------
-void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool gausplots) const
+void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss) const
 {
   //book hists
   TString s = hist->GetName();
@@ -6668,7 +6668,7 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
 			   hist->GetYaxis()->GetXmax());
   htemp->Sumw2();
 
-  if(gausplots) {
+  if(plotgauss) {
     for(int i=0;i<4;++i) 
       {
 	s = hist->GetName();
@@ -6722,7 +6722,7 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
       hresults[6]->SetBinContent(i, f->GetProb());
       hresults[6]->SetBinError(i, 0.01);
 
-      if(gausplots) {
+      if(plotgauss) {
 	if(  i == int(hist->GetNbinsX()/6)
 	     || i == int(hist->GetNbinsX()/3)
 	     ||  i == int(hist->GetNbinsX()/2)  )       
