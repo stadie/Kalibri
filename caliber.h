@@ -1,4 +1,4 @@
-//  $Id: caliber.h,v 1.46 2009/06/20 21:42:42 mschrode Exp $
+//  $Id: caliber.h,v 1.47 2009/07/13 08:20:40 mschrode Exp $
 
 //!  \mainpage
 //!
@@ -130,13 +130,13 @@ class TMeasurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.46 2009/06/20 21:42:42 mschrode Exp $
+//!  $Id: caliber.h,v 1.47 2009/07/13 08:20:40 mschrode Exp $
 // -----------------------------------------------------------------
 class TCaliber {
 public :
   TCaliber(const std::string& f)
   : configfile(f),p(0),deriv_step(1e-03),mvec(6),niter(100),eps(1e-02),
-  wlf1(1e-04),wlf2(0.9),print_parnderiv(false)
+  wlf1(1e-04),wlf2(0.9),printParNDeriv_(false)
  {};
   ~TCaliber(){};
 
@@ -171,9 +171,10 @@ private:
   double deriv_step;
   int mvec, niter;
   float eps,wlf1,wlf2;
-  bool print_parnderiv;
-  std::vector<int> globaljetpars;
-  std::vector<int> fixedpars;
+  bool printParNDeriv_;
+  std::vector<int> globalJetPars_;
+  std::vector<int> fixedJetPars_;
+  std::vector<int> fixedGlobalJetPars_;
 };
 
 #endif

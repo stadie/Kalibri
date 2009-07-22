@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.86 2009/06/26 11:49:54 mschrode Exp $
+//  $Id: caliber.cc,v 1.87 2009/07/16 14:49:11 mschrode Exp $
 
 #include "caliber.h"
 
@@ -166,11 +166,17 @@ void TCaliber::Run_Lvmini()
   cout << nthreads << " threads.\n";
 
   // Fixed pars
-  if( fixedpars.size() > 0 ) cout << "Fixed parameters:\n";
-  for(unsigned int i = 0; i < fixedpars.size(); i++) {
-    int idx = fixedpars.at(i);
+  if( fixedJetPars_.size() > 0 ) cout << "Fixed jet parameters:\n";
+  for(unsigned int i = 0; i < fixedJetPars_.size(); i++) {
+    int idx = fixedJetPars_.at(i);
     cout << "  " << idx+1 << ": " << p->GetPars()[idx] << endl;
   }
+  if( fixedGlobalJetPars_.size() > 0 ) cout << "Fixed global jet parameters:\n";
+  for(unsigned int i = 0; i < fixedGlobalJetPars_.size(); i++) {
+    int idx = fixedGlobalJetPars_.at(i);
+    cout << "  " << idx+1 << ": " << p->GetPars()[idx] << endl;
+  }
+
   
   ComputeThread *t[nthreads];
   for (int ithreads=0; ithreads<nthreads; ++ithreads){
@@ -244,8 +250,8 @@ void TCaliber::Run_Lvmini()
 	temp_derivative2[param]=0.0;
       } 
       //set local parameters to global value
-      for( std::vector<int>::const_iterator iter = globaljetpars.begin();
-	   iter != globaljetpars.end() ; ++ iter) {
+      for( std::vector<int>::const_iterator iter = globalJetPars_.begin();
+	   iter != globalJetPars_.end() ; ++ iter) {
 	double val = p->GetPars()[*iter];
 	for(int id = *iter + p->GetNumberOfJetParametersPerBin(); 
 	    id < p->GetNumberOfJetParameters() ; 
@@ -266,8 +272,8 @@ void TCaliber::Run_Lvmini()
 	}
       }
       //sum up derivative results for global par
-      for( std::vector<int>::const_iterator iter = globaljetpars.begin();
-	   iter != globaljetpars.end() ; ++ iter) {
+      for( std::vector<int>::const_iterator iter = globalJetPars_.begin();
+	   iter != globalJetPars_.end() ; ++ iter) {
 	int gid = *iter;
 	for(int id = *iter + p->GetNumberOfJetParametersPerBin(); 
 	    id < p->GetNumberOfJetParameters() ; 
@@ -279,8 +285,13 @@ void TCaliber::Run_Lvmini()
 	}
       }
       //zero derivative of fixed pars
-      for( std::vector<int>::const_iterator iter = fixedpars.begin();
-	   iter != fixedpars.end() ; ++ iter) {
+      for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
+	   iter != fixedJetPars_.end() ; ++ iter) {
+	temp_derivative1[*iter] = 0;
+	temp_derivative2[*iter] = 0;
+      }
+      for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
+	   iter != fixedGlobalJetPars_.end() ; ++ iter) {
 	temp_derivative1[*iter] = 0;
 	temp_derivative2[*iter] = 0;
       }
@@ -291,7 +302,7 @@ void TCaliber::Run_Lvmini()
 	assert(aux[param] == aux[param]);
       }
       //print derivatives:
-      if(print_parnderiv) {
+      if(printParNDeriv_) {
 	for( int param = 0 ; param < npar ; ++param ) {
 	  std::cout << "par: " << param << ": p = " <<  p->GetPars()[param] << " dp/dx = " 
 		    <<  aux[param] << " dp/dx^2 = " << aux[param+npar] << std::endl;
@@ -314,8 +325,8 @@ void TCaliber::Run_Lvmini()
   error_index=2;
   error_index = lvmind_(error_index);
   p->SetErrors(aux+error_index);
-  for( std::vector<int>::const_iterator iter = globaljetpars.begin();
-       iter != globaljetpars.end() ; ++ iter) {
+  for( std::vector<int>::const_iterator iter = globalJetPars_.begin();
+       iter != globalJetPars_.end() ; ++ iter) {
     double val =  p->GetPars()[*iter];
     double err = p->GetErrors()[*iter];
     for(int id = *iter + p->GetNumberOfJetParametersPerBin(); 
@@ -443,17 +454,17 @@ void TCaliber::Init()
   eps        = config.read<double>("BFGS eps",1e-02);
   wlf1       = config.read<double>("BFGS 1st wolfe parameter",1e-04);
   wlf2       = config.read<double>("BFGS 2nd wolfe parameter",0.9);
-  print_parnderiv = config.read<bool>("BFGS print derivatives",false);
+  printParNDeriv_ = config.read<bool>("BFGS print derivatives",false);
   //global parameters ?
-  globaljetpars = bag_of<int>(config.read<string>("global jet parameters","")); 
+  globalJetPars_ = bag_of<int>(config.read<string>("global jet parameters","")); 
 
-  //fixed parameters
-  std::vector<int> fixjetpars = bag_of<int>(config.read<string>("fixed jet parameters",""));
-  if (fixjetpars.size() % 3 == 0) {
-    for(unsigned int i = 0 ; i < fixjetpars.size() ; i += 3) {
-      int etaid = fixjetpars[i];
-      int phiid = fixjetpars[i+1];
-      int parid = fixjetpars[i+2];
+  //fixed jet parameters
+  std::vector<int> fixJetPars = bag_of<int>(config.read<string>("fixed jet parameters",""));
+  if (fixJetPars.size() % 3 == 0) {
+    for(unsigned int i = 0 ; i < fixJetPars.size() ; i += 3) {
+      int etaid = fixJetPars[i];
+      int phiid = fixJetPars[i+1];
+      int parid = fixJetPars[i+2];
       if(parid >= p->GetNumberOfJetParametersPerBin()) continue;
       int jetbin = p->GetJetBin(p->GetJetEtaBin(etaid),p->GetJetPhiBin(phiid));
       if(jetbin < 0) {
@@ -461,10 +472,29 @@ void TCaliber::Init()
 	exit(-2);  
       }
       //std::cout << "jetbin:" << jetbin << '\n';
-      fixedpars.push_back(jetbin * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters() + parid);
+      fixedJetPars_.push_back(jetbin * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters() + parid);
     }
   } else {
     cerr << "ERROR: syntax is: fixed jet parameter = <eta_id> <phi_id> <par_id>\n"; 
+  }
+
+  //fixed global parameters
+  std::vector<int> fixGlobalJetPars = bag_of<int>(config.read<string>("fixed global jet parameters",""));
+  for(size_t globalJetBin = 0; globalJetBin < fixGlobalJetPars.size(); globalJetBin++) {
+      if( globalJetBin < 0 ) {
+	std::cerr << "WARNING: fixed global jet parameter bin index = " << globalJetBin << std::endl; 
+	exit(-2);  
+      } else if( static_cast<int>(globalJetBin) > p->GetNumberOfGlobalJetParameters() ) {
+	std::cerr << "WARNING: fixed global jet parameter bin index = " << globalJetBin;
+	std::cerr << " which is larger than the max number ";
+	std::cerr << p->GetNumberOfGlobalJetParameters() << " of global parameters." << std::endl;
+	exit(-2);  
+      } else {
+	fixedGlobalJetPars_.push_back( p->GetNumberOfTowerParameters() +
+				       p->GetNumberOfJetParameters()   +
+				       p->GetNumberOfTrackParameters() +
+				       globalJetBin );
+      }
   }
 
   output_file = config.read<string>( "Output file", "calibration_k.cfi" );
