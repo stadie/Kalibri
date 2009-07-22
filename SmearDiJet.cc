@@ -1,4 +1,4 @@
-// $Id: SmearDiJet.cc,v 1.1 2009/06/11 17:29:25 mschrode Exp $
+// $Id: SmearDiJet.cc,v 1.2 2009/07/16 14:46:51 mschrode Exp $
 
 #include "SmearDiJet.h"
 
@@ -54,7 +54,7 @@ void SmearDiJet::ChangeParAddress(double* oldpar, double* newpar) {
 //!  where \f$ f \f$ is the truth pdf and \f$ r \f$ is the
 //!  response pdf. \f$ r \f$ is normalized to unity,
 //!  \f$ f \f$ is normalized such that \f$ P \f$ is 
-//!  normalized to unity (see TruthPDF(t)). The method
+//!  normalized to unity (see truthPDF(t)). The method
 //!  returns \f$ -\ln(P) \f$.
 //!
 //!  The integral is calculated numerically using the
@@ -89,7 +89,7 @@ double SmearDiJet::chi2() const
       if(nIter == 0 || i % 3 != 0) {
 	double p0 = RespPDF(GetMess()->pt / t);
 	double p1 = RespPDF(GetSecondMess()->pt / t);
-	pp.push_back(p0 * p1 * TruthPDF(t)); // Store product of pdfs and normalization
+	pp.push_back(p0 * p1 * truthPDF(t)); // Store product of pdfs and normalization
       } else {
 	pp.push_back(pp_old.at(i/3));       // Store product of pdfs previously calcluated
       }
@@ -111,7 +111,7 @@ double SmearDiJet::chi2() const
     nIter++;
   }
 
-  return  -1.*log(pint);
+  return  -1. * GetWeight() * log(pint);
 }
 
 
@@ -201,7 +201,7 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
 //!          normalized such that the negative log-likelihood
 //!          is normalized
 // --------------------------------------------------
-double SmearDiJet::TruthPDF(double t) const {
+double SmearDiJet::truthPDF(double t) const {
   TJet jet;
   jet.pt = t;
   return truthPDF_(&jet);
@@ -211,7 +211,7 @@ double SmearDiJet::TruthPDF(double t) const {
 
 //!  \brief Print event parameters
 // --------------------------------------------------
-void SmearDiJet::PrintInitStats() const {
+void SmearDiJet::printInitStats() const {
   std::cout << "Event type: " << GetType() << "\n";
   std::cout << "Integration parameters\n";
   std::cout << "  niter: " << kMaxNIter_ << "\n";
@@ -219,3 +219,13 @@ void SmearDiJet::PrintInitStats() const {
   std::cout << "  range: " << kMin_ << " < truth < " << kMax_ << " (GeV)\n";
 }
 
+
+
+//!  \brief Get \f$ \hat{p}_{T} \f$ of the dijet event
+// --------------------------------------------------
+double SmearDiJet::ptHat() const {
+  double ptHat = 0.;
+  TJet * jet = dynamic_cast<TJet*>(GetMess());
+  if( jet ) ptHat = jet->ptHat;
+  return ptHat;
+}

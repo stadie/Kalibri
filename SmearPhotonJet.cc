@@ -1,4 +1,4 @@
-// $Id: SmearPhotonJet.cc,v 1.1 2009/06/11 17:29:25 mschrode Exp $
+// $Id: SmearPhotonJet.cc,v 1.2 2009/07/16 14:45:53 mschrode Exp $
 
 #include "SmearPhotonJet.h"
 
@@ -11,7 +11,7 @@ double SmearPhotonJet::chi2() const {
   TJet mess(GetMess());
   mess.pt = GetMess()->pt / GetTruth();
   
-  return -1.*log( respPDF_(&mess) / GetTruth() ); // Need to divide by _truth to have probability (!= density)
+  return -1. * GetWeight() * log( respPDF_(&mess) / GetTruth() ); // Need to divide by _truth to have probability (!= density)
 }
 
 
