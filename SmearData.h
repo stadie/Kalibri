@@ -1,4 +1,4 @@
-// $Id: SmearData.h,v 1.1 2009/06/11 17:29:25 mschrode Exp $
+// $Id: SmearData.h,v 1.2 2009/07/16 14:45:53 mschrode Exp $
 
 #ifndef SmearData_h
 #define SmearData_h
@@ -10,23 +10,23 @@
 //!  \brief Abstract base class for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 15:24:49 CEST 2009
-//!  $Id: SmearData.h,v 1.1 2009/06/11 17:29:25 mschrode Exp $
+//!  $Id: SmearData.h,v 1.2 2009/07/16 14:45:53 mschrode Exp $
 // --------------------------------------------------
 class SmearData : public TData {
  public:
   SmearData(DataType type, TMeasurement * mess, double truth, double weight, const Function& respPDF);
-  virtual ~SmearData() { delete mMess_; }
+  virtual ~SmearData() { delete mess_; }
 
   //!  \brief Get the negative log-likelihood of this event
   //!  \return The negative log-likelihood of this event
   // --------------------------------------------------
   virtual double chi2() const = 0;
   virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
-  virtual void PrintInitStats() const = 0;
+  virtual void printInitStats() const = 0;
 
 
   virtual void ChangeParAddress(double* oldpar, double* newpar) { respPDF_.changeParBase(oldpar,newpar); }
-  virtual TMeasurement * GetMess() const { return mMess_; }
+  virtual TMeasurement * GetMess() const { return mess_; }
   virtual double GetTruth() const { return kTruth_; }
   virtual DataType GetType() const { return kType_; }
   virtual double GetWeight() const { return kWeight_; }
@@ -46,7 +46,7 @@ class SmearData : public TData {
   const double    kTruth_;                     //!< Truth
   const DataType  kType_;                      //!< Event type
   const double    kWeight_;                    //!< Event weight
-  TMeasurement  * mMess_;                      //!< The measurement
+  TMeasurement  * mess_;                       //!< The measurement
 };
 
 #endif

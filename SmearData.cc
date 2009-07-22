@@ -1,4 +1,4 @@
-// $Id: SmearData.cc,v 1.1 2009/06/11 17:29:25 mschrode Exp $
+// $Id: SmearData.cc,v 1.2 2009/07/16 14:45:53 mschrode Exp $
 
 #include "SmearData.h"
 
@@ -17,7 +17,7 @@ SmearData::SmearData(DataType type, TMeasurement * mess, double truth, double we
     kTruth_(truth),
     kType_(type),
     kWeight_(weight),
-    mMess_(mess) {};
+    mess_(mess) {};
 
 
 
