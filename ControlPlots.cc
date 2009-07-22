@@ -654,8 +654,8 @@ void TControlPlots::MakeControlPlotsL2L3MCTruth() {
       double eta    = jte->GetMess()->eta;
 
       unsigned int etaBin = 0;
-      if( fabs(eta) > etaBinEdge.back() ) continue;
-      while( fabs(eta) > etaBinEdge.at(etaBin+1) ) etaBin++;
+      if( std::abs(eta) > etaBinEdge.back() ) continue;
+      while( std::abs(eta) > etaBinEdge.at(etaBin+1) ) etaBin++;
       hGenPtSpec.at(etaBin)->Fill( weight * ptgen );
     }
   }
@@ -782,6 +782,10 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     h2PttrueCorrL2L3.push_back(static_cast<TH2F*>(h2->Clone(name)));
   } // End of loop over eta bins
 
+  // Value of chi2 after fit
+  double chi2Kalibri = 0.;
+  double chi2JetMET  = 0.;
+
 
   // Loop over data and fill response into
   // the corresponding 2D histogram
@@ -790,7 +794,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     if( jte ) {
       if( jte->FlaggedBad() ) continue;   // Discard events flagged bad
       
-      Jet * jet        = static_cast<Jet*>(jte->GetMess());
+      Jet * jet         = static_cast<Jet*>(jte->GetMess());
       double weight     = jte->GetWeight();
       double ptmeas     = jet->pt;
       double ptcorr     = jte->GetParametrizedMess();
@@ -816,6 +820,17 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
 	h2PttrueCorrL2.at(etabin)->Fill(pttrue,ptcorrL2/pttrue,weight);
 	h2PttrueCorrL2L3.at(etabin)->Fill(pttrue,ptcorrL2L3/pttrue,weight);
       }
+
+      // Calculate chi2
+      double res   = ptmeas - ptcorr;
+      double err2  = jet->expectedError(ptcorr);
+      err2        *= err2;
+      chi2Kalibri += weight * TData::ScaleCauchy( log(err2) + res*res/err2 );
+
+      res          = ptmeas - ptcorrL2L3;
+      err2         = jet->expectedError(ptcorrL2L3);
+      err2        *= err2;
+      chi2JetMET  += weight * TData::ScaleCauchy( log(err2) + res*res/err2 );
     }
   } // End of loop over data
 
@@ -1015,9 +1030,10 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   leg->SetFillColor(0);
   leg->SetTextFont(42);
   leg->AddEntry(hRespEtaUncorr.at(0).at(0),"Uncorrected","P");
-  leg->AddEntry(hRespEtaCorr.at(0).at(0),"Corrected Kalibri","P");
+  leg->AddEntry(hRespEtaCorr.at(0).at(0),"Kalibri","P");
   //leg->AddEntry(hRespEtaCorrL2.at(0).at(0),"Corrected L2","P");
-  leg->AddEntry(hRespEtaCorrL2L3.at(0).at(0),"Corrected L2L3","P");
+  leg->AddEntry(hRespEtaCorrL2L3.at(0).at(0),"Summer08","P");
+
 
   // Mean response vs eta per pttrue bin
   TPostScript       * ps = new TPostScript("controlplotsJetTruthEventResponse.ps",111);
@@ -2510,7 +2526,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	    ringsRawSum[0][0] +=ringsRaw[0];
 	    for(int b=1;b<11;b++)
 	      {
-		if((fabs(etajet) > (b-1)*0.5) && (fabs(etajet) < b*0.5))
+		if((std::abs(etajet) > (b-1)*0.5) && (std::abs(etajet) < b*0.5))
 		  {
 		    ringsSum[b][0] +=rings[0];
 		    ringsRawSum[b][0] +=ringsRaw[0];
@@ -2522,7 +2538,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
 		ringsRawSum[0][a] +=ringsRaw[a] - ringsRaw[a-1];
 		for(int b=1;b<11;b++)
 		  {
-		    if((fabs(etajet) > (b-1)*0.5) && (fabs(etajet) < b*0.5))
+		    if((std::abs(etajet) > (b-1)*0.5) && (std::abs(etajet) < b*0.5))
 		      {
 			ringsSum[b][a] +=rings[a] - rings[a-1];
 			ringsRawSum[b][a] +=ringsRaw[a] - ringsRaw[a-1];
@@ -2657,19 +2673,19 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	  hpt_uncorr[0]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
 	  hpt_uncorr[1]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
 	  hpt_uncorr[2]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
-	  if(fabs(etajet) < 1.4)
+	  if(std::abs(etajet) < 1.4)
 	    {
 	      hpt_uncorr[3]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
 	      hpt_uncorr[4]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
 	      hpt_uncorr[5]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
 	    }
-	  else if(fabs(etajet) > 1.4  && fabs(etajet) < 3.0)
+	  else if(std::abs(etajet) > 1.4  && std::abs(etajet) < 3.0)
 	    {
 	      hpt_uncorr[6]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
 	      hpt_uncorr[7]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
 	      hpt_uncorr[8]->Fill(etjet,etjet/etjetcor,jg->GetWeight());    
 	    }
-	  else if(fabs(etajet) > 3.0)
+	  else if(std::abs(etajet) > 3.0)
 	    {
 	      hpt_uncorr[9]->Fill(etjet,etjet/ jg->GetTruth(),jg->GetWeight());
 	      hpt_uncorr[10]->Fill(etjet,etjetcor/jg->GetTruth(),jg->GetWeight());
@@ -4730,7 +4746,7 @@ void TControlPlots::MakeControlPlotsDiJet()
       double etaprobe = etajet1;
       double phiprobe = phijet1;
       double etprobe = etjet1;
-      if(fabs(etajet1) < fabs(etajet2))  //unbias if both jets in barrel
+      if(std::abs(etajet1) < std::abs(etajet2))  //unbias if both jets in barrel
 	{
 	  B *= -1;
 	  Buncor *= -1;
@@ -4744,7 +4760,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  etjet2uncor = etjet1uncor;
 	  etjet1uncor = temp;
 	}
-      double deltaphi = fabs(phiprobe - phijet2);
+      double deltaphi = std::abs(phiprobe - phijet2);
       double deltaphioff = deltaPhi(phiprobe,phijet2);
 
 
@@ -4862,14 +4878,14 @@ void TControlPlots::MakeControlPlotsDiJet()
       dphi[0]->Fill(deltaphi);
       dphi[5]->Fill(deltaphioff);
       dphi[6]->Fill(deltaphioff);
-      dphi[7]->Fill(fabs(deltaphioff));
+      dphi[7]->Fill(std::abs(deltaphioff));
       dphi[8]->Fill(phiprobe - phijet2);             //
       if((phiprobe - phijet2) > 0) dphi[9]->Fill(phiprobe - phijet2);             //
       else dphi[10]->Fill(phiprobe - phijet2);             //
       Bvsdphi->Fill(deltaphi,B); 
-      Difvscomb->Fill(fabs(etprobe - etjet2),etjetcomb);
+      Difvscomb->Fill(std::abs(etprobe - etjet2),etjetcomb);
       combmean[0]->Fill(etscale, etjetcomb);
-      difmean[0]->Fill(etscale, fabs(etprobe - etjet2));
+      difmean[0]->Fill(etscale, std::abs(etprobe - etjet2));
 
       Beta[0]->Fill(etaprobe, B,jj->GetWeight());
       Beta[1]->Fill(etaprobe, Buncor,jj->GetWeight());
@@ -4921,10 +4937,10 @@ void TControlPlots::MakeControlPlotsDiJet()
             
       for(int i=0;i<4;++i)
 	{
-	  if((fabs(etaprobe) > i) && (fabs(etaprobe) < i+1)) 
+	  if((std::abs(etaprobe) > i) && (std::abs(etaprobe) < i+1)) 
 	    {
 	      combmean[i+1]->Fill(etscale, etjetcomb);
-	      difmean[i+1]->Fill(etscale, fabs(etprobe - etjet2));
+	      difmean[i+1]->Fill(etscale, std::abs(etprobe - etjet2));
 	    }
 	}
     }  //End of loop over all fit-events
