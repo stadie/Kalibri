@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.h,v 1.1 2009/06/11 17:34:05 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.h,v 1.2 2009/07/16 14:49:10 mschrode Exp $
 
 #ifndef JS_CONTROLPLOTS_JETSMEARING_H
 #define JS_CONTROLPLOTS_JETSMEARING_H
@@ -19,7 +19,7 @@
 //!  \brief Generates validation plots for jet-smearing method
 //!  \author Matthias Schroeder
 //!  \date Thu May  7 11:30:28 CEST 2009 
-//!  $Id: ControlPlotsJetSmearing.h,v 1.1 2009/06/11 17:34:05 mschrode Exp $
+//!  $Id: ControlPlotsJetSmearing.h,v 1.2 2009/07/16 14:49:10 mschrode Exp $
 // --------------------------------------------------
 class ControlPlotsJetSmearing {
  public:
@@ -44,11 +44,11 @@ class ControlPlotsJetSmearing {
   double       respMax_;
   std::string  dir_;
 
-  void drawPSPage(TPostScript * ps, TCanvas * can, TObject * obj, std::string option, bool logy) const;
-  void drawPSPage(TPostScript * ps, TCanvas * can, std::vector<TObject*> objs, std::string option, bool logy) const;
+  void drawPSPage(TPostScript * ps, TCanvas * can, TObject * obj, std::string option = "", bool logy = false) const;
+  void drawPSPage(TPostScript * ps, TCanvas * can, std::vector<TObject*> objs, std::string option = "", bool logy = false) const;
   void normHist(TH1F * h, std::string option = "") const
     { if( h->Integral(option.c_str()) ) h->Scale(1./h->Integral(option.c_str())); }
   void setGStyle() const;
-
+  template <class T> std::string toString(const T& t) const;
 };
 #endif
