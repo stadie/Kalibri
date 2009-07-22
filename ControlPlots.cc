@@ -5717,7 +5717,7 @@ void TControlPlots::MakeControlPlotsTop()
 
   TPostScript * const ps = new TPostScript("controlplotsTop.ps",111);
 
-  bool printEps = false;  // just as a temporary solution. don't we want to support this in general?
+  bool individualPdf = mConfig->read<bool>("create individual pdf files", false);
 
   // book hists
 
@@ -5745,10 +5745,10 @@ void TControlPlots::MakeControlPlotsTop()
   for(unsigned a=0; a<2; a++){
     invMass     [a] = new TH1F("invMass"  +suffix[a], "",  40, 0., 200.);
     messTruth   [a] = new TH1F("messTruth"+suffix[a], "",  40, 0.,   2.);
-    messTruthPt [a] = new TH2F("messTruthPt" +suffix[a], "", 35,    0, 140, 51, 0., 2.);
-    messTruthEta[a] = new TH2F("messTruthEta"+suffix[a], "", 40,  -4.,  4., 51, 0., 2.);
-    responsePt  [a] = new TH2F("responsePt"  +suffix[a], "", 35,    0, 140, 51, 0., 2.);
-    responseEta [a] = new TH2F("responseEta" +suffix[a], "", 40,  -4.,  4., 51, 0., 2.);
+    messTruthPt [a] = new TH2F("messTruthPt" +suffix[a], "", 19, binningLogPt, 51, 0., 2.);
+    messTruthEta[a] = new TH2F("messTruthEta"+suffix[a], "", 40,  -4.,  4.   , 51, 0., 2.);
+    responsePt  [a] = new TH2F("responsePt"  +suffix[a], "", 19, binningLogPt, 51, 0., 2.);
+    responseEta [a] = new TH2F("responseEta" +suffix[a], "", 40,  -4.,  4.   , 51, 0., 2.);
   }
   TH1F* messTruthPt_mgf [2];
   TH1F* messTruthEta_mgf[2];
@@ -5840,11 +5840,11 @@ void TControlPlots::MakeControlPlotsTop()
 	mPt  += jets[j]->pt;
 	mEta += jets[j]->eta;
 
-	messTruthPt [0]->Fill( jets[j]->pt  , combined4Vec.M()/t );
-	messTruthEta[0]->Fill( jets[j]->eta , combined4Vec.M()/t );
+	messTruthPt [0]->Fill( jets[j]->genPt , combined4Vec.M()/t );
+	messTruthEta[0]->Fill( jets[j]->eta   , combined4Vec.M()/t );
 	
-	messTruthPt [1]->Fill( jets[j]->pt  , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
-	messTruthEta[1]->Fill( jets[j]->eta , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	messTruthPt [1]->Fill( jets[j]->genPt , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	messTruthEta[1]->Fill( jets[j]->eta   , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
 	double response[2]; // before and after Kalibri fit
 	if(j==0) {
@@ -6059,15 +6059,15 @@ void TControlPlots::MakeControlPlotsTop()
     messTruthPt_mgf [a]->SetTitle( "" );
     messTruthEta_mgf[a]->SetTitle( "" );
     
-    invMass         [a]->SetXTitle( "invariant mass [GeV]" );
-    messTruth       [a]->SetXTitle( "measurement/truth" );
-    messTruthPt_mgf [a]->SetXTitle( "p_{T} [GeV]" );
+    invMass         [a]->SetXTitle( "m_{jj} [GeV]" );
+    messTruth       [a]->SetXTitle( "m_{jj} / 80.4 GeV" );
+    messTruthPt_mgf [a]->SetXTitle( "p_{T} (gen) [GeV]" );
     messTruthEta_mgf[a]->SetXTitle( "#eta" );
 
     invMass         [a]->SetYTitle( "events" );
     messTruth       [a]->SetYTitle( "events" );
-    messTruthPt_mgf [a]->SetYTitle( "measurement/truth" );
-    messTruthEta_mgf[a]->SetYTitle( "measurement/truth" );
+    messTruthPt_mgf [a]->SetYTitle( "m_{jj} / 80.4 GeV" );
+    messTruthEta_mgf[a]->SetYTitle( "m_{jj} / 80.4 GeV" );
 
     messTruthPt_mgf [a]->SetMinimum( 0.4 );
     messTruthEta_mgf[a]->SetMinimum( 0.4 );
@@ -6188,47 +6188,47 @@ void TControlPlots::MakeControlPlotsTop()
 
   scale->Draw();
   c->Draw();
-  if(printEps) c->Print("top_scale.eps");
+  if(individualPdf) c->Print("top_scale.pdf");
   ps->NewPage();
 
   weight->Draw();
   c->Draw();
-  if(printEps) c->Print("top_weight.eps");
+  if(individualPdf) c->Print("top_weight.pdf");
   ps->NewPage();
 
   truth->Draw();
   c->Draw();
-  if(printEps) c->Print("top_truth.eps");
+  if(individualPdf) c->Print("top_truth.pdf");
   ps->NewPage();
 
   pt->Draw();
   c->Draw();
-  if(printEps) c->Print("top_pt.eps");
+  if(individualPdf) c->Print("top_pt.pdf");
   ps->NewPage();
 
   eta->Draw();
   c->Draw();
-  if(printEps) c->Print("top_eta.eps");
+  if(individualPdf) c->Print("top_eta.pdf");
   ps->NewPage();
 
   phi->Draw();
   c->Draw();
-  if(printEps) c->Print("top_phi.eps");
+  if(individualPdf) c->Print("top_phi.pdf");
   ps->NewPage();
 
   genPt->Draw();
   c->Draw();
-  if(printEps) c->Print("top_genPt.eps");
+  if(individualPdf) c->Print("top_genPt.pdf");
   ps->NewPage();
 
   meanPt->Draw();
   c->Draw();
-  if(printEps) c->Print("top_meanPt.eps");
+  if(individualPdf) c->Print("top_meanPt.pdf");
   ps->NewPage();
 
   meanEta->Draw();
   c->Draw();
-  if(printEps) c->Print("top_meanEta.eps");
+  if(individualPdf) c->Print("top_meanEta.pdf");
   ps->NewPage();
 
   invMass[0]->Draw("p");
@@ -6237,24 +6237,26 @@ void TControlPlots::MakeControlPlotsTop()
   paveText[0]->Draw();
   paveText[1]->Draw();
   c->Draw();
-  if(printEps) c->Print("top_invMass.eps");
+  if(individualPdf) c->Print("top_invMass.pdf");
   ps->NewPage();
 
   messTruth[0]->Draw("p");
   messTruth[1]->Draw("p same");
   legend->Draw("same");
   c->Draw();
-  if(printEps) c->Print("top_messTruth.eps");
+  if(individualPdf) c->Print("top_messTruth.pdf");
   ps->NewPage();
 
+  c->SetLogx(1);
   messTruthPt_mgf[0]->Draw("p");
   messTruthPt_mgf[1]->Draw("p same");
   legend->Draw("same");
   line->DrawLine(messTruthPt_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 messTruthPt_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
-  if(printEps) c->Print("top_messTruthPt.eps");
+  if(individualPdf) c->Print("top_messTruthPt.pdf");
   ps->NewPage();
+  c->SetLogx(0);
 
   messTruthEta_mgf[0]->Draw("p");
   messTruthEta_mgf[1]->Draw("p same");
@@ -6262,17 +6264,19 @@ void TControlPlots::MakeControlPlotsTop()
   line->DrawLine(messTruthEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 messTruthEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
-  if(printEps) c->Print("top_messTruthEta.eps");
+  if(individualPdf) c->Print("top_messTruthEta.pdf");
   ps->NewPage();
 
+  c->SetLogx(1);
   responsePt_mgf[0]->Draw("p");
   responsePt_mgf[1]->Draw("p same");
   legend->Draw("same");
   line->DrawLine(responsePt_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 responsePt_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
-  if(printEps) c->Print("top_responsePt.eps");
+  if(individualPdf) c->Print("top_responsePt.pdf");
   ps->NewPage();
+  c->SetLogx(0);
 
   responseEta_mgf[0]->Draw("p");
   responseEta_mgf[1]->Draw("p same");
@@ -6280,7 +6284,7 @@ void TControlPlots::MakeControlPlotsTop()
   line->DrawLine(responseEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 responseEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
-  if(printEps) c->Print("top_responseEta.eps");
+  if(individualPdf) c->Print("top_responseEta.pdf");
   ps->NewPage();
 
   c->SetLogx(1);
@@ -6292,7 +6296,7 @@ void TControlPlots::MakeControlPlotsTop()
     corrFacsPt_mgf[i]->Draw("p same");
   legendCorrFacs->Draw("same");
   c->Draw();
-  if(printEps) c->Print("top_corrFacsPt.eps");
+  if(individualPdf) c->Print("top_corrFacsPt.pdf");
   ps->NewPage();
 
   c->SetLogx(0);
@@ -6303,7 +6307,7 @@ void TControlPlots::MakeControlPlotsTop()
   line->DrawLine(corrFacsEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 corrFacsEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
-  if(printEps) c->Print("top_corrFacsEta.eps");
+  if(individualPdf) c->Print("top_corrFacsEta.pdf");
   ps->NewPage();
 
   c->SetLogx(1);
@@ -6314,7 +6318,7 @@ void TControlPlots::MakeControlPlotsTop()
   line->DrawLine(correctedResponsePt_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 correctedResponsePt_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
-  if(printEps) c->Print("top_correctedResponsePt.eps");
+  if(individualPdf) c->Print("top_correctedResponsePt.pdf");
   ps->NewPage();
 
   c->SetLogx(0);
@@ -6325,7 +6329,7 @@ void TControlPlots::MakeControlPlotsTop()
   line->DrawLine(correctedResponseEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 correctedResponseEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
-  if(printEps) c->Print("top_correctedResponseEta.eps");
+  if(individualPdf) c->Print("top_correctedResponseEta.pdf");
 
   ps->Close();
 
