@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.4 2009/07/16 15:38:11 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.5 2009/07/22 11:49:25 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -47,7 +47,7 @@ ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, 
 // --------------------------------------------------
 void ControlPlotsJetSmearing::plotResponse() const
 {
-  std::cout << "Creating response control plots..." << std::endl;
+  std::cout << "Creating response control plots\n";
 
   // --- Create histograms of response ---------------------
   // Different pttrue variables
@@ -359,8 +359,6 @@ void ControlPlotsJetSmearing::plotResponse() const
   delete leg;
   delete c1;
   delete ps;
-
-  std::cout << "Done" << std::endl;
 }
 
 
@@ -371,7 +369,7 @@ void ControlPlotsJetSmearing::plotResponse() const
 //!              scan plot is done
 // --------------------------------------------------
 void ControlPlotsJetSmearing::plotParameterScan(const std::vector<unsigned int>& pars) const {
-  std::cout << "Creating parameter scan control plots..." << std::endl;
+  std::cout << "Creating parameter scan control plots\n";
 
   // Create one histogram of likelihood per parameter
   std::vector<TH1F*> hLikelihood;
@@ -437,18 +435,16 @@ void ControlPlotsJetSmearing::plotParameterScan(const std::vector<unsigned int>&
   hLikelihood.clear();
   delete c1;
   delete ps;
-
-  std::cout << "Done" << std::endl;
 }
 
 
 
 //!  \brief Draw control plots for events
-//!         of type \p SmearDiJet
+//!         of type \p SmearDiJet \p
 // --------------------------------------------------
 void ControlPlotsJetSmearing::plotDijets() const
 {
-  std::cout << "Creating dijet control plots..." << std::endl;
+  std::cout << "Creating dijet control plots\n";
 
   // --- Create histograms --------------------------
 
@@ -562,12 +558,19 @@ void ControlPlotsJetSmearing::plotDijets() const
 
   // Response correlations
   TH2F * hRvsDeltaPhi = new TH2F("hRvsDeltaPhi",";#Delta#phi;p^{jet}_{T} / p^{gen}_{T}",
-				 25,1.5,M_PI,25,0,1.4);
+				 50,1.5,M_PI,50,0,2);
+  hRvsDeltaPhi->SetMarkerStyle(7);
   TH2F * hRvsRel3rdJetPt = new TH2F("hRvsRel3rdJetPt",
 				    ";p^{jet3}_{T,rel} = p^{jet3}_{T} / p^{dijet}_{T};p^{jet}_{T} / p^{gen}_{T}",
-				    50,0,1.4,25,0,1.4);
+				    50,0,1.4,50,0,2);
+  hRvsRel3rdJetPt->SetMarkerStyle(7);
+  TH2F * hRvs3rdJetPt = new TH2F("hRvs3rdJetPt",
+				 ";p^{jet3} (GeV);p^{jet}_{T} / p^{gen}_{T}",
+				 50,0.9*min3rdJetPt, 1.1*max3rdJetPt,50,0,2);
+  hRvs3rdJetPt->SetMarkerStyle(7);
   TH2F * hRvsEMF = new TH2F("hRvsEMF",";EMF;p^{jet}_{T} / p^{gen}_{T}",
-			    25,0,1,25,0,1.4);
+			    50,0,1,50,0,2);
+  hRvsEMF->SetMarkerStyle(7);
 
 
 
@@ -593,6 +596,9 @@ void ControlPlotsJetSmearing::plotDijets() const
 
       hRvsRel3rdJetPt->Fill( jet3->pt / dijet->dijetPt(), jet1->pt / jet1->genPt, weight );
       hRvsRel3rdJetPt->Fill( jet3->pt / dijet->dijetPt(), jet2->pt / jet2->genPt, weight );
+
+      hRvs3rdJetPt->Fill( jet3->pt, jet1->pt / jet1->genPt, weight );
+      hRvs3rdJetPt->Fill( jet3->pt, jet2->pt / jet2->genPt, weight );
 
       hPtHat->Fill( dijet->ptHat(), weight );
 
@@ -696,9 +702,10 @@ void ControlPlotsJetSmearing::plotDijets() const
   drawPSPage(ps,c1,hRel3rdJetPt,"",true);
   drawPSPage(ps,c1,hDeltaPhi,"",true);
   drawPSPage(ps,c1,hDeltaPhivsRel3rdJetPt);
-  drawPSPage(ps,c1,hRvsRel3rdJetPt);
-  drawPSPage(ps,c1,hRvsDeltaPhi);
-  drawPSPage(ps,c1,hRvsEMF);
+  drawPSPage(ps,c1,hRvsRel3rdJetPt,"COLZ",true);
+  drawPSPage(ps,c1,hRvs3rdJetPt,"COLZ",true);
+  drawPSPage(ps,c1,hRvsDeltaPhi,"COLZ",true);
+  drawPSPage(ps,c1,hRvsEMF,"COLZ",true);
 
   ps->Close();
 
@@ -718,12 +725,11 @@ void ControlPlotsJetSmearing::plotDijets() const
   delete hDeltaPhi;
   delete hDeltaPhivsRel3rdJetPt;
   delete hRvsRel3rdJetPt;
+  delete hRvs3rdJetPt;
   delete hRvsDeltaPhi;
   delete hRvsEMF;
   delete c1;
   delete ps;
-
-  std::cout << "Done" << std::endl;
 }
 
 
@@ -732,6 +738,8 @@ void ControlPlotsJetSmearing::plotDijets() const
 // --------------------------------------------------
 void ControlPlotsJetSmearing::setGStyle() const
 {
+  gStyle->SetPalette(1);
+
   // For the canvas:
   gStyle->SetCanvasBorderMode(0);
   gStyle->SetCanvasColor(kWhite);
@@ -782,10 +790,10 @@ void ControlPlotsJetSmearing::setGStyle() const
 
   //  Margins
   // -------------------------------------------
-  gStyle->SetPadTopMargin(0.05);
+  gStyle->SetPadTopMargin(0.16);
   gStyle->SetPadBottomMargin(0.18);
   gStyle->SetPadLeftMargin(0.19);
-  gStyle->SetPadRightMargin(0.04);
+  gStyle->SetPadRightMargin(0.16);
 
   // For the Global title:
   gStyle->SetOptTitle(1);
@@ -833,12 +841,12 @@ void ControlPlotsJetSmearing::setGStyle() const
 //!  \param can    The \p obj is drawn on this canvas
 //!  \param obj    The TObject to be drawn
 //!  \param option Draw options
-//!  \param logy   Sets log-scale on y-axis if true
+//!  \param log    Sets log-scale on last axis if true
 // --------------------------------------------------
-void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, TObject * obj, std::string option, bool logy) const {
+void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, TObject * obj, std::string option, bool log) const {
   std::vector<TObject*> objs;
   objs.push_back(obj);
-  drawPSPage(ps,can,objs,option,logy);
+  drawPSPage(ps,can,objs,option,log);
 }
 
 
@@ -856,17 +864,25 @@ void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, TObjec
 //!  \param objs   Contains the objects that are drawn
 //!  \param option Draw options (except for "same",
 //!                see above)
-//!  \param logy   Sets log-scale on y-axis if true
+//!  \param log    Sets log-scale on last axis if true
 // --------------------------------------------------
-void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, std::vector<TObject*> objs, std::string option, bool logy) const {
+void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, std::vector<TObject*> objs, std::string option, bool log) const {
   ps->NewPage();
   can->cd();
   for( size_t i = 0; i < objs.size(); i++ ) {
     if( i == 0 ) objs.at(i)->Draw(option.c_str());
     else         objs.at(i)->Draw((option.append("same")).c_str());
   }
-  if( logy ) can->SetLogy(1);
-  else       can->SetLogy(0);
+  std::string hist = objs.at(0)->ClassName();
+  if( hist.compare("TH1F") == 0 ) {
+    if( log ) can->SetLogy(1);
+    else      can->SetLogy(0);
+  } else if( hist.compare("TH2F") == 0 ) {
+    can->SetLogy(0);
+    if( log ) can->SetLogz(1);
+    else      can->SetLogz(0);
+  }
+
   can->Draw();
 }
  
