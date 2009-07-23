@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.87 2009/07/16 14:49:11 mschrode Exp $
+//  $Id: caliber.cc,v 1.88 2009/07/22 13:50:34 mschrode Exp $
 
 #include "caliber.h"
 
@@ -224,6 +224,10 @@ void TCaliber::Run_Lvmini()
 	TData::ScaleResidual = &TData::ScaleHuber;	
 	cout << "scaling of residuals with Huber-Function." << endl;
       }
+    else if(  _residualScalingScheme.at(loop) == 3  ) {
+      TData::ScaleResidual = &TData::ScaleTukey;	
+      cout << "scaling of residuals a la Tukey." << endl;
+    }
     else {
       cerr << "ERROR: " << _residualScalingScheme.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
       break;
@@ -300,6 +304,7 @@ void TCaliber::Run_Lvmini()
 	aux[param]      = temp_derivative1[param]/(2.0*deriv_step);
 	aux[param+npar] = temp_derivative2[param]/(deriv_step*deriv_step);
 	assert(aux[param] == aux[param]);
+	assert(aux[param+npar] == aux[param+npar]);
       }
       //print derivatives:
       if(printParNDeriv_) {

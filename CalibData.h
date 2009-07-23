@@ -1,6 +1,6 @@
 //  \author Christian Autermann
 //  \date Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.68 2009/07/15 14:38:49 snaumann Exp $
+// $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -29,7 +29,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.68 2009/07/15 14:38:49 snaumann Exp $
+//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
 class TMeasurement
 {
 public:
@@ -58,7 +58,7 @@ public:
 //!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.68 2009/07/15 14:38:49 snaumann Exp $
+//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
 class TTower : public TMeasurement
 { 
 public:
@@ -80,7 +80,7 @@ public:
 //!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.68 2009/07/15 14:38:49 snaumann Exp $
+//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
 class TJet : public TMeasurement
 {
 public:
@@ -147,7 +147,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.68 2009/07/15 14:38:49 snaumann Exp $
+//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
 class TTrack : public TMeasurement
 {
 public:
@@ -207,7 +207,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.68 2009/07/15 14:38:49 snaumann Exp $
+//! $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
 class TData
 {
 public:
@@ -281,6 +281,7 @@ public:
   //!   - ScaleNone(double z2)
   //!   - ScaleCauchy(double z2)
   //!   - ScaleHuber(double z2)
+  //!   - ScaleTukey(double z2)
   //!
   //!  \param z2 Normalized and squared residual
   //!  \return Scaled residual
@@ -297,7 +298,15 @@ public:
 
 
   static double ScaleCauchy(double z2);  //!< Scaling of residual with Cauchy function
-  static double ScaleHuber(double z2);   //!< Scaling of residual with Huber function
+  static double ScaleHuber(double z2);   //!< Scaling of residual with Huber function  
+  
+  //!  \brief Cut on residuals
+  //!
+  //!  discards events with $|residual| > 1.5 \sigma$
+  //!
+  //!  \param z2 Normalized and squared residual
+  //!  \return Scaled residual
+  static double ScaleTukey(double z2) { return ( z2 > 2.25) ? 0 : z2;}    //!< Scaling of residual a la  Tukey
 };
 
 
@@ -313,7 +322,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.68 2009/07/15 14:38:49 snaumann Exp $
+//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
 class TAbstractData : public TData
 {
 public:
