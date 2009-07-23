@@ -5732,8 +5732,11 @@ void TControlPlots::MakeControlPlotsTop()
   TH1F* phi    = new TH1F("phi"   , "Phi"   ,  68, -3.4, 3.4);
   TH1F* genPt  = new TH1F("genPt" , ""      , 200,    0, 200);
 
-  TH1F* meanPt  = new TH1F("meanPt" , "MeanPt" , 200,    0, 200);
-  TH1F* meanEta = new TH1F("meanEta", "MeanEta",  80,  -4.,  4.);
+  TH1F* meanPt  = new TH1F("meanPt" , "MeanPt" , 200,   0, 200);
+  TH1F* meanEta = new TH1F("meanEta", "MeanEta",  80, -4.,  4.);
+
+  TH1F* wPt  = new TH1F("wPt"  , "wPt"  , 200,   0, 400);
+  TH1F* wEta = new TH1F("wEta" , "wEta" ,  80, -4.,  4.);
 
   TH1F* invMass     [2];
   TH1F* messTruth   [2];
@@ -5818,6 +5821,9 @@ void TControlPlots::MakeControlPlotsTop()
       scale ->Fill(s);
       weight->Fill(w);
       truth ->Fill(t);
+
+      wPt ->Fill( combined4Vec.Pt()  );
+      wEta->Fill( combined4Vec.Eta() );
       
       invMass  [0]->Fill( combined4Vec.M()   );
       messTruth[0]->Fill( combined4Vec.M()/t );
@@ -5827,6 +5833,9 @@ void TControlPlots::MakeControlPlotsTop()
 
       double mPt  = 0.;
       double mEta = 0.;
+
+      //      messTruthPt [0]->Fill( combined4Vec.Pt() , combined4Vec.M()/t );
+      //      messTruthPt [1]->Fill( combined4Vec.Pt() , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
       for(unsigned j=0; j<jets.size(); j++) {
 	if(jets[j]->flavor != TJet::uds) continue;
@@ -5841,9 +5850,11 @@ void TControlPlots::MakeControlPlotsTop()
 	mEta += jets[j]->eta;
 
 	messTruthPt [0]->Fill( jets[j]->genPt , combined4Vec.M()/t );
+	//	messTruthPt [0]->Fill( jets[j]->pt , combined4Vec.M()/t );
 	messTruthEta[0]->Fill( jets[j]->eta   , combined4Vec.M()/t );
 	
 	messTruthPt [1]->Fill( jets[j]->genPt , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	//	messTruthPt [1]->Fill( jets[j]->pt , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 	messTruthEta[1]->Fill( jets[j]->eta   , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
 	double response[2]; // before and after Kalibri fit
@@ -6167,15 +6178,19 @@ void TControlPlots::MakeControlPlotsTop()
   legend->AddEntry(invMass[0],"before fit");
   legend->AddEntry(invMass[1],"after fit");
 
-  TLegend* legendCorrFacs = new TLegend(0.8, 0.7, 0.91, 0.85);
+  TLegend* legendCorrFacs = new TLegend(0.8, 0.76, 0.91, 0.85);
   legendCorrFacs->SetFillColor(0);
-  for(unsigned i=0; i<5; i++)
-    legendCorrFacs->AddEntry(corrFacsPt_mgf[i], corrLevels[i+1]);
+  for(unsigned i=0; i<5; i++) {
+    if(i!=0 && i!=3)
+      legendCorrFacs->AddEntry(corrFacsPt_mgf[i], corrLevels[i+1]);
+  }
 
-  TLegend* legendCorrResponse = new TLegend(0.8, 0.67, 0.91, 0.85);
+  TLegend* legendCorrResponse = new TLegend(0.8, 0.73, 0.91, 0.85);
   legendCorrResponse->SetFillColor(0);
-  for(unsigned i=0; i<6; i++)
-    legendCorrResponse->AddEntry(correctedResponsePt_mgf[i], corrLevels[i]);
+  for(unsigned i=0; i<6; i++) {
+    if(i!=1 && i!=4)
+      legendCorrResponse->AddEntry(correctedResponsePt_mgf[i], corrLevels[i]);
+  }
 
   // create a line
 
@@ -6229,6 +6244,16 @@ void TControlPlots::MakeControlPlotsTop()
   meanEta->Draw();
   c->Draw();
   if(individualPdf) c->Print("top_meanEta.pdf");
+  ps->NewPage();
+
+  wPt->Draw();
+  c->Draw();
+  if(individualPdf) c->Print("top_wPt.pdf");
+  ps->NewPage();
+
+  wEta->Draw();
+  c->Draw();
+  if(individualPdf) c->Print("top_wEta.pdf");
   ps->NewPage();
 
   invMass[0]->Draw("p");
@@ -6288,21 +6313,25 @@ void TControlPlots::MakeControlPlotsTop()
   ps->NewPage();
 
   c->SetLogx(1);
-  corrFacsPt_mgf[0]->Draw("p");
+  corrFacsPt_mgf[1]->Draw("p");
   line->DrawLine(corrFacsPt_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 corrFacsPt_mgf[0]->GetXaxis()->GetXmax(), 1.);
-  fL5->Draw("same");
-  for(unsigned int i=1; i<5; i++)
-    corrFacsPt_mgf[i]->Draw("p same");
+  //fL5->Draw("same");
+  for(unsigned int i=1; i<5; i++) {
+    if(i!=0 && i!=3)
+      corrFacsPt_mgf[i]->Draw("p same");
+  }
   legendCorrFacs->Draw("same");
   c->Draw();
   if(individualPdf) c->Print("top_corrFacsPt.pdf");
   ps->NewPage();
 
   c->SetLogx(0);
-  corrFacsEta_mgf[0]->Draw("p");
-  for(unsigned int i=1; i<5; i++)
-    corrFacsEta_mgf[i]->Draw("p same");
+  corrFacsEta_mgf[1]->Draw("p");
+  for(unsigned int i=1; i<5; i++) {
+    if(i!=0 && i!=3)
+      corrFacsEta_mgf[i]->Draw("p same");
+  }
   legendCorrFacs->Draw("same");
   line->DrawLine(corrFacsEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 corrFacsEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
@@ -6312,8 +6341,10 @@ void TControlPlots::MakeControlPlotsTop()
 
   c->SetLogx(1);
   correctedResponsePt_mgf[0]->Draw("p");
-  for(unsigned int i=1; i<6; i++)
-    correctedResponsePt_mgf[i]->Draw("p same");
+  for(unsigned int i=1; i<6; i++) {
+    if(i!=1 && i!=4)
+      correctedResponsePt_mgf[i]->Draw("p same");
+  }
   legendCorrResponse->Draw("same");
   line->DrawLine(correctedResponsePt_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 correctedResponsePt_mgf[0]->GetXaxis()->GetXmax(), 1.);
@@ -6323,8 +6354,10 @@ void TControlPlots::MakeControlPlotsTop()
 
   c->SetLogx(0);
   correctedResponseEta_mgf[0]->Draw("p");
-  for(unsigned int i=1; i<6; i++)
-    correctedResponseEta_mgf[i]->Draw("p same");
+  for(unsigned int i=1; i<6; i++) {
+    if(i!=1 && i!=4)
+      correctedResponseEta_mgf[i]->Draw("p same");
+  }
   legendCorrResponse->Draw("same");
   line->DrawLine(correctedResponseEta_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 correctedResponseEta_mgf[0]->GetXaxis()->GetXmax(), 1.);
@@ -6344,6 +6377,8 @@ void TControlPlots::MakeControlPlotsTop()
   objToBeWritten.push_back( genPt  );
   objToBeWritten.push_back( meanPt  );
   objToBeWritten.push_back( meanEta );
+  objToBeWritten.push_back( wPt  );
+  objToBeWritten.push_back( wEta );
   for(unsigned a=0; a<2; a++){
     objToBeWritten.push_back( invMass     [a] );
     objToBeWritten.push_back( messTruth   [a] );
@@ -6382,6 +6417,8 @@ void TControlPlots::MakeControlPlotsTop()
   delete genPt;
   delete meanPt;
   delete meanEta;
+  delete wPt;
+  delete wEta;
   for(unsigned a=0; a<2; a++){
     delete paveText    [a];
     delete invMass     [a];
