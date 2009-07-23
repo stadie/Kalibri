@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.8 2009/07/13 08:25:11 mschrode Exp $
+//    $Id: JetTruthEvent.h,v 1.9 2009/07/23 13:44:41 mschrode Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -32,10 +32,14 @@ public:
   double chi2() const;
   double chi2_plots() const { return chi2plots; }
   double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const { 
+    //chi2plots = chi2_fast_invert(temp_derivative1,temp_derivative2,epsilon);
     chi2plots = chi2_log_fast_invert(temp_derivative1,temp_derivative2,epsilon);
+    //chi2plots = chi2_fast_scaled(temp_derivative1,temp_derivative2,epsilon);
+    //chi2plots = chi2_fast_simple_scaled(temp_derivative1,temp_derivative2,epsilon);
     return chi2plots;
   }
   double chi2_fast_blobel(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_scaled(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_fast_simple_scaled(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_fast_invert(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;

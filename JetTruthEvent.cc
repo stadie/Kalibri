@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.15 2009/04/15 18:10:53 mschrode Exp $
+//    $Id: JetTruthEvent.cc,v 1.16 2009/04/27 13:49:07 mschrode Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -81,7 +81,7 @@ double JetTruthEvent::chi2_fast_simple_scaled(double * temp_derivative1,
     temp1 = weight * TData::ScaleResidual(temp1);
     assert(temp1 == temp1);
     temp2 = truth - i->upperEt;
-    c = i->upperEt / jet->HadEt();  
+    c = i->upperEt / jet->Et();  
     //if(c <= 0) c = 1.0;
     err2inv = c * jet->expectedError(truth/c); 
     err2inv *= err2inv;
@@ -96,31 +96,107 @@ double JetTruthEvent::chi2_fast_simple_scaled(double * temp_derivative1,
   return chi2;
 }
 
+
+double JetTruthEvent::chi2_fast_scaled(double * temp_derivative1, 
+				       double * temp_derivative2, 
+				       double const epsilon) const
+{
+  if(flagged_bad) return 0;
+  double et = jet->correctedEt(jet->Et());
+  double c = et / jet->Et();
+  const double deltaE = epsilon;
+  double etprime  = (jet->correctedEt(jet->Et() + deltaE) - 
+		     jet->correctedEt(jet->Et() - deltaE))/2/deltaE;
+  if((etprime == 0) || (c <= 0)) {
+    std::cout << "warning: deriv zero!\n";
+    flagged_bad = true;
+    ++nflagged;
+    return 0;
+  }
+  double err2 = etprime * jet->expectedError(jet->Et());
+  err2 *= err2;
+  double chi2 = truth - et;
+  chi2 *= chi2 / err2;
+  chi2 = weight * TData::ScaleResidual(log(err2) + chi2);
+  //chi2 = weight *  TData::ScaleResidual(chi2);
+  if(chi2 != chi2) {//check for NAN
+    std::cout << truth << ", " << et << ", " <<  jet->Et() << ", " << c << ", " << chi2 << '\n';
+    assert(chi2 == chi2);
+  }
+  assert(! std::isinf(chi2));
+  double temp1,temp2;
+  const Jet::VariationColl& varcoll = jet->varyParsDirectly(epsilon);
+  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+    temp1 = truth - i->lowerEt;
+    c = i->lowerEt / jet->Et();
+    //if(c <= 0) c = 1.0;
+    err2 = i->lowerEtDeriv * jet->expectedError(jet->Et());
+    if((i->lowerEtDeriv == 0)|| (c <= 0)) {
+      std::cout << "warning: deriv zero!\n"; 
+      flagged_bad = true;
+      ++nflagged;
+      return 0;
+      //err2 = c * jet->expectedError(jet->Et());
+    }
+    err2 *= err2;
+    temp1 *= temp1 / err2; 
+    //temp1 = weight * (log(err2) + temp1);
+    temp1 = weight * TData::ScaleResidual(log(err2) + temp1);
+    //temp1 = weight * TData::ScaleResidual(temp1);
+    assert(temp1 == temp1);
+    assert(! std::isinf(temp1));
+    temp2 = truth - i->upperEt;
+    c = i->upperEt / jet->Et();  
+    //if(c <= 0) c = 1.0;
+    err2 = i->upperEtDeriv * jet->expectedError(jet->Et());
+    if((i->upperEtDeriv == 0) || (c <= 0)) {
+      std::cout << "warning: deriv zero!\n";
+      flagged_bad = true; 
+      ++nflagged;
+      return 0;
+      //err2 = c * jet->expectedError(jet->Et());
+    }
+    err2 *= err2;
+    temp2 *= temp2 / err2;
+    temp2 = weight * TData::ScaleResidual(log(err2) + temp2);
+    //temp2 = weight * TData::ScaleResidual(temp2);
+    assert(temp2 == temp2);
+    assert(! std::isinf(temp2));
+    temp_derivative1[i->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative   
+  }
+  assert(chi2 == chi2);
+  return chi2;
+}
+
 double JetTruthEvent::chi2_fast_simple(double * temp_derivative1, 
 				       double * temp_derivative2, 
 				       double const epsilon) const
 {
   double et = jet->correctedEt(jet->Et());
-  double c = (et - jet->EmEt() - jet->OutEt()) / jet->HadEt(); 
-  double err2inv = jet->expectedError((truth - jet->EmEt() - jet->OutEt())/c + jet->EmEt() + jet->OutEt() );
+  double c = et/jet->Et(); 
+  double err2inv = jet->expectedError(truth/c);
   err2inv *= err2inv;
   err2inv = 1/err2inv;
   double chi2 = truth - et;
-  chi2 *= chi2 * err2inv;
+  chi2 *= chi2 * err2inv;  
+  if(chi2 != chi2) {//check for NAN
+    std::cout << truth << ", " << et << ", " <<  jet->Et() << ", " << c << ", " << chi2 << '\n';
+  }
   chi2 = weight * TData::ScaleResidual(chi2);
   double temp1,temp2;
   const Jet::VariationColl& varcoll = jet->varyParsDirectly(epsilon);
   for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     temp1 = truth - i->lowerEt;
-    c = (i->lowerEt - jet->EmEt() - jet->OutEt()) / jet->HadEt(); 
-    err2inv = jet->expectedError((truth - jet->EmEt() - jet->OutEt())/c + jet->EmEt() + jet->OutEt() );
+    c = i->lowerEt/jet->Et(); 
+    err2inv = jet->expectedError(truth/c);
     err2inv *= err2inv;
     err2inv = 1/err2inv;
     temp1 *= temp1 * err2inv;
     temp1 = weight * TData::ScaleResidual(temp1);
     temp2 = truth - i->upperEt;
-    c = (i->upperEt - jet->EmEt() - jet->OutEt()) / jet->HadEt(); 
-    err2inv = jet->expectedError((truth - jet->EmEt() - jet->OutEt())/c + jet->EmEt() + jet->OutEt() ); 
+    c = i->upperEt/jet->Et(); 
+    err2inv = jet->expectedError(truth/c); 
     err2inv *= err2inv;
     err2inv = 1/err2inv;
     temp2 *= temp2 * err2inv;
@@ -158,11 +234,12 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
   
   if(chi2 != chi2) {//check for NAN
     std::cout << truth << ", " << expectedEt << ", " << chi2 << '\n';
+    assert(false);
   }
   
   //calculate chi2 for derivatives
   double temp1,temp2;
-  const Jet::VariationColl& varcoll = jet->varyPars(epsilon,truth,expectedEt);
+  const Jet::VariationColl& varcoll = jet->varyPars(epsilon,truth,truth);
   for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     if(( i->lowerEt < 0 ) || ( i->upperEt < 0 )) {
       flagged_bad = true;
@@ -173,7 +250,8 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
 
   for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     //std::cout << i->parid << ":" << i->lowerEt << ";" << i->upperEt << " diff:" 
-    //	      << i->upperEt - i->lowerEt << '\n';
+    //	      << i->upperEt - i->lowerEt << ", " << i->upperError <<
+    //  ", " << i->lowerError << '\n';
     if((std::abs((i->lowerEt - expectedEt)/expectedEt) > 0.01) || 
        (std::abs((i->upperEt - expectedEt)/expectedEt) > 0.01)) {
       std::cout << "strange extrapolation result modifying par:" << i->parid << ":" 
