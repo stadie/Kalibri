@@ -10,7 +10,7 @@ else
 endif
 
 #O2 for optimization, g for debugging, pg for profiling
-SPECIALFLAGS= -g #-g -Wall -pg#-O2
+SPECIALFLAGS= -g -O4 #-g -Wall -pg#-O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
@@ -23,7 +23,7 @@ RCXX=$(SPECIALFLAGS) -Wno-deprecated -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
 
-SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc
+SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc JetConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -99,6 +99,9 @@ ParameterLimitsReader.o: EventReader.h ParameterLimitsReader.h ParameterLimitsRe
 TowerConstraintsReader.o:  EventReader.h TowerConstraintsReader.h TowerConstraintsReader.cc Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c TowerConstraintsReader.cc
 
+JetConstraintsReader.o:  EventReader.h JetConstraintsReader.h JetConstraintsReader.cc Parameters.h ConfigFile.h JetConstraintEvent.h
+	$(C) $(RCXX) -c JetConstraintsReader.cc
+
 TrackClusterReader.o: EventReader.h TrackClusterReader.h TrackClusterReader.cc TrackClusterSel.h Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c TrackClusterReader.cc
 
@@ -111,11 +114,14 @@ EventWeightProcessor.o: CalibData.h ConfigFile.h EventProcessor.h Parameters.h E
 Jet.o: CalibData.h Jet.h Jet.cc Parametrization.h Function.h
 	$(C) $(RCXX) -c Jet.cc	
 
-JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc Jet.h
+JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc
 	$(C) $(CFLAGS) -c JetTruthEvent.cc
 
-TwoJetsInvMassEvent.o: CalibData.h Jet.h TwoJetsInvMassEvent.h TwoJetsInvMassEvent.cc Jet.h 
+TwoJetsInvMassEvent.o: CalibData.h Jet.h TwoJetsInvMassEvent.h TwoJetsInvMassEvent.cc
 	$(C) $(RCXX) -c TwoJetsInvMassEvent.cc
+
+JetConstraintEvent.o: JetConstraintEvent.h CalibData.h Jet.h
+	$(C) $(CFLAGS) -c JetConstraintEvent.cc
 
 JetWithTowers.o: CalibData.h Jet.h JetWithTowers.h Function.h JetWithTowers.cc Parametrization.h
 	$(C) $(RCXX) -c JetWithTowers.cc
@@ -123,7 +129,7 @@ JetWithTowers.o: CalibData.h Jet.h JetWithTowers.h Function.h JetWithTowers.cc P
 JetWithTracks.o: CalibData.h Jet.h JetWithTracks.h Function.h JetWithTracks.cc Parametrization.h
 	$(C) $(RCXX) -c JetWithTracks.cc
 
-caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h TrackClusterReader.h EventProcessor.h EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h
+caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h JetConstraintsReader.h TrackClusterReader.h EventProcessor.h  EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h 
 	$(C) $(RCXX)  -I/usr/include/boost -c caliber.cc 
 
 runjunk: $(SRC:.cc=.o) lbfgs.o

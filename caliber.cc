@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.89 2009/07/23 11:38:28 stadie Exp $
+//  $Id: caliber.cc,v 1.90 2009/07/23 13:47:40 mschrode Exp $
 
 #include "caliber.h"
 
@@ -24,6 +24,7 @@ boost::mutex io_mutex;
 #include "TrackClusterReader.h"
 #include "ParameterLimitsReader.h"
 #include "TowerConstraintsReader.h"
+#include "JetConstraintsReader.h"
 #include "EventProcessor.h"
 #include "EventWeightProcessor.h"
 #include "Jet.h"
@@ -441,7 +442,7 @@ void TCaliber::init()
   while(  *resScheme != 0  )
     {
       int scheme = static_cast<int>(*resScheme - '0');
-      if(  scheme < 0  ||  scheme > 2  )
+      if(  scheme < 0  ||  scheme > 3  )
 	{
 	  cerr << "ERROR: " << scheme << " is not a valid scheme for resdiual scaling! Using default scheme 221." << endl << endl;
 	  residualScalingScheme_.clear();
@@ -531,7 +532,10 @@ void TCaliber::init()
   plr.readEvents(data_);
 
   TowerConstraintsReader cr(configFile_,par_);
-  cr.readEvents(data_);
+  cr.readEvents(data_);  
+
+  JetConstraintsReader jcr(configFile_,par_);
+  jcr.readEvents(data_);
 }
 //--^-TCaliber class-^------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

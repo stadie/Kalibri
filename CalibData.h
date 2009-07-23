@@ -1,6 +1,6 @@
 //  \author Christian Autermann
 //  \date Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
+// $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -16,7 +16,7 @@ using namespace std;
 //!
 //!  \sa TAbstractData 
 enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
-               InvMass, typeTowerConstraint, ParLimit, TypeSmearPhotonJet, TypeSmearDiJet };
+               InvMass, typeTowerConstraint, ParLimit, TypeSmearPhotonJet, TypeSmearDiJet, JetConstraint };
 
 //!  \brief Base class of a measurement
 //!
@@ -29,7 +29,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
+//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
 class TMeasurement
 {
 public:
@@ -58,7 +58,7 @@ public:
 //!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
+//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
 class TTower : public TMeasurement
 { 
 public:
@@ -80,7 +80,7 @@ public:
 //!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
+//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
 class TJet : public TMeasurement
 {
 public:
@@ -147,7 +147,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
+//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
 class TTrack : public TMeasurement
 {
 public:
@@ -207,7 +207,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
+//! $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
 class TData
 {
 public:
@@ -324,7 +324,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
+//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
 class TAbstractData : public TData
 {
 public:
