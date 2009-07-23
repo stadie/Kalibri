@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.7 2009/04/27 13:49:07 mschrode Exp $
+//    $Id: JetTruthEvent.h,v 1.8 2009/07/13 08:25:11 mschrode Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -26,7 +26,9 @@ public:
   void ChangeParAddress(double* oldpar, double* newpar) { jet->ChangeParAddress(oldpar,newpar);}
   DataType GetType() const { return GammaJet;} 
   double GetWeight() const { return weight;}
-  
+  virtual void setWeight(double w) { weight = w; }
+  virtual double ptHat() const { return 0.; }                  //!< Dummy
+
   double chi2() const;
   double chi2_plots() const { return chi2plots; }
   double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const { 

@@ -1,4 +1,4 @@
-// $Id: SmearDiJet.h,v 1.2 2009/07/16 14:46:51 mschrode Exp $
+// $Id: SmearDiJet.h,v 1.3 2009/07/22 11:48:06 mschrode Exp $
 
 #ifndef SmearDiJet_h
 #define SmearDiJet_h
@@ -10,7 +10,7 @@
 //!  \brief Dijet data for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 18:23:44 CEST 2009
-//!  $Id: SmearDiJet.h,v 1.2 2009/07/16 14:46:51 mschrode Exp $
+//!  $Id: SmearDiJet.h,v 1.3 2009/07/22 11:48:06 mschrode Exp $
 // --------------------------------------------------
 class SmearDiJet : public SmearData {
  public:
@@ -30,8 +30,8 @@ class SmearDiJet : public SmearData {
   virtual double chi2() const;
   virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   virtual void printInitStats() const;
+  virtual double ptHat() const;
 
-  double ptHat() const;
   double dijetPt() const { return 0.5 * (GetMess()->pt + GetSecondMess()->pt); } //!< Get dijet pt \f$ \frac{1}{2} (p^{1}_{T} + p^{2}_{T}) \f$
   TMeasurement * GetSecondMess() const { return secndMess_; }  //!< Get second jet
   TMeasurement * GetThirdMess() const { return thirdMess_; }   //!< Get third jet

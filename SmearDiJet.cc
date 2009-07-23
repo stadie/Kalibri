@@ -1,4 +1,4 @@
-// $Id: SmearDiJet.cc,v 1.2 2009/07/16 14:46:51 mschrode Exp $
+// $Id: SmearDiJet.cc,v 1.3 2009/07/22 11:48:06 mschrode Exp $
 
 #include "SmearDiJet.h"
 
@@ -6,8 +6,8 @@
 
 //!  \brief Constructor
 //!  \param mess First jet
-//!  \param mess Second jet
-//!  \param mess Third jet (for cuts)
+//!  \param secndMess Second jet
+//!  \param thirdMess Third jet (for cuts)
 //!  \param weight Event weight
 //!  \param respPDF Response probability density
 //!  \param truthPDF True pt probability density

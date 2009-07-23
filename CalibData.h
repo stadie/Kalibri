@@ -1,6 +1,6 @@
 //  \author Christian Autermann
 //  \date Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
+// $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -29,7 +29,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
+//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
 class TMeasurement
 {
 public:
@@ -58,7 +58,7 @@ public:
 //!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
+//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
 class TTower : public TMeasurement
 { 
 public:
@@ -80,7 +80,7 @@ public:
 //!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
+//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
 class TJet : public TMeasurement
 {
 public:
@@ -147,7 +147,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
+//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
 class TTrack : public TMeasurement
 {
 public:
@@ -207,7 +207,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
+//! $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
 class TData
 {
 public:
@@ -218,6 +218,8 @@ public:
   virtual void ChangeParAddress(double* oldpar, double* newpar) = 0;   //!< Change adress of parameter array
   virtual DataType GetType() const = 0;                                //!< Get DataType
   virtual double GetWeight() const = 0;                                //!< Get weight
+  virtual void setWeight(double w) = 0;                              //!< Set weight
+  virtual double ptHat() const = 0;                                    //!< Get event scale
 
 
   //!  \brief Get the normalized, squared residual \f$ z^{2} \f$ of this event
@@ -322,7 +324,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.69 2009/07/22 11:45:44 mschrode Exp $
+//!  $Id: CalibData.h,v 1.70 2009/07/23 11:38:28 stadie Exp $
 class TAbstractData : public TData
 {
 public:
@@ -445,7 +447,8 @@ public:
   virtual void UpdateError(){};
   double GetError() const { return _error;};
   double GetWeight() const { return _weight;};
-  void   SetWeight(const double & weight) { _weight=weight;};
+  virtual void setWeight(double w) { _weight = w;};
+  virtual double ptHat() const { return 0.; }                                    //!< Dummy
   DataType GetType() const {return _type;};
   void SetType(DataType type) {_type=type;};
   unsigned short int GetIndex(){return _index;};

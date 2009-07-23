@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: TwoJetsInvMassEvent.h,v 1.2 2009/03/11 07:52:52 snaumann Exp $
+//    $Id: TwoJetsInvMassEvent.h,v 1.3 2009/04/27 13:49:08 mschrode Exp $
 //   
 #ifndef TWOJETSINVMASSEVENT_H
 #define TWOJETSINVMASSEVENT_H
@@ -36,6 +36,8 @@ public:
   }
   DataType GetType() const { return InvMass;} 
   double GetWeight() const { return weight;}
+  virtual void setWeight(double w) { weight = w; }
+  virtual double ptHat() const { return 0.; }             //!< Dummy
 
   double correctedMass() const;
   
