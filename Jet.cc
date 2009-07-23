@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.25 2009/07/13 08:25:24 mschrode Exp $
+//    $Id: Jet.cc,v 1.26 2009/07/13 12:04:39 snaumann Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -92,14 +92,17 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
 // -------------------------------------------------------
 const Jet::VariationColl& Jet::varyParsDirectly(double eps)
 {
+  const double deltaE = eps * 100.0;
   for(int i = 0 ; i < f.nPars() ; ++i) {
     double orig = f.firstPar()[i];
     f.firstPar()[i] += eps;
     varcoll[i].upperEt = correctedEt(pt);
     varcoll[i].upperError = expectedError(varcoll[i].upperEt);
+    varcoll[i].upperEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
     f.firstPar()[i] = orig - eps;;
     varcoll[i].lowerEt = correctedEt(pt); 
     varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
+    varcoll[i].lowerEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
     f.firstPar()[i] = orig;
     varcoll[i].parid = f.parIndex() + i;
   }  
@@ -108,9 +111,11 @@ const Jet::VariationColl& Jet::varyParsDirectly(double eps)
     gf.firstPar()[i] += eps;
     varcoll[j].upperEt = correctedEt(pt);
     varcoll[j].upperError = expectedError(varcoll[j].upperEt);
+    varcoll[j].upperEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
     gf.firstPar()[i] = orig - eps;;
     varcoll[j].lowerEt = correctedEt(pt); 
     varcoll[j].lowerError = expectedError(varcoll[j].lowerEt);
+    varcoll[j].lowerEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
     gf.firstPar()[i] = orig;
     varcoll[j].parid = gf.parIndex() + i;
   }
@@ -145,8 +150,8 @@ double Jet::correctedEt(double Et, bool fast) const {
     std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
   assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
-  if(corEt < 0) {
-    std::cout << "WARNING: jet cor. Et < 0.0 GeV:" << corEt << '\n';
+  if(corEt <= 0.0) {
+    std::cout << "WARNING: jet cor. Et <= 0.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
     corEt = 1.0;
   }
   temp.pt   = corEt;  
@@ -160,7 +165,7 @@ double Jet::correctedEt(double Et, bool fast) const {
   assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
   if(corEt <= 1.0) {
-    std::cout << "WARNING: global jet cor. Et < 1.0 GeV:" << corEt << '\n';
+    std::cout << "WARNING: global jet cor. Et <= 1.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
     corEt = 1.0;
   }
 

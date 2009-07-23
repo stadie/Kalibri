@@ -11,7 +11,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.17 2009/06/11 17:32:15 mschrode Exp $
+//!    $Id: Jet.h,v 1.18 2009/07/13 12:04:39 snaumann Exp $
 class Jet : public TJet
 {
  public:
@@ -89,6 +89,8 @@ class Jet : public TJet
     double lowerEt;      //!< Expected Et if parameter is varied by -eps
     double upperError;   //!< Expected error if parameter is varied by +eps
     double lowerError;   //!< Expected error if parameter is varied by -eps
+    double upperEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
+    double lowerEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
     bool operator==(int b) const { return parid == b;} //!< Two ParameterVariation are the same if they have the same parid
   };
   typedef std::vector<ParameterVariation> VariationColl;

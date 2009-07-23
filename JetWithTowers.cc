@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.16 2009/06/11 17:32:15 mschrode Exp $
+//    $Id: JetWithTowers.cc,v 1.17 2009/07/13 12:04:39 snaumann Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -106,7 +106,8 @@ const Jet::VariationColl& JetWithTowers::varyParsDirectly(double eps)
 {
   Jet::varyParsDirectly(eps);
   int i = Jet::nPar();
-
+  
+  const double deltaE = eps * 100.0;
   for(std::map<int,double*>::const_iterator iter = towerpars.begin() ;
       iter != towerpars.end() ; ++iter) {
     double *p = iter->second;
@@ -119,9 +120,11 @@ const Jet::VariationColl& JetWithTowers::varyParsDirectly(double eps)
       p[towpar] += eps;
       varcoll[i].upperEt = correctedEt(pt);
       varcoll[i].upperError = expectedError(varcoll[i].upperEt);
+      varcoll[i].upperEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
       p[towpar] = orig - eps;
       varcoll[i].lowerEt = correctedEt(pt); 
       varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
+      varcoll[i].lowerEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
       p[towpar] = orig;
       varcoll[i].parid = id + towpar;
       //std::cout << "up:" << varcoll[i].upperEt << " low:" << varcoll[i].lowerEt << '\n'; 

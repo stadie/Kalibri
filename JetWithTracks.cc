@@ -2,7 +2,7 @@
 //    Class for jets with tracks 
 //
 //    first version: Hartmut Stadie 2009/04/08
-//    $Id: JetWithTracks.cc,v 1.3 2009/06/11 17:32:15 mschrode Exp $
+//    $Id: JetWithTracks.cc,v 1.4 2009/07/13 12:04:39 snaumann Exp $
 //   
 #include"JetWithTracks.h"
 
@@ -118,6 +118,7 @@ const Jet::VariationColl& JetWithTracks::varyParsDirectly(double eps)
   Jet::varyParsDirectly(eps);
   int i = Jet::nPar();
 
+  const double deltaE = eps * 100.0;
   for(std::map<int,double*>::const_iterator iter = trackpars.begin() ;
       iter != trackpars.end() ; ++iter) {
     double *p = iter->second;
@@ -130,9 +131,11 @@ const Jet::VariationColl& JetWithTracks::varyParsDirectly(double eps)
       p[trkpar] += eps;
       varcoll[i].upperEt = correctedEt(pt);
       varcoll[i].upperError = expectedError(varcoll[i].upperEt);
+      varcoll[i].upperEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
       p[trkpar] = orig - eps;
       varcoll[i].lowerEt = correctedEt(pt); 
       varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
+      varcoll[i].lowerEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
       p[trkpar] = orig;
       varcoll[i].parid = id + trkpar;
       //std::cout << "up:" << varcoll[i].upperEt << " low:" << varcoll[i].lowerEt << '\n'; 
