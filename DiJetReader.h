@@ -36,7 +36,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.9 2009/06/11 17:32:15 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.10 2009/07/16 14:48:18 mschrode Exp $
 // ----------------------------------------------------------------   
 class DiJetReader : public EventReader{
  public:
@@ -56,6 +56,8 @@ class DiJetReader : public EventReader{
   int    nDijetEvents_;         //!< Maximum number of read dijet events
 
   double minJetEt_;             //!< Minimum pt of jet
+  double minDijetEt_;           //!< Minimum dijet pt
+  double maxDijetEt_;           //!< Maximum dijet pt
   double max3rdJetEt_;          //!< Maximum pt of 3rd jet in dijet event
   double maxRel3rdJetEt_;       //!< Maximum relative pt of 3rd jet in dijet event
   double minDeltaPhi_;          //!< Minimum DeltaPhi for 0 < DeltaPhi < Pi
@@ -68,6 +70,8 @@ class DiJetReader : public EventReader{
 
   int    nDiJetCut_;            //!< Number of events with less than 2 jets
   int    nMinJetEt_;            //!< Number of events rejected by minJetEt_ cut
+  int    nMinDijetEt_;          //!< Number of events rejected by minDijetEt_ cut
+  int    nMaxDijetEt_;          //!< Number of events rejected by maxDijetEt_ cut
   int    nCutOn3rdJet_;         //!< Number of events rejected by max3rdJetEt_ or maxRelJetEt_ cut
   int    nMinDeltaPhi_;         //!< Number of events rejected by maxDeltaPhi_ cut
   int    nMaxJetEta_;           //!< Number of events rejected by maxJetEta_ cut

@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.19 2009/07/13 12:04:39 snaumann Exp $
+//    $Id: DiJetReader.cc,v 1.20 2009/07/16 14:48:18 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -44,7 +44,9 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   }
 
   // Cuts
-  minJetEt_          = config->read<double>("Et cut on jet",0.0); 
+  minJetEt_          = config->read<double>("Et cut on jet",0.0);
+  minDijetEt_        = config->read<double>("Et min cut on dijet",0.0); 
+  maxDijetEt_        = config->read<double>("Et max cut on dijet",100.0); 
   max3rdJetEt_       = config->read<double>("Et cut on n+1 Jet",10.0);
   maxRel3rdJetEt_    = config->read<double>("Relative n+1 Jet Et Cut",0.2);
   maxJetEta_         = config->read<double>("Eta cut on jet",5.0);
@@ -55,8 +57,10 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   maxGenJetEt_       = config->read<double>("Et genJet max",10000.0);
   maxDeltaR_         = config->read<double>("DeltaR cut on jet matching",0.25);
   // Counter for cutflow
-  nMinJetEt_          = 0;
   nDiJetCut_          = 0;
+  nMinJetEt_          = 0;
+  nMinDijetEt_        = 0;
+  nMaxDijetEt_        = 0;
   nCutOn3rdJet_       = 0;
   nMaxJetEta_         = 0;  
   nMinDeltaPhi_       = 0;
@@ -137,6 +141,8 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
   // Reset counters of rejected events
   nDiJetCut_          = 0;
   nMinJetEt_          = 0;
+  nMinDijetEt_        = 0;
+  nMaxDijetEt_        = 0;
   nCutOn3rdJet_       = 0;
   nMinGenJetEt_       = 0;    
   nMaxGenJetEt_       = 0;     
@@ -220,6 +226,10 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
     std::cout << "  " << (nReadEvts-=nMaxJetEta_) << std::flush;
     std::cout << " dijet-jet events with |eta| < " << maxJetEta_ << "\n";
     std::cout << "  " << (nReadEvts-=nMinJetHadFraction_) << std::flush;
+    std::cout << " dijet-jet events dijet pt > " << minDijetEt_ << " GeV\n";
+    std::cout << "  " << (nReadEvts-=nMinDijetEt_) << std::flush;
+    std::cout << " dijet-jet events dijet pt < " << maxDijetEt_ << " GeV\n";
+    std::cout << "  " << (nReadEvts-=nMaxDijetEt_) << std::flush;
     std::cout << " dijet-jet events with hadronic fraction > " << minJetHadFraction_ << "\n";
     std::cout << "  " << (nReadEvts-=nMaxJetHadFraction_) << std::flush;
     std::cout << " dijet-jet events with hadronic fraction < " << maxJetHadFraction_ << "\n";
@@ -632,12 +642,110 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 
 
 
-//!  \brief Create SmearDiJet event for jet smearing
-//!  \note Measured pt is L2L3 corrected
+//!  \brief Create \p SmearDiJet \p event for jet smearing
+//!
+//!  Uses the three jets with the highest uncorrected
+//!  calo pt. For creation of a \p SmearDiJet \p event,
+//!  the JetMET L2L3 correction is applied.
+//!
+//!  \return A \p SmearDiJet \p if all cuts are passed,
+//!          else 0
 // ----------------------------------------------------------------   
 TData* DiJetReader::createSmearEvent()
 {
-  if( nJet_.NobjGenJet < 3 ) {
+//   if( nJet_.NobjGenJet < 3 ) {
+//     nDiJetCut_++;
+//     return 0;
+//   }
+
+//   SmearDiJet * jj_data = 0;
+  
+//   TJet   * jet1        = 0;
+//   TJet   * jet2        = 0;
+
+//   // Loop over three jets with highest genjet Et
+//   for(int genJetIdx = 0; genJetIdx < 3; genJetIdx++) {
+//     int calJetIdx = nJet_.GenJetColJetIdx[genJetIdx]; // Closest (DeltaR) calo jet
+//     if( nJet_.NobjJet <= calJetIdx ) {
+//       nDiJetCut_++;
+//       if( jet1 ) delete jet1;
+//       if( jet2 ) delete jet2;
+//       return 0;
+//     }
+
+//     double dphi         = TVector2::Phi_mpi_pi( nJet_.JetPhi[calJetIdx] - nJet_.GenJetColPhi[genJetIdx] );
+//     double deta         = nJet_.JetEta[calJetIdx] - nJet_.GenJetColEta[genJetIdx];
+//     double drJetGenjet  = sqrt( deta*deta - dphi*dphi );
+//     double min_tower_dr = 10.;
+//     double emf          = 0;
+//     double had          = 0;
+//     double out          = 0;
+//     int    closestTower = 0; 
+
+//     // Loop over towers
+//     for (int n=0; n<nJet_.NobjTow; ++n) {
+//       if (nJet_.Tow_jetidx[n]!=(int)calJetIdx) continue;//look for calJetIdx-jet's towers
+//       emf += nJet_.TowEm[n];
+//       had += nJet_.TowHad[n];
+//       out += nJet_.TowOE[n];
+//       dphi = TVector2::Phi_mpi_pi( nJet_.JetPhi[calJetIdx] - nJet_.TowPhi[n] );
+//       deta = nJet_.JetEta[calJetIdx] - nJet_.TowEta[n];
+//       double dr = sqrt( deta*deta + dphi*dphi );     
+//       if (dr < min_tower_dr) {
+// 	min_tower_dr = dr;
+// 	closestTower = n;
+//       }
+//     } // End of loop over towers
+
+
+//     // Projection factor E --> Et
+//     // The following is not quite correct, as this factor is different for all towers
+//     // These values should be in the n-tupel as well
+//     double projFac   = nJet_.JetEt[calJetIdx] /  nJet_.JetE[calJetIdx];
+
+//     // Want L2L3 corrected jets
+//     double corrFac   = nJet_.JetCorrL2[calJetIdx] * nJet_.JetCorrL3[calJetIdx];
+
+//     // Set up measurement
+//     TJet * jetp      = new TJet;
+//     jetp->pt         = corrFac * nJet_.JetPt[calJetIdx];
+//     jetp->E          = corrFac * nJet_.JetE[calJetIdx];
+//     jetp->HadF       = corrFac * had * projFac;
+//     jetp->EMF        = corrFac * emf * projFac;
+//     jetp->OutF       = corrFac * out * projFac;
+//     jetp->eta        = nJet_.JetEta[calJetIdx];
+//     jetp->phi        = nJet_.JetPhi[calJetIdx];
+//     jetp->genPt      = nJet_.GenJetColPt[genJetIdx];
+//     jetp->dR         = drJetGenjet;
+//     jetp->ptHat      = nJet_.GenEvtScale;
+
+//     // All corrections initialised with 1. as jets are already L2L3 corrected
+//     jetp->corFactors = TJet::CorFactors();
+
+
+//     if     ( genJetIdx == 0 ) { // Store first jet
+//       jet1 = jetp;
+//     }
+//     else if( genJetIdx == 1 ) { // Store second jet
+//       jet2 = jetp;
+//     }
+//     else if( genJetIdx == 2) { // Create a SmearDiJet event
+//       jj_data = new SmearDiJet(jet1,                                          // First jet
+// 			       jet2,                                          // Second jet
+// 			       jetp,                                          // Third jet
+// 			       1.,                                            // Weights from EventProcessor
+// 			       p->jet_function(nJet_.TowId_eta[closestTower],
+// 					       nJet_.TowId_phi[closestTower]), // Response pdf of second jet
+// 			       p->global_jet_function(),                      // Truth pdf
+// 			       min_,                                          // Integration minimum
+// 			       max_,                                          // Integration maximum
+// 			       eps_,                                          // Integration step length
+// 			       maxNIter_);                                    // Integration n iterations
+//     }
+//   }  //End of loop over jets
+
+
+  if( nJet_.NobjJet < 3 ) {
     nDiJetCut_++;
     return 0;
   }
@@ -647,18 +755,11 @@ TData* DiJetReader::createSmearEvent()
   TJet   * jet1        = 0;
   TJet   * jet2        = 0;
 
-  // Loop over three jets with highest genjet Et
-  for(int genJetIdx = 0; genJetIdx < 3; genJetIdx++) {
-    int calJetIdx = nJet_.GenJetColJetIdx[genJetIdx]; // Closest (DeltaR) calo jet
-    if( nJet_.NobjJet <= calJetIdx ) {
-      nDiJetCut_++;
-      if( jet1 ) delete jet1;
-      if( jet2 ) delete jet2;
-      return 0;
-    }
+  // Loop over three jets with highest calojet Et
+  for(int jetIdx = 0; jetIdx < 3; jetIdx++) {
 
-    double dphi         = TVector2::Phi_mpi_pi( nJet_.JetPhi[calJetIdx] - nJet_.GenJetColPhi[genJetIdx] );
-    double deta         = nJet_.JetEta[calJetIdx] - nJet_.GenJetColEta[genJetIdx];
+    double dphi         = TVector2::Phi_mpi_pi( nJet_.JetPhi[jetIdx] - nJet_.GenJetPhi[jetIdx] );
+    double deta         = nJet_.JetEta[jetIdx] - nJet_.GenJetEta[jetIdx];
     double drJetGenjet  = sqrt( deta*deta - dphi*dphi );
     double min_tower_dr = 10.;
     double emf          = 0;
@@ -668,12 +769,12 @@ TData* DiJetReader::createSmearEvent()
 
     // Loop over towers
     for (int n=0; n<nJet_.NobjTow; ++n) {
-      if (nJet_.Tow_jetidx[n]!=(int)calJetIdx) continue;//look for calJetIdx-jet's towers
+      if (nJet_.Tow_jetidx[n]!=(int)jetIdx) continue;//look for jetIdx-jet's towers
       emf += nJet_.TowEm[n];
       had += nJet_.TowHad[n];
       out += nJet_.TowOE[n];
-      dphi = TVector2::Phi_mpi_pi( nJet_.JetPhi[calJetIdx] - nJet_.TowPhi[n] );
-      deta = nJet_.JetEta[calJetIdx] - nJet_.TowEta[n];
+      dphi = TVector2::Phi_mpi_pi( nJet_.JetPhi[jetIdx] - nJet_.TowPhi[n] );
+      deta = nJet_.JetEta[jetIdx] - nJet_.TowEta[n];
       double dr = sqrt( deta*deta + dphi*dphi );     
       if (dr < min_tower_dr) {
 	min_tower_dr = dr;
@@ -685,38 +786,39 @@ TData* DiJetReader::createSmearEvent()
     // Projection factor E --> Et
     // The following is not quite correct, as this factor is different for all towers
     // These values should be in the n-tupel as well
-    double projFac   = nJet_.JetEt[calJetIdx] /  nJet_.JetE[calJetIdx];
+    double projFac   = nJet_.JetEt[jetIdx] /  nJet_.JetE[jetIdx];
 
     // Want L2L3 corrected jets
-    double corrFac   = nJet_.JetCorrL2[calJetIdx] * nJet_.JetCorrL3[calJetIdx];
+    double corrFac   = nJet_.JetCorrL2[jetIdx] * nJet_.JetCorrL3[jetIdx];
 
     // Set up measurement
     TJet * jetp      = new TJet;
-    jetp->pt         = corrFac * nJet_.JetEt[calJetIdx];
-    jetp->E          = corrFac * nJet_.JetE[calJetIdx];
+    jetp->pt         = corrFac * nJet_.JetPt[jetIdx];
+    jetp->E          = corrFac * nJet_.JetE[jetIdx];
     jetp->HadF       = corrFac * had * projFac;
     jetp->EMF        = corrFac * emf * projFac;
     jetp->OutF       = corrFac * out * projFac;
-    jetp->eta        = nJet_.JetEta[calJetIdx];
-    jetp->phi        = nJet_.JetPhi[calJetIdx];
-    jetp->genPt      = nJet_.GenJetColEt[genJetIdx];
+    jetp->eta        = nJet_.JetEta[jetIdx];
+    jetp->phi        = nJet_.JetPhi[jetIdx];
+    jetp->genPt      = nJet_.GenJetPt[jetIdx];
     jetp->dR         = drJetGenjet;
+    jetp->ptHat      = nJet_.GenEvtScale;
 
     // All corrections initialised with 1. as jets are already L2L3 corrected
     jetp->corFactors = TJet::CorFactors();
 
 
-    if     ( genJetIdx == 0 ) { // Store first jet
+    if     ( jetIdx == 0 ) { // Store first jet
       jet1 = jetp;
     }
-    else if( genJetIdx == 1 ) { // Store second jet
+    else if( jetIdx == 1 ) { // Store second jet
       jet2 = jetp;
     }
-    else if( genJetIdx == 2) { // Create a SmearDiJet event
+    else if( jetIdx == 2) { // Create a SmearDiJet event
       jj_data = new SmearDiJet(jet1,                                          // First jet
 			       jet2,                                          // Second jet
 			       jetp,                                          // Third jet
-			       1.,                                            // Unweighted
+			       1.,                                            // Weights from EventProcessor
 			       p->jet_function(nJet_.TowId_eta[closestTower],
 					       nJet_.TowId_phi[closestTower]), // Response pdf of second jet
 			       p->global_jet_function(),                      // Truth pdf
@@ -725,9 +827,10 @@ TData* DiJetReader::createSmearEvent()
 			       eps_,                                          // Integration step length
 			       maxNIter_);                                    // Integration n iterations
     }
-  }  //End of loop over jets
+  }  // End of loop over jets
 
-  //  check if event is ok and return
+
+  // Check if event is ok and return
   bool isGoodEvt = true;
   TJet * j1 = static_cast<TJet*>(jj_data->GetMess());
   TJet * j2 = static_cast<TJet*>(jj_data->GetSecondMess());
@@ -748,6 +851,14 @@ TData* DiJetReader::createSmearEvent()
     nMinJetEt_++;
     isGoodEvt = false;
   }
+  else if( jj_data->dijetPt() < minDijetEt_ ) {
+    nMinDijetEt_++;
+    isGoodEvt = false;
+  }
+  else if( jj_data->dijetPt() > maxDijetEt_ ) {
+    nMaxDijetEt_++;
+    isGoodEvt = false;
+  }
   else if( std::abs(j1->eta) > maxJetEta_ || std::abs(j2->eta) > maxJetEta_ ) {
     nMaxJetEta_++;
     isGoodEvt = false;
@@ -762,7 +873,7 @@ TData* DiJetReader::createSmearEvent()
     nMaxJetHadFraction_++;
     isGoodEvt = false;
   }
-  else if( 2 * j3->pt / ( j1->pt + j2->pt ) > maxRel3rdJetEt_ && j3->pt > max3rdJetEt_ ) {
+  else if( j3->pt / jj_data->dijetPt() > maxRel3rdJetEt_ && j3->pt > max3rdJetEt_ ) {
     nCutOn3rdJet_++;
     isGoodEvt = false;
   }
@@ -770,6 +881,36 @@ TData* DiJetReader::createSmearEvent()
     nMinDeltaPhi_++;
     isGoodEvt = false;
   }
+
+//   if( isGoodEvt ) {
+//     double r1 = j1->pt / j1->genPt;
+//     double r2 = j2->pt / j2->genPt;
+   
+//     if( r1 > 1.3 || r2 > 1.3 ) {
+//       std::cout << "\n=================================================\n";
+//       std::cout << "R (12)       " << r1 << " " << r2 << std::endl;
+//       std::cout << "pthat        " << jj_data->ptHat() << std::endl;
+
+//       std::cout << "--- gen level ------------------------------------\n";
+//       std::cout << "pt (123)     " << nJet_.GenJetColPt[0] << " "
+// 		<< nJet_.GenJetColPt[1] << " " << nJet_.GenJetColPt[2] << std::endl;
+//       std::cout << "phi (123)    " << nJet_.GenJetColPhi[0] << " "
+// 		<< nJet_.GenJetColPhi[1] << " " << nJet_.GenJetColPhi[2] << std::endl;
+//       std::cout << "dPhi (12)    " << std::abs(TVector2::Phi_mpi_pi(nJet_.GenJetColPhi[0] - nJet_.GenJetColPhi[1])) << std::endl;
+//       std::cout << "dPhi (13)    " << std::abs(TVector2::Phi_mpi_pi(nJet_.GenJetColPhi[0] - nJet_.GenJetColPhi[2])) << std::endl;
+//       std::cout << "dPhi (23)    " << std::abs(TVector2::Phi_mpi_pi(nJet_.GenJetColPhi[1] - nJet_.GenJetColPhi[2])) << std::endl;
+//       std::cout << "calIdx (123) " << nJet_.GenJetColJetIdx[0] << " "
+// 		<< nJet_.GenJetColJetIdx[1] << " " << nJet_.GenJetColJetIdx[2] << std::endl;
+
+//       std::cout << "--- calo level -----------------------------------\n";
+//       std::cout << "pt (123)      " << j1->pt << " " << j2->pt << " " << j3->pt << std::endl;
+//       std::cout << "ptgen (123)   " << j1->genPt << " " << j2->genPt << " " << j3->genPt << std::endl;
+//       std::cout << "phi (123)     " << j1->phi << " " << j2->phi << " " << j3->phi << std::endl;
+//       std::cout << "dPhi (12)     " << std::abs(TVector2::Phi_mpi_pi(j1->phi - j2->phi)) << std::endl;
+//       std::cout << "dPhi (13)     " << std::abs(TVector2::Phi_mpi_pi(j1->phi - j3->phi)) << std::endl;
+//       std::cout << "dPhi (23)     " << std::abs(TVector2::Phi_mpi_pi(j2->phi - j3->phi)) << std::endl;
+//     }
+//   }
 
   if(! isGoodEvt) {
     if( jj_data ) delete jj_data;
