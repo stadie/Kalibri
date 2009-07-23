@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.50 2009/06/26 11:49:54 mschrode Exp $
+// $Id: Parameters.h,v 1.51 2009/07/08 12:16:34 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -28,7 +28,7 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.50 2009/06/26 11:49:54 mschrode Exp $
+//!  $Id: Parameters.h,v 1.51 2009/07/08 12:16:34 mschrode Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -252,7 +252,7 @@ public :
     double var = a*a/hade/hade + b*b/hade + c*c;
     //truncate variance accordingly
     double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
-    return sqrt(truncvar) * hade;
+    return sqrt(truncvar) * hadet;
   }
   
   static double toy_jet_error_parametrization(const double *x, const TMeasurement *xorig=0, double errorig=0) {
@@ -266,7 +266,7 @@ public :
     double var = a*a/e/e + b*b/e + c*c;
     //truncate variance accordingly
     double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
-    return sqrt(truncvar) * e;
+    return sqrt(truncvar) * x[0];
   }
 
   static double const_error_parametrization(const double *x, const TMeasurement *xorig, double errorig)  {
