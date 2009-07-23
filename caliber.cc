@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.88 2009/07/22 13:50:34 mschrode Exp $
+//  $Id: caliber.cc,v 1.89 2009/07/23 11:38:28 stadie Exp $
 
 #include "caliber.h"
 
@@ -25,6 +25,7 @@ boost::mutex io_mutex;
 #include "ParameterLimitsReader.h"
 #include "TowerConstraintsReader.h"
 #include "EventProcessor.h"
+#include "EventWeightProcessor.h"
 #include "Jet.h"
 #include "JetTruthEvent.h"
 
@@ -125,20 +126,24 @@ public:
 
 
 //--------------------------------------------------------------------------------------------
-void TCaliber::Run()
+void TCaliber::run()
 {
-  if (fit_method!=3){
+  if (fitMethod_!=3){
 
     time_t start = time(0);
     
     //calls FlattenSpectra and BalanceSpectra if enabled in config
-    EventProcessor ep(configfile,p);
-    ep.process(data);
+    EventProcessor ep(configFile_,par_);
+    ep.process(data_);
 
-    if (fit_method==1) Run_Lvmini();
+    // Apply event weights if enabled
+    EventWeightProcessor ewp(configFile_,par_);
+    ewp.process(data_);
+
+    if (fitMethod_==1) run_Lvmini();
 
     time_t end = time(0);
-    cout << "Done, fitted " << p->GetNumberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
+    cout << "Done, fitted " << par_->GetNumberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
   } 
   //Dummy Configuration: Nothing to be done, start-values are written to file
 }
@@ -146,13 +151,13 @@ void TCaliber::Run()
 
 
 // -----------------------------------------------------------------
-void TCaliber::Run_Lvmini()
+void TCaliber::run_Lvmini()
 { 
   int naux = 3000000, iret=0;
   
-  int npar = p->GetNumberOfParameters();
+  int npar = par_->GetNumberOfParameters();
 
-  naux = lvmdim_(npar,mvec);
+  naux = lvmdim_(npar,mvec_);
   cout<<"array of size "<<naux<<" needed."<<endl;
 
   double* aux = new double[naux], fsum = 0;
@@ -161,39 +166,38 @@ void TCaliber::Run_Lvmini()
   double *temp_derivative2 = new double[npar];
 
   cout << "\nFitting " << npar << " parameters; \n";
-  p->Print();
-  cout << " with LVMINI.\n" << "Using " << data.size() << " total events and ";
-  cout << nthreads << " threads.\n";
+  par_->Print();
+  cout << " with LVMINI.\n" << "Using " << data_.size() << " total events and ";
+  cout << nThreads_ << " threads.\n";
 
   // Fixed pars
   if( fixedJetPars_.size() > 0 ) cout << "Fixed jet parameters:\n";
   for(unsigned int i = 0; i < fixedJetPars_.size(); i++) {
     int idx = fixedJetPars_.at(i);
-    cout << "  " << idx+1 << ": " << p->GetPars()[idx] << endl;
+    cout << "  " << idx+1 << ": " << par_->GetPars()[idx] << endl;
   }
   if( fixedGlobalJetPars_.size() > 0 ) cout << "Fixed global jet parameters:\n";
   for(unsigned int i = 0; i < fixedGlobalJetPars_.size(); i++) {
     int idx = fixedGlobalJetPars_.at(i);
-    cout << "  " << idx+1 << ": " << p->GetPars()[idx] << endl;
+    cout << "  " << idx+1 << ": " << par_->GetPars()[idx] << endl;
   }
-
   
-  ComputeThread *t[nthreads];
-  for (int ithreads=0; ithreads<nthreads; ++ithreads){
-    t[ithreads] = new ComputeThread(npar, p->GetPars(),deriv_step);
+  ComputeThread *t[nThreads_];
+  for (int ithreads=0; ithreads<nThreads_; ++ithreads){
+    t[ithreads] = new ComputeThread(npar, par_->GetPars(),derivStep_);
   }
 
-  lvmeps_(data.size()*eps,wlf1,wlf2);
-  lvmeps_(eps,wlf1,wlf2);
+  lvmeps_(data_.size()*eps_,wlf1_,wlf2_);
+  lvmeps_(eps_,wlf1_,wlf2_);
 
   //Set errors per default to 0 //@@ doesn't seem to work...
   int error_index=2;
   error_index = lvmind_(error_index);
-  p->FillErrors(aux+error_index);
+  par_->FillErrors(aux+error_index);
 
-  for( unsigned int loop = 0; loop < _residualScalingScheme.size() ; ++loop ) {
+  for( unsigned int loop = 0; loop < residualScalingScheme_.size() ; ++loop ) {
     cout<<"Updating Di-Jet Errors"<<endl;
-    for(DataIter it = data.begin()  ; it < data.end() ; ++it) {
+    for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
       (*it)->UpdateError();
     }
     
@@ -203,48 +207,48 @@ void TCaliber::Run_Lvmini()
     else if(  loop+1 == 2  ) cout << "nd" << flush;
     else if(  loop+1 == 3  ) cout << "rd" << flush;
     else cout << "th" << flush;
-    cout << " of " << _residualScalingScheme.size() <<" iteration(s): " << flush;
-    if(  _residualScalingScheme.at(loop) == 0  ) {
+    cout << " of " << residualScalingScheme_.size() <<" iteration(s): " << flush;
+    if(  residualScalingScheme_.at(loop) == 0  ) {
 	TData::ScaleResidual = &TData::ScaleNone;	
 	cout << "no scaling of residuals." << endl;
 
 	cout << "Rejecting outliers " << flush;
-	DataIter beg = partition(data.begin(), data.end(), OutlierRejection(OutlierChi2Cut));
-	for(DataIter i = beg ; i != data.end() ; ++i) {
+	DataIter beg = partition(data_.begin(), data_.end(), OutlierRejection(outlierChi2Cut_));
+	for(DataIter i = beg ; i != data_.end() ; ++i) {
 	  delete *i;
 	}
-	data.erase(beg,data.end());
-	cout << "and using " << data.size() << " events." << endl;
+	data_.erase(beg,data_.end());
+	cout << "and using " << data_.size() << " events." << endl;
       }
-    else if(  _residualScalingScheme.at(loop) == 1  ) {
+    else if(  residualScalingScheme_.at(loop) == 1  ) {
 	TData::ScaleResidual = &TData::ScaleCauchy;	
 	cout << "scaling of residuals with Cauchy-Function." << endl;
       }
-    else if(  _residualScalingScheme.at(loop) == 2  ) {
+    else if(  residualScalingScheme_.at(loop) == 2  ) {
 	TData::ScaleResidual = &TData::ScaleHuber;	
 	cout << "scaling of residuals with Huber-Function." << endl;
       }
-    else if(  _residualScalingScheme.at(loop) == 3  ) {
+    else if(  residualScalingScheme_.at(loop) == 3  ) {
       TData::ScaleResidual = &TData::ScaleTukey;	
       cout << "scaling of residuals a la Tukey." << endl;
     }
     else {
-      cerr << "ERROR: " << _residualScalingScheme.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
+      cerr << "ERROR: " << residualScalingScheme_.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
       break;
     }
-    if(lvmdim_(npar,mvec) > naux)
-      cout<<"Aux field too small. "<<lvmdim_(npar,mvec)<<" enntires needed."<<endl;
+    if(lvmdim_(npar,mvec_) > naux)
+      cout<<"Aux field too small. "<<lvmdim_(npar,mvec_)<<" enntires needed."<<endl;
     if (npar>0) npar*=-1; //Show output
     //initialization
-    lvmini_( npar, mvec, niter, aux);
+    lvmini_( npar, mvec_, nIter_, aux);
     npar=std::abs(npar);
     
     int n = 0;
     
-    for(DataIter it = data.begin()  ; it < data.end() ; ++it) {
+    for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
       t[n]->AddData(*it);
       n++;
-      if(n == nthreads) n = 0;
+      if(n == nThreads_) n = 0;
     }
     
     do {
@@ -256,17 +260,17 @@ void TCaliber::Run_Lvmini()
       //set local parameters to global value
       for( std::vector<int>::const_iterator iter = globalJetPars_.begin();
 	   iter != globalJetPars_.end() ; ++ iter) {
-	double val = p->GetPars()[*iter];
-	for(int id = *iter + p->GetNumberOfJetParametersPerBin(); 
-	    id < p->GetNumberOfJetParameters() ; 
-	    id += p->GetNumberOfJetParametersPerBin()) {
-	  p->GetPars()[id] = val;
+	double val = par_->GetPars()[*iter];
+	for(int id = *iter + par_->GetNumberOfJetParametersPerBin(); 
+	    id < par_->GetNumberOfJetParameters() ; 
+	    id += par_->GetNumberOfJetParametersPerBin()) {
+	  par_->GetPars()[id] = val;
 	}
       }
       fsum = 0;
-      for (int ithreads=0; ithreads<nthreads; ++ithreads) t[ithreads]->Start();
+      for (int ithreads=0; ithreads<nThreads_; ++ithreads) t[ithreads]->Start();
       
-      for (int ithreads=0; ithreads<nthreads; ++ithreads){
+      for (int ithreads=0; ithreads<nThreads_; ++ithreads){
 	if(t[ithreads]->IsDone()) {
 	  fsum += t[ithreads]->Chi2();
 	  for (int param=0 ; param < npar ; ++param) {
@@ -279,9 +283,9 @@ void TCaliber::Run_Lvmini()
       for( std::vector<int>::const_iterator iter = globalJetPars_.begin();
 	   iter != globalJetPars_.end() ; ++ iter) {
 	int gid = *iter;
-	for(int id = *iter + p->GetNumberOfJetParametersPerBin(); 
-	    id < p->GetNumberOfJetParameters() ; 
-	    id += p->GetNumberOfJetParametersPerBin()) {
+	for(int id = *iter + par_->GetNumberOfJetParametersPerBin(); 
+	    id < par_->GetNumberOfJetParameters() ; 
+	    id += par_->GetNumberOfJetParametersPerBin()) {
 	  temp_derivative1[gid] += temp_derivative1[id];
 	  temp_derivative2[gid] += temp_derivative2[id];
 	  temp_derivative1[id] = 0;
@@ -301,49 +305,49 @@ void TCaliber::Run_Lvmini()
       }
       //fast derivative calculation:
       for( int param = 0 ; param < npar ; ++param ) {
-	aux[param]      = temp_derivative1[param]/(2.0*deriv_step);
-	aux[param+npar] = temp_derivative2[param]/(deriv_step*deriv_step);
+	aux[param]      = temp_derivative1[param]/(2.0*derivStep_);
+	aux[param+npar] = temp_derivative2[param]/(derivStep_*derivStep_);
 	assert(aux[param] == aux[param]);
 	assert(aux[param+npar] == aux[param+npar]);
       }
       //print derivatives:
       if(printParNDeriv_) {
 	for( int param = 0 ; param < npar ; ++param ) {
-	  std::cout << "par: " << param << ": p = " <<  p->GetPars()[param] << " dp/dx = " 
+	  std::cout << "par: " << param << ": p = " <<  par_->GetPars()[param] << " dp/dx = " 
 		    <<  aux[param] << " dp/dx^2 = " << aux[param+npar] << std::endl;
 	}
       }
-      lvmfun_(p->GetPars(),fsum,iret,aux);
-      //p->SetParameters(aux + par_index); 
+      lvmfun_(par_->GetPars(),fsum,iret,aux);
+      //par_->SetParameters(aux + par_index); 
       lvmprt_(2,aux,2); //print out
     } while (iret<0); 
 
     lvmprt_(2,aux,2); //print out
-    for (int ithreads=0; ithreads<nthreads; ++ithreads){
+    for (int ithreads=0; ithreads<nThreads_; ++ithreads){
       t[ithreads]->ClearData();
     }  
     int par_index = 1;
     par_index = lvmind_(par_index);
-    p->SetParameters(aux + par_index);
+    par_->SetParameters(aux + par_index);
   }
   //Copy Parameter errors from aux array to the TParameter::e array
   error_index=2;
   error_index = lvmind_(error_index);
-  p->SetErrors(aux+error_index);
+  par_->SetErrors(aux+error_index);
   for( std::vector<int>::const_iterator iter = globalJetPars_.begin();
        iter != globalJetPars_.end() ; ++ iter) {
-    double val =  p->GetPars()[*iter];
-    double err = p->GetErrors()[*iter];
-    for(int id = *iter + p->GetNumberOfJetParametersPerBin(); 
-	id < p->GetNumberOfJetParameters() ; 
-	id += p->GetNumberOfJetParametersPerBin()) {
-      p->GetPars()[id] = val;
-      p->GetErrors()[id] = err;
+    double val =  par_->GetPars()[*iter];
+    double err = par_->GetErrors()[*iter];
+    for(int id = *iter + par_->GetNumberOfJetParametersPerBin(); 
+	id < par_->GetNumberOfJetParameters() ; 
+	id += par_->GetNumberOfJetParametersPerBin()) {
+      par_->GetPars()[id] = val;
+      par_->GetErrors()[id] = err;
     }
   }
-  p->SetFitChi2(fsum);
+  par_->SetFitChi2(fsum);
   
-  for (int ithreads=0; ithreads<nthreads; ++ithreads){
+  for (int ithreads=0; ithreads<nThreads_; ++ithreads){
     delete t[ithreads];
   }
   delete [] aux;  
@@ -354,41 +358,41 @@ void TCaliber::Run_Lvmini()
 
 
 //--------------------------------------------------------------------------------------------
-void TCaliber::Done()
+void TCaliber::done()
 {
-  ConfigFile config( configfile.c_str() );
+  ConfigFile config( configFile_.c_str() );
 
   // write calibration to cfi output file if ending is cfi
   bool cfi=false;
   bool txt=false;
   bool tex=false;
-  std::string fileName(GetOutputFile());
+  std::string fileName(getOutputFile());
   if( fileName.find(".cfi")!=std::string::npos ){
     if( fileName.substr(fileName.find(".cfi")).compare(".cfi")==0 ){
-      p->Write_CalibrationCfi( fileName.c_str() );
+      par_->Write_CalibrationCfi( fileName.c_str() );
       cfi=true; // file has a real .cfi ending
     }
   }
   // write calibration to cfi output file if ending is txt
   if( fileName.find(".txt")!=std::string::npos ){
     if( fileName.substr(fileName.find(".txt")).compare(".txt")==0 ){
-      p->Write_CalibrationTxt( fileName.c_str() );
+      par_->Write_CalibrationTxt( fileName.c_str() );
       txt=true; // file has a real .txt ending
     }
   }
   // write calibration to cfi output file if ending is txt
   if( fileName.find(".tex")!=std::string::npos ){
     if( fileName.substr(fileName.find(".tex")).compare(".tex")==0 ){
-      p->Write_CalibrationTex( fileName.c_str(), config );
+      par_->Write_CalibrationTex( fileName.c_str(), config );
       tex=true; // file has a real .txt ending
     }
   }
 
   // write calibration to cfi & txt output file if w/o ending
   if( !cfi && !txt && !tex ){
-    p->Write_CalibrationCfi( (fileName+".cfi").c_str() );
-    p->Write_CalibrationTxt( (fileName+".txt").c_str() );
-    p->Write_CalibrationTex( (fileName+".tex").c_str(), config );
+    par_->Write_CalibrationCfi( (fileName+".cfi").c_str() );
+    par_->Write_CalibrationTxt( (fileName+".txt").c_str() );
+    par_->Write_CalibrationTex( (fileName+".tex").c_str(), config );
   }
 
 
@@ -396,11 +400,11 @@ void TCaliber::Done()
   if( config.read<bool>("create plots",0) ) {
     int mode = config.read<int>("Mode",0);
     if( mode == 0 ) {  // Control plots for calibration
-      TControlPlots * plots = new TControlPlots(configfile,&data,p);
+      TControlPlots * plots = new TControlPlots(configFile_,&data_,par_);
       plots->MakePlots();
       delete plots;
     } else if( mode == 1 ) {  // Control plots for jetsmearing
-      ControlPlotsJetSmearing * plotsjs = new ControlPlotsJetSmearing(configfile,&data,p);
+      ControlPlotsJetSmearing * plotsjs = new ControlPlotsJetSmearing(configFile_,&data_,par_);
       plotsjs->plotResponse();
       plotsjs->plotDijets();
       delete plotsjs;
@@ -409,28 +413,28 @@ void TCaliber::Done()
   
   // Clean-up
   cout << endl << "Cleaning up... " << flush;
-  for(DataIter i = data.begin() ; i != data.end() ; ++i) {
+  for(DataIter i = data_.begin() ; i != data_.end() ; ++i) {
     delete *i;
   }
-  data.clear();
+  data_.clear();
   cout << "Done" << endl;
 }
 
 
 
 //--------------------------------------------------------------------------------------------
-void TCaliber::Init()
+void TCaliber::init()
 {
-  ConfigFile config(configfile.c_str() );
+  ConfigFile config(configFile_.c_str() );
 
-  p = TParameters::CreateParameters(configfile);
+  par_ = TParameters::CreateParameters(configFile_);
 
   //initialize temp arrays for fast derivative calculation
-  TAbstractData::total_n_pars     = p->GetNumberOfParameters();
+  TAbstractData::total_n_pars     = par_->GetNumberOfParameters();
   //--------------------------------------------------------------------------
   //read config file
-  fit_method = config.read<int>("Fit method",1);
-  nthreads = config.read<int>("Number of Threads",1);
+  fitMethod_ = config.read<int>("Fit method",1);
+  nThreads_ = config.read<int>("Number of Threads",1);
   
   // Residual scaling
   const char* resScheme = ( config.read<string>("Residual Scaling Scheme","221").c_str() );
@@ -440,25 +444,25 @@ void TCaliber::Init()
       if(  scheme < 0  ||  scheme > 2  )
 	{
 	  cerr << "ERROR: " << scheme << " is not a valid scheme for resdiual scaling! Using default scheme 221." << endl << endl;
-	  _residualScalingScheme.clear();
-	  _residualScalingScheme.push_back(2);
-	  _residualScalingScheme.push_back(2);
-	  _residualScalingScheme.push_back(1);
+	  residualScalingScheme_.clear();
+	  residualScalingScheme_.push_back(2);
+	  residualScalingScheme_.push_back(2);
+	  residualScalingScheme_.push_back(1);
 	  break;
 	}
 
-      _residualScalingScheme.push_back( static_cast<int>(*resScheme - '0') );
+      residualScalingScheme_.push_back( static_cast<int>(*resScheme - '0') );
       resScheme++;
     }
-  OutlierChi2Cut        = config.read<double>("Outlier Cut on Chi2",100.0);
+  outlierChi2Cut_        = config.read<double>("Outlier Cut on Chi2",100.0);
 
   //BFGS fit parameters
-  deriv_step = config.read<double>("BFGS derivative step",1e-03);
-  mvec       = config.read<int>("BFGS mvec",6);
-  niter      = config.read<int>("BFGS niter",100);
-  eps        = config.read<double>("BFGS eps",1e-02);
-  wlf1       = config.read<double>("BFGS 1st wolfe parameter",1e-04);
-  wlf2       = config.read<double>("BFGS 2nd wolfe parameter",0.9);
+  derivStep_ = config.read<double>("BFGS derivative step",1e-03);
+  mvec_       = config.read<int>("BFGS mvec",6);
+  nIter_      = config.read<int>("BFGS niter",100);
+  eps_        = config.read<double>("BFGS eps",1e-02);
+  wlf1_       = config.read<double>("BFGS 1st wolfe parameter",1e-04);
+  wlf2_       = config.read<double>("BFGS 2nd wolfe parameter",0.9);
   printParNDeriv_ = config.read<bool>("BFGS print derivatives",false);
   //global parameters ?
   globalJetPars_ = bag_of<int>(config.read<string>("global jet parameters","")); 
@@ -470,14 +474,14 @@ void TCaliber::Init()
       int etaid = fixJetPars[i];
       int phiid = fixJetPars[i+1];
       int parid = fixJetPars[i+2];
-      if(parid >= p->GetNumberOfJetParametersPerBin()) continue;
-      int jetbin = p->GetJetBin(p->GetJetEtaBin(etaid),p->GetJetPhiBin(phiid));
+      if(parid >= par_->GetNumberOfJetParametersPerBin()) continue;
+      int jetbin = par_->GetJetBin(par_->GetJetEtaBin(etaid),par_->GetJetPhiBin(phiid));
       if(jetbin < 0) {
 	std::cerr<<"WARNING: fixed jet parameter bin index = " << jetbin << endl; 
 	exit(-2);  
       }
       //std::cout << "jetbin:" << jetbin << '\n';
-      fixedJetPars_.push_back(jetbin * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters() + parid);
+      fixedJetPars_.push_back(jetbin * par_->GetNumberOfJetParametersPerBin() + par_->GetNumberOfTowerParameters() + parid);
     }
   } else {
     cerr << "ERROR: syntax is: fixed jet parameter = <eta_id> <phi_id> <par_id>\n"; 
@@ -489,45 +493,45 @@ void TCaliber::Init()
       if( globalJetBin < 0 ) {
 	std::cerr << "WARNING: fixed global jet parameter bin index = " << globalJetBin << std::endl; 
 	exit(-2);  
-      } else if( static_cast<int>(globalJetBin) > p->GetNumberOfGlobalJetParameters() ) {
+      } else if( static_cast<int>(globalJetBin) > par_->GetNumberOfGlobalJetParameters() ) {
 	std::cerr << "WARNING: fixed global jet parameter bin index = " << globalJetBin;
 	std::cerr << " which is larger than the max number ";
-	std::cerr << p->GetNumberOfGlobalJetParameters() << " of global parameters." << std::endl;
+	std::cerr << par_->GetNumberOfGlobalJetParameters() << " of global parameters." << std::endl;
 	exit(-2);  
       } else {
-	fixedGlobalJetPars_.push_back( p->GetNumberOfTowerParameters() +
-				       p->GetNumberOfJetParameters()   +
-				       p->GetNumberOfTrackParameters() +
+	fixedGlobalJetPars_.push_back( par_->GetNumberOfTowerParameters() +
+				       par_->GetNumberOfJetParameters()   +
+				       par_->GetNumberOfTrackParameters() +
 				       globalJetBin );
       }
   }
 
-  output_file = config.read<string>( "Output file", "calibration_k.cfi" );
+  outputFile_ = config.read<string>( "Output file", "calibration_k.cfi" );
 
   //fill data vector
-  PhotonJetReader pjr(configfile,p);
-  n_gammajet_events = pjr.readEvents(data);
+  PhotonJetReader pjr(configFile_,par_);
+  nGammajetEvents_ = pjr.readEvents(data_);
   
-  DiJetReader djr(configfile,p);
-  n_dijet_events = djr.readEvents(data);
+  DiJetReader djr(configFile_,par_);
+  nDijetEvents_ = djr.readEvents(data_);
 
-  TriJetReader tjr(configfile,p);
-  n_trijet_events = tjr.readEvents(data);
+  TriJetReader tjr(configFile_,par_);
+  nTrijetEvents_ = tjr.readEvents(data_);
 
-  ZJetReader zjr(configfile,p);
-  n_zjet_events = zjr.readEvents(data);
+  ZJetReader zjr(configFile_,par_);
+  nZjetEvents_ = zjr.readEvents(data_);
 
-  TopReader tr(configfile,p);
-  n_top_events = tr.readEvents(data);
+  TopReader tr(configFile_,par_);
+  nTopEvents_ = tr.readEvents(data_);
   
-  TrackClusterReader tcr(configfile,p);
-  n_trackcluster_events = tcr.readEvents(data);
+  TrackClusterReader tcr(configFile_,par_);
+  nTrackClusterEvents_ = tcr.readEvents(data_);
 
-  ParameterLimitsReader plr(configfile,p);
-  plr.readEvents(data);
+  ParameterLimitsReader plr(configFile_,par_);
+  plr.readEvents(data_);
 
-  TowerConstraintsReader cr(configfile,p);
-  cr.readEvents(data);
+  TowerConstraintsReader cr(configFile_,par_);
+  cr.readEvents(data_);
 }
 //--^-TCaliber class-^------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -545,9 +549,9 @@ int caliber(int argc, char *argv[])
   else  
     Calibration = new TCaliber("config/calibration.cfg"); //Read input defined in config file
   
-  Calibration->Init();
-  Calibration->Run();  //Run Fit
-  Calibration->Done(); //Do Plots & Write Calibration to file
+  Calibration->init();
+  Calibration->run();  //Run Fit
+  Calibration->done(); //Do Plots & Write Calibration to file
   JetTruthEvent::printStats();
   Jet::printInversionStats();
   delete Calibration;    
@@ -558,7 +562,7 @@ int caliber(int argc, char *argv[])
 
 
 //--------------------------------------------------------------------------------------------
-void PrintUsage()
+void printUsage()
 {
   std::cerr << "ERROR: You did something wrong! Better fix it." << std::endl;
 }
@@ -569,7 +573,7 @@ void PrintUsage()
 int main(int argc, char *argv[])
 {
   if (argc>2) {
-    PrintUsage();
+    printUsage();
     exit(EXIT_FAILURE);
   }
   return caliber(argc, argv);

@@ -1,4 +1,4 @@
-//  $Id: caliber.h,v 1.47 2009/07/13 08:20:40 mschrode Exp $
+//  $Id: caliber.h,v 1.48 2009/07/22 13:50:32 mschrode Exp $
 
 //!  \mainpage
 //!
@@ -130,51 +130,73 @@ class TMeasurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.47 2009/07/13 08:20:40 mschrode Exp $
+//!  $Id: caliber.h,v 1.48 2009/07/22 13:50:32 mschrode Exp $
 // -----------------------------------------------------------------
 class TCaliber {
 public :
+  //!  \param f Name of the configuration file
+  // -----------------------------------------------------------------
   TCaliber(const std::string& f)
-  : configfile(f),p(0),deriv_step(1e-03),mvec(6),niter(100),eps(1e-02),
-  wlf1(1e-04),wlf2(0.9),printParNDeriv_(false)
- {};
+  : configFile_(f),
+  par_(0),
+  fitMethod_(1),
+  nThreads_(1),
+  nGammajetEvents_(0),
+  nDijetEvents_(0),
+  nTrijetEvents_(0),
+  nTrackClusterEvents_(0),
+  nZjetEvents_(0),
+  nTopEvents_(0),
+  printParNDeriv_(false),
+  derivStep_(1e-03),
+  mvec_(6),
+  nIter_(100),
+  eps_(1e-02),
+  wlf1_(1e-04),
+  wlf2_(0.9)
+  {};
+
   ~TCaliber(){};
 
-  void Init();
-  void Run();
-  void Done();
-  const char * GetOutputFile(){ return output_file.c_str(); };
+  void init();   //!< Read parameters from configfile, read data
+  void run();    //!< Run the fit
+  void done();   //!< Make control plots, clean up
+  const char * getOutputFile() { return outputFile_.c_str(); }; //!< Get the ouputfile name
 
 protected:  
   //internal functions
-  void Run_Lvmini();
+  void run_Lvmini();  //!< Run the fit
 
 private:
   //internal variables
-  int fit_method, n_gammajet_events, n_dijet_events;
-  int n_trijet_events,n_trackcluster_events, n_zjet_events, n_top_events;
-  std::string configfile, output_file;              //input/output
-  //int use_GammaJetTowerMethod,use_DisplayMethod;    //plots
-  //bool useMassConstraintW;
-  //bool useMassConstraintTop;
- 
-
-  std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals
-  double OutlierChi2Cut;                            // Cut on outlier when no scaling is chosen
-  int nthreads;
-  bool flatten_spectra;
-  std::vector<TData*> data;
-  
-  TParameters * p;    //fit parameters, depend on number of bins & geometry
+  std::string configFile_;    //!< The configuration file name
+  std::string outputFile_;    //!< The output file name
+  TParameters * par_;         //!< Fit parameters, depend on number of bins & geometry
+  int fitMethod_;             //!< Running mode
+  int nThreads_;              //!< Number of threads
+  std::vector<TData*> data_;  //!< The data
+  int nGammajetEvents_;       //!< Number of gamma-jet events
+  int nDijetEvents_;          //!< Number of dijet events
+  int nTrijetEvents_;         //!< Number of trijet events
+  int nTrackClusterEvents_;   //!< Number of track-cluster events
+  int nZjetEvents_;           //!< Number of Zjet events
+  int nTopEvents_;            //!< Number of top events
 
   // control parameters of fit
-  double deriv_step;
-  int mvec, niter;
-  float eps,wlf1,wlf2;
-  bool printParNDeriv_;
-  std::vector<int> globalJetPars_;
-  std::vector<int> fixedJetPars_;
-  std::vector<int> fixedGlobalJetPars_;
+  bool printParNDeriv_;     //!< Control whether to print derivatives in each iteration
+  std::vector<int> residualScalingScheme_;    //!< Iteration scheme of scaling of residuals
+  double outlierChi2Cut_;                     //!< Cut on outlier when no scaling is chosen
+  std::vector<int> globalJetPars_;            //!< List of global jet parameters
+  std::vector<int> fixedJetPars_;             //!< List of fixed jet parameters
+  std::vector<int> fixedGlobalJetPars_;       //!< List of fixed global jet parameters
+
+  // LVMINI parameters
+  double derivStep_;        //!< Step width for derivative calculation
+  int mvec_;                //!< Number of stored vector pairs in LVMINI
+  int nIter_;               //!< Number of iterations in LVMINI
+  float eps_;               //!< Convergence parameter in LVMINI
+  float wlf1_;              //!< Parameter 1 of strong Wolfe condition in LVMINI
+  float wlf2_;              //!< Parameter 2 of strong Wolfe condition in LVMINI
 };
 
 #endif
