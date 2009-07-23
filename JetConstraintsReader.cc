@@ -4,7 +4,7 @@
 //    This class add user defined jet constraints
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: JetConstraintsReader.cc,v 1.1 2008/12/12 17:06:00 stadie Exp $
+//    $Id: JetConstraintsReader.cc,v 1.1 2009/07/23 15:54:12 stadie Exp $
 //   
 
 #include "JetConstraintsReader.h"
@@ -23,7 +23,7 @@ JetConstraintsReader::JetConstraintsReader(const std::string& configfile, TParam
   //specify constraints
   vector<double> jet_constraint = bag_of<double>(config->read<string>( "jet constraint",""));
   if(jet_constraint.size() % 4 == 0) {
-    for(unsigned int i = 0 ; i < jet_constraint.size() ; i += 5) {
+    for(unsigned int i = 0 ; i < jet_constraint.size() ; i += 4) {
       jet_constraints.push_back(JetConstraint((int)jet_constraint[i],(int)jet_constraint[i+1],
 					      jet_constraint[i+2],jet_constraint[i+3]));
     } 
