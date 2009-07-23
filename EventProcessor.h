@@ -6,8 +6,8 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/14
-//!    $Id: EventProcessor.h,v 1.1 2008/12/14 13:38:57 stadie Exp $
-//!
+//!    $Id: EventProcessor.h,v 1.2 2009/04/27 13:50:11 mschrode Exp $
+// -----------------------------------------------------------------
 #ifndef EVENTPROCESSOR_H
 #define EVENTPROCESSOR_H
 
@@ -19,24 +19,30 @@ class TF1;
 #include <vector>
 #include <string>
 
+
+
+// -----------------------------------------------------------------
 class EventProcessor
 {
  public:
   EventProcessor(const std::string& configfile, TParameters* param);
-  ~EventProcessor();
-  int process(std::vector<TData*>& data);
- private:
-  void FlattenSpectra(std::vector<TData*>& data);
-  void BalanceSpectra(std::vector<TData*>& data);
-  int GetSpectraBin(double m1, double m2, double m3);
-  static void FitWithoutBottom(TH1 * hist, TF1 * func, double bottom=0.33);
-  static double gauss_step(double *x, double *par);
+  virtual ~EventProcessor();
+  virtual int process(std::vector<TData*>& data);
 
-  TParameters* p;
-  double Et_cut_on_gamma, Et_cut_on_jet;
-  bool flatten_spectra;
-  double RelWeight[7];//@@ Replace 7 by something meaningful
-  std::vector<int> _residualScalingScheme;          // Iteration scheme of scaling of residuals
+ private:
+  static void fitWithoutBottom(TH1 * hist, TF1 * func, double bottom=0.33);
+  static double gaussStep(double *x, double *par);
+
+  int flattenSpectra(std::vector<TData*>& data);
+  void balanceSpectra(std::vector<TData*>& data);
+  int getSpectraBin(double m1, double m2, double m3);
+
+  TParameters* par_;
+  double etCutOnGamma_;
+  double etCutOnJet_;
+  bool flattenSpectra_;
+  double relWeight_[7];//@@ Replace 7 by something meaningful
+  //  std::vector<int> residualScalingScheme_;          // Iteration scheme of scaling of residuals
 
   typedef std::vector<TData*>::iterator DataIter;
   typedef std::vector<TData*>::const_iterator DataConstIter;
@@ -48,8 +54,6 @@ class EventProcessor
     double *_cut;
     double _min, _max;
   };
-
-
 };
 
 

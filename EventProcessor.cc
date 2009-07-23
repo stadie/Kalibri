@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
+//    $Id: EventProcessor.cc,v 1.1 2008/12/14 13:38:57 stadie Exp $
 //   
 #include "EventProcessor.h"
 
@@ -26,23 +26,25 @@
 using std::cout;
 using std::endl;
 
+
+
 EventProcessor::EventProcessor(const std::string& configfile, TParameters* param)
-  : p(param),Et_cut_on_gamma(0),Et_cut_on_jet(0),flatten_spectra(0)
+  : par_(param),etCutOnGamma_(0),etCutOnJet_(0),flattenSpectra_(0)
 {  
   ConfigFile config(configfile.c_str());
 
-  flatten_spectra = config.read<int>("Flatten Spectra",1); 
+  flattenSpectra_ = config.read<int>("Flatten Spectra",0); 
   
   //last minute kinematic cuts
-  Et_cut_on_jet   = config.read<double>("Et cut on jet",0.0); 
-  Et_cut_on_gamma = config.read<double>("Et cut on gamma",0.0); 
+  etCutOnJet_   = config.read<double>("Et cut on jet",0.0); 
+  etCutOnGamma_ = config.read<double>("Et cut on gamma",0.0); 
   //relative sample weight 
-  RelWeight[2]        = config.read<double>("Gamma-Jet weight",1.0);
-  RelWeight[1]        = config.read<double>("Track-Tower weight",1.0);
-  RelWeight[3]        = config.read<double>("Track-Cluster weight",1.0);
-  RelWeight[4]        = config.read<double>("Di-Jet weight",1.0);
-  RelWeight[5]        = config.read<double>("Multi-Jet weight",1.0);
-  //RelWeight[2]        = config.read<double>("Z-Jet weight",1.0);
+  relWeight_[2]        = config.read<double>("Gamma-Jet weight",1.0);
+  relWeight_[1]        = config.read<double>("Track-Tower weight",1.0);
+  relWeight_[3]        = config.read<double>("Track-Cluster weight",1.0);
+  relWeight_[4]        = config.read<double>("Di-Jet weight",1.0);
+  relWeight_[5]        = config.read<double>("Multi-Jet weight",1.0);
+  //relWeight_[2]        = config.read<double>("Z-Jet weight",1.0);
 }
  
 EventProcessor::~EventProcessor()
@@ -52,7 +54,10 @@ EventProcessor::~EventProcessor()
 
 int EventProcessor::process(std::vector<TData*>& data)
 {
-  if(flatten_spectra) FlattenSpectra(data);
+  if(flattenSpectra_) {
+    std::cout << "Flatten spectra for ";
+    std::cout << flattenSpectra(data) << " events\n";
+  }
   //BalanceSpectra(data);
   return data.size();
 }
@@ -72,7 +77,7 @@ bool EventProcessor::NotBalancedRejection::operator()(TData *d) {
   return result;
 }
 
-int EventProcessor::GetSpectraBin(double m1, double m2=0., double m3=0.)
+int EventProcessor::getSpectraBin(double m1, double m2=0., double m3=0.)
 {
   //pt
   int bin1, bins1 = 7000; 
@@ -82,7 +87,7 @@ int EventProcessor::GetSpectraBin(double m1, double m2=0., double m3=0.)
   else if (m1>max1) bin1=bins1+1;
   else              bin1=(int)(((m1-min1)/max1)*(double)bins1);
   //eta
-  int bin2=0, bins2 = p->GetEtaGranularityJet()*p->GetPhiGranularityJet();
+  int bin2=0, bins2 = par_->GetEtaGranularityJet()*par_->GetPhiGranularityJet();
   double min2    = 0.;
   double max2    = 82.;
   if      (m2<min2) bin2=0;
@@ -99,14 +104,14 @@ int EventProcessor::GetSpectraBin(double m1, double m2=0., double m3=0.)
   return bin1 *bins2*bins3 + bin2 *bins3 + bin3;
 }
 
-double EventProcessor::gauss_step(double *x, double *par)
+double EventProcessor::gaussStep(double *x, double *par)
 {
   return par[2]/(par[1]*2.5)*exp(-(x[0]-par[0])*(x[0]-par[0])/(2.0*par[1]*par[1]))
     *
     (1.0-1.0/(1.0+exp((par[3]-x[0])/par[4]) ) );  	
 }
 
-void EventProcessor::FitWithoutBottom(TH1 * hist, TF1 * func, double bottom)
+void EventProcessor::fitWithoutBottom(TH1 * hist, TF1 * func, double bottom)
 {
   TH1F * result=(TH1F*)hist->Clone();
   double maximum = hist->GetMaximum();
@@ -122,12 +127,14 @@ void EventProcessor::FitWithoutBottom(TH1 * hist, TF1 * func, double bottom)
   result->Fit("gauss_step","LLQNO","");
 }
 
-void EventProcessor::FlattenSpectra(std::vector<TData*>& data)
+int EventProcessor::flattenSpectra(std::vector<TData*>& data)
 {
+  int numProcEvts = 0; // Number of processed events
+
   double allweights=0;
   //@@ Replace "7" with some more meaningful variable name!!!
   for(int i=0;i<7;++i)
-    allweights += RelWeight[i];
+    allweights += relWeight_[i];
 
   map<int,double> weights[7];
   double tot[7];
@@ -138,6 +145,8 @@ void EventProcessor::FlattenSpectra(std::vector<TData*>& data)
   for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
     TAbstractData* dt = dynamic_cast<TAbstractData*>(*it);
     if(! dt) continue;
+    if( dt->GetType() == ParLimit ) continue;
+    numProcEvts++;
     alltotal+=dt->GetWeight();
     for (int type=0; type<7; ++type){
       if (dt->GetType()!=type) continue;
@@ -162,9 +171,9 @@ void EventProcessor::FlattenSpectra(std::vector<TData*>& data)
 	  min_tower_dr = dr;
 	}
       }
-      //int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had)  );
-      //int bin = GetSpectraBin( dt->GetScale(), index );
-      int bin = GetSpectraBin( dt->GetScale() );
+      //int bin = getSpectraBin( dt->GetScale(), index, em/(em+had)  );
+      //int bin = getSpectraBin( dt->GetScale(), index );
+      int bin = getSpectraBin( dt->GetScale() );
       double error = 1.;//dt->GetParametrizedErr( &dt->GetMess()->pt );
       weights[type][bin]+=dt->GetWeight()/error;
       tot[type]+=dt->GetWeight()/error;
@@ -200,13 +209,13 @@ void EventProcessor::FlattenSpectra(std::vector<TData*>& data)
 	}
 	//int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had) );
 	//int bin = GetSpectraBin( dt->GetScale(), index );
-	int bin = GetSpectraBin( dt->GetScale() );
+	int bin = getSpectraBin( dt->GetScale() );
 	//dt->SetWeight(1);
 	 
 	 
 	//dt->SetWeight(dt->GetWeight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
 	 
-	dt->SetWeight(dt->GetWeight()/weights[type][bin] * (alltotal / double(weights[type].size()) )  * RelWeight[type] / allweights );
+	dt->setWeight(dt->GetWeight()/weights[type][bin] * (alltotal / double(weights[type].size()) )  * relWeight_[type] / allweights );
 	 
 	 
 	//dt->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
@@ -264,13 +273,15 @@ void EventProcessor::FlattenSpectra(std::vector<TData*>& data)
     */
 
   } 
+
+  return numProcEvts;
 }
   
 //further weighting.............................................................
-void EventProcessor::BalanceSpectra(std::vector<TData*>& data)
+void EventProcessor::balanceSpectra(std::vector<TData*>& data)
 {
   cout<<"...further weighting"<<endl;
-  double min = Et_cut_on_gamma;
+  double min = etCutOnGamma_;
   double max = 100.; //GeV
   int nbins = (int)(max-min);//one bin per GeV
   if (nbins<2) return;
@@ -312,7 +323,7 @@ void EventProcessor::BalanceSpectra(std::vector<TData*>& data)
 
   cout<<"...fit the truth distributions"<<endl;
   double edge;
-  TF1 * f = new TF1("gauss_step",gauss_step,-3,3,5);
+  TF1 * f = new TF1("gauss_step",gaussStep,-3,3,5);
   double * cuts = new double[nbins];
   TText * text = new TText();
   text->SetTextSize(0.03);
@@ -323,11 +334,11 @@ void EventProcessor::BalanceSpectra(std::vector<TData*>& data)
     //TF1 *f=0;
     //gauss_forpt[i]->Fit("gaus","LLQNO","");
     //f = (TF1*)gROOT->GetFunction("gaus")->Clone();
-    edge = 1.0-Et_cut_on_gamma/(((double)i)+min+0.5);
+    edge = 1.0-etCutOnGamma_/(((double)i)+min+0.5);
     f->SetParameters(-1.,2.0,3.0, edge, 0.0001);
     f->FixParameter(3, edge);
     f->FixParameter(4, 0.0001);
-    FitWithoutBottom(gauss_forpt[i], f);
+    fitWithoutBottom(gauss_forpt[i], f);
     //bla->Fit("gauss_step","LLQNO","");
     //delete bla;
 
