@@ -2,8 +2,10 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
+//
 //    $Id: TwoJetsInvMassEvent.h,v 1.3 2009/04/27 13:49:08 mschrode Exp $
 //   
+
 #ifndef TWOJETSINVMASSEVENT_H
 #define TWOJETSINVMASSEVENT_H
 
@@ -45,9 +47,11 @@ public:
   double chi2_plots() const { return chi2plots; }
   double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const { 
     chi2plots = chi2_fast_simple(temp_derivative1,temp_derivative2,epsilon);
+    //chi2plots = chi2_fast_scaled(temp_derivative1,temp_derivative2,epsilon);
     return chi2plots;
   }
   double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_scaled(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   void UpdateError() {}
 
  private:

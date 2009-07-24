@@ -1,8 +1,13 @@
+//
+//    Class for all events with two jets constraint to one invariant mass
+//
+//    first version: Hartmut Stadie 2008/12/14
+//    $Id: JetTruthEvent.h,v 1.5 2009/02/25 15:08:25 stadie Exp $
+//     
 #include "TwoJetsInvMassEvent.h"
 
 #include "TLorentzVector.h"
 #include <algorithm>
-
 
 double TwoJetsInvMassEvent::chi2() const
 {
@@ -42,10 +47,10 @@ double  TwoJetsInvMassEvent::correctedMass() const {
 double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1, 
 					     double * temp_derivative2, double const epsilon) const
 {
-  double et1 = jet1->correctedEt(jet1->Et());
+  const double et1 = jet1->correctedEt(jet1->Et());
   double c1 = et1/ jet1->Et();
    
-  double et2 = jet2->correctedEt(jet2->Et());
+  const double et2 = jet2->correctedEt(jet2->Et());
   double c2 = et2/ jet2->Et();
   
 
@@ -53,13 +58,19 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
   p1.SetPtEtaPhiM(et1,jet1->eta(),jet1->phi(),0);
   p2.SetPtEtaPhiM(et2,jet2->eta(),jet2->phi(),0);
   
-  double err2inv = c1 * jet1->expectedError(et1);
+  // alpha = 1 - cos(angle(p1,p2))
+  const double alpha = 1 - cos(p1.Angle(p2.Vect()));
+  double m = sqrt(2 * p1.P()*p2.P() * alpha);
+  double dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+  double dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+  
+  double err2inv = dmdp1 * c1 * jet1->expectedError(et1);
   err2inv *= err2inv;
-  double err2 = c2 * jet2->expectedError(et2);
+  double err2 = dmdp2 * c2 * jet2->expectedError(et2);
   err2inv += err2 * err2;
   err2inv = 1/err2inv;
-  
-  double chi2 = truth - (p1+p2).M();
+ 
+  double chi2 = truth - m;
   chi2 *= chi2 * err2inv; 
   if(chi2 != chi2) {//check for NAN
     std::cout <<et1 << ", " << et2 << ", " <<  jet1->Et() << ", " << jet2->Et() << ", " << chi2 << '\n';
@@ -73,6 +84,7 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
     c1 = i1->lowerEt/jet1->Et();
     Jet::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
     if(i2 != varcoll2.end()) {
+      assert(i1->parid == i2->parid);
       p2.SetPtEtaPhiM(i2->lowerEt,jet2->eta(),jet2->phi(),0);
       c2 = i2->lowerEt/jet2->Et();
       err2 = c2 * i2->lowerError;
@@ -80,9 +92,13 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
       p2.SetPtEtaPhiM(et2,jet2->eta(),jet2->phi(),0);
       c2 = et2/ jet2->Et();
       err2 = c2 * jet2->expectedError(et2);
-    }
-    temp1 = truth - (p1+p2).M();
-    err2inv = c1 * i1->lowerError;
+    } 
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+    dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+    err2 *= dmdp2;
+    temp1 = truth - m;
+    err2inv = dmdp1 * c1 * i1->lowerError;
     err2inv *= err2inv;
     err2inv += err2 * err2;
     err2inv = 1/err2inv;
@@ -94,9 +110,15 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
       p2.SetPtEtaPhiM(i2->upperEt,jet2->eta(),jet2->phi(),0);
       c2 = i2->upperEt/ jet2->Et();
       err2 = c2 * i2->upperError;
-    } 
-    temp2 = truth - (p1+p2).M();
-    err2inv = c1 * i1->upperError;
+    } else {
+      err2 = c2 * jet2->expectedError(et2);
+    }
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+    dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+    temp2 = truth - m;
+    err2 *= dmdp2;
+    err2inv = dmdp1 * c1 * i1->upperError;
     err2inv *= err2inv;
     err2inv += err2 * err2;
     err2inv = 1/err2inv;
@@ -104,6 +126,10 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
     temp2 = weight * TData::ScaleResidual(temp2);
     temp_derivative1[i1->parid] += (temp2 - temp1); // for 1st derivative
     temp_derivative2[i1->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+    //if(i2 != varcoll2.end()) {
+    //  temp_derivative1[i1->parid] += (temp2 - temp1); // for 1st derivative
+    //  temp_derivative2[i1->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+    //}
   }
   for(Jet::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
     p2.SetPtEtaPhiM(i2->lowerEt,jet2->eta(),jet2->phi(),0);
@@ -116,18 +142,25 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
       c1 = et1/ jet1->Et();
       err2 = c1 * jet1->expectedError(et1);
     }
-    temp1 = truth - (p1+p2).M();
-    err2inv = c2 * i2->lowerError;
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+    dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+    temp1 = truth - m;
+    err2inv = dmdp2 * c2 * i2->lowerError;
     err2inv *= err2inv;
+    err2 *= dmdp1;
     err2inv += err2 * err2;
     err2inv = 1/err2inv;
     temp1 *= temp1 * err2inv;
     temp1 = weight * TData::ScaleResidual(temp1);
     p2.SetPtEtaPhiM(i2->upperEt,jet2->eta(),jet2->phi(),0);
     c2 = i2->upperEt/jet2->Et();
-
-    temp2 = truth - (p1+p2).M();
-    err2inv = c2 * i2->upperError;
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+    dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+    temp2 = truth - m;
+    err2 = dmdp1 * c1 * jet1->expectedError(et1);
+    err2inv = dmdp2 * c2 * i2->upperError;
     err2inv *= err2inv;
     err2inv += err2 * err2;
     err2inv = 1/err2inv;
@@ -138,4 +171,132 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
   }
   return chi2;
 
+}
+
+double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1, 
+					     double * temp_derivative2, double const epsilon) const
+{
+  double deltaE = 0.0001;
+  double et1 = jet1->correctedEt(jet1->Et());
+  double et1prime = (jet1->correctedEt(jet1->Et() + deltaE) - 
+		     jet1->correctedEt(jet1->Et() - deltaE))/2/deltaE;
+  
+  double et2 = jet2->correctedEt(jet2->Et());
+  double et2prime =  (jet2->correctedEt(jet2->Et() + deltaE) - 
+		      jet2->correctedEt(jet2->Et() - deltaE))/2/deltaE;
+  
+  double c1 = et1prime;
+  double c2 = et2prime;
+  //std::cout << "Et1:" << jet1->Et() << " c1:" << et1prime << ", " << et1/jet1->Et() << '\n';
+  TLorentzVector p1,p2;
+  p1.SetPtEtaPhiM(et1,jet1->eta(),jet1->phi(),0);
+  p2.SetPtEtaPhiM(et2,jet2->eta(),jet2->phi(),0);
+  
+  // alpha = 1 - cos(angle(p1,p2))
+  double alpha = 1 - cos(p1.Angle(p2.Vect()));
+  double m = sqrt(2 * p1.P()*p2.P() * alpha);
+  double dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+  double dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+  
+  double err2inv = dmdp1 * c1 * jet1->expectedError(et1);
+  err2inv *= err2inv;
+  double err2 = dmdp2 * c2 * jet2->expectedError(et2);
+  err2inv += err2 * err2;
+  err2inv = 1/err2inv;
+ 
+  double chi2 = truth - m;
+  chi2 *= chi2 * err2inv; 
+  if(chi2 != chi2) {//check for NAN
+    std::cout <<et1 << ", " << et2 << ", " <<  jet1->Et() << ", " << jet2->Et() << ", " << chi2 << '\n';
+  }
+  chi2 = weight * TData::ScaleResidual(chi2);
+  double temp1,temp2;
+  const Jet::VariationColl& varcoll1 = jet1->varyParsDirectly(epsilon);
+  const Jet::VariationColl& varcoll2 = jet2->varyParsDirectly(epsilon);
+  for(Jet::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) {
+    p1.SetPtEtaPhiM(i1->lowerEt,jet1->eta(),jet1->phi(),0);
+    c1 = i1->lowerEtDeriv;
+    Jet::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
+    if(i2 != varcoll2.end()) {
+      p2.SetPtEtaPhiM(i2->lowerEt,jet2->eta(),jet2->phi(),0);
+      c2 = i2->lowerEtDeriv;
+      err2 = c2 * i2->lowerError;
+    } else {
+      p2.SetPtEtaPhiM(et2,jet2->eta(),jet2->phi(),0);
+      c2 = et2prime;
+      err2 = c2 * jet2->expectedError(et2);
+    } 
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+    dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+    err2 *= dmdp2;
+    temp1 = truth - m;
+    err2inv = dmdp1 * c1 * i1->lowerError;
+    err2inv *= err2inv;
+    err2inv += err2 * err2;
+    err2inv = 1/err2inv;
+    temp1 *= temp1 * err2inv;
+    temp1 = weight * TData::ScaleResidual(temp1);
+    p1.SetPtEtaPhiM(i1->upperEt,jet1->eta(),jet1->phi(),0);
+    c1 = i1->upperEtDeriv;
+    if(i2 != varcoll2.end()) {
+      p2.SetPtEtaPhiM(i2->upperEt,jet2->eta(),jet2->phi(),0);
+      c2 = i2->upperEtDeriv;
+      err2 = c2 * i2->upperError;
+    }  else {
+      err2 = c2 * jet2->expectedError(et2);
+    }
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+    dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+    temp2 = truth - m;
+    err2 *= dmdp2;
+    err2inv = dmdp1 * c1 * i1->upperError;
+    err2inv *= err2inv;
+    err2inv += err2 * err2;
+    err2inv = 1/err2inv;
+    temp2 *= temp2 * err2inv;
+    temp2 = weight * TData::ScaleResidual(temp2);
+    temp_derivative1[i1->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i1->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+  }
+  for(Jet::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
+    p2.SetPtEtaPhiM(i2->lowerEt,jet2->eta(),jet2->phi(),0);
+    c2 = i2->lowerEtDeriv;
+    Jet::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
+    if(i1 != varcoll1.end()) {
+      continue;
+    } else {
+      p1.SetPtEtaPhiM(et1,jet1->eta(),jet1->phi(),0);
+      c1 = et1prime;
+      err2 = c1 * jet1->expectedError(et1);
+    }
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+    dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+    temp1 = truth - m;
+    err2inv = dmdp2 * c2 * i2->lowerError;
+    err2inv *= err2inv;
+    err2 *= dmdp1;
+    err2inv += err2 * err2;
+    err2inv = 1/err2inv;
+    temp1 *= temp1 * err2inv;
+    temp1 = weight * TData::ScaleResidual(temp1);
+    p2.SetPtEtaPhiM(i2->upperEt,jet2->eta(),jet2->phi(),0);
+    c2 = i2->upperEtDeriv;
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    dmdp1 = p2.P() * alpha / m * jet1->E() / jet1->Et();
+    dmdp2 = p1.P() * alpha / m * jet2->E() / jet2->Et();
+    temp2 = truth - m;
+    err2 = dmdp1 * c1 * jet1->expectedError(et1);
+    err2inv = dmdp2 * c2 * i2->upperError;
+    err2inv *= err2inv;
+    err2inv += err2 * err2;
+    err2inv = 1/err2inv;
+    temp2 *= temp2 * err2inv;
+    temp2 = weight * TData::ScaleResidual(temp2);
+    temp_derivative1[i2->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i2->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+  }
+  return chi2;
 }
