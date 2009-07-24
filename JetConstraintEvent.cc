@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetTruthEvent.h,v 1.8 2009/07/13 08:25:11 mschrode Exp $
+//    $Id: JetConstraintEvent.cc,v 1.1 2009/07/23 15:54:12 stadie Exp $
 //   
 
 
@@ -17,7 +17,18 @@ JetConstraintEvent::~JetConstraintEvent()
   }
   jets.clear();
 }
-    
+
+void JetConstraintEvent::addJet(Jet* j) 
+{
+  jets.push_back(j); 
+  //add parameter ids to variation  map
+  const Jet::VariationColl& varcoll = j->varyParsDirectly(0.001);
+  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+    varmap[i->parid] = Variation();
+  }
+}
+
+
 void JetConstraintEvent::ChangeParAddress(double* oldpar, double* newpar) { 
   for(unsigned int i = 0, njets = jets.size() ; i < njets ; ++i) {
     jets[i]->ChangeParAddress(oldpar,newpar);
@@ -54,8 +65,10 @@ double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_de
     const Jet::VariationColl& varcoll = jets[i]->varyParsDirectly(epsilon);
     double et = jets[i]->correctedEt(jets[i]->Et());
     for(Jet::VariationCollIter j = varcoll.begin() ; j != varcoll.end() ; ++j) {
-      varmap[j->parid].uppersum += j->upperEt - et;
-      varmap[j->parid].lowersum += j->lowerEt - et;
+      VarMap::iterator k = varmap.find(j->parid);
+      assert(k != varmap.end());
+      k->second.uppersum += j->upperEt - et;
+      k->second.lowersum += j->lowerEt - et;
     }
   }
   for(VarMap::iterator i = varmap.begin() ; i != varmap.end() ; ++i) {
