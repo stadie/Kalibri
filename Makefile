@@ -99,7 +99,7 @@ ParameterLimitsReader.o: EventReader.h ParameterLimitsReader.h ParameterLimitsRe
 TowerConstraintsReader.o:  EventReader.h TowerConstraintsReader.h TowerConstraintsReader.cc Parameters.h ConfigFile.h
 	$(C) $(RCXX) -c TowerConstraintsReader.cc
 
-JetConstraintsReader.o:  EventReader.h JetConstraintsReader.h JetConstraintsReader.cc Parameters.h ConfigFile.h JetConstraintEvent.h
+JetConstraintsReader.o:  EventReader.h JetConstraintsReader.h JetConstraintsReader.cc Parameters.h ConfigFile.h JetConstraintEvent.h JetConstraintsReader.cc
 	$(C) $(RCXX) -c JetConstraintsReader.cc
 
 TrackClusterReader.o: EventReader.h TrackClusterReader.h TrackClusterReader.cc TrackClusterSel.h Parameters.h ConfigFile.h
@@ -120,7 +120,7 @@ JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc
 TwoJetsInvMassEvent.o: CalibData.h Jet.h TwoJetsInvMassEvent.h TwoJetsInvMassEvent.cc
 	$(C) $(RCXX) -c TwoJetsInvMassEvent.cc
 
-JetConstraintEvent.o: JetConstraintEvent.h CalibData.h Jet.h
+JetConstraintEvent.o: JetConstraintEvent.h CalibData.h Jet.h JetConstraintEvent.cc
 	$(C) $(CFLAGS) -c JetConstraintEvent.cc
 
 JetWithTowers.o: CalibData.h Jet.h JetWithTowers.h Function.h JetWithTowers.cc Parametrization.h
