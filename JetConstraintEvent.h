@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetTruthEvent.h,v 1.8 2009/07/13 08:25:11 mschrode Exp $
+//    $Id: JetConstraintEvent.h,v 1.1 2009/07/23 15:54:12 stadie Exp $
 //   
 #ifndef JETCONSTRAINTEVENT_H
 #define JETCONSTRAINTEVENT_H
@@ -23,7 +23,7 @@ class JetConstraintEvent : public TData
   JetConstraintEvent(double t, double w) : truth(t), weight(w) {}
   ~JetConstraintEvent();
     
-  void addJet(Jet* j) { jets.push_back(j);}
+  void addJet(Jet* j);
   
 
   //interface from TData
