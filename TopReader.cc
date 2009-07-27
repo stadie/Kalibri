@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.9 2009/07/20 13:09:05 snaumann Exp $
+//    $Id: TopReader.cc,v 1.10 2009/07/23 13:07:20 snaumann Exp $
 //   
 #include "TopReader.h"
 
@@ -442,8 +442,8 @@ TData* TopReader::createTwoJetsInvMassEvents()
   }
   delete [] terr;
   if(jets[1] &&
-     jets[0]->Et() > minJetEt_ && fabs(jets[0]->eta()) < maxJetEta_ &&
-     jets[1]->Et() > minJetEt_ && fabs(jets[1]->eta()) < maxJetEta_) {
+     jets[0]->Et() > minJetEt_ && std::abs(jets[0]->eta()) < maxJetEta_ &&
+     jets[1]->Et() > minJetEt_ && std::abs(jets[1]->eta()) < maxJetEta_) {
     return new TwoJetsInvMassEvent(jets[0],jets[1],massConstraintW_,1.0);
   } else {
     delete jets[0];
