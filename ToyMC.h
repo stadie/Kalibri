@@ -14,7 +14,7 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.14 2009/07/08 12:13:51 mschrode Exp $
+//!  $Id: ToyMC.h,v 1.15 2009/07/16 15:05:37 mschrode Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -144,9 +144,11 @@ class ToyMC {
   int generatePhotonJetTree(TTree *tree, int nevents);
   int generateTrackClusterTree(TTree *tree, int nevents);
   int generateDiJetTree(TTree* CalibTree, int nevents);
+  int generateTopTree(TTree* CalibTree, int nevents);
   int makeTrackCluster(const char* filename, int nevents);
   int makePhotonJet(const char* filename, int nevents);
   int makeDiJet(const char* filename, int nevents);
+  int makeTop(const char* filename, int nevents);
   void init(const std::string& configfile);
   void print() const;
 };

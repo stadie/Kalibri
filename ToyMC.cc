@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.28 2009/07/15 08:07:12 stadie Exp $
+// $Id: ToyMC.cc,v 1.29 2009/07/16 15:05:37 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -998,7 +998,236 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   return CalibTree->GetEntriesFast();
 }
 
+//!  \brief Generate w decay events and write into tree
+//!
+//!  The w decay event contains two real jets. and a third
+//!  dummy jet with Et = 0 GeV to fit to the DiJetReader
+//!  which reads a third jet for potential cuts.
+//!
+//!  \param CalibTree ROOT tree
+//!  \param nevents Number of dijet events
+//!  \return Number of generated events
+//----------------------------------------------------------
+int ToyMC::generateTopTree(TTree* CalibTree, int nevents)
+{
+  //make tree 
+ // CaloTowers
+  const int kMAX = 10000;
+  int NobjTow;
+  float towet[kMAX];
+  float toweta[kMAX];
+  float towphi[kMAX];
+  float towen[kMAX];
+  float towem[kMAX];
+  float towhd[kMAX];
+  float towoe[kMAX];  
+  float towemtrue[kMAX];
+  float towhdtrue[kMAX];
+  float towoetrue[kMAX];
+  int towid_phi[kMAX];
+  int towid_eta[kMAX];
+  int towid[kMAX];
+  int tow_jetidx[kMAX];
 
+  CalibTree->Branch( "NobjTow", &NobjTow,"NobjTow/I"             );
+  CalibTree->Branch( "TowId",     towid,      "TowId[NobjTow]/I"    );
+  CalibTree->Branch( "TowId_phi", towid_phi,  "TowId_phi[NobjTow]/I");
+  CalibTree->Branch( "TowId_eta", towid_eta,  "TowId_eta[NobjTow]/I");
+  CalibTree->Branch( "TowEt",     towet,      "TowEt[NobjTow]/F"    );
+  CalibTree->Branch( "TowEta",    toweta,     "TowEta[NobjTow]/F"   );
+  CalibTree->Branch( "TowPhi",    towphi,     "TowPhi[NobjTow]/F"   );
+  CalibTree->Branch( "TowE",      towen,      "TowE[NobjTow]/F"     );
+  CalibTree->Branch( "TowEm",     towem,      "TowEm[NobjTow]/F"    );
+  CalibTree->Branch( "TowHad",    towhd,      "TowHad[NobjTow]/F"   );
+  CalibTree->Branch( "TowOE",     towoe,      "TowOE[NobjTow]/F"    );
+  CalibTree->Branch( "Tow_jetidx",tow_jetidx, "Tow_jetidx[NobjTow]/I");
+  // RecoJets
+  const int kjMAX = 8;
+  int NobjJet = 2;;
+  float jetpt[kjMAX];
+  float jetphi[kjMAX];
+  float jeteta[kjMAX];
+  float jetet[kjMAX];
+  float jete[kjMAX];
+  int jetflavor[kjMAX];
+  int jettopid[kjMAX];
+  float jscaleL1[kjMAX];
+  float jscaleL2[kjMAX];
+  float jscaleL3[kjMAX];
+  float jscaleL4[kjMAX];
+  float jscaleL5[kjMAX];
+  for(int i = 0; i < kjMAX; i++) {
+    jscaleL1[i] = 1.;
+    jscaleL2[i] = 1.;
+    jscaleL3[i] = 1.;
+    jscaleL4[i] = 1.;
+    jscaleL5[i] = 1.;
+  }
+  CalibTree->Branch( "NobjJet",&NobjJet,"NobjJet/I"     );
+  CalibTree->Branch( "JetPt", jetpt, "JetPt[NobjJet]/F" );
+  CalibTree->Branch( "JetPhi",jetphi,"JetPhi[NobjJet]/F");
+  CalibTree->Branch( "JetEta",jeteta,"JetEta[NobjJet]/F");
+  CalibTree->Branch( "JetEt", jetet, "JetEt[NobjJet]/F" );
+  CalibTree->Branch( "JetE",  jete,  "JetE[NobjJet]/F"  );
+  CalibTree->Branch( "JetFlavor", jetflavor, "JetFlavor[NobjJet]/I" );
+  CalibTree->Branch( "JetTopID",  jettopid,  "JetTopID[NobjJet]/I"  );
+  CalibTree->Branch( "JetCorrL1", jscaleL1,  "JetCorrL1[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrL2", jscaleL2,  "JetCorrL2[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrL3", jscaleL3,  "JetCorrL3[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrL4", jscaleL4,  "JetCorrL4[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrL5", jscaleL5,  "JetCorrL5[NobjJet]/F" );
+  // GenJets
+  float genjetpt[kjMAX];
+  float genjetphi[kjMAX];
+  float genjeteta[kjMAX];
+  float genjetet[kjMAX];
+  float genjete[kjMAX];
+  CalibTree->Branch( "GenJetPt", genjetpt, "GenJetPt[NobjJet]/F" );
+  CalibTree->Branch( "GenJetPhi",genjetphi,"GenJetPhi[NobjJet]/F");
+  CalibTree->Branch( "GenJetEta",genjeteta,"GenJetEta[NobjJet]/F");
+  CalibTree->Branch( "GenJetEt", genjetet, "GenJetEt[NobjJet]/F" );
+  CalibTree->Branch( "GenJetE",  genjete,  "GenJetE[NobjJet]/F"  );
+
+  //EventWeight
+  float weight = 1;
+  CalibTree->Branch( "Weight",&weight,"Weight/F"   );
+
+  // Loop over events
+  TLorentzVector wjet[2];
+  const double Wmass = 80.403; 
+  float ttowet[kMAX];
+  float ttoweta[kMAX];
+  float ttowphi[kMAX];
+  int ttowid_phi[kMAX];
+  int ttowid_eta[kMAX]; 
+  TLorentzVector jet, tower;
+  for(int n = 0; n < nevents ; ++n) {
+    // Generate truth 4-momentum of W boson
+    genInput();	
+    wjet[0].SetPtEtaPhiM(0,0,0,0);
+    wjet[1].SetPtEtaPhiM(0,0,0,0);    
+    double theta = random_->Rndm() * M_PI;
+    double phi = random_->Rndm() * M_PI * 2.0;
+    double p = Wmass / 2;
+    double pt = p * sin(theta);
+    wjet[0].SetXYZM(pt * sin(phi),pt * cos(phi),p * cos(theta),0);
+    wjet[1].SetVectM(-wjet[0].Vect(),0);
+    //std::cout << "vor Boost:\n";
+    //std::cout << wjet[0].Px() << ", " << wjet[0].Py() << ", " << wjet[0].Pz() << ", " << wjet[0].E() << '\n';
+    //std::cout << wjet[1].Px() << ", " << wjet[1].Py() << ", " << wjet[1].Pz() << ", " << wjet[1].E() << '\n';
+    //std::cout << "mass:" << (wjet[0] + wjet[1]).M() << '\n';
+    pInput_.SetVectM(pInput_.Vect(),Wmass);
+    TVector3 b = pInput_.BoostVector();
+    wjet[0].Boost(b);
+    wjet[1].Boost(b);    
+    //std::cout << "boost:" << b.X() << ", " << b.Y() << ", " << b.Z() << '\n';
+    //std::cout << wjet[0].Px() << ", " << wjet[0].Py() << ", " << wjet[0].Pz() << ", " << wjet[0].E() << '\n';
+    //std::cout << wjet[1].Px() << ", " << wjet[1].Py() << ", " << wjet[1].Pz() << ", " << wjet[1].E() << '\n';
+
+    //std::cout << "mass:" << (wjet[0] + wjet[1]).M() << '\n'; 
+    // set gen jets from W
+    for(int i = 0 ; i < 2 ; ++i) {
+      genjetpt[i]  = wjet[i].Pt();
+      genjeteta[i] = wjet[i].Eta();
+      genjetphi[i] = wjet[i].Phi();
+      genjetet[i]  = wjet[i].Pt();
+      genjete[i]   = wjet[i].E();
+    }
+    if((std::abs(wjet[0].Eta()) > 3) || (std::abs(wjet[1].Eta()) > 3)) {
+      n--;
+      continue;
+    }
+  
+    // Set random response paramters for this event
+    // if required by response model
+    if     (responseModel_ == Flat) parResp_.at(0) = random_->Uniform(1.5);
+    else if(responseModel_ == Exp)  parResp_.at(0) = random_->Exp(0.5);
+    else if(responseModel_ == Slope) {
+      double u1 = random_->Uniform(2);
+      double u2 = random_->Uniform(2);
+      parResp_.at(0) = 2. - std::max(u1,u2);
+    }
+
+    // Loop over first two jets and
+    // split genjets into towers
+    NobjTow = 0;
+    for(int i = 0 ; i < 2 ; ++i) {
+      // Split it into towers and set truth of towers
+      int ntow = splitJet(wjet[i],ttowet,ttoweta,ttowphi,ttowid_eta,ttowid_phi);  
+
+      // Reset jet and genjet 4-momenta. They will
+      // be repopulated by sum of tower 4-momenta
+      jet.SetPtEtaPhiM(0,0,0,0);
+      wjet[i].SetPtEtaPhiM(0,0,0,0);
+
+      // Generate pi0 fraction i.e. non-hadronic fraction
+      double p0frac = random_->Uniform(maxPi0Frac_);
+
+      // Loop over towers and smear truth with response
+      // and resolution
+      for(int j = 0 ; j < ntow ; ++j) {
+	int k         = NobjTow + j;
+
+	// Copy tower truth to tower
+	towet[k]      = ttowet[j];
+	toweta[k]     = ttoweta[j];
+	towphi[k]     = ttowphi[j];	
+	towid[k]      = 0;
+	towid_eta[k]  = ttowid_eta[j];
+	towid_phi[k]  = ttowid_phi[j];
+	tow_jetidx[k] = i;
+	tower.SetPtEtaPhiM(towet[k],toweta[k],towphi[k],0);
+	towen[k]      = tower.E();
+
+	// Add unsmeared tower to genjet
+	wjet[i]    += tower;
+
+	// Calculate smear factor
+	bool calcSmearFactor = false;
+	if( j == 0 || smearTowersIndividually_ ) calcSmearFactor = true;
+
+	// Smear hadronic par of tower energy
+	smearTower((1 - p0frac) * tower.E(),calcSmearFactor,towen[k],towem[k],towhd[k],
+		   towoe[k],towemtrue[k],towhdtrue[k],towoetrue[k]); 
+
+	// Add remaining em part
+	towen[k]     += p0frac * tower.E();
+	towem[k]     += p0frac * tower.E();
+	towemtrue[k] += p0frac * tower.E();
+
+	// Multiply tower 4-momentum with response
+	tower        *= towen[k]/tower.E();
+	towet[k]      = tower.Pt();
+
+	// Add tower to jet
+	jet += tower;
+      } // End loop over towers
+
+      // Set jet and genjet variables
+      NobjTow        += ntow; 
+      jetpt[i]        = jet.Pt();
+      jetphi[i]       = jet.Phi();
+      jeteta[i]       = jet.Eta();
+      jetet[i]        = jet.Pt();
+      jete[i]         = jet.E();
+      jetflavor[i]    = 1;//uds
+      jettopid[i]      = 0;
+      /*
+	jetgenpt[i]     = genjet[i].Pt();
+	jetgenphi[i]    = genjet[i].Phi();
+	jetgeneta[i]    = genjet[i].Eta();
+	jetgenet[i]     = genjet[i].Pt();
+	jetgene[i]      = genjet[i].E();
+      */
+    } // End of loop over jets
+
+    // Fill tree
+    CalibTree->Fill();
+    if(n % 1000 == 0) std::cout << "generating event " << n << '\n';
+  }  // End of loop over events
+
+  return CalibTree->GetEntriesFast();
+}
 
 //!  \brief Generate photon-jet events and write into tree
 //!  \param filename Name of output file
@@ -1028,6 +1257,22 @@ int ToyMC::makeDiJet(const char* filename, int nevents) {
   TTree* CalibTree = new TTree("DiJetTree","DiJetTree");
 
   nevents = generateDiJetTree(CalibTree,nevents);
+  //file->ls();
+  file->Write();
+  file->Close();
+  return nevents;
+}
+
+//!  \brief Generate top events
+//!  \param filename Name of output file
+//!  \param nevents Number of dijet events
+//!  \return Number of generated events
+//----------------------------------------------------------
+int ToyMC::makeTop(const char* filename, int nevents) {
+  TFile* file = new TFile(filename,"recreate");
+  TTree* CalibTree = new TTree("TopTree","TopTree");
+
+  nevents = generateTopTree(CalibTree,nevents);
   //file->ls();
   file->Write();
   file->Close();
@@ -1147,7 +1392,7 @@ void ToyMC::init(const std::string& configfile) {
   int seed = config.read<int>("ToyMC seed",0); 
   random_->SetSeed(seed);
   type_ = config.read<int>("ToyMC type",1);
-  if( !( type_ == 1 || type_ == 2 ) ) {
+  if( !( type_ == 1 || type_ == 2 || type_ == 3 ) ) {
     std::cout << "unknown ToyMC event type " << type_ << std::endl;
     exit(1);
   }
@@ -1223,6 +1468,8 @@ void ToyMC::print() const {
     std::cout << "Photon-jet events\n";
   else if( type_ == 2 )
     std::cout << "Dijet events\n";
+  else if( type_ == 3 ) 
+    std::cout << "Top events\n";
 
   std::cout << "\n";
 }

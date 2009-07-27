@@ -2,7 +2,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: toy.cc,v 1.7 2008/08/14 11:56:39 stadie Exp $
+//!  $Id: toy.cc,v 1.8 2009/06/11 17:34:45 mschrode Exp $
 //!  \sa ToyMC
 #include "ToyMC.h"
 
@@ -30,6 +30,8 @@ int main(int argc, char* argv[]) {
     mc->makePhotonJet(file.c_str(),nevents);
   else if(type == 2) 
     mc->makeDiJet(file.c_str(),nevents);
+  else if(type == 3)
+    mc->makeTop(file.c_str(),nevents);    
   else {
     std::cerr << "unknown ToyMC type:" << type << '\n';
     delete mc;
