@@ -14,7 +14,7 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.15 2009/07/16 15:05:37 mschrode Exp $
+//!  $Id: ToyMC.h,v 1.16 2009/07/27 13:51:59 stadie Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -129,10 +129,10 @@ class ToyMC {
 
   void genInput();
   void calIds(float& eta, float &phi, int& ieta, int& iphi);
-  void smearTower(double e, bool calcSmearFactor, float& te, float& tem, float& thad, float& tout, float& temtrue, 
-		  float& thadtrue, float& touttrue);  
+  void smearTower(const TLorentzVector& jet, double e, bool calcSmearFactor, float& te, float& tem, float& thad, 
+		  float& tout, float& temtrue, float& thadtrue, float& touttrue);  
   int  splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi);
-  void calculateSmearFactor(double pt);
+  void calculateSmearFactor(const TLorentzVector& jet, double pt);
 
 
  public:

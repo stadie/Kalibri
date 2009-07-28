@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.30 2009/07/27 13:51:59 stadie Exp $
+// $Id: ToyMC.cc,v 1.31 2009/07/28 11:57:09 stadie Exp $
 
 #include "ToyMC.h"
 
@@ -99,14 +99,15 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
 
 //!  \brief Calculate pt smear factor due to
 //!         response and resolution
+//!  \param jet the four vector of the jet
 //!  \param E  Energy for calculation of some smear factors
 //----------------------------------------------------------
-void ToyMC::calculateSmearFactor(double E) {
+void ToyMC::calculateSmearFactor(const TLorentzVector& jet, double E) {
   // Reset smear factor
   smearFactor_ = 1.;
 
   // Pt
-  double pt    = E * pInput_.Pt()/pInput_.E();
+  double pt    = E * jet.Pt()/jet.E();
 
   // Apply resolution
   if( responseModel_ == Constant
@@ -165,6 +166,7 @@ void ToyMC::calculateSmearFactor(double E) {
 //!  \brief Calculate emf, scale hadronic tower energy with response factor,
 //!         and smear with resolution
 //!
+//!  \param jet the four vector of the jet
 //!  \param e True tower energy without pi0 part
 //!  \param calcSmearFactor If true, the smear factor is calculated newly during this function call
 //!  \param te Tower energy after scaling
@@ -175,8 +177,8 @@ void ToyMC::calculateSmearFactor(double E) {
 //!  \param thadtrue True had part of tower energy after scaling
 //!  \param touttrue True HO part of tower energy after scaling
 // -----------------------------------------------------------------
-void ToyMC::smearTower(double e, bool calcSmearFactor, float& te, float& tem, float& thad, float& tout, 
-		       float& temtrue, float& thadtrue, float& touttrue) 
+void ToyMC::smearTower(const TLorentzVector& jet, double e, bool calcSmearFactor, float& te, float& tem, float& thad, 
+		       float& tout, float& temtrue, float& thadtrue, float& touttrue) 
 {
   // Generate emf and set electromagnetic
   // and hadronic fraction; smear hadronic
@@ -191,8 +193,8 @@ void ToyMC::smearTower(double e, bool calcSmearFactor, float& te, float& tem, fl
 
   // Apply response and resolution to hadronic fraction
   if( calcSmearFactor ) {
-    if( smearTowersIndividually_ ) calculateSmearFactor(thad);
-    else                           calculateSmearFactor(pInput_.E());
+    if( smearTowersIndividually_ ) calculateSmearFactor(jet, thad);
+    else                           calculateSmearFactor(jet, jet.E());
   }
   thad      *= smearFactor_;
 
@@ -359,7 +361,8 @@ int ToyMC::generateTrackClusterTree(TTree* CalibTree, int nevents)
     bool calcSmearFactor = false;
     if( i == 0 || smearTowersIndividually_ ) calcSmearFactor = true;
 
-    smearTower(pInput_.E(),calcSmearFactor,towen[0],towem[0],towhd[0],towoe[0],towemtrue[0],towhdtrue[0],towoetrue[0]);
+    smearTower(pInput_,pInput_.E(),calcSmearFactor,towen[0],towem[0],towhd[0],towoe[0],towemtrue[0],
+	       towhdtrue[0],towoetrue[0]);
     towet[0] = towen[0]/pInput_.E() * pInput_.Pt();
     CalibTree->Fill();
     if(i % 1000 == 0) std::cout << "generated event " << i << '\n';
@@ -568,7 +571,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
 
     // Create 4-momentum of genjet (massless)
     genjet.SetPtEtaPhiM(jgenpt,jgeneta,jgenphi,0);
-
+    pInput_= genjet;
     // Split it into towers and set tower truth
     NobjTowCal = splitJet(genjet,towet,toweta,towphi,towid_eta,towid_phi);
 
@@ -604,7 +607,7 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
       if( j == 0 || smearTowersIndividually_ ) calcSmearFactor = true;
 
       // Smear hadronic par of tower energy
-      smearTower((1 - p0frac) * tower.E(),calcSmearFactor,towen[j],towem[j],towhd[j],towoe[j],
+      smearTower(pInput_, (1 - p0frac) * tower.E(),calcSmearFactor,towen[j],towem[j],towhd[j],towoe[j],
 		 towemtrue[j],towhdtrue[j],towoetrue[j]); 
 
       // Add remaining em part
@@ -826,6 +829,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 
   // Generate events
   TLorentzVector jet[2];
+  TLorentzVector orijet;
   TLorentzVector genjet[2];
   TLorentzVector tower;
 
@@ -868,10 +872,9 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
     NobjTow = 0;
     for(int i = 0 ; i < 2 ; ++i) {
       // Create 4-momentum of genjet (massless)
-      genjet[i].SetPtEtaPhiM(jetgenpt[i],jetgeneta[i],jetgenphi[i],0);
-
+      orijet.SetPtEtaPhiM(jetgenpt[i],jetgeneta[i],jetgenphi[i],0);
       // Split it into towers and set truth of towers
-      int ntow = splitJet(genjet[i],ttowet,ttoweta,ttowphi,ttowid_eta,ttowid_phi);  
+      int ntow = splitJet(orijet,ttowet,ttoweta,ttowphi,ttowid_eta,ttowid_phi);  
 
       // Reset jet and genjet 4-momenta. They will
       // be repopulated by sum of tower 4-momenta
@@ -905,7 +908,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 	if( j == 0 || smearTowersIndividually_ ) calcSmearFactor = true;
 
 	// Smear hadronic par of tower energy
-	smearTower((1 - p0frac) * tower.E(),calcSmearFactor,towen[k],towem[k],towhd[k],
+	smearTower(orijet, (1 - p0frac) * tower.E(),calcSmearFactor,towen[k],towem[k],towhd[k],
 		   towoe[k],towemtrue[k],towhdtrue[k],towoetrue[k]); 
 
 	// Add remaining em part
@@ -1188,7 +1191,7 @@ int ToyMC::generateTopTree(TTree* CalibTree, int nevents)
 	if( j == 0 || smearTowersIndividually_ ) calcSmearFactor = true;
 
 	// Smear hadronic par of tower energy
-	smearTower((1 - p0frac) * tower.E(),calcSmearFactor,towen[k],towem[k],towhd[k],
+	smearTower(pInput_,(1 - p0frac) * tower.E(),calcSmearFactor,towen[k],towem[k],towhd[k],
 		   towoe[k],towemtrue[k],towhdtrue[k],towoetrue[k]); 
 
 	// Add remaining em part
