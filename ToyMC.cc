@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.29 2009/07/16 15:05:37 mschrode Exp $
+// $Id: ToyMC.cc,v 1.30 2009/07/27 13:51:59 stadie Exp $
 
 #include "ToyMC.h"
 
@@ -1157,6 +1157,7 @@ int ToyMC::generateTopTree(TTree* CalibTree, int nevents)
 
       // Reset jet and genjet 4-momenta. They will
       // be repopulated by sum of tower 4-momenta
+      pInput_ = wjet[i];
       jet.SetPtEtaPhiM(0,0,0,0);
       wjet[i].SetPtEtaPhiM(0,0,0,0);
 
