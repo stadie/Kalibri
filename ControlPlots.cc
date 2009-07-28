@@ -5728,8 +5728,8 @@ void TControlPlots::MakeControlPlotsTop()
   TH1F* weight = new TH1F("weight", "Weight", 200,    0, 200);
   TH1F* truth  = new TH1F("truth" , "Truth" , 200,    0, 200);
   TH1F* pt     = new TH1F("pt"    , ""      , 200,    0, 200);
-  TH1F* eta    = new TH1F("eta"   , "Eta"   ,  80,  -4.,  4.);
-  TH1F* phi    = new TH1F("phi"   , "Phi"   ,  68, -3.4, 3.4);
+  TH1F* eta    = new TH1F("eta"   , ""      ,  80,  -4.,  4.);
+  TH1F* phi    = new TH1F("phi"   , ""      ,  68, -3.4, 3.4);
   TH1F* genPt  = new TH1F("genPt" , ""      , 200,    0, 200);
 
   TH1F* meanPt  = new TH1F("meanPt" , "MeanPt" , 200,   0, 200);
@@ -5738,25 +5738,31 @@ void TControlPlots::MakeControlPlotsTop()
   TH1F* wPt  = new TH1F("wPt"  , "wPt"  , 200,   0, 400);
   TH1F* wEta = new TH1F("wEta" , "wEta" ,  80, -4.,  4.);
 
-  TH1F* invMass     [2];
-  TH1F* messTruth   [2];
-  TH2F* messTruthPt [2];
-  TH2F* messTruthEta[2];
-  TH2F* responsePt  [2];
-  TH2F* responseEta [2];
+  TH1F* invMass       [2];
+  TH1F* messTruth     [2];
+  TH2F* messTruthPtGen[2];
+  TH2F* messTruthPtRec[2];
+  TH2F* messTruthEta  [2];
+  TH2F* responsePtGen [2];
+  TH2F* responsePtRec [2];
+  TH2F* responseEta   [2];
   TString suffix[2] = { "Before", "After" };
   for(unsigned a=0; a<2; a++){
-    invMass     [a] = new TH1F("invMass"  +suffix[a], "",  40, 0., 200.);
-    messTruth   [a] = new TH1F("messTruth"+suffix[a], "",  40, 0.,   2.);
-    messTruthPt [a] = new TH2F("messTruthPt" +suffix[a], "", 19, binningLogPt, 51, 0., 2.);
-    messTruthEta[a] = new TH2F("messTruthEta"+suffix[a], "", 40,  -4.,  4.   , 51, 0., 2.);
-    responsePt  [a] = new TH2F("responsePt"  +suffix[a], "", 19, binningLogPt, 51, 0., 2.);
-    responseEta [a] = new TH2F("responseEta" +suffix[a], "", 40,  -4.,  4.   , 51, 0., 2.);
+    invMass       [a] = new TH1F("invMass"        +suffix[a], "",  40, 0., 200.);
+    messTruth     [a] = new TH1F("messTruth"      +suffix[a], "",  40, 0.,   2.);
+    messTruthPtGen[a] = new TH2F("messTruthPtGen" +suffix[a], "", 19, binningLogPt, 51, 0., 2.);
+    messTruthPtRec[a] = new TH2F("messTruthPtRec" +suffix[a], "", 19, binningLogPt, 51, 0., 2.);
+    messTruthEta  [a] = new TH2F("messTruthEta"   +suffix[a], "", 40,  -4.,  4.   , 51, 0., 2.);
+    responsePtGen [a] = new TH2F("responsePtGen"  +suffix[a], "", 19, binningLogPt, 51, 0., 2.);
+    responsePtRec [a] = new TH2F("responsePtRec"  +suffix[a], "", 19, binningLogPt, 51, 0., 2.);
+    responseEta   [a] = new TH2F("responseEta"    +suffix[a], "", 40,  -4.,  4.   , 51, 0., 2.);
   }
-  TH1F* messTruthPt_mgf [2];
-  TH1F* messTruthEta_mgf[2];
-  TH1F* responsePt_mgf  [2];
-  TH1F* responseEta_mgf[2];
+  TH1F* messTruthPtGen_mgf[2];
+  TH1F* messTruthPtRec_mgf[2];
+  TH1F* messTruthEta_mgf  [2];
+  TH1F* responsePtGen_mgf [2];
+  TH1F* responsePtRec_mgf [2];
+  TH1F* responseEta_mgf   [2];
 
   TH2F* corrFacsPt [5];
   TH2F* corrFacsEta[5];
@@ -5806,7 +5812,9 @@ void TControlPlots::MakeControlPlotsTop()
 	if(j==0) combined4Vec = jet4Vec;
 	else combined4Vec += jet4Vec;
       }
-      double s,t,w;
+      double s = 0.;
+      double t = 0.;
+      double w = 0.;
       
       if(invM2) {
 	s = invM2->GetScale();
@@ -5834,8 +5842,8 @@ void TControlPlots::MakeControlPlotsTop()
       double mPt  = 0.;
       double mEta = 0.;
 
-      //      messTruthPt [0]->Fill( combined4Vec.Pt() , combined4Vec.M()/t );
-      //      messTruthPt [1]->Fill( combined4Vec.Pt() , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+      //      messTruthPtGen [0]->Fill( combined4Vec.Pt() , combined4Vec.M()/t );
+      //      messTruthPtGen [1]->Fill( combined4Vec.Pt() , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
       for(unsigned j=0; j<jets.size(); j++) {
 	if(jets[j]->flavor != TJet::uds) continue;
@@ -5849,13 +5857,13 @@ void TControlPlots::MakeControlPlotsTop()
 	mPt  += jets[j]->pt;
 	mEta += jets[j]->eta;
 
-	messTruthPt [0]->Fill( jets[j]->genPt , combined4Vec.M()/t );
-	//	messTruthPt [0]->Fill( jets[j]->pt , combined4Vec.M()/t );
-	messTruthEta[0]->Fill( jets[j]->eta   , combined4Vec.M()/t );
+	messTruthPtGen[0]->Fill( jets[j]->genPt , combined4Vec.M()/t );
+	messTruthPtRec[0]->Fill( jets[j]->pt    , combined4Vec.M()/t );
+	messTruthEta  [0]->Fill( jets[j]->eta   , combined4Vec.M()/t );
 	
-	messTruthPt [1]->Fill( jets[j]->genPt , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
-	//	messTruthPt [1]->Fill( jets[j]->pt , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
-	messTruthEta[1]->Fill( jets[j]->eta   , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	messTruthPtGen[1]->Fill( jets[j]->genPt , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	messTruthPtRec[1]->Fill( jets[j]->pt    , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	messTruthEta  [1]->Fill( jets[j]->eta   , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
 	double response[2]; // before and after Kalibri fit
 	if(j==0) {
@@ -5875,8 +5883,9 @@ void TControlPlots::MakeControlPlotsTop()
 	  }
 	}
 	for(unsigned a=0; a<2; a++){
-	  responsePt [a]->Fill( jets[j]->genPt  , response[a] );
-	  responseEta[a]->Fill( jets[j]->eta , response[a] );
+	  responsePtGen[a]->Fill( jets[j]->genPt , response[a] );
+	  responsePtRec[a]->Fill( jets[j]->pt    , response[a] );
+	  responseEta  [a]->Fill( jets[j]->eta   , response[a] );
 	}
 
 	corrFacsPt [0]->Fill( jets[j]->genPt  , jets[j]->corFactors.getL1() );
@@ -5918,19 +5927,23 @@ void TControlPlots::MakeControlPlotsTop()
 
   for(unsigned i=0; i<2; i++){
 
-    TH1F* results_pt [8];
-    TH1F* results_eta[8];
+    TH1F* results_ptGen[8];
+    TH1F* results_ptRec[8];
+    TH1F* results_eta  [8];
 
-    Fit2D(messTruthPt [i], results_pt);
-    Fit2D(messTruthEta[i], results_eta);
+    Fit2D(messTruthPtGen[i], results_ptGen);
+    Fit2D(messTruthPtRec[i], results_ptRec);
+    Fit2D(messTruthEta  [i], results_eta);
     for(int j=0; j<8; j++) {
       if(j==2) { //mean of Gauss fits
-	messTruthPt_mgf [i] = results_pt [j];
-	messTruthEta_mgf[i] = results_eta[j];
+	messTruthPtGen_mgf[i] = results_ptGen[j];
+	messTruthPtRec_mgf[i] = results_ptRec[j];
+	messTruthEta_mgf  [i] = results_eta  [j];
       }
       else {
-	delete results_pt [j];
-	delete results_eta[j];
+	delete results_ptGen[j];
+	delete results_ptRec[j];
+	delete results_eta  [j];
       }
     }
 
@@ -5938,19 +5951,23 @@ void TControlPlots::MakeControlPlotsTop()
 
   for(unsigned i=0; i<2; i++){
 
-    TH1F* results_pt [8];
-    TH1F* results_eta[8];
+    TH1F* results_ptGen[8];
+    TH1F* results_ptRec[8];
+    TH1F* results_eta  [8];
 
-    Fit2D(responsePt [i], results_pt);
-    Fit2D(responseEta[i], results_eta);
+    Fit2D(responsePtGen[i], results_ptGen);
+    Fit2D(responsePtRec[i], results_ptRec);
+    Fit2D(responseEta  [i], results_eta);
     for(int j=0; j<8; j++) {
       if(j==2) { //mean of Gauss fits
-	responsePt_mgf [i] = results_pt [j];
-	responseEta_mgf[i] = results_eta[j];
+	responsePtGen_mgf[i] = results_ptGen[j];
+	responsePtRec_mgf[i] = results_ptRec[j];
+	responseEta_mgf  [i] = results_eta  [j];
       }
       else {
-	delete results_pt [j];
-	delete results_eta[j];
+	delete results_ptGen[j];
+	delete results_ptRec[j];
+	delete results_eta  [j];
       }
     }
 
@@ -5999,9 +6016,13 @@ void TControlPlots::MakeControlPlotsTop()
   // configure hists
 
   pt   ->SetXTitle( "p_{T} (rec) [GeV]" );
+  eta  ->SetXTitle( "#eta"              );
+  phi  ->SetXTitle( "#phi"              );
   genPt->SetXTitle( "p_{T} (gen) [GeV]" );
 
   pt   ->SetYTitle( "events" );
+  eta  ->SetYTitle( "events" );
+  phi  ->SetYTitle( "events" );
   genPt->SetYTitle( "events" );
 
   int markerColor[2] = { 2, 1 };
@@ -6034,20 +6055,23 @@ void TControlPlots::MakeControlPlotsTop()
     invMass     [a]->GetFunction("gaus")->SetLineWidth( 1 );
     messTruth   [a]->GetFunction("gaus")->SetLineWidth( 1 );
 
-    invMass         [a]->SetMarkerColor( markerColor[a] );
-    messTruth       [a]->SetMarkerColor( markerColor[a] );
-    messTruthPt_mgf [a]->SetMarkerColor( markerColor[a] );
-    messTruthEta_mgf[a]->SetMarkerColor( markerColor[a] );
+    invMass           [a]->SetMarkerColor( markerColor[a] );
+    messTruth         [a]->SetMarkerColor( markerColor[a] );
+    messTruthPtGen_mgf[a]->SetMarkerColor( markerColor[a] );
+    messTruthPtRec_mgf[a]->SetMarkerColor( markerColor[a] );
+    messTruthEta_mgf  [a]->SetMarkerColor( markerColor[a] );
 
-    invMass         [a]->SetMarkerStyle( markerStyle[a] );
-    messTruth       [a]->SetMarkerStyle( markerStyle[a] );
-    messTruthPt_mgf [a]->SetMarkerStyle( markerStyle[a] );
-    messTruthEta_mgf[a]->SetMarkerStyle( markerStyle[a] );
+    invMass           [a]->SetMarkerStyle( markerStyle[a] );
+    messTruth         [a]->SetMarkerStyle( markerStyle[a] );
+    messTruthPtGen_mgf[a]->SetMarkerStyle( markerStyle[a] );
+    messTruthPtRec_mgf[a]->SetMarkerStyle( markerStyle[a] );
+    messTruthEta_mgf  [a]->SetMarkerStyle( markerStyle[a] );
 
-    invMass         [a]->SetMarkerSize( 1.5 );
-    messTruth       [a]->SetMarkerSize( 1.5 );
-    messTruthPt_mgf [a]->SetMarkerSize( 1.5 );
-    messTruthEta_mgf[a]->SetMarkerSize( 1.5 );
+    invMass           [a]->SetMarkerSize( 1.5 );
+    messTruth         [a]->SetMarkerSize( 1.5 );
+    messTruthPtGen_mgf[a]->SetMarkerSize( 1.5 );
+    messTruthPtRec_mgf[a]->SetMarkerSize( 1.5 );
+    messTruthEta_mgf  [a]->SetMarkerSize( 1.5 );
 
     paveText[a]->SetFillColor( 0 );
     paveText[a]->SetBorderSize( 1 );
@@ -6067,48 +6091,61 @@ void TControlPlots::MakeControlPlotsTop()
     sprintf(tmpTxt, "#sigma/#mu = %4.2f", relSigma);
     paveText[a]->AddText(tmpTxt);
 
-    messTruthPt_mgf [a]->SetTitle( "" );
-    messTruthEta_mgf[a]->SetTitle( "" );
+    messTruthPtGen_mgf[a]->SetTitle( "" );
+    messTruthPtRec_mgf[a]->SetTitle( "" );
+    messTruthEta_mgf  [a]->SetTitle( "" );
     
-    invMass         [a]->SetXTitle( "m_{jj} [GeV]" );
-    messTruth       [a]->SetXTitle( "m_{jj} / 80.4 GeV" );
-    messTruthPt_mgf [a]->SetXTitle( "p_{T} (gen) [GeV]" );
-    messTruthEta_mgf[a]->SetXTitle( "#eta" );
+    invMass           [a]->SetXTitle( "m_{jj} [GeV]" );
+    messTruth         [a]->SetXTitle( "m_{jj} / 80.4 GeV" );
+    messTruthPtGen_mgf[a]->SetXTitle( "p_{T} (gen) [GeV]" );
+    messTruthPtRec_mgf[a]->SetXTitle( "p_{T} (rec) [GeV]" );
+    messTruthEta_mgf  [a]->SetXTitle( "#eta" );
 
-    invMass         [a]->SetYTitle( "events" );
-    messTruth       [a]->SetYTitle( "events" );
-    messTruthPt_mgf [a]->SetYTitle( "m_{jj} / 80.4 GeV" );
-    messTruthEta_mgf[a]->SetYTitle( "m_{jj} / 80.4 GeV" );
+    invMass           [a]->SetYTitle( "events" );
+    messTruth         [a]->SetYTitle( "events" );
+    messTruthPtGen_mgf[a]->SetYTitle( "m_{jj} / 80.4 GeV" );
+    messTruthPtRec_mgf[a]->SetYTitle( "m_{jj} / 80.4 GeV" );
+    messTruthEta_mgf  [a]->SetYTitle( "m_{jj} / 80.4 GeV" );
 
-    messTruthPt_mgf [a]->SetMinimum( 0.4 );
-    messTruthEta_mgf[a]->SetMinimum( 0.4 );
+    messTruthPtGen_mgf[a]->SetMinimum( 0.4 );
+    messTruthPtRec_mgf[a]->SetMinimum( 0.4 );
+    messTruthEta_mgf  [a]->SetMinimum( 0.4 );
 
-    messTruthPt_mgf [a]->SetMaximum( 1.6 );
-    messTruthEta_mgf[a]->SetMaximum( 1.6 );
+    messTruthPtGen_mgf[a]->SetMaximum( 1.6 );
+    messTruthPtRec_mgf[a]->SetMaximum( 1.6 );
+    messTruthEta_mgf  [a]->SetMaximum( 1.6 );
 
-    responsePt_mgf [a]->SetMarkerColor( markerColor[a] );
-    responseEta_mgf[a]->SetMarkerColor( markerColor[a] );
+    responsePtGen_mgf[a]->SetMarkerColor( markerColor[a] );
+    responsePtRec_mgf[a]->SetMarkerColor( markerColor[a] );
+    responseEta_mgf  [a]->SetMarkerColor( markerColor[a] );
 
-    responsePt_mgf [a]->SetMarkerStyle( markerStyle[a] );
-    responseEta_mgf[a]->SetMarkerStyle( markerStyle[a] );
+    responsePtGen_mgf[a]->SetMarkerStyle( markerStyle[a] );
+    responsePtRec_mgf[a]->SetMarkerStyle( markerStyle[a] );
+    responseEta_mgf  [a]->SetMarkerStyle( markerStyle[a] );
 
-    responsePt_mgf [a]->SetMarkerSize( 1.5 );
-    responseEta_mgf[a]->SetMarkerSize( 1.5 );
+    responsePtGen_mgf[a]->SetMarkerSize( 1.5 );
+    responsePtRec_mgf[a]->SetMarkerSize( 1.5 );
+    responseEta_mgf  [a]->SetMarkerSize( 1.5 );
 
-    responsePt_mgf [a]->SetTitle( "" );
-    responseEta_mgf[a]->SetTitle( "" );
+    responsePtGen_mgf[a]->SetTitle( "" );
+    responsePtRec_mgf[a]->SetTitle( "" );
+    responseEta_mgf  [a]->SetTitle( "" );
     
-    responsePt_mgf [a]->SetXTitle( "p_{T} (gen) [GeV]" );
-    responseEta_mgf[a]->SetXTitle( "#eta" );
+    responsePtGen_mgf[a]->SetXTitle( "p_{T} (gen) [GeV]" );
+    responsePtRec_mgf[a]->SetXTitle( "p_{T} (rec) [GeV]" );
+    responseEta_mgf  [a]->SetXTitle( "#eta" );
 
-    responsePt_mgf [a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
-    responseEta_mgf[a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+    responsePtGen_mgf[a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+    responsePtRec_mgf[a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
+    responseEta_mgf  [a]->SetYTitle( "p_{T} (rec) / p_{T} (gen)" );
 
-    responsePt_mgf [a]->SetMinimum( 0.4 );
-    responseEta_mgf[a]->SetMinimum( 0.4 );
+    responsePtGen_mgf[a]->SetMinimum( 0.4 );
+    responsePtRec_mgf[a]->SetMinimum( 0.4 );
+    responseEta_mgf  [a]->SetMinimum( 0.4 );
 
-    responsePt_mgf [a]->SetMaximum( 1.6 );
-    responseEta_mgf[a]->SetMaximum( 1.6 );
+    responsePtGen_mgf[a]->SetMaximum( 1.6 );
+    responsePtRec_mgf[a]->SetMaximum( 1.6 );
+    responseEta_mgf  [a]->SetMaximum( 1.6 );
 
   }
 
@@ -6168,7 +6205,9 @@ void TControlPlots::MakeControlPlotsTop()
   }
 
   TF1 *fL5 = new TF1("fL5", "[0]+[1]*log10(x)+[2]*log10(x)*log10(x)", 10., 2000.);
-  fL5->SetParameters(0.695, 0.174, -0.026); //paramters from AN-2009/010
+  // paramters from CondFormats/JetMETObjects/data/L5Flavor_IC5.txt in V01-08-04
+  //fL5->SetParameters(0.692, 0.176, -0.026); // dijet
+  fL5->SetParameters(0.599, 0.176, -0.006); // ttbar
   fL5->SetLineWidth(1);
 
   // create legends
@@ -6273,13 +6312,24 @@ void TControlPlots::MakeControlPlotsTop()
   ps->NewPage();
 
   c->SetLogx(1);
-  messTruthPt_mgf[0]->Draw("p");
-  messTruthPt_mgf[1]->Draw("p same");
+  messTruthPtGen_mgf[0]->Draw("p");
+  messTruthPtGen_mgf[1]->Draw("p same");
   legend->Draw("same");
-  line->DrawLine(messTruthPt_mgf[0]->GetXaxis()->GetXmin(), 1.,
-		 messTruthPt_mgf[0]->GetXaxis()->GetXmax(), 1.);
+  line->DrawLine(messTruthPtGen_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 messTruthPtGen_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
-  if(individualPdf) c->Print("top_messTruthPt.pdf");
+  if(individualPdf) c->Print("top_messTruthPtGen.pdf");
+  ps->NewPage();
+  c->SetLogx(0);
+
+  c->SetLogx(1);
+  messTruthPtRec_mgf[0]->Draw("p");
+  messTruthPtRec_mgf[1]->Draw("p same");
+  legend->Draw("same");
+  line->DrawLine(messTruthPtRec_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 messTruthPtRec_mgf[0]->GetXaxis()->GetXmax(), 1.);
+  c->Draw();
+  if(individualPdf) c->Print("top_messTruthPtRec.pdf");
   ps->NewPage();
   c->SetLogx(0);
 
@@ -6293,13 +6343,24 @@ void TControlPlots::MakeControlPlotsTop()
   ps->NewPage();
 
   c->SetLogx(1);
-  responsePt_mgf[0]->Draw("p");
-  responsePt_mgf[1]->Draw("p same");
+  responsePtGen_mgf[0]->Draw("p");
+  responsePtGen_mgf[1]->Draw("p same");
   legend->Draw("same");
-  line->DrawLine(responsePt_mgf[0]->GetXaxis()->GetXmin(), 1.,
-		 responsePt_mgf[0]->GetXaxis()->GetXmax(), 1.);
+  line->DrawLine(responsePtGen_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 responsePtGen_mgf[0]->GetXaxis()->GetXmax(), 1.);
   c->Draw();
-  if(individualPdf) c->Print("top_responsePt.pdf");
+  if(individualPdf) c->Print("top_responsePtGen.pdf");
+  ps->NewPage();
+  c->SetLogx(0);
+
+  c->SetLogx(1);
+  responsePtRec_mgf[0]->Draw("p");
+  responsePtRec_mgf[1]->Draw("p same");
+  legend->Draw("same");
+  line->DrawLine(responsePtRec_mgf[0]->GetXaxis()->GetXmin(), 1.,
+		 responsePtRec_mgf[0]->GetXaxis()->GetXmax(), 1.);
+  c->Draw();
+  if(individualPdf) c->Print("top_responsePtRec.pdf");
   ps->NewPage();
   c->SetLogx(0);
 
@@ -6316,7 +6377,7 @@ void TControlPlots::MakeControlPlotsTop()
   corrFacsPt_mgf[1]->Draw("p");
   line->DrawLine(corrFacsPt_mgf[0]->GetXaxis()->GetXmin(), 1.,
 		 corrFacsPt_mgf[0]->GetXaxis()->GetXmax(), 1.);
-  //fL5->Draw("same");
+  fL5->Draw("same");
   for(unsigned int i=1; i<5; i++) {
     if(i!=0 && i!=3)
       corrFacsPt_mgf[i]->Draw("p same");
@@ -6380,16 +6441,20 @@ void TControlPlots::MakeControlPlotsTop()
   objToBeWritten.push_back( wPt  );
   objToBeWritten.push_back( wEta );
   for(unsigned a=0; a<2; a++){
-    objToBeWritten.push_back( invMass     [a] );
-    objToBeWritten.push_back( messTruth   [a] );
-    objToBeWritten.push_back( messTruthPt [a] );
-    objToBeWritten.push_back( messTruthEta[a] );
-    objToBeWritten.push_back( responsePt  [a] );
-    objToBeWritten.push_back( responseEta [a] );
-    objToBeWritten.push_back( messTruthPt_mgf [a] );
-    objToBeWritten.push_back( messTruthEta_mgf[a] );
-    objToBeWritten.push_back( responsePt_mgf  [a] );
-    objToBeWritten.push_back( responseEta_mgf [a] );
+    objToBeWritten.push_back( invMass       [a] );
+    objToBeWritten.push_back( messTruth     [a] );
+    objToBeWritten.push_back( messTruthPtGen[a] );
+    objToBeWritten.push_back( messTruthPtRec[a] );
+    objToBeWritten.push_back( messTruthEta  [a] );
+    objToBeWritten.push_back( responsePtGen [a] );
+    objToBeWritten.push_back( responsePtRec [a] );
+    objToBeWritten.push_back( responseEta   [a] );
+    objToBeWritten.push_back( messTruthPtGen_mgf[a] );
+    objToBeWritten.push_back( messTruthPtRec_mgf[a] );
+    objToBeWritten.push_back( messTruthEta_mgf  [a] );
+    objToBeWritten.push_back( responsePtGen_mgf [a] );
+    objToBeWritten.push_back( responsePtRec_mgf [a] );
+    objToBeWritten.push_back( responseEta_mgf   [a] );
   }
   for(unsigned i=0; i<5; i++){
     objToBeWritten.push_back( corrFacsPt [i] );
@@ -6420,17 +6485,21 @@ void TControlPlots::MakeControlPlotsTop()
   delete wPt;
   delete wEta;
   for(unsigned a=0; a<2; a++){
-    delete paveText    [a];
-    delete invMass     [a];
-    delete messTruth   [a];
-    delete messTruthPt [a];
-    delete messTruthEta[a];
-    delete responsePt  [a];
-    delete responseEta [a];
-    delete messTruthPt_mgf [a];
-    delete messTruthEta_mgf[a];
-    delete responsePt_mgf  [a];
-    delete responseEta_mgf [a];
+    delete paveText [a];
+    delete invMass  [a];
+    delete messTruth[a];
+    delete messTruthPtGen[a];
+    delete messTruthPtRec[a];
+    delete messTruthEta  [a];
+    delete responsePtGen [a];
+    delete responsePtRec [a];
+    delete responseEta   [a];
+    delete messTruthPtGen_mgf[a];
+    delete messTruthPtRec_mgf[a];
+    delete messTruthEta_mgf  [a];
+    delete responsePtGen_mgf [a];
+    delete responsePtRec_mgf [a];
+    delete responseEta_mgf   [a];
   }
   for(unsigned i=0; i<5; i++){
     delete corrFacsPt [i];
