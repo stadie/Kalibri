@@ -5724,19 +5724,29 @@ void TControlPlots::MakeControlPlotsTop()
   double binningLogPt[20] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
 			     120, 150, 200, 250, 300, 400, 500, 700, 1000, 2000};
 
-  TH1F* scale  = new TH1F("scale" , "Scale" , 200,    0, 200);
-  TH1F* weight = new TH1F("weight", "Weight", 200,    0, 200);
-  TH1F* truth  = new TH1F("truth" , "Truth" , 200,    0, 200);
-  TH1F* pt     = new TH1F("pt"    , ""      , 200,    0, 200);
-  TH1F* eta    = new TH1F("eta"   , ""      ,  80,  -4.,  4.);
-  TH1F* phi    = new TH1F("phi"   , ""      ,  68, -3.4, 3.4);
-  TH1F* genPt  = new TH1F("genPt" , ""      , 200,    0, 200);
+  TH1F* scale  = new TH1F("scale" , "", 200,    0, 200);
+  TH1F* weight = new TH1F("weight", "", 200,    0, 200);
+  TH1F* truth  = new TH1F("truth" , "", 200,    0, 200);
+  TH1F* pt     = new TH1F("pt"    , "", 200,    0, 200);
+  TH1F* eta    = new TH1F("eta"   , "",  80,  -4.,  4.);
+  TH1F* phi    = new TH1F("phi"   , "",  68, -3.4, 3.4);
+  TH1F* genPt  = new TH1F("genPt" , "", 200,    0, 200);
 
-  TH1F* meanPt  = new TH1F("meanPt" , "MeanPt" , 200,   0, 200);
-  TH1F* meanEta = new TH1F("meanEta", "MeanEta",  80, -4.,  4.);
+  TH2F* recPt12 = new TH2F("recPt12", "", 100,  0., 200., 100,  0., 200.);
+  TH2F* genPt12 = new TH2F("genPt12", "", 100,  0., 200., 100,  0., 200.);
+  TH2F* eta12   = new TH2F("eta12"  , "",  80, -4.,   4.,  80, -4.,   4.);
 
-  TH1F* wPt  = new TH1F("wPt"  , "wPt"  , 200,   0, 400);
-  TH1F* wEta = new TH1F("wEta" , "wEta" ,  80, -4.,  4.);
+  TH1F* meanPt  = new TH1F("meanPt" , "", 200,   0, 200);
+  TH1F* meanEta = new TH1F("meanEta", "",  80, -4.,  4.);
+
+  TH1F* wPt  = new TH1F("wPt" , "", 200,   0, 400);
+  TH1F* wEta = new TH1F("wEta", "",  80, -4.,  4.);
+
+  TH1F* dR      = new TH1F("deltaR"     , "",  40,  0.,   4.);
+  TH2F* dRrecPt = new TH2F("deltaRrecPt", "", 100,  0., 200., 40,   0.,  4.);
+  TH2F* dRgenPt = new TH2F("deltaRgenPt", "", 100,  0., 200., 40,   0.,  4.);
+  TH2F* dReta   = new TH2F("deltaReta"  , "",  80, -4.,   4., 40,   0.,  4.);
+  TH2F* dRwPt   = new TH2F("deltaRwPt"  , "", 100,  0., 200., 40,   0.,  4.);
 
   TH1F* invMass       [2];
   TH1F* messTruth     [2];
@@ -5829,6 +5839,21 @@ void TControlPlots::MakeControlPlotsTop()
       scale ->Fill(s);
       weight->Fill(w);
       truth ->Fill(t);
+
+      if(jets[1]) {
+
+	recPt12->Fill(jets[0]->pt   , jets[1]->pt   );
+	genPt12->Fill(jets[0]->genPt, jets[1]->genPt);
+	eta12  ->Fill(jets[0]->eta  , jets[1]->eta  );
+
+	double dr = deltaR(jets[0]->eta, jets[0]->phi,
+			   jets[1]->eta, jets[1]->phi);
+	dR->Fill(dr);
+	dRrecPt->Fill(jets[0]->pt      , dr);
+	dRgenPt->Fill(jets[0]->genPt   , dr);
+	dReta  ->Fill(jets[0]->eta     , dr);
+	dRwPt  ->Fill(combined4Vec.Pt(), dr);
+      }
 
       wPt ->Fill( combined4Vec.Pt()  );
       wEta->Fill( combined4Vec.Eta() );
@@ -6015,15 +6040,51 @@ void TControlPlots::MakeControlPlotsTop()
 
   // configure hists
 
+  scale ->SetXTitle( "scale"  );
+  weight->SetXTitle( "weight" );
+  truth ->SetXTitle( "truth"  );
   pt   ->SetXTitle( "p_{T} (rec) [GeV]" );
   eta  ->SetXTitle( "#eta"              );
   phi  ->SetXTitle( "#phi"              );
   genPt->SetXTitle( "p_{T} (gen) [GeV]" );
+  dR   ->SetXTitle( "#DeltaR_{jj}" );
 
-  pt   ->SetYTitle( "events" );
-  eta  ->SetYTitle( "events" );
-  phi  ->SetYTitle( "events" );
-  genPt->SetYTitle( "events" );
+  scale ->SetYTitle( "events" );
+  weight->SetYTitle( "events" );
+  truth ->SetYTitle( "events" );
+  pt    ->SetYTitle( "events" );
+  eta   ->SetYTitle( "events" );
+  phi   ->SetYTitle( "events" );
+  genPt ->SetYTitle( "events" );
+  dR    ->SetYTitle( "events" );
+
+  recPt12->SetXTitle( "p_{T,1} (rec) [GeV]" );
+  genPt12->SetXTitle( "p_{T,1} (gen) [GeV]" );
+  eta12  ->SetXTitle( "#eta_{1}" );
+
+  recPt12->SetYTitle( "p_{T,2} (rec) [GeV]" );
+  genPt12->SetYTitle( "p_{T,2} (gen) [GeV]" );
+  eta12  ->SetYTitle( "#eta_{2}" );
+
+  meanPt ->SetXTitle( "(p_{T,1}+p_{T,2})/2"   );
+  meanEta->SetXTitle( "(#eta_{1}+#eta_{2})/2" );
+  wPt    ->SetXTitle( "p_{T,W} [GeV]"  );
+  wEta   ->SetXTitle( "#eta_{W}" );
+
+  meanPt ->SetYTitle( "events" );
+  meanEta->SetYTitle( "events" );
+  wPt    ->SetYTitle( "events" );
+  wEta   ->SetYTitle( "events" );
+
+  dRrecPt->SetXTitle( "p_{T,1} (rec) [GeV]" );
+  dRgenPt->SetXTitle( "p_{T,1} (gen) [GeV]" );
+  dReta  ->SetXTitle( "#eta_{1}" );
+  dRwPt  ->SetXTitle( "p_{T,W} [GeV]"  );
+
+  dRrecPt->SetYTitle( "#DeltaR_{jj}" );
+  dRgenPt->SetYTitle( "#DeltaR_{jj}" );
+  dReta  ->SetYTitle( "#DeltaR_{jj}" );
+  dRwPt  ->SetYTitle( "#DeltaR_{jj}" );
 
   int markerColor[2] = { 2, 1 };
   int markerStyle[2] = { 22, 20 };
@@ -6275,6 +6336,21 @@ void TControlPlots::MakeControlPlotsTop()
   if(individualPdf) c->Print("top_genPt.pdf");
   ps->NewPage();
 
+  recPt12->Draw("box");
+  c->Draw();
+  if(individualPdf) c->Print("top_recPt12.pdf");
+  ps->NewPage();
+
+  genPt12->Draw("box");
+  c->Draw();
+  if(individualPdf) c->Print("top_genPt12.pdf");
+  ps->NewPage();
+
+  eta12->Draw("box");
+  c->Draw();
+  if(individualPdf) c->Print("top_eta12.pdf");
+  ps->NewPage();
+
   meanPt->Draw();
   c->Draw();
   if(individualPdf) c->Print("top_meanPt.pdf");
@@ -6293,6 +6369,31 @@ void TControlPlots::MakeControlPlotsTop()
   wEta->Draw();
   c->Draw();
   if(individualPdf) c->Print("top_wEta.pdf");
+  ps->NewPage();
+
+  dR->Draw();
+  c->Draw();
+  if(individualPdf) c->Print("top_dR.pdf");
+  ps->NewPage();
+
+  dRrecPt->Draw("box");
+  c->Draw();
+  if(individualPdf) c->Print("top_dRrecPt.pdf");
+  ps->NewPage();
+
+  dRgenPt->Draw("box");
+  c->Draw();
+  if(individualPdf) c->Print("top_dRgenPt.pdf");
+  ps->NewPage();
+
+  dReta->Draw("box");
+  c->Draw();
+  if(individualPdf) c->Print("top_dReta.pdf");
+  ps->NewPage();
+
+  dRwPt->Draw("box");
+  c->Draw();
+  if(individualPdf) c->Print("top_dRwPt.pdf");
   ps->NewPage();
 
   invMass[0]->Draw("p");
@@ -6436,10 +6537,19 @@ void TControlPlots::MakeControlPlotsTop()
   objToBeWritten.push_back( eta );
   objToBeWritten.push_back( phi );
   objToBeWritten.push_back( genPt  );
+  objToBeWritten.push_back( recPt12 );
+  objToBeWritten.push_back( genPt12 );
+  objToBeWritten.push_back( eta12 );
   objToBeWritten.push_back( meanPt  );
   objToBeWritten.push_back( meanEta );
   objToBeWritten.push_back( wPt  );
   objToBeWritten.push_back( wEta );
+  objToBeWritten.push_back( dR   );
+  objToBeWritten.push_back( dRrecPt );
+  objToBeWritten.push_back( dRgenPt );
+  objToBeWritten.push_back( dReta   );
+  objToBeWritten.push_back( dRwPt   );
+
   for(unsigned a=0; a<2; a++){
     objToBeWritten.push_back( invMass       [a] );
     objToBeWritten.push_back( messTruth     [a] );
@@ -6480,10 +6590,18 @@ void TControlPlots::MakeControlPlotsTop()
   delete eta;
   delete phi;
   delete genPt;
+  delete recPt12;
+  delete genPt12;
+  delete eta12;
   delete meanPt;
   delete meanEta;
   delete wPt;
   delete wEta;
+  delete dR;
+  delete dRrecPt;
+  delete dRgenPt;
+  delete dReta;
+  delete dRwPt;
   for(unsigned a=0; a<2; a++){
     delete paveText [a];
     delete invMass  [a];
@@ -6728,6 +6846,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!   Some properties of these projected
 //!   distributions are filled, per x-bin, into 8 1D histograms
 //!   'hresults':
+//!   
 //!    - 0: Mean value
 //!    - 1: Standard deviation
 //!    - 2: Mean of Gauss fit
@@ -6736,6 +6855,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!    - 5: chi2 / n.d.f.
 //!    - 6: Probability of Gauss fit
 //!    - 7: Quantiles Q0.9 / (Q0.9 - 1)
+//!   
 //!   'hresults' are newly created (take care of deleting them!);
 //!   their object names are set to:
 //!      "(hist-name)_result(X)",
@@ -6743,17 +6863,21 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!   the above specified property (i.e. 0 for "mean").
 //!
 //!   Also, the projected distributions of 3 example x-bins:
+//!   
 //!    - 0: hist->GetNbinsX() / 6
 //!    - 1: hist->GetNbinsX() / 3
 //!    - 2: hist->GetNbinsX() / 2
+//!   
 //!   are filled into 'gaussplots' and the corresponding
 //!   Gauss fits are filled into 'gf'. Both 'gaussplots' and 'gf'
 //!   are newly created (take care of deleting them!) and their
 //!   names are set to:
+//!   
 //!      "(hist-name)_gaussplot(X)",
 //!      "(hist-name)_gaussfit(X)"
+//!   
 //!   respectively.
-//! ---------------------------------------------------------------
+//---------------------------------------------------------------
 void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss) const
 {
   //book hists
