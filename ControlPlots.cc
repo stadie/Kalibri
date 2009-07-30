@@ -5736,11 +5736,17 @@ void TControlPlots::MakeControlPlotsTop()
   TH2F* genPt12 = new TH2F("genPt12", "", 100,  0., 200., 100,  0., 200.);
   TH2F* eta12   = new TH2F("eta12"  , "",  80, -4.,   4.,  80, -4.,   4.);
 
-  TH1F* meanPt  = new TH1F("meanPt" , "", 200,   0, 200);
-  TH1F* meanEta = new TH1F("meanEta", "",  80, -4.,  4.);
+  TH1F* deltaRecPt = new TH1F("deltaRecPt", "",  75,  0., 150.);
+  TH1F* deltaGenPt = new TH1F("deltaGenPt", "",  75,  0., 150.);
+  TH1F* deltaEta   = new TH1F("deltaEta"  , "",  40,  0.,   4.);
+  TH2F* deltaRecPtRecPt1 = new TH2F("deltaRecPtRecPt1", "", 100,  0., 200.,  75,  0., 150.);
+  TH2F* deltaRecPtEta1   = new TH2F("deltaRecPtEta1"  , "",  80, -4.,   4.,  75,  0., 150.);
 
-  TH1F* wPt  = new TH1F("wPt" , "", 200,   0, 400);
-  TH1F* wEta = new TH1F("wEta", "",  80, -4.,  4.);
+  TH1F* meanPt  = new TH1F("meanPt" , "", 75,  0., 150.);
+  TH1F* meanEta = new TH1F("meanEta", "", 80, -4.,   4.);
+
+  TH1F* wPt  = new TH1F("wPt" , "", 150,  0., 300.);
+  TH1F* wEta = new TH1F("wEta", "",  80, -4.,   4.);
 
   TH1F* dR      = new TH1F("deltaR"     , "",  40,  0.,   4.);
   TH2F* dRrecPt = new TH2F("deltaRrecPt", "", 100,  0., 200., 40,   0.,  4.);
@@ -5845,6 +5851,13 @@ void TControlPlots::MakeControlPlotsTop()
 	recPt12->Fill(jets[0]->pt   , jets[1]->pt   );
 	genPt12->Fill(jets[0]->genPt, jets[1]->genPt);
 	eta12  ->Fill(jets[0]->eta  , jets[1]->eta  );
+
+	deltaRecPt->Fill( std::abs(jets[0]->pt    - jets[1]->pt    ) );
+	deltaGenPt->Fill( std::abs(jets[0]->genPt - jets[1]->genPt ) );
+	deltaEta  ->Fill( std::abs(jets[0]->eta   - jets[1]->eta   ) );
+
+	deltaRecPtRecPt1->Fill( jets[0]->pt , std::abs(jets[0]->pt - jets[1]->pt) );
+	deltaRecPtEta1  ->Fill( jets[0]->eta, std::abs(jets[0]->pt - jets[1]->pt) );
 
 	double dr = deltaR(jets[0]->eta, jets[0]->phi,
 			   jets[1]->eta, jets[1]->phi);
@@ -6066,7 +6079,21 @@ void TControlPlots::MakeControlPlotsTop()
   genPt12->SetYTitle( "p_{T,2} (gen) [GeV]" );
   eta12  ->SetYTitle( "#eta_{2}" );
 
-  meanPt ->SetXTitle( "(p_{T,1}+p_{T,2})/2"   );
+  deltaRecPt->SetXTitle( "#Deltap_{T,jj} (rec) [GeV]" );
+  deltaGenPt->SetXTitle( "#Deltap_{T,jj} (gen) [GeV]" );
+  deltaEta  ->SetXTitle( "#Delta#eta_{jj}"            );
+
+  deltaRecPt->SetYTitle( "events" );
+  deltaGenPt->SetYTitle( "events" );
+  deltaEta  ->SetYTitle( "events" );
+
+  deltaRecPtRecPt1->SetXTitle( "p_{T,1} (rec) [GeV]" );
+  deltaRecPtEta1  ->SetXTitle( "#eta_{1}" );
+
+  deltaRecPtRecPt1->SetYTitle( "#Deltap_{T,jj} (rec) [GeV]" );
+  deltaRecPtEta1  ->SetYTitle( "#Deltap_{T,jj} (rec) [GeV]" );
+
+  meanPt ->SetXTitle( "(p_{T,1}+p_{T,2})/2 [GeV]"   );
   meanEta->SetXTitle( "(#eta_{1}+#eta_{2})/2" );
   wPt    ->SetXTitle( "p_{T,W} [GeV]"  );
   wEta   ->SetXTitle( "#eta_{W}" );
@@ -6093,6 +6120,9 @@ void TControlPlots::MakeControlPlotsTop()
   paveText[0] = new TPaveText(0.7, 0.6 , 0.91, 0.75, "NDC");
   paveText[1] = new TPaveText(0.7, 0.45, 0.91, 0.6 , "NDC");
 
+  TF1 *fInvMass  [2];
+  TF1 *fMessTruth[2];
+
   for(unsigned a=0; a<2; a++){
 
     invMass     [a]->Fit( "gaus", "Q0" );
@@ -6104,17 +6134,17 @@ void TControlPlots::MakeControlPlotsTop()
     double messTruthMu    = messTruth[a]->GetFunction("gaus")->GetParameter(1);
     double messTruthSigma = messTruth[a]->GetFunction("gaus")->GetParameter(2);
 
-    invMass     [a]->Fit( "gaus", "Q", "", invMassMu  -2*invMassSigma  , invMassMu  +2*invMassSigma   );
-    messTruth   [a]->Fit( "gaus", "Q", "", messTruthMu-2*messTruthSigma, messTruthMu+2*messTruthSigma );
+    invMass     [a]->Fit( "gaus", "Q0", "", invMassMu  -2*invMassSigma  , invMassMu  +2*invMassSigma   );
+    messTruth   [a]->Fit( "gaus", "Q0", "", messTruthMu-2*messTruthSigma, messTruthMu+2*messTruthSigma );
 
     invMass     [a]->SetLineColor( markerColor[a] );
     messTruth   [a]->SetLineColor( markerColor[a] );
 
-    invMass     [a]->GetFunction("gaus")->SetLineColor( markerColor[a] );
-    messTruth   [a]->GetFunction("gaus")->SetLineColor( markerColor[a] );
+    fInvMass  [a] = invMass  [a]->GetFunction("gaus");
+    fMessTruth[a] = messTruth[a]->GetFunction("gaus");
 
-    invMass     [a]->GetFunction("gaus")->SetLineWidth( 1 );
-    messTruth   [a]->GetFunction("gaus")->SetLineWidth( 1 );
+    fInvMass  [a]->SetLineColor( markerColor[a] );
+    fMessTruth[a]->SetLineColor( markerColor[a] );
 
     invMass           [a]->SetMarkerColor( markerColor[a] );
     messTruth         [a]->SetMarkerColor( markerColor[a] );
@@ -6139,8 +6169,8 @@ void TControlPlots::MakeControlPlotsTop()
     paveText[a]->SetTextColor( markerColor[a] );
     paveText[a]->SetTextAlign( 12 );
 
-    double mu    = invMass[a]->GetFunction("gaus")->GetParameter(1);
-    double sigma = invMass[a]->GetFunction("gaus")->GetParameter(2);
+    double mu    = fInvMass[a]->GetParameter(1);
+    double sigma = fInvMass[a]->GetParameter(2);
     double relSigma = sigma / mu;
 
     char *tmpTxt = new char[100];
@@ -6351,6 +6381,31 @@ void TControlPlots::MakeControlPlotsTop()
   if(individualPdf) c->Print("top_eta12.pdf");
   ps->NewPage();
 
+  deltaRecPt->Draw();
+  c->Draw();
+  if(individualPdf) c->Print("top_deltaRecPt.pdf");
+  ps->NewPage();
+
+  deltaGenPt->Draw();
+  c->Draw();
+  if(individualPdf) c->Print("top_deltaGenPt.pdf");
+  ps->NewPage();
+
+  deltaEta->Draw();
+  c->Draw();
+  if(individualPdf) c->Print("top_deltaEta.pdf");
+  ps->NewPage();
+
+  deltaRecPtRecPt1->Draw("box");
+  c->Draw();
+  if(individualPdf) c->Print("top_deltaRecPtRecPt1.pdf");
+  ps->NewPage();
+
+  deltaRecPtEta1->Draw("box");
+  c->Draw();
+  if(individualPdf) c->Print("top_deltaRecPtEta1.pdf");
+  ps->NewPage();
+
   meanPt->Draw();
   c->Draw();
   if(individualPdf) c->Print("top_meanPt.pdf");
@@ -6396,8 +6451,10 @@ void TControlPlots::MakeControlPlotsTop()
   if(individualPdf) c->Print("top_dRwPt.pdf");
   ps->NewPage();
 
-  invMass[0]->Draw("p");
-  invMass[1]->Draw("p same");
+  invMass [0]->Draw("p");
+  fInvMass[0]->Draw("same");
+  invMass [1]->Draw("p same");
+  fInvMass[1]->Draw("same");  
   legend->Draw("same");
   paveText[0]->Draw();
   paveText[1]->Draw();
@@ -6405,8 +6462,10 @@ void TControlPlots::MakeControlPlotsTop()
   if(individualPdf) c->Print("top_invMass.pdf");
   ps->NewPage();
 
-  messTruth[0]->Draw("p");
-  messTruth[1]->Draw("p same");
+  messTruth [0]->Draw("p");
+  fMessTruth[0]->Draw("same");
+  messTruth [1]->Draw("p same");
+  fMessTruth[1]->Draw("same");  
   legend->Draw("same");
   c->Draw();
   if(individualPdf) c->Print("top_messTruth.pdf");
@@ -6540,6 +6599,11 @@ void TControlPlots::MakeControlPlotsTop()
   objToBeWritten.push_back( recPt12 );
   objToBeWritten.push_back( genPt12 );
   objToBeWritten.push_back( eta12 );
+  objToBeWritten.push_back( deltaRecPt );
+  objToBeWritten.push_back( deltaGenPt );
+  objToBeWritten.push_back( deltaEta );
+  objToBeWritten.push_back( deltaRecPtRecPt1 );
+  objToBeWritten.push_back( deltaRecPtEta1 );
   objToBeWritten.push_back( meanPt  );
   objToBeWritten.push_back( meanEta );
   objToBeWritten.push_back( wPt  );
@@ -6593,6 +6657,11 @@ void TControlPlots::MakeControlPlotsTop()
   delete recPt12;
   delete genPt12;
   delete eta12;
+  delete deltaRecPt;
+  delete deltaGenPt;
+  delete deltaEta;
+  delete deltaRecPtRecPt1;
+  delete deltaRecPtEta1;
   delete meanPt;
   delete meanEta;
   delete wPt;
