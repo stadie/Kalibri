@@ -3,7 +3,7 @@
 //
 //    first version: Hartmut Stadie 2008/12/14
 //
-//    $Id: TwoJetsInvMassEvent.h,v 1.3 2009/04/27 13:49:08 mschrode Exp $
+//    $Id: TwoJetsInvMassEvent.h,v 1.5 2009/07/24 17:50:27 stadie Exp $
 //   
 
 #ifndef TWOJETSINVMASSEVENT_H
@@ -48,9 +48,11 @@ public:
   double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const { 
     chi2plots = chi2_fast_simple(temp_derivative1,temp_derivative2,epsilon);
     //chi2plots = chi2_fast_scaled(temp_derivative1,temp_derivative2,epsilon);
+    //chi2plots = chi2_fast_const_error(temp_derivative1,temp_derivative2,epsilon);
     return chi2plots;
   }
   double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_const_error(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_fast_scaled(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   void UpdateError() {}
 
