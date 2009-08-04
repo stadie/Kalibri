@@ -2,7 +2,7 @@
 //    Class for all events with two jets constraint to one invariant mass
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: TwoJetsInvMassEvent.cc,v 1.5 2009/07/30 11:35:57 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.cc,v 1.6 2009/08/04 10:11:58 stadie Exp $
 //     
 #include "TwoJetsInvMassEvent.h"
 
@@ -11,26 +11,7 @@
 
 double TwoJetsInvMassEvent::chi2() const
 {
-  double et1 = jet1->correctedEt(jet1->Et());
-  double c1 = et1/ jet1->Et();
-   
-  double et2 = jet2->correctedEt(jet2->Et());
-  double c2 = et2/ jet2->Et();
-  
-
-  TLorentzVector p1,p2;
-  p1.SetPtEtaPhiM(et1,jet1->eta(),jet1->phi(),0);
-  p2.SetPtEtaPhiM(et2,jet2->eta(),jet2->phi(),0);
-  
-  double err2inv = c1 * jet1->Error();
-  err2inv *= err2inv;
-  double err2 = c2 * jet2->Error();
-  err2inv += err2 * err2;
-  err2inv = 1/err2inv;
-  
-  double chi2 = truth - (p1+p2).M();
-  chi2 *= chi2 * err2inv;
-  chi2 = weight * TData::ScaleResidual(chi2);
+  double chi2 = chi2_fast(0, 0, 0);
   return chi2;
 }
  
@@ -76,6 +57,9 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
     std::cout <<et1 << ", " << et2 << ", " <<  jet1->Et() << ", " << jet2->Et() << ", " << chi2 << '\n';
   }
   chi2 = weight * TData::ScaleResidual(-log(err2inv) + chi2);
+
+  if(!temp_derivative1) return chi2;
+
   double temp1,temp2;
   const Jet::VariationColl& varcoll1 = jet1->varyParsDirectly(epsilon);
   const Jet::VariationColl& varcoll2 = jet2->varyParsDirectly(epsilon);
@@ -193,6 +177,9 @@ double TwoJetsInvMassEvent::chi2_fast_const_error(double * temp_derivative1,
     std::cout <<et1 << ", " << et2 << ", " <<  jet1->Et() << ", " << jet2->Et() << ", " << chi2 << '\n';
   }
   chi2 = weight * TData::ScaleResidual(chi2);
+
+  if(!temp_derivative1) return chi2;
+
   double temp1,temp2;
   const Jet::VariationColl& varcoll1 = jet1->varyParsDirectly(epsilon);
   const Jet::VariationColl& varcoll2 = jet2->varyParsDirectly(epsilon);
@@ -286,6 +273,9 @@ double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1,
     std::cout <<et1 << ", " << et2 << ", " <<  jet1->Et() << ", " << jet2->Et() << ", " << chi2 << '\n';
   }
   chi2 = weight * TData::ScaleResidual(-log(err2inv) + chi2);
+
+  if(!temp_derivative1) return chi2;
+
   double temp1,temp2;
   const Jet::VariationColl& varcoll1 = jet1->varyParsDirectly(epsilon);
   const Jet::VariationColl& varcoll2 = jet2->varyParsDirectly(epsilon);
@@ -434,6 +424,9 @@ double TwoJetsInvMassEvent::chi2_fast_inv(double * temp_derivative1,
     std::cout <<et1 << ", " << et2 << ", " <<  jet1->Et() << ", " << jet2->Et() << ", " << chi2 << '\n';
   }
   chi2 = weight * TData::ScaleResidual(chi2);
+
+  if(!temp_derivative1) return chi2;
+
   double temp1,temp2;
   const Jet::VariationColl& varcoll1 = jet1->varyParsDirectly(epsilon);;
   const Jet::VariationColl& varcoll2 = jet2->varyParsDirectly(epsilon);;
