@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.11 2009/07/27 13:51:11 stadie Exp $
+//    $Id: TopReader.cc,v 1.12 2009/08/04 10:11:58 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -22,8 +22,10 @@
 
 TopReader::TopReader(const std::string& configfile, TParameters* p) :
   EventReader(configfile,p),
-  minJetEt_(0),
-  maxJetEta_(0),
+  minJetEt_     (0.),
+  maxJetEta_    (0.),
+  minJetHadFrac_(0.07),
+  maxJetHadFrac_(0.95),
   useToL3CorrectedJets_(false),
   useMassConstraintW_  (false),
   useMassConstraintTop_(false),
@@ -40,6 +42,8 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
 
   minJetEt_  = config->read<double>("Et cut on jet",0.0);
   maxJetEta_ = config->read<double>("Eta cut on jet",100.0);
+  minJetHadFrac_ = config->read<double>("Min had fraction", 0.07);
+  maxJetHadFrac_ = config->read<double>("Max had fraction", 0.95);
   useToL3CorrectedJets_ = config->read<bool>("use to L3 corrected jets",false);
   useMassConstraintW_   = config->read<bool>("use W mass constraint",true);
   useMassConstraintTop_ = config->read<bool>("use Top mass constraint",false);
@@ -380,8 +384,8 @@ TData* TopReader::createTwoJetsInvMassEvents()
 	closestTower = n;
       }
     } 
-    if(had/(had + em) < 0.07) { delete jets[0]; return 0;}
-    if(had/(had + em) > 0.92) { delete jets[0]; return 0;}
+    if(had/(had + em) < minJetHadFrac_) { delete jets[0]; return 0;}
+    if(had/(had + em) > maxJetHadFrac_) { delete jets[0]; return 0;}
     double factor = top_.JetEt[i] / top_.JetE[i];
     tower.pt = top_.JetEt[i];
     tower.EMF = em * factor;
