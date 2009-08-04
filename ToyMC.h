@@ -14,20 +14,22 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.16 2009/07/27 13:51:59 stadie Exp $
+//!  $Id: ToyMC.h,v 1.17 2009/07/28 12:48:47 stadie Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
  private:
   //!  \brief Resolution model
   //! 
-  //!  - For calibration
+  //!  - For calibration:
   //!    - 'Gauss': An energy dependent Gaussian resolution
   //!      \f[
   //!       \frac{\sigma}{E} = \frac{b}{E} \oplus \frac{b}{\sqrt{E}} \oplus b
   //!      \f]
   //!      
   //!    - 'Landau': An energy dependent Landau resolution
+  //!      
+  //!    - 'Dirac': A Dirac delta function as perfect resolution
   //!
   //!  - For jet smearing:
   //!    - 'GaussUniform': A Gaussian resolution with a uniform
@@ -40,7 +42,7 @@ class ToyMC {
   //!      The appropriate parametrizations are
   //!      - SmearParametrizationStepGauss
   // ----------------------------------------------------------------  
-  enum ResolutionModel { Gauss, Landau, GaussUniform, TwoGauss };
+  enum ResolutionModel { Gauss, Landau, GaussUniform, TwoGauss, Dirac };
 
 
   //!  \brief Response for generation

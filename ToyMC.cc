@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.31 2009/07/28 11:57:09 stadie Exp $
+// $Id: ToyMC.cc,v 1.32 2009/07/28 12:48:47 stadie Exp $
 
 #include "ToyMC.h"
 
@@ -109,7 +109,7 @@ void ToyMC::calculateSmearFactor(const TLorentzVector& jet, double E) {
   // Pt
   double pt    = E * jet.Pt()/jet.E();
 
-  // Apply resolution
+  // Apply response
   if( responseModel_ == Constant
       || (responseModel_ == Flat)
       || (responseModel_ == Exp)
@@ -1341,6 +1341,8 @@ void ToyMC::init(const std::string& configfile) {
   } else if(resolution  == "Landau") {
     resolutionModel_ = Landau;
     assert( parReso_.size() >= 3 );
+  } else if(resolution  == "Dirac") {
+    resolutionModel_ = Dirac;
   } else if( resolution == "GaussUniform" ) {
     resolutionModel_ = GaussUniform; 
     assert( parReso_.size() >= 3 );
@@ -1441,6 +1443,8 @@ void ToyMC::print() const {
     std::cout << "Gauss\n";
   else if( resolutionModel_ == Landau )
     std::cout << "Landau\n";
+  else if( resolutionModel_ == Dirac )
+    std::cout << "Dirac\n";
   else if( resolutionModel_ == GaussUniform )
     std::cout << "GaussUniform\n";
   else if( resolutionModel_ == TwoGauss )
