@@ -6721,14 +6721,11 @@ void TControlPlots::MakeControlPlotsTop()
 //   3rd and 4th and so on are plotted. This has to be extended
 //   in a clever way...
 //
-//   NOTE: Chi2 is calculated w/o scaling of residuals
-//   ( = scaling scheme '0' )
+//   NOTE: Chi2 is calculated with that scheme for scaling of
+//   residuals that was used in the last fit iteration
 //---------------------------------------------------------------
 void TControlPlots::MakeControlPlotsParameterScan()
 {
-  // Put scaling scheme to no scaling for the time being
-  TData::ScaleResidual = &TData::ScaleNone;
-
   std::vector<TObject*> objToBeWritten;
 
   TCanvas * const c1 = new TCanvas("c1","",600,600);
