@@ -3,7 +3,7 @@
 //
 //    first version: Hartmut Stadie 2008/12/14
 //
-//    $Id: TwoJetsInvMassEvent.h,v 1.5 2009/07/24 17:50:27 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.h,v 1.6 2009/07/30 11:35:57 stadie Exp $
 //   
 
 #ifndef TWOJETSINVMASSEVENT_H
@@ -17,8 +17,8 @@
 class TwoJetsInvMassEvent : public TData
 {
 public:
-  TwoJetsInvMassEvent(Jet *j1, Jet *j2, double t, double w) 
-    : jet1(j1), jet2(j2),truth(t),weight(w),flagged_bad(false),chi2plots(1000.) {}
+  TwoJetsInvMassEvent(Jet *j1, Jet *j2, double t, double w, double* p) 
+    : jet1(j1), jet2(j2),truth(t),weight(w),flagged_bad(false),chi2plots(1000.),par(p) {}
   ~TwoJetsInvMassEvent() { delete jet1; delete jet2;}
 
   //interface from TData
@@ -32,7 +32,8 @@ public:
   TJet *GetJet1() const {return jet1;}
   TJet *GetJet2() const {return jet2;}
 
-  void ChangeParAddress(double* oldpar, double* newpar) { 
+  void ChangeParAddress(double* oldpar, double* newpar) {
+    par = newpar;
     jet1->ChangeParAddress(oldpar,newpar);
     jet2->ChangeParAddress(oldpar,newpar);
   }
@@ -46,22 +47,25 @@ public:
   double chi2() const;
   double chi2_plots() const { return chi2plots; }
   double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const { 
-    chi2plots = chi2_fast_simple(temp_derivative1,temp_derivative2,epsilon);
+    //chi2plots = chi2_fast_simple(temp_derivative1,temp_derivative2,epsilon);
     //chi2plots = chi2_fast_scaled(temp_derivative1,temp_derivative2,epsilon);
     //chi2plots = chi2_fast_const_error(temp_derivative1,temp_derivative2,epsilon);
+    chi2plots = chi2_fast_inv(temp_derivative1,temp_derivative2,epsilon);
     return chi2plots;
   }
   double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_fast_const_error(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_fast_scaled(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_inv(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   void UpdateError() {}
 
  private:
   Jet *jet1,*jet2;
   double truth;
   double weight;
-  bool flagged_bad;
+  mutable bool flagged_bad;
   mutable double chi2plots;   //!< Store chi2 value from last iteration for plots
+  double *par;
 };
 
 #endif

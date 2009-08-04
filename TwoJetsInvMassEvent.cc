@@ -2,7 +2,7 @@
 //    Class for all events with two jets constraint to one invariant mass
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: TwoJetsInvMassEvent.cc,v 1.4 2009/07/30 11:24:45 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.cc,v 1.5 2009/07/30 11:35:57 stadie Exp $
 //     
 #include "TwoJetsInvMassEvent.h"
 
@@ -174,7 +174,7 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
 }
 
 double TwoJetsInvMassEvent::chi2_fast_const_error(double * temp_derivative1, 
-					     double * temp_derivative2, double const epsilon) const
+						  double * temp_derivative2, double const epsilon) const
 {
   const double et1 = jet1->correctedEt(jet1->Et());
   const double et2 = jet2->correctedEt(jet2->Et());
@@ -388,4 +388,168 @@ double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1,
     temp_derivative2[i2->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
   }
   return chi2;
+}
+
+double TwoJetsInvMassEvent::chi2_fast_inv(double * temp_derivative1, 
+					  double * temp_derivative2, double const epsilon) const
+{
+  if(flagged_bad) return chi2plots;
+  const double et1 = jet1->correctedEt(jet1->Et());
+  const double et2 = jet2->correctedEt(jet2->Et());
+
+  TLorentzVector p1,p2;
+  p1.SetPtEtaPhiM(et1,jet1->eta(),jet1->phi(),0);
+  p2.SetPtEtaPhiM(et2,jet2->eta(),jet2->phi(),0);
+  
+  // alpha = 1 - cos(angle(p1,p2))
+  double alpha = 1 - cos(p1.Angle(p2.Vect()));
+  double m = sqrt(2 * p1.P() * p2.P() * alpha);
+
+  double K = truth / m;
+  double truth1 = et1 * K; 
+  double truth2 = et2 * K; 
+  
+  double expErr1, expErr2;
+  double expEt1 = jet1->expectedEt(truth1,truth1,expErr1);  
+  double expEt2 = jet2->expectedEt(truth2,truth2,expErr2);
+  if((expEt1 < 0) || (expEt2 < 0)) {
+    flagged_bad = true;
+    return chi2plots;;
+  }
+
+  //std::cout << "m:" << m << " ..." <<  sqrt(2 * truth1 *jet1->E() / jet1->Et() * truth2 * jet2->E() / jet2->Et() * alpha)
+  //	    << " == " << truth << '\n';;
+  
+  double chi21 = expEt1 - jet1->Et();
+  double chi22 = expEt2 - jet2->Et();
+  double err21 = expErr1;
+  double err22 = expErr2;
+  chi21 *= chi21;
+  chi22 *= chi22;
+  err21 *= err21;
+  err22 *= err22;
+
+  double chi2 = chi21/err21 + chi22/err22 + log(err21) + log(err22);
+  if(chi2 != chi2) {//check for NAN
+    std::cout <<et1 << ", " << et2 << ", " <<  jet1->Et() << ", " << jet2->Et() << ", " << chi2 << '\n';
+  }
+  chi2 = weight * TData::ScaleResidual(chi2);
+  double temp1,temp2;
+  const Jet::VariationColl& varcoll1 = jet1->varyParsDirectly(epsilon);;
+  const Jet::VariationColl& varcoll2 = jet2->varyParsDirectly(epsilon);;
+  for(Jet::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) { 
+    p1.SetPtEtaPhiM(i1->lowerEt,jet1->eta(),jet1->phi(),0);
+    Jet::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
+    if(i2 != varcoll2.end()) {  
+      p2.SetPtEtaPhiM(i2->lowerEt,jet2->eta(),jet2->phi(),0);
+    } else {
+      p2.SetPtEtaPhiM(et2,jet2->eta(),jet2->phi(),0);
+    }  
+    m = sqrt(2 * p1.P() * p2.P() * alpha);
+    K = truth / m;
+    truth1 = p1.Pt() * K; 
+    truth2 = p2.Pt() * K;
+    double oldpar = par[i1->parid];
+    par[i1->parid] -= epsilon;
+    expEt1 = jet1->expectedEt(truth1,truth1,err21);  
+    expEt2 = jet2->expectedEt(truth2,truth2,err22); 
+    if((expEt1 < 0) || (expEt2 < 0)) {
+      flagged_bad = true;
+      par[i1->parid] = oldpar;
+      return chi2plots;
+    }
+    chi21 = expEt1 - jet1->Et();
+    chi22 = expEt2 - jet2->Et();
+    chi21 *= chi21;
+    chi22 *= chi22;
+    err21 *= err21;
+    err22 *= err22;
+    temp1 = chi21/err21 + chi22/err22 + log(err21) + log(err22);
+    temp1 = weight * TData::ScaleResidual(temp1);
+    p1.SetPtEtaPhiM(i1->upperEt,jet1->eta(),jet1->phi(),0);
+    if(i2 != varcoll2.end()) {
+      p2.SetPtEtaPhiM(i2->upperEt,jet2->eta(),jet2->phi(),0);
+    } 
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    K = truth / m;
+    truth1 = p1.Pt() * K; 
+    truth2 = p2.Pt() * K;
+    par[i1->parid] = oldpar + epsilon; 
+    expEt1 = jet1->expectedEt(truth1,truth1,err21);  
+    expEt2 = jet2->expectedEt(truth2,truth2,err22); 
+    if((expEt1 < 0) || (expEt2 < 0)) {
+      flagged_bad = true;
+      par[i1->parid] = oldpar;
+      return chi2plots;
+    }
+    chi21 = expEt1 - jet1->Et();
+    chi22 = expEt2 - jet2->Et();
+    par[i1->parid] = oldpar;
+    chi21 *= chi21;
+    chi22 *= chi22;
+    err21 *= err21;
+    err22 *= err22;
+    temp2 = chi21/err21 + chi22/err22 + log(err21) + log(err22);
+    temp2 = weight * TData::ScaleResidual(temp2);
+    //std::cout << temp2 << " - " << temp1 << " : " << chi2 << '\n';
+    temp_derivative1[i1->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i1->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+  }
+  for(Jet::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
+    p2.SetPtEtaPhiM(i2->lowerEt,jet2->eta(),jet2->phi(),0);
+    Jet::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
+    if(i1 != varcoll1.end()) {
+      continue;
+    } 
+    p1.SetPtEtaPhiM(et1,jet1->eta(),jet1->phi(),0);
+    m = sqrt(2 * p1.P() * p2.P() * alpha);
+    K = truth / m;
+    truth1 = p1.Pt() * K; 
+    truth2 = p2.Pt() * K;
+    double oldpar = par[i2->parid];
+    par[i2->parid] -= epsilon;   
+    expEt1 = jet1->expectedEt(truth1,truth1,err21);  
+    expEt2 = jet2->expectedEt(truth2,truth2,err22); 
+    if((expEt1 < 0) || (expEt2 < 0)) {
+      flagged_bad = true;
+      par[i1->parid] = oldpar;
+      return chi2plots;
+    }
+    chi21 = expEt1 - jet1->Et();
+    chi22 = expEt2 - jet2->Et();
+    chi21 *= chi21;
+    chi22 *= chi22;
+    err21 *= err21;
+    err22 *= err22;
+    temp1 = chi21/err21 + chi22/err22 + log(err21) + log(err22);
+    temp1 = weight * TData::ScaleResidual(temp1);
+    p2.SetPtEtaPhiM(i2->upperEt,jet2->eta(),jet2->phi(),0);
+    m = sqrt(2 * p1.P()*p2.P() * alpha);
+    K = truth / m;
+    truth1 = p1.Pt() * K; 
+    truth2 = p2.Pt() * K;
+    par[i2->parid] = oldpar + epsilon; 
+    expEt1 = jet1->expectedEt(truth1,truth1,err21);  
+    expEt2 = jet2->expectedEt(truth2,truth2,err22); 
+    if((expEt1 < 0) || (expEt2 < 0)) {
+      flagged_bad = true;
+      par[i1->parid] = oldpar;
+      return chi2plots;
+    }
+    chi21 = expEt1 - jet1->Et();
+    chi22 = expEt2 - jet2->Et();
+    par[i2->parid] = oldpar;
+    chi21 *= chi21;
+    chi22 *= chi22;
+    err21 *= err21;
+    err22 *= err22;
+    temp2 = chi21/err21 + chi22/err22 + log(err21) + log(err22);
+    temp2 = weight * TData::ScaleResidual(temp2);
+    //std::cout << i2->lowerEt << " - " << i2->upperEt << ", " << et2 << '\n';
+    //std::cout << temp2 << " - " << temp1 << " : " << chi2 << '\n';
+    temp_derivative1[i2->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i2->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+  }
+  return chi2;
+
 }
