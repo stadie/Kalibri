@@ -4,7 +4,7 @@
 //    This class reads events according to the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.h,v 1.4 2009/07/20 13:09:05 snaumann Exp $
+//    $Id: TopReader.h,v 1.5 2009/08/04 15:37:41 snaumann Exp $
 //   
 #ifndef TOPREADER_H
 #define TOPREADER_H
@@ -36,6 +36,7 @@ class TopReader : public EventReader{
   bool useToL3CorrectedJets_;
   bool useMassConstraintW_;
   bool useMassConstraintTop_;
+  bool useGenJetInvMass_;
   double massConstraintW_;
   double massConstraintTop_; 
   int nTopEvents_;

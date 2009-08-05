@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.12 2009/08/04 10:11:58 stadie Exp $
+//    $Id: TopReader.cc,v 1.13 2009/08/04 15:37:41 snaumann Exp $
 //   
 #include "TopReader.h"
 
@@ -29,6 +29,7 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
   useToL3CorrectedJets_(false),
   useMassConstraintW_  (false),
   useMassConstraintTop_(false),
+  useGenJetInvMass_(false),
   massConstraintW_  (80.4),
   massConstraintTop_(172.4),
   dataClass_(0)
@@ -47,6 +48,7 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
   useToL3CorrectedJets_ = config->read<bool>("use to L3 corrected jets",false);
   useMassConstraintW_   = config->read<bool>("use W mass constraint",true);
   useMassConstraintTop_ = config->read<bool>("use Top mass constraint",false);
+  useGenJetInvMass_     = config->read<bool>("use GenJet inv mass constraint",false);
   massConstraintW_   = config->read<double>("W mass",80.4);
   massConstraintTop_ = config->read<double>("Top mass",172.4);
   if(!useMassConstraintW_ && !useMassConstraintTop_) {
@@ -448,6 +450,13 @@ TData* TopReader::createTwoJetsInvMassEvents()
   if(jets[1] &&
      jets[0]->Et() > minJetEt_ && std::abs(jets[0]->eta()) < maxJetEta_ &&
      jets[1]->Et() > minJetEt_ && std::abs(jets[1]->eta()) < maxJetEta_) {
+    if(useGenJetInvMass_ ) {
+      //compute inv mass of GenJets
+      TLorentzVector p1,p2;
+      p1.SetPtEtaPhiM(jets[0]->GenPt(),jets[0]->eta(),jets[0]->phi(),0);
+      p2.SetPtEtaPhiM(jets[1]->GenPt(),jets[1]->eta(),jets[1]->phi(),0);
+      return new TwoJetsInvMassEvent(jets[0],jets[1],(p1+p2).M(),1.0,p->GetPars());
+    }
     return new TwoJetsInvMassEvent(jets[0],jets[1],massConstraintW_,1.0,p->GetPars());
   } else {
     delete jets[0];

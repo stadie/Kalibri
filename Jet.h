@@ -11,7 +11,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.18 2009/07/13 12:04:39 snaumann Exp $
+//!    $Id: Jet.h,v 1.19 2009/07/23 11:43:42 stadie Exp $
 class Jet : public TJet
 {
  public:
@@ -34,6 +34,7 @@ class Jet : public TJet
   double eta()    const {return TMeasurement::eta;}  //!< Return pseudorapidity
   double phi()    const {return TMeasurement::phi;}  //!< Return azimuthal angle
   Flavor flavor() const {return TJet::flavor;}       //!< Return jet flavor
+  double GenPt()  const {return TJet::genPt;}        //!< Return Pt for corresponding GenJet
 
   //!  \brief Change address of parameters covered by this jet
   //!  \sa Parameters
