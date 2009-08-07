@@ -1,8 +1,9 @@
-//  $Id: caliber.cc,v 1.90 2009/07/23 13:47:40 mschrode Exp $
+//  $Id: caliber.cc,v 1.91 2009/07/23 15:54:12 stadie Exp $
 
 #include "caliber.h"
 
 #include <algorithm>
+#include <iomanip>
 
 //Boost
 #include <boost/thread/thread.hpp>
@@ -313,9 +314,15 @@ void TCaliber::run_Lvmini()
       }
       //print derivatives:
       if(printParNDeriv_) {
+	std::cout << std::setw(5) << "\npar";
+	std::cout << std::setw(15) << "p";
+	std::cout << std::setw(15) << "dp/dx";
+	std::cout << std::setw(15) << "d^2p/dx^2\n";
 	for( int param = 0 ; param < npar ; ++param ) {
-	  std::cout << "par: " << param << ": p = " <<  par_->GetPars()[param] << " dp/dx = " 
-		    <<  aux[param] << " dp/dx^2 = " << aux[param+npar] << std::endl;
+	  std::cout << std::setw(5) << param;
+	  std::cout << std::setw(15) << par_->GetPars()[param];
+	  std::cout << std::setw(15) << aux[param];
+	  std::cout << std::setw(15) << aux[param+npar] << std::endl;
 	}
       }
       lvmfun_(par_->GetPars(),fsum,iret,aux);
@@ -407,6 +414,7 @@ void TCaliber::done()
     } else if( mode == 1 ) {  // Control plots for jetsmearing
       ControlPlotsJetSmearing * plotsjs = new ControlPlotsJetSmearing(configFile_,&data_,par_);
       plotsjs->plotResponse();
+      //plotsjs->plotMeanResponseAndResolution();
       plotsjs->plotDijets();
       delete plotsjs;
     }
