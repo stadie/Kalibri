@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.31 2009/07/13 08:20:40 mschrode Exp $
+// $Id: Parameters.cc,v 1.32 2009/07/17 09:56:47 snaumann Exp $
 
 #include <fstream>
 #include <cassert>
@@ -72,6 +72,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     double tmax    = config.read<double>("DiJet integration max truth",1000.);
     std::vector<double> scale = bag_of<double>(config.read<string>("Jet parameter scales",""));
     return new SmearStepGaussInter(rmin,rmax,rnsteps,tmin,tmax,scale);
+  } else if(name == "GroomParametrization") {
+    return new GroomParametrization();
   }
   return 0;
 }
@@ -1202,7 +1204,7 @@ Function TParameters::tower_function(int etaid, int phiid) {
     std::cerr<<"WARNING: TParameters::tower_function::index = " << id << endl; 
     exit(-2);  
   }
-  return Function(tower_parametrization,GetTowerParRef(id),id * GetNumberOfTowerParametersPerBin(),
+  return Function(tower_parametrization,0,GetTowerParRef(id),id * GetNumberOfTowerParametersPerBin(),
 		  GetNumberOfTowerParametersPerBin());
 }
 
@@ -1212,8 +1214,8 @@ Function TParameters::jet_function(int etaid, int phiid) {
     std::cerr<<"WARNING: TParameters::jet_function::index = " << id << endl; 
     exit(-2);  
   }
-  return Function(jet_parametrization,GetJetParRef(id),
-		  id * GetNumberOfJetParametersPerBin() + GetNumberOfTowerParameters(),
+  return Function(jet_parametrization,p->hasInvertedCorrection() ? inv_jet_parametrization : 0,
+		  GetJetParRef(id),id * GetNumberOfJetParametersPerBin() + GetNumberOfTowerParameters(),
 		  GetNumberOfJetParametersPerBin());
 }
 
@@ -1223,13 +1225,13 @@ Function TParameters::track_function(int etaid, int phiid) {
     std::cerr<<"WARNING: TParameters::track_function::index = " << id << endl; 
     exit(-2);  
   }
-  return Function(track_parametrization,GetTrackParRef(id),
+  return Function(track_parametrization,0,GetTrackParRef(id),
 		  id * GetNumberOfTrackParametersPerBin() + GetNumberOfTowerParameters() + GetNumberOfJetParameters(),
 		  GetNumberOfTrackParametersPerBin());
 }
 
 Function TParameters::global_jet_function() {
-  return Function(global_jet_parametrization,GetGlobalJetParRef(),
+  return Function(global_jet_parametrization,0,GetGlobalJetParRef(),
 		  GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters(),
 		  GetNumberOfGlobalJetParameters());
 }

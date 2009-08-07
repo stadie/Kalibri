@@ -10,16 +10,16 @@ else
 endif
 
 #O2 for optimization, g for debugging, pg for profiling
-SPECIALFLAGS= -g -O4 #-g -Wall -pg#-O2
+SPECIALFLAGS= -g -O4  #-pg#-O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 #-I. -I./include -I$(SRT_PUBLIC_CONTEXT)/include 
 CFLAGS= $(SPECIALFLAGS) -Wall $(ROOTAUXCFLAGS)
 #-L../../lib/$(SRT_SUBDIR)/
-LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS)
+LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS) -lgsl  -lgslcblas -lm
 
-RCXX=$(SPECIALFLAGS) -Wno-deprecated -Wall $(ROOTCFLAGS)
+RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
 

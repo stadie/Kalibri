@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.39 2009/07/13 08:20:40 mschrode Exp $
+//  $Id: Parametrization.h,v 1.40 2009/07/17 09:56:47 snaumann Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -9,6 +9,12 @@
 #include "CalibData.h"
 
 
+#include "gsl/gsl_errno.h"
+#include "gsl/gsl_math.h"
+#include "gsl/gsl_roots.h"
+     
+
+
 //!  \brief Abstract base class for parametrizations of
 //!         correction functions
 //!
@@ -17,7 +23,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.39 2009/07/13 08:20:40 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.40 2009/07/17 09:56:47 snaumann Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -138,6 +144,20 @@ public:
   // -----------------------------------------------------------------
   unsigned int nGlobalJetPars() const { return nglobaljetpars_;}
 
+  //!  \brief Returns the expected response for a jet with true x-> Et 
+  //!         (this is the inverted jet correction
+  //!
+  //!  \param x TMeasurement describing the true jet properties
+  //!  \param par Parameters of the jet response function
+  //!  \return the expected calorimeter response
+  // -----------------------------------------------------------------
+  virtual double inverseJetCorrection(const TMeasurement *x,const double *par) const { return -1;}
+
+  
+  //!  \brief Get the number of parameters of the track p
+  //!  \return Number of parameters of the track parametrization
+  // -----------------------------------------------------------------
+  virtual bool hasInvertedCorrection() const { return false;}
 
 private: 
   Parametrization();
@@ -569,7 +589,8 @@ public:
   }
 
   double correctedJetEt(const TMeasurement *x,const double *par) const {
-    return par[0] * x->HadF + x->EMF + x->OutF;
+    //return par[0] * x->HadF + x->EMF + x->OutF;
+    return par[0] * x->pt;
   }
 };
 
@@ -1393,4 +1414,82 @@ class SmearStepGaussInter : public Parametrization
     return p;
   }
 };
+
+
+//!  \brief Jet parametrization using power law from Groom
+//!
+//!  This parametrization has 0 tower parameters,3
+//!  jet parameters and 0 global jet parameters
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class GroomParametrization: public Parametrization {
+public:
+  GroomParametrization() : Parametrization(0,3,0,0)
+    {
+    }
+  const char* name() const { return "GroomParametrization";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+  
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    //return 1/par[0] * x->pt; int iter = 0, max_iter = 100;
+    const gsl_root_fsolver_type *T;
+    gsl_root_fsolver *s;
+    gsl_function F;
+    f_par p(x->pt,par);
+    
+    F.function = &f;
+    F.params = &p;
+
+    double x_lo = 0.1 * x->pt;
+    double x_hi = 5 * x->pt;
+    if(f(x_lo,&p) * f(x_hi,&p) > 0) {
+      //std::cout << "Warning: root not bracketed\n";
+      return 0;
+    }
+    
+    T = gsl_root_fsolver_brent;
+    s = gsl_root_fsolver_alloc (T);
+    gsl_root_fsolver_set (s, &F, x_lo, x_hi);
+    int status, iter = 0;
+    double r;
+    do {
+      iter++;
+      status = gsl_root_fsolver_iterate (s);
+      r = gsl_root_fsolver_root (s);
+      x_lo = gsl_root_fsolver_x_lower (s);
+      x_hi = gsl_root_fsolver_x_upper (s);
+      status = gsl_root_test_interval (x_lo,x_hi,0, eps_);
+    }
+    while (status == GSL_CONTINUE && iter < max_iter_);
+    assert(status == GSL_SUCCESS);
+    gsl_root_fsolver_free (s);
+    return r;
+  }
+
+  double inverseJetCorrection(const TMeasurement *x,const double *par) const { 
+    return (par[0] - par[1] * pow(0.01 * x->pt, -par[2])) * x->pt;
+  }
+ 
+  bool hasInvertedCorrection() const { return true;}
+
+ private:
+  static const double eps_ =  1.0e-8;
+  static const int max_iter_ = 20;
+  struct f_par {
+    double y;
+    const double *par;
+    f_par(double y, const double *par) : y(y), par(par) {}
+  };
+
+  static double f(double x, void* params) {
+    f_par* p = (f_par*)params;
+    //return y - (par[0] - par[1] * pow(0.01 * x,-par[2])) * x;
+    return p->y - (p->par[0] - p->par[1] * pow(0.01 * x, -p->par[2])) * x;
+  };
+};
+
 #endif

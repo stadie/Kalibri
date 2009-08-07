@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.51 2009/07/08 12:16:34 mschrode Exp $
+// $Id: Parameters.h,v 1.52 2009/07/23 11:36:00 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -28,7 +28,7 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.51 2009/07/08 12:16:34 mschrode Exp $
+//!  $Id: Parameters.h,v 1.52 2009/07/23 11:36:00 stadie Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -92,6 +92,9 @@ public :
   }
   static double jet_parametrization(const TMeasurement* x, const double* par) {
     return instance->p->correctedJetEt(x,par);
+  }  
+  static double inv_jet_parametrization(const TMeasurement* x, const double* par) {
+    return instance->p->inverseJetCorrection(x,par);
   }  
   static double track_parametrization(const TMeasurement* x, const double* par) {
     return instance->p->GetExpectedResponse(x,par);

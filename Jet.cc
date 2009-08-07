@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.26 2009/07/13 12:04:39 snaumann Exp $
+//    $Id: Jet.cc,v 1.27 2009/07/23 11:43:42 stadie Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -151,7 +151,7 @@ double Jet::correctedEt(double Et, bool fast) const {
   assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
   if(corEt <= 0.0) {
-    std::cout << "WARNING: jet cor. Et <= 0.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
+    //std::cout << "WARNING: jet cor. Et <= 0.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
     corEt = 1.0;
   }
   temp.pt   = corEt;  
@@ -165,7 +165,7 @@ double Jet::correctedEt(double Et, bool fast) const {
   assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
   if(corEt <= 1.0) {
-    std::cout << "WARNING: global jet cor. Et <= 1.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
+    //std::cout << "WARNING: global jet cor. Et <= 1.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
     corEt = 1.0;
   }
 
@@ -197,6 +197,13 @@ double Jet::correctedEt(double Et, bool fast) const {
 // -------------------------------------------------------
 double Jet::expectedEt(double truth, double start, bool fast)
 {
+  if(f.hasInverse()) { 
+    temp.pt   = truth;  
+    temp.HadF = truth - OutF - EMF;
+    if(temp.HadF < 0) temp.HadF = 0;
+    temp.E    = TJet::E * truth/TJet::pt;
+    return f.inverse(&temp);
+  }
   static const double eps = 1.0e-12;
   //const double up = 4 * truth;
   //const double low = 0.2 * truth;
