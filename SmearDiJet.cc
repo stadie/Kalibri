@@ -1,7 +1,6 @@
-// $Id: SmearDiJet.cc,v 1.3 2009/07/22 11:48:06 mschrode Exp $
+// $Id: SmearDiJet.cc,v 1.4 2009/07/23 13:44:41 mschrode Exp $
 
 #include "SmearDiJet.h"
-
 
 
 //!  \brief Constructor
@@ -11,6 +10,7 @@
 //!  \param weight Event weight
 //!  \param respPDF Response probability density
 //!  \param truthPDF True pt probability density
+//!  \param truthBin The truth bin of this event
 //!  \param min Minimum true pt in integration range
 //!  \param max Maximum true pt in integration range
 //!  \param eps Integration precision for convergence
@@ -33,7 +33,7 @@ SmearDiJet::SmearDiJet(TMeasurement * mess,
     kMax_(max),
     secndMess_(secndMess),
     thirdMess_(thirdMess),
-    truthPDF_(truthPDF) {};
+    truthPDF_(truthPDF) { };
 
 
 
@@ -71,8 +71,6 @@ double SmearDiJet::chi2() const
   std::vector<double> pp;         // Product of current function values of response pdfs
   std::vector<double> pp_old;     // Product of function values of response pdfs from previous iteration
 
-  TJet mess;
-
   // Iterate until precision or max. number iterations reached
   while(fabs((pint - pint_old) / pint_old) > kEps_ && nIter < kMaxNIter_) {
     pint_old = pint;
@@ -87,8 +85,8 @@ double SmearDiJet::chi2() const
       
       // Calculate probability only at new nodes
       if(nIter == 0 || i % 3 != 0) {
-	double p0 = RespPDF(GetMess()->pt / t);
-	double p1 = RespPDF(GetSecondMess()->pt / t);
+	double p0 = respPDF( GetMess()->pt / t, t );
+	double p1 = respPDF( GetSecondMess()->pt / t, t );
 	pp.push_back(p0 * p1 * truthPDF(t)); // Store product of pdfs and normalization
       } else {
 	pp.push_back(pp_old.at(i/3));       // Store product of pdfs previously calcluated
@@ -110,6 +108,8 @@ double SmearDiJet::chi2() const
     pint *= (3. * h / 8.);                 // Apply overall normalization
     nIter++;
   }
+
+  if( pint <= 0 ) return 0.;
 
   return  -1. * GetWeight() * log(pint);
 }
@@ -156,7 +156,6 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
   par = respPDF_.firstPar();
   for(int i = 0; i < respPDF_.nPars(); i++) {
     oldpar = par[i];
-
     par[i] += epsilon;
     temp1   = chi2();
 
@@ -193,18 +192,18 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
 
 
 //!  \brief Truth pdf
-//!  \note The probability is noth normalized to unity but in such
+//!  \note The probability is not normalized to unity but in such
 //!        a way that the negative log-likelihood as returned by
 //!        chi2() is properly normalized.
 //!  \param t Truth, pt in GeV
-//!  \return The probability density of the truth t,
+//!  \return The probability density of the truth \p t,
 //!          normalized such that the negative log-likelihood
 //!          is normalized
 // --------------------------------------------------
 double SmearDiJet::truthPDF(double t) const {
-  TJet jet;
-  jet.pt = t;
-  return truthPDF_(&jet);
+  TMeasurement meas;
+  meas.pt = t;
+  return truthPDF_(&meas);
 }
 
 

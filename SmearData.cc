@@ -1,4 +1,4 @@
-// $Id: SmearData.cc,v 1.3 2009/07/22 11:46:18 mschrode Exp $
+// $Id: SmearData.cc,v 1.4 2009/07/23 13:44:41 mschrode Exp $
 
 #include "SmearData.h"
 
@@ -12,7 +12,7 @@
 //!  \param respPDF Response probability density
 // --------------------------------------------------
 SmearData::SmearData(DataType type, TMeasurement * mess, double truth, double weight, const Function& respPDF)
-    : TData(),
+  : TData(),
     respPDF_(respPDF),
     kTruth_(truth),
     kType_(type),
@@ -23,10 +23,13 @@ SmearData::SmearData(DataType type, TMeasurement * mess, double truth, double we
 
 //!  \brief Response pdf
 //!  \param r Response
-//!  \return The probability density of the response r
+//!  \param pt pt
+//!  \return The probability density of the response \r 
+//!          for an event with true pt \pt
 // --------------------------------------------------
-double SmearData::RespPDF(double r) const {
-  TJet jet;
-  jet.pt = r;
-  return respPDF_(&jet);
+double SmearData::respPDF(double r, double pt) const {
+  TMeasurement meas;
+  meas.E  = r;
+  meas.pt = pt;
+  return respPDF_(&meas);
 }
