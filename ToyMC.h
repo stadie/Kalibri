@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TLorentzVector.h"
 #include "TRandom.h"
 
@@ -14,7 +15,7 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.17 2009/07/28 12:48:47 stadie Exp $
+//!  $Id: ToyMC.h,v 1.18 2009/08/04 15:35:44 snaumann Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -94,7 +95,7 @@ class ToyMC {
 
   //!  \brief Truth pt spectrum
   // ----------------------------------------------------------------  
-  enum TruthSpectrum { Uniform, PowerLaw };
+  enum TruthSpectrum { Uniform, PowerLaw, PtEtaHistogram };
 
 
   // Global variables
@@ -108,6 +109,8 @@ class ToyMC {
   double          maxPt_;              //!< Maximum truth pt
   TruthSpectrum   ptSpectrum_;         //!< Truth pt spectrum
   TLorentzVector  pInput_;             //!< Stores the truth lorentz vector of the current event
+
+  TH2F          * histPtEta_;          //!< For histogramed truth spectrum
 
   // Parameters for measurement 
   int             chunks_;
@@ -142,6 +145,7 @@ class ToyMC {
   ~ToyMC() {
     delete random_;
     if( histResp_ ) delete histResp_;
+    if( histPtEta_ ) delete histPtEta_;
   }
   int generatePhotonJetTree(TTree *tree, int nevents);
   int generateTrackClusterTree(TTree *tree, int nevents);

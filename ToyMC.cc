@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.32 2009/07/28 12:48:47 stadie Exp $
+// $Id: ToyMC.cc,v 1.33 2009/08/04 15:35:44 snaumann Exp $
 
 #include "ToyMC.h"
 
@@ -44,16 +44,18 @@ ToyMC::ToyMC() : type_(1), minEta_(-2.5),maxEta_(2.5),minPt_(30), maxPt_(400),pt
 void ToyMC::genInput() { 
   static double rand[3];
   random_->RndmArray(3,rand);
-  double pt = 0;  
+  double pt  = 0;
+  double eta = 0;
   if(ptSpectrum_ == Uniform) {
-    random_->RndmArray(3,rand);
-    pt = rand[0]*(maxPt_ - minPt_)+minPt_;
+    pt  = rand[0]*(maxPt_ - minPt_)+minPt_;
+    eta = rand[1]*(maxEta_ - minEta_)+minEta_;
   } else if(ptSpectrum_ == PowerLaw) {
-    pt = minPt_ * pow(rand[0],-1.0/5.5);
+    pt  = minPt_ * pow(rand[0],-1.0/5.5);
+    eta = rand[1]*(maxEta_ - minEta_)+minEta_;
+  } else if(ptSpectrum_ == PtEtaHistogram) {
+    histPtEta_->GetRandom2(eta, pt);
   }
-  pInput_.SetPtEtaPhiM(pt,
-		       rand[1]*(maxEta_ - minEta_)+minEta_,
-		       rand[2]*2 * M_PI - M_PI, 0);
+  pInput_.SetPtEtaPhiM(pt, eta, (rand[2]*2 * M_PI - M_PI), 0);
 }
 
 
@@ -1301,6 +1303,11 @@ void ToyMC::init(const std::string& configfile) {
     ptSpectrum_ = PowerLaw; 
   } else if(spectrum == "uniform") {
     ptSpectrum_ = Uniform;
+  } else if(spectrum == "PtEtaHistogram") {
+    ptSpectrum_ = PtEtaHistogram;
+    TFile file("toymcPtEtaInput.root");
+    histPtEta_ = (TH2F*) file.Get("genWPtEta");
+    histPtEta_->SetDirectory(0);
   } else {
     std::cerr << "unknown ToyMC pt spectrum:" << spectrum << '\n';
     exit(1);
@@ -1418,6 +1425,8 @@ void ToyMC::print() const {
     std::cout << "Uniform\n";
   else if( ptSpectrum_ == PowerLaw )
     std::cout << "PowerLaw\n";
+  else if( ptSpectrum_ == PtEtaHistogram )
+    std::cout << "PtEtaHistogram\n";
 
   std::cout << "  response:     ";
   if( responseModel_ == Constant )
