@@ -1,4 +1,4 @@
-//  $Id: caliber.h,v 1.48 2009/07/22 13:50:32 mschrode Exp $
+//  $Id: caliber.h,v 1.49 2009/07/23 13:47:40 mschrode Exp $
 
 //!  \mainpage
 //!
@@ -34,12 +34,18 @@
 //!      Configuration file</A>
 //!
 //!  \section label_sec_geninfo General information about and results of the calibration method
-//!  - Matthias Schr&ouml;der:
+//!
+//!  - J. Naumann-Emme:
+//!    <A HREF="http://indico.cern.ch/conferenceDisplay.py?confId=65022">
+//!    JEC from top using "Kalibri" method</A>,
+//!    CMS Jet Energy Corrections Meeting, 24th July, 2009
+//!
+//!  - M. Schr&ouml;der:
 //!    <A HREF="http://indico.cern.ch/conferenceDisplay.py?confId=64137">
 //!    An Unbinned Fit for Jet Energy Corrections</A>,
 //!    CMS Jet Energy Corrections Meeting, 10th July, 2009
 //!
-//!  - Jan Thomsen:
+//!  - J. Thomsen:
 //!    <A HREF="https://indico.desy.de/getFile.py/access?contribId=0&resId=0&materialId=slides&confId=1638">
 //!    Inclusion of track information</A>,
 //!    UHH Jetcalibration meeting, 8th May, 2009
@@ -130,10 +136,11 @@ class TMeasurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.48 2009/07/22 13:50:32 mschrode Exp $
+//!  $Id: caliber.h,v 1.49 2009/07/23 13:47:40 mschrode Exp $
 // -----------------------------------------------------------------
 class TCaliber {
 public :
+  //!  \brief Constructor
   //!  \param f Name of the configuration file
   // -----------------------------------------------------------------
   TCaliber(const std::string& f)
