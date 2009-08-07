@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.40 2009/07/17 09:56:47 snaumann Exp $
+//  $Id: Parametrization.h,v 1.41 2009/08/07 11:18:45 stadie Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -23,7 +23,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.40 2009/07/17 09:56:47 snaumann Exp $
+//!  $Id: Parametrization.h,v 1.41 2009/08/07 11:18:45 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -840,7 +840,7 @@ public:
   //!  double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
   //!  \endcode   
   double correctedJetEt(const TMeasurement *x,const double *par) const {
-    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
     //double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
     double c1 = par[0]+logpt*(0.1 * par[1]+logpt * 0.01* par[2]);
@@ -858,11 +858,6 @@ public:
     double logpt = log10(pt);
     double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
     return  c2 * x->pt;
-
-/*     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; */
-/*     double logpt = log10(pt); */
-/*     double c2 = 0.998293 + 5.43056/(pow(logpt,3.3444) + 2.39809); */
-/*     return  c2 * x->pt; */
   }
 };
 
@@ -1062,7 +1057,7 @@ class SmearFermiTail : public Parametrization{
   }
 
   //!  \brief Returns probability density of response
-  //!  \param x   TMeasurement::pt is response for which the 
+  //!  \param x   TMeasurement::E is response for which the 
   //!             probability density is returned
   //!  \param par Pointer to parameters
   //!  \return Probability density of response
@@ -1077,8 +1072,8 @@ class SmearFermiTail : public Parametrization{
     if(c > 1.) c = 1.;
     if(T < 0.) T = 0.;
 
-    double p = c / sqrt(2.* M_PI ) / sigma * exp(-pow((x->pt - mu) / sigma, 2.) / 2.);
-    p += (1. - c) / (T * log(1 + exp(mu / T))) / (exp((x->pt - mu) / T) + 1.);
+    double p = c / sqrt(2.* M_PI ) / sigma * exp(-pow((x->E - mu) / sigma, 2.) / 2.);
+    p += (1. - c) / (T * log(1 + exp(mu / T))) / (exp((x->E - mu) / T) + 1.);
 
     return p;
   }
@@ -1095,8 +1090,28 @@ class SmearFermiTail : public Parametrization{
 //!  This pdf consists of two Gaussians, a central one around
 //!  1. and a second one describing the tail:
 //!  \f[
-//!   p(r) = c \cdot G_{0}(\mu_{0},\sigma_{0}) + (1-c) \cdot G_{1}(\mu_{1},\sigma_{1})
+//!   p(r) = c_{i} \cdot G_{0}(\mu_{0},\sigma_{0}) + (1-c_{i}) \cdot G_{1}(\mu_{1},\sigma_{1})
 //!  \f]
+//!  The mean of the Gaussian is parameterized by
+//!  \f[
+//!   \mu(t) = a_{1} + a_{2}\cdot t
+//!  \f]
+//!  where the \f$ a_{i} \f$ are specified via the config file.
+//!  The width of the Gaussian is parameterized by
+//!  \f[
+//!   \frac{\sigma(t)}{p_{T}} = \sqrt{\frac{a^{2}_{1}}{t} + \frac{a^{2}_{2}}{t} + a^{2}_{3}},
+//!  \f]
+//!  where the \f$ a_{i} \f$ are parameters of the fit.
+//!
+//!  The parameters of the tail Gaussian are binned
+//!  in \f$ N_{i} \f$ \p t bins.
+//!
+//!  The truth pdf is \f$ f(t) = N/t^{n} \f$. The normalization
+//!  is such that the dijet probability
+//!  \f[
+//!    p = \int\;dt\;f(t)r(m_{1}/t)r(m_{2}/t)
+//!  \f]
+//!  is normalized to one. Therefore: \f$ n > 3 \f$
 //!
 //!  Number of free parameters:
 //!   - towers: 0
@@ -1107,43 +1122,155 @@ class SmearFermiTail : public Parametrization{
 //!     - 3: Mean \f$ \mu_{1} \f$ of tail Gaussian
 //!     - 4: Width \f$ \sigma_{1} \f$ of tail Gaussian
 //!   - tracks: 0
-//!   - global: 0
+//!   - global: 1
 // ------------------------------------------------------------------------
 class SmearTwoGauss : public Parametrization { 
  public:
-  SmearTwoGauss(const std::vector<double>& scale)
-    : Parametrization(0,5,0,0), mScale(scale) { assert( mScale.size() >= nJetPars() ); }
+  //!  \brief Constructor
+  //!  \param ptBinEdges  Edges of pt bins of tail Gaussian
+  //!  \param meanRespPar Parameters of mean response parametrization
+  //!  \param rParScales  Response parameter scales
+  // ------------------------------------------------------------------------
+  SmearTwoGauss(const std::vector<double>& ptBinEdges, const std::vector<double>& meanRespPar, const std::vector<double>& rParScales)
+    : Parametrization(0,3+3*(ptBinEdges.size()-1),0,1),
+    meanRespPar_(meanRespPar),
+    ptBinEdges_(ptBinEdges),
+    nPtBins_(static_cast<int>(ptBinEdges_.size())-1),
+    ptMin_(ptBinEdges_.front()),
+    ptMax_(ptBinEdges_.back()),
+    respParScales_(rParScales)
+    {
+      // Duplicate jet parameter scales for pt binned
+      // function part
+      int nRespParScales = static_cast<int>(respParScales_.size());
+      if( nRespParScales == 6 ) {
+	for(int ptBin = 1; ptBin < nPtBins_; ptBin++) {
+	  for(int i = 3; i < nRespParScales; i++) {
+	    respParScales_.push_back( respParScales_.at(i) );
+	  }
+	}
+      }
+
+      print();
+
+      assert( meanRespPar.size() == 2 );
+      for(int ptBin = 0; ptBin < nPtBins_; ptBin++) {
+	assert( ptBinEdges_.at(ptBin) < ptBinEdges_.at(ptBin+1) );
+      }
+      assert( 0.0 <= ptMin_ && ptMin_ < ptMax_ );
+      assert( respParScales_.size() == nJetPars() );
+    }
+
   const char* name() const { return "SmearTwoGauss";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
-    return x->pt;
+    return 0.;
   }
 
   //!  \brief Returns probability density of response
-  //!  \param x   TMeasurement::pt is response for which the 
+  //!  \param x   TMeasurement::E is response for which the 
   //!             probability density is returned
   //!  \param par Pointer to parameters
   //!  \return Probability density of response
   // ------------------------------------------------------------------------
   double correctedJetEt(const TMeasurement *x,const double *par) const {
-    double c  = mScale.at(0)*par[0];  // Normalization
-    double u0 = mScale.at(1)*par[1];
-    double s0 = mScale.at(2)*par[2];  // Sigma of main Gaussian
-    double u1 = mScale.at(3)*par[3];  // Mean of Gaussian tail
-    double s1 = mScale.at(4)*par[4];  // Sigma of Gaussian tail
+    // Central Gaussian
+    double u0 = meanRespPar_.at(0) + meanRespPar_.at(1)*x->pt;
+    double a1 = respParScales_.at(0)*par[0];
+    double a2 = respParScales_.at(1)*par[1];
+    double a3 = respParScales_.at(2)*par[2];
+    double s0 = sqrt( a1*a1/x->pt/x->pt + a2*a2/x->pt + a3*a3 );
 
-    //Take care of proper normalization
+    // Offset to ptBin
+    int idx = 3*findPtBin(x->pt);
+
+    // Normalization
+    double c  = respParScales_.at(3+idx)*par[3+idx];
     if(c < 0.) c = 0.;
     if(c > 1.) c = 1.;
 
-    double p  =       c  / sqrt(2* M_PI) / s0 * exp(-pow((x->pt - u0) / s0, 2) / 2);
-    p        += (1. - c) / sqrt(2* M_PI) / s1 * exp(-pow((x->pt - u1) / s1, 2) / 2);
+    // Tail Gaussian
+    double u1 = respParScales_.at(4+idx)*par[4+idx];
+    double s1 = respParScales_.at(5+idx)*par[5+idx];
+
+    // Combined probability density
+    double p  =       c  / sqrt(2* M_PI) / s0 * exp(-pow((x->E - u0) / s0, 2) / 2);
+    p        += (1. - c) / sqrt(2* M_PI) / s1 * exp(-pow((x->E - u1) / s1, 2) / 2);
 
     return p;
   }
 
+
+
+  //!  \brief Returns probability density of true pt multiplied by normalization
+  //!         of dijet probability (see also \p SmearDiJet::truthPDF(t)).
+  //!  \param x   \p TMeasurement::pt is true pt for which the
+  //!             probability density is returned
+  //!  \param par Pointer to parameters
+  //!  \return Probability density of truth times normalization of dijet probability
+  // ------------------------------------------------------------------------
+  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+    double p = 0.;
+    if( ptMin_ < x->pt && x->pt < ptMax_ ) {
+      double n    = par[0];        // The exponent
+      double k    = n - 3.;
+      double norm = k / ( pow(ptMin_,-k) - pow(ptMax_,-k) );
+      
+      p = norm / pow( x->pt, n );
+    }
+
+    return p;
+  }
+
+
  private:
-  const std::vector<double> mScale;    //!< Parameter scales
+  const std::vector<double> meanRespPar_;    //!< Parameters of mean response
+  const std::vector<double> ptBinEdges_;     //!< Pt bin edges
+  const int    nPtBins_;                     //!< Number of pt bins
+  const double ptMin_;                       //!< Minimum of non-zero range of truth pdf
+  const double ptMax_;                       //!< Maximum of non-zero range of truth pdf
+  std::vector<double> respParScales_;  //!< Response parameter scales
+
+
+
+  //!  \brief Return the pt bin for a given \p pt value
+  //!
+  //!  There are \p nPtBins_ from 0 to <tt> nPtBins_-1 </tt>.
+  //!  The underflow bin is also 0, the overflow bin also
+  //!  <tt> nPtBins_-1 </tt>.
+  // ------------------------------------------------------------------------
+  int findPtBin(double pt) const {
+    int ptBin = 0;
+    for(int bin = 0; bin < nPtBins_; bin++) {
+      if( pt > ptBinEdges_.at(bin) )
+	ptBin = bin;
+      else
+	break;
+    }
+
+    return ptBin;
+  }
+
+
+
+  //!  \brief Print some initialization details
+  // ------------------------------------------------------------------------
+  void print() const {
+    std::cout << "Parametrization class '" << name() << "'\n";
+    std::cout << "  Probability density of ptTrue spectrum:\n";
+    std::cout << "    Powerlaw\n";
+    std::cout << "    " << ptMin_ << " < ptTrue < " << ptMax_ << " GeV\n";
+    std::cout << "  Probability density of response:\n";
+    std::cout << "    Mean response '" << meanRespPar_.at(0) << " + " << meanRespPar_.at(1) << " * pt'\n";
+    std::cout << "    " << nPtBins_ << " ptTrue bins:\n";
+    for(int i = 0; i < nPtBins_; i++) {
+      std::cout << "      " << i << ": " << ptBinEdges_.at(i) << " - " << ptBinEdges_.at(1+i) << " GeV\n";
+    }
+    std::cout << "    Response parameter scale factors:\n";
+    for(size_t i = 0; i < respParScales_.size(); i++) {
+      std::cout << "      " << i << ": " << respParScales_.at(i) << "\n";
+    }
+  }
 };
 
 
@@ -1170,57 +1297,57 @@ class SmearStepGauss : public Parametrization
  public:
   SmearStepGauss(double min, double max, int nsteps, const std::vector<double>& scale)
     : Parametrization(0,nsteps+3,0,0),
-    mNGausPar(3),
-    mMin(min),
-    mMax(max),
-    mNStepPar(nsteps),
-    mStepWidth((mMax - mMin)/mNStepPar),
-    mScale(scale)
+    nGausPar_(3),
+    min_(min),
+    max_(max),
+    nStepPar_(nsteps),
+    stepWidth_((max_ - min_)/nStepPar_),
+    scale_(scale)
     {
-      for(int i = 0; i < mNStepPar+1; i++) {
-	mBinEdges.push_back( mMin + i*mStepWidth );
+      for(int i = 0; i < nStepPar_+1; i++) {
+	binEdges_.push_back( min_ + i*stepWidth_ );
       }
-      assert( 0.0 <= mMin && mMin < mMax );
-      assert( mScale.size() >= nJetPars() );
+      assert( 0.0 <= min_ && min_ < max_ );
+      assert( scale_.size() >= nJetPars() );
     }
-  ~SmearStepGauss() { mBinEdges.clear(); }
+  ~SmearStepGauss() { binEdges_.clear(); }
 
   const char* name() const { return "SmearStepGauss";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const { return x->pt; }
+  double correctedTowerEt(const TMeasurement *x,const double *par) const { return 0.; }
 
   //!  \brief Returns probability density of response
-  //!  \param x   TMeasurement::pt is response for which the 
+  //!  \param x   TMeasurement::E is response for which the 
   //!             probability density is returned
   //!  \param par Pointer to parameters
   //!  \return Probability density of response
   // ------------------------------------------------------------------------
   double correctedJetEt(const TMeasurement *x,const double *par) const {
     // Probability density from Gaussian part
-    double c = mScale.at(0)*par[0];
-    double u = mScale.at(1)*par[1];
-    double s = mScale.at(2)*par[2];
+    double c = scale_.at(0)*par[0];
+    double u = scale_.at(1)*par[1];
+    double s = scale_.at(2)*par[2];
     
-    double p = c / sqrt(2* M_PI ) / s * exp(-pow((x->pt - u) / s, 2) / 2);
+    double p = c / sqrt(2* M_PI ) / s * exp(-pow((x->E - u) / s, 2) / 2);
     
     
     // Probability density from step function part
     // Copy parameter values to temp vector for normalization
-    std::vector<double> stepPar = std::vector<double>(mNStepPar,1.);
+    std::vector<double> stepPar = std::vector<double>(nStepPar_,1.);
     double norm = 0.;
-    for(int i = 0; i < mNStepPar; i++) {
-      stepPar.at(i) = mScale.at(mNGausPar+i)*par[mNGausPar+i];
+    for(int i = 0; i < nStepPar_; i++) {
+      stepPar.at(i) = scale_.at(nGausPar_+i)*par[nGausPar_+i];
       if( stepPar.at(i) < 0. ) stepPar.at(i) = 0.;
       norm += stepPar.at(i);
     }
-    norm = (1.-c)/norm/mStepWidth;
+    norm = (1.-c)/norm/stepWidth_;
 
 
     // Find parameter idx for given response x
     // and add content to p
-    if( x->pt >= mBinEdges.front() && x->pt < mBinEdges.back() ) {
+    if( x->E >= binEdges_.front() && x->E < binEdges_.back() ) {
       int i = 0;
-      while( x->pt > mBinEdges.at(1+i) ) i++;
+      while( x->E > binEdges_.at(1+i) ) i++;
       p += norm*stepPar.at(i);
     }
 
@@ -1228,13 +1355,13 @@ class SmearStepGauss : public Parametrization
   }
 
  private:
-  const int    mNGausPar;              //!< Number of parameters of Gaussian part of pdf
-  const double mMin;                   //!< Minimum of non-zero range of pdf
-  const double mMax;                   //!< Maximum of non-zero range of pdf
-  const int    mNStepPar;              //!< Number of parameters of step part of pdf
-  const double mStepWidth;             //!< Step width
-  const std::vector<double> mScale;    //!< Parameters scales
-  std::vector<double> mBinEdges;       //!< Edges of steps
+  const int    nGausPar_;              //!< Number of parameters of Gaussian part of pdf
+  const double min_;                   //!< Minimum of non-zero range of pdf
+  const double max_;                   //!< Maximum of non-zero range of pdf
+  const int    nStepPar_;              //!< Number of parameters of step part of pdf
+  const double stepWidth_;             //!< Step width
+  const std::vector<double> scale_;    //!< Parameters scales
+  std::vector<double> binEdges_;       //!< Edges of steps
 };
 
 
@@ -1268,70 +1395,72 @@ class SmearStepGaussInter : public Parametrization
 { 
  public:
   //!  \brief Constructor
-  //!  \param rmin    Minimum of binned part of response pdf \f$ H_{inter} \f$
-  //!  \param rmax    Maximum of binned part of response pdf \f$ H_{inter} \f$
-  //!  \param rnsteps Number of bins of binned part of response pdf \f$ H_{inter} \f$
-  //!  \param tmin    Minimum of truth pdf
-  //!  \param tmax    Maximum of truth pdf
-  //!  \param scale   Parameter scales
+  //!  \param tMin          Minimum of non-zero part of truth pdf
+  //!  \param tMax          Maximum of non-zero part of truth pdf
+  //!  \param rMin          Minimum of binned part of response pdf \f$ H_{inter} \f$
+  //!  \param rMax          Maximum of binned part of response pdf \f$ H_{inter} \f$
+  //!  \param rNBins        Number of bins of binned part of response pdf \f$ H_{inter} \f$
+  //!  \param rParScales  Jet parameter scales
   // ------------------------------------------------------------------------
-  SmearStepGaussInter(double rmin, double rmax, int rnsteps, double tmin, double tmax, const std::vector<double>& scale) : Parametrization(0,rnsteps+3,0,1),
-    mNGausPar(3),
-    mRMin(rmin),
-    mRMax(rmax),
-    mNStepPar(rnsteps),
-    mBinWidth((mRMax - mRMin)/mNStepPar),
-    mTMin(tmin),
-    mTMax(tmax),
-    mScale(scale)
+  SmearStepGaussInter(double tMin, double tMax, double rMin, double rMax, int rNBins, const std::vector<double>& rParScales)
+    : Parametrization(0,rNBins+3,0,1),
+    tMin_(tMin),
+    tMax_(tMax),
+    rMin_(rMin),
+    rMax_(rMax),
+    nGausPar_(3),
+    nStepPar_(rNBins),
+    binWidth_((rMax_ - rMin_)/nStepPar_),
+    respParScales_(rParScales)
     {
-      for(int i = 0; i < mNStepPar+1; i++) {
-	mBinCenters.push_back( mRMin + (0.5+i)*mBinWidth );
+      for(int i = 0; i < nStepPar_+1; i++) {
+	binCenters_.push_back( rMin_ + (0.5+i)*binWidth_ );
       }
-      assert( 0.0 <= mRMin && mRMin < mRMax );
-      assert( 0.0 <= mTMin && mTMin < mTMax );
-      assert( mScale.size() >= (nJetPars()+nGlobalJetPars()) );      
+      assert( 0.0 <= tMin_ && tMin_ < tMax_ );
+      assert( 0.0 <= rMin_ && rMin_ < rMax_ );
+      assert( respParScales_.size() >= nJetPars() );      
+
+      print();
     }
 
-  ~SmearStepGaussInter() { mBinCenters.clear(); }
+  ~SmearStepGaussInter() { binCenters_.clear(); }
 
   const char* name() const { return "SmearStepGaussInter";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const { return x->pt; }
+  double correctedTowerEt(const TMeasurement *x,const double *par) const { return 0.; }
 
   //!  \brief Returns probability density of response
-  //!  \param x   TMeasurement::pt is response for which the 
-  //!             probability density is returned
+  //!  \param x   TMeasurement::E is the response,
   //!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
   //!  \return Probability density of response
   // ------------------------------------------------------------------------
   double correctedJetEt(const TMeasurement *x,const double *par) const {
     // Probability density from Gaussian part
-    double c = mScale.at(0)*par[0];
-    double u = mScale.at(1)*par[1];
-    double s = mScale.at(2)*par[2];
+    double c = respParScales_.at(0)*par[0];
+    double u = respParScales_.at(1)*par[1];
+    double s = respParScales_.at(2)*par[2];
     
-    double p = c / sqrt(2* M_PI ) / s * exp(-pow((x->pt - u) / s, 2) / 2);
-
+    double p = c / sqrt(2* M_PI ) / s * exp(-pow((x->E - u) / s, 2) / 2);
+    
     
     // Probability density from step function part
     // Copy parameter values to temp vector for normalization
-    std::vector<double> stepPar = std::vector<double>(mNStepPar,1.);
+    std::vector<double> stepPar(nStepPar_,1.);
     double norm = 0.;
-    for(int i = 0; i < mNStepPar; i++) {
-      stepPar.at(i) = mScale.at(mNGausPar+i)*par[mNGausPar+i];
+    for(int i = 0; i < nStepPar_; i++) {
+      stepPar.at(i) = respParScales_.at(nGausPar_+i)*par[nGausPar_+i];
       if( stepPar.at(i) < 0. ) stepPar.at(i) = 0.;
       norm += stepPar.at(i);
     }
-    norm = (1.-c)/norm/mBinWidth;
+    norm = (1.-c)/norm/binWidth_;
     
-    p += norm*interpolate(x->pt,stepPar);
-
+    p += norm*interpolate(x->E,stepPar);
+    
     return p;
   }
 
-  //!  \brief Returns probability density of truth multiplied by normalization
-  //!         of dijet probability (see also SmearDiJet::TruthPDF(t)).
+  //!  \brief Returns probability density of true pt multiplied by normalization
+  //!         of dijet probability (see also SmearDiJet::truthPDF(t)).
   //!  \param x   TMeasurement::pt is truth for which the 
   //!             probability density is returned
   //!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
@@ -1339,28 +1468,34 @@ class SmearStepGaussInter : public Parametrization
   // ------------------------------------------------------------------------
   double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
     double p = 0.;
-    if( mTMin < x->pt && x->pt < mTMax ) {
-      double n    = mScale.at(nJetPars()) * par[0];        // The exponent
+    if( tMin_ < x->pt && x->pt < tMax_ ) {
+      double n    = par[0];        // The exponent
       double k    = n - 3.;
-      double norm = k / ( pow(mTMin,-k) - pow(mTMax,-k) );
-
+      double norm = k / ( pow(tMin_,-k) - pow(tMax_,-k) );
+      
       p = norm / pow( x->pt, n );
+      
+      // For constant spectrum
+      //! \TODO Should become a base class for two classes
+      //!       with either constant or powerlaw spectrum
+      // double norm = ( pow(mTMax,3) + pow(mTMin,3) ) / 3.;
+      // p = 1./norm;
     }
+
     return p;
   }
 
 
  private:
-  const int    mNGausPar;              //!< Number of parameters of Gaussian part of pdf
-  const double mRMin;                  //!< Minimum of non-zero range of response pdf
-  const double mRMax;                  //!< Maximum of non-zero range of response pdf
-  const int    mNStepPar;              //!< Number of parameters of step part of pdf
-  const double mBinWidth;              //!< Bin width
-  const double mTMin;                  //!< Minimum of non-zero range of truth pdf
-  const double mTMax;                  //!< Maximum of non-zero range of truth pdf
-  const std::vector<double> mScale;    //!< Parameter scales
-  std::vector<double> mBinCenters;     //!< Centers of bins
-  mutable std::vector<double> stepPar;  //!< Store step parameters
+  const double tMin_;                   //!< Minimum of non-zero range of truth pdf
+  const double tMax_;                   //!< Maximum of non-zero range of truth pdf
+  const double rMin_;                   //!< Minimum of non-zero range of response pdf
+  const double rMax_;                   //!< Maximum of non-zero range of response pdf
+  const int    nGausPar_;               //!< Number of parameters of Gaussian part of pdf
+  const int    nStepPar_;               //!< Number of parameters of step part of pdf
+  const double binWidth_;               //!< Bin width
+  const std::vector<double> respParScales_;     //!< Parameter scales
+  std::vector<double> binCenters_;      //!< Centers of response bins
 
 
 
@@ -1368,9 +1503,9 @@ class SmearStepGaussInter : public Parametrization
   //!
   //!  Returns the linearly weighted mean value of two adjacent bin
   //!  contents, where the two bins are the ones whose bin centers
-  //!  are closest to r. The contents are weighted with the distance
+  //!  are closest to \p r. The contents are weighted with the distance
   //!  of r from the corresponding bin center. The interpolation
-  //!  assumes mNStepPar bins. At the left and right edges of the
+  //!  assumes \p nStepPar_ bins. At the left and right edges of the
   //!  binned range, the interpolation is done assuming 0 bin content
   //!  outside the binned range.
   //!
@@ -1382,14 +1517,14 @@ class SmearStepGaussInter : public Parametrization
     double p = 0.;     // The interpolated parameter
 
     // Check that r is in range of binning +/- 0.5*mBinWidth
-    if( r > mRMin - 0.5*mBinWidth  &&  r < mRMax + 0.5*mBinWidth ) {
+    if( r > rMin_ - 0.5*binWidth_  &&  r < rMax_ + 0.5*binWidth_ ) {
       // Find index i of the next larger bin center
       unsigned int i = 0;                              
-      while( r > mBinCenters.at(i) ) i++;
-      assert( i < mBinCenters.size() );
+      while( r > binCenters_.at(i) ) i++;
+      assert( i < binCenters_.size() );
 
-      double dx  = mBinCenters.at(i) - r;  // Distance to next larger bin center
-      dx        /= mBinWidth;              // dx relative to bin width
+      double dx  = binCenters_.at(i) - r;  // Distance to next larger bin center
+      dx        /= binWidth_;              // dx relative to bin width
       double a   = 0.;
       double b   = 0.;
 
@@ -1398,7 +1533,7 @@ class SmearStepGaussInter : public Parametrization
 	a = 0.;
 	b = par.front();
       }
-      else if( i == mBinCenters.size()-1 ) { // Right edge
+      else if( i == binCenters_.size()-1 ) { // Right edge
 	a = par.back();
 	b = 0.;
       }
@@ -1413,7 +1548,314 @@ class SmearStepGaussInter : public Parametrization
 
     return p;
   }
+
+
+
+  //!  \brief Print some initialization details
+  // ------------------------------------------------------------------------
+  void print() const {
+    std::cout << "Parametrization class '" << name() << "'\n";
+    std::cout << "  Probability density of ptTrue spectrum:\n";
+    std::cout << "    Powerlaw\n";
+    std::cout << "    " << tMin_ << " < ptTrue < " << tMax_ << " GeV\n";
+    std::cout << "  Probability density of response:\n";
+    std::cout << "    Non-zero for " << rMin_ << " < R < " << rMax_ << "\n";
+    std::cout << "    " << nStepPar_ << " step parameters\n";
+  }
 };
+
+
+
+//!  \brief Parametrization used for SmearFunction estimation
+//!
+//!  The response pdf consists of a central Gaussians and an
+//!  interpolated step function (with \f$ N_{j} \f$ response bins)
+//!  parametrizing the tail:
+//!  \f[
+//!   p(r) = c_{i} \cdot G(\mu(t),\sigma(t)) + (1-c_{i}) \cdot H_{inter}(b_{i,j})
+//!  \f]
+//!  The mean of the Gaussian is parameterized by
+//!  \f[
+//!   \mu(t) = 1.008 - 8E-06\cdot t
+//!  \f]
+//!  from a fit on the mean of L2L3 corrected jets.
+//!  The width of the Gaussian is parameterized by
+//!  \f[
+//!   \frac{\sigma(t)}{p_{T}} = \sqrt{\frac{a^{2}_{1}}{t} + \frac{a^{2}_{2}}{t} + a^{2}_{3}},
+//!  \f]
+//!  where the \f$ a_{i} \f$ are parameters of the fit. (So far,
+//!  \f$ a_{1} = 0 \f$.)
+//!  The step function part is additionally binned in \f$ N_{i} \f$ \p t bins.
+//!
+//!  The truth pdf is \f$ f(t) = N/t^{n} \f$. The normalization
+//!  is such that the dijet probability
+//!  \f[
+//!    p = \int\;dt\;f(t)r(m_{1}/t)r(m_{2}/t)
+//!  \f]
+//!  is normalized to one. Therefore: \f$ n > 3 \f$
+//!
+//!  Number of free parameters:
+//!   - towers: 0
+//!   - jets:   \f$ 2 + N_{i}\cdot(1+n_{j}) \f$
+//!     - \f$ 0 - 1 \f$:  \f$ a_{1} \f$ and \f$ a_{2} \f$    Normalization \f$ c \f$
+//!     - \f$ 2 + N_{i}\cdot(N_{j}+1): Normalization \f$ c_{i} \f$
+//!     - \f$ 3\ldots + N_{i}\cdot(N_{j}+1): Parameters \f$ b_{i,j} \f$ of the step function
+//!   - tracks: 0
+//!   - global: 1
+//!     - The exponent of the truth spectrum
+// ------------------------------------------------------------------------
+class SmearStepGaussInterPtBinned : public Parametrization
+{
+ public:
+  //!  \brief Constructor
+  //!  \param ptBinEdges  Edges of pt bins of step function
+  //!  \param rMin        Minimum response of step function \f$ H_{inter} \f$
+  //!  \param rMax        Maximum response of step function \f$ H_{inter} \f$
+  //!  \param rNBins      Number of bins per pt bin of step function \f$ H_{inter} \f$
+  //!  \param rParScales  Response parameter scales
+  // ------------------------------------------------------------------------
+  SmearStepGaussInterPtBinned(const std::vector<double>& ptBinEdges, double rMin, double rMax, int rNBins, const std::vector<double>& rParScales)
+    : Parametrization( 0, 2 + (ptBinEdges.size()-1) * (1+rNBins), 0, 1 ),
+    ptBinEdges_(ptBinEdges),
+    ptMin_(ptBinEdges_.front()),
+    ptMax_(ptBinEdges_.back()),
+    nPtBins_(static_cast<int>(ptBinEdges_.size())-1),
+    rMin_(rMin),
+    rMax_(rMax),
+    nGaussPar_(2),
+    nStepParPerPtBin_(rNBins),
+    binWidth_((rMax_ - rMin_)/nStepParPerPtBin_),
+    respParScales_(rParScales)
+    {
+      // Find step function bin centers
+      for(int i = 0; i < nStepParPerPtBin_+1; i++) {
+	binCenters_.push_back( rMin_ + (0.5+i)*binWidth_ );
+      }
+      // Duplicate jet parameter scales for pt binned step
+      // function part
+      int nRespParScales = static_cast<int>(respParScales_.size());
+      if( nRespParScales == nGaussPar_ + 1 + nStepParPerPtBin_ ) {
+	for(int ptBin = 1; ptBin < nPtBins_; ptBin++) {
+	  for(int i = nGaussPar_; i < nRespParScales; i++) {
+	    respParScales_.push_back( respParScales_.at(i) );
+	  }
+	}
+      }
+
+      print();
+
+      for(int ptBin = 0; ptBin < nPtBins_; ptBin++) {
+	assert( ptBinEdges_.at(ptBin) < ptBinEdges_.at(ptBin+1) );
+      }
+      assert( 0.0 <= ptMin_ && ptMin_ < ptMax_ );
+      assert( 0.0 <= rMin_ && rMin_ < rMax_ );
+      assert( respParScales_.size() == nJetPars() );
+    }
+
+  ~SmearStepGaussInterPtBinned() {};
+
+  const char* name() const { return "SmearStepGaussInterPtBinned";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const { return 0.; }
+
+
+
+  //!  \brief Returns probability density of response
+  //!  \param x \p TMeasurement::E is the response,
+  //!           \p TMeasurement::pt is the true pt
+  //!  \param par Pointer to parameters
+  //!  \return Probability density of response
+  // ------------------------------------------------------------------------
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    // Find index to start of step parameters of this pt bin
+    // Per pt bin there are
+    //  - 1 normalization constant,
+    //  - nStepParPerPtBin_ step parameters
+    int idx = nGaussPar_ + findPtBin(x->pt)*(1+nStepParPerPtBin_);
+
+    // Probability density from Gaussian part
+    double c = respParScales_.at(idx)*par[idx];
+    double u = meanResponse(x->pt);
+
+    double a1 = 0.;
+    double a2 = respParScales_.at(0)*par[0];
+    double a3 = respParScales_.at(1)*par[1];
+    double s  = sqrt( a1*a1/x->pt/x->pt + a2*a2/x->pt + a3*a3 );
+
+    double p = c / sqrt(2* M_PI ) / s * exp(-pow((x->E - u) / s, 2) / 2);
+    
+    
+    // Probability density from step function part
+    // Copy parameter values to temp vector for normalization
+    std::vector<double> stepPar(nStepParPerPtBin_,1.);
+    double norm = 0.;
+    idx++;
+    for(int i = 0; i < nStepParPerPtBin_; i++) {
+      stepPar.at(i) = respParScales_.at(idx+i)*par[idx+i];
+      if( stepPar.at(i) < 0. ) stepPar.at(i) = 0.;
+      norm += stepPar.at(i);
+    }
+    norm = (1.-c)/norm/binWidth_;
+    
+    p += norm*interpolate(x->E,stepPar);
+    
+    return p;
+  }
+
+
+
+  //!  \brief Returns probability density of true pt multiplied by normalization
+  //!         of dijet probability (see also \p SmearDiJet::truthPDF(t)).
+  //!  \param x   \p TMeasurement::pt is true pt for which the
+  //!             probability density is returned
+  //!  \param par Pointer to parameters
+  //!  \return Probability density of truth times normalization of dijet probability
+  // ------------------------------------------------------------------------
+  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+    double p = 0.;
+    if( ptMin_ < x->pt && x->pt < ptMax_ ) {
+      double n    = par[0];        // The exponent
+      double k    = n - 3.;
+      double norm = k / ( pow(ptMin_,-k) - pow(ptMax_,-k) );
+      
+      p = norm / pow( x->pt, n );
+
+/*       double norm = ( pow(ptMax_,3) + pow(ptMin_,3) ) / 3.; */
+/*       p = 1./norm; */
+    }
+
+    return p;
+  }
+
+
+ private:
+  const std::vector<double> ptBinEdges_;  //!< Pt bin edges
+  const double ptMin_;                  //!< Minimum of non-zero range of truth pdf
+  const double ptMax_;                  //!< Maximum of non-zero range of truth pdf
+  const int    nPtBins_;                //!< Number of pt bins
+  const double rMin_;                   //!< Minimum of non-zero range of response pdf
+  const double rMax_;                   //!< Maximum of non-zero range of response pdf
+  const int    nGaussPar_;              //!< Number of parameters of gauss part of pdf
+  const int    nStepParPerPtBin_;       //!< Number of parameters of step part of pdf per pt bin
+  const double binWidth_;               //!< Response bin width
+  std::vector<double> respParScales_;   //!< Jet parameter scales
+  std::vector<double> binCenters_;      //!< Centers of response bins
+
+
+
+  //!  \brief Return the pt bin for a given \p pt value
+  //!
+  //!  There are \p nPtBins_ from 0 to <tt> nPtBins_-1 </tt>.
+  //!  The underflow bin is also 0, the overflow bin also
+  //!  <tt> nPtBins_-1 </tt>.
+  // ------------------------------------------------------------------------
+  int findPtBin(double pt) const {
+    int ptBin = 0;
+    for(int bin = 0; bin < nPtBins_; bin++) {
+      if( pt > ptBinEdges_.at(bin) )
+	ptBin = bin;
+      else
+	break;
+    }
+
+    return ptBin;
+  }
+
+
+
+  //!  \brief Linear interpolation between two bins
+  //!
+  //!  Returns the linearly weighted mean value of two adjacent bin
+  //!  contents, where the two bins are the ones whose bin centers
+  //!  are closest to \p r. The contents are weighted with the distance
+  //!  of r from the corresponding bin center. The interpolation
+  //!  assumes \p nStepParPerPtBin_ bins. At the left and right edges of the
+  //!  binned range, the interpolation is done assuming 0 bin content
+  //!  outside the binned range.
+  //!
+  //!  \param r   Response
+  //!  \param par Parameters / bin content to be interpolated
+  //!  \return    Interpolated bin content
+  // ------------------------------------------------------------------------
+  double interpolate(double r, const std::vector<double>& par) const {
+    double p = 0.;     // The interpolated parameter
+
+    // Check that r is in range of binning +/- 0.5*mBinWidth
+    if( r > rMin_ - 0.5*binWidth_  &&  r < rMax_ + 0.5*binWidth_ ) {
+      // Find index i of the next larger bin center
+      unsigned int i = 0;
+      while( r > binCenters_.at(i) ) i++;
+      assert( i < binCenters_.size() );
+
+      double dx  = binCenters_.at(i) - r;  // Distance to next larger bin center
+      dx        /= binWidth_;              // dx relative to bin width
+      double a   = 0.;
+      double b   = 0.;
+
+      // Find bin contents to be interpolated
+      if( i == 0 ) { // Left edge
+	a = 0.;
+	b = par.front();
+      }
+      else if( i == binCenters_.size()-1 ) { // Right edge
+	a = par.back();
+	b = 0.;
+      }
+      else { // Central part
+	a = par.at(i-1);
+	b = par.at(i);
+      }
+
+      // Interpolate contents
+      p = dx * a + (1-dx) * b;
+    }
+
+    return p;
+  }
+
+
+  //!  \brief Return the mean response for a given \p pt
+  //!
+  //!  The mean response \p R is linearly parametrized as
+  //!  \f[ R = 1.008 - 8\cdot10^{-6}\cdot p_{T} \f],
+  //!  where the parameter values come from a fit of 
+  //!  \f$ <p^{jet}_{T} / p^{gen}_{T}> \f$ of Summer08
+  //!  L2L3 corrected jets.
+  // ------------------------------------------------------------------------
+  double meanResponse(double pt) const {
+    double a = 1.008;
+    double b = -8E-06;
+
+    return a + b*pt;
+  }
+
+
+
+  //!  \brief Print some initialization details
+  // ------------------------------------------------------------------------
+  void print() const {
+    std::cout << "Parametrization class '" << name() << "'\n";
+    std::cout << "  Probability density of ptTrue spectrum:\n";
+    std::cout << "    Powerlaw\n";
+    std::cout << "    " << ptMin_ << " < ptTrue < " << ptMax_ << " GeV\n";
+    std::cout << "  Probability density of response:\n";
+    std::cout << "    Non-zero for " << rMin_ << " < R < " << rMax_ << "\n";
+    std::cout << "    " << nGaussPar_ << " gauss parameters\n";
+    std::cout << "    " << nStepParPerPtBin_ << " step parameters per pt bin\n";
+    std::cout << "    " << nPtBins_ << " ptTrue bins:\n";
+    for(int i = 0; i < nPtBins_; i++) {
+      std::cout << "      " << i << ": " << ptBinEdges_.at(i) << " - " << ptBinEdges_.at(1+i) << " GeV\n";
+    }
+    std::cout << "    Response parameter scale factors:\n";
+    for(int i = 0; i < 1+nGaussPar_+nStepParPerPtBin_; i++) {
+      std::cout << "      " << i << ": " << respParScales_.at(i) << "\n";
+      if( i == (nGaussPar_-1) || i == nGaussPar_ ) 
+	std::cout << "     ----------\n";
+    }
+  }
+};
+
+
 
 
 //!  \brief Jet parametrization using power law from Groom
@@ -1491,5 +1933,4 @@ public:
     return p->y - (p->par[0] - p->par[1] * pow(0.01 * x, -p->par[2])) * x;
   };
 };
-
 #endif

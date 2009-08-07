@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.52 2009/07/23 11:36:00 stadie Exp $
+// $Id: Parameters.h,v 1.53 2009/08/07 11:18:45 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -28,7 +28,7 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.52 2009/07/23 11:36:00 stadie Exp $
+//!  $Id: Parameters.h,v 1.53 2009/08/07 11:18:45 stadie Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -336,12 +336,13 @@ private:
   bool eta_symmetry;
   unsigned int eta_granularity, phi_granularity,eta_granularity_jet, phi_granularity_jet, eta_granularity_track, phi_granularity_track;
   std::vector<double> start_values, jet_start_values, track_start_values, global_jet_start_values;
+
   //The parametrization functions:
   Parametrization* p;
 
-  double * k; //all fit-parameters
-  double * e; //all fit-parameter errors
-  double * trackEff; //track Efficiency 13eta X 13 ptbins;
+  double * k; //!< all fit-parameters
+  double * e; //!< all fit-parameter errors
+  double * trackEff; //!< track Efficiency 13eta X 13 ptbins;
   double fitchi2;
 
   /// ------------------------------------------------------

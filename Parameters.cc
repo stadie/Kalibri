@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.32 2009/07/17 09:56:47 snaumann Exp $
+// $Id: Parameters.cc,v 1.33 2009/08/07 11:18:45 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -56,22 +56,31 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
   } else if(name == "SmearFermiTail") {
     return new SmearFermiTail();
   } else if(name == "SmearTwoGauss") {
-    std::vector<double> scale = bag_of<double>(config.read<string>("Jet parameter scales",""));
-    return new SmearTwoGauss(scale);
+    std::vector<double> ptBinEdges = bag_of<double>(config.read<string>("DiJet integration pt bin edges","0 100000"));
+    std::vector<double> meanRespPar = bag_of<double>(config.read<string>("mean response parameters","1 0"));
+    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
+    return new SmearTwoGauss(ptBinEdges,meanRespPar,scale);
   } else if(name == "SmearStepGauss") {
     double min    = config.read<double>("Response pdf min",0.);
     double max    = config.read<double>("Response pdf max",1.8);
     int    nsteps = config.read<int>("Response pdf nsteps",10);
-    std::vector<double> scale = bag_of<double>(config.read<string>("Jet parameter scales",""));
+    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
     return new SmearStepGauss(min,max,nsteps,scale);
   } else if(name == "SmearStepGaussInter") {
-    double rmin    = config.read<double>("Response pdf min",0.);
-    double rmax    = config.read<double>("Response pdf max",1.8);
-    int    rnsteps = config.read<int>("Response pdf nsteps",10);
-    double tmin    = config.read<double>("DiJet integration min truth",100.);
-    double tmax    = config.read<double>("DiJet integration max truth",1000.);
-    std::vector<double> scale = bag_of<double>(config.read<string>("Jet parameter scales",""));
-    return new SmearStepGaussInter(rmin,rmax,rnsteps,tmin,tmax,scale);
+    double rMin    = config.read<double>("Response pdf min",0.);
+    double rMax    = config.read<double>("Response pdf max",1.8);
+    int    rNBins  = config.read<int>("Response pdf nsteps",10);
+    double tMin    = config.read<double>("DiJet integration min",0.);
+    double tMax    = config.read<double>("DiJet integration max",1.);
+    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
+    return new SmearStepGaussInter(tMin,tMax,rMin,rMax,rNBins,scale);
+  } else if(name == "SmearStepGaussInterPtBinned") {
+    double rMin    = config.read<double>("Response pdf min",0.);
+    double rMax    = config.read<double>("Response pdf max",1.8);
+    int    rNBins  = config.read<int>("Response pdf nsteps",10);
+    std::vector<double> ptBinEdges = bag_of<double>(config.read<string>("DiJet integration pt bin edges","0 100000"));
+    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
+    return new SmearStepGaussInterPtBinned(ptBinEdges,rMin,rMax,rNBins,scale);
   } else if(name == "GroomParametrization") {
     return new GroomParametrization();
   }
@@ -125,6 +134,8 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "SmearStepGauss";
   } else if(parclass == "SmearParametrizationStepGaussInter") {
     parclass = "SmearStepGaussInter";
+  } else if(parclass == "SmearParametrizationStepGaussInterPtBinned") {
+    parclass = "SmearStepGaussInterPtBinned";
   }
 
   Parametrization *param = CreateParametrization(parclass,config);
@@ -178,7 +189,31 @@ void TParameters::Init(const ConfigFile& config)
         << "       There must be at least " << p->nTowerPars() << " parameters!" << endl;
     exit(2);    
   }
-  jet_start_values = bag_of<double>(config.read<string>("jet start values","")); 
+
+  jet_start_values = bag_of<double>(config.read<string>("jet start values",""));
+  if( p->name() == "SmearStepGaussInterPtBinned" || 
+      p->name() == "SmearTwoGauss"                   ) {
+    // Duplicate start values for pt binned part of parametrization
+    std::vector<double> ptBinEdges = bag_of<double>(config.read<string>("DiJet integration pt bin edges","0 100000"));
+    size_t nPtBins = ptBinEdges.size()-1;
+    if( nPtBins < 1 ) {
+      std::cerr << "ERROR: Less than 1 pt bins for dijet integration\n";
+      exit(3);
+    }
+    size_t nJetStartValues = jet_start_values.size(); 
+    if( nJetStartValues < p->nJetPars() ) {
+      std::cout << "Less than " << p->nJetPars() << " jet parameter start values -- ";
+      std::cout << "filling up for " << nPtBins << " pt bins\n";
+      size_t nParNotBinned = 0;
+      if( p->name() == "SmearStepGaussInterPtBinned" ) nParNotBinned = 2;
+      else if( p->name() == "SmearTwoGauss" ) nParNotBinned = 3;
+      for(size_t ptBin = 1; ptBin < nPtBins; ptBin++) {
+	for(size_t i = nParNotBinned; i < nJetStartValues; i++) {
+	  jet_start_values.push_back( jet_start_values.at(i) );
+	}
+      }
+    } 
+  }
   if ( jet_start_values.size()< p->nJetPars()){
     cerr<< "ERROR: Number of jet start values and free jet parameters does not match!"<<endl
         << "       There must be at least " << p->nJetPars() << " parameters!" << endl;
@@ -1113,11 +1148,34 @@ void TParameters::Write_CalibrationTex(const char* name, const ConfigFile& confi
     pJetFit.push_back(GetJetParRef(jetbin)[i]);
   }
   
-  // Getting start values and scales from config file
-  std::vector<double> pJetStart = bag_of<double>(config.read<string>("jet start values","")); 
-
   // Getting scales from config file
-  std::vector<double> pJetScale = bag_of<double>(config.read<string>("Jet parameter scales","")); 
+  std::vector<double> pJetScale = bag_of<double>(config.read<string>("jet parameter scales","")); 
+  if( p->name() == "SmearStepGaussInterPtBinned" || 
+      p->name() == "SmearTwoGauss"  ) {
+    size_t nParNotBinned = 0;
+    if( p->name() == "SmearStepGaussInterPtBinned" ) nParNotBinned = 2;
+    else if( p->name() == "SmearTwoGauss" ) nParNotBinned = 3;
+    size_t nPtBins = (jet_start_values.size() - nParNotBinned) / (pJetScale.size()-nParNotBinned);
+    size_t jetScaleSize = pJetScale.size();
+    for(size_t ptBin = 1; ptBin < nPtBins; ptBin++) {
+      for(size_t i = nParNotBinned; i < jetScaleSize; i++) {
+	pJetScale.push_back(pJetScale.at(i));
+      }
+    }
+  }
+
+  //fixed jet parameters
+  std::vector<int> fixedJetPars;
+  std::vector<int> fixJetPars = bag_of<int>(config.read<string>("fixed jet parameters",""));
+  for(unsigned int i = 0 ; i < fixJetPars.size() ; i += 3) {
+    int etaid = fixJetPars[i];
+    int phiid = fixJetPars[i+1];
+    int parid = fixJetPars[i+2];
+    if(parid >= GetNumberOfJetParametersPerBin()) continue;
+    int jetbin = GetJetBin(GetJetEtaBin(etaid),GetJetPhiBin(phiid));
+    fixedJetPars.push_back(jetbin * GetNumberOfJetParametersPerBin() + GetNumberOfTowerParameters() + parid);
+  }
+
 
   // Write to tex file
   ofstream outfile(name, ofstream::binary);
@@ -1156,8 +1214,9 @@ void TParameters::Write_CalibrationTex(const char* name, const ConfigFile& confi
     outfile << "\\begin{flushleft}\n\\begin{tabular}{lcl}\n";
     outfile << TexTabularLine<int>(config,"DiJet integration number of iterations");
     outfile << TexTabularLine<double>(config,"DiJet integration epsilon");
-    outfile << TexTabularLine<double>(config,"DiJet integration min truth");
-    outfile << TexTabularLine<double>(config,"DiJet integration max truth");
+    outfile << TexTabularLine<double>(config,"DiJet integration min");
+    outfile << TexTabularLine<double>(config,"DiJet integration max");
+    outfile << TexTabularLine<double>(config,"DiJet integration pt bin edges");
     outfile << "\\end{tabular}\\end{flushleft}\n";
 
     // Start and fitted parameters
@@ -1165,9 +1224,28 @@ void TParameters::Write_CalibrationTex(const char* name, const ConfigFile& confi
     outfile << "\\begin{tabular}{cccc}\n";
     outfile << "\\hline\n\\hline\n";
     outfile << "Index & Scale & Start value & Fitted value \\\\ \n\\hline \n";
-    for(unsigned int i = 0; i < pJetScale.size() && i < pJetStart.size() && i < pJetFit.size(); i++) {
-      outfile << i << " & " << pJetScale.at(i) << " & " << pJetStart.at(i) << " & " << pJetFit.at(i) << " \\\\ \n";
+    size_t nextFixedPar = 0;
+    for(unsigned int i = 0; i < pJetScale.size() && i < jet_start_values.size() && i < pJetFit.size(); i++) {
+      bool isFixedPar = false;
+      if( fixedJetPars.size() > 0 ) {
+	if( i == static_cast<unsigned int>(fixedJetPars.at(nextFixedPar)) ) {
+	  isFixedPar = true;
+	  if( nextFixedPar < (fixedJetPars.size() - 1) ) nextFixedPar++;
+	}
+      }
+      if( isFixedPar ) {
+	outfile << "\\textcolor{gray}{" << i << "} & \\textcolor{gray}{";
+	outfile << pJetScale.at(i) << "} & \\textcolor{gray}{";
+	outfile << jet_start_values.at(i) << "} & \\textcolor{gray}{";
+	outfile << pJetFit.at(i) << "} \\\\ \n";
+      } else {
+	outfile << i << " & ";
+	outfile << pJetScale.at(i) << " & ";
+	outfile << jet_start_values.at(i) << " & ";
+	outfile << pJetFit.at(i) << " \\\\ \n";
+      }
     }
+      
     outfile << "\\hline\n\\hline\n";
     outfile << "\\end{tabular}\n";
     outfile << "\\end{center}\n";

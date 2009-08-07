@@ -5,7 +5,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date  2008/12/12
-//!  $Id: ParameterLimitsReader.cc,v 1.3 2009/06/02 16:28:28 mschrode Exp $
+//!  $Id: ParameterLimitsReader.cc,v 1.4 2009/06/05 15:46:40 mschrode Exp $
 //!   
 #include "ParameterLimitsReader.h"
 
@@ -39,8 +39,7 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TPar
 
     // For SmearHistGauss
     if( parclass == "SmearParametrizationStepGauss"
-	|| parclass == "SmearParametrizationStepGaussInter"
-	|| parclass == "SmearParametrizationTwoGauss") {
+	|| parclass == "SmearParametrizationStepGaussInter" ) {
       std::cout << "Using default parameter limits for '" << parclass << "':" << std::endl;
 
       // Loop over parameters in one bin
@@ -53,10 +52,50 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TPar
 	for(int j = p->GetNumberOfTowerParameters() + i; 
 	    j <  p->GetNumberOfParameters(); 
 	    j += p->GetNumberOfJetParametersPerBin()) {
-	  par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
+	  if( j < p->GetNumberOfParameters()-1 )
+	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
 	} // End of loop over eta and phi bins
       } // End of loop over parameters in one bin
     }
+    // For SmearTwoGauss
+    else if( parclass == "SmearParametrizationTwoGauss" ) {
+      std::cout << "Using default parameter limits for '" << parclass << "':" << std::endl;
+
+      // Loop over parameters in one bin
+      for(int i = 0; i < p->GetNumberOfJetParametersPerBin(); i++) {
+	double min = 0.;
+	double max = 10000.;   // Sigma and histogrammed parameters have no upper limit
+	if( i > 2 && (i-3)%3 == 0 ) max = 1.; // Normalization constant between 0 and 1
+
+	// Loop over eta and phi bins
+	for(int j = p->GetNumberOfTowerParameters() + i; 
+	    j <  p->GetNumberOfParameters(); 
+	    j += p->GetNumberOfJetParametersPerBin()) {
+	  if( j < p->GetNumberOfParameters()-1 )
+	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
+	} // End of loop over eta and phi bins
+      } // End of loop over parameters in one bin
+    }
+    // For SmearStepGaussInterPtBinned
+    else if( parclass == "SmearParametrizationStepGaussInterPtBinned" ) {
+      std::cout << "Using default parameter limits for '" << parclass << "':" << std::endl;
+      int rNBins = config->read<int>("Response pdf nsteps",10);
+      // Loop over parameters in one bin
+      for(int i = 0; i < p->GetNumberOfJetParametersPerBin(); i++) {
+	double min = 0.;
+	double max = 10000.;   // Step function parameters have no upper limit
+	if( i > 1 && (i-2)%(rNBins+1) == 0 ) max = 1.; // Normalization constant between 0 and 1
+
+	// Loop over eta and phi bins
+	for(int j = p->GetNumberOfTowerParameters() + i; 
+	    j <  p->GetNumberOfParameters(); 
+	    j += p->GetNumberOfJetParametersPerBin()) {
+	  if( j < p->GetNumberOfParameters()-1 )
+	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
+	} // End of loop over eta and phi bins
+      } // End of loop over parameters in one bin
+    }
+
   }
   // Catch wrong syntax in config file
   else if(limits.size() > 1) {
