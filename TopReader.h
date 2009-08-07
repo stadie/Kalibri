@@ -4,15 +4,16 @@
 //    This class reads events according to the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.h,v 1.5 2009/08/04 15:37:41 snaumann Exp $
+//    $Id: TopReader.h,v 1.6 2009/08/05 12:16:30 stadie Exp $
 //   
 #ifndef TOPREADER_H
 #define TOPREADER_H
 
-#include "EventReader.h"
-
 #include <string>
 
+#include "TH2F.h"
+
+#include "EventReader.h"
 #include "TopSel.h"
 
 class TData;
@@ -41,6 +42,9 @@ class TopReader : public EventReader{
   double massConstraintTop_; 
   int nTopEvents_;
   int dataClass_;
+
+  bool createGenWHist_;
+  TH2F* genWPtEta_;
 };
 
 

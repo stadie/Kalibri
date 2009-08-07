@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.13 2009/08/04 15:37:41 snaumann Exp $
+//    $Id: TopReader.cc,v 1.14 2009/08/05 12:16:30 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -32,7 +32,8 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
   useGenJetInvMass_(false),
   massConstraintW_  (80.4),
   massConstraintTop_(172.4),
-  dataClass_(0)
+  dataClass_(0),
+  createGenWHist_(false)
 {
   nTopEvents_     = config->read<int>("use Top events",-1); 
   if(nTopEvents_ == 0) {
@@ -67,6 +68,10 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
     tchain_top->Add( it->c_str() );
   }  
   top_.Init( tchain_top );
+
+  createGenWHist_ = config->read<bool>("create genW histogram",false);
+  if(createGenWHist_)
+    genWPtEta_ = new TH2F("genWPtEta", "genWPtEta", 100, -5., 5., 400, 0., 400.);
   
   delete config;
   config = 0;
@@ -74,6 +79,11 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
 
 TopReader::~TopReader()
 {
+  if(createGenWHist_) {
+    TFile file("toymcPtEtaInput.root", "recreate");
+    genWPtEta_->Write();
+    delete genWPtEta_;
+  }
 }
 
 int TopReader::readEvents(std::vector<TData*>& data)
@@ -447,6 +457,16 @@ TData* TopReader::createTwoJetsInvMassEvents()
     }
   }
   delete [] terr;
+  if(createGenWHist_) {
+    TLorentzVector genW, genJet;
+    for(int i = 0; i < 3; ++i) {
+      if((TJet::Flavor)top_.JetFlavor[i] != TJet::uds) continue;
+      genJet.SetPtEtaPhiE(top_.GenJetPt[i],top_.GenJetEta[i],top_.GenJetPhi[i],top_.GenJetE[i]);
+      if(i==0) genW = genJet;
+      else genW += genJet;
+    }
+    genWPtEta_->Fill(genW.Eta(), genW.Pt());
+  }
   if(jets[1] &&
      jets[0]->Et() > minJetEt_ && std::abs(jets[0]->eta()) < maxJetEta_ &&
      jets[1]->Et() > minJetEt_ && std::abs(jets[1]->eta()) < maxJetEta_) {
