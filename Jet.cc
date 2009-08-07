@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.27 2009/07/23 11:43:42 stadie Exp $
+//    $Id: Jet.cc,v 1.28 2009/08/07 11:18:45 stadie Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -16,7 +16,7 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 	 const Function& gf, double Etmin) 
   : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,0.0,0.0,TJet::CorFactors()), 
-    f(f),gf(gf),errf(errfunc),etmin(Etmin)
+    f(f),gf(gf),errf(errfunc),etmin(Etmin), gsl_impl(this)
 {
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());
@@ -28,7 +28,7 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 	 const Function& gf, double Etmin) 
   : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,dR,corFactors),
-    f(f),gf(gf),errf(errfunc),etmin(Etmin)
+    f(f),gf(gf),errf(errfunc),etmin(Etmin), gsl_impl(this)
 {
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());
@@ -205,8 +205,6 @@ double Jet::expectedEt(double truth, double start, bool fast)
     return f.inverse(&temp);
   }
   static const double eps = 1.0e-12;
-  //const double up = 4 * truth;
-  //const double low = 0.2 * truth;
   double x1 = start,x2;
   //find root of truth - jet->correctedEt(expectedEt)
   // x: expectedEt
@@ -216,25 +214,15 @@ double Jet::expectedEt(double truth, double start, bool fast)
   if(std::abs(f1 - truth) < eps) {
     return x1;
   }
+
+  x2 = 0.1 * start;
+  x1 = 5 * start;
+  if(! gsl_impl.root(truth,x2,x1,eps)) return -1;
   //get second point assuming a constant correction factor
   //x2 = (truth - EMF - OutF) * (x1 - EMF - OutF)/(f1 - EMF - OutF) + EMF;
-  x2 = truth * x1 / f1;
-  //if((x2 > up )||(x2 < low)) x2 = x1;
-  ///double f2 = correctedEt(x2,true);
-  //double y2 = truth - f2;
-  //std::cout << "truth:" << truth << " start:" << start << "  f1:" << f1 << " x2:" << x2	<< '\n';
-  /*
-  if(extrapolate || (std::abs(y2) < eps)) {
-    //std::cout << "extrapolated:" << x2 << ", " << y2 << " at scale " << scale << std::endl;  
-    return x2;
-  }
-  */
-  if(! secant(truth,x2,x1,eps)) return -1;
-  //f1 = correctedEt(scale,true);
-  //x2 = (truth - EMF - OutF) * (scale - EMF - OutF)/(f1 - EMF - OutF) + EMF + OutF;
-  //std::cout << i << ": scale:" << scale << ", expected:" << (truth - EMF) * (scale - EMF)/(f1 - EMF) + EMF << "  dist for scale:" << truth - f1 << "\n";
-  //std::cout << "x1=" << x1 << "  x2=" << x2 << '\n';
-  assert(std::abs(correctedEt(x2)-truth)/truth < eps); 
+  //x2 = truth * x1 / f1;
+  //if(! secant(truth,x2,x1,eps)) return -1;
+  //assert(std::abs(correctedEt(x2)-truth)/truth < eps); 
   return x2;
 }
 
@@ -446,7 +434,33 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
   return true;
 }
 
-
+bool Jet::GslImplementation::root(double truth, double& x1, double& x2, double eps) {
+  par.y = truth;
+  ++ncalls;
+  if(gsl_root_fsolver_set(s,&F,x1,x2)) {
+    //std::cout << "Warning: root not bracketed\n";
+    ++nfails;
+    return false;
+  }
+  int status, iter = 0;
+  double r;
+  do {
+    iter++;
+    status = gsl_root_fsolver_iterate(s);
+    r = gsl_root_fsolver_root(s);
+    x1 = gsl_root_fsolver_x_lower(s);
+    x2 = gsl_root_fsolver_x_upper(s);
+    status = gsl_root_test_interval(x1,x2,0, eps);
+    }
+  while(status == GSL_CONTINUE && iter < 100);
+  ntries += iter;
+  if(status != GSL_SUCCESS) {
+    ++nfails;
+    return false;
+  }
+  x2 = r;
+  return true;
+}
 
 // ------------------------------------------------------------
 void Jet::print()
@@ -463,8 +477,17 @@ void Jet::print()
   std::cout << "\n";
 }
 
+Jet::GslImplementation::GslImplementation(const Jet* jet) 
+  : par(0,jet),s(gsl_root_fsolver_alloc(gsl_root_fsolver_brent))
+{
+  F.function = &rf;
+  F.params = &par;
+  gsl_set_error_handler_off();
+}
 
-
+Jet::GslImplementation::~GslImplementation() {
+  gsl_root_fsolver_free(s);
+} 
 
 // ------------------------------------------------------------
 long long Jet::ncalls = 0;
@@ -477,6 +500,6 @@ void Jet::printInversionStats()
     std::cout << "Inversion statistics for Jet::expectedEt:\n";
     std::cout << "calls: " << ncalls << " average number of iterations:"
 	      << (double)ntries/ncalls << " failures:" << (double)nfails/ncalls*100
-	      << "%    warnings:" << (double)nwarns/ntries*100 << "%" <<std::endl;
+	      << "% warnings:" << (double)nwarns/ntries*100 << "%" <<std::endl;
   }
 }

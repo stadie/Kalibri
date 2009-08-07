@@ -11,7 +11,13 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.19 2009/07/23 11:43:42 stadie Exp $
+//!    $Id: Jet.h,v 1.20 2009/08/05 12:16:30 stadie Exp $
+
+
+#include "gsl/gsl_errno.h"
+#include "gsl/gsl_math.h"
+#include "gsl/gsl_roots.h"
+     
 class Jet : public TJet
 {
  public:
@@ -122,6 +128,23 @@ class Jet : public TJet
   static long long nwarns;        //!< Number of warnings during inversion
 
   mutable TMeasurement temp;
+  class GslImplementation {
+    struct rf_par {
+      double y;
+      const Jet* jet;
+      rf_par(double y, const Jet *jet) : y(y), jet(jet) {}
+    } par;
+    gsl_root_fsolver *s;
+    gsl_function F;
+    static double rf(double x, void* params) {
+      rf_par* p = (rf_par*)params;
+      return p->y - p->jet->correctedEt(x,true);
+    };
+  public:
+    GslImplementation(const Jet* jet);
+    ~GslImplementation();
+    bool root(double truth, double& x1, double& x2, double eps);
+  } gsl_impl;
 };
 
 #endif

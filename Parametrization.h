@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.41 2009/08/07 11:18:45 stadie Exp $
+//  $Id: Parametrization.h,v 1.42 2009/08/07 12:19:24 mschrode Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -23,7 +23,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.41 2009/08/07 11:18:45 stadie Exp $
+//!  $Id: Parametrization.h,v 1.42 2009/08/07 12:19:24 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1867,9 +1867,9 @@ class SmearStepGaussInterPtBinned : public Parametrization
 // -----------------------------------------------------------------
 class GroomParametrization: public Parametrization {
 public:
-  GroomParametrization() : Parametrization(0,3,0,0)
-    {
-    }
+  GroomParametrization() : Parametrization(0,3,0,0) {
+    gsl_set_error_handler_off();
+  }
   const char* name() const { return "GroomParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -1888,27 +1888,26 @@ public:
 
     double x_lo = 0.1 * x->pt;
     double x_hi = 5 * x->pt;
-    if(f(x_lo,&p) * f(x_hi,&p) > 0) {
+
+    T = gsl_root_fsolver_brent;
+    s = gsl_root_fsolver_alloc(T);
+    if(gsl_root_fsolver_set(s,&F,x_lo,x_hi)) {
       //std::cout << "Warning: root not bracketed\n";
       return 0;
     }
-    
-    T = gsl_root_fsolver_brent;
-    s = gsl_root_fsolver_alloc (T);
-    gsl_root_fsolver_set (s, &F, x_lo, x_hi);
     int status, iter = 0;
     double r;
     do {
       iter++;
-      status = gsl_root_fsolver_iterate (s);
-      r = gsl_root_fsolver_root (s);
-      x_lo = gsl_root_fsolver_x_lower (s);
-      x_hi = gsl_root_fsolver_x_upper (s);
-      status = gsl_root_test_interval (x_lo,x_hi,0, eps_);
+      status = gsl_root_fsolver_iterate(s);
+      r = gsl_root_fsolver_root(s);
+      x_lo = gsl_root_fsolver_x_lower(s);
+      x_hi = gsl_root_fsolver_x_upper(s);
+      status = gsl_root_test_interval(x_lo,x_hi,0, eps_);
     }
     while (status == GSL_CONTINUE && iter < max_iter_);
     assert(status == GSL_SUCCESS);
-    gsl_root_fsolver_free (s);
+    gsl_root_fsolver_free(s);
     return r;
   }
 
