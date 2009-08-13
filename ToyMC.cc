@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.33 2009/08/04 15:35:44 snaumann Exp $
+// $Id: ToyMC.cc,v 1.34 2009/08/07 11:59:50 snaumann Exp $
 
 #include "ToyMC.h"
 
@@ -77,17 +77,21 @@ void ToyMC::calIds(float& eta, float &phi, int& ieta, int& iphi)
   } else {
     ieta = -((int)(std::abs(eta) / dEta) + 1);
   }
-  if(ieta > 0) {
-    eta = (ieta - 0.5) * dEta;
-  } else {
-    eta = (ieta + 0.5) * dEta;
+  if(useTowerCenterEtaPhi_) {
+    if(ieta > 0) {
+      eta = (ieta - 0.5) * dEta;
+    } else {
+      eta = (ieta + 0.5) * dEta;
+    }
   }
   
   if(phi < 0) phi += 2 * M_PI;
   iphi = (int)(phi / dPhi);
   iphi++;
   if(iphi > 72) iphi = 72; 
-  phi = (iphi-0.5) * dPhi;
+  if(useTowerCenterEtaPhi_) {
+    phi = (iphi-0.5) * dPhi;
+  }
 
   assert(phi < 2 * M_PI);
   assert(ieta != 0);
@@ -232,8 +236,12 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
   for(int i = 0 ; i < chunks_ ; ++i) {
     //float teta = random_->Gaus(jet.Eta(), jetspread);
     //float tphi = random_->Gaus(jet.Phi(), jetspread);
-    float R = random_->Exp(1/(jetSpreadA_ +jetSpreadB_ * jet.E()));
-    float PHI = random_->Uniform(2 * M_PI);
+    float R = 0.0;
+    float PHI = 0.0;
+    if(jetSpreadA_ != 0 || jetSpreadB_ != 0) {
+      R = random_->Exp(1/(jetSpreadA_ +jetSpreadB_ * jet.E()));
+      PHI = random_->Uniform(2 * M_PI);
+    }
     //std::cout << "E:" << jet.E() << "  R:" << R << '\n';
     float teta = jet.Eta() + R * cos(PHI);
     float tphi = jet.Phi() + R * sin(PHI);
@@ -1109,27 +1117,21 @@ int ToyMC::generateTopTree(TTree* CalibTree, int nevents)
   for(int n = 0; n < nevents ; ++n) {
     // Generate truth 4-momentum of W boson
     genInput();	
+    pInput_.SetVectM(pInput_.Vect(),Wmass);
+    // Generate two jets
     wjet[0].SetPtEtaPhiM(0,0,0,0);
     wjet[1].SetPtEtaPhiM(0,0,0,0);    
     double theta = random_->Rndm() * M_PI;
-    double phi = random_->Rndm() * M_PI * 2.0;
+    double phi = random_->Rndm() * M_PI * 2.0 - M_PI;
     double p = Wmass / 2;
     double pt = p * sin(theta);
-    wjet[0].SetXYZM(pt * sin(phi),pt * cos(phi),p * cos(theta),0);
+    wjet[0].SetXYZM(pt * cos(phi),pt * sin(phi),p * cos(theta),0);
     wjet[1].SetVectM(-wjet[0].Vect(),0);
-    //std::cout << "vor Boost:\n";
-    //std::cout << wjet[0].Px() << ", " << wjet[0].Py() << ", " << wjet[0].Pz() << ", " << wjet[0].E() << '\n';
-    //std::cout << wjet[1].Px() << ", " << wjet[1].Py() << ", " << wjet[1].Pz() << ", " << wjet[1].E() << '\n';
-    //std::cout << "mass:" << (wjet[0] + wjet[1]).M() << '\n';
-    pInput_.SetVectM(pInput_.Vect(),Wmass);
+    // Boost jets according to momentum of W boson
     TVector3 b = pInput_.BoostVector();
     wjet[0].Boost(b);
     wjet[1].Boost(b);    
-    //std::cout << "boost:" << b.X() << ", " << b.Y() << ", " << b.Z() << '\n';
-    //std::cout << wjet[0].Px() << ", " << wjet[0].Py() << ", " << wjet[0].Pz() << ", " << wjet[0].E() << '\n';
-    //std::cout << wjet[1].Px() << ", " << wjet[1].Py() << ", " << wjet[1].Pz() << ", " << wjet[1].E() << '\n';
 
-    //std::cout << "mass:" << (wjet[0] + wjet[1]).M() << '\n'; 
     // set gen jets from W
     for(int i = 0 ; i < 2 ; ++i) {
       genjetpt[i]  = wjet[i].Pt();
@@ -1397,6 +1399,7 @@ void ToyMC::init(const std::string& configfile) {
   jetSpreadA_  = config.read<double>("ToyMC jet spread A",0.5);
   jetSpreadB_  = config.read<double>("ToyMC jet spread B",0);
   noOutOfCone_ = config.read<bool>("ToyMC avoid out-of-cone",true);
+  useTowerCenterEtaPhi_ = config.read<bool>("ToyMC use eta and phi at tower center",true);
   chunks_      = config.read<int>("ToyMC chunks",200);
   maxPi0Frac_  = config.read<double>("ToyMC max pi0 fraction",0.5);
   maxEmf_      = config.read<double>("ToyMC tower max EMF",0.5);
@@ -1474,6 +1477,13 @@ void ToyMC::print() const {
   std::cout << "  jet spread:   ";
   std::cout << "A = " << jetSpreadA_ << ",  B = " << jetSpreadB_ << "\n";
   std::cout << "  n chunks:     " << chunks_ << "\n";
+
+  std::cout << "  use eta and phi at tower center:  ";
+  if( useTowerCenterEtaPhi_ )
+    std::cout << "yes\n";    
+  else
+    std::cout << "no\n";
+
   std::cout << "  out-of-cone:  ";
   if( noOutOfCone_ )
     std::cout << "no\n";

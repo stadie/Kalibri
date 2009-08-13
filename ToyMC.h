@@ -15,7 +15,7 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.18 2009/08/04 15:35:44 snaumann Exp $
+//!  $Id: ToyMC.h,v 1.19 2009/08/07 11:59:50 snaumann Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -116,6 +116,7 @@ class ToyMC {
   int             chunks_;
   double          jetSpreadA_;
   double          jetSpreadB_;
+  bool            useTowerCenterEtaPhi_;
   bool            noOutOfCone_;
   double          maxPi0Frac_;
   double          maxEmf_;
