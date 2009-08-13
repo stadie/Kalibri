@@ -5726,12 +5726,15 @@ void TControlPlots::MakeControlPlotsTop()
   double binningLogPt[15] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
 			     120, 150, 200, 250, 300};
 
+  unsigned int nTowersPhi = 72;
+  double edgePhiHist = TMath::Pi()+2*TMath::Pi()/nTowersPhi;
+
   TH1F* scale  = new TH1F("scale" , "", 200,    0, 200);
   TH1F* weight = new TH1F("weight", "", 200,    0, 200);
   TH1F* truth  = new TH1F("truth" , "", 200,    0, 200);
   TH1F* pt     = new TH1F("pt"    , "", 200,    0, 200);
-  TH1F* eta    = new TH1F("eta"   , "",  80,  -4.,  4.);
-  TH1F* phi    = new TH1F("phi"   , "",  68, -3.4, 3.4);
+  TH1F* eta    = new TH1F("eta"   , "",  96,  -4.,  4.);
+  TH1F* phi    = new TH1F("phi"   , "",  nTowersPhi+2, -edgePhiHist, edgePhiHist);
   TH1F* genPt  = new TH1F("genPt" , "", 200,    0, 200);
 
   TH2F* recPt12 = new TH2F("recPt12", "", 100,  0., 200., 100,  0., 200.);
@@ -5740,7 +5743,7 @@ void TControlPlots::MakeControlPlotsTop()
 
   TH1F* deltaRecPt = new TH1F("deltaRecPt", "",  75,  0., 150.);
   TH1F* deltaGenPt = new TH1F("deltaGenPt", "",  75,  0., 150.);
-  TH1F* deltaEta   = new TH1F("deltaEta"  , "",  40,  0.,   4.);
+  TH1F* deltaEta   = new TH1F("deltaEta"  , "",  24,  0.,   4.);
   TH2F* deltaRecPtRecPt1 = new TH2F("deltaRecPtRecPt1", "", 100,  0., 200.,  75,  0., 150.);
   TH2F* deltaRecPtEta1   = new TH2F("deltaRecPtEta1"  , "",  80, -4.,   4.,  75,  0., 150.);
 
@@ -5766,7 +5769,7 @@ void TControlPlots::MakeControlPlotsTop()
   TH2F* responseEta   [2];
   TString suffix[2] = { "Before", "After" };
   for(unsigned a=0; a<2; a++){
-    invMass       [a] = new TH1F("invMass"        +suffix[a], "",  40, 0., 200.);
+    invMass       [a] = new TH1F("invMass"        +suffix[a], "", 100, 0., 200.);
     messTruth     [a] = new TH1F("messTruth"      +suffix[a], "",  40, 0.,   2.);
     messTruthPtGen[a] = new TH2F("messTruthPtGen" +suffix[a], "", 14, binningLogPt, 51, 0., 2.);
     messTruthPtRec[a] = new TH2F("messTruthPtRec" +suffix[a], "", 14, binningLogPt, 51, 0., 2.);
