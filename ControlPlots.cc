@@ -31,29 +31,29 @@ using namespace std;
 //!  \param par         Parameters
 // -------------------------------------------------------------
 TControlPlots::TControlPlots(const std::string& configfile, const std::vector<TData*> *data, TParameters *par)
-  : mData(data), mPar(par), mConfig(new ConfigFile(configfile.c_str())), mOutFile(0)
+  : data_(data), par_(par), config_(new ConfigFile(configfile.c_str())), outFile_(0)
 { 
-  mPtRatioName[0] = "p^{jet}_{T}/ E_{T}^{#gamma}";
-  mPtRatioName[1] = "p_{T}^{cor. jet}/E_{T}^{#gamma}";
-  mPtRatioName[2] = "p_{T}^{jet}/p_{T}^{cor. jet}";
+  ptRatioName_[0] = "p^{jet}_{T}/ E_{T}^{#gamma}";
+  ptRatioName_[1] = "p_{T}^{cor. jet}/E_{T}^{#gamma}";
+  ptRatioName_[2] = "p_{T}^{jet}/p_{T}^{cor. jet}";
 
-  mControlQuantityName[0] = "mean"; 
-  mControlQuantityName[1] = "standard deviation"; 
-  mControlQuantityName[2] = "mean of Gauss fit"; 
-  mControlQuantityName[3] = "width of Gauss fit"; 
-  mControlQuantityName[4] = "median"; 
-  mControlQuantityName[5] = "#chi^{2} / n.d.f."; 
-  mControlQuantityName[6] = "probability"; 
-  mControlQuantityName[7] = "quantiles"; 
+  controlQuantityName_[0] = "mean"; 
+  controlQuantityName_[1] = "standard deviation"; 
+  controlQuantityName_[2] = "mean of Gauss fit"; 
+  controlQuantityName_[3] = "width of Gauss fit"; 
+  controlQuantityName_[4] = "median"; 
+  controlQuantityName_[5] = "#chi^{2} / n.d.f."; 
+  controlQuantityName_[6] = "probability"; 
+  controlQuantityName_[7] = "quantiles"; 
 
-  SetGStyle();
+  setGStyle();
 
-  if(mConfig->read<bool>("plot output format",0)) {
-    mOutputROOT = false;
+  if(config_->read<bool>("plot output format",0)) {
+    outputROOT_ = false;
   }
   else {
-    mOutputROOT = true;
-    mOutFile = new TFile("controlplots.root","RECREATE","Cal calib control plots");
+    outputROOT_ = true;
+    outFile_ = new TFile("controlplots.root","RECREATE","Cal calib control plots");
   }    
 }
 
@@ -62,10 +62,10 @@ TControlPlots::TControlPlots(const std::string& configfile, const std::vector<TD
 // -------------------------------------------------------------
 TControlPlots::~TControlPlots()
 {
-  if( mOutFile !=0 )
+  if( outFile_ !=0 )
     {
-      if( mOutFile->IsOpen() ) mOutFile->Close();
-      delete mOutFile;
+      if( outFile_->IsOpen() ) outFile_->Close();
+      delete outFile_;
     }
 }
 
@@ -73,73 +73,60 @@ TControlPlots::~TControlPlots()
 
 //!  \brief Create all plots as specified in the config file
 // -------------------------------------------------------------
-void TControlPlots::MakePlots()
+void TControlPlots::makePlots()
 {
   cout << endl << "Writing control plots in .ps " << flush;
-  if( mOutputROOT ) cout << "and .root " << flush;
+  if( outputROOT_ ) cout << "and .root " << flush;
   cout << "format:" << endl;
-  if( mConfig->read<bool>("create jet-truth event plots",false) ) {
-    cout << "Creating jet-truth event control plots... " << flush;
-    MakeControlPlotsJetTruthEventResponse();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create jet-truth event plots",false) ) {
+    cout << "Creating jet-truth event control plots\n";
+    makeControlPlotsJetTruthEventResponse();
   }
-  if( mConfig->read<bool>("create binned response plots",false) ) {
-    cout << "Creating binned control plots... " << flush;
-    MakeControlPlotsBinnedResponse();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create binned response plots",false) ) {
+    cout << "Creating binned control plots\n";
+    makeControlPlotsBinnedResponse();
   }
-  if( mConfig->read<bool>("create L2L3 MC truth plots",false) ) {
-    cout << "Creating L2L3 MC truth control plots... " << flush;
-    MakeControlPlotsL2L3MCTruth();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create L2L3 MC truth plots",false) ) {
+    cout << "Creating L2L3 MC truth control plots\n";
+    makeControlPlotsL2L3MCTruth();
   }
-  if( mConfig->read<bool>("create chi2 plots",false) ) {
-    cout << "Creating chi2 control plots... " << flush;
-    MakeControlPlotsChi2();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create chi2 plots",false) ) {
+    cout << "Creating chi2 control plots\n";
+    makeControlPlotsChi2();
   }
-  if( mConfig->read<bool>("create correction function plots",false) ) {
-    cout << "Creating correction function control plots... " << flush;
-    MakeControlPlotsCorrectionFunction();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create correction function plots",false) ) {
+    cout << "Creating correction function control plots\n";
+    makeControlPlotsCorrectionFunction();
   }
-  if( mConfig->read<bool>("create tower plots" ,false) ) {
-    cout << "Creating tower control plots... " << flush;
-    MakeControlPlotsTowers();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create tower plots" ,false) ) {
+    cout << "Creating tower control plots\n";
+    makeControlPlotsTowers();
   }
-  if( mConfig->read<bool>("create gamma jet plots" ,false) ) {
-    cout << "Creating more gamma jet control plots... " << flush;
-    MakeControlPlotsGammaJet();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create gamma jet plots" ,false) ) {
+    cout << "Creating more gamma jet control plots\n";
+    makeControlPlotsGammaJet();
   }
-  if( mConfig->read<bool>("create more gamma jet plots" ,false) ) {
-    cout << "Creating gamma jet (tower bin) control plots... " << flush;
-    MakeControlPlotsGammaJetPerTowerBin();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create more gamma jet plots" ,false) ) {
+    cout << "Creating gamma jet (tower bin) control plots\n";
+    makeControlPlotsGammaJetPerTowerBin();
       
-    cout << "Creating gamma jet (jet bin) control plots... " << flush;
-    MakeControlPlotsGammaJetPerJetBin();
-    cout << "ok" << endl;
+    cout << "Creating gamma jet (jet bin) control plots\n";
+    makeControlPlotsGammaJetPerJetBin();
     
-    cout << "Creating even more gamma jet control plots (sigmas)... " << flush;
-    MakeControlPlotsGammaJetSigmas();
-    cout << "ok" << endl;
+    cout << "Creating even more gamma jet control plots (sigmas)\n";
+    makeControlPlotsGammaJetSigmas();
   }
-  if( mConfig->read<bool>("create dijet plots",false) ) {
-    cout << "Creating di-jet control plots... " << flush;
-    MakeControlPlotsDiJet();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create dijet plots",false) ) {
+    cout << "Creating di-jet control plots\n";
+    makeControlPlotsDiJet();
   }
-  if( mConfig->read<bool>("create top plots",false) ) {
-    cout << "Creating top control plots... " << flush;
-    MakeControlPlotsTop();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create top plots",false) ) {
+    cout << "Creating top control plots\n";
+    makeControlPlotsTop();
   }
-  if( mConfig->read<bool>("create parameter scan plots" ,false) ) {
-    cout << "Creating parameter scan control plots... " << flush;
-    MakeControlPlotsParameterScan();
-    cout << "ok" << endl;
+  if( config_->read<bool>("create parameter scan plots" ,false) ) {
+    cout << "Creating parameter scan control plots\n";
+    makeControlPlotsParameterScan();
   }
 }
 
@@ -163,7 +150,7 @@ void TControlPlots::MakePlots()
 //!  to the directory "BinnedResponse" in the file
 //!  "controlplots.root".
 // -------------------------------------------------------------
-void TControlPlots::MakeControlPlotsBinnedResponse()
+void TControlPlots::makeControlPlotsBinnedResponse()
 {
   std::vector<TObject*>                objToBeWritten;
   std::vector<TData*>::const_iterator  data_it;
@@ -172,9 +159,9 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
   // Create a Et and eta binning
   // Et = x, eta = y
   std::vector<double> binEdgesEt
-    = bag_of<double>(mConfig->read<std::string>("Control plots pt bin edges","0 100"));
+    = bag_of<double>(config_->read<std::string>("Control plots pt bin edges","0 100"));
   std::vector<double> binEdgesEta
-    = bag_of<double>(mConfig->read<std::string>("Control plots eta bin edges","-5 5"));
+    = bag_of<double>(config_->read<std::string>("Control plots eta bin edges","-5 5"));
   Binning bins(binEdgesEt,binEdgesEta);
 
 
@@ -182,10 +169,10 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
   // Et and eta bins
   std::vector<TH1F*> hResp;
   std::vector<TH1F*> hRespJetMet;
-  for(int i = 0; i < bins.NBins(); i++)
+  for(int i = 0; i < bins.nBins(); i++)
     {
       char name[50];
-      sprintf(name,"hResponse_pt%i_eta%i",bins.IX(i),bins.IY(i));
+      sprintf(name,"hResponse_pt%i_eta%i",bins.iX(i),bins.iY(i));
       TH1F * h = new TH1F(name,"",51,0,2);
       h->SetLineColor(2);
       h->GetXaxis()->SetTitleSize(0.05);
@@ -195,7 +182,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
       hResp.push_back(h);
       objToBeWritten.push_back(h);
 
-      sprintf(name,"hResponseJetMET_pt%i_eta%i",bins.IX(i),bins.IY(i));
+      sprintf(name,"hResponseJetMET_pt%i_eta%i",bins.iX(i),bins.iY(i));
       h = static_cast<TH1F*>(h->Clone(name));
       h->SetLineColor(1);
       hRespJetMet.push_back(h);
@@ -205,7 +192,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
 
   // Loop over data and fill response into
   // the corresponding histogram
-  for(  data_it = mData->begin();  data_it != mData->end();  data_it++ )
+  for(  data_it = data_->begin();  data_it != data_->end();  data_it++ )
     {
       double weight = (*data_it)->GetWeight();
       double etmeas = (*data_it)->GetMess()->pt;
@@ -220,8 +207,8 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
 	  if( jte->FlaggedBad() ) continue;
 	}
 
-      int bin = bins.Bin(ettrue,eta);
-      if( 0 <= bin && bin < bins.NBins() )
+      int bin = bins.bin(ettrue,eta);
+      if( 0 <= bin && bin < bins.nBins() )
 	{
 	  hResp.at(bin)->Fill(etcorr/ettrue,weight);
 
@@ -230,7 +217,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
 	  TJet *jet = dynamic_cast<TJet*>((*data_it)->GetMess());
 	  if( jet )
 	    {
-	      double cjetmet = jet->corFactors.getToL3();
+	      double cjetmet = jet->corFactors.getL2L3();
 	      hRespJetMet.at(bin)->Fill(cjetmet*etmeas/ettrue,weight);
 	    }
 	}
@@ -334,7 +321,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
       fitstat->SetTextFont(42);
       fitstat->SetTextAlign(12);
       sprintf(label,"%.0f < p^{true}_{T} < %.0f GeV, %.1f < #eta < %.1f",
-	      bins.XLow(i),bins.XUp(i),bins.YLow(i),bins.YUp(i));
+	      bins.xLow(i),bins.xUp(i),bins.yLow(i),bins.yUp(i));
       fitstat->AddText(label);
       sprintf(label,"#mu = %.3f #pm %.3f",fit->GetParameter(1),fit->GetParError(1));
       fitstat->AddText(label);
@@ -383,7 +370,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
       fitstat->SetTextFont(42);
       fitstat->SetTextAlign(12);
       sprintf(label,"%.0f < p^{true}_{T} < %.0f GeV, %.1f < #eta < %.1f",
-	      bins.XLow(i),bins.XUp(i),bins.YLow(i),bins.YUp(i));
+	      bins.xLow(i),bins.xUp(i),bins.yLow(i),bins.yUp(i));
       fitstat->AddText(label);
       fitstat->Draw("same");
 
@@ -395,7 +382,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
 	}
     }
 
-  if( mOutputROOT ) WriteToRootFile(objToBeWritten,"BinnedResponse");
+  if( outputROOT_ ) writeToRootFile(objToBeWritten,"BinnedResponse");
 
 
   // Clean up
@@ -442,7 +429,7 @@ void TControlPlots::MakeControlPlotsBinnedResponse()
 //!  to the directory "Chi2" in the file
 //!  "controlplots.root".
 // -------------------------------------------------------------
-void TControlPlots::MakeControlPlotsChi2()
+void TControlPlots::makeControlPlotsChi2()
 {
   std::vector<TObject*>                objToBeWritten;
   std::vector<TData*>::const_iterator  data_it;
@@ -490,7 +477,7 @@ void TControlPlots::MakeControlPlotsChi2()
 
 
   // Loop over data and fill histograms
-  for(  data_it = mData->begin();  data_it != mData->end();  data_it++ )
+  for(  data_it = data_->begin();  data_it != data_->end();  data_it++ )
     {
       double weight   = (*data_it)->GetWeight();
       double lastchi2 = ((*data_it)->chi2_plots())/weight;
@@ -570,7 +557,7 @@ void TControlPlots::MakeControlPlotsChi2()
 
   c1->Draw();
 
-  if( mOutputROOT ) WriteToRootFile(objToBeWritten, "Chi2");
+  if( outputROOT_ ) writeToRootFile(objToBeWritten, "Chi2");
   
   ps->Close();
 
@@ -598,25 +585,28 @@ void TControlPlots::MakeControlPlotsChi2()
 //!  to the directory "L2L3MCTruth" in the file
 //!  "controlplots.root".
 // -------------------------------------------------------------
-void TControlPlots::MakeControlPlotsL2L3MCTruth() {
+void TControlPlots::makeControlPlotsL2L3MCTruth() {
   std::vector<TObject*>                objToBeWritten;
   std::vector<TData*>::const_iterator  data_it;
 
 
   // Absolute eta bins
-  std::vector<double> etaBinEdge = bag_of<double>(mConfig->read<std::string>("Control plots eta bin edges",""));
+  std::vector<double> etaBinEdge = bag_of<double>(config_->read<std::string>("Control plots eta bin edges",""));
 
   std::vector<double>::iterator itNeg = etaBinEdge.end();
   std::vector<double>::iterator it = etaBinEdge.begin();
   for(; it != etaBinEdge.end(); it++) {
     if( *it < 0 ) itNeg = it;
   }
-  if( itNeg != etaBinEdge.end() ) etaBinEdge.erase(etaBinEdge.begin(),itNeg+1); // Want symmetry in eta
+  if( itNeg != etaBinEdge.end() ) {
+    etaBinEdge.erase(etaBinEdge.begin(),itNeg+1); // Want symmetry in eta
+    etaBinEdge.insert(etaBinEdge.begin(),0.);
+  }
 
   // Find histogram ranges
   double ptGenMin = 10000.;
   double ptGenMax = 0.;
-  for( data_it = mData->begin(); data_it != mData->end(); data_it++ ) {
+  for( data_it = data_->begin(); data_it != data_->end(); data_it++ ) {
     if( (*data_it)->GetTruth() < ptGenMin ) ptGenMin = (*data_it)->GetTruth();
     if( (*data_it)->GetTruth() > ptGenMax ) ptGenMax = (*data_it)->GetTruth();
   }
@@ -644,7 +634,7 @@ void TControlPlots::MakeControlPlotsL2L3MCTruth() {
 
 
   // Loop over data and fill histograms
-  for( data_it = mData->begin(); data_it != mData->end(); data_it++ ) {
+  for( data_it = data_->begin(); data_it != data_->end(); data_it++ ) {
     JetTruthEvent *jte = dynamic_cast<JetTruthEvent*>(*data_it);
     if( jte ) {
       if( jte->FlaggedBad() ) continue;    // Discard events flagged bad
@@ -690,7 +680,7 @@ void TControlPlots::MakeControlPlotsL2L3MCTruth() {
   ps->NewPage();
 
 
-  if( mOutputROOT ) WriteToRootFile(objToBeWritten, "L2L3MCTruth");
+  if( outputROOT_ ) writeToRootFile(objToBeWritten, "L2L3MCTruth");
   
   ps->Close();
 
@@ -718,7 +708,7 @@ void TControlPlots::MakeControlPlotsL2L3MCTruth() {
 //!  to the directory "JetTruthEventResponse" in the file
 //!  "controlplots.root".
 // -------------------------------------------------------------
-void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
+void TControlPlots::makeControlPlotsJetTruthEventResponse() {
   std::vector<TObject*>                objToBeWritten;
   std::vector<TData*>::const_iterator  data_it;
 
@@ -726,10 +716,10 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
 
   // Create a pttrue and eta binning
   // pttrue = x, eta = y
-  std::vector<double> binEdgesPt = bag_of<double>(mConfig->read<std::string>("Control plots pt bin edges",""));
+  std::vector<double> binEdgesPt = bag_of<double>(config_->read<std::string>("Control plots pt bin edges",""));
 
   // Absolute eta bins
-  std::vector<double> binEdgesEta = bag_of<double>(mConfig->read<std::string>("Control plots eta bin edges",""));
+  std::vector<double> binEdgesEta = bag_of<double>(config_->read<std::string>("Control plots eta bin edges",""));
   Binning bins(binEdgesPt,binEdgesEta);
   //  bins.Print();
 
@@ -738,9 +728,8 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   // Pt and eta bins
   std::vector<TH2F*> h2EtaUncorr;    // Uncorrected response vs eta
   std::vector<TH2F*> h2EtaCorr;      // Response corrected by kalibri fit vs eta
-  std::vector<TH2F*> h2EtaCorrL2;    // Response corrected by JetMET L2 correction vs eta
   std::vector<TH2F*> h2EtaCorrL2L3;  // Response corrected by JetMET L2L3 correction vs eta
-  for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) { // Loop over pttrue bins
+  for(int ptbin = 0; ptbin < bins.nBinsX(); ptbin++) { // Loop over pttrue bins
     char name[50];
     sprintf(name,"h2EtaUncorr_pttrue%i",ptbin);
     TH2F * h2 = new TH2F(name,";#eta;< p^{jet}_{T} / p^{true}_{T} >",20,-5,5,51,0,2);
@@ -748,9 +737,6 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     
     sprintf(name,"h2EtaCorr_pttrue%i",ptbin);
     h2EtaCorr.push_back(static_cast<TH2F*>(h2->Clone(name)));
-    
-    sprintf(name,"h2EtaCorrL2_pttrue%i",ptbin);
-    h2EtaCorrL2.push_back(static_cast<TH2F*>(h2->Clone(name)));
     
     sprintf(name,"h2EtaCorrL2L3_pttrue%i",ptbin);
     h2EtaCorrL2L3.push_back(static_cast<TH2F*>(h2->Clone(name)));
@@ -760,13 +746,12 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   // eta bins
   std::vector<TH2F*> h2PttrueUncorr;    // Uncorrected response vs pttrue
   std::vector<TH2F*> h2PttrueCorr;      // Response corrected by kalibri fit vs pttrue
-  std::vector<TH2F*> h2PttrueCorrL2;    // Response corrected by JetMET L2 correction vs pttrue
   std::vector<TH2F*> h2PttrueCorrL2L3;  // Response corrected by JetMET L2L3 correction vs pttru
   // Logarithmic binning
   const int nLogBins = 15;
   double logBins[nLogBins+1];
-  EquidistLogBins(logBins,nLogBins,bins.XLow(0),bins.XUp(bins.NBinsX()-1));
-  for(int etabin = 0; etabin < bins.NBinsY(); etabin++) { // Loop over eta bins
+  equidistLogBins(logBins,nLogBins,bins.xLow(0),bins.xUp(bins.nBinsX()-1));
+  for(int etabin = 0; etabin < bins.nBinsY(); etabin++) { // Loop over eta bins
     char name[50];
     sprintf(name,"h2PttrueUncorr_pttrue%i",etabin);
     TH2F * h2 = new TH2F(name,";p^{true}_{T} (GeV);< p^{jet}_{T} / p^{true}_{T} >",nLogBins,logBins,51,0,2);
@@ -775,21 +760,15 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     sprintf(name,"h2PttrueCorr_eta%i",etabin);
     h2PttrueCorr.push_back(static_cast<TH2F*>(h2->Clone(name)));
     
-    sprintf(name,"h2PttrueCorrL2_eta%i",etabin);
-    h2PttrueCorrL2.push_back(static_cast<TH2F*>(h2->Clone(name)));
-    
     sprintf(name,"h2PttrueCorrL2L3_eta%i",etabin);
     h2PttrueCorrL2L3.push_back(static_cast<TH2F*>(h2->Clone(name)));
   } // End of loop over eta bins
 
-  // Value of chi2 after fit
-  double chi2Kalibri = 0.;
-  double chi2JetMET  = 0.;
 
-
-  // Loop over data and fill response into
-  // the corresponding 2D histogram
-  for( data_it = mData->begin(); data_it != mData->end(); data_it++ ) {
+  // First loop over data and fill response of uncorrected
+  // and Kalibri corrected data into the corresponding
+  // 2D histogram
+  for( data_it = data_->begin(); data_it != data_->end(); data_it++ ) {
     JetTruthEvent *jte = dynamic_cast<JetTruthEvent*>(*data_it);
     if( jte ) {
       if( jte->FlaggedBad() ) continue;   // Discard events flagged bad
@@ -798,41 +777,102 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
       double weight     = jte->GetWeight();
       double ptmeas     = jet->pt;
       double ptcorr     = jte->GetParametrizedMess();
-      double ptcorrL2   = jet->corFactors.getToL2() * jet->pt;
-      double ptcorrL2L3 = jet->corFactors.getToL3() * jet->pt;
       double eta        = jte->GetMess()->eta;
       double pttrue     = jte->GetTruth();
 
       // Find pttrue bin for response vs eta plot
-      int ptbin = bins.IX(pttrue);
-      if( 0 <= ptbin && ptbin < bins.NBinsX() ) {
+      int ptbin = bins.iX(pttrue);
+      if( 0 <= ptbin && ptbin < bins.nBinsX() ) {
 	h2EtaUncorr.at(ptbin)->Fill(eta,ptmeas/pttrue,weight);
 	h2EtaCorr.at(ptbin)->Fill(eta,ptcorr/pttrue,weight);
-	h2EtaCorrL2.at(ptbin)->Fill(eta,ptcorrL2/pttrue,weight);
-	h2EtaCorrL2L3.at(ptbin)->Fill(eta,ptcorrL2L3/pttrue,weight);
       }
 
       // Find pttrue bin for response vs eta plot
-      int etabin = bins.IY(eta);
-      if( 0 <= etabin && etabin < bins.NBinsY() ) {
+      int etabin = bins.iY(eta);
+      if( 0 <= etabin && etabin < bins.nBinsY() ) {
 	h2PttrueUncorr.at(etabin)->Fill(pttrue,ptmeas/pttrue,weight);
 	h2PttrueCorr.at(etabin)->Fill(pttrue,ptcorr/pttrue,weight);
-	h2PttrueCorrL2.at(etabin)->Fill(pttrue,ptcorrL2/pttrue,weight);
-	h2PttrueCorrL2L3.at(etabin)->Fill(pttrue,ptcorrL2L3/pttrue,weight);
+      }
+    }
+  } // End of first loop over data
+
+  // Either use stored L2L3 correction or read from file
+  std::vector<std::string> inputFileNames = bag_of_string(config_->read<string>("Control plots JetMET L2L3 constants",";"));
+  bool useStoredL2L3Corr = true;
+  std::vector<double> fittedParameters(par_->GetNumberOfParameters());
+  if( inputFileNames.size() ) {
+    useStoredL2L3Corr = false;
+
+    std::cout << "  Using constants for comparison to JetMET L2L3 corrections from files:\n";
+
+    // Store fitted parameter values
+    for(int i = 0; i < par_->GetNumberOfParameters(); i++) {
+      fittedParameters.at(i) = par_->GetPars()[i];
+    }
+
+    // Read JetMET parameter values
+    std::string corrL2FileName;
+    std::string corrL3FileName;
+    for(size_t i = 0; i < inputFileNames.size(); i++) {
+      if( inputFileNames.at(i).find("L2") != std::string::npos ) 
+	corrL2FileName = inputFileNames.at(i);
+      else if( inputFileNames.at(i).find("L3") != std::string::npos ) 
+	corrL3FileName = inputFileNames.at(i);
+    }
+    
+    if( !corrL2FileName.empty() || !corrL3FileName.empty() ) {
+      if( !corrL2FileName.empty() ) {
+	std::cout << "    L2: " << corrL2FileName << std::endl;
+	par_->readCalibrationJetMETL2(corrL2FileName);
+      }
+      if( !corrL3FileName.empty() ) {
+	std::cout << "    L3: " << corrL3FileName << std::endl;
+	par_->readCalibrationJetMETL3(corrL3FileName);
+      }
+    } else {
+      std::cerr << "    ERROR: Could not find specified file(s).\n";
+      std::cerr << "           Using stored JetMET L2L3 corrections.\n";
+    }
+  } else {
+    std::cout << "  Using stored JetMET L2L3 corrections for comparison.\n";
+  }
+
+  // Second loop over data and fill response of uncorrected
+  // and Kalibri corrected data into the corresponding
+  // 2D histogram
+  for( data_it = data_->begin(); data_it != data_->end(); data_it++ ) {
+    JetTruthEvent *jte = dynamic_cast<JetTruthEvent*>(*data_it);
+    if( jte ) {
+      if( jte->FlaggedBad() ) continue;   // Discard events flagged bad
+
+      Jet * jet         = static_cast<Jet*>(jte->GetMess());
+      double weight     = jte->GetWeight();
+      double ptcorr     = 0.;
+      if( useStoredL2L3Corr ) ptcorr = jet->corFactors.getL2L3() * jet->pt;
+      else                    ptcorr = jte->GetParametrizedMess();
+      double eta        = jte->GetMess()->eta;
+      double pttrue     = jte->GetTruth();
+      // Find pttrue bin for response vs eta plot
+      int ptbin = bins.iX(pttrue);
+      if( 0 <= ptbin && ptbin < bins.nBinsX() ) {
+	h2EtaCorrL2L3.at(ptbin)->Fill(eta,ptcorr/pttrue,weight);
       }
 
-      // Calculate chi2
-      double res   = ptmeas - ptcorr;
-      double err2  = jet->expectedError(ptcorr);
-      err2        *= err2;
-      chi2Kalibri += weight * TData::ScaleCauchy( log(err2) + res*res/err2 );
-
-      res          = ptmeas - ptcorrL2L3;
-      err2         = jet->expectedError(ptcorrL2L3);
-      err2        *= err2;
-      chi2JetMET  += weight * TData::ScaleCauchy( log(err2) + res*res/err2 );
+      // Find pttrue bin for response vs eta plot
+      int etabin = bins.iY(eta);
+      if( 0 <= etabin && etabin < bins.nBinsY() ) {
+	h2PttrueCorrL2L3.at(etabin)->Fill(pttrue,ptcorr/pttrue,weight);
+      }
     }
-  } // End of loop over data
+  } // End of second loop over data
+
+  // If parameter values were changed, reset them
+  // to fitted values
+  if( !useStoredL2L3Corr ) {
+    for(int i = 0; i < par_->GetNumberOfParameters(); i++) {
+      par_->GetPars()[i] = fittedParameters.at(i);
+    }
+  }
 
 
   // -- Mean response vs eta, pt ---------------------------------
@@ -844,26 +884,23 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   // Suffix:
   //  Uncorr   - Uncorrected mean response
   //  Corr     - Mean response corrected by kalibri fit
-  //  CorrL2   - Mean response corrected by JetMET L2 correction
   //  CorrL2L3 - Mean response corrected by JetMET L2L3 correction
-  std::vector< std::vector<TH1F*> > hRespEtaUncorr(4,std::vector<TH1F*>(bins.NBinsX()));
-  std::vector< std::vector<TH1F*> > hRespEtaCorr(4,std::vector<TH1F*>(bins.NBinsX()));
-  std::vector< std::vector<TH1F*> > hRespEtaCorrL2(4,std::vector<TH1F*>(bins.NBinsX()));
-  std::vector< std::vector<TH1F*> > hRespEtaCorrL2L3(4,std::vector<TH1F*>(bins.NBinsX()));
+  std::vector< std::vector<TH1F*> > hRespEtaUncorr(4,std::vector<TH1F*>(bins.nBinsX()));
+  std::vector< std::vector<TH1F*> > hRespEtaCorr(4,std::vector<TH1F*>(bins.nBinsX()));
+  std::vector< std::vector<TH1F*> > hRespEtaCorrL2L3(4,std::vector<TH1F*>(bins.nBinsX()));
 
-  std::vector< std::vector<TH1F*> > hRespPttrueUncorr(4,std::vector<TH1F*>(bins.NBinsY()));
-  std::vector< std::vector<TH1F*> > hRespPttrueCorr(4,std::vector<TH1F*>(bins.NBinsY()));
-  std::vector< std::vector<TH1F*> > hRespPttrueCorrL2(4,std::vector<TH1F*>(bins.NBinsY()));
-  std::vector< std::vector<TH1F*> > hRespPttrueCorrL2L3(4,std::vector<TH1F*>(bins.NBinsY()));
+  std::vector< std::vector<TH1F*> > hRespPttrueUncorr(4,std::vector<TH1F*>(bins.nBinsY()));
+  std::vector< std::vector<TH1F*> > hRespPttrueCorr(4,std::vector<TH1F*>(bins.nBinsY()));
+  std::vector< std::vector<TH1F*> > hRespPttrueCorrL2L3(4,std::vector<TH1F*>(bins.nBinsY()));
 
-  for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) { // Loop over pt bins
+  for(int ptbin = 0; ptbin < bins.nBinsX(); ptbin++) { // Loop over pt bins
     char title[50];
-    sprintf(title,"%.1f < p^{true}_{T} < %.1f GeV",bins.XLow(bins.Bin(ptbin,0)),bins.XUp(bins.Bin(ptbin,0)));
+    sprintf(title,"%.1f < p^{true}_{T} < %.1f GeV",bins.xLow(bins.bin(ptbin,0)),bins.xUp(bins.bin(ptbin,0)));
     TH1F * hProjection[8];
     TH1F * gaussplots[4];
     TF1 * gaussfits[4];
     // Uncorrected response
-    Fit2D(h2EtaUncorr.at(ptbin),hProjection,gaussplots,gaussfits);
+    fit2D(h2EtaUncorr.at(ptbin),hProjection,gaussplots,gaussfits);
     for(int i = 0; i < 8; i++) {
       if( i < 4 ) {
 	hProjection[i]->SetTitle(title);
@@ -880,7 +917,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     }
     
     // Kalibri corrected response
-    Fit2D(h2EtaCorr.at(ptbin),hProjection,gaussplots,gaussfits);
+    fit2D(h2EtaCorr.at(ptbin),hProjection,gaussplots,gaussfits);
     for(int i = 0; i < 8; i++) {
       if( i < 4 ) {
 	hProjection[i]->SetTitle(title);
@@ -896,25 +933,8 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
       }
     }
 
-    // L2 corrected response
-    Fit2D(h2EtaCorrL2.at(ptbin),hProjection,gaussplots,gaussfits);
-    for(int i = 0; i < 8; i++) {
-      if( i < 4 ) {
-	hProjection[i]->SetTitle(title);
-	hProjection[i]->SetMarkerStyle(22);
-	hProjection[i]->SetMarkerColor(3);
-	hProjection[i]->SetLineColor(3);
-	hRespEtaCorrL2.at(i).at(ptbin) = hProjection[i];
-	objToBeWritten.push_back(hProjection[i]);
-	delete gaussplots[i];
-	delete gaussfits[i];
-      } else {
-	delete hProjection[i];
-      }
-    }
-
     // L2L3 corrected response
-    Fit2D(h2EtaCorrL2L3.at(ptbin),hProjection,gaussplots,gaussfits);
+    fit2D(h2EtaCorrL2L3.at(ptbin),hProjection,gaussplots,gaussfits);
     for(int i = 0; i < 8; i++) {
       if( i < 4 ) {
 	hProjection[i]->SetTitle(title);
@@ -932,21 +952,20 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   } // End of loop over pt bins
 
   //Delete 2D histograms response vs eta
-  for(int i = 0; i < bins.NBinsX(); i++) {
+  for(int i = 0; i < bins.nBinsX(); i++) {
     delete h2EtaUncorr.at(i);
     delete h2EtaCorr.at(i);
-    delete h2EtaCorrL2.at(i);
     delete h2EtaCorrL2L3.at(i);
   }
 
-  for(int etabin = 0; etabin < bins.NBinsY(); etabin++) { // Loop over eta bins
+  for(int etabin = 0; etabin < bins.nBinsY(); etabin++) { // Loop over eta bins
     char title[50];
-    sprintf(title,"%.1f <  #eta < %.1f",bins.YLow(bins.Bin(0,etabin)),bins.YUp(bins.Bin(0,etabin)));
+    sprintf(title,"%.1f <  #eta < %.1f",bins.yLow(bins.bin(0,etabin)),bins.yUp(bins.bin(0,etabin)));
     TH1F * hProjection[8];
     TH1F * gaussplots[4];
     TF1 * gaussfits[4];
     // Uncorrected response
-    Fit2D(h2PttrueUncorr.at(etabin),hProjection,gaussplots,gaussfits);
+    fit2D(h2PttrueUncorr.at(etabin),hProjection,gaussplots,gaussfits);
     for(int i = 0; i < 8; i++) {
       if( i < 4 ) {
 	hProjection[i]->SetTitle(title);
@@ -963,7 +982,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     }
     
     // Kalibri corrected response
-    Fit2D(h2PttrueCorr.at(etabin),hProjection,gaussplots,gaussfits);
+    fit2D(h2PttrueCorr.at(etabin),hProjection,gaussplots,gaussfits);
     for(int i = 0; i < 8; i++) {
       if( i < 4 ) {
 	hProjection[i]->SetTitle(title);
@@ -979,25 +998,8 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
       }
     }
 
-    // L2 corrected response
-    Fit2D(h2PttrueCorrL2.at(etabin),hProjection,gaussplots,gaussfits);
-    for(int i = 0; i < 8; i++) {
-      if( i < 4 ) {
-	hProjection[i]->SetTitle(title);
-	hProjection[i]->SetMarkerStyle(22);
-	hProjection[i]->SetMarkerColor(3);
-	hProjection[i]->SetLineColor(3);
-	hRespPttrueCorrL2.at(i).at(etabin) = hProjection[i];
-	objToBeWritten.push_back(hProjection[i]);
-	delete gaussplots[i];
-	delete gaussfits[i];
-      } else {
-	delete hProjection[i];
-      }
-    }
-
     // L2L3 corrected response
-    Fit2D(h2PttrueCorrL2L3.at(etabin),hProjection,gaussplots,gaussfits);
+    fit2D(h2PttrueCorrL2L3.at(etabin),hProjection,gaussplots,gaussfits);
     for(int i = 0; i < 8; i++) {
       if( i < 4 ) {
 	hProjection[i]->SetTitle(title);
@@ -1016,10 +1018,9 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
 
 
   //Delete 2D histograms response vs pttrue
-  for(int i = 0; i < bins.NBinsY(); i++) {
+  for(int i = 0; i < bins.nBinsY(); i++) {
     delete h2PttrueUncorr.at(i);
     delete h2PttrueCorr.at(i);
-    delete h2PttrueCorrL2.at(i);
     delete h2PttrueCorrL2L3.at(i);
   }
 
@@ -1031,9 +1032,7 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   leg->SetTextFont(42);
   leg->AddEntry(hRespEtaUncorr.at(0).at(0),"Uncorrected","P");
   leg->AddEntry(hRespEtaCorr.at(0).at(0),"Kalibri","P");
-  //leg->AddEntry(hRespEtaCorrL2.at(0).at(0),"Corrected L2","P");
-  leg->AddEntry(hRespEtaCorrL2L3.at(0).at(0),"Summer08","P");
-
+  leg->AddEntry(hRespEtaCorrL2L3.at(0).at(0),(config_->read<string>("Control plots JetMET L2L3 label","NO LABEL")).c_str(),"P");
 
   // Mean response vs eta per pttrue bin
   TPostScript       * ps = new TPostScript("controlplotsJetTruthEventResponse.ps",111);
@@ -1047,14 +1046,13 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   leta->SetLineWidth(2);
   leta->SetLineStyle(2);
 
-  for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) {
+  for(int ptbin = 0; ptbin < bins.nBinsX(); ptbin++) {
     // Mean response vs eta
     hRespEtaUncorr.at(0).at(ptbin)->GetYaxis()->SetRangeUser(0,2);
     hRespEtaUncorr.at(0).at(ptbin)->GetYaxis()->SetTitle("< p^{jet}_{T} / p^{true}_{T} >");
     hRespEtaUncorr.at(0).at(ptbin)->Draw("PE1");
     leta->Draw("same");
     hRespEtaCorr.at(0).at(ptbin)->Draw("PE1same");
-    //hRespEtaCorrL2.at(0).at(ptbin)->Draw("PE1same");
     hRespEtaCorrL2L3.at(0).at(ptbin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
@@ -1066,19 +1064,17 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     hRespEtaUncorr.at(2).at(ptbin)->Draw("PE1");
     leta->Draw("same");
     hRespEtaCorr.at(2).at(ptbin)->Draw("PE1same");
-    //hRespEtaCorrL2.at(2).at(ptbin)->Draw("PE1same");
     hRespEtaCorrL2L3.at(2).at(ptbin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
     ps->NewPage();
   }
-  for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) {
+  for(int ptbin = 0; ptbin < bins.nBinsX(); ptbin++) {
     // Zoom: Mean response vs eta
     hRespEtaUncorr.at(0).at(ptbin)->GetYaxis()->SetRangeUser(0.8,1.2);
     hRespEtaUncorr.at(0).at(ptbin)->Draw("PE1");
     leta->Draw("same");
     hRespEtaCorr.at(0).at(ptbin)->Draw("PE1same");
-    //hRespEtaCorrL2.at(0).at(ptbin)->Draw("PE1same");
     hRespEtaCorrL2L3.at(0).at(ptbin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
@@ -1089,7 +1085,6 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     hRespEtaUncorr.at(2).at(ptbin)->Draw("PE1");
     leta->Draw("same");
     hRespEtaCorr.at(2).at(ptbin)->Draw("PE1same");
-    //hRespEtaCorrL2.at(2).at(ptbin)->Draw("PE1same");
     hRespEtaCorrL2L3.at(2).at(ptbin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
@@ -1103,14 +1098,13 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   lpttrue->SetLineColor(1);
   lpttrue->SetLineWidth(2);
   lpttrue->SetLineStyle(2);
-  for(int etabin = 0; etabin < bins.NBinsY(); etabin++) {
+  for(int etabin = 0; etabin < bins.nBinsY(); etabin++) {
     // Mean response vs pttrue
     hRespPttrueUncorr.at(0).at(etabin)->GetYaxis()->SetRangeUser(0,2);
     hRespPttrueUncorr.at(0).at(etabin)->GetYaxis()->SetTitle("< p^{jet}_{T} / p^{true}_{T} >");
     hRespPttrueUncorr.at(0).at(etabin)->Draw("PE1");
     lpttrue->Draw("same");
     hRespPttrueCorr.at(0).at(etabin)->Draw("PE1same");
-    //hRespPttrueCorrL2.at(0).at(etabin)->Draw("PE1same");
     hRespPttrueCorrL2L3.at(0).at(etabin)->Draw("PE1same");
     leg->Draw("same");
     c1->SetLogx(1);
@@ -1122,19 +1116,17 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     hRespPttrueUncorr.at(2).at(etabin)->Draw("PE1");
     lpttrue->Draw("same");
     hRespPttrueCorr.at(2).at(etabin)->Draw("PE1same");
-    //hRespPttrueCorrL2.at(2).at(etabin)->Draw("PE1same");
     hRespPttrueCorrL2L3.at(2).at(etabin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
     ps->NewPage();
   }
-  for(int etabin = 0; etabin < bins.NBinsY(); etabin++) {
+  for(int etabin = 0; etabin < bins.nBinsY(); etabin++) {
     // Zoom: Mean response vs pttrue
     hRespPttrueUncorr.at(0).at(etabin)->GetYaxis()->SetRangeUser(0.8,1.2);
     hRespPttrueUncorr.at(0).at(etabin)->Draw("PE1");
     lpttrue->Draw("same");
     hRespPttrueCorr.at(0).at(etabin)->Draw("PE1same");
-    //hRespPttrueCorrL2.at(0).at(etabin)->Draw("PE1same");
     hRespPttrueCorrL2L3.at(0).at(etabin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
@@ -1144,7 +1136,6 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     hRespPttrueUncorr.at(2).at(etabin)->Draw("PE1");
     lpttrue->Draw("same");
     hRespPttrueCorr.at(2).at(etabin)->Draw("PE1same");
-    //hRespPttrueCorrL2.at(2).at(etabin)->Draw("PE1same");
     hRespPttrueCorrL2L3.at(2).at(etabin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
@@ -1160,13 +1151,12 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
   c1->SetLogx(0);
 
   // Resolution vs eta per pttrue bin
-  for(int ptbin = 0; ptbin < bins.NBinsX(); ptbin++) {
+  for(int ptbin = 0; ptbin < bins.nBinsX(); ptbin++) {
     // Sigma
     hRespEtaUncorr.at(1).at(ptbin)->GetYaxis()->SetRangeUser(0,0.4);
     hRespEtaUncorr.at(1).at(ptbin)->GetYaxis()->SetTitle("#sigma( p^{jet}_{T} / p^{true}_{T} )  /  < p^{jet}_{T} / p^{true}_{T} >");
     hRespEtaUncorr.at(1).at(ptbin)->Draw("PE1");
     hRespEtaCorr.at(1).at(ptbin)->Draw("PE1same");
-    //hRespEtaCorrL2.at(1).at(ptbin)->Draw("PE1same");
     hRespEtaCorrL2L3.at(1).at(ptbin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
@@ -1176,20 +1166,18 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     hRespEtaUncorr.at(3).at(ptbin)->GetYaxis()->SetTitle("Gauss fit #sigma( p^{jet}_{T} / p^{true}_{T} )  /  < p^{jet}_{T} / p^{true}_{T} >");
     hRespEtaUncorr.at(3).at(ptbin)->Draw("PE1");
     hRespEtaCorr.at(3).at(ptbin)->Draw("PE1same");
-    //hRespEtaCorrL2.at(3).at(ptbin)->Draw("PE1same");
     hRespEtaCorrL2L3.at(3).at(ptbin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
     ps->NewPage();
   }
   // Resolution vs pttrue per eta bin
-  for(int etabin = 0; etabin < bins.NBinsY(); etabin++) {
+  for(int etabin = 0; etabin < bins.nBinsY(); etabin++) {
     // Sigma
     hRespPttrueUncorr.at(1).at(etabin)->GetYaxis()->SetRangeUser(0,0.4);
     hRespPttrueUncorr.at(1).at(etabin)->GetYaxis()->SetTitle("#sigma( p^{jet}_{T} / p^{true}_{T} )  /  < p^{jet}_{T} / p^{true}_{T} >");
     hRespPttrueUncorr.at(1).at(etabin)->Draw("PE1");
     hRespPttrueCorr.at(1).at(etabin)->Draw("PE1same");
-    //hRespPttrueCorrL2.at(1).at(etabin)->Draw("PE1same");
     hRespPttrueCorrL2L3.at(1).at(etabin)->Draw("PE1same");
     leg->Draw("same");
     c1->SetLogx(1);
@@ -1200,14 +1188,13 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
     hRespPttrueUncorr.at(3).at(etabin)->GetYaxis()->SetTitle("Gauss fit #sigma( p^{jet}_{T} / p^{true}_{T} )  /  < p^{jet}_{T} / p^{true}_{T} >");
     hRespPttrueUncorr.at(3).at(etabin)->Draw("PE1");
     hRespPttrueCorr.at(3).at(etabin)->Draw("PE1same");
-    //hRespPttrueCorrL2.at(3).at(etabin)->Draw("PE1same");
     hRespPttrueCorrL2L3.at(3).at(etabin)->Draw("PE1same");
     leg->Draw("same");
     c1->Draw();
     ps->NewPage();
   }
 
-  if( mOutputROOT ) WriteToRootFile(objToBeWritten,"JetTruthEventResponse");
+  if( outputROOT_ ) writeToRootFile(objToBeWritten,"JetTruthEventResponse");
 
   // Clean up
   ps->Close();
@@ -1229,11 +1216,11 @@ void TControlPlots::MakeControlPlotsJetTruthEventResponse() {
 //!  to the directory "CorrectionFunction" in the file
 //!  "controlplots.root".
 // -------------------------------------------------------------
-void TControlPlots::MakeControlPlotsCorrectionFunction() {
+void TControlPlots::makeControlPlotsCorrectionFunction() {
   std::vector<TObject*>                objToBeWritten;
   std::vector<TData*>::const_iterator  data_it;
 
-  std::vector<double> binEdgesPt = bag_of<double>(mConfig->read<std::string>("Control plots pt bin edges",""));
+  std::vector<double> binEdgesPt = bag_of<double>(config_->read<std::string>("Control plots pt bin edges",""));
 
 
   // -- Global jet correctin function ----------
@@ -1247,12 +1234,12 @@ void TControlPlots::MakeControlPlotsCorrectionFunction() {
   // Loop over pt bins and fill histo with correction factor
 //   std::cout << ">> Global jet parameters:\n";
 //   for(int i = 0; i < 4; i++) {
-//     std::cout << i << ": " << mPar->GetGlobalJetParRef()[i] << std::endl;
+//     std::cout << i << ": " << par_->GetGlobalJetParRef()[i] << std::endl;
 //   }
   TMeasurement meas;
   for(int ptbin = 1; ptbin <= hGlobalJetCorr->GetNbinsX(); ptbin++) {
     meas.pt = hGlobalJetCorr->GetBinCenter(ptbin);
-    double ptcorr = TParameters::global_jet_parametrization(&meas,mPar->GetGlobalJetParRef());
+    double ptcorr = TParameters::global_jet_parametrization(&meas,par_->GetGlobalJetParRef());
     hGlobalJetCorr->SetBinContent(ptbin,ptcorr/meas.pt);
     hGlobalJetCorr->GetYaxis()->SetRangeUser(1.0,3.0);
   }
@@ -1260,8 +1247,8 @@ void TControlPlots::MakeControlPlotsCorrectionFunction() {
 
   // -- Local jet correctin function -----------
   // Create one histogram per jet-bin
-  std::vector<TH1F*> hLocalJetCorr(mPar->GetEtaGranularityJet());
-  for(int jetbin = 0; jetbin < mPar->GetEtaGranularityJet(); jetbin++) {
+  std::vector<TH1F*> hLocalJetCorr(par_->GetEtaGranularityJet());
+  for(int jetbin = 0; jetbin < par_->GetEtaGranularityJet(); jetbin++) {
     char name[50];
     sprintf(name,"hLocalJetCorr_bin%i",jetbin);
     char title[100];
@@ -1272,7 +1259,7 @@ void TControlPlots::MakeControlPlotsCorrectionFunction() {
     // Loop over ptbins and fill histo with correction factor
     for(int ptbin = 1; ptbin <= h->GetNbinsX(); ptbin++) {
     meas.pt = h->GetBinCenter(ptbin);
-    double ptcorr = TParameters::jet_parametrization(&meas,mPar->GetJetParRef(jetbin));
+    double ptcorr = TParameters::jet_parametrization(&meas,par_->GetJetParRef(jetbin));
     h->SetBinContent(ptbin,ptcorr/meas.pt);
     }
     h->GetYaxis()->SetRangeUser(0.5,2.0);
@@ -1300,7 +1287,7 @@ void TControlPlots::MakeControlPlotsCorrectionFunction() {
   }
 
 
-  if( mOutputROOT ) WriteToRootFile(objToBeWritten,"CorrectionFunction");
+  if( outputROOT_ ) writeToRootFile(objToBeWritten,"CorrectionFunction");
 
 
   // Clean up
@@ -1320,7 +1307,7 @@ void TControlPlots::MakeControlPlotsCorrectionFunction() {
 //---------------------------------------------------------------
 //   Tower control plots
 //---------------------------------------------------------------
-void TControlPlots::MakeControlPlotsTowers()
+void TControlPlots::makeControlPlotsTowers()
 {
   std::vector<TObject*> objToBeWritten;
   std::vector<TData*>::const_iterator data_it;
@@ -1340,14 +1327,14 @@ void TControlPlots::MakeControlPlotsTowers()
   int markerColor[5] = { 1,4,2,3,7 };
   int markerStyle[5] = { 8,1,1,1,1 };
 
-  TH2F * constants = new TH2F("hCalibConstants","Calibration constants vs. E_{T} and #eta-bin with f_{em} = OUF = 0;E_{T} [GeV];#eta-bin",100,0.5,100.,mPar->GetEtaGranularity(),1,mPar->GetEtaGranularity()); 
+  TH2F * constants = new TH2F("hCalibConstants","Calibration constants vs. E_{T} and #eta-bin with f_{em} = OUF = 0;E_{T} [GeV];#eta-bin",100,0.5,100.,par_->GetEtaGranularity(),1,par_->GetEtaGranularity()); 
    
-  for (int eta=0; eta<mPar->GetEtaGranularity();++eta) // Loop over eta bins
+  for (int eta=0; eta<par_->GetEtaGranularity();++eta) // Loop over eta bins
     {
-      for (int phi=0; phi<mPar->GetPhiGranularity();++phi) // Loop over phi bins
+      for (int phi=0; phi<par_->GetPhiGranularity();++phi) // Loop over phi bins
 	{
-	  int i = mPar->GetBin(eta,phi);
-	  double * val = mPar->GetTowerParRef(i);
+	  int i = par_->GetBin(eta,phi);
+	  double * val = par_->GetTowerParRef(i);
 
 	  TH1F * plot[5]; 
 	  sprintf(name, "h%d_eta%d_phi%d",i,eta+1,phi+1);
@@ -1528,8 +1515,8 @@ void TControlPlots::MakeControlPlotsTowers()
 
 	  double mess, error;
 
-	  data_it = mData->begin();
-	  for (; data_it != mData->end();++data_it) // 1. loop over all fit events
+	  data_it = data_->begin();
+	  for (; data_it != data_->end();++data_it) // 1. loop over all fit events
 	    {
 	      //if one fit event is composed of multiple towers, than loop over all
 	      TAbstractData* ad = dynamic_cast<TAbstractData*>(*data_it);
@@ -1643,7 +1630,7 @@ void TControlPlots::MakeControlPlotsTowers()
 	      au_vs_had[a]->Divide(norm_vs_had[a]);
 	    }
 	  
-	  for (data_it = mData->begin(); data_it != mData->end();++data_it) // 2. loop over all fit-events
+	  for (data_it = data_->begin(); data_it != data_->end();++data_it) // 2. loop over all fit-events
 	    {
 	      //if one fit event is composed of multiple towers, than loop over all
 	      mess = 0.;
@@ -1687,26 +1674,26 @@ void TControlPlots::MakeControlPlotsTowers()
 		      testmess->HadF = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
 		      testmess->OutF = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
 		      plot_had[0]->Fill( mhad, t/m );
-		      khad[0]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
+		      khad[0]->Fill(     mhad, par_->plot_parametrization(testmess,val) );
 		      if ((*data_it)->GetType()==GammaJet)
 			{
 			  plot_had[2]->Fill( mhad, t/m );
-			  khad[2]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
+			  khad[2]->Fill(     mhad, par_->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==TrackTower)
 			{
-			  khad[1]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
+			  khad[1]->Fill(     mhad, par_->plot_parametrization(testmess,val) );
 			  plot_had[1]->Fill( mhad, t/m );
 			}  
 		      else if ((*data_it)->GetType()==TrackCluster)
 			{
 			  plot_had[3]->Fill( mhad, t/m );
-			  khad[3]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
+			  khad[3]->Fill(     mhad, par_->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==PtBalance)
 			{
 			  plot_had[4]->Fill( mhad, t/m );
-			  khad[4]->Fill(     mhad, mPar->plot_parametrization(testmess,val) );
+			  khad[4]->Fill(     mhad, par_->plot_parametrization(testmess,val) );
 			}  
 		    }
 
@@ -1718,7 +1705,7 @@ void TControlPlots::MakeControlPlotsTowers()
 		      testmess->EMF = em[0]->GetBinContent(em[0]->GetXaxis()->FindBin(m));
 		      testmess->HadF = had[0]->GetBinContent(had[0]->GetXaxis()->FindBin(m));
 		      testmess->OutF = au[0]->GetBinContent(au[0]->GetXaxis()->FindBin(m));
-		      k[0]->Fill( m, mPar->plot_parametrization(testmess,val) );
+		      k[0]->Fill( m, par_->plot_parametrization(testmess,val) );
 
 		      if ((*data_it)->GetType()==GammaJet)
 			{
@@ -1730,7 +1717,7 @@ void TControlPlots::MakeControlPlotsTowers()
 			  testmess->EMF = em[2]->GetBinContent(em[2]->GetXaxis()->FindBin(m));
 			  testmess->HadF = had[2]->GetBinContent(had[2]->GetXaxis()->FindBin(m));
 			  testmess->OutF = au[2]->GetBinContent(au[2]->GetXaxis()->FindBin(m));
-			  k[2]->Fill( m, mPar->plot_parametrization(testmess,val) );
+			  k[2]->Fill( m, par_->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==TrackTower)
 			{
@@ -1739,7 +1726,7 @@ void TControlPlots::MakeControlPlotsTowers()
 			  testmess->EMF = em[1]->GetBinContent(em[1]->GetXaxis()->FindBin(m));
 			  testmess->HadF = had[1]->GetBinContent(had[1]->GetXaxis()->FindBin(m));
 			  testmess->OutF = au[1]->GetBinContent(au[1]->GetXaxis()->FindBin(m));
-			  k[1]->Fill( m, mPar->plot_parametrization(testmess,val) );
+			  k[1]->Fill( m, par_->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==TrackCluster) 
 			{
@@ -1748,7 +1735,7 @@ void TControlPlots::MakeControlPlotsTowers()
 			  testmess->EMF = em[3]->GetBinContent(em[3]->GetXaxis()->FindBin(m));
 			  testmess->HadF = had[3]->GetBinContent(had[3]->GetXaxis()->FindBin(m));
 			  testmess->OutF = au[3]->GetBinContent(au[3]->GetXaxis()->FindBin(m));
-			  k[3]->Fill( m, mPar->plot_parametrization(testmess,val) );
+			  k[3]->Fill( m, par_->plot_parametrization(testmess,val) );
 			}  
 		      else if ((*data_it)->GetType()==PtBalance) 
 			{
@@ -1757,7 +1744,7 @@ void TControlPlots::MakeControlPlotsTowers()
 			  testmess->EMF = em[3]->GetBinContent(em[3]->GetXaxis()->FindBin(m));
 			  testmess->HadF = had[3]->GetBinContent(had[3]->GetXaxis()->FindBin(m));
 			  testmess->OutF = au[3]->GetBinContent(au[3]->GetXaxis()->FindBin(m));
-			  k[4]->Fill( m, mPar->plot_parametrization(testmess,val) );
+			  k[4]->Fill( m, par_->plot_parametrization(testmess,val) );
 			}  
 		    }
 		} // End of 4. loop over towers
@@ -1852,17 +1839,17 @@ void TControlPlots::MakeControlPlotsTowers()
 	      testmess->EMF = 0.0;
 	      testmess->HadF = (double)b;
 	      khadonly->SetBinContent(khadonly->GetXaxis()->FindBin(b), 
-				      mPar->plot_parametrization(testmess,val) );
+				      par_->plot_parametrization(testmess,val) );
 	      constants->SetBinContent(constants->GetXaxis()->FindBin(b),constants->GetYaxis()->FindBin(eta+1),
-				       mPar->plot_parametrization(testmess,val));
+				       par_->plot_parametrization(testmess,val));
 	      testmess->EMF = (double)b*0.2; // -> EMFrac = 0.25
 	      testmess->HadF = (double)b*0.8;
 	      kEfrac02->SetBinContent(kEfrac02->GetXaxis()->FindBin(b), 
-				      mPar->plot_parametrization(testmess,val) );       
+				      par_->plot_parametrization(testmess,val) );       
 	      testmess->EMF = (double)b*0.5; // -> EMFrac = 1.0
 	      testmess->HadF = (double)b*0.5;
 	      kEfrac05->SetBinContent(kEfrac05->GetXaxis()->FindBin(b), 
-				      mPar->plot_parametrization(testmess,val) );       
+				      par_->plot_parametrization(testmess,val) );       
 	    }
 
 	  khadonly->GetYaxis()->SetRangeUser(0.9,1.1);
@@ -2009,7 +1996,7 @@ void TControlPlots::MakeControlPlotsTowers()
   ps->NewPage();
   objToBeWritten.push_back(constants);
 
-  if( mOutputROOT ) WriteToRootFile(objToBeWritten, "Towers");
+  if( outputROOT_ ) writeToRootFile(objToBeWritten, "Towers");
     
   ps->Close();
 
@@ -2026,9 +2013,9 @@ void TControlPlots::MakeControlPlotsTowers()
 //---------------------------------------------------------------
 //   Gamma-Jet Control Histograms
 //---------------------------------------------------------------
-void TControlPlots::MakeControlPlotsGammaJet()
+void TControlPlots::makeControlPlotsGammaJet()
 {
-  std::vector<std::string> tmpPlottedQuant = bag_of_string(mConfig->read<std::string>("gamma jet plotted quantities",""));
+  std::vector<std::string> tmpPlottedQuant = bag_of_string(config_->read<std::string>("gamma jet plotted quantities",""));
   std::set<std::string> plottedQuant;
   //do we really have to copy the vector and not just use mPlottedQuant in the first place???
   std::vector<std::string>::const_iterator it = tmpPlottedQuant.begin();
@@ -2215,9 +2202,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	  int etaBin = 0;
 	  if( e < 41 ) etaBin = -41 + e;
 	  else etaBin = -40 + e;
-	  etaBinEdge[e] = mPar->EtaLowerEdge(etaBin);
+	  etaBinEdge[e] = par_->EtaLowerEdge(etaBin);
 	}
-      etaBinEdge[82] = mPar->EtaUpperEdge(41);
+      etaBinEdge[82] = par_->EtaUpperEdge(41);
       heta[0] = new TH2F("heta0","#gamma-jet;#eta",82,etaBinEdge,100,0,4);
       */
       heta[0] = new TH2F("heta0","#gamma-jet;#eta",20,-5,5,100,0,4);
@@ -2372,7 +2359,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
   // Fill histos
 
   //loop over all fit-events
-  for ( std::vector<TData*>::const_iterator i = mData->begin() ; i != mData->end() ; ++i )
+  for ( std::vector<TData*>::const_iterator i = data_->begin() ; i != data_->end() ; ++i )
     {
       TData* jg = *i;
       if( jg->GetType() != GammaJet ) continue;
@@ -2817,7 +2804,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
 
   // From the above specified 2D histograms containing different
   // Pt ratios versus different quantities, projections along
-  // the x-axis are made per x bin using TControlPlots::Fit2D(...).
+  // the x-axis are made per x bin using TControlPlots::fit2D(...).
   // Some properties of these projected distributions, in the
   // following called 'control quantities', are plotted:
   //   0: Mean value
@@ -2858,9 +2845,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 
   TLegend* leg = new TLegend(0.7,0.68,0.96,0.9);
   leg->SetFillColor(0);
-  leg->AddEntry(heta[0],mPtRatioName[0],"p");
-  leg->AddEntry(heta[2],mPtRatioName[2],"p");
-  leg->AddEntry(heta[1],mPtRatioName[1],"p");
+  leg->AddEntry(heta[0],ptRatioName_[0],"p");
+  leg->AddEntry(heta[2],ptRatioName_[2],"p");
+  leg->AddEntry(heta[1],ptRatioName_[1],"p");
 
   if( plottedQuant.count("eta") > 0 )
     {
@@ -2876,9 +2863,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	    }
 
 	  // Do projections and determine control quantities
-	  Fit2D(heta[i],hists_eta[i],gp_eta[i], gf_eta[i]);
-	  Fit2D(heta[i+1],hists_eta[i+1],gp_eta[i+1], gf_eta[i+1]);
-	  Fit2D(heta[i+2],hists_eta[i+2],gp_eta[i+2], gf_eta[i+2]); 
+	  fit2D(heta[i],hists_eta[i],gp_eta[i], gf_eta[i]);
+	  fit2D(heta[i+1],hists_eta[i+1],gp_eta[i+1], gf_eta[i+1]);
+	  fit2D(heta[i+2],hists_eta[i+2],gp_eta[i+2], gf_eta[i+2]); 
 
 	  // Set axis ranges
 	  for(int a = 0; a<3;++a)
@@ -2914,9 +2901,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 		  else sprintf(title,"#gamma-jet, %i < E_{T}^{#gamma} < %i GeV, %.2f < #eta < %.2f",
 			       etLimit[int(i/3)-1],etLimit[int(i/3)],etaMin,etaMax);
 		  gp_eta[i+a][b]->SetTitle(title);
-		  gp_eta[i+a][b]->SetXTitle(mPtRatioName[a]);
+		  gp_eta[i+a][b]->SetXTitle(ptRatioName_[a]);
 
-		  // Set style and line color according to mPtRatioName
+		  // Set style and line color according to ptRatioName_
 		  gp_eta[i+a][b]->SetMarkerStyle(markerStyle[a]);
 		  gp_eta[i+a][b]->SetMarkerColor(markerColor[a]);
 		  gp_eta[i+a][b]->SetLineColor(markerColor[a]);
@@ -2971,7 +2958,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	      for(int c = 0; c < 7; c += 3) // Loop over etgamma bins
 		{
 		  TH1F *h = static_cast<TH1F*>(hists_eta[a+c][b]->Clone("h"));
-		  h->SetTitle("#gamma-jet,  " + mPtRatioName[a-3] + " " + mControlQuantityName[b]);
+		  h->SetTitle("#gamma-jet,  " + ptRatioName_[a-3] + " " + controlQuantityName_[b]);
 		  h->SetMarkerStyle(markerStyle[c/3]);
 		  h->SetMarkerColor(markerColor[c/3]);
 		  h->SetLineColor(markerColor[c/3]);
@@ -3024,9 +3011,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	    }
 
 	  // Do projections and determine control quantities
-	  Fit2D(hpt_uncorr[i],hists_ptuncorr[i],gp_ptuncorr[i], gf_ptuncorr[i]);
-	  Fit2D(hpt_uncorr[i+1],hists_ptuncorr[i+1],gp_ptuncorr[i+1], gf_ptuncorr[i+1]);
-	  Fit2D(hpt_uncorr[i+2],hists_ptuncorr[i+2],gp_ptuncorr[i+2], gf_ptuncorr[i+2]); 
+	  fit2D(hpt_uncorr[i],hists_ptuncorr[i],gp_ptuncorr[i], gf_ptuncorr[i]);
+	  fit2D(hpt_uncorr[i+1],hists_ptuncorr[i+1],gp_ptuncorr[i+1], gf_ptuncorr[i+1]);
+	  fit2D(hpt_uncorr[i+2],hists_ptuncorr[i+2],gp_ptuncorr[i+2], gf_ptuncorr[i+2]); 
 	  for(int a = 0; a<3;++a)
 	    {
 	      for(int b = 0 ; b < 4 ; ++b)
@@ -3067,9 +3054,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 					    "#gamma-jet, 3.0 < |#eta|, %.1f < p^{jet}_{T} < %.1f GeV",
 					    min,max);
 		  gp_ptuncorr[i+a][b]->SetTitle(title);
-		  gp_ptuncorr[i+a][b]->SetXTitle(mPtRatioName[a]);
+		  gp_ptuncorr[i+a][b]->SetXTitle(ptRatioName_[a]);
 
-		  // Set style and line color according to mPtRatioName
+		  // Set style and line color according to ptRatioName_
 		  gp_ptuncorr[i+a][b]->SetMarkerStyle(markerStyle[a]);
 		  gp_ptuncorr[i+a][b]->SetMarkerColor(markerColor[a]);
 		  gp_ptuncorr[i+a][b]->SetLineColor(markerColor[a]);
@@ -3135,9 +3122,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	}
 
       // Do projections and determine control quantities
-      Fit2D(hpt[0],hists_pttrue[0],gp_pttrue[0], gf_pttrue[0]);
-      Fit2D(hpt[1],hists_pttrue[1],gp_pttrue[1], gf_pttrue[1]);
-      Fit2D(hpt[2],hists_pttrue[2],gp_pttrue[2], gf_pttrue[2]); 
+      fit2D(hpt[0],hists_pttrue[0],gp_pttrue[0], gf_pttrue[0]);
+      fit2D(hpt[1],hists_pttrue[1],gp_pttrue[1], gf_pttrue[1]);
+      fit2D(hpt[2],hists_pttrue[2],gp_pttrue[2], gf_pttrue[2]); 
       for(int a = 0; a<3;++a)
 	{
 	  for(int b = 0 ; b < 4 ; ++b)
@@ -3169,9 +3156,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	      // Set title according to pt bin
 	      sprintf(title,"#gamma-jet, %.1f < E^{#gamma}_{T} < %.1f GeV",min,max);
 	      gp_pttrue[a][b]->SetTitle(title);
-	      gp_pttrue[a][b]->SetXTitle(mPtRatioName[a]);
+	      gp_pttrue[a][b]->SetXTitle(ptRatioName_[a]);
 
-	      // Set style and line color according to mPtRatioName
+	      // Set style and line color according to ptRatioName_
 	      gp_pttrue[a][b]->SetMarkerStyle(markerStyle[a]);
 	      gp_pttrue[a][b]->SetMarkerColor(markerColor[a]);
 	      gp_pttrue[a][b]->SetLineColor(markerColor[a]);
@@ -3235,9 +3222,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	}
 
       // Do projections and determine control quantities
-      Fit2D(hptTrack[0],hists_ptTrack[0],gp_ptTrack[0], gf_ptTrack[0]);
-      Fit2D(hptTrack[1],hists_ptTrack[1],gp_ptTrack[1], gf_ptTrack[1]);
-      Fit2D(hptTrack[2],hists_ptTrack[2],gp_ptTrack[2], gf_ptTrack[2]); 
+      fit2D(hptTrack[0],hists_ptTrack[0],gp_ptTrack[0], gf_ptTrack[0]);
+      fit2D(hptTrack[1],hists_ptTrack[1],gp_ptTrack[1], gf_ptTrack[1]);
+      fit2D(hptTrack[2],hists_ptTrack[2],gp_ptTrack[2], gf_ptTrack[2]); 
       for(int a = 0; a<3;++a)
 	{
 	  for(int b = 0 ; b < 4 ; ++b)
@@ -3269,9 +3256,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	      // Set title according to pt bin
 	      sprintf(title,"#gamma-jet Track only, %.1f < E^{#gamma}_{T} < %.1f GeV",min,max);
 	      gp_ptTrack[a][b]->SetTitle(title);
-	      gp_ptTrack[a][b]->SetXTitle(mPtRatioName[a]);
+	      gp_ptTrack[a][b]->SetXTitle(ptRatioName_[a]);
 
-	      // Set style and line color according to mPtRatioName
+	      // Set style and line color according to ptRatioName_
 	      gp_ptTrack[a][b]->SetMarkerStyle(markerStyle[a]);
 	      gp_ptTrack[a][b]->SetMarkerColor(markerColor[a]);
 	      gp_ptTrack[a][b]->SetLineColor(markerColor[a]);
@@ -3336,9 +3323,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	}
 
       // Do projections and determine control quantities
-      Fit2D(hetaTrack[0],hists_etaTrack[0],gp_etaTrack[0], gf_etaTrack[0]);
-      Fit2D(hetaTrack[1],hists_etaTrack[1],gp_etaTrack[1], gf_etaTrack[1]);
-      Fit2D(hetaTrack[2],hists_etaTrack[2],gp_etaTrack[2], gf_etaTrack[2]); 
+      fit2D(hetaTrack[0],hists_etaTrack[0],gp_etaTrack[0], gf_etaTrack[0]);
+      fit2D(hetaTrack[1],hists_etaTrack[1],gp_etaTrack[1], gf_etaTrack[1]);
+      fit2D(hetaTrack[2],hists_etaTrack[2],gp_etaTrack[2], gf_etaTrack[2]); 
       for(int a = 0; a<3;++a)
 	{
 	  for(int b = 0 ; b < 4 ; ++b)
@@ -3370,7 +3357,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	      // Set title according to eta bin
 	      sprintf(title,"#gamma-jet Track only, %.1f < E^{#gamma}_{T} < %.1f GeV",min,max);
 	      gp_etaTrack[a][b]->SetTitle(title);
-	      gp_etaTrack[a][b]->SetXTitle(mPtRatioName[a]);
+	      gp_etaTrack[a][b]->SetXTitle(ptRatioName_[a]);
 
 	      // Set style and line color according to mEtaRatioName
 	      gp_etaTrack[a][b]->SetMarkerStyle(markerStyle[a]);
@@ -3437,9 +3424,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	}
 
       // Do projections and determine control quantities
-      Fit2D(hptlog[0],hists_ptlog[0],gp_ptlog[0], gf_ptlog[0]);
-      Fit2D(hptlog[1],hists_ptlog[1],gp_ptlog[1], gf_ptlog[1]);
-      Fit2D(hptlog[2],hists_ptlog[2],gp_ptlog[2], gf_ptlog[2]); 
+      fit2D(hptlog[0],hists_ptlog[0],gp_ptlog[0], gf_ptlog[0]);
+      fit2D(hptlog[1],hists_ptlog[1],gp_ptlog[1], gf_ptlog[1]);
+      fit2D(hptlog[2],hists_ptlog[2],gp_ptlog[2], gf_ptlog[2]); 
       for(int a = 0; a<3;++a)
 	{
 	  for(int b = 0 ; b < 4 ; ++b)
@@ -3503,9 +3490,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	}
 
       // Do projections and determine control quantities
-      Fit2D(henergy[0],hists_energy[0],gp_energy[0], gf_energy[0]);
-      Fit2D(henergy[1],hists_energy[1],gp_energy[1], gf_energy[1]);
-      Fit2D(henergy[2],hists_energy[2],gp_energy[2], gf_energy[2]); 
+      fit2D(henergy[0],hists_energy[0],gp_energy[0], gf_energy[0]);
+      fit2D(henergy[1],hists_energy[1],gp_energy[1], gf_energy[1]);
+      fit2D(henergy[2],hists_energy[2],gp_energy[2], gf_energy[2]); 
       for(int a = 0; a<3;++a)
 	{
 	  for(int b = 0 ; b < 4 ; ++b)
@@ -3537,9 +3524,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	      // Set title according to energy bin
 	      sprintf(title,"#gamma-jet, %.1f < E^{jet} < %.1f GeV",min,max);
 	      gp_energy[a][b]->SetTitle(title);
-	      gp_energy[a][b]->SetXTitle(mPtRatioName[a]);
+	      gp_energy[a][b]->SetXTitle(ptRatioName_[a]);
 
-	      // Set style and line color according to mPtRatioName
+	      // Set style and line color according to ptRatioName_
 	      gp_energy[a][b]->SetMarkerStyle(markerStyle[a]);
 	      gp_energy[a][b]->SetMarkerColor(markerColor[a]);
 	      gp_energy[a][b]->SetLineColor(markerColor[a]);
@@ -3604,9 +3591,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	}
 
       // Do projections and determine control quantities
-      Fit2D(hemf[0],hists_emf[0],gp_emf[0], gf_emf[0]);
-      Fit2D(hemf[1],hists_emf[1],gp_emf[1], gf_emf[1]);
-      Fit2D(hemf[2],hists_emf[2],gp_emf[2], gf_emf[2]); 
+      fit2D(hemf[0],hists_emf[0],gp_emf[0], gf_emf[0]);
+      fit2D(hemf[1],hists_emf[1],gp_emf[1], gf_emf[1]);
+      fit2D(hemf[2],hists_emf[2],gp_emf[2], gf_emf[2]); 
       for(int a = 0; a<3;++a)
 	{
 	  for(int b = 0 ; b < 4 ; ++b)
@@ -3638,9 +3625,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
 	      // Set title according to emf bin
 	      sprintf(title,"#gamma-jet, %.2f < f_{em} < %.2f",min,max);
 	      gp_emf[a][b]->SetTitle(title);
-	      gp_emf[a][b]->SetXTitle(mPtRatioName[a]);
+	      gp_emf[a][b]->SetXTitle(ptRatioName_[a]);
 
-	      // Set style and line color according to mPtRatioName
+	      // Set style and line color according to ptRatioName_
 	      gp_emf[a][b]->SetMarkerStyle(markerStyle[a]);
 	      gp_emf[a][b]->SetMarkerColor(markerColor[a]);
 	      gp_emf[a][b]->SetLineColor(markerColor[a]);
@@ -3701,8 +3688,8 @@ void TControlPlots::MakeControlPlotsGammaJet()
       RelResPt[a+4]->SetMarkerColor(markerColorRes[a]);
       RelResPt[a+4]->SetLineColor(markerColorRes[a]);
 
-      Fit2DRes(RelResPt[a],hists_RelResPt[a],gp_RelResPt[a], gf_RelResPt[a]);
-      Fit2DRes(RelResPt[a+4],hists_RelResPt[a+4],gp_RelResPt[a+4], gf_RelResPt[a+4]);
+      fit2DRes(RelResPt[a],hists_RelResPt[a],gp_RelResPt[a], gf_RelResPt[a]);
+      fit2DRes(RelResPt[a+4],hists_RelResPt[a+4],gp_RelResPt[a+4], gf_RelResPt[a+4]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -3766,7 +3753,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
       RelResEMF[a]->SetMarkerColor(markerColorRes[a]);
       RelResEMF[a]->SetLineColor(markerColorRes[a]);
 
-      Fit2DRes(RelResEMF[a],hists_RelResEMF[a],gp_RelResEMF[a], gf_RelResEMF[a]);
+      fit2DRes(RelResEMF[a],hists_RelResEMF[a],gp_RelResEMF[a], gf_RelResEMF[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -3807,7 +3794,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
       RelResEta[a]->SetMarkerColor(markerColorRes[a]);
       RelResEta[a]->SetLineColor(markerColorRes[a]);
 
-      Fit2DRes(RelResEta[a],hists_RelResEta[a],gp_RelResEta[a], gf_RelResEta[a]);
+      fit2DRes(RelResEta[a],hists_RelResEta[a],gp_RelResEta[a], gf_RelResEta[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -3848,7 +3835,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
       RelResTrackMult[a]->SetMarkerColor(markerColorRes[a]);
       RelResTrackMult[a]->SetLineColor(markerColorRes[a]);
 
-      Fit2DRes(RelResTrackMult[a],hists_RelResTrackMult[a],gp_RelResTrackMult[a], gf_RelResTrackMult[a]);
+      fit2DRes(RelResTrackMult[a],hists_RelResTrackMult[a],gp_RelResTrackMult[a], gf_RelResTrackMult[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -3937,9 +3924,9 @@ void TControlPlots::MakeControlPlotsGammaJet()
   
   for (int eta=-41; eta < 41;++eta)
     {
-      int i = mPar->GetEtaBin(eta >= 0 ? eta +1 : eta);
+      int i = par_->GetEtaBin(eta >= 0 ? eta +1 : eta);
       TMeasurement x;
-      double* par = mPar->GetTowerParRef(mPar->GetBin(i,0));
+      double* par = par_->GetTowerParRef(par_->GetBin(i,0));
       htow[0]->Fill(eta + 41,TParameters::tower_parametrization(&x,par));
       x.HadF = 5;
       htow[1]->Fill(eta + 41,TParameters::tower_parametrization(&x,par));
@@ -3970,7 +3957,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
 
   // Closing ps file and writing objects to .root file
   ps->Close();
-  if( mOutputROOT ) WriteToRootFile(objToBeWritten, "GammaJet");
+  if( outputROOT_ ) writeToRootFile(objToBeWritten, "GammaJet");
 
 
   // free memory
@@ -4132,7 +4119,7 @@ void TControlPlots::MakeControlPlotsGammaJet()
 //   Gamma-Jet Control Histograms per tower bin
 //   orig name: gammajet_plots_per_towerbin.ps
 //---------------------------------------------------------------
-void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
+void TControlPlots::makeControlPlotsGammaJetPerTowerBin()
 {
   std::vector<TObject*> objToBeWritten;
   std::vector<TObject*> objToBeDeleted;
@@ -4145,11 +4132,11 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
   objToBeDeleted.push_back(ps);
 
   //one plot per *TOWER* bin!
-  for (int eta=0; eta<mPar->GetEtaGranularity();++eta) // Loop over eta bins
+  for (int eta=0; eta<par_->GetEtaGranularity();++eta) // Loop over eta bins
     {
-      for (int phi=0; phi<mPar->GetPhiGranularity();++phi) // Loop over phi bins
+      for (int phi=0; phi<par_->GetPhiGranularity();++phi) // Loop over phi bins
 	{
-	  int i = mPar->GetBin(eta,phi);
+	  int i = par_->GetBin(eta,phi);
 
 	  // Initialize histos
 	  char * name = new char[100];
@@ -4175,8 +4162,8 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 
 
 	  int indexJet=0, ijets=0;      
-	  data_it = mData->begin();
-	  for (; data_it != mData->end();++data_it) // loop over all fit-events
+	  data_it = data_->begin();
+	  for (; data_it != data_->end();++data_it) // loop over all fit-events
 	    {
 	      if ( (*data_it)->GetType()!=GammaJet ) continue;
 	      TAbstractData* ad = dynamic_cast<TAbstractData*>(*data_it);
@@ -4260,10 +4247,10 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 	  objToBeWritten.push_back(plot_jes);
 
 	  sprintf(name,"res2_%i",i);
-	  //TF1 * res2 = new TF1(name,mPar->jes_plot_parametrization, 0.5, 400., 3);
+	  //TF1 * res2 = new TF1(name,par_->jes_plot_parametrization, 0.5, 400., 3);
 	  //objToBeDeleted.push_back(res2);
-	  //i = indexJet/ijets - mPar->GetNumberOfTowerParameters();
-	  //double * val = mPar->GetJetParRef(i);
+	  //i = indexJet/ijets - par_->GetNumberOfTowerParameters();
+	  //double * val = par_->GetJetParRef(i);
 	  //res2->SetParameters(val[0],val[1]);
 	  //res2->SetLineWidth( 3 );
 	  //res2->SetLineColor( 2 );
@@ -4275,7 +4262,7 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
   }
 
   ps->Close();
-  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "GammaJetPerTowerBin" );
+  if( outputROOT_ ) writeToRootFile( objToBeWritten, "GammaJetPerTowerBin" );
   objToBeDeleted.clear();
 }
 
@@ -4285,7 +4272,7 @@ void TControlPlots::MakeControlPlotsGammaJetPerTowerBin()
 //   Gamma-Jet Control Histograms per jet bin
 //   orig name: gammajet_plots_per_jetbin.ps
 //---------------------------------------------------------------
-void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
+void TControlPlots::makeControlPlotsGammaJetPerJetBin()
 {
   std::vector<TObject*> objToBeDeleted;
   std::vector<TObject*> objToBeWritten;
@@ -4298,11 +4285,11 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
   objToBeDeleted.push_back(ps);
 
   //one plot per *JET* bin!
-  for (int eta=0; eta<mPar->GetEtaGranularityJet();++eta)
+  for (int eta=0; eta<par_->GetEtaGranularityJet();++eta)
     {
-      for (int phi=0; phi<mPar->GetPhiGranularityJet();++phi)
+      for (int phi=0; phi<par_->GetPhiGranularityJet();++phi)
 	{
-	  int i = mPar->GetJetBin(eta,phi)*mPar->GetNumberOfJetParametersPerBin() + mPar->GetNumberOfTowerParameters();
+	  int i = par_->GetJetBin(eta,phi)*par_->GetNumberOfJetParametersPerBin() + par_->GetNumberOfTowerParameters();
 	  char * name = new char[100];
 	  sprintf(name, "h2jes_gj%d_eta%d_phi%d",i,eta+1,phi+1);
 	  TH1F * plot_jes = new TH1F(name,";#sum calibrated tower E_{T} [GeV]; JES: ( E_{T}^{#gamma} / #sum E_{T}^{calib. tower})",100,0.0,400.);
@@ -4321,8 +4308,8 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 	  objToBeDeleted.push_back(norm_jes);
 
 	  //loop over all fit-events
-	  data_it = mData->begin();
-	  for (; data_it != mData->end();++data_it)
+	  data_it = data_->begin();
+	  for (; data_it != data_->end();++data_it)
 	    {
 	      TAbstractData* ad = dynamic_cast<TAbstractData*>(*data_it);
 	      if(! ad) continue;
@@ -4394,10 +4381,10 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 	  objToBeWritten.push_back( plot_jes );
 
 	  sprintf(name,"res2_%i",i);
-	  //TF1 * res2 = new TF1(name,mPar->jes_plot_parametrization, 0.5, 400., 3);
+	  //TF1 * res2 = new TF1(name,par_->jes_plot_parametrization, 0.5, 400., 3);
 	  //objToBeDeleted.push_back(res2);
-	  //i = mPar->GetJetBin(eta, phi);
-	  //double * val = mPar->GetJetParRef(i);
+	  //i = par_->GetJetBin(eta, phi);
+	  //double * val = par_->GetJetParRef(i);
 	  //res2->SetParameters(val[0],val[1],val[2]);
 	  //res2->SetLineWidth( 3 );
 	  //res2->SetLineColor( 2 );
@@ -4409,7 +4396,7 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 	}
     }
   ps->Close();
-  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "GammaJetPerJetBin" );
+  if( outputROOT_ ) writeToRootFile( objToBeWritten, "GammaJetPerJetBin" );
   objToBeDeleted.clear();
 }
 
@@ -4419,7 +4406,7 @@ void TControlPlots::MakeControlPlotsGammaJetPerJetBin()
 //   Gamma-Jet Control Histograms
 //   orig name: sigmas_gammajet.ps
 //---------------------------------------------------------------
-void TControlPlots::MakeControlPlotsGammaJetSigmas()
+void TControlPlots::makeControlPlotsGammaJetSigmas()
 {
   std::vector<TObject*> objToBeWritten;
 
@@ -4448,7 +4435,7 @@ void TControlPlots::MakeControlPlotsGammaJetSigmas()
   }
   
   //loop over all fit-events
-  for ( std::vector<TData*>::const_iterator i = mData->begin(); i != mData->end() ; ++i )
+  for ( std::vector<TData*>::const_iterator i = data_->begin(); i != data_->end() ; ++i )
     {
       if( (*i)->GetType() != GammaJet ) continue;
 
@@ -4520,7 +4507,7 @@ void TControlPlots::MakeControlPlotsGammaJetSigmas()
   
   ps->Close();
 
-  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "GammaJetSigmas" );
+  if( outputROOT_ ) writeToRootFile( objToBeWritten, "GammaJetSigmas" );
 
   for(int i = 0 ; i < nPtBins ; ++i)
     {
@@ -4536,7 +4523,7 @@ void TControlPlots::MakeControlPlotsGammaJetSigmas()
 //---------------------------------------------------------------
 //   Dijet-Jet Control Histograms
 //---------------------------------------------------------------
-void TControlPlots::MakeControlPlotsDiJet()
+void TControlPlots::makeControlPlotsDiJet()
 {
   std::vector<TObject*> objToBeWritten;
 
@@ -4714,7 +4701,7 @@ void TControlPlots::MakeControlPlotsDiJet()
   int noTrack=0;
 
   //loop over all fit-events
-  for( std::vector<TData*>::const_iterator i = mData->begin() ; i != mData->end() ; ++i )  
+  for( std::vector<TData*>::const_iterator i = data_->begin() ; i != data_->end() ; ++i )  
     {
       TData* jj = *i;
       if(jj->GetType() != PtBalance) continue;
@@ -5033,7 +5020,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  Beta[i+a]->SetLineColor(markerColor[a]);
 	  objToBeWritten.push_back(Beta[i+a]);
 	  
-	  Fit2D(Beta[i+a],hists_beta[i+a],gp_beta[i+a], gf_beta[i+a]);
+	  fit2D(Beta[i+a],hists_beta[i+a],gp_beta[i+a], gf_beta[i+a]);
 
 	  for(int b = 0 ; b < 4 ; ++b)
 	    {
@@ -5068,7 +5055,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	      if( a == 0 ) gp_beta[a][b]->SetXTitle("B after fit");
 	      else gp_beta[a][b]->SetXTitle("B before fit");
 
-	      // Set style and line color according to mPtRatioName
+	      // Set style and line color according to ptRatioName_
 	      gp_beta[a][b]->SetMarkerStyle(markerStyle[a]);
 	      gp_beta[a][b]->SetMarkerColor(markerColor[a]);
 	      gp_beta[a][b]->SetLineColor(markerColor[a]);
@@ -5113,7 +5100,7 @@ void TControlPlots::MakeControlPlotsDiJet()
       Bpt[a]->SetMarkerColor(markerColor[a]);
       Bpt[a]->SetLineColor(markerColor[a]);
 
-      Fit2D(Bpt[a],hists_pt[a],gp_pt[a], gf_pt[a]);
+      fit2D(Bpt[a],hists_pt[a],gp_pt[a], gf_pt[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -5146,7 +5133,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  if( a == 0 ) gp_pt[a][b]->SetXTitle("B after fit");
 	  else gp_pt[a][b]->SetXTitle("B before fit");
 
-	  // Set style and line color according to mPtRatioName
+	  // Set style and line color according to ptRatioName_
 	  gp_pt[a][b]->SetMarkerStyle(markerStyle[a]);
 	  gp_pt[a][b]->SetMarkerColor(markerColor[a]);
 	  gp_pt[a][b]->SetLineColor(markerColor[a]);
@@ -5190,7 +5177,7 @@ void TControlPlots::MakeControlPlotsDiJet()
       Bptlog[a]->SetMarkerColor(markerColor[a]);
       Bptlog[a]->SetLineColor(markerColor[a]);
 
-      Fit2D(Bptlog[a],hists_ptlog[a],gp_ptlog[a], gf_ptlog[a]);
+      fit2D(Bptlog[a],hists_ptlog[a],gp_ptlog[a], gf_ptlog[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -5231,7 +5218,7 @@ void TControlPlots::MakeControlPlotsDiJet()
       Benergy[a]->SetMarkerColor(markerColor[a]);
       Benergy[a]->SetLineColor(markerColor[a]);
 
-      Fit2D(Benergy[a],hists_energy[a],gp_energy[a], gf_energy[a]);
+      fit2D(Benergy[a],hists_energy[a],gp_energy[a], gf_energy[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -5264,7 +5251,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  if( a == 0 ) gp_energy[a][b]->SetXTitle("B after fit");
 	  else gp_energy[a][b]->SetXTitle("B before fit");
 
-	  // Set style and line color according to mPtRatioName
+	  // Set style and line color according to ptRatioName_
 	  gp_energy[a][b]->SetMarkerStyle(markerStyle[a]);
 	  gp_energy[a][b]->SetMarkerColor(markerColor[a]);
 	  gp_energy[a][b]->SetLineColor(markerColor[a]);
@@ -5307,7 +5294,7 @@ void TControlPlots::MakeControlPlotsDiJet()
       Bemf[a]->SetMarkerColor(markerColor[a]);
       Bemf[a]->SetLineColor(markerColor[a]);
 
-      Fit2D(Bemf[a],hists_emf[a],gp_emf[a], gf_emf[a]);
+      fit2D(Bemf[a],hists_emf[a],gp_emf[a], gf_emf[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -5340,7 +5327,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 	  if( a == 0 ) gp_emf[a][b]->SetXTitle("B after fit");
 	  else gp_emf[a][b]->SetXTitle("B before fit");
 
-	  // Set style and line color according to mPtRatioName
+	  // Set style and line color according to ptRatioName_
 	  gp_emf[a][b]->SetMarkerStyle(markerStyle[a]);
 	  gp_emf[a][b]->SetMarkerColor(markerColor[a]);
 	  gp_emf[a][b]->SetLineColor(markerColor[a]);
@@ -5394,8 +5381,8 @@ void TControlPlots::MakeControlPlotsDiJet()
       RelResPt[a+4]->SetMarkerColor(markerColor[a]);
       RelResPt[a+4]->SetLineColor(markerColor[a]);
 
-      Fit2DRes(RelResPt[a],hists_RelResPt[a],gp_RelResPt[a], gf_RelResPt[a]);
-      Fit2DRes(RelResPt[a+4],hists_RelResPt[a+4],gp_RelResPt[a+4], gf_RelResPt[a+4]);
+      fit2DRes(RelResPt[a],hists_RelResPt[a],gp_RelResPt[a], gf_RelResPt[a]);
+      fit2DRes(RelResPt[a+4],hists_RelResPt[a+4],gp_RelResPt[a+4], gf_RelResPt[a+4]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -5458,7 +5445,7 @@ void TControlPlots::MakeControlPlotsDiJet()
       RelResEMF[a]->SetMarkerColor(markerColor[a]);
       RelResEMF[a]->SetLineColor(markerColor[a]);
 
-      Fit2DRes(RelResEMF[a],hists_RelResEMF[a],gp_RelResEMF[a], gf_RelResEMF[a]);
+      fit2DRes(RelResEMF[a],hists_RelResEMF[a],gp_RelResEMF[a], gf_RelResEMF[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -5499,7 +5486,7 @@ void TControlPlots::MakeControlPlotsDiJet()
       RelResEta[a]->SetMarkerColor(markerColor[a]);
       RelResEta[a]->SetLineColor(markerColor[a]);
 
-      Fit2DRes(RelResEta[a],hists_RelResEta[a],gp_RelResEta[a], gf_RelResEta[a]);
+      fit2DRes(RelResEta[a],hists_RelResEta[a],gp_RelResEta[a], gf_RelResEta[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -5540,7 +5527,7 @@ void TControlPlots::MakeControlPlotsDiJet()
       RelResTrackMult[a]->SetMarkerColor(markerColor[a]);
       RelResTrackMult[a]->SetLineColor(markerColor[a]);
 
-      Fit2DRes(RelResTrackMult[a],hists_RelResTrackMult[a],gp_RelResTrackMult[a], gf_RelResTrackMult[a]);
+      fit2DRes(RelResTrackMult[a],hists_RelResTrackMult[a],gp_RelResTrackMult[a], gf_RelResTrackMult[a]);
 
       for(int b = 0 ; b < 4 ; ++b)
 	{
@@ -5594,7 +5581,7 @@ void TControlPlots::MakeControlPlotsDiJet()
   // Clean up
   ps->Close();
 
-  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "DiJet" );
+  if( outputROOT_ ) writeToRootFile( objToBeWritten, "DiJet" );
 
   delete c1;
   delete c2;
@@ -5709,7 +5696,7 @@ void TControlPlots::MakeControlPlotsDiJet()
 //---------------------------------------------------------------
 //   Top Control Histograms
 //---------------------------------------------------------------
-void TControlPlots::MakeControlPlotsTop()
+void TControlPlots::makeControlPlotsTop()
 {
   std::vector<TObject*> objToBeWritten;
 
@@ -5717,7 +5704,7 @@ void TControlPlots::MakeControlPlotsTop()
 
   TPostScript * const ps = new TPostScript("controlplotsTop.ps",111);
 
-  bool individualPdf = mConfig->read<bool>("create individual pdf files", false);
+  bool individualPdf = config_->read<bool>("create individual pdf files", false);
 
   // book hists
 
@@ -5805,7 +5792,7 @@ void TControlPlots::MakeControlPlotsTop()
 
   //loop over all fit-events and fill hists
 
-  for( std::vector<TData*>::const_iterator i = mData->begin() ; i != mData->end() ; ++i )  
+  for( std::vector<TData*>::const_iterator i = data_->begin() ; i != data_->end() ; ++i )  
     {
 
       TData* data = *i;
@@ -5975,9 +5962,9 @@ void TControlPlots::MakeControlPlotsTop()
     TH1F* results_ptRec[8];
     TH1F* results_eta  [8];
 
-    Fit2D(messTruthPtGen[i], results_ptGen);
-    Fit2D(messTruthPtRec[i], results_ptRec);
-    Fit2D(messTruthEta  [i], results_eta);
+    fit2D(messTruthPtGen[i], results_ptGen);
+    fit2D(messTruthPtRec[i], results_ptRec);
+    fit2D(messTruthEta  [i], results_eta);
     for(unsigned j=0; j<8; j++) {
       if(j<4) {
 	messTruthPtGen_proj[i][j] = results_ptGen[j];
@@ -5999,9 +5986,9 @@ void TControlPlots::MakeControlPlotsTop()
     TH1F* results_ptRec[8];
     TH1F* results_eta  [8];
 
-    Fit2D(responsePtGen[i], results_ptGen);
-    Fit2D(responsePtRec[i], results_ptRec);
-    Fit2D(responseEta  [i], results_eta);
+    fit2D(responsePtGen[i], results_ptGen);
+    fit2D(responsePtRec[i], results_ptRec);
+    fit2D(responseEta  [i], results_eta);
     for(unsigned j=0; j<8; j++) {
       if(j<4) {
 	responsePtGen_proj[i][j] = results_ptGen[j];
@@ -6022,8 +6009,8 @@ void TControlPlots::MakeControlPlotsTop()
     TH1F* results_pt [8];
     TH1F* results_eta[8];
 
-    Fit2D(corrFacsPt [i], results_pt);
-    Fit2D(corrFacsEta[i], results_eta);
+    fit2D(corrFacsPt [i], results_pt);
+    fit2D(corrFacsEta[i], results_eta);
     for(unsigned j=0; j<8; j++) {
       if(j==2) { //mean of Gauss fits
 	corrFacsPt_mgf [i] = results_pt [j];
@@ -6042,8 +6029,8 @@ void TControlPlots::MakeControlPlotsTop()
     TH1F* results_pt [8];
     TH1F* results_eta[8];
 
-    Fit2D(correctedResponsePt [i], results_pt);
-    Fit2D(correctedResponseEta[i], results_eta);
+    fit2D(correctedResponsePt [i], results_pt);
+    fit2D(correctedResponseEta[i], results_eta);
     for(unsigned j=0; j<8; j++) {
       if(j==2) { //mean of Gauss fits
 	correctedResponsePt_mgf [i] = results_pt [j];
@@ -6692,7 +6679,7 @@ void TControlPlots::MakeControlPlotsTop()
     objToBeWritten.push_back( correctedResponseEta_mgf[i] );
   }
 
-  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "Top" );
+  if( outputROOT_ ) writeToRootFile( objToBeWritten, "Top" );
 
   // clean up
 
@@ -6775,7 +6762,7 @@ void TControlPlots::MakeControlPlotsTop()
 //   NOTE: Chi2 is calculated with that scheme for scaling of
 //   residuals that was used in the last fit iteration
 //---------------------------------------------------------------
-void TControlPlots::MakeControlPlotsParameterScan()
+void TControlPlots::makeControlPlotsParameterScan()
 {
   std::vector<TObject*> objToBeWritten;
 
@@ -6785,13 +6772,13 @@ void TControlPlots::MakeControlPlotsParameterScan()
 
   // Loop over parameters and vary one parameter
   // while the others are left as in TParameter::GetPars()
-  TGraph *gParScan[mPar->GetNumberOfParameters()];
-  TH1F *hFrame[mPar->GetNumberOfParameters()];
-  TLine *line[mPar->GetNumberOfParameters()];
-  for(int i = 0; i < mPar->GetNumberOfParameters(); i++)
+  TGraph *gParScan[par_->GetNumberOfParameters()];
+  TH1F *hFrame[par_->GetNumberOfParameters()];
+  TLine *line[par_->GetNumberOfParameters()];
+  for(int i = 0; i < par_->GetNumberOfParameters(); i++)
     {
       // Store original value of parameter i
-      double origPar = mPar->GetPars()[i];
+      double origPar = par_->GetPars()[i];
 
       // Vary parameter and get chi2
       double x_param[21];
@@ -6805,15 +6792,15 @@ void TControlPlots::MakeControlPlotsParameterScan()
 	{
 	  double variedPar = origPar - 0.1 + 0.01*a;
 	  x_param[a] = variedPar;
-	  mPar->GetPars()[i] = variedPar;
-	  for( std::vector<TData*>::const_iterator it = mData->begin();  it < mData->end();  ++it )
+	  par_->GetPars()[i] = variedPar;
+	  for( std::vector<TData*>::const_iterator it = data_->begin();  it < data_->end();  ++it )
 	    {
 	      y_chi2[a] += (*it)->chi2();
 	    }
 	}
 
       // Reset original parameter
-      mPar->GetPars()[i] = origPar;
+      par_->GetPars()[i] = origPar;
 
 
       // Draw graphs
@@ -6821,7 +6808,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
       name += i;
       TString title = "Parameter ";
       title += i;
-      if( i < mPar->GetNumberOfTowerParameters() )
+      if( i < par_->GetNumberOfTowerParameters() )
 	{
 	  title += " (tower parameter ";
 	  title += i;
@@ -6829,7 +6816,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
       else
 	{
 	  title += " (jet parameter ";
-	  title += i - (mPar->GetNumberOfTowerParameters());
+	  title += i - (par_->GetNumberOfTowerParameters());
 	}
       title += ");Parameter p_{";
       title += i;
@@ -6862,15 +6849,15 @@ void TControlPlots::MakeControlPlotsParameterScan()
 
 
   // Correlations between 2 parameters
-  int nPlots = mPar->GetNumberOfParameters()/2;
+  int nPlots = par_->GetNumberOfParameters()/2;
   TGraph2D *gParScan2D[nPlots];
   for(int i = 0; i < nPlots; i++)
     {
       int parIdx = 2*i;
 
       // Store original value of parameters i and i+1
-      double origParX = mPar->GetPars()[parIdx];
-      double origParY = mPar->GetPars()[parIdx+1];
+      double origParX = par_->GetPars()[parIdx];
+      double origParY = par_->GetPars()[parIdx+1];
 
       // Vary parameter and get chi2
       double x_param[441];
@@ -6885,17 +6872,17 @@ void TControlPlots::MakeControlPlotsParameterScan()
       for(int a = 0; a < 21; a++)
 	{
 	  double variedParX = origParX - 0.1 + 0.01*a;
-	  mPar->GetPars()[parIdx] = variedParX;
+	  par_->GetPars()[parIdx] = variedParX;
 	  for(int b = 0; b < 21; b++)
 	    {
 	      double variedParY = origParY - 0.1 + 0.01*b;
-	      mPar->GetPars()[parIdx+1] = variedParY;
+	      par_->GetPars()[parIdx+1] = variedParY;
 
 	      int pointIdx = b + 21*a;
 	      x_param[pointIdx] = variedParX;
 	      y_param[pointIdx] = variedParY;
 
-	      for( std::vector<TData*>::const_iterator it = mData->begin();  it < mData->end();  ++it )
+	      for( std::vector<TData*>::const_iterator it = data_->begin();  it < data_->end();  ++it )
 		{
 		  z_chi2[pointIdx] += (*it)->chi2();
 		}
@@ -6903,8 +6890,8 @@ void TControlPlots::MakeControlPlotsParameterScan()
 	}
 
       // Reset original parameter
-      mPar->GetPars()[parIdx] = origParX;
-      mPar->GetPars()[parIdx+1] = origParY;
+      par_->GetPars()[parIdx] = origParX;
+      par_->GetPars()[parIdx+1] = origParY;
 
 
       // Draw graphs
@@ -6937,12 +6924,12 @@ void TControlPlots::MakeControlPlotsParameterScan()
   // Clean up
   ps->Close();
 
-  if( mOutputROOT ) WriteToRootFile( objToBeWritten, "ParScan" );
+  if( outputROOT_ ) writeToRootFile( objToBeWritten, "ParScan" );
 
   delete c1;
   delete ps;
 
-  for(int i = 0; i < mPar->GetNumberOfParameters(); i++)
+  for(int i = 0; i < par_->GetNumberOfParameters(); i++)
     {
       delete gParScan[i];
       delete hFrame[i];
@@ -6995,7 +6982,7 @@ void TControlPlots::MakeControlPlotsParameterScan()
 //!   
 //!   respectively.
 //---------------------------------------------------------------
-void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss) const
+void TControlPlots::fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss) const
 {
   //book hists
   TString s = hist->GetName();
@@ -7021,10 +7008,10 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
       s += i;
       hresults[i] = (TH1F*) hresults[0]->Clone(s);
       s = hist->GetTitle();
-      hresults[i]->SetTitle(s + ",  " + mControlQuantityName[i]); 
+      hresults[i]->SetTitle(s + ",  " + controlQuantityName_[i]); 
     }
   s = hist->GetTitle();
-  hresults[0]->SetTitle(s + ",  " + mControlQuantityName[0]); 
+  hresults[0]->SetTitle(s + ",  " + controlQuantityName_[0]); 
 
   hresults[5]->SetMinimum(0.0);
   hresults[5]->SetMaximum(100);
@@ -7118,7 +7105,7 @@ void TControlPlots::Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
 }
 
 
-void TControlPlots::Fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const
+void TControlPlots::fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const
 {
   //book hists
   TString s = hist->GetName();
@@ -7144,14 +7131,14 @@ void TControlPlots::Fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplo
       s += i;
       hresults[i] = (TH1F*) hresults[0]->Clone(s);
       s = hist->GetTitle();
-      hresults[i]->SetTitle(s + ",  " + mControlQuantityName[i]);
+      hresults[i]->SetTitle(s + ",  " + controlQuantityName_[i]);
     }
   hresults[0]->SetYTitle("Mittelwert von Jet/genJet"); 
   hresults[2]->SetYTitle("Gauss Peak von Jet/genJet"); 
   hresults[1]->SetYTitle("(Breite von Jet/genJet) / Mittelwert"); 
   hresults[3]->SetYTitle("(Gauss Breite von Jet/genJet) / Peak Value"); 
   s = hist->GetTitle();
-  hresults[0]->SetTitle(s + ",  " + mControlQuantityName[0]); 
+  hresults[0]->SetTitle(s + ",  " + controlQuantityName_[0]); 
 
   hresults[5]->SetMinimum(0.0);
   hresults[5]->SetMaximum(100);
@@ -7243,13 +7230,13 @@ void TControlPlots::Fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplo
 
 
 //---------------------------------------------------------------
-// Write all TObjects in 'obj' to the file 'mOutFile' into the
-// directory 'mOutFile:/dir'. If 'mOutFile:/dir' does not exist,
+// Write all TObjects in 'obj' to the file 'outFile_' into the
+// directory 'outFile_:/dir'. If 'outFile_:/dir' does not exist,
 // it is created first.
 //---------------------------------------------------------------
-void TControlPlots::WriteToRootFile(std::vector<TObject*> obj, std::string dir)
+void TControlPlots::writeToRootFile(std::vector<TObject*> obj, std::string dir)
 {
-  std::string directory = mOutFile->GetName();
+  std::string directory = outFile_->GetName();
   directory += ":";
   gDirectory->cd(directory.c_str());
   directory += "/";
@@ -7272,7 +7259,7 @@ void TControlPlots::WriteToRootFile(std::vector<TObject*> obj, std::string dir)
 //---------------------------------------------------------------
 // Set style option for ps output.
 //---------------------------------------------------------------
-void TControlPlots::SetGStyle() const
+void TControlPlots::setGStyle() const
 {
   // For the canvas:
   gStyle->SetCanvasBorderMode(0);
@@ -7369,7 +7356,7 @@ void TControlPlots::SetGStyle() const
 //!  so 'bins' must have length nBins+1;
 //!  If 'first', 'last' or 'nBins' are not positive, failure is reported.
 // -------------------------------------------------------------
-bool TControlPlots::EquidistLogBins(double * bins, int nBins, double first, double last) const {
+bool TControlPlots::equidistLogBins(double * bins, int nBins, double first, double last) const {
   if( nBins < 1 || first <= 0. || last <= 0. ) return false;
   bins[0]     = first;
   bins[nBins] = last;
@@ -7392,25 +7379,25 @@ TControlPlots::Binning::Binning(const std::vector<double>& binEdgesX, const std:
 
   for(unsigned int i = 0; i < binEdgesX.size(); i++)
     {
-      if( i > 0 ) assert( binEdgesX.at(i) > mEdgesX.at(i-1) );
-      mEdgesX.push_back(binEdgesX.at(i));
+      if( i > 0 ) assert( binEdgesX.at(i) > edgesX_.at(i-1) );
+      edgesX_.push_back(binEdgesX.at(i));
     }
   for(unsigned int i = 0; i < binEdgesY.size(); i++)
     {
-      if( i > 0 ) assert( binEdgesY.at(i) > mEdgesY.at(i-1) );
-      mEdgesY.push_back(binEdgesY.at(i));
+      if( i > 0 ) assert( binEdgesY.at(i) > edgesY_.at(i-1) );
+      edgesY_.push_back(binEdgesY.at(i));
     }
 }
 
 
 
 // -------------------------------------------------------------
-int TControlPlots::Binning::Bin(int ix, int iy) const
+int TControlPlots::Binning::bin(int ix, int iy) const
 {
   int bin = -1;
-  if( ix >= 0 && ix < NBinsX() && iy >= 0 && iy < NBinsY() )
+  if( ix >= 0 && ix < nBinsX() && iy >= 0 && iy < nBinsY() )
     {
-      bin = ix + iy*NBinsX();
+      bin = ix + iy*nBinsX();
     }
   return bin;
 }
@@ -7418,17 +7405,17 @@ int TControlPlots::Binning::Bin(int ix, int iy) const
 
 
 // -------------------------------------------------------------
-int TControlPlots::Binning::IX(double x) const
+int TControlPlots::Binning::iX(double x) const
 {
   int ix = -1;                     // Underflow
-  if( x > mEdgesX.at(NBinsX()) )   // Overflow
+  if( x > edgesX_.at(nBinsX()) )   // Overflow
     {
-      ix = NBinsX();
+      ix = nBinsX();
     }
-  else if( x > mEdgesX.at(0) )
+  else if( x > edgesX_.at(0) )
     {
       ix = 0;
-      while( x > mEdgesX.at(ix+1) ) ix++;
+      while( x > edgesX_.at(ix+1) ) ix++;
     }
   return ix;
 }
@@ -7436,17 +7423,17 @@ int TControlPlots::Binning::IX(double x) const
 
 
 // -------------------------------------------------------------
-int TControlPlots::Binning::IY(double y) const
+int TControlPlots::Binning::iY(double y) const
 {
   int iy = -1;                     // Underflow
-  if( y > mEdgesY.at(NBinsY()) )   // Overflow
+  if( y > edgesY_.at(nBinsY()) )   // Overflow
     {
-      iy = NBinsY();
+      iy = nBinsY();
     }
-  else if( y > mEdgesY.at(0) )
+  else if( y > edgesY_.at(0) )
     {
       iy = 0;
-      while( y > mEdgesY.at(iy+1) ) iy++;
+      while( y > edgesY_.at(iy+1) ) iy++;
     }
   return iy;
 }
@@ -7454,11 +7441,11 @@ int TControlPlots::Binning::IY(double y) const
 
 
 // -------------------------------------------------------------
-void TControlPlots::Binning::Print() const
+void TControlPlots::Binning::print() const
 {
-  for(int i = 0; i < NBins(); i++)
+  for(int i = 0; i < nBins(); i++)
     {
-      std::cout << i << ":  " << IX(i) << " (" << XLow(i) << ", " << XUp(i) << "),  " << IY(i) << " (" << YLow(i) << ", " << YUp(i) << ")" << std::endl;
+      std::cout << i << ":  " << iX(i) << " (" << xLow(i) << ", " << xUp(i) << "),  " << iY(i) << " (" << yLow(i) << ", " << yUp(i) << ")" << std::endl;
     }
 }
 
