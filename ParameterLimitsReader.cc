@@ -5,7 +5,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date  2008/12/12
-//!  $Id: ParameterLimitsReader.cc,v 1.4 2009/06/05 15:46:40 mschrode Exp $
+//!  $Id: ParameterLimitsReader.cc,v 1.5 2009/08/07 12:19:24 mschrode Exp $
 //!   
 #include "ParameterLimitsReader.h"
 
@@ -21,7 +21,7 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TPar
   vector<double> limits = bag_of<double>(config->read<string>( "Jet Parameter Limits",""));
   
   // In case limits are explicitly set via config file
-  if(limits.size() % 4 == 0) {
+  if( limits.size() > 0 && limits.size() % 4 == 0 ) {
     std::cout << "Using user defined parameter limits:" << std::endl;
     for(unsigned int i = 0 ; i < limits.size() ; i += 4) {
       int index = (int)limits[i];
