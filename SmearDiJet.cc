@@ -1,4 +1,4 @@
-// $Id: SmearDiJet.cc,v 1.4 2009/07/23 13:44:41 mschrode Exp $
+// $Id: SmearDiJet.cc,v 1.5 2009/08/07 12:15:16 mschrode Exp $
 
 #include "SmearDiJet.h"
 
@@ -10,7 +10,6 @@
 //!  \param weight Event weight
 //!  \param respPDF Response probability density
 //!  \param truthPDF True pt probability density
-//!  \param truthBin The truth bin of this event
 //!  \param min Minimum true pt in integration range
 //!  \param max Maximum true pt in integration range
 //!  \param eps Integration precision for convergence
