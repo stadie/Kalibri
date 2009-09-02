@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.33 2009/08/07 11:18:45 stadie Exp $
+// $Id: Parameters.cc,v 1.34 2009/08/07 12:19:23 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -148,6 +148,9 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
   return instance;
 }
 
+
+
+// -----------------------------------------------------------------
 void TParameters::Init(const ConfigFile& config)
 {
   eta_ntwr_used   = config.read<unsigned>("maximum eta twr used",82); 
@@ -158,8 +161,6 @@ void TParameters::Init(const ConfigFile& config)
   phi_granularity_jet = config.read<unsigned>("jet granularity in phi",1); 
   eta_granularity_track = config.read<unsigned>("track granularity in eta",1); 
   phi_granularity_track = config.read<unsigned>("track granularity in phi",1); 
-  input_calibration   = config.read<string>("input calibration",""); 
-  track_efficiency   = config.read<string>("track efficiency","");
 
   if (eta_ntwr_used%2 !=0){
     cerr << "WARNING: Use even number of eta towers! Forced exit."<< endl;    
@@ -273,27 +274,76 @@ void TParameters::Init(const ConfigFile& config)
   
   // read predefined calibration contants from cfi
   // or txt file depending on the ending of the name
-  cout << "Reading calibration from file '" << input_calibration << endl;
-  if(!input_calibration.empty()){
-    if( !input_calibration.substr(input_calibration.rfind(".")+1).compare("cfi") ){
-      Read_CalibrationCfi(input_calibration); 
-    } 
-    else if( !input_calibration.substr(input_calibration.rfind(".")+1).compare("txt") ){
-      cout << "call function" << endl;
-      Read_CalibrationTxt(input_calibration); 
+  std::vector<std::string> inputCalibration = bag_of_string(config.read<string>("input calibration",";"));
+
+  // Check whether start values for calibration are to be read
+  // from file
+  if( inputCalibration.empty() ) {
+    cout << "Using calibration start values from config file.\n";
+  } else {
+    cout << "Using calibration start values from file ";
+
+    // Check whether calibration constants are given in one of the
+    // Kalibri formats or in official JetMET format and prepare
+    // vector for further processing
+    std::string inputFormat = "UNKNOWN";
+    if( inputCalibration.front() == "Kalibri" ) {
+      inputFormat = "Kalibri";
+      inputCalibration.erase(inputCalibration.begin());
     }
-    else{
-      cout << "Error: unknown file format: '" 
-	   << input_calibration.substr(input_calibration.rfind("."))
-	   << "'"<< endl;  
+    else if( inputCalibration.front() == "JetMET" ) {
+      inputFormat = "JetMET";
+      inputCalibration.erase(inputCalibration.begin());
+    }
+    else if( inputCalibration.size() == 1 ) { // For backward compatibility
+      inputFormat = "Kalibri";
+    }
+
+    // Read calibration constants
+    if( inputCalibration.size() == 0 ) {
+      std::cerr << "\nWARNING: No file name specified to read start values from.\n"; 
+      std::cerr << "         Using start values from config file.\n";
+    }
+    else {
+      if( inputFormat == "Kalibri" ) {
+	// Read predefined calibration contants from cfi
+	// or txt file depending on the ending of the name
+	std::string inputFileName = inputCalibration.front();
+	if( !inputFileName.substr(inputFileName.rfind(".")+1).compare("cfi") ) {
+	  cout << inputFileName << std::endl;
+	  readCalibrationCfi(inputFileName); 
+	} 
+	else if( !inputFileName.substr(inputFileName.rfind(".")+1).compare("txt") ) {
+	  cout << inputFileName << std::endl;
+	  readCalibrationTxt(inputFileName); 
+	}
+	else {
+	  cerr << "\nERROR: Unknown file format: '" ;
+	  cerr << inputFileName.substr(inputFileName.rfind(".")) << "'\n";
+	  cerr << "       Using start values from config file.\n";
+	}
+      }
+      else if( inputFormat == "JetMET" ) {
+	cout << ":\n";
+	readCalibrationJetMET(inputCalibration); 
+      }
+      else {
+	std::cerr << "\nWARNING: Unknown input format.\n"; 
+	std::cerr << "         Using start values from config file.\n";
+      }
     }
   }
-  if(!track_efficiency.empty()){
-  cout << "Reading Track Efficiency from file '" << track_efficiency << endl;
-  Read_TrackEffTxt(track_efficiency);
+
+  std::string trackEffFileName = config.read<string>("track efficiency","");
+  if(!trackEffFileName.empty()){
+  cout << "Reading Track Efficiency from file '" << trackEffFileName << endl;
+  readTrackEffTxt(trackEffFileName);
   }
 }
 
+
+
+// -----------------------------------------------------------------
 std::string TParameters::trim(std::string const& source, char const* delims) 
 {
   std::string result(source);
@@ -319,13 +369,15 @@ std::string TParameters::trim(std::string const& source, char const* delims)
 
 
 
+//!  \brief Read predefined calibration constants from txt file 
+//!
 //! fills start parameters for fit when read from txt file; expects 
 //! 72 lines for 72 bins in phi for each eta bin ranging from -41
 //! to 41 (skipping the 0) and the following parameter format:
 //! maxEta minEta nPar towerParameters jetParameters separated by
 //! blanks
 // ---------------------------------------------------------------
-void TParameters::Read_CalibrationTxt(std::string const& configFile)
+void TParameters::readCalibrationTxt(std::string const& configFile)
 {
   std::ifstream file(configFile.c_str());
   std::string line; // buffer line
@@ -421,7 +473,11 @@ void TParameters::Read_CalibrationTxt(std::string const& configFile)
   }
 }
 
-void TParameters::Read_CalibrationCfi(std::string const& configFile)
+
+
+//!  \brief Read predefined calibration constants from cfi file 
+// -----------------------------------------------------------------
+void TParameters::readCalibrationCfi(std::string const& configFile)
 {
   std::ifstream file(configFile.c_str());
 
@@ -571,7 +627,198 @@ void TParameters::Read_CalibrationCfi(std::string const& configFile)
   delete[] dummy;
 }
 
-void TParameters::Read_TrackEffTxt(std::string const& configFile)
+
+
+//!  \brief Read correction factors in CondDB format
+// -----------------------------------------------------------------
+void TParameters::readCalibrationJetMET(const std::vector<std::string>& inputFileNames) {
+  std::string corrL2FileName;
+  std::string corrL3FileName;
+  for(size_t i = 0; i < inputFileNames.size(); i++) {
+    if( inputFileNames.at(i).find("L2") != std::string::npos ) 
+      corrL2FileName = inputFileNames.at(i);
+    else if( inputFileNames.at(i).find("L3") != std::string::npos ) 
+      corrL3FileName = inputFileNames.at(i);
+  }
+
+  if( !corrL2FileName.empty() ) {
+    std::cout << "  L2: " << corrL2FileName << std::endl;
+    readCalibrationJetMETL2(corrL2FileName);
+  }
+  if( !corrL3FileName.empty() ) {
+    std::cout << "  L3: " << corrL3FileName << std::endl;
+    readCalibrationJetMETL3(corrL3FileName);
+  }
+}
+
+
+
+//!  \brief Read L2 correction factors in CondDB format
+//!
+//!  Read parameters of L2 correction from
+//!  txt file in CondDB format i.e.
+//!  <tt>etaMin etaMax nPar EtMin EtMax Par1 Par2 Par3 Par4 Par5 Par6</tt>.
+//!  If there are more than 6 L2 parameters in the file,
+//!  they are ignored.
+//!
+//!  The pt ranges of validity are not considered.
+//!
+//!  In case some eta bins are missing, default parameter
+//!  values 1 0 0 are assumed.
+//!
+//!  \note There are scaling factors for the L2 parameters
+//!  in the \p L2L3JetParametrization . The parameter
+//!  values read by this method are scaled accordingly.
+// -----------------------------------------------------------------
+void TParameters::readCalibrationJetMETL2(const std::string& inputFileName) {
+  // There are scaling factors in "L2L3JetParametrization"
+  std::vector<double> scale(6,1.);
+  scale.at(1) = 10.;
+  scale.at(2) = 100.;
+
+  std::vector< std::vector<double> > parL2;
+
+  std::ifstream file;
+  file.open(inputFileName.c_str());
+
+  int    etaBin = -41;
+  float  etaMin = 0.;
+  float  etaMax = 0.;
+  int      nPar = 0;
+  float     val = -1.;  // Needs float precision as etaEdge() has
+                        // float precision; do we need it there?
+
+  if( file.is_open() ) {
+    while( !file.eof() && etaBin < 42 ) {
+      if( etaBin == 0 ) etaBin++;          // No bin index 0
+      file >> etaMin;                      // Eta min
+      file >> etaMax;                      // Eta max
+      val = 0.;
+      file >> val;                         // Number of values following
+      if( val != 0 ) {                     // Avoid reading of empty last line
+	nPar = static_cast<int>(val - 5);  // Number of L2 parameters in file
+	std::vector<double> par(GetNumberOfJetParametersPerBin(),0.);  // Storage of the L2 parameters in this bin
+	file >> val;                       // Et min
+	file >> val;                       // Et max
+	// Store L2 parameters
+	for(int i = 0; i < GetNumberOfJetParametersPerBin(); i++) {
+	  file >> val;
+	  par.at(i) = scale.at(i) * val;
+	}
+	// In case of different numbers of parameters in
+	// JetMET and Kalibri L2 parametrization
+	for(int i = 0; i < nPar - GetNumberOfJetParametersPerBin(); i++) {
+	  file >> val;
+	}
+      
+	// In case some eta bin is missing,
+	// add default parameters
+	while( etaBin < 42 && 
+	       etaMin != etaLowerEdge(etaBin) && 
+	       etaMax != etaUpperEdge(etaBin)    ) {
+	  std::cout << "    WARNING: No parameters for eta bin " << etaBin;
+	  std::cout << "; using default parameters instead.\n";
+
+	  std::vector<double> defaultPar(GetNumberOfJetParametersPerBin(),0.);
+	  for(int i = 0; i < GetNumberOfJetParametersPerBin(); i++) {
+	    if( i == 0 ) defaultPar.at(i) = 1.;
+	    else         defaultPar.at(i) = 0.;
+	  }
+	  parL2.push_back(defaultPar);
+	  etaBin++;
+	}
+      
+	if( etaBin < 42 ) {
+	  parL2.push_back(par);
+	}
+	etaBin++;
+      }
+    }
+  }
+  file.close();
+
+  // In case last eta bins are missing,
+  // add default parameters  
+  while( etaBin < 42 ) {
+    if( etaBin == 0 ) etaBin++;          // No bin index 0
+
+    std::cout << "    WARNING: No parameters for eta bin " << etaBin;
+    std::cout << "; using default parameters instead.\n";
+
+    std::vector<double> defaultPar(GetNumberOfJetParametersPerBin(),0.);
+    for(int i = 0; i < GetNumberOfJetParametersPerBin(); i++) {
+      if( i == 0 ) defaultPar.at(i) = 1.;
+      else         defaultPar.at(i) = 0.;
+    }
+    parL2.push_back(defaultPar);
+    etaBin++;
+  }
+
+  // Write read constants to array
+  int etaIdx = 0;
+  for(etaBin = -41; etaBin <= 41; etaBin++, etaIdx++) {
+    if( etaBin == 0 ) etaBin++;
+    for(int phiBin = 1; phiBin <= 72; phiBin++) {
+      int jetIdx = GetJetBin(GetJetEtaBin(etaBin),GetJetPhiBin(phiBin));
+      if( jetIdx<0 ) continue;
+      for(int i = 0; i < GetNumberOfJetParametersPerBin(); i++) {
+	k[GetNumberOfTowerParameters() +
+	  jetIdx*GetNumberOfJetParametersPerBin() + i] = parL2.at(etaIdx).at(i);
+      }
+    }
+  }
+}
+
+
+
+//!  \brief Read L3 correction factors in CondDB format
+//!
+//!  Read parameters of L3 correction from
+//!  txt file in CondDB format i.e.
+//!  <tt>etaMin etaMax nPar EtMin EtMax Par1 Par2 Par3 Par4</tt>
+//!
+//!  The pt ranges of validity are not considered.
+// -----------------------------------------------------------------
+void TParameters::readCalibrationJetMETL3(const std::string& inputFileName) {
+  std::ifstream file;
+  file.open(inputFileName.c_str());
+
+  std::vector<double> parL3;   // Storage for the L3 parameters
+  double val  = -1.;
+  int n = 0;
+
+  if( file.is_open() ) {
+    file >> val;                       // Eta min
+    file >> val;                       // Eta max
+    file >> val;                       // Number of values following
+    n = static_cast<int>(val - 2);     // Number of L3 parameters
+    file >> val;                       // Et min
+    file >> val;                       // Et max
+    for(int i = 0; i < n; i++) {       // Store L3 parameters
+      file >> val;
+      parL3.push_back(val);
+    }
+  }
+  file.close();
+
+  if( n == GetNumberOfGlobalJetParameters() ) {
+    for(int i = 0; i < GetNumberOfGlobalJetParameters(); i++) {
+      k[GetNumberOfTowerParameters() + 
+	GetNumberOfJetParameters() + 
+	GetNumberOfTrackParameters() + i] = parL3[i];
+    }
+    
+  } else {
+    std::cerr << "ERROR: Number of read global jet parameters too small.\n";
+    std::cerr << "       Using start values from config file.\n";
+  }
+}
+
+
+
+//!  \brief Read track efficiency from txt file
+// -----------------------------------------------------------------
+void TParameters::readTrackEffTxt(std::string const& configFile)
 {
   // ---------------------------------------------------------------
   //read Track Efficiency as used in JPT Algorithm
@@ -619,6 +866,9 @@ void TParameters::Read_TrackEffTxt(std::string const& configFile)
   }
 }
 
+
+
+// -----------------------------------------------------------------
 int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) const
 {  
   assert(eta_id != 0);
@@ -667,7 +917,10 @@ int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) 
   return -4;
 }
 
-float TParameters::EtaEdge(int const etaBin, bool lowerEdge)
+
+
+// -----------------------------------------------------------------
+float TParameters::etaEdge(int const etaBin, bool lowerEdge)
 {
   // return eta bin - eta edge mappting
   switch(etaBin){
@@ -758,6 +1011,9 @@ float TParameters::EtaEdge(int const etaBin, bool lowerEdge)
   }
 }
 
+
+
+// -----------------------------------------------------------------
 int TParameters::GetPhiBin(int phi_id, int phigranu) const
 //This function knows the number of wanted phi-bins and returns 
 //in which phi-bin the tower with eta-ID "phi_id" is located.
@@ -767,6 +1023,9 @@ int TParameters::GetPhiBin(int phi_id, int phigranu) const
   return (phi_id-1)*phigranu/phi_ntwr;
 }
 
+
+
+// -----------------------------------------------------------------
 void TParameters::Print() const
 {
   std::cout  << p->name() << " resulting in:\n "
@@ -782,6 +1041,9 @@ void TParameters::Print() const
 	     << "and " << GetNumberOfGlobalJetParameters() << " global jet parameters\n"; 
 }
 
+
+
+// -----------------------------------------------------------------
 void TParameters::Write_CalibrationTxt(const char* name)
 {
   cout << "Writing calibration to file '" << name << "'" << endl;
@@ -796,8 +1058,8 @@ void TParameters::Write_CalibrationTxt(const char* name)
       if(towerIdx<0 || jetIdx<0 || trackIdx<0) continue;
       // write: lower eta | upper eta | nparameters, for
       // each eta id of the tower and n times for n phi bins
-      file << std::setw(10) << EtaLowerEdge(ieta) 
-	   << std::setw(10) << EtaUpperEdge(ieta)  
+      file << std::setw(10) << etaLowerEdge(ieta) 
+	   << std::setw(10) << etaUpperEdge(ieta)  
 	   << std::setw(10) << 2 + p->nTowerPars()+p->nJetPars()+p->nTrackPars()+p->nGlobalJetPars();
       // Dummy: pt range of validity
       file << std::setw(8) << std::setprecision(4) << 4;
@@ -824,6 +1086,9 @@ void TParameters::Write_CalibrationTxt(const char* name)
   file.close();
 }
 
+
+
+// -----------------------------------------------------------------
 void TParameters::Write_CalibrationCfi(const char* name)
 {
   cout << "Writing calibration to file '" << name << "'" << endl;
@@ -1256,6 +1521,7 @@ void TParameters::Write_CalibrationTex(const char* name, const ConfigFile& confi
 
 
 
+// -----------------------------------------------------------------
 int TParameters::GetTrackEffBin(double pt, double eta)
 {
   int bin, etabin, ptbin;
