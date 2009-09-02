@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.91 2009/07/23 15:54:12 stadie Exp $
+//  $Id: caliber.cc,v 1.92 2009/08/07 12:21:21 mschrode Exp $
 
 #include "caliber.h"
 
@@ -409,7 +409,7 @@ void TCaliber::done()
     int mode = config.read<int>("Mode",0);
     if( mode == 0 ) {  // Control plots for calibration
       TControlPlots * plots = new TControlPlots(configFile_,&data_,par_);
-      plots->MakePlots();
+      plots->makePlots();
       delete plots;
     } else if( mode == 1 ) {  // Control plots for jetsmearing
       ControlPlotsJetSmearing * plotsjs = new ControlPlotsJetSmearing(configFile_,&data_,par_);

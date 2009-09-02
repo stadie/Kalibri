@@ -29,7 +29,7 @@
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.27 2009/07/21 14:08:55 snaumann Exp $
+//!  $Id: ControlPlots.h,v 1.28 2009/07/21 14:15:23 snaumann Exp $
 // -------------------------------------------------------------
 class TControlPlots
 {
@@ -37,39 +37,39 @@ public:
   TControlPlots(const std::string& configfile, const std::vector<TData*> *data, TParameters *par);
   ~TControlPlots();
 
-  bool OutputFormatRoot() const { return mOutputROOT; }
+  bool outputFormatRoot() const { return outputROOT_; }
 
-  void MakePlots();
+  void makePlots();
 
  private:  
-  void MakeControlPlotsBinnedResponse();
-  void MakeControlPlotsChi2();
-  void MakeControlPlotsCorrectionFunction();
-  void MakeControlPlotsDiJet();
-  void MakeControlPlotsGammaJet();
-  void MakeControlPlotsGammaJetPerJetBin();
-  void MakeControlPlotsGammaJetPerTowerBin();
-  void MakeControlPlotsGammaJetSigmas();
-  void MakeControlPlotsL2L3MCTruth();
-  void MakeControlPlotsJetTruthEventResponse();
-  void MakeControlPlotsParameterScan();
-  void MakeControlPlotsTop();
-  void MakeControlPlotsTowers();
+  void makeControlPlotsBinnedResponse();
+  void makeControlPlotsChi2();
+  void makeControlPlotsCorrectionFunction();
+  void makeControlPlotsDiJet();
+  void makeControlPlotsGammaJet();
+  void makeControlPlotsGammaJetPerJetBin();
+  void makeControlPlotsGammaJetPerTowerBin();
+  void makeControlPlotsGammaJetSigmas();
+  void makeControlPlotsL2L3MCTruth();
+  void makeControlPlotsJetTruthEventResponse();
+  void makeControlPlotsParameterScan();
+  void makeControlPlotsTop();
+  void makeControlPlotsTowers();
 
-  bool EquidistLogBins(double * bins, int nBins, double first, double last) const;
-  void Fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss=true) const;
-  void Fit2D(const TH2F* hist, TH1F* hresults[8]) const { Fit2D(hist, hresults, 0, 0, false); };
-  void Fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
-  void SetGStyle() const;
-  void WriteToRootFile(std::vector<TObject*> obj, std::string dir);
+  bool equidistLogBins(double * bins, int nBins, double first, double last) const;
+  void fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss=true) const;
+  void fit2D(const TH2F* hist, TH1F* hresults[8]) const { fit2D(hist, hresults, 0, 0, false); };
+  void fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
+  void setGStyle() const;
+  void writeToRootFile(std::vector<TObject*> obj, std::string dir);
 
-  const        std::vector<TData*> *mData;      //!< Pointer to data
-  TParameters *mPar;                            //!< Pointer to parameter values
-  ConfigFile  *mConfig;                         //!< Pointer to config file
-  TFile       *mOutFile;                        //!< Pointer to root output file
-  TString      mPtRatioName[3];	                //!< For histo titles etc
-  TString      mControlQuantityName[8];         //!< For histo titles etc
-  bool         mOutputROOT;                     //!< If true, histograms are written to ROOT file
+  const        std::vector<TData*> *data_;      //!< Pointer to data
+  TParameters *par_;                            //!< Pointer to parameter values
+  ConfigFile  *config_;                         //!< Pointer to config file
+  TFile       *outFile_;                        //!< Pointer to root output file
+  TString      ptRatioName_[3];	                //!< For histo titles etc
+  TString      controlQuantityName_[8];         //!< For histo titles etc
+  bool         outputROOT_;                     //!< If true, histograms are written to ROOT file
 
 
 
@@ -111,25 +111,25 @@ public:
       //!  \param bin Global bin index
       //!  \return Lower bin edge in x direction
       // -------------------------------------------------------------
-      double XLow(int bin) const { return mEdgesX.at(IX(bin)); }
+      double xLow(int bin) const { return edgesX_.at(iX(bin)); }
 
       //!  \brief Upper bin edge in x direction
       //!  \param bin Global bin index
       //!  \return Upper bin edge in x direction
       // -------------------------------------------------------------
-      double XUp(int bin) const { return mEdgesX.at(IX(bin)+1); }
+      double xUp(int bin) const { return edgesX_.at(iX(bin)+1); }
 
       //!  \brief Lower bin edge in y direction
       //!  \param bin Global bin index
       //!  \return Lower bin edge in y direction
       // -------------------------------------------------------------
-      double YLow(int bin) const { return mEdgesY.at(IY(bin)); }
+      double yLow(int bin) const { return edgesY_.at(iY(bin)); }
 
       //!  \brief Upper bin edge in y direction
       //!  \param bin Global bin index
       //!  \return Upper bin edge in y direction
       // -------------------------------------------------------------
-      double YUp(int bin) const { return mEdgesY.at(IY(bin)+1); }
+      double yUp(int bin) const { return edgesY_.at(iY(bin)+1); }
 
       //!  \brief X bin index ix of global bin
       //!
@@ -138,7 +138,7 @@ public:
       //!  \param bin Global bin index
       //!  \return ix of global bin
       // -------------------------------------------------------------
-      int IX(int bin) const { return bin % NBinsX(); }
+      int iX(int bin) const { return bin % nBinsX(); }
 
       //!  \brief X bin index ix of value x
       //!
@@ -149,7 +149,7 @@ public:
       //!          ( ix == -1 for x < XLow(0): Underflow, 
       //!            ix == NBinsX() for x > XUp(NBins()-1): Overflow )
       // -------------------------------------------------------------
-      int IX(double x) const;
+      int iX(double x) const;
 
       //!  \brief Y bin index iy of global bin
       //!
@@ -158,7 +158,7 @@ public:
       //!  \param bin Global bin index
       //!  \return iy of global bin
       // -------------------------------------------------------------
-      int IY(int bin) const { return bin / NBinsX(); }
+      int iY(int bin) const { return bin / nBinsX(); }
 
       //!  \brief Y bin index iy of value y
       //!
@@ -169,46 +169,46 @@ public:
       //!          ( iy == -1 for y < YLow(0): Underflow, 
       //!            iy == NBinsyY() for y > YUp(NBins()-1): Overflow )
       // -------------------------------------------------------------
-      int IY(double y) const;
+      int iY(double y) const;
 
       //!  \brief Global bin index of bin with x and y indices ix and iy
       //!  \param ix Bin index in x direction
       //!  \param iy Bin index in y direction
       //!  \return Global bin index
       // -------------------------------------------------------------
-      int Bin(int ix, int iy) const;
+      int bin(int ix, int iy) const;
 
       //!  \brief Global bin index of bin containing values x and y
       //!  \param x x value
       //!  \param y y value
       //!  \return Global bin index
       // -------------------------------------------------------------
-      int Bin(double x, double y) const { return Bin(IX(x),IY(y)); }
+      int bin(double x, double y) const { return bin(iX(x),iY(y)); }
 
       //!  \brief Number of global bins
       //!
       //!  NBins() == NBinsX() * NBinsY()
       //!  \return Number of global bins
       // -------------------------------------------------------------
-      int NBins() const { return  NBinsX()*NBinsY(); }
+      int nBins() const { return  nBinsX()*nBinsY(); }
 
       //!  \brief Number of x bins
       //!  \return Number of x bins
       // -------------------------------------------------------------
-      int NBinsX() const { return static_cast<int>(mEdgesX.size()) - 1; }
+      int nBinsX() const { return static_cast<int>(edgesX_.size()) - 1; }
 
       //!  \brief Number of y bins
       //!  \return Number of y bins
       // -------------------------------------------------------------
-      int NBinsY() const { return static_cast<int>(mEdgesY.size()) - 1; }
+      int nBinsY() const { return static_cast<int>(edgesY_.size()) - 1; }
 
       //!  \brief Print the binning to std
       // -------------------------------------------------------------
-      void Print() const;
+      void print() const;
 
     private:
-      std::vector<double> mEdgesX;   //!< Bin edges in x direction
-      std::vector<double> mEdgesY;   //!< Bin edges in y direction
+      std::vector<double> edgesX_;   //!< Bin edges in x direction
+      std::vector<double> edgesY_;   //!< Bin edges in y direction
     };
 };
 #endif
