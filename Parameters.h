@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.53 2009/08/07 11:18:45 stadie Exp $
+// $Id: Parameters.h,v 1.54 2009/08/07 12:19:23 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -28,7 +28,7 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.53 2009/08/07 11:18:45 stadie Exp $
+//!  $Id: Parameters.h,v 1.54 2009/08/07 12:19:23 mschrode Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -297,17 +297,23 @@ public :
     //return 1e4/(1+exp(k* (par[0] - min))) + 1e4/(1+exp(-k* (par[0] - max));
   }
 
-  /// return upper or lower eta eta edge
-  float EtaEdge(int const etaBin, bool lowerEdge);
-  /// return upper edge of bin in eta
-  float EtaUpperEdge(int const etaBin) { return EtaEdge(etaBin, false); };
-  /// return lower edge of bin in eta
-  float EtaLowerEdge(int const etaBin) { return EtaEdge(etaBin, true ); };
+  //! return upper or lower eta eta edge
+  float etaEdge(int const etaBin, bool lowerEdge);
+  //! return upper edge of bin in eta
+  float etaUpperEdge(int const etaBin) { return etaEdge(etaBin, false); };
+  //! return lower edge of bin in eta
+  float etaLowerEdge(int const etaBin) { return etaEdge(etaBin, true ); };
 
   Function tower_function(int etaid, int phiid);
   Function jet_function(int etaid, int phiid);
   Function track_function(int etaid, int phiid);
   Function global_jet_function();
+
+  void readCalibrationCfi(const std::string& file);
+  void readCalibrationTxt(const std::string& file);
+  void readCalibrationJetMET(const std::vector<std::string>& inputFileNames);
+  void readCalibrationJetMETL2(const std::string& inputFileName);
+  void readCalibrationJetMETL3(const std::string& inputFileName);
 
 
 protected:
@@ -349,18 +355,8 @@ private:
   /// private functions
 
   void Init(const ConfigFile& config);
-
-  /// read predefined calibration constants from cfi file 
-  void Read_CalibrationCfi(const std::string& file);
-  /// read predefined calibration constants from txt file
-  void Read_CalibrationTxt(const std::string& file);
-  /// read Track Efficiency from txt file
-  void Read_TrackEffTxt(const std::string& file);
-
+  void readTrackEffTxt(const std::string& file);
   std::string trim(std::string const& source, char const* delims = " {}\t\r\n");
-  std::string input_calibration;
-  std::string track_efficiency;
-  
 
   static TParameters *instance; 
 
