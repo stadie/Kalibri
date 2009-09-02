@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.42 2009/08/07 12:19:24 mschrode Exp $
+//  $Id: Parametrization.h,v 1.43 2009/08/07 13:16:37 stadie Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -23,7 +23,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.42 2009/08/07 12:19:24 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.43 2009/08/07 13:16:37 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -819,14 +819,14 @@ class TrackParametrization : public Parametrization {
 //!  - The jet Et is corrected globally with the L3
 //!    correction function
 //!
-//!  This parametrization has 3 jet parameters and
+//!  This parametrization has 6 jet parameters and
 //!  4 global jet parameters.
 //!
 //!  \sa Parametrization
 // -----------------------------------------------------------------
 class L2L3JetParametrization : public Parametrization { 
 public:
-  L2L3JetParametrization() : Parametrization(0,3,0,4) {}
+  L2L3JetParametrization() : Parametrization(0,6,0,4) {}
   const char* name() const { return "L2L3JetParametrization";}
   
   double correctedTowerEt(const TMeasurement *x,const double *par) const {
@@ -842,8 +842,8 @@ public:
   double correctedJetEt(const TMeasurement *x,const double *par) const {
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
-    //double result = par[0]+logpt*(par[1]+logpt*(par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
-    double c1 = par[0]+logpt*(0.1 * par[1]+logpt * 0.01* par[2]);
+    double c1 = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
+    //    double c1 = par[0]+logpt*(0.1 * par[1]+logpt * 0.01* par[2]);
     return c1 * x->pt;
   }
 
@@ -1476,7 +1476,7 @@ class SmearStepGaussInter : public Parametrization
       p = norm / pow( x->pt, n );
       
       // For constant spectrum
-      //! \TODO Should become a base class for two classes
+      //! \todo Should become a base class for two classes
       //!       with either constant or powerlaw spectrum
       // double norm = ( pow(mTMax,3) + pow(mTMin,3) ) / 3.;
       // p = 1./norm;
@@ -1598,8 +1598,8 @@ class SmearStepGaussInter : public Parametrization
 //!   - towers: 0
 //!   - jets:   \f$ 2 + N_{i}\cdot(1+n_{j}) \f$
 //!     - \f$ 0 - 1 \f$:  \f$ a_{1} \f$ and \f$ a_{2} \f$    Normalization \f$ c \f$
-//!     - \f$ 2 + N_{i}\cdot(N_{j}+1): Normalization \f$ c_{i} \f$
-//!     - \f$ 3\ldots + N_{i}\cdot(N_{j}+1): Parameters \f$ b_{i,j} \f$ of the step function
+//!     - \f$ 2 + N_{i}\cdot(N_{j}+1) \f$: Normalization \f$ c_{i} \f$
+//!     - \f$ 3\ldots + N_{i} \cdot (N_{j}+1) \f$: Parameters \f$ b_{i,j} \f$ of the step function
 //!   - tracks: 0
 //!   - global: 1
 //!     - The exponent of the truth spectrum
