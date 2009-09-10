@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.34 2009/08/07 12:19:23 mschrode Exp $
+// $Id: Parameters.cc,v 1.35 2009/09/02 14:05:59 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -675,6 +675,8 @@ void TParameters::readCalibrationJetMETL2(const std::string& inputFileName) {
   std::vector<double> scale(6,1.);
   scale.at(1) = 10.;
   scale.at(2) = 100.;
+  scale.at(3) = 100.;
+  scale.at(4) = 100.;
 
   std::vector< std::vector<double> > parL2;
 
@@ -696,7 +698,7 @@ void TParameters::readCalibrationJetMETL2(const std::string& inputFileName) {
       val = 0.;
       file >> val;                         // Number of values following
       if( val != 0 ) {                     // Avoid reading of empty last line
-	nPar = static_cast<int>(val - 5);  // Number of L2 parameters in file
+	nPar = static_cast<int>(val - 2);  // Number of L2 parameters in file
 	std::vector<double> par(GetNumberOfJetParametersPerBin(),0.);  // Storage of the L2 parameters in this bin
 	file >> val;                       // Et min
 	file >> val;                       // Et max
@@ -709,8 +711,7 @@ void TParameters::readCalibrationJetMETL2(const std::string& inputFileName) {
 	// JetMET and Kalibri L2 parametrization
 	for(int i = 0; i < nPar - GetNumberOfJetParametersPerBin(); i++) {
 	  file >> val;
-	}
-      
+	}      
 	// In case some eta bin is missing,
 	// add default parameters
 	while( etaBin < 42 && 
@@ -919,6 +920,11 @@ int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) 
 
 
 
+//!  \brief Return upper or lower eta edge
+//!  \param etaBin Index of eta bin,
+//!         \f$ -41 \leq \texttt{etaBin} \leq 41 \f$
+//!  \param lowerEdge If true, return value of lower
+//!                   edge else of upper edge
 // -----------------------------------------------------------------
 float TParameters::etaEdge(int const etaBin, bool lowerEdge)
 {
@@ -1026,7 +1032,7 @@ int TParameters::GetPhiBin(int phi_id, int phigranu) const
 
 
 // -----------------------------------------------------------------
-void TParameters::Print() const
+void TParameters::print() const
 {
   std::cout  << p->name() << " resulting in:\n "
 	     << eta_granularity << " x " << phi_granularity << " tower bins with " 
@@ -1044,7 +1050,7 @@ void TParameters::Print() const
 
 
 // -----------------------------------------------------------------
-void TParameters::Write_CalibrationTxt(const char* name)
+void TParameters::writeCalibrationTxt(const char* name)
 {
   cout << "Writing calibration to file '" << name << "'" << endl;
 
@@ -1066,18 +1072,18 @@ void TParameters::Write_CalibrationTxt(const char* name)
       file << std::setw(8) << std::setprecision(4) << 2000;
       // write: each tower parameter
       for(unsigned itower=0; itower<p->nTowerPars(); ++itower){
-	file << std::setw(8) << std::setprecision(4) << k[towerIdx*p->nTowerPars()+itower];
+	file << std::setw(12) << std::setprecision(4) << k[towerIdx*p->nTowerPars()+itower];
       }
       // write: each jet parameter
       for(unsigned ijet=0; ijet<p->nJetPars(); ++ijet){
-	file << std::setw(8) << std::setprecision(4) << k[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+ijet];
+	file << std::setw(12) << std::setprecision(4) << k[GetNumberOfTowerParameters()+jetIdx*p->nJetPars()+ijet];
       }
       // write: each track parameter
       for(unsigned itrack=0; itrack<p->nTrackPars(); ++itrack){
-	file << std::setw(8) << std::setprecision(4) << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+trackIdx*p->nTrackPars()+itrack];
+	file << std::setw(12) << std::setprecision(4) << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+trackIdx*p->nTrackPars()+itrack];
       }
       for(unsigned igjet=0; igjet<p->nGlobalJetPars(); ++igjet){
-	file << std::setw(8) << std::setprecision(4) << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters()+igjet];
+	file << std::setw(12) << std::setprecision(4) << k[GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters()+igjet];
       }
       // complete line
       file << std::endl;
@@ -1089,7 +1095,7 @@ void TParameters::Write_CalibrationTxt(const char* name)
 
 
 // -----------------------------------------------------------------
-void TParameters::Write_CalibrationCfi(const char* name)
+void TParameters::writeCalibrationCfi(const char* name)
 {
   cout << "Writing calibration to file '" << name << "'" << endl;
   ofstream file(name, ofstream::binary);
@@ -1402,7 +1408,7 @@ void TParameters::Write_CalibrationCfi(const char* name)
 
 
 //-----------------------------------------------------
-void TParameters::Write_CalibrationTex(const char* name, const ConfigFile& config)
+void TParameters::writeCalibrationTex(const char* name, const ConfigFile& config)
 {
   cout << "Writing calibration to file '" << name << "'" << endl;
 
@@ -1455,33 +1461,33 @@ void TParameters::Write_CalibrationTex(const char* name, const ConfigFile& confi
 
     // BFGS parameters
     outfile << "\\begin{flushleft}\n\\begin{tabular}{lcl}\n";
-    outfile << TexTabularLine<double>(config,"BFGS derivative step");
-    outfile << TexTabularLine<int>(config,"BFGS mvec");
-    outfile << TexTabularLine<int>(config,"BFGS niter");
-    outfile << TexTabularLine<double>(config,"BFGS eps");
-    outfile << TexTabularLine<double>(config,"BFGS 1st wolfe parameter");
-    outfile << TexTabularLine<double>(config,"BFGS 2nd wolfe parameter");
+    outfile << texTabularLine<double>(config,"BFGS derivative step");
+    outfile << texTabularLine<int>(config,"BFGS mvec");
+    outfile << texTabularLine<int>(config,"BFGS niter");
+    outfile << texTabularLine<double>(config,"BFGS eps");
+    outfile << texTabularLine<double>(config,"BFGS 1st wolfe parameter");
+    outfile << texTabularLine<double>(config,"BFGS 2nd wolfe parameter");
     outfile << "\\end{tabular}\\end{flushleft}\n";
 
     // Event selection cuts
     outfile << "\\begin{flushleft}\n\\begin{tabular}{lcl}\n";
-    outfile << TexTabularLine<double>(config,"Et genJet min");
-    outfile << TexTabularLine<double>(config,"Et genJet max");
-    outfile << TexTabularLine<double>(config,"DeltaR cut on jet matching");
-    outfile << TexTabularLine<int>(config,"Et cut on jet");
-    outfile << TexTabularLine<int>(config,"Eta cut on jet");
-    outfile << TexTabularLine<double>(config,"Min had fraction");
-    outfile << TexTabularLine<double>(config,"Max had fraction");
-    outfile << TexTabularLine<double>(config,"Relative n+1 Jet Et Cut");
+    outfile << texTabularLine<double>(config,"Et genJet min");
+    outfile << texTabularLine<double>(config,"Et genJet max");
+    outfile << texTabularLine<double>(config,"DeltaR cut on jet matching");
+    outfile << texTabularLine<int>(config,"Et cut on jet");
+    outfile << texTabularLine<int>(config,"Eta cut on jet");
+    outfile << texTabularLine<double>(config,"Min had fraction");
+    outfile << texTabularLine<double>(config,"Max had fraction");
+    outfile << texTabularLine<double>(config,"Relative n+1 Jet Et Cut");
     outfile << "\\end{tabular}\\end{flushleft}\n";
 
     // Dijet integration parameters
     outfile << "\\begin{flushleft}\n\\begin{tabular}{lcl}\n";
-    outfile << TexTabularLine<int>(config,"DiJet integration number of iterations");
-    outfile << TexTabularLine<double>(config,"DiJet integration epsilon");
-    outfile << TexTabularLine<double>(config,"DiJet integration min");
-    outfile << TexTabularLine<double>(config,"DiJet integration max");
-    outfile << TexTabularLine<double>(config,"DiJet integration pt bin edges");
+    outfile << texTabularLine<int>(config,"DiJet integration number of iterations");
+    outfile << texTabularLine<double>(config,"DiJet integration epsilon");
+    outfile << texTabularLine<double>(config,"DiJet integration min");
+    outfile << texTabularLine<double>(config,"DiJet integration max");
+    outfile << texTabularLine<double>(config,"DiJet integration pt bin edges");
     outfile << "\\end{tabular}\\end{flushleft}\n";
 
     // Start and fitted parameters
@@ -1591,7 +1597,7 @@ Function TParameters::global_jet_function() {
 //!  \param fieldname Name of parameter in config file
 //!  \return The line for the LaTeX tabular
 // --------------------------------------------------
-template<class T> std::string TParameters::TexTabularLine(const ConfigFile& config, const std::string& fieldname) const {
+template<class T> std::string TParameters::texTabularLine(const ConfigFile& config, const std::string& fieldname) const {
   std::stringstream line;
   line << "\\texttt{" << fieldname << "} & = & $";
   line << config.read<T>(fieldname.c_str(),-1) << "$ \\\\ \n";

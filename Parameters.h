@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.54 2009/08/07 12:19:23 mschrode Exp $
+// $Id: Parameters.h,v 1.55 2009/09/02 14:18:08 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -28,7 +28,7 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.54 2009/08/07 12:19:23 mschrode Exp $
+//!  $Id: Parameters.h,v 1.55 2009/09/02 14:18:08 mschrode Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -64,9 +64,9 @@ public :
   int GetEtaGranularityTrack() const { return eta_granularity_track;}
   int GetPhiGranularityTrack() const { return phi_granularity_track;}
 
-  void Write_CalibrationCfi(const char* name); //!< write calibration constants to cfi file
-  void Write_CalibrationTxt(const char* name); //!< write calibration constants to txt file
-  void Write_CalibrationTex(const char* name, const ConfigFile& config); //!< write calibration constants and some paraemters of the fit to tex file
+  void writeCalibrationCfi(const char* name); //!< write calibration constants to cfi file
+  void writeCalibrationTxt(const char* name); //!< write calibration constants to txt file
+  void writeCalibrationTex(const char* name, const ConfigFile& config); //!< write calibration constants and some paraemters of the fit to tex file
 
   double* GetTowerParRef(int bin) { return k + bin*p->nTowerPars(); }
   double* GetJetParRef(int jetbin)  { return k + GetNumberOfTowerParameters()+jetbin*p->nJetPars();}
@@ -85,7 +85,7 @@ public :
   double* GetEffMap() {return trackEff;}
   int GetTrackEffBin(double pt, double eta);
 
-  void Print() const;
+  void print() const;
   
   static double tower_parametrization(const TMeasurement* x, const double* par) {
     return instance->p->correctedTowerEt(x,par);
@@ -297,7 +297,6 @@ public :
     //return 1e4/(1+exp(k* (par[0] - min))) + 1e4/(1+exp(-k* (par[0] - max));
   }
 
-  //! return upper or lower eta eta edge
   float etaEdge(int const etaBin, bool lowerEdge);
   //! return upper edge of bin in eta
   float etaUpperEdge(int const etaBin) { return etaEdge(etaBin, false); };
@@ -332,7 +331,7 @@ private:
   int GetEtaBin(int phi_id, int etagranu, int phigranu, bool etasym) const;
   int GetPhiBin(int phi_id, int phigranu) const;
 
-  template<class T> std::string TexTabularLine(const ConfigFile& config, const std::string& fieldname) const;
+  template<class T> std::string texTabularLine(const ConfigFile& config, const std::string& fieldname) const;
 
   
 
