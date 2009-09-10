@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.92 2009/08/07 12:21:21 mschrode Exp $
+//  $Id: caliber.cc,v 1.93 2009/09/02 14:17:34 mschrode Exp $
 
 #include "caliber.h"
 
@@ -168,7 +168,7 @@ void TCaliber::run_Lvmini()
   double *temp_derivative2 = new double[npar];
 
   cout << "\nFitting " << npar << " parameters; \n";
-  par_->Print();
+  par_->print();
   cout << " with LVMINI.\n" << "Using " << data_.size() << " total events and ";
   cout << nThreads_ << " threads.\n";
 
@@ -377,30 +377,30 @@ void TCaliber::done()
   std::string fileName(getOutputFile());
   if( fileName.find(".cfi")!=std::string::npos ){
     if( fileName.substr(fileName.find(".cfi")).compare(".cfi")==0 ){
-      par_->Write_CalibrationCfi( fileName.c_str() );
+      par_->writeCalibrationCfi( fileName.c_str() );
       cfi=true; // file has a real .cfi ending
     }
   }
   // write calibration to cfi output file if ending is txt
   if( fileName.find(".txt")!=std::string::npos ){
     if( fileName.substr(fileName.find(".txt")).compare(".txt")==0 ){
-      par_->Write_CalibrationTxt( fileName.c_str() );
+      par_->writeCalibrationTxt( fileName.c_str() );
       txt=true; // file has a real .txt ending
     }
   }
   // write calibration to cfi output file if ending is txt
   if( fileName.find(".tex")!=std::string::npos ){
     if( fileName.substr(fileName.find(".tex")).compare(".tex")==0 ){
-      par_->Write_CalibrationTex( fileName.c_str(), config );
+      par_->writeCalibrationTex( fileName.c_str(), config );
       tex=true; // file has a real .txt ending
     }
   }
 
   // write calibration to cfi & txt output file if w/o ending
   if( !cfi && !txt && !tex ){
-    par_->Write_CalibrationCfi( (fileName+".cfi").c_str() );
-    par_->Write_CalibrationTxt( (fileName+".txt").c_str() );
-    par_->Write_CalibrationTex( (fileName+".tex").c_str(), config );
+    par_->writeCalibrationCfi( (fileName+".cfi").c_str() );
+    par_->writeCalibrationTxt( (fileName+".txt").c_str() );
+    par_->writeCalibrationTex( (fileName+".tex").c_str(), config );
   }
 
 
@@ -478,7 +478,8 @@ void TCaliber::init()
 
   //fixed jet parameters
   std::vector<int> fixJetPars = bag_of<int>(config.read<string>("fixed jet parameters",""));
-  if (fixJetPars.size() % 3 == 0) {
+  if(fixJetPars.size() % 3 == 0) {
+    // Fix the specified parameters
     for(unsigned int i = 0 ; i < fixJetPars.size() ; i += 3) {
       int etaid = fixJetPars[i];
       int phiid = fixJetPars[i+1];
@@ -492,18 +493,38 @@ void TCaliber::init()
       //std::cout << "jetbin:" << jetbin << '\n';
       fixedJetPars_.push_back(jetbin * par_->GetNumberOfJetParametersPerBin() + par_->GetNumberOfTowerParameters() + parid);
     }
+  }
+  else if( fixJetPars.size() % 2 == 0 ) {
+    // Fix all parameters in the specified jet bins
+    for(unsigned int i = 0 ; i < fixJetPars.size() ; i += 2) {
+      int etaid = fixJetPars[i];
+      int phiid = fixJetPars[i+1];
+      int jetbin = par_->GetJetBin(par_->GetJetEtaBin(etaid),par_->GetJetPhiBin(phiid));
+      if(jetbin < 0) {
+	std::cerr<<"WARNING: fixed jet parameter bin index = " << jetbin << endl; 
+	exit(-2);  
+      }
+
+      for(int parIdx = 0; parIdx < par_->GetNumberOfJetParametersPerBin(); parIdx++) {
+	fixedJetPars_.push_back( par_->GetNumberOfTowerParameters() + 
+				 jetbin * par_->GetNumberOfJetParametersPerBin() +
+				 parIdx );
+      }
+    }
   } else {
-    cerr << "ERROR: syntax is: fixed jet parameter = <eta_id> <phi_id> <par_id>\n"; 
+    cerr << "ERROR: Syntax error for fixed jet parameters. Syntax is:\n";
+    cerr << "       'fixed jet parameter = { <eta_id> <phi_id> <par_id> }' or\n"; 
+    cerr << "       'fixed jet parameter = { <eta_id> <phi_id> }'\n"; 
   }
 
   //fixed global parameters
   std::vector<int> fixGlobalJetPars = bag_of<int>(config.read<string>("fixed global jet parameters",""));
   for(size_t globalJetBin = 0; globalJetBin < fixGlobalJetPars.size(); globalJetBin++) {
       if( globalJetBin < 0 ) {
-	std::cerr << "WARNING: fixed global jet parameter bin index = " << globalJetBin << std::endl; 
+	std::cerr << "ERROR: fixed global jet parameter bin index = " << globalJetBin << std::endl; 
 	exit(-2);  
       } else if( static_cast<int>(globalJetBin) > par_->GetNumberOfGlobalJetParameters() ) {
-	std::cerr << "WARNING: fixed global jet parameter bin index = " << globalJetBin;
+	std::cerr << "ERROR: fixed global jet parameter bin index = " << globalJetBin;
 	std::cerr << " which is larger than the max number ";
 	std::cerr << par_->GetNumberOfGlobalJetParameters() << " of global parameters." << std::endl;
 	exit(-2);  

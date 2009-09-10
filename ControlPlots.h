@@ -21,15 +21,15 @@
 
 //!  \brief Create control plots
 //!
-//!  Objects of 'TControlPlots' can create control plots via
-//!  the 'MakeControlPlots()' method from several TData
+//!  Objects of \p TControlPlots can create control plots via
+//!  the \p makeControlPlots() method from several TData
 //!  objects. The output is in .ps or both .ps and .root format.
 //!  The kind of the control plots and the output format is
 //!  specified via the config file.
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.28 2009/07/21 14:15:23 snaumann Exp $
+//!  $Id: ControlPlots.h,v 1.29 2009/09/02 14:17:34 mschrode Exp $
 // -------------------------------------------------------------
 class TControlPlots
 {
@@ -37,39 +37,31 @@ public:
   TControlPlots(const std::string& configfile, const std::vector<TData*> *data, TParameters *par);
   ~TControlPlots();
 
-  bool outputFormatRoot() const { return outputROOT_; }
-
   void makePlots();
+  bool outputFormatRoot() const { return outputROOT_; }
 
  private:  
   void makeControlPlotsBinnedResponse();
   void makeControlPlotsChi2();
-  void makeControlPlotsCorrectionFunction();
-  void makeControlPlotsDiJet();
-  void makeControlPlotsGammaJet();
-  void makeControlPlotsGammaJetPerJetBin();
-  void makeControlPlotsGammaJetPerTowerBin();
-  void makeControlPlotsGammaJetSigmas();
-  void makeControlPlotsL2L3MCTruth();
   void makeControlPlotsJetTruthEventResponse();
+  void makeControlPlotsL2L3MCTruth();
   void makeControlPlotsParameterScan();
   void makeControlPlotsTop();
-  void makeControlPlotsTowers();
 
   bool equidistLogBins(double * bins, int nBins, double first, double last) const;
   void fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss=true) const;
   void fit2D(const TH2F* hist, TH1F* hresults[8]) const { fit2D(hist, hresults, 0, 0, false); };
-  void fit2DRes(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4] ) const;
+  bool readJetMETParameters();
+  void resetFittedParameters();
   void setGStyle() const;
   void writeToRootFile(std::vector<TObject*> obj, std::string dir);
 
-  const        std::vector<TData*> *data_;      //!< Pointer to data
-  TParameters *par_;                            //!< Pointer to parameter values
   ConfigFile  *config_;                         //!< Pointer to config file
+  const std::vector<TData*> *data_;             //!< Pointer to data
+  std::vector<double> fittedPar_;               //!< Stores fitted parameters
   TFile       *outFile_;                        //!< Pointer to root output file
-  TString      ptRatioName_[3];	                //!< For histo titles etc
-  TString      controlQuantityName_[8];         //!< For histo titles etc
   bool         outputROOT_;                     //!< If true, histograms are written to ROOT file
+  TParameters *par_;                            //!< Pointer to parameter values
 
 
 
