@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.21 2009/07/23 13:49:55 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.22 2009/08/07 12:15:41 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -23,14 +23,14 @@
 
 //!  \brief Constructor
 //!
-//!  Reads data from ROOT trees and stores them in an NJetSel selector.
-//!  The data can be stored in a format derived from TData (as specified
+//!  Reads data from ROOT trees and stores them in an \p NJetSel selector.
+//!  The data can be stored in a format derived from \p TData (as specified
 //!  in the 'Di-Jet data class' field in the config file) by calling the
-//!  method readEvents(std::vector<TData*>& data). Additionally, the cut
-//!  thresholds are read from the configfile.
+//!  method readEvents(<tt>std::vector<TData*>& data<\tt>). Additionally,
+//!  the cut thresholds are read from the configfile.
 //!
 //!  \param configfile Name of configfile
-//!  \param p Pointer to TParameters object
+//!  \param p Pointer to \p TParameters object
 // ----------------------------------------------------------------   
 DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   : EventReader(configfile,p)
@@ -247,8 +247,9 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
 
 
 
-//!  \brief Create TData_PtBalance event from dijet data
-//!  \return Pointer to TData_PtBalance event (0 if cuts are not passed)
+//!  \brief Create \p TData_PtBalance event from dijet data
+//!  \return Pointer to \p TData_PtBalance event
+//!  (0 if cuts are not passed)
 // ----------------------------------------------------------------   
 TData* DiJetReader::createPtBalanceEvent()
 {
@@ -643,29 +644,68 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 
 
 
-//!  \brief Create \p SmearDiJet \p event for jet smearing
+//!  \brief Create \p SmearDiJet event for jet smearing
 //!
-//!  Uses the three jets with the highest uncorrected
-//!  calo pt. For creation of a \p SmearDiJet \p event,
+//!  Uses the three jets with the highest corrected
+//!  calo pt. For creation of a \p SmearDiJet event,
 //!  the JetMET L2L3 correction is applied.
 //!
-//!  \return A \p SmearDiJet \p if all cuts are passed,
+//!  \return A \p SmearDiJet if all cuts are passed,
 //!          else 0
 // ----------------------------------------------------------------   
 TData* DiJetReader::createSmearEvent()
 {
+  // There should be at least three jets in the event
   if( nJet_.NobjJet < 3 ) {
     nDiJetCut_++;
     return 0;
   }
 
+  // Pointer to the three leading jets
   SmearDiJet * jj_data = 0;
-  
   TJet   * jet1        = 0;
   TJet   * jet2        = 0;
 
-  // Loop over three jets with highest calojet Et
-  for(int jetIdx = 0; jetIdx < 3; jetIdx++) {
+  // Find three jets with highest L2L3 corrected
+  // calojet Et
+  int idx[3] = { 1, 1, 1 };	// Indices of the three leading jets
+  for(int j = 0; j < 3; j++) {
+    int maxIdx = 0;
+    if( j == 1 ) {
+      if( maxIdx == idx[0] ) {
+	maxIdx++;
+      }
+    }
+    if( j == 2 ) {
+      if( maxIdx == idx[0] || maxIdx == idx[1] ) {
+	maxIdx++;
+	if( maxIdx == idx[0] || maxIdx == idx[1] ) {
+	  maxIdx++;
+	}
+      }
+    }
+    for(int i = 0; i < nJet_.NobjJet; i++) {
+      if( j == 1 ) {
+	if( i == idx[0] ) {
+	  continue;
+	}
+      }	else if( j == 2 ) {
+	if( i == idx[0] || i == idx[1] ) {
+	  continue;
+	}
+      }
+      double corrMaxPt = nJet_.JetCorrL2[maxIdx] * nJet_.JetCorrL3[maxIdx] * nJet_.JetPt[maxIdx];
+      double corrPt = nJet_.JetCorrL2[i] * nJet_.JetCorrL3[i] * nJet_.JetPt[i];
+      if( corrPt > corrMaxPt ) {
+	maxIdx = i;
+      }
+    }
+    idx[j] = maxIdx;
+  }
+
+  // Loop over three jets with highest corrected calojet Et
+  for(int i = 0; i < 3; i++) {
+    int jetIdx = idx[i];
 
     double dphi         = TVector2::Phi_mpi_pi( nJet_.JetPhi[jetIdx] - nJet_.GenJetPhi[jetIdx] );
     double deta         = nJet_.JetEta[jetIdx] - nJet_.GenJetEta[jetIdx];
@@ -717,13 +757,13 @@ TData* DiJetReader::createSmearEvent()
     jetp->corFactors = TJet::CorFactors();
 
 
-    if     ( jetIdx == 0 ) { // Store first jet
+    if     ( jetIdx == idx[0] ) { // Store first jet
       jet1 = jetp;
     }
-    else if( jetIdx == 1 ) { // Store second jet
+    else if( jetIdx == idx[1] ) { // Store second jet
       jet2 = jetp;
     }
-    else if( jetIdx == 2) { // Create a SmearDiJet event
+    else if( jetIdx == idx[2] ) { // Create a SmearDiJet event
       int etaBin = nJet_.TowId_eta[closestTower]; // This is the 3rd jet, needs to be adjusted!
       int phiBin = nJet_.TowId_phi[closestTower]; // This is the 3rd jet, needs to be adjusted!
       jj_data = new SmearDiJet(jet1,                       // First jet
