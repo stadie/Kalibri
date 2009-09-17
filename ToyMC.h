@@ -15,7 +15,7 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.19 2009/08/07 11:59:50 snaumann Exp $
+//!  $Id: ToyMC.h,v 1.20 2009/08/13 10:56:41 snaumann Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -108,6 +108,7 @@ class ToyMC {
   double          minPt_;              //!< Minimum truth pt
   double          maxPt_;              //!< Maximum truth pt
   TruthSpectrum   ptSpectrum_;         //!< Truth pt spectrum
+  std::vector<double> parTruth_;       //!< Parameters for truth spectrum
   TLorentzVector  pInput_;             //!< Stores the truth lorentz vector of the current event
 
   TH2F          * histPtEta_;          //!< For histogramed truth spectrum

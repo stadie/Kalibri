@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.34 2009/08/07 11:59:50 snaumann Exp $
+// $Id: ToyMC.cc,v 1.35 2009/08/13 10:56:41 snaumann Exp $
 
 #include "ToyMC.h"
 
@@ -36,8 +36,8 @@ ToyMC::ToyMC() : type_(1), minEta_(-2.5),maxEta_(2.5),minPt_(30), maxPt_(400),pt
 //!  events) which is then smeared due to detector response
 //!  and  resolution effects etc.
 //!  The randomly generated components are
-//!  - pt between minPt_ and maxPt_ according to ptSpectrum_
-//!  - eta uniformly between minEta_ and maxEta_
+//!  - pt between \p minPt_ and \p maxPt_ according to \p ptSpectrum_
+//!  - eta uniformly between \p minEta_ and \p maxEta_
 //!  - phi uniformly between 0 and 2Pi
 //!  - a zero mass
 // -----------------------------------------------------------------
@@ -50,7 +50,7 @@ void ToyMC::genInput() {
     pt  = rand[0]*(maxPt_ - minPt_)+minPt_;
     eta = rand[1]*(maxEta_ - minEta_)+minEta_;
   } else if(ptSpectrum_ == PowerLaw) {
-    pt  = minPt_ * pow(rand[0],-1.0/5.5);
+    pt  = minPt_ * pow(rand[0],-1.0/(parTruth_.at(0) - 1.0));
     eta = rand[1]*(maxEta_ - minEta_)+minEta_;
   } else if(ptSpectrum_ == PtEtaHistogram) {
     histPtEta_->GetRandom2(eta, pt);
@@ -160,7 +160,7 @@ void ToyMC::calculateSmearFactor(const TLorentzVector& jet, double E) {
   else if( resolutionModel_ == TwoGauss ) {
     do {
       smear = histResp_->GetRandom();
-    } while ( smear < 0.3 );
+    } while ( smear < 0.5 || smear > 1.2 );
   }
 
   smearFactor_ *= smear;
@@ -1301,8 +1301,10 @@ void ToyMC::init(const std::string& configfile) {
 
   // Truth spectrum
   std::string spectrum = config.read<std::string>("ToyMC pt spectrum","uniform");
+  parTruth_            = bag_of<double>(config.read<string>("ToyMC pt spectrum parameters",";"));
   if(spectrum == "powerlaw") {
     ptSpectrum_ = PowerLaw; 
+    assert( parTruth_.size() > 0 );
   } else if(spectrum == "uniform") {
     ptSpectrum_ = Uniform;
   } else if(spectrum == "PtEtaHistogram") {
@@ -1427,7 +1429,7 @@ void ToyMC::print() const {
   if( ptSpectrum_ == Uniform )
     std::cout << "Uniform\n";
   else if( ptSpectrum_ == PowerLaw )
-    std::cout << "PowerLaw\n";
+    std::cout << "PowerLaw: 1/pt^" << parTruth_.at(0) << std::endl;
   else if( ptSpectrum_ == PtEtaHistogram )
     std::cout << "PtEtaHistogram\n";
 
