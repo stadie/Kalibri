@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.6 2009/07/23 13:48:45 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.7 2009/08/07 12:19:24 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -339,13 +339,12 @@ void ControlPlotsJetSmearing::plotResponse() const
 	}
       }
 
-      // In case of step + gauss parametrizations
-      if( param == "SmearParametrizationStepGauss" ||
-	  param == "SmearParametrizationStepGaussInter" ) {
+      // In case of step + gauss parametrization
+      else if( param == "SmearParametrizationStepGauss" ) {
 
 	// Step part of fit function
 	for(int bin = 1; bin <= hRespFitStep.at(ptBin)->GetNbinsX(); bin++) {
-	  double val  = scale.at(2+bin)*(smeardata->GetRespPar()[2+bin]);
+	  double val  = scale.at(3+bin)*(smeardata->GetRespPar()[3+bin]);
 	  hRespFitStep.at(ptBin)->SetBinContent(bin,val);
 	}
 	normHist(hRespFitStep.at(ptBin),"width");
@@ -356,6 +355,42 @@ void ControlPlotsJetSmearing::plotResponse() const
 	  double c     = scale.at(0)*(smeardata->GetRespPar()[0]);
 	  double mu    = scale.at(1)*(smeardata->GetRespPar()[1]);
 	  double sigma = scale.at(2)*(smeardata->GetRespPar()[2]);
+	  double r     = hRespFitGaus.at(ptBin)->GetBinCenter(bin);
+	  double val   = c * exp( -pow((mu-r)/sigma,2) / 2. ) / sqrt(2.*M_PI) / sigma;
+	  hRespFitGaus.at(ptBin)->SetBinContent(bin,val);
+	}
+
+	// Sum
+	for(int binGaus = 1; binGaus <= hRespFitGaus.at(ptBin)->GetNbinsX(); binGaus++) {
+	  int    binStep = hRespFitStep.at(ptBin)->FindBin(hRespFitGaus.at(ptBin)->GetBinCenter(binGaus));
+	  double val     = hRespFitStep.at(ptBin)->GetBinContent(binStep) + hRespFitGaus.at(ptBin)->GetBinContent(binGaus);
+	  hRespFitSum.at(ptBin)->SetBinContent(binGaus,val);
+	}
+      }
+
+      // In case of interpolated step + gauss parametrization
+      else if( param == "SmearParametrizationStepGaussInter" ) {
+	// Step part of fit function
+	for(int bin = 1; bin <= hRespFitStep.at(ptBin)->GetNbinsX(); bin++) {
+	  double val  = scale.at(3+bin)*(smeardata->GetRespPar()[3+bin]);
+	  hRespFitStep.at(ptBin)->SetBinContent(bin,val);
+	}
+	normHist(hRespFitStep.at(ptBin),"width");
+	hRespFitStep.at(ptBin)->Scale(1. - scale.at(0)*(smeardata->GetRespPar()[0]));
+	
+	// Gauss part of fit function
+	for(int bin = 1; bin <= hRespFitGaus.at(ptBin)->GetNbinsX(); bin++) {
+	  // Mean
+	  double a1 = meanRespPar.at(0);
+	  double a2 = meanRespPar.at(1);
+	  double mu = a1 + a2*ptBinCenter;
+	  // Width
+	  a1 = scale.at(1)*smeardata->GetRespPar()[1];
+	  a2 = scale.at(2)*smeardata->GetRespPar()[2];
+	  double a3 = scale.at(3)*smeardata->GetRespPar()[3];
+	  double sigma = sqrt( a1*a1/ptBinCenter/ptBinCenter + a2*a2/ptBinCenter + a3*a3 );
+	  // pdf
+	  double c     = scale.at(0)*(smeardata->GetRespPar()[0]);
 	  double r     = hRespFitGaus.at(ptBin)->GetBinCenter(bin);
 	  double val   = c * exp( -pow((mu-r)/sigma,2) / 2. ) / sqrt(2.*M_PI) / sigma;
 	  hRespFitGaus.at(ptBin)->SetBinContent(bin,val);
@@ -417,16 +452,6 @@ void ControlPlotsJetSmearing::plotResponse() const
   if( datait != data_->end() ) {
     SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
 
-    // Overall truth normalization
-    n            = dijet->getTruthPar()[0];
-    double k     = n - 3.;
-    double m     = n - 1.;
-    double norm1 = k / ( pow(ptBinEdges.front(),-k) - pow(ptBinEdges.back(),-k) );
-    double norm2 = m / ( pow(ptBinEdges.front(),-m) - pow(ptBinEdges.back(),-m) );
-
-//     double norm1 = ptBinEdges.back() - ptBinEdges.front();
-//     double norm2 = ( pow(ptBinEdges.front(),3) + pow(ptBinEdges.back(),3) ) / 3.;
-
     // Fill truth pdf per pt bin
     for(int bin = 1; bin <= hTruthPDFInt->GetNbinsX(); bin++) {
       double t = hTruthPDFInt->GetBinCenter(bin);
@@ -434,8 +459,8 @@ void ControlPlotsJetSmearing::plotResponse() const
 	hTruthPDFInt->SetBinContent(bin,dijet->truthPDF(t));
       }
     }
-    hTruthPDFInt->Scale(norm2/norm1);
-    
+    if( hTruthPDFInt->Integral("width") ) hTruthPDFInt->Scale(1./hTruthPDFInt->Integral("width"));
+
     for(int ptBin = 0; ptBin < nPtBins; ptBin++) {
       for(int bin = 1; bin <= hDijetTruthPDF.at(ptBin)->GetNbinsX(); bin++) {
 	double t = hDijetTruthPDF.at(ptBin)->GetBinCenter(bin);
@@ -443,8 +468,7 @@ void ControlPlotsJetSmearing::plotResponse() const
 	  hDijetTruthPDF.at(ptBin)->SetBinContent(bin,dijet->truthPDF(t));
 	}
       }
-    // Normalize with overal normalization
-    hDijetTruthPDF.at(ptBin)->Scale(norm2/norm1);
+      if( hDijetTruthPDF.at(ptBin)->Integral("width") ) hDijetTruthPDF.at(ptBin)->Scale(1./hDijetTruthPDF.at(ptBin)->Integral("width"));
     }
   }
 
@@ -491,7 +515,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     if( min < yMin ) yMin = min;
     if( max > yMax ) yMax = max;
   }
-  if( yMin < 8E-4 ) yMin = 8E-4;
+  if( yMin < 8E-5 ) yMin = 8E-5;
   for(int ptBin = 0; ptBin < nPtBins; ptBin++) {
     hRespMeas.at(ptBin)->GetYaxis()->SetRangeUser(yMin,yMax);
   }
@@ -610,8 +634,23 @@ void ControlPlotsJetSmearing::plotResponse() const
     ps->NewPage();
     c1->cd();
     hDijetPtGen.at(ptBin)->Draw();
+    c1->SetLogy();
+    c1->Draw();
+  }
+
+  for(int ptBin = 0; ptBin < nPtBins; ptBin++) {
+    ps->NewPage();
+    c1->cd();
+    hDijetPtHat.at(ptBin)->Draw();
+    c1->SetLogy();
+    c1->Draw();
+  }
+
+  for(int ptBin = 0; ptBin < nPtBins; ptBin++) {
+    ps->NewPage();
+    c1->cd();
+    hDijetPtGen.at(ptBin)->Draw();
     hDijetTruthPDF.at(ptBin)->Draw("SAME");
-    //leg->Draw("same");
     c1->SetLogy();
     c1->Draw();
   }
@@ -621,7 +660,6 @@ void ControlPlotsJetSmearing::plotResponse() const
     c1->cd();
     hDijetPtHat.at(ptBin)->Draw();
     hDijetTruthPDF.at(ptBin)->Draw("SAME");
-    //leg->Draw("same");
     c1->SetLogy();
     c1->Draw();
   }

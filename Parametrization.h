@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.44 2009/09/02 13:54:29 mschrode Exp $
+//  $Id: Parametrization.h,v 1.45 2009/09/10 15:47:57 mschrode Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -6,8 +6,10 @@
 #include <cmath>
 #include <vector>
 
-#include "CalibData.h"
+#include "TH1D.h"
+#include "TMath.h"
 
+#include "CalibData.h"
 
 #include "gsl/gsl_errno.h"
 #include "gsl/gsl_math.h"
@@ -23,7 +25,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.44 2009/09/02 13:54:29 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.45 2009/09/10 15:47:57 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1400,31 +1402,47 @@ class SmearStepGaussInter : public Parametrization
   //!  \param tMax          Maximum of non-zero part of truth pdf
   //!  \param rMin          Minimum of binned part of response pdf \f$ H_{inter} \f$
   //!  \param rMax          Maximum of binned part of response pdf \f$ H_{inter} \f$
+  //!  \param ptDijetMin    Minimum of dijet pt
+  //!  \param ptDijetMax    Maximum of dijet pt
   //!  \param rNBins        Number of bins of binned part of response pdf \f$ H_{inter} \f$
-  //!  \param rParScales  Jet parameter scales
+  //!  \param rParScales    Jet parameter scales
+  //!  \param meanRespPar   Parameters for mean of Gaussian
   // ------------------------------------------------------------------------
-  SmearStepGaussInter(double tMin, double tMax, double rMin, double rMax, int rNBins, const std::vector<double>& rParScales)
-    : Parametrization(0,rNBins+3,0,1),
+  SmearStepGaussInter(double tMin, double tMax, double rMin, double rMax, int rNBins, double ptDijetMin, double ptDijetMax, const std::vector<double>& rParScales, const std::vector<double>& meanRespPar)
+    : Parametrization(0,rNBins+4,0,1),
     tMin_(tMin),
     tMax_(tMax),
     rMin_(rMin),
     rMax_(rMax),
-    nGausPar_(3),
+    ptDijetMin_(ptDijetMin),
+    ptDijetMax_(ptDijetMax),
+    nGausPar_(4),
     nStepPar_(rNBins),
     binWidth_((rMax_ - rMin_)/nStepPar_),
-    respParScales_(rParScales)
+    respParScales_(rParScales),
+    meanRespPar_(meanRespPar)
     {
       for(int i = 0; i < nStepPar_+1; i++) {
 	binCenters_.push_back( rMin_ + (0.5+i)*binWidth_ );
       }
       assert( 0.0 <= tMin_ && tMin_ < tMax_ );
       assert( 0.0 <= rMin_ && rMin_ < rMax_ );
-      assert( respParScales_.size() >= nJetPars() );      
+      assert( 0.0 <= ptDijetMin_ && ptDijetMin_ < ptDijetMax_ );
+      assert( respParScales_.size() >= nJetPars() );
+      assert( meanRespPar_.size() > 1 );
 
       print();
+
+      // Integral over dijet resolution for truth pdf
+      norm_ = new TH1D("norm","",100,tMin_,tMax_);
+      for(int bin = 1; bin < norm_->GetNbinsX(); bin++) {
+	double pt = norm_->GetBinCenter(bin);
+	double val = dijetCutFactor(pt) * norm_->GetXaxis()->GetBinWidth(bin);
+	norm_->SetBinContent(bin,val);
+      }
     }
 
-  ~SmearStepGaussInter() { binCenters_.clear(); }
+  ~SmearStepGaussInter() { binCenters_.clear(); delete norm_; }
 
   const char* name() const { return "SmearStepGaussInter";}
   
@@ -1438,9 +1456,13 @@ class SmearStepGaussInter : public Parametrization
   double correctedJetEt(const TMeasurement *x,const double *par) const {
     // Probability density from Gaussian part
     double c = respParScales_.at(0)*par[0];
-    double u = respParScales_.at(1)*par[1];
-    double s = respParScales_.at(2)*par[2];
-    
+    double u = meanRespPar_.at(0) + meanRespPar_.at(1)*x->pt;
+
+    double a1 = respParScales_.at(1)*par[1];
+    double a2 = respParScales_.at(2)*par[2];
+    double a3 = respParScales_.at(3)*par[3];
+    double s  = sqrt( a1*a1/x->pt/x->pt + a2*a2/x->pt + a3*a3 );
+
     double p = c / sqrt(2* M_PI ) / s * exp(-pow((x->E - u) / s, 2) / 2);
     
     
@@ -1460,28 +1482,25 @@ class SmearStepGaussInter : public Parametrization
     return p;
   }
 
+
+
   //!  \brief Returns probability density of true pt multiplied by normalization
-  //!         of dijet probability (see also SmearDiJet::truthPDF(t)).
-  //!  \param x   TMeasurement::pt is truth for which the 
+  //!         of dijet probability (see also \p SmearDiJet::truthPDF(t)).
+  //!  \param x   \p TMeasurement::pt is truth for which the 
   //!             probability density is returned
   //!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
   //!  \return Probability density of truth times normalization of dijet probability
   // ------------------------------------------------------------------------
   double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
-    double p = 0.;
-    if( tMin_ < x->pt && x->pt < tMax_ ) {
-      double n    = par[0];        // The exponent
-      double k    = n - 3.;
-      double norm = k / ( pow(tMin_,-k) - pow(tMax_,-k) );
-      
-      p = norm / pow( x->pt, n );
-      
-      // For constant spectrum
-      //! \todo Should become a base class for two classes
-      //!       with either constant or powerlaw spectrum
-      // double norm = ( pow(mTMax,3) + pow(mTMin,3) ) / 3.;
-      // p = 1./norm;
+    // Norm of probability of dijet event configuration
+    double norm = 0.;
+    for(int bin = 1; bin < norm_->GetNbinsX(); bin++) {
+      double pt = norm_->GetBinCenter(bin);
+      norm += pow(pt,2-par[0]) * norm_->GetBinContent(bin);
     }
+
+    double p = 0.;
+    if( norm ) p = truthPDF(x->pt,par[0]) / norm;
 
     return p;
   }
@@ -1492,11 +1511,15 @@ class SmearStepGaussInter : public Parametrization
   const double tMax_;                   //!< Maximum of non-zero range of truth pdf
   const double rMin_;                   //!< Minimum of non-zero range of response pdf
   const double rMax_;                   //!< Maximum of non-zero range of response pdf
+  const double ptDijetMin_;             //!< Minimum of pt dijet
+  const double ptDijetMax_;             //!< Maximum of pt dijet
   const int    nGausPar_;               //!< Number of parameters of Gaussian part of pdf
   const int    nStepPar_;               //!< Number of parameters of step part of pdf
   const double binWidth_;               //!< Bin width
   const std::vector<double> respParScales_;     //!< Parameter scales
+  const std::vector<double> meanRespPar_;    //!< Parameters of mean response
   std::vector<double> binCenters_;      //!< Centers of response bins
+  TH1D * norm_;			        //!< Integral over dijet resolution for truth pdf for different t
 
 
 
@@ -1552,6 +1575,50 @@ class SmearStepGaussInter : public Parametrization
 
 
 
+  //!  \brief Returns probability density (not normalised!) of truth
+  //!         considering cuts on dijet pt
+  //!
+  //!  The probability density of \p pt if cuts
+  //!  \f$ \texttt{ptDijetMin_} < pt^{\textrm{dijet}} < \texttt{ptDijetMax_} \f$
+  //!  are applied:
+  //!  \f[ t^{-n} \int^{\texttt{ptDijetMax_}}_{\texttt{ptDijetMin_}}
+  //!      dx\,\frac{r(x/t) \cdot t}{\sqrt{2}} \f]
+  // ------------------------------------------------------------------------
+  double truthPDF(double pt, double n) const {
+    double prob = 0.;
+    if( tMin_ < pt && pt < tMax_ ) {
+      prob = 1. / pow( pt, n );
+      prob *= dijetCutFactor(pt);
+    }
+
+    return prob;
+  }
+
+
+
+  //!  \brief Returns the integral over the response in the truth pdf
+  //!         representing the cuts on dijet pt
+  //!
+  //!  \f[ t^{-n} \int^{\texttt{ptDijetMax_}}_{\texttt{ptDijetMin_}}
+  //!      dx\,\frac{r(x/t) \cdot t}{\sqrt{2}} \f]
+  // ------------------------------------------------------------------------
+  double dijetCutFactor(double pt) const {
+    double p = 0.;
+    if( tMin_ < pt && pt < tMax_ ) {
+      double a1 = 4.19;
+      double a2 = 1.25; //respParScales_.at(0)*par[0];
+      double a3 = 0.03; //respParScales_.at(1)*par[1];
+      double sigma  = sqrt( a1*a1 + a2*a2*pt + a3*a3*pt*pt ) / sqrt(2);
+      double normTmin = ( ptDijetMin_ - pt ) / sqrt(2) / sigma;
+      double normTmax = ( ptDijetMax_ - pt ) / sqrt(2) / sigma;
+      p = 0.5 * ( TMath::Erfc(normTmin) - TMath::Erfc(normTmax) );
+    }
+
+    return p;
+  }
+
+
+
   //!  \brief Print some initialization details
   // ------------------------------------------------------------------------
   void print() const {
@@ -1559,6 +1626,7 @@ class SmearStepGaussInter : public Parametrization
     std::cout << "  Probability density of ptTrue spectrum:\n";
     std::cout << "    Powerlaw\n";
     std::cout << "    " << tMin_ << " < ptTrue < " << tMax_ << " GeV\n";
+    std::cout << "    " << ptDijetMin_ << " < ptDijet < " << ptDijetMax_ << " GeV\n";
     std::cout << "  Probability density of response:\n";
     std::cout << "    Non-zero for " << rMin_ << " < R < " << rMax_ << "\n";
     std::cout << "    " << nStepPar_ << " step parameters\n";

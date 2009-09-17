@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.35 2009/09/02 14:05:59 mschrode Exp $
+// $Id: Parameters.cc,v 1.36 2009/09/10 15:47:57 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -67,13 +67,16 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
     return new SmearStepGauss(min,max,nsteps,scale);
   } else if(name == "SmearStepGaussInter") {
-    double rMin    = config.read<double>("Response pdf min",0.);
-    double rMax    = config.read<double>("Response pdf max",1.8);
-    int    rNBins  = config.read<int>("Response pdf nsteps",10);
-    double tMin    = config.read<double>("DiJet integration min",0.);
-    double tMax    = config.read<double>("DiJet integration max",1.);
+    double rMin       = config.read<double>("Response pdf min",0.);
+    double rMax       = config.read<double>("Response pdf max",1.8);
+    int    rNBins     = config.read<int>("Response pdf nsteps",10);
+    double tMin       = config.read<double>("DiJet integration min",0.);
+    double tMax       = config.read<double>("DiJet integration max",1.);
+    double ptDijetMin = config.read<double>("Et min cut on dijet",0.);
+    double ptDijetMax = config.read<double>("Et max cut on dijet",1.);
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    return new SmearStepGaussInter(tMin,tMax,rMin,rMax,rNBins,scale);
+    std::vector<double> meanRespPar = bag_of<double>(config.read<string>("mean response parameters","1 0"));
+    return new SmearStepGaussInter(tMin,tMax,rMin,rMax,rNBins,ptDijetMin,ptDijetMax,scale,meanRespPar);
   } else if(name == "SmearStepGaussInterPtBinned") {
     double rMin    = config.read<double>("Response pdf min",0.);
     double rMax    = config.read<double>("Response pdf max",1.8);
