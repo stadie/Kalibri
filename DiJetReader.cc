@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.22 2009/08/07 12:15:41 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.23 2009/09/17 12:33:13 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -26,7 +26,7 @@
 //!  Reads data from ROOT trees and stores them in an \p NJetSel selector.
 //!  The data can be stored in a format derived from \p TData (as specified
 //!  in the 'Di-Jet data class' field in the config file) by calling the
-//!  method readEvents(<tt>std::vector<TData*>& data<\tt>). Additionally,
+//!  method readEvents(<tt>std::vector<TData*>& data</tt>). Additionally,
 //!  the cut thresholds are read from the configfile.
 //!
 //!  \param configfile Name of configfile

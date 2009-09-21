@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.45 2009/09/10 15:47:57 mschrode Exp $
+//  $Id: Parametrization.h,v 1.46 2009/09/17 13:01:32 mschrode Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -25,7 +25,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.45 2009/09/10 15:47:57 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.46 2009/09/17 13:01:32 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1579,9 +1579,9 @@ class SmearStepGaussInter : public Parametrization
   //!         considering cuts on dijet pt
   //!
   //!  The probability density of \p pt if cuts
-  //!  \f$ \texttt{ptDijetMin_} < pt^{\textrm{dijet}} < \texttt{ptDijetMax_} \f$
+  //!  \f$ \texttt{ptDijetMin\_} < p^{\textrm{dijet}}_{T} < \texttt{ptDijetMax\_} \f$
   //!  are applied:
-  //!  \f[ t^{-n} \int^{\texttt{ptDijetMax_}}_{\texttt{ptDijetMin_}}
+  //!  \f[ t^{-n} \int^{\texttt{ptDijetMax\_}}_{\texttt{ptDijetMin\_}}
   //!      dx\,\frac{r(x/t) \cdot t}{\sqrt{2}} \f]
   // ------------------------------------------------------------------------
   double truthPDF(double pt, double n) const {
@@ -1599,7 +1599,7 @@ class SmearStepGaussInter : public Parametrization
   //!  \brief Returns the integral over the response in the truth pdf
   //!         representing the cuts on dijet pt
   //!
-  //!  \f[ t^{-n} \int^{\texttt{ptDijetMax_}}_{\texttt{ptDijetMin_}}
+  //!  \f[ t^{-n} \int^{\texttt{ptDijetMax\_}}_{\texttt{ptDijetMin\_}}
   //!      dx\,\frac{r(x/t) \cdot t}{\sqrt{2}} \f]
   // ------------------------------------------------------------------------
   double dijetCutFactor(double pt) const {
