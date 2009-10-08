@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.23 2009/09/17 12:33:13 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.24 2009/09/21 06:52:56 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -43,6 +43,7 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
     return;
   }
 
+  prescale_ = config->read<int>("Di-Jet prescale",1);
   // Cuts
   minJetEt_          = config->read<double>("Et cut on jet",0.0);
   minDijetEt_        = config->read<double>("Et min cut on dijet",0.0); 
@@ -160,7 +161,7 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
   int nGoodEvts = 0;                          // Number of events passing all cuts
 
   cout << "\nReading " << injet << "-jet events...\n";
-  for (int i=0;i<nevent;i++) {
+  for (int i=0 ; i < nevent ; i+= prescale_) {
     if((i+1)%10000==0) cout << i+1 << endl;
     nJet_.fChain->GetEvent(i); 
     if (nJet_.NobjTow>10000 || nJet_.NobjJet>100) {

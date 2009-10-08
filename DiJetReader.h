@@ -36,7 +36,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.10 2009/07/16 14:48:18 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.11 2009/07/23 13:49:55 mschrode Exp $
 // ----------------------------------------------------------------   
 class DiJetReader : public EventReader{
  public:
@@ -54,6 +54,7 @@ class DiJetReader : public EventReader{
 
   int    dataClass_;            //!< Data class, see also TData
   int    nDijetEvents_;         //!< Maximum number of read dijet events
+  int    prescale_;             //!< onkly read every nth event
 
   double minJetEt_;             //!< Minimum pt of jet
   double minDijetEt_;           //!< Minimum dijet pt
