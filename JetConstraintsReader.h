@@ -4,7 +4,7 @@
 //    This class add user defined jet constraints
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: JetConstraintsReader.h,v 1.1 2008/12/12 17:06:00 stadie Exp $
+//    $Id: JetConstraintsReader.h,v 1.1 2009/07/23 15:54:12 stadie Exp $
 //   
 #ifndef JETCONSTRAINTSREADER_H
 #define JETCONSTRAINTSREADER_H
@@ -13,6 +13,8 @@
 
 #include <string>
 #include <vector>
+
+class Parametrization;
 
 class JetConstraintsReader : public EventReader{
  public:
@@ -30,6 +32,7 @@ class JetConstraintsReader : public EventReader{
       mineta(mineta),maxeta(maxeta),Et(Et),weight(weight) {}
   };
   std::vector<JetConstraint> jet_constraints;
+  Parametrization* cp;
 };
 
 

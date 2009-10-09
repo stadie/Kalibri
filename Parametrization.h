@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.46 2009/09/17 13:01:32 mschrode Exp $
+//  $Id: Parametrization.h,v 1.47 2009/09/21 06:52:56 mschrode Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -25,7 +25,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.46 2009/09/17 13:01:32 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.47 2009/09/21 06:52:56 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -170,6 +170,24 @@ private:
 };
 
 
+//!  \brief Parametrization that does not change a thing  
+//!
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class ConstParametrization : public Parametrization { 
+public:
+  ConstParametrization() : Parametrization(0,0,0,0) {}
+  const char* name() const { return "ConstParametrization";}
+  
+  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+    return x->pt;
+  }
+    
+  double correctedJetEt(const TMeasurement *x,const double *par) const {
+    return  x->pt;   
+  }
+};
 
 //!  \brief Parametrization of the hadronic tower response 
 //!         by a step function in Et
@@ -842,7 +860,7 @@ public:
   //!  double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
   //!  \endcode   
   double correctedJetEt(const TMeasurement *x,const double *par) const {
-    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
+    double  pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
     //    double c1 = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
     double c1 = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(0.01*par[3]+logpt*(0.01*par[4]))));

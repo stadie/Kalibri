@@ -120,7 +120,7 @@ JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc
 TwoJetsInvMassEvent.o: CalibData.h Jet.h TwoJetsInvMassEvent.h TwoJetsInvMassEvent.cc
 	$(C) $(RCXX) -c TwoJetsInvMassEvent.cc
 
-JetConstraintEvent.o: JetConstraintEvent.h CalibData.h Jet.h JetConstraintEvent.cc
+JetConstraintEvent.o: JetConstraintEvent.h CalibData.h Jet.h JetConstraintEvent.cc Function.h
 	$(C) $(CFLAGS) -c JetConstraintEvent.cc
 
 JetWithTowers.o: CalibData.h Jet.h JetWithTowers.h Function.h JetWithTowers.cc Parametrization.h
