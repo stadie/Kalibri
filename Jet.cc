@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.28 2009/08/07 11:18:45 stadie Exp $
+//    $Id: Jet.cc,v 1.29 2009/08/07 13:16:37 stadie Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -16,7 +16,7 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 	 const Function& gf, double Etmin) 
   : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,0.0,0.0,TJet::CorFactors()), 
-    f(f),gf(gf),errf(errfunc),etmin(Etmin), gsl_impl(this)
+    f(f),gf(gf),errf(errfunc),etmin(Etmin),EoverPt(E/Et),gsl_impl(this)
 {
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());
@@ -28,7 +28,7 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 	 double (*errfunc)(const double *x, const TMeasurement *xorig, double err), 
 	 const Function& gf, double Etmin) 
   : TJet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,dR,corFactors),
-    f(f),gf(gf),errf(errfunc),etmin(Etmin), gsl_impl(this)
+    f(f),gf(gf),errf(errfunc),etmin(Etmin),EoverPt(E/Et),gsl_impl(this)
 {
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());
@@ -142,35 +142,32 @@ double Jet::correctedEt(double Et, bool fast) const {
   // 
   //assume that only the hadronic energy gets modified!
   temp.pt   = Et;  
-  temp.HadF = Et - OutF - EMF;
-  if(temp.HadF < 0) temp.HadF = 0;
-  temp.E    = TJet::E * Et/TJet::pt;
-  double corEt = f(&temp);
-  if(corEt != corEt) 
+  //temp.HadF = Et - OutF - EMF;
+  // if(temp.HadF < 0) temp.HadF = 0;
+  temp.E    = EoverPt * Et;
+  temp.pt = f(&temp);
+  /*
+    if(corEt != corEt) 
     std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
-  assert(corEt == corEt);
-  //if(corEt <  OutF + EMF) corEt = OutF + EMF;
-  if(corEt <= 0.0) {
+    assert(corEt == corEt);
+    //if(corEt <  OutF + EMF) corEt = OutF + EMF;
+  */
+  if(temp.pt <= 0.0) {
     //std::cout << "WARNING: jet cor. Et <= 0.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
-    corEt = 1.0;
+    temp.pt = 1.0;
   }
-  temp.pt   = corEt;  
-  temp.HadF = corEt - OutF - EMF;
-  if(temp.HadF < 0) temp.HadF = 0;
-  temp.E    = TJet::E * corEt/TJet::pt;
-
-  corEt = gf(&temp);
-  if(corEt != corEt) 
-    std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
-  assert(corEt == corEt);
+  //temp.HadF = corEt - OutF - EMF;
+  //if(temp.HadF < 0) temp.HadF = 0;
+  temp.E = EoverPt * temp.pt;  
+  temp.pt = gf(&temp);
+  //if(corEt != corEt) std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
+  //assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
-  if(corEt <= 1.0) {
+  if(temp.pt <= 1.0) {
     //std::cout << "WARNING: global jet cor. Et <= 1.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
-    corEt = 1.0;
+    temp.pt = 1.0;
   }
-
-
-  return corEt;
+  return temp.pt;
 }
 
 
@@ -452,7 +449,7 @@ bool Jet::GslImplementation::root(double truth, double& x1, double& x2, double e
     x2 = gsl_root_fsolver_x_upper(s);
     status = gsl_root_test_interval(x1,x2,0, eps);
     }
-  while(status == GSL_CONTINUE && iter < 100);
+  while(status == GSL_CONTINUE && iter < 20);
   ntries += iter;
   if(status != GSL_SUCCESS) {
     ++nfails;

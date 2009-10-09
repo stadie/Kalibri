@@ -11,7 +11,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.20 2009/08/05 12:16:30 stadie Exp $
+//!    $Id: Jet.h,v 1.21 2009/08/07 13:16:37 stadie Exp $
 
 
 #include "gsl/gsl_errno.h"
@@ -128,6 +128,7 @@ class Jet : public TJet
   static long long nwarns;        //!< Number of warnings during inversion
 
   mutable TMeasurement temp;
+  const double EoverPt;
   class GslImplementation {
     struct rf_par {
       double y;
