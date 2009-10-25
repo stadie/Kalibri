@@ -15,7 +15,7 @@ class TTree;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.20 2009/08/13 10:56:41 snaumann Exp $
+//!  $Id: ToyMC.h,v 1.21 2009/09/17 12:59:09 mschrode Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -89,8 +89,22 @@ class ToyMC {
   //!    - 'Flat'
   //!    - 'Exp'
   //!    - 'Slope'
+  //!
+  //!    - 'StepEta': The jet response is given by
+  //!      \f[ R(\eta) = A_{i},
+  //!          \qquad i = 0 \textrm{ for } \eta < 0,
+  //!          i = 1 \textrm{ else} \f]
+  //!      The appropriate correction function is
+  //!      - ToyJetParametrization
+  //!    - 'SinusEta': The jet response is given by
+  //!      \f[ R(\eta) = 1 + A_{0} \sin(A_{1} \eta) \f]
+  //!      The appropriate correction function is
+  //!      - ToyJetParametrization
+  //!    - 'SinusEtaSimpleInversePt': The jet response is given by
+  //!      the product of the response models 'SinusEta' and
+  //!      'SimpleInverse'
   // ----------------------------------------------------------------  
-  enum ResponseModel { Constant, L3, SimpleInverse, Flat, Slope, Exp };
+  enum ResponseModel { Constant, L3, SimpleInverse, Flat, Slope, Exp, StepEta, SinusEta, SinusEtaSimpleInversePt };
 
 
   //!  \brief Truth pt spectrum
@@ -122,7 +136,7 @@ class ToyMC {
   double          maxPi0Frac_;
   double          maxEmf_;
 
-  ResponseModel   responseModel_;      //!< Response model
+  ResponseModel responseModel_;        //!< Response models
   std::vector<double> parResp_;        //!< Parameters for Response
   TH1F          * histResp_;           //!< For histogramed response
 
@@ -131,7 +145,6 @@ class ToyMC {
 
   double          smearFactor_;        //!< Combined smear factor from response and resolution
   bool            smearTowersIndividually_;  //!< If true, mSmearTowersIndividually is determined individually for each tower, else for each jet
-
 
 
   void genInput();

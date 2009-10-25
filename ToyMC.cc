@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.35 2009/08/13 10:56:41 snaumann Exp $
+// $Id: ToyMC.cc,v 1.36 2009/09/17 12:59:09 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -132,6 +132,16 @@ void ToyMC::calculateSmearFactor(const TLorentzVector& jet, double E) {
   else if( responseModel_ == SimpleInverse ) { 
     smearFactor_ *= 1. - parResp_.at(0)/(pt + parResp_.at(1));
   }
+  else if( responseModel_ == StepEta ) {
+    smearFactor_ *= jet.Eta() < 0 ? parResp_.at(0) : parResp_.at(1);
+  }
+  else if( responseModel_ == SinusEta ) {
+    smearFactor_ *= 1. + parResp_.at(0)*sin( parResp_.at(1)*jet.Eta() );
+  }
+  else if( responseModel_ == SinusEtaSimpleInversePt ) {
+    smearFactor_ *= 1. + parResp_.at(0)*sin( parResp_.at(1)*jet.Eta() );
+    smearFactor_ *= 1. - parResp_.at(2)/(pt + parResp_.at(3));
+  }
 
   // Apply resolution
   double smear = 1.;
@@ -218,7 +228,6 @@ void ToyMC::smearTower(const TLorentzVector& jet, double e, bool calcSmearFactor
 // -----------------------------------------------------------------
 int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi, int* ieta,int* iphi) {
   typedef __gnu_cxx::hash_map<int,int> TowerMap;
-
   TowerMap towers;
   double jphi = jet.Phi();
   if(jphi < 0) jphi += 2 * M_PI;
@@ -245,7 +254,6 @@ int ToyMC::splitJet(const TLorentzVector& jet ,float* et,float* eta,float * phi,
     //std::cout << "E:" << jet.E() << "  R:" << R << '\n';
     float teta = jet.Eta() + R * cos(PHI);
     float tphi = jet.Phi() + R * sin(PHI);
-    
     tphi = TVector2::Phi_0_2pi(tphi);
     if(std::abs(teta) > 3.33333) {
       //std::cout << "chunk outside simulated calo\n";
@@ -735,7 +743,13 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float jetgeneta[kjMAX];
   float jetgenet[kjMAX];
   float jetgene[kjMAX];
-  int   jetgenjetidx[kjMAX];
+
+  float genJetColPt[kjMAX];
+  float genJetColPhi[kjMAX];
+  float genJetColEta[kjMAX];
+  float genJetColEt[kjMAX];
+  float genJetColE[kjMAX];
+  int   genJetColJetIdx[kjMAX];
 
   float weight = 1; 
 
@@ -820,12 +834,12 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 
   // Genjet collection
   CalibTree->Branch("NobjGenJet",&NobjJet,"NobjGenJet/I");
-  CalibTree->Branch("GenJetColEt",jetgenet,"GenJetColEt[NobjGenJet]/F" );
-  CalibTree->Branch("GenJetColE",jetgene,"GenJetColE[NobjGenJet]/F"     );
-  CalibTree->Branch("GenJetColPt",jetgenpt,"GenJetColPt[NobjGenJet]/F" );
-  CalibTree->Branch("GenJetColEta",jetgeneta,"GenJetColEta[NobjGenJet]/F" );
-  CalibTree->Branch("GenJetColPhi",jetgenphi,"GenJetColPhi[NobjGenJet]/F" );
-  CalibTree->Branch("GenJetColJetIdx",jetgenjetidx,"GenJetColJetIdx[NobjJet]/I");
+  CalibTree->Branch("GenJetColEt",genJetColEt,"GenJetColEt[NobjGenJet]/F" );
+  CalibTree->Branch("GenJetColE",genJetColE,"GenJetColE[NobjGenJet]/F"     );
+  CalibTree->Branch("GenJetColPt",genJetColPt,"GenJetColPt[NobjGenJet]/F" );
+  CalibTree->Branch("GenJetColEta",genJetColEta,"GenJetColEta[NobjGenJet]/F" );
+  CalibTree->Branch("GenJetColPhi",genJetColPhi,"GenJetColPhi[NobjGenJet]/F" );
+  CalibTree->Branch("GenJetColJetIdx",genJetColJetIdx,"GenJetColJetIdx[NobjJet]/I");
 
   // Event branches
   CalibTree->Branch("GenEvtScale",&genevtscale,"GenEvtScale/F" );
@@ -859,14 +873,13 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
     // Second genjet gets random eta
     // between -3 and 3, and phi+PI
     jetgenpt[1]  = jetgenpt[0];
-    jetgeneta[1] = random_->Gaus(jetgeneta[0],1.0);
-    if((jetgeneta[1] > 3.0) || (jetgeneta[1] < -3.0)) {
-      --n;
-      continue;
-    }
+    //    jetgeneta[1] = random_->Gaus(jetgeneta[0],1.0);
+    jetgeneta[1] = random_->Uniform(minEta_,maxEta_);
+//     if((jetgeneta[1] > 3.0) || (jetgeneta[1] < -3.0)) {
+//       --n;
+//       continue;
+//     }
     jetgenphi[1] = jetgenphi[0] + M_PI;
-
-
     // Set random response paramters for this event
     // if required by response model
     if     (responseModel_ == Flat) parResp_.at(0) = random_->Uniform(1.5);
@@ -885,7 +898,6 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       orijet.SetPtEtaPhiM(jetgenpt[i],jetgeneta[i],jetgenphi[i],0);
       // Split it into towers and set truth of towers
       int ntow = splitJet(orijet,ttowet,ttoweta,ttowphi,ttowid_eta,ttowid_phi);  
-
       // Reset jet and genjet 4-momenta. They will
       // be repopulated by sum of tower 4-momenta
       jet[i].SetPtEtaPhiM(0,0,0,0);
@@ -946,7 +958,18 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       jetgeneta[i]    = genjet[i].Eta();
       jetgenet[i]     = genjet[i].Pt();
       jetgene[i]      = genjet[i].E();
-      jetgenjetidx[i] = i;
+
+      if( !smearTowersIndividually_ ) {
+	jscalel2[i]  = 1. / smearFactor_;
+	jscalel23[i] = jscalel2[i];
+      }
+
+      genJetColPt[i]  = genjet[i].Pt();
+      genJetColPhi[i] = genjet[i].Phi();
+      genJetColEta[i] = genjet[i].Eta();
+      genJetColEt[i]  = genjet[i].Pt();
+      genJetColE[i]   = genjet[i].E();
+      genJetColJetIdx[i] = i;
     } // End of loop over jets
 
     // Check generated eta measurement
@@ -957,8 +980,11 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
     }
 
     // Order jets by pt
-    if((jeteta[1] > minEta_) && (jeteta[1] < maxEta_)
-       && (jetpt[1] > jetpt[0])) {
+    //    if((jeteta[1] > minEta_) && (jeteta[1] < maxEta_)
+    // && (jetpt[1] > jetpt[0])) {
+
+    if( jetpt[1] > jetpt[0]) {
+
       //swap jets
       jetpt[0]     = jet[1].Pt();
       jetphi[0]    = jet[1].Phi();
@@ -970,6 +996,11 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       jetgeneta[0] = genjet[1].Eta();
       jetgenet[0]  = genjet[1].Pt();
       jetgene[0]   = genjet[1].E();
+      genJetColJetIdx[0] = 1;
+
+      double l2CorrTmp = jscalel2[0];
+      jscalel2[0]   = jscalel2[1];
+      jscalel23[0] = jscalel2[0];
 
       jetpt[1]     = jet[0].Pt();
       jetphi[1]    = jet[0].Phi();
@@ -981,6 +1012,10 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       jetgeneta[1] = genjet[0].Eta();
       jetgenet[1]  = genjet[0].Pt();
       jetgene[1]   = genjet[0].E();
+      genJetColJetIdx[1] = 0;
+
+      jscalel2[1]   = l2CorrTmp;
+      jscalel23[1] = jscalel2[1];
 
       // Swap towers
       for(int j = 0 ; j < NobjTow ; ++j) {
@@ -998,9 +1033,14 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       jetgeneta[2]    = 0.;
       jetgenet[2]     = 0.;
       jetgene[2]      = 0.;
-      jetgenjetidx[2] = 2;
-    }
 
+      genJetColPt[2]  = 0.;
+      genJetColPhi[2] = 0.;
+      genJetColEta[2] = 0.;
+      genJetColEt[2]  = 0.; 
+      genJetColE[2]   = 0.;
+      genJetColJetIdx[2] = 2;
+    }
 
     // Fill tree
     CalibTree->Fill();
@@ -1318,7 +1358,7 @@ void ToyMC::init(const std::string& configfile) {
   }
 
   // Response model
-  parResp_             = bag_of<double>(config.read<string>("ToyMC response parameters","1"));
+  parResp_ = bag_of<double>(config.read<string>("ToyMC response parameters","1"));
   std::string response = config.read<std::string>("ToyMC response model","Constant");
   if        ( response == "Constant" ) {
     responseModel_ = Constant;
@@ -1338,6 +1378,15 @@ void ToyMC::init(const std::string& configfile) {
   } else if( response == "SimpleInverse" ) {
     responseModel_ = SimpleInverse;
     assert( parResp_.size() >= 2 );
+  } else if( response == "StepEta" ) {
+    responseModel_ = StepEta;
+    assert( parResp_.size() >= 1 );
+  } else if( response == "SinusEta" ) {
+    responseModel_ = SinusEta;
+    assert( parResp_.size() >= 1 );
+  } else if( response == "SinusEtaSimpleInversePt" ) {
+    responseModel_ = SinusEtaSimpleInversePt;
+    assert( parResp_.size() >= 3 );
   } else {
     std::cerr << "unknown ToyMC response model: " << response << '\n';
     exit(1);
@@ -1435,36 +1484,42 @@ void ToyMC::print() const {
 
   std::cout << "  response:     ";
   if( responseModel_ == Constant )
-    std::cout << "Constant\n";
+    std::cout << "'Constant'";
   else if( responseModel_ == Flat )
-    std::cout << "Flat\n";
+    std::cout << "'Flat'";
   else if( responseModel_ == Exp )
-    std::cout << "Exp\n";
+    std::cout << "'Exp'";
   else if( responseModel_ == Slope )
-    std::cout << "Slope\n";
+    std::cout << "'Slope'";
   else if( responseModel_ == L3 )
-    std::cout << "L3\n";
+    std::cout << "'L3'";
   else if( responseModel_ == SimpleInverse )
-    std::cout << "SimpleInverse\n";
+    std::cout << "'SimpleInverse'";
+  else if( responseModel_ == StepEta )
+    std::cout << "'StepEta'";
+  else if( responseModel_ == SinusEta )
+    std::cout << "'SinusEta'";
+  else if( responseModel_ == SinusEtaSimpleInversePt )
+    std::cout << "'SinusEtaSimpleInversePt'";
 
-  std::cout << "  parameters:   ";
+  std::cout << " with parameters ";
   for(unsigned int i = 0; i < parResp_.size(); i++)
     std::cout << parResp_.at(i) << ",  ";
   std::cout << "\n";
 
   std::cout << "  resolution:   ";
   if( resolutionModel_ == Gauss )
-    std::cout << "Gauss\n";
+    std::cout << "'Gauss'";
   else if( resolutionModel_ == Landau )
-    std::cout << "Landau\n";
+    std::cout << "'Landau'";
   else if( resolutionModel_ == Dirac )
-    std::cout << "Dirac\n";
+    std::cout << "'Dirac'";
   else if( resolutionModel_ == GaussUniform )
-    std::cout << "GaussUniform\n";
+    std::cout << "'GaussUniform'";
   else if( resolutionModel_ == TwoGauss )
-    std::cout << "TwoGauss\n";
+    std::cout << "'TwoGauss'";
 
-  std::cout << "  parameters:   ";
+  std::cout << " with parameters ";
   for(unsigned int i = 0; i < parReso_.size(); i++)
     std::cout << parReso_.at(i) << ",  ";
   std::cout << "\n";
