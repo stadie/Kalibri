@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.36 2009/09/17 12:59:09 mschrode Exp $
+// $Id: ToyMC.cc,v 1.37 2009/10/25 14:17:03 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -655,6 +655,11 @@ int ToyMC::generatePhotonJetTree(TTree* CalibTree, int nevents)
     mcalmet  = 0;
     mcalphi  = 0;
     mcalsum  = 0;
+
+    if( !smearTowersIndividually_ ) {
+      jscalel2  = 1. / smearFactor_;
+      jscalel23 = jscalel2;
+    }
 
     // Fill tree
     CalibTree->Fill();
