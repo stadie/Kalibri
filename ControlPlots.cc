@@ -22,6 +22,7 @@ using namespace std;
 
 #include "JetTruthEvent.h"
 #include "TwoJetsInvMassEvent.h"
+#include "TwoJetsPtBalanceEvent.h"
 
 
 //!  \brief Constructor
@@ -96,6 +97,10 @@ void TControlPlots::makePlots()
   if( config_->read<bool>("create top plots",false) ) {
     cout << "Creating top control plots\n";
     makeControlPlotsTop();
+  }
+  if( config_->read<bool>("create dijets pt-balance plots",false) ) {
+    cout << "Creating dijet pt-balance control plots\n";
+    makeControlPlotsTwoJetsPtBalance();
   }
 }
 
@@ -1400,9 +1405,9 @@ void TControlPlots::makeControlPlotsTop()
 
   for(unsigned i=0; i<2; i++){
 
-    TH1F* results_ptGen[8];
-    TH1F* results_ptRec[8];
-    TH1F* results_eta  [8];
+    std::vector<TH1F*> results_ptGen;
+    std::vector<TH1F*> results_ptRec;
+    std::vector<TH1F*> results_eta;
 
     fit2D(messTruthPtGen[i], results_ptGen);
     fit2D(messTruthPtRec[i], results_ptRec);
@@ -1424,9 +1429,9 @@ void TControlPlots::makeControlPlotsTop()
 
   for(unsigned i=0; i<2; i++){
 
-    TH1F* results_ptGen[8];
-    TH1F* results_ptRec[8];
-    TH1F* results_eta  [8];
+    std::vector<TH1F*> results_ptGen;
+    std::vector<TH1F*> results_ptRec;
+    std::vector<TH1F*> results_eta;
 
     fit2D(responsePtGen[i], results_ptGen);
     fit2D(responsePtRec[i], results_ptRec);
@@ -1448,8 +1453,8 @@ void TControlPlots::makeControlPlotsTop()
 
   for(unsigned i=0; i<5; i++){
 
-    TH1F* results_pt [8];
-    TH1F* results_eta[8];
+    std::vector<TH1F*> results_pt;
+    std::vector<TH1F*> results_eta;
 
     fit2D(corrFacsPt [i], results_pt);
     fit2D(corrFacsEta[i], results_eta);
@@ -1468,8 +1473,8 @@ void TControlPlots::makeControlPlotsTop()
 
   for(unsigned i=0; i<6; i++){
 
-    TH1F* results_pt [8];
-    TH1F* results_eta[8];
+    std::vector<TH1F*> results_pt;
+    std::vector<TH1F*> results_eta;
 
     fit2D(correctedResponsePt [i], results_pt);
     fit2D(correctedResponseEta[i], results_eta);
@@ -2383,7 +2388,922 @@ void TControlPlots::makeControlPlotsParameterScan()
     {
       delete gParScan2D[i];
     }
- }
+}
+
+
+
+//!  \brief Control plots for events of type \p TwoJetsPtBalanceEvent
+// -------------------------------------------------------------
+void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
+  bool debug = false;
+
+  if( debug ) std::cout << "Entering makeControlPlotsTwoJetsPtBalance()\n";
+
+  std::vector<TObject*>                objToBeWritten;
+  std::vector<TData*>::const_iterator  data_it;
+
+  // -- Create 2D histograms of balance etc vs eta, ptdijet --------------
+
+  // Create a ptdijet and eta binning
+  // ptdijet = x, eta = y
+  std::vector<double> binEdgesPtDijet = bag_of<double>(config_->read<std::string>("Control plots pt bin edges",""));
+
+  // Eta bins
+  std::vector<double> binEdgesEta = bag_of<double>(config_->read<std::string>("Control plots eta bin edges",""));
+  Binning bins(binEdgesPtDijet,binEdgesEta);
+  //  bins.Print();
+
+  if( debug ) std::cout << "Creating 2D histograms\n";
+
+  // Create 2D histograms of balance etc vs eta,
+  // ptDijet, ptGenDijet in bins of eta, ptDijet,
+  // ptGenDijet
+  // Outer index: x-axis quantity
+  // Inner index: binning
+  //  0: Balance vs eta, bins of ptDijet
+  //  1: Balance vs eta, bins of ptDijet(gen)
+  //  2: Balance vs ptDijet, bins of eta
+  //  3: Balance vs ptDijet(gen), bins of eta
+  std::vector< std::vector<TH2F*> > h2BUncorr(4);    // Uncorrected dijet balance
+  std::vector< std::vector<TH2F*> > h2BCorr(4);      // Dijet balance corrected by kalibri fit
+  std::vector< std::vector<TH2F*> > h2BCorrL2L3(4);  // Dijet balance corrected by JetMET L2L3 correction
+
+  // Create 2D histograms of response vs eta in
+  // bins of ptGen
+  // 0: Response vs eta, bins of ptGen
+  // 1: Response vs ptGen, bins of eta
+  std::vector< std::vector<TH2F*> > h2RUncorr(2);    // Uncorrected response
+  std::vector< std::vector<TH2F*> > h2RCorr(2);      // Response corrected by kalibri fit
+  std::vector< std::vector<TH2F*> > h2RCorrL2L3(2);  // Response corrected by JetMET L2L3 correction
+
+  TString ptSumLabel = "2 #upoint (p^{1}_{T} - p^{2}_{T}) / (p^{1}_{T} + p^{2}_{T})";
+  TString respLabel = "p_{T} / p_{T,gen}";
+
+  // Loop over ptDijet bins
+  for(int ptbin = 0; ptbin < bins.nBinsX(); ptbin++) {
+    char name[50];
+    sprintf(name,"h2BUncorrVsEta_ptDijet%i",ptbin);
+    TH2F * h2 = new TH2F(name,";#eta;"+ptSumLabel,21,-5,5,51,-2,2);
+    h2BUncorr.at(0).push_back(h2);
+    
+    sprintf(name,"h2BCorrVsEta_ptDijet%i",ptbin);
+    h2BCorr.at(0).push_back(static_cast<TH2F*>(h2->Clone(name)));
+    
+    sprintf(name,"h2BCorrL2L3VsEta_ptDijet%i",ptbin);
+    h2BCorrL2L3.at(0).push_back(static_cast<TH2F*>(h2->Clone(name)));
+
+
+    sprintf(name,"h2BUncorrVsEta_ptDijetGen%i",ptbin);
+    h2 = new TH2F(name,";#eta;"+ptSumLabel,21,-5,5,51,-2,2);
+    h2BUncorr.at(1).push_back(h2);
+    
+    sprintf(name,"h2BCorrVsEta_ptDijetGen%i",ptbin);
+    h2BCorr.at(1).push_back(static_cast<TH2F*>(h2->Clone(name)));
+    
+    sprintf(name,"h2BCorrL2L3VsEta_ptDijetGen%i",ptbin);
+    h2BCorrL2L3.at(1).push_back(static_cast<TH2F*>(h2->Clone(name)));
+
+
+    sprintf(name,"h2RUncorrVsEta_ptGen%i",ptbin);
+    h2 = new TH2F(name,";#eta;"+respLabel,21,-5,5,51,0,2);
+    h2RUncorr.at(0).push_back(h2);
+    
+    sprintf(name,"h2RCorrVsEta_ptGen%i",ptbin);
+    h2RCorr.at(0).push_back(static_cast<TH2F*>(h2->Clone(name)));
+    
+    sprintf(name,"h2RCorrL2L3VsEta_ptGen%i",ptbin);
+    h2RCorrL2L3.at(0).push_back(static_cast<TH2F*>(h2->Clone(name)));
+  } // End of loop over ptDijet bins
+
+
+  // Logarithmic binning
+  const int nLogBins = 15;
+  double logBins[nLogBins+1];
+  equidistLogBins(logBins,nLogBins,bins.xLow(0),bins.xUp(bins.nBinsX()-1));
+  // Loop over eta bins
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) {
+    char name[50];
+    sprintf(name,"h2BUncorrVsPtDijet_eta%i",etaBin);
+    TH2F * h2 = new TH2F(name,";p^{dijet}_{T} (GeV);"+ptSumLabel,nLogBins,logBins,51,-2,2);
+    h2BUncorr.at(2).push_back(h2);
+    
+    sprintf(name,"h2BCorrVsPtDijet_eta%i",etaBin);
+    h2BCorr.at(2).push_back(static_cast<TH2F*>(h2->Clone(name)));
+    
+    sprintf(name,"h2BCorrL2L3VsPtDijet_eta%i",etaBin);
+    h2BCorrL2L3.at(2).push_back(static_cast<TH2F*>(h2->Clone(name)));
+
+
+    sprintf(name,"h2BUncorrVsPtDijetGen_eta%i",etaBin);
+    h2 = new TH2F(name,";p^{dijet}_{T,gen} (GeV);"+ptSumLabel,nLogBins,logBins,51,-2,2);
+    h2BUncorr.at(3).push_back(h2);
+    
+    sprintf(name,"h2BCorrVsPtDijetGen_eta%i",etaBin);
+    h2BCorr.at(3).push_back(static_cast<TH2F*>(h2->Clone(name)));
+    
+    sprintf(name,"h2BCorrL2L3VsPtDijetGen_eta%i",etaBin);
+    h2BCorrL2L3.at(3).push_back(static_cast<TH2F*>(h2->Clone(name)));
+
+
+    sprintf(name,"h2RUncorrVsPtGen_eta%i",etaBin);
+    h2 = new TH2F(name,";p^{gen}_{T} (GeV);"+respLabel,nLogBins,logBins,51,0,2);
+    h2RUncorr.at(1).push_back(h2);
+    
+    sprintf(name,"h2RCorrVsPtGen_eta%i",etaBin);
+    h2RCorr.at(1).push_back(static_cast<TH2F*>(h2->Clone(name)));
+    
+    sprintf(name,"h2RCorrL2L3VsPtGen_eta%i",etaBin);
+    h2RCorrL2L3.at(1).push_back(static_cast<TH2F*>(h2->Clone(name)));
+  } // End of loop over eta bins
+
+  // Other control quantities
+  TH2F * h2Eta = new TH2F("h2Eta",";#eta^{1};#eta^{2}",21,-5.,5.,20,-5.,5.);
+  objToBeWritten.push_back(h2Eta);
+  
+  if( debug ) std::cout << "Filling 2D histograms\n";
+
+  // First loop over data and fill balance uncorrected
+  // and Kalibri corrected data into the corresponding
+  // 2D histogram
+  for( data_it = data_->begin(); data_it != data_->end(); data_it++ ) {
+    TwoJetsPtBalanceEvent *evt = dynamic_cast<TwoJetsPtBalanceEvent*>(*data_it);
+    if( evt ) {
+      if( evt->flaggedBad() ) continue;   // Discard events flagged bad
+      double weight = evt->GetWeight();
+
+      h2Eta->Fill(evt->getJet1()->eta(),evt->getJet2()->eta(),evt->GetWeight());
+
+      // Find ptDijet bins
+      int ptDijetBin = bins.iX(evt->ptDijet());
+      int ptDijetGenBin = bins.iX(evt->ptDijetGen());
+      
+      for(int i = 0; i < 2; i++) {
+	Jet * jet = evt->getJet1();
+	if( i == 1 ) evt->getJet2();
+
+	if( 0 <= ptDijetBin && ptDijetBin < bins.nBinsX() ) {
+	  h2BUncorr.at(0).at(ptDijetBin)->Fill(jet->eta(),evt->ptBalance(),weight);
+	  h2BCorr.at(0).at(ptDijetBin)->Fill(jet->eta(),evt->ptBalanceCorr(),weight);
+	  h2BCorrL2L3.at(0).at(ptDijetBin)->Fill(jet->eta(),evt->ptBalanceCorrL2L3(),weight);
+	}
+
+	if( 0 <= ptDijetGenBin && ptDijetGenBin < bins.nBinsX() ) {
+	  h2BUncorr.at(1).at(ptDijetGenBin)->Fill(jet->eta(),evt->ptBalance(),weight);
+	  h2BCorr.at(1).at(ptDijetGenBin)->Fill(jet->eta(),evt->ptBalanceCorr(),weight);
+	  h2BCorrL2L3.at(1).at(ptDijetGenBin)->Fill(jet->eta(),evt->ptBalanceCorrL2L3(),weight);
+	}
+
+	// Find ptGen bin
+	int ptGenBin = bins.iX(jet->GenPt());
+	if( 0 <= ptGenBin && ptGenBin < bins.nBinsX() ) {
+	  h2RUncorr.at(0).at(ptGenBin)->Fill(jet->eta(),jet->Et()/jet->GenPt(),weight);
+	  h2RCorr.at(0).at(ptGenBin)->Fill(jet->eta(),jet->correctedEt()/jet->GenPt(),weight);
+	  h2RCorrL2L3.at(0).at(ptGenBin)->Fill(jet->eta(),jet->corFactors.getL2L3()*jet->Et()/jet->GenPt(),weight);
+	}
+	
+	// Find eta bin
+	int etaBin = bins.iY(jet->eta());
+	if( 0 <= etaBin && etaBin < bins.nBinsY() ) {
+	  h2BUncorr.at(2).at(etaBin)->Fill(evt->ptDijet(),evt->ptBalance(),weight);
+	  h2BCorr.at(2).at(etaBin)->Fill(evt->ptDijet(),evt->ptBalanceCorr(),weight);
+	  h2BCorrL2L3.at(2).at(etaBin)->Fill(evt->ptDijet(),evt->ptBalanceCorrL2L3(),weight);
+
+	  h2BUncorr.at(3).at(etaBin)->Fill(evt->ptDijetGen(),evt->ptBalance(),weight);
+	  h2BCorr.at(3).at(etaBin)->Fill(evt->ptDijetGen(),evt->ptBalanceCorr(),weight);
+	  h2BCorrL2L3.at(3).at(etaBin)->Fill(evt->ptDijetGen(),evt->ptBalanceCorrL2L3(),weight);
+
+	  h2RUncorr.at(1).at(etaBin)->Fill(jet->GenPt(),jet->Et()/jet->GenPt(),weight);
+	  h2RCorr.at(1).at(etaBin)->Fill(jet->GenPt(),jet->correctedEt()/jet->GenPt(),weight);
+	  h2RCorrL2L3.at(1).at(etaBin)->Fill(jet->GenPt(),jet->corFactors.getL2L3()*jet->Et()/jet->GenPt(),weight);
+	}
+      }
+    }
+  } // End of first loop over data
+
+  if( debug ) std::cout << "Projecting 1D histograms\n";
+
+  // -- Balance vs eta, pt ---------------------------------
+  // Get 1D projections from 2D histograms
+  //  0: Balance vs eta, bins of ptDijet
+  //  1: Balance vs eta, bins of ptDijet(gen)
+  //  2: Balance vs ptDijet, bins of eta
+  //  3: Balance vs ptDijet(gen), bins of eta
+  std::vector< std::vector<TH1F*> > hBUncorr(4);
+  std::vector< std::vector<TH1F*> > hBCorr(4);
+  std::vector< std::vector<TH1F*> > hBCorrL2L3(4);
+
+  std::vector< std::vector< std::vector<TH1F*> > > hBDistUncorr(4);
+  std::vector< std::vector< std::vector<TH1F*> > > hBDistCorr(4);
+  std::vector< std::vector< std::vector<TH1F*> > > hBDistCorrL2L3(4);
+
+  // 0: Response vs eta, bins of ptGen
+  // 1: Response vs ptGen, bins of eta
+  std::vector< std::vector<TH1F*> > hRUncorr(2);
+  std::vector< std::vector<TH1F*> > hRCorr(2);
+  std::vector< std::vector<TH1F*> > hRCorrL2L3(2);
+
+  for(int i = 0; i < 4; i++) {
+    int nBins = bins.nBinsX();
+    if( i > 1 ) nBins = bins.nBinsY();
+
+    hBUncorr.at(i) = std::vector<TH1F*>(nBins);
+    hBCorr.at(i) = std::vector<TH1F*>(nBins);
+    hBCorrL2L3.at(i) = std::vector<TH1F*>(nBins);
+    
+    hBDistUncorr.at(i) = std::vector< std::vector<TH1F*> >(nBins);
+    hBDistCorr.at(i) = std::vector< std::vector<TH1F*> >(nBins);
+    hBDistCorrL2L3.at(i) = std::vector< std::vector<TH1F*> >(nBins);
+
+    if( i < 2 ) {
+      if( i == 1 ) nBins = bins.nBinsY();
+      hRUncorr.at(i) = std::vector<TH1F*>(nBins);
+      hRCorr.at(i) = std::vector<TH1F*>(nBins);
+      hRCorrL2L3.at(i) = std::vector<TH1F*>(nBins);
+    }
+  }
+  int colorUncorr = 1;
+  int colorCorr = 2;
+  int colorGen = 4;
+
+  if( debug ) std::cout << " Loop over ptDijet bins\n";
+
+  for(int ptDijetBin = 0; ptDijetBin < bins.nBinsX(); ptDijetBin++) { // Loop over pt bins
+    if( debug ) {
+      std::cout << "  Bin " << ptDijetBin << ": ";
+      std::cout << bins.xLow(bins.bin(ptDijetBin,0)) << " - ";
+      std::cout << bins.xUp(bins.bin(ptDijetBin,0)) << std::endl;
+    }
+    char title[100];
+    sprintf(title,"%.0f < p^{dijet}_{T} < %.0f GeV",bins.xLow(bins.bin(ptDijetBin,0)),bins.xUp(bins.bin(ptDijetBin,0)));
+
+    if( debug ) std::cout << "   Uncorrected balance vs eta, bins of ptDijet\n";
+    // Uncorrected balance vs eta, bins of ptDijet
+    fit2DMean(h2BUncorr.at(0).at(ptDijetBin),
+		   hBUncorr.at(0).at(ptDijetBin),
+		   hBDistUncorr.at(0).at(ptDijetBin),colorUncorr);
+    hBUncorr.at(0).at(ptDijetBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBUncorr.at(0).at(ptDijetBin));
+
+    if( debug ) std::cout << "   Corrected balance vs eta, bins of ptDijet\n";
+    // Corrected balance vs eta, bins of ptDijet
+    fit2DMean(h2BCorr.at(0).at(ptDijetBin),
+		   hBCorr.at(0).at(ptDijetBin),
+		   hBDistCorr.at(0).at(ptDijetBin),colorCorr);
+    hBCorr.at(0).at(ptDijetBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBCorr.at(0).at(ptDijetBin));
+
+    if( debug ) std::cout << "   Genjet balance vs eta, bins of ptDijet\n";
+    // Genjet balance vs eta, bins of ptDijet
+    fit2DMean(h2BCorrL2L3.at(0).at(ptDijetBin),
+		   hBCorrL2L3.at(0).at(ptDijetBin),
+		   hBDistCorrL2L3.at(0).at(ptDijetBin),colorGen);
+    hBCorrL2L3.at(0).at(ptDijetBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBCorrL2L3.at(0).at(ptDijetBin));
+
+    sprintf(title,"%.0f < p^{dijet}_{T,gen} < %.0f GeV",bins.xLow(bins.bin(ptDijetBin,0)),bins.xUp(bins.bin(ptDijetBin,0)));
+    if( debug ) std::cout << "   Uncorrected balance vs eta, bins of ptDijet\n";
+    // Uncorrected balance vs eta, bins of ptDijetGen
+    fit2DMean(h2BUncorr.at(1).at(ptDijetBin),
+		   hBUncorr.at(1).at(ptDijetBin),
+		   hBDistUncorr.at(1).at(ptDijetBin),colorUncorr);
+    hBUncorr.at(1).at(ptDijetBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBUncorr.at(1).at(ptDijetBin));
+
+    if( debug ) std::cout << "   Corrected balance vs eta, bins of ptDijet\n";
+    // Corrected balance vs eta, bins of ptDijetGen
+    fit2DMean(h2BCorr.at(1).at(ptDijetBin),
+		   hBCorr.at(1).at(ptDijetBin),
+		   hBDistCorr.at(1).at(ptDijetBin),colorCorr);
+    hBCorr.at(1).at(ptDijetBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBCorr.at(1).at(ptDijetBin));
+
+    if( debug ) std::cout << "   Genjet balance vs eta, bins of ptDijet\n";
+    // Genjet balance vs eta, bins of ptDijetGen
+    fit2DMean(h2BCorrL2L3.at(1).at(ptDijetBin),
+		   hBCorrL2L3.at(1).at(ptDijetBin),
+		   hBDistCorrL2L3.at(1).at(ptDijetBin),colorGen);
+    hBCorrL2L3.at(1).at(ptDijetBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBCorrL2L3.at(1).at(ptDijetBin));
+
+
+    if( debug ) std::cout << "   Uncorrected response vs eta, bins of ptGen\n";
+    sprintf(title,"%.0f < p_{T,gen} < %.0f GeV",bins.xLow(bins.bin(ptDijetBin,0)),bins.xUp(bins.bin(ptDijetBin,0)));
+    // Uncorrected response vs eta, bins of ptGen
+    fit2DGaussMean(h2RUncorr.at(0).at(ptDijetBin),
+		   hRUncorr.at(0).at(ptDijetBin),colorUncorr);
+    hRUncorr.at(0).at(ptDijetBin)->SetTitle(title);    
+    objToBeWritten.push_back(hRUncorr.at(0).at(ptDijetBin));
+
+    if( debug ) std::cout << "   Corrected response vs eta, bins of ptGen\n";
+    // Corrected response vs eta, bins of ptGen
+    fit2DGaussMean(h2RCorr.at(0).at(ptDijetBin),
+		   hRCorr.at(0).at(ptDijetBin),colorCorr);
+    hRCorr.at(0).at(ptDijetBin)->SetTitle(title);    
+    objToBeWritten.push_back(hRCorr.at(0).at(ptDijetBin));
+
+    if( debug ) std::cout << "   L2L3 corrected response vs eta, bins of ptGen\n";
+    // L2L3 corrected response vs eta, bins of ptGen
+    fit2DGaussMean(h2RCorrL2L3.at(0).at(ptDijetBin),
+		   hRCorrL2L3.at(0).at(ptDijetBin),colorGen);
+    hRCorrL2L3.at(0).at(ptDijetBin)->SetTitle(title);    
+    objToBeWritten.push_back(hRCorrL2L3.at(0).at(ptDijetBin));
+  } // End of loop over pt bins
+
+  if( debug ) std::cout << " Loop over eta bins\n";
+
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) { // Loop over eta bins
+    char title[50];
+    sprintf(title,"%.1f < #eta < %.1f",bins.yLow(bins.bin(0,etaBin)),bins.yUp(bins.bin(0,etaBin)));
+    // Uncorrected balance vs ptDijet, bins of eta
+    fit2DMean(h2BUncorr.at(2).at(etaBin),
+	      hBUncorr.at(2).at(etaBin),
+	      hBDistUncorr.at(2).at(etaBin),colorUncorr);
+    hBUncorr.at(2).at(etaBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBUncorr.at(2).at(etaBin));
+
+    // Corrected balance vs ptDijet, bins of eta
+    fit2DMean(h2BCorr.at(2).at(etaBin),
+	      hBCorr.at(2).at(etaBin),
+	      hBDistCorr.at(2).at(etaBin),colorCorr);
+    hBCorr.at(2).at(etaBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBCorr.at(2).at(etaBin));
+
+    // Genjet balance vs ptDijet, bins of eta
+    fit2DMean(h2BCorrL2L3.at(2).at(etaBin),
+	      hBCorrL2L3.at(2).at(etaBin),
+	      hBDistCorrL2L3.at(2).at(etaBin),colorGen);
+    hBCorrL2L3.at(2).at(etaBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBCorrL2L3.at(2).at(etaBin));
+
+    // Uncorrected balance vs ptDijetGen, bins of eta
+    fit2DMean(h2BUncorr.at(3).at(etaBin),
+	      hBUncorr.at(3).at(etaBin),
+	      hBDistUncorr.at(3).at(etaBin),colorUncorr);
+    hBUncorr.at(3).at(etaBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBUncorr.at(3).at(etaBin));
+
+    // Corrected balance vs ptDijetGen, bins of eta
+    fit2DMean(h2BCorr.at(3).at(etaBin),
+	      hBCorr.at(3).at(etaBin),
+	      hBDistCorr.at(3).at(etaBin),colorCorr);
+    hBCorr.at(3).at(etaBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBCorr.at(3).at(etaBin));
+
+    // Genjet balance vs ptDijetGen, bins of eta
+    fit2DMean(h2BCorrL2L3.at(3).at(etaBin),
+	      hBCorrL2L3.at(3).at(etaBin),
+	      hBDistCorrL2L3.at(3).at(etaBin),colorGen);
+    hBCorrL2L3.at(3).at(etaBin)->SetTitle(title);    
+    objToBeWritten.push_back(hBCorrL2L3.at(3).at(etaBin));
+
+
+    // Uncorrected response vs ptGen, bins of eta
+    fit2DGaussMean(h2RUncorr.at(1).at(etaBin),
+		   hRUncorr.at(1).at(etaBin),colorUncorr);
+    hRUncorr.at(1).at(etaBin)->SetTitle(title);    
+    objToBeWritten.push_back(hRUncorr.at(1).at(etaBin));
+
+    // Corrected response vs ptGen, bins of eta
+    fit2DGaussMean(h2RCorr.at(1).at(etaBin),
+		   hRCorr.at(1).at(etaBin),colorCorr);
+    hRCorr.at(1).at(etaBin)->SetTitle(title);    
+    objToBeWritten.push_back(hRCorr.at(1).at(etaBin));
+
+    // L2L3 corrected response vs ptGen, bins of eta
+    fit2DGaussMean(h2RCorrL2L3.at(1).at(etaBin),
+		   hRCorrL2L3.at(1).at(etaBin),colorGen);
+    hRCorrL2L3.at(1).at(etaBin)->SetTitle(title);    
+    objToBeWritten.push_back(hRCorrL2L3.at(1).at(etaBin));
+
+  } // End of loop over eta bins
+
+  if( debug ) std::cout << "Drawing histograms\n";
+
+
+  // -- Draw histograms into ps file ----------------------------
+  // Draw mean balance
+  TPostScript * const ps1 = new TPostScript("controlplotsTwoJetsPtBalanceMean.ps",111);
+  TCanvas * const c1 = new TCanvas("c1","",500,500); // Mean values
+
+  c1->Draw();
+  ps1->NewPage();
+  h2Eta->Draw();
+  c1->Draw();
+  ps1->NewPage();
+
+  TLegend * legBal = new TLegend(0.4,0.65,0.93,0.85);
+  legBal->SetBorderSize(0);
+  legBal->SetFillColor(0);
+  legBal->SetTextFont(42);
+  legBal->AddEntry(hBUncorr.at(0).at(0),"Uncorrected","P");
+  legBal->AddEntry(hBCorr.at(0).at(0),"Kalibri","P");
+  //legBal->AddEntry(hBCorrL2L3.at(0).at(0),"L2L3 correction","P");
+
+  TH1F * hist = hBUncorr.at(0).at(0);
+  TLine *lEtaBal = new TLine(hist->GetXaxis()->GetBinLowEdge(1),0,
+			  hist->GetXaxis()->GetBinUpEdge(hist->GetNbinsX()),0);
+  lEtaBal->SetLineColor(1);
+  lEtaBal->SetLineWidth(2);
+  lEtaBal->SetLineStyle(2);
+
+  double bMin = -1.;
+  double bMax = 2.;
+  double bMinZoom = -0.1;
+  double bMaxZoom = 0.2;
+
+  for(int ptDijetBin = 0; ptDijetBin < bins.nBinsX(); ptDijetBin++) {
+    // Balance vs eta
+    c1->cd();
+    hBUncorr.at(0).at(ptDijetBin)->GetYaxis()->SetRangeUser(bMin,bMax);
+    hBUncorr.at(0).at(ptDijetBin)->GetYaxis()->SetTitle(ptSumLabel);
+    hBUncorr.at(0).at(ptDijetBin)->Draw("PE1");
+    lEtaBal->Draw("same");
+    hBCorr.at(0).at(ptDijetBin)->Draw("PE1same");
+    //hBCorrL2L3.at(0).at(ptDijetBin)->Draw("PE1same");
+    legBal->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+  for(int ptDijetBin = 0; ptDijetBin < bins.nBinsX(); ptDijetBin++) {
+    // Zoom: Balance vs eta
+    c1->cd();
+    hBUncorr.at(0).at(ptDijetBin)->GetYaxis()->SetRangeUser(bMinZoom,bMaxZoom);
+    hBUncorr.at(0).at(ptDijetBin)->Draw("PE1");
+    lEtaBal->Draw("same");
+    hBCorr.at(0).at(ptDijetBin)->Draw("PE1same");
+    //hBCorrL2L3.at(0).at(ptDijetBin)->Draw("PE1same");
+    legBal->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+
+  for(int ptDijetBin = 0; ptDijetBin < bins.nBinsX(); ptDijetBin++) {
+    // Balance vs eta
+    c1->cd();
+    hBUncorr.at(1).at(ptDijetBin)->GetYaxis()->SetRangeUser(bMin,bMax);
+    hBUncorr.at(1).at(ptDijetBin)->GetYaxis()->SetTitle(ptSumLabel);
+    hBUncorr.at(1).at(ptDijetBin)->Draw("PE1");
+    lEtaBal->Draw("same");
+    hBCorr.at(1).at(ptDijetBin)->Draw("PE1same");
+    //hBCorrL2L3.at(1).at(ptDijetBin)->Draw("PE1same");
+    legBal->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+  for(int ptDijetBin = 0; ptDijetBin < bins.nBinsX(); ptDijetBin++) {
+    // Zoom: Balance vs eta
+    c1->cd();
+    hBUncorr.at(1).at(ptDijetBin)->GetYaxis()->SetRangeUser(bMinZoom,bMaxZoom);
+    hBUncorr.at(1).at(ptDijetBin)->Draw("PE1");
+    lEtaBal->Draw("same");
+    hBCorr.at(1).at(ptDijetBin)->Draw("PE1same");
+    //hBCorrL2L3.at(1).at(ptDijetBin)->Draw("PE1same");
+    legBal->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+
+  hist = hBUncorr.at(2).at(0);
+  TLine *lPtDijet = new TLine(hist->GetXaxis()->GetBinLowEdge(1),0,
+			  hist->GetXaxis()->GetBinUpEdge(hist->GetNbinsX()),0);
+  lPtDijet->SetLineColor(1);
+  lPtDijet->SetLineWidth(2);
+  lPtDijet->SetLineStyle(2);
+
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) {
+    // Balance vs ptDijet
+    c1->cd()->SetLogx(1);
+    hBUncorr.at(2).at(etaBin)->GetYaxis()->SetRangeUser(bMin,bMax);
+    hBUncorr.at(2).at(etaBin)->GetYaxis()->SetTitle(ptSumLabel);
+    hBUncorr.at(2).at(etaBin)->Draw("PE1");
+    lPtDijet->Draw("same");
+    hBCorr.at(2).at(etaBin)->Draw("PE1same");
+    //hBCorrL2L3.at(2).at(etaBin)->Draw("PE1same");
+    legBal->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) {
+    // Zoom: Balance vs ptDijet
+    c1->cd()->SetLogx(1);
+    hBUncorr.at(2).at(etaBin)->GetYaxis()->SetRangeUser(bMinZoom,bMaxZoom);
+    hBUncorr.at(2).at(etaBin)->Draw("PE1");
+    lPtDijet->Draw("same");
+    hBCorr.at(2).at(etaBin)->Draw("PE1same");
+    //hBCorrL2L3.at(2).at(etaBin)->Draw("PE1same");
+    legBal->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) {
+    // Balance vs ptDijetGen
+    c1->cd()->SetLogx(1);
+    hBUncorr.at(3).at(etaBin)->GetYaxis()->SetRangeUser(bMin,bMax);
+    hBUncorr.at(3).at(etaBin)->GetYaxis()->SetTitle(ptSumLabel);
+    hBUncorr.at(3).at(etaBin)->Draw("PE1");
+    lPtDijet->Draw("same");
+    hBCorr.at(3).at(etaBin)->Draw("PE1same");
+    //hBCorrL2L3.at(3).at(etaBin)->Draw("PE1same");
+    legBal->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) {
+    // Zoom: Balance vs ptDijetGen
+    c1->cd()->SetLogx(1);
+    hBUncorr.at(3).at(etaBin)->GetYaxis()->SetRangeUser(bMinZoom,bMaxZoom);
+    hBUncorr.at(3).at(etaBin)->Draw("PE1");
+    lPtDijet->Draw("same");
+    hBCorr.at(3).at(etaBin)->Draw("PE1same");
+    //hBCorrL2L3.at(3).at(etaBin)->Draw("PE1same");
+    legBal->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+
+
+  // Draw response
+  double rMin = 0.;
+  double rMax = 2.5;
+  double rMinZoom = 0.;
+  double rMaxZoom = 0.5;
+
+  TLegend * legResp = new TLegend(0.4,0.65,0.93,0.85);
+  legResp->SetBorderSize(0);
+  legResp->SetFillColor(0);
+  legResp->SetTextFont(42);
+  legResp->AddEntry(hRUncorr.at(0).at(0),"Uncorrected","P");
+  legResp->AddEntry(hRCorr.at(0).at(0),"Kalibri","P");
+  //legResp->AddEntry(hRCorrL2L3.at(0).at(0),"L2L3 correction","P");
+
+  hist = hRUncorr.at(0).at(0);
+  TLine *lEtaResp = new TLine(hist->GetXaxis()->GetBinLowEdge(1),1,
+			  hist->GetXaxis()->GetBinUpEdge(hist->GetNbinsX()),1);
+  lEtaResp->SetLineColor(1);
+  lEtaResp->SetLineWidth(2);
+  lEtaResp->SetLineStyle(2);
+
+  hist = hRUncorr.at(1).at(0);
+  TLine *lPtGenResp = new TLine(hist->GetXaxis()->GetBinLowEdge(1),1,
+			  hist->GetXaxis()->GetBinUpEdge(hist->GetNbinsX()),1);
+  lPtGenResp->SetLineColor(1);
+  lPtGenResp->SetLineWidth(2);
+  lPtGenResp->SetLineStyle(2);
+
+  for(int ptGenBin = 0; ptGenBin < bins.nBinsX(); ptGenBin++) {
+    // Response vs eta
+    c1->cd()->SetLogx(0);
+    hRUncorr.at(0).at(ptGenBin)->GetYaxis()->SetRangeUser(rMin,rMax);
+    hRUncorr.at(0).at(ptGenBin)->GetYaxis()->SetTitle(respLabel);
+    hRUncorr.at(0).at(ptGenBin)->Draw("PE1");
+    lEtaResp->Draw("same");
+    hRCorr.at(0).at(ptGenBin)->Draw("PE1same");
+    //hRCorrL2L3.at(0).at(ptGenBin)->Draw("PE1same");
+    legResp->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+  for(int ptGenBin = 0; ptGenBin < bins.nBinsX(); ptGenBin++) {
+    // Zoom: Response vs eta
+    c1->cd();
+    hRUncorr.at(0).at(ptGenBin)->GetYaxis()->SetRangeUser(rMinZoom,rMaxZoom);
+    hRUncorr.at(0).at(ptGenBin)->Draw("PE1");
+    hRCorr.at(0).at(ptGenBin)->Draw("PE1same");
+    //hRCorrL2L3.at(0).at(ptGenBin)->Draw("PE1same");
+    legResp->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) {
+    // Response vs ptGen
+    c1->cd()->SetLogx(1);
+    hRUncorr.at(1).at(etaBin)->GetYaxis()->SetRangeUser(rMin,rMax);
+    hRUncorr.at(1).at(etaBin)->GetYaxis()->SetTitle(respLabel);
+    hRUncorr.at(1).at(etaBin)->Draw("PE1");
+    lPtGenResp->Draw("same");
+    hRCorr.at(1).at(etaBin)->Draw("PE1same");
+    //hRCorrL2L3.at(1).at(etaBin)->Draw("PE1same");
+    legResp->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) {
+    // Zoom: Response vs ptGen
+    c1->cd();
+    hRUncorr.at(1).at(etaBin)->GetYaxis()->SetRangeUser(rMinZoom,rMaxZoom);
+    hRUncorr.at(1).at(etaBin)->Draw("PE1");
+    hRCorr.at(1).at(etaBin)->Draw("PE1same");
+    //hRCorrL2L3.at(1).at(etaBin)->Draw("PE1same");
+    legResp->Draw("same");
+    c1->Draw();
+    ps1->NewPage();
+  }
+
+  ps1->Close();
+
+
+  // Draw distributions
+  for(int i = 0; i < 4; i++) {
+    int nBins = bins.nBinsX();
+    if( i > 1 ) nBins = bins.nBinsY();
+    for(int bin = 0; bin < nBins; bin++) {
+      for(size_t k = 0; k < hBDistUncorr.at(i).at(bin).size(); k++) {
+	double min = 0.;
+	double maxUncorr = 0.;
+	double maxCorr = 0.;
+	double maxCorrL2L3 = 0.;
+	findYRange(hBDistUncorr.at(i).at(bin).at(k),min,maxUncorr);
+	findYRange(hBDistCorr.at(i).at(bin).at(k),min,maxCorr);
+	findYRange(hBDistCorrL2L3.at(i).at(bin).at(k),min,maxCorrL2L3);
+
+	//	if( maxCorrL2L3 > maxCorr ) maxCorr = maxCorrL2L3;
+	if( maxUncorr > maxCorr ) maxCorr = maxUncorr;
+	maxCorr *= 1.3;
+	hBDistUncorr.at(i).at(bin).at(k)->GetYaxis()->SetRangeUser(0.,maxCorr);
+	hBDistCorr.at(i).at(bin).at(k)->GetYaxis()->SetRangeUser(0.,maxCorr);
+	hBDistCorrL2L3.at(i).at(bin).at(k)->GetYaxis()->SetRangeUser(0.,maxCorr);
+      }
+    }
+  }
+
+  TPostScript * const ps2 = new TPostScript("controlplotsTwoJetsPtBalanceDistributions.ps",112);
+  ps2->Range(25,1);
+
+  double cw  = 300;
+  double mw  = 70;
+
+  double w   = 3*cw + mw;
+  double h   = 2*cw + 2*mw;
+  
+  double crw = cw/w;
+  double mrw = mw/w;
+  double crh = cw/h;
+  double mrh = mw/h;
+
+  TCanvas * const c2 = new TCanvas("c1","",(int)w,(int)h);
+
+  // Pads for the histograms
+  std::vector<TPad*> cPads;
+  cPads.push_back(new TPad("cPad0","",mrw,mrh+crh,mrw+crw,1.-mrw));
+  cPads.push_back(new TPad("cPad1","",mrw+crw,mrh+crh,mrw+2*crw,1.-mrw));
+  cPads.push_back(new TPad("cPad2","",mrw+2*crw,mrh+crh,1.,1.-mrw));
+  cPads.push_back(new TPad("cPad3","",mrw,mrh,mrw+crw,mrh+crh));
+  cPads.push_back(new TPad("cPad4","",mrw+crw,mrh,mrw+2*crw,mrh+crh));
+  cPads.push_back(new TPad("cPad5","",mrw+2*crw,mrh,1.,mrh+crh));
+  for(unsigned int i = 0; i < cPads.size(); i++) {
+    cPads.at(i)->SetFillStyle(1001); 
+    cPads.at(i)->SetFrameFillColor(10 );
+    cPads.at(i)->SetFrameBorderMode(0);
+    cPads.at(i)->SetTopMargin(0.04);
+    cPads.at(i)->SetBottomMargin(0.1);
+    cPads.at(i)->SetLeftMargin(0.1);
+    cPads.at(i)->SetRightMargin(0.04);
+    
+    c2->cd();
+    cPads.at(i)->Draw();
+  }
+
+  // Pads for margins holding titles
+  TPad * mbPad = new TPad("mbPad","",0.,0.,1.,mrh);
+  mbPad->SetFillStyle(1001);
+  mbPad->SetFrameFillColor(10);
+  mbPad->SetFrameBorderMode(0);
+ 
+  TPaveText * bLabel = new TPaveText(0.6,0.5,0.95,1.,"NDC");
+  bLabel->SetFillColor(0);
+  bLabel->SetTextFont(42);
+  bLabel->SetTextSize(0.7);
+  bLabel->SetBorderSize(0);
+  bLabel->AddText(ptSumLabel);
+  c2->cd();
+  mbPad->Draw();
+  mbPad->cd();
+  bLabel->Draw();
+
+  TPad * mtPad = new TPad("mtPad","",0.,mrh+2.*crh+0.01,1.,1.);
+  mtPad->SetFillStyle(1001);
+  mtPad->SetFrameFillColor(10);
+  mtPad->SetFrameBorderMode(0);
+  c2->cd();
+  mtPad->Draw();
+ 
+  std::vector<TPaveText*> tLabels(2*(bins.nBinsX()+bins.nBinsY()));
+  for(int i = 0; i < 2*(bins.nBinsX()+bins.nBinsY()); i++) {
+    tLabels.at(i) = new TPaveText(0.3,0.6,0.7,1.,"NDC");
+    tLabels.at(i)->SetFillColor(0);
+    tLabels.at(i)->SetTextFont(42);
+    tLabels.at(i)->SetTextSize(0.5);
+    tLabels.at(i)->SetBorderSize(0);
+  }
+
+  // For some reason, this prevents the first ps-page
+  // from looking weird...
+  c2->Draw();
+  ps2->NewPage();
+  // Loop over ptDijet bins
+  for(int ptDijetBin = 0; ptDijetBin < bins.nBinsX(); ptDijetBin++) {
+    char label[100];
+    sprintf(label,"%.0f < p^{dijet}_{T} < %.0f GeV",
+	    bins.xLow(bins.bin(ptDijetBin,0)),bins.xUp(bins.bin(ptDijetBin,0)));
+    tLabels.at(ptDijetBin)->AddText(label);
+    mtPad->Clear();
+    mtPad->cd();
+    tLabels.at(ptDijetBin)->Draw();
+
+    for(size_t k = 0; k < hBDistUncorr.at(0).at(ptDijetBin).size(); k++) {
+      int padIdx = k % 6;
+      cPads.at(padIdx)->cd();
+
+      TString etaBinText = hBDistUncorr.at(0).at(ptDijetBin).at(k)->GetTitle();
+      hBDistUncorr.at(0).at(ptDijetBin).at(k)->SetTitle("");
+
+      hBDistUncorr.at(0).at(ptDijetBin).at(k)->Draw("H");
+      hBDistCorr.at(0).at(ptDijetBin).at(k)->Draw("Hsame");
+      //      hBDistCorrL2L3.at(0).at(ptDijetBin).at(k)->Draw("Hsame");
+
+      // Label bin
+      TPaveText * etaBinLabel = new TPaveText(0.13,0.84,0.93,0.93,"NDC");
+      etaBinLabel->SetFillColor(0);
+      etaBinLabel->SetTextFont(42);
+      etaBinLabel->SetTextAlign(12);
+      etaBinLabel->AddText(etaBinText);
+      etaBinLabel->Draw("same");
+
+      if( padIdx == 5 || k == hBDistUncorr.at(0).at(ptDijetBin).size()-1 ) {
+	c2->Draw();
+	ps2->NewPage();
+	for(std::vector<TPad*>::iterator p = cPads.begin(); p != cPads.end(); p++) {
+	  (*p)->Clear();
+	}
+      }
+    }
+  }
+  // Loop over ptDijetGen bins
+  for(int ptDijetBin = 0; ptDijetBin < bins.nBinsX(); ptDijetBin++) {
+    char label[100];
+    sprintf(label,"%.0f < p^{dijet}_{T,gen} < %.0f GeV",
+	    bins.xLow(bins.bin(ptDijetBin,0)),bins.xUp(bins.bin(ptDijetBin,0)));
+    tLabels.at(bins.nBinsX()+ptDijetBin)->AddText(label);
+    mtPad->Clear();
+    mtPad->cd();
+    tLabels.at(bins.nBinsX()+ptDijetBin)->Draw();
+
+    for(size_t k = 0; k < hBDistUncorr.at(1).at(ptDijetBin).size(); k++) {
+      int padIdx = k % 6;
+      cPads.at(padIdx)->cd();
+
+      TString etaBinText = hBDistUncorr.at(1).at(ptDijetBin).at(k)->GetTitle();
+      hBDistUncorr.at(1).at(ptDijetBin).at(k)->SetTitle("");
+
+      hBDistUncorr.at(1).at(ptDijetBin).at(k)->Draw("H");
+      hBDistCorr.at(1).at(ptDijetBin).at(k)->Draw("Hsame");
+      //      hBDistCorrL2L3.at(1).at(ptDijetBin).at(k)->Draw("Hsame");
+
+      // Label bin
+      TPaveText * etaBinLabel = new TPaveText(0.13,0.84,0.93,0.93,"NDC");
+      etaBinLabel->SetFillColor(0);
+      etaBinLabel->SetTextFont(42);
+      etaBinLabel->SetTextAlign(12);
+      etaBinLabel->AddText(etaBinText);
+      etaBinLabel->Draw("same");
+
+      if( padIdx == 5 || k == hBDistUncorr.at(1).at(ptDijetBin).size()-1 ) {
+	c2->Draw();
+	ps2->NewPage();
+	for(std::vector<TPad*>::iterator p = cPads.begin(); p != cPads.end(); p++) {
+	  (*p)->Clear();
+	}
+      }
+    }
+  }
+  // Loop over eta bins
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) {
+    char label[100];
+    sprintf(label,"%.2f < #eta < %.2f",
+	    bins.yLow(bins.bin(0,etaBin)),bins.yUp(bins.bin(0,etaBin)));
+    tLabels.at(2*bins.nBinsX()+etaBin)->AddText(label);
+    mtPad->Clear();
+    mtPad->cd();
+    tLabels.at(2*bins.nBinsX()+etaBin)->Draw();
+
+    for(size_t k = 0; k < hBDistUncorr.at(2).at(etaBin).size(); k++) {
+      int padIdx = k % 6;
+      cPads.at(padIdx)->cd();
+
+      TString ptDijetBinText = hBDistUncorr.at(2).at(etaBin).at(k)->GetTitle();
+      hBDistUncorr.at(2).at(etaBin).at(k)->SetTitle("");
+
+      hBDistUncorr.at(2).at(etaBin).at(k)->Draw("H");
+      hBDistCorr.at(2).at(etaBin).at(k)->Draw("Hsame");
+      //      hBDistCorrL2L3.at(2).at(etaBin).at(k)->Draw("Hsame");
+
+      // Label bin
+      TPaveText * ptDijetBinLabel = new TPaveText(0.13,0.84,0.93,0.93,"NDC");
+      ptDijetBinLabel->SetFillColor(0);
+      ptDijetBinLabel->SetTextFont(42);
+      ptDijetBinLabel->SetTextAlign(12);
+      ptDijetBinLabel->AddText(ptDijetBinText);
+      ptDijetBinLabel->Draw("same");
+
+      if( padIdx == 5 || k == hBDistUncorr.at(2).at(etaBin).size()-1 ) {
+	c2->Draw();
+	ps2->NewPage();
+	for(std::vector<TPad*>::iterator p = cPads.begin(); p != cPads.end(); p++) {
+	  (*p)->Clear();
+	}
+      }
+    }
+  }
+  // Loop over eta bins
+  for(int etaBin = 0; etaBin < bins.nBinsY(); etaBin++) {
+    char label[100];
+    sprintf(label,"%.2f < #eta < %.2f",
+	    bins.yLow(bins.bin(0,etaBin)),bins.yUp(bins.bin(0,etaBin)));
+    tLabels.at(2*bins.nBinsX()+bins.nBinsY()+etaBin)->AddText(label);
+    mtPad->Clear();
+    mtPad->cd();
+    tLabels.at(2*bins.nBinsX()+bins.nBinsY()+etaBin)->Draw();
+
+    for(size_t k = 0; k < hBDistUncorr.at(3).at(etaBin).size(); k++) {
+      int padIdx = k % 6;
+      cPads.at(padIdx)->cd();
+
+      TString ptDijetGenBinText = hBDistUncorr.at(3).at(etaBin).at(k)->GetTitle();
+      hBDistUncorr.at(3).at(etaBin).at(k)->SetTitle("");
+
+      hBDistUncorr.at(3).at(etaBin).at(k)->Draw("H");
+      hBDistCorr.at(3).at(etaBin).at(k)->Draw("Hsame");
+      //      hBDistCorrL2L3.at(3).at(etaBin).at(k)->Draw("Hsame");
+
+      // Label bin
+      TPaveText * ptDijetGenBinLabel = new TPaveText(0.13,0.84,0.93,0.93,"NDC");
+      ptDijetGenBinLabel->SetFillColor(0);
+      ptDijetGenBinLabel->SetTextFont(42);
+      ptDijetGenBinLabel->SetTextAlign(12);
+      ptDijetGenBinLabel->AddText(ptDijetGenBinText);
+      ptDijetGenBinLabel->Draw("same");
+
+      if( padIdx == 5 || k == hBDistUncorr.at(3).at(etaBin).size()-1 ) {
+	c2->Draw();
+	ps2->NewPage();
+	for(std::vector<TPad*>::iterator p = cPads.begin(); p != cPads.end(); p++) {
+	  (*p)->Clear();
+	}
+      }
+    }
+  }
+  ps2->Close();
+
+  if( outputROOT_ ) writeToRootFile(objToBeWritten,"TwoJetsPtBalanceEvent");
+
+  if( debug ) std::cout << "Cleaning up\n";
+
+  // Clean up
+  for(size_t i = 0; i < objToBeWritten.size(); i++) {
+    delete objToBeWritten.at(i);
+  }
+  for(int i = 0; i < 4; i++) {
+    int nBins = bins.nBinsX();
+    if( i > 1 ) nBins = bins.nBinsY();
+    for(int bin = 0; bin < nBins; bin++) {
+      delete h2BUncorr.at(i).at(bin);
+      delete h2BCorr.at(i).at(bin);
+      delete h2BCorrL2L3.at(i).at(bin);
+      for(size_t k = 0; k < hBDistUncorr.size(); k++) {
+	delete hBDistUncorr.at(i).at(bin).at(k);
+      }
+      for(size_t k = 0; k < hBDistCorr.size(); k++) {
+	delete hBDistCorr.at(i).at(bin).at(k);
+      }
+      for(size_t k = 0; k < hBDistCorrL2L3.size(); k++) {
+	delete hBDistCorrL2L3.at(i).at(bin).at(k);
+      }
+    }
+  }
+  for(int i = 0; i < 2; i++) {
+    int nBins = bins.nBinsX();
+    if( i > 0 ) nBins = bins.nBinsY();
+    for(int bin = 0; bin < nBins; bin++) {
+      delete h2RUncorr.at(i).at(bin);
+      delete h2RCorr.at(i).at(bin);
+      delete h2RCorrL2L3.at(i).at(bin);
+    }
+  }
+
+  delete c1;
+  delete c2;
+  delete ps1;
+  delete ps2;
+  delete legBal;
+  delete legResp;
+  delete lPtDijet;
+  delete lEtaBal;
+  delete lEtaResp;
+  delete lPtGenResp;
+
+  if( debug ) std::cout << "Leaving makeControlPlotsTwoJetsPtBalance()\n";
+}
 
 
 
@@ -2406,46 +3326,219 @@ bool TControlPlots::equidistLogBins(double * bins, int nBins, double first, doub
 }
 
 
+//!  \brief Find y-axis range
+//!
+//!  Sets \p min and \p max to the minimum (non-zero) and
+//!  maximum bin content of \p h, respectively.
+// --------------------------------------------------
+void TControlPlots::findYRange(const TH1F * h, double& min, double& max) const {
+  min = 10000.;
+  max = 0.;
+  for(int bin = 1; bin <= h->GetNbinsX(); bin++) {
+    double val = h->GetBinContent(bin);
+    if( val > 0. && val < min ) min = val;
+    if( val > 0. && val > max ) max = val;
+  }
+  if( min > max ) {
+    min = 1E-3;
+    max = 1;
+  }
+}
 
-//!  \brief Takes a 2D histogram \p hist and creates projections along
-//!         the x-axis per x bin
-//!
-//!   Some properties of these projected
-//!   distributions are filled, per x-bin, into 8 1D histograms
-//!   \p hresults:
-//!   
-//!    - 0: Mean value
-//!    - 1: Standard deviation
-//!    - 2: Mean of Gauss fit
-//!    - 3: Width of Gauss fit
-//!    - 4: Median 
-//!    - 5: chi2 / n.d.f.
-//!    - 6: Probability of Gauss fit
-//!    - 7: Quantiles Q0.9 / (Q0.9 - 1)
-//!   
-//!   \p hresults are newly created (take care of deleting them!);
-//!   their object names are set to:
-//!      "(hist-name)_result(X)",
-//!   where (hist-name) = hist->GetName() and (X) is the index of
-//!   the above specified property (i.e. 0 for "mean").
-//!
-//!   Also, the projected distributions of 3 example x-bins:
-//!   
-//!    - 0: hist->GetNbinsX() / 6
-//!    - 1: hist->GetNbinsX() / 3
-//!    - 2: hist->GetNbinsX() / 2
-//!   
-//!   are filled into \p gaussplots and the corresponding
-//!   Gauss fits are filled into \p gf. Both \p gaussplots and \p gf
-//!   are newly created (take care of deleting them!) and their
-//!   names are set to:
-//!   
-//!      "(hist-name)_gaussplot(X)",
-//!      "(hist-name)_gaussfit(X)"
-//!   
-//!   respectively.
+
+
+//!  \brief Interface to fit2D(const TH2F* hist, std::vector<TH1F*>& hresults,
+//!  std::vector<TH1F*>& distributions, std::vector<TF1*>& gaussFits, const bool plotgauss)
+//!  using the old signature of \p fit2D.
 //---------------------------------------------------------------
-void TControlPlots::fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss) const
+void TControlPlots::fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss) const {
+  std::vector<TH1F*> vHresults;
+  std::vector<TH1F*> vDistributions;
+  std::vector<TF1*> vGaussFits;
+  fit2D(hist,vHresults,vDistributions,vGaussFits,plotgauss);
+  for(int i = 0; i < 8; i++) {
+    hresults[i] = vHresults.at(i);
+  }
+  for(int i = 0; i < 4; i++) {
+    int idx = i * vGaussFits.size() / 4;
+    gaussplots[i] = vDistributions.at(idx);
+    gf[i] = vGaussFits.at(idx);
+  }
+}
+
+
+
+//!  \brief Get mean of x-profiles of a 2D histogram
+//!
+//!  Calculates the 1D projections of \p hist along the
+//!  x-axis for different x bins. The means versus x are filled
+//!  in the 1D histogram \p hresult.
+//!
+//!  \p distributions contains the actual 1D distributions
+//!  per x-bin of \p hist.
+//!
+//!  The marker color of \p hresult is set to \p color.
+//!
+//!  \sa fit2D(const TH2F* hist, std::vector<TH1F*>& hresults,
+//!  std::vector<TH1F*>& distributions, std::vector<TF1*>& gaussFits, const bool plotgauss)
+//---------------------------------------------------------------
+void TControlPlots::fit2DMean(const TH2F* hist, TH1F*& hresult,
+			      std::vector<TH1F*>& distributions,
+			      int color) const {
+  std::vector<TH1F*> hResults;
+  std::vector<TF1*> gaussFits;
+  fit2D(hist,hResults,distributions,gaussFits,true);
+  for(size_t i = 0; i < hResults.size(); i++) {
+    if( i == 0 ) {
+      hresult = hResults.at(i);
+      hresult->SetMarkerStyle(20);
+      hresult->SetMarkerColor(color);
+      hresult->SetLineColor(color);
+    } else {
+      delete hResults.at(i);
+    }
+  }
+  for(size_t k = 0; k < distributions.size(); k++) {
+    distributions.at(k)->SetLineColor(color);
+    delete gaussFits.at(k);
+  }
+}
+
+
+
+//!  \brief Get mean of x-profiles of a 2D histogram
+//!
+//!  Calculates the 1D projections of \p hist along the
+//!  x-axis for different x bins. The means versus x are filled
+//!  in the 1D histogram \p hresult.
+//!
+//!  The marker color of \p hresult is set to \p color.
+//!
+//!  \sa fit2D(const TH2F* hist, std::vector<TH1F*>& hresults,
+//!  std::vector<TH1F*>& distributions, std::vector<TF1*>& gaussFits, const bool plotgauss)
+//---------------------------------------------------------------
+void TControlPlots::fit2DMean(const TH2F* hist, TH1F*& hresult, int color) const {
+  std::vector<TH1F*> hResults;
+  fit2D(hist,hResults);
+  for(size_t i = 0; i < hResults.size(); i++) {
+    if( i == 0 ) {
+      hresult = hResults.at(i);
+      hresult->SetMarkerStyle(20);
+      hresult->SetMarkerColor(color);
+      hresult->SetLineColor(color);
+    } else {
+      delete hResults.at(i);
+    }
+  }
+}
+
+
+
+//!  \brief Get mean of x-profiles of a 2D histogram from Gauss fit
+//!
+//!  Calculates the 1D projections of \p hist along the
+//!  x-axis for different x bins. The means of central
+//!  (\f$ \pm3\sigma \f$) Gauss fits versus x are filled
+//!  in the 1D histogram \p hresult.
+//!
+//!  \p distributions contains the actual 1D distributions
+//!  per x-bin of \p hist. \p gaussFits contains the Gaussian
+//!  fits on these distributions.
+//!
+//!  The marker color of \p hresult is set to \p color.
+//!
+//!  \sa fit2D(const TH2F* hist, std::vector<TH1F*>& hresults,
+//!  std::vector<TH1F*>& distributions, std::vector<TF1*>& gaussFits, const bool plotgauss)
+//---------------------------------------------------------------
+void TControlPlots::fit2DGaussMean(const TH2F* hist, TH1F*& hresult,
+				   std::vector<TH1F*>& distributions,
+				   std::vector<TF1*>& gaussFits, int color) const {
+  std::vector<TH1F*> hResults;
+  fit2D(hist,hResults,distributions,gaussFits,true);
+  for(size_t i = 0; i < hResults.size(); i++) {
+    if( i == 2 ) {
+      hresult = hResults.at(i);
+      hresult->SetMarkerStyle(20);
+      hresult->SetMarkerColor(color);
+      hresult->SetLineColor(color);
+    } else {
+      delete hResults.at(i);
+    }
+  }
+  for(size_t k = 0; k < distributions.size(); k++) {
+    distributions.at(k)->SetLineColor(color);
+    gaussFits.at(k)->SetLineColor(color);
+    gaussFits.at(k)->SetLineWidth(1);
+  }
+}
+
+
+
+//!  \brief Get mean of x-profiles of a 2D histogram from Gauss fit
+//!
+//!  Calculates the 1D projections of \p hist along the
+//!  x-axis for different x bins. The means of central
+//!  (\f$ \pm3\sigma \f$) Gauss fits versus x are filled
+//!  in the 1D histogram \p hresult.
+//!
+//!  The marker color of \p hresult is set to \p color.
+//!
+//!  \sa fit2D(const TH2F* hist, std::vector<TH1F*>& hresults,
+//!  std::vector<TH1F*>& distributions, std::vector<TF1*>& gaussFits, const bool plotgauss)
+//---------------------------------------------------------------
+void TControlPlots::fit2DGaussMean(const TH2F* hist, TH1F*& hresult, int color) const {
+  std::vector<TH1F*> hResults;
+  fit2D(hist,hResults);
+  for(size_t i = 0; i < hResults.size(); i++) {
+    if( i == 2 ) {
+      hresult = hResults.at(i);
+      hresult->SetMarkerStyle(20);
+      hresult->SetMarkerColor(color);
+      hresult->SetLineColor(color);
+    } else {
+      delete hResults.at(i);
+    }
+  }
+}
+
+
+
+//!  \brief Get different x-profiles of a 2D histogram
+//!
+//!  Calculates the 1D projections of \p hist along the
+//!  x-axis for different x bins. Different quantities
+//!  of these projections are calculated and shown
+//!  versus x in the 1D histograms \p hresults
+//!   - 0: Mean
+//!   - 1: RMS
+//!   - 2: Mean of central (\f$ \pm3\sigma \f$) Gauss fit
+//!   - 3: Width of central Gauss fit
+//!   - 4: Median
+//!   - 5: \f$ \chi^{2} / ndof\f$
+//!   - 6: Fit probability
+//!   - 7: Quantiles
+//!
+//!  The binning and the x-axis title of the histograms
+//!  in \p hresults is the same as the x binning of \p hist, the
+//!  y-axis title and the histogram title are adjusted
+//!  to the displayed quantity.
+//!
+//!  \p distributions contains the actual 1D distributions
+//!  per x-bin of \p hist. \p gaussFits contains the Gaussian
+//!  fits on these distributions. The latter two vectors are
+//!  only filled, if \p plotgauss is true.
+//!
+//!  \p hresults are newly created (take care of deleting them!);
+//!  their object names are set to:
+//!     "(hist-name)_result(X)",
+//!  where (hist-name) = hist->GetName() and (X) is the index of
+//!  the above specified property (i.e. 0 for "mean").
+//---------------------------------------------------------------
+void TControlPlots::fit2D(const TH2F* hist,
+			  std::vector<TH1F*>& hresults,
+			  std::vector<TH1F*>& distributions,
+			  std::vector<TF1*>& gaussFits,
+			  const bool plotgauss) const
 {
   TString quantityName[8];
   quantityName[0] = "mean"; 
@@ -2458,6 +3551,7 @@ void TControlPlots::fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
   quantityName[7] = "quantiles"; 
 
   //book hists
+  hresults = std::vector<TH1F*>(8);
   TString s = hist->GetName();
   s += "_result0";
   if( hist->GetXaxis()->GetXbins()->GetSize() == hist->GetNbinsX() +1)
@@ -2496,25 +3590,14 @@ void TControlPlots::fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
   htemp->Sumw2();
 
   if(plotgauss) {
-    for(int i=0;i<4;++i) 
-      {
-	s = hist->GetName();
-	s += "_gaussplot";
-	s += i;
-	gaussplots[i] = (TH1F*)htemp->Clone(s);
-	
-	s = hist->GetName();
-	s += "_gaussfit";
-	s += i;
-	gf[i] = new TF1(s,"0");
-      }
+    distributions = std::vector<TH1F*>(hist->GetNbinsX());
+    gaussFits = std::vector<TF1*>(hist->GetNbinsX());
   }
 
   const int nq = 2;
   double yq[2],xq[2];
   xq[0] = 0.5;
   xq[1] = 0.90;
-  int index = 0;		// Counting index used for gaussplots
   for(int i = 1 ; i <= hist->GetNbinsX() ; ++i)
     {
       htemp->Reset();
@@ -2523,56 +3606,76 @@ void TControlPlots::fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[
 	  htemp->SetBinContent(j,hist->GetBinContent(hist->GetBin(i,j)));
 	  htemp->SetBinError(j,hist->GetBinError(i,j));
 	}  
+      if(plotgauss) {
+	int idx = i - 1;
+	char title[100];
+	sprintf(title,
+		"%.2f < %s < %.2f",
+		hist->GetXaxis()->GetBinLowEdge(i),
+		hist->GetXaxis()->GetTitle(),
+		hist->GetXaxis()->GetBinUpEdge(i));
+	s = hist->GetName();
+	s += "_distribution";
+	s += idx;
+	distributions.at(idx) = static_cast<TH1F*>(htemp->Clone(s));
+	distributions.at(idx)->SetTitle(title);
+      }
       double mean = htemp->GetMean(); 
       double meanerror = htemp->GetMeanError();
       double width = htemp->GetRMS();
       if(width < 0.1) width = 0.1;
-      if(htemp->GetSumOfWeights() <= 0) continue; 
-      htemp->Fit("gaus","QNO","", mean - 3 * width,mean + 3 * width);
-      TF1 *f = (TF1*)gROOT->GetFunction("gaus")->Clone();
-      mean = f->GetParameter(1);
-      meanerror = f->GetParError(1);
-      width = f->GetParameter(2);
-      if(width < 0.05) width = 0.05;
-      if( (htemp->Fit(f,"LLQNO","goff",mean - 1.5 * width, mean + 1.5 * width) == 0) ) {
+      if(htemp->GetSumOfWeights() <= 0) {
+	if(plotgauss) {
+	  int idx = i - 1;
+	  s = hist->GetName();
+	  s += "_gaussFit";
+	  s += idx;
+	  gaussFits.at(idx) = new TF1(s,"gaus");//static_cast<TF1*>(f->Clone(s));
+	}
+	continue; 
+      } else {
+	htemp->Fit("gaus","QNO","", mean - 3 * width,mean + 3 * width);
+	TF1 *f = (TF1*)gROOT->GetFunction("gaus")->Clone();
 	mean = f->GetParameter(1);
 	meanerror = f->GetParError(1);
 	width = f->GetParameter(2);
+	if(width < 0.05) width = 0.05;
+	if( (htemp->Fit(f,"LLQNO","goff",mean - 1.5 * width, mean + 1.5 * width) == 0) ) {
+	  mean = f->GetParameter(1);
+	  meanerror = f->GetParError(1);
+	  width = f->GetParameter(2);
+	  
+	  hresults[2]->SetBinContent(i,mean);
+	  hresults[2]->SetBinError(i,meanerror);
+	  hresults[3]->SetBinContent(i,width/mean);
+	  hresults[3]->SetBinError(i, f->GetParError(2)/mean);
+	}
+	hresults[5]->SetBinContent(i, f->GetChisquare() / f->GetNumberFreeParameters());
+	hresults[5]->SetBinError(i, 0.01);
+	hresults[6]->SetBinContent(i, f->GetProb());
+	hresults[6]->SetBinError(i, 0.01);
+	if(plotgauss) {
+	  int idx = i - 1;
+	  s = hist->GetName();
+	  s += "_gaussFit";
+	  s += idx;
+	  gaussFits.at(idx) = static_cast<TF1*>(f->Clone(s));
+	}
 	
-	hresults[2]->SetBinContent(i,mean);
-	hresults[2]->SetBinError(i,meanerror);
-	hresults[3]->SetBinContent(i,width/mean);
-	hresults[3]->SetBinError(i, f->GetParError(2)/mean);
+	mean = htemp->GetMean();
+	meanerror = htemp->GetMeanError();
+	width = htemp->GetRMS();
+	hresults[0]->SetBinContent(i,mean);
+	hresults[0]->SetBinError(i,meanerror);
+	hresults[1]->SetBinContent(i,width/mean); 
+	hresults[1]->SetBinError(i,htemp->GetRMSError()/mean);
+	htemp->GetQuantiles(nq,yq,xq);
+	hresults[4]->SetBinContent(i,yq[0]);
+	hresults[4]->SetBinError(i,0.0001);
+	hresults[7]->SetBinContent(i,yq[1]/yq[0]-1);
+	hresults[7]->SetBinError(i,0.0001);
+	delete f;
       }
-      hresults[5]->SetBinContent(i, f->GetChisquare() / f->GetNumberFreeParameters());
-      hresults[5]->SetBinError(i, 0.01);
-      hresults[6]->SetBinContent(i, f->GetProb());
-      hresults[6]->SetBinError(i, 0.01);
-
-      if(plotgauss) {
-	if(  i == int(hist->GetNbinsX()/6)
-	     || i == int(hist->GetNbinsX()/3)
-	     ||  i == int(hist->GetNbinsX()/2)  )       
-	  {
-	    gaussplots[index] = (TH1F*)htemp->Clone(gaussplots[index]->GetName());
-	    gf[index] = (TF1*)f->Clone(gf[index]->GetName());
-	    index++;
-	  }
-      }
-
-      mean = htemp->GetMean();
-      meanerror = htemp->GetMeanError();
-      width = htemp->GetRMS();
-      hresults[0]->SetBinContent(i,mean);
-      hresults[0]->SetBinError(i,meanerror);
-      hresults[1]->SetBinContent(i,width/mean); 
-      hresults[1]->SetBinError(i,htemp->GetRMSError()/mean);
-      htemp->GetQuantiles(nq,yq,xq);
-      hresults[4]->SetBinContent(i,yq[0]);
-      hresults[4]->SetBinError(i,0.0001);
-      hresults[7]->SetBinContent(i,yq[1]/yq[0]-1);
-      hresults[7]->SetBinError(i,0.0001);
-      delete f;
     }
   delete htemp;
 }
@@ -2703,7 +3806,7 @@ void TControlPlots::setGStyle() const
   gStyle->SetStatH(0.16);
   gStyle->SetStatW(0.22);
 
-  // For the legend
+  // For the leegnd
   gStyle->SetLegendBorderSize(1);
 
   // Margins:
@@ -2744,6 +3847,26 @@ void TControlPlots::setGStyle() const
   gStyle->SetNdivisions(510,"XYZ");
   gStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
   gStyle->SetPadTickY(1);
+}
+
+
+//!  \brief Adjust y-axis range
+//!
+//!  Sets the y-axis range of \p h from
+//!  <tt> c1 * min</tt> to <tt> c2 * max</tt>,
+//!  where \p min and \p max are the minimal and
+//!  the maximal bin non-zero content, respectively.
+//!  If <tt>min < minLimit</tt>, \p minLimit is used
+//!  instead as minimum.
+// --------------------------------------------------
+void TControlPlots::setYRange(TH1F * h, double c1, double c2, double minLimit) const {
+  double min = 0.;
+  double max = 0.;
+  findYRange(h,min,max);
+  min *= c1;
+  max *= c2;
+  if( min < minLimit ) min = minLimit;
+  h->GetYaxis()->SetRangeUser( min, max );
 }
 
 

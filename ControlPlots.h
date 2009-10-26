@@ -29,7 +29,7 @@
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.29 2009/09/02 14:17:34 mschrode Exp $
+//!  $Id: ControlPlots.h,v 1.30 2009/09/10 15:46:32 mschrode Exp $
 // -------------------------------------------------------------
 class TControlPlots
 {
@@ -47,13 +47,25 @@ public:
   void makeControlPlotsL2L3MCTruth();
   void makeControlPlotsParameterScan();
   void makeControlPlotsTop();
+  void makeControlPlotsTwoJetsPtBalance();
 
   bool equidistLogBins(double * bins, int nBins, double first, double last) const;
+  void findYRange(const TH1F * h, double& min, double& max) const;
+  void fit2D(const TH2F* hist, std::vector<TH1F*>& hresults, std::vector<TH1F*>& distributions,
+	     std::vector<TF1*>& gaussFits, const bool plotgauss = true) const;
   void fit2D(const TH2F* hist, TH1F* hresults[8], TH1F* gaussplots[4], TF1* gf[4], const bool plotgauss=true) const;
-  void fit2D(const TH2F* hist, TH1F* hresults[8]) const { fit2D(hist, hresults, 0, 0, false); };
+  void fit2D(const TH2F* hist, std::vector<TH1F*>& hresults) const { std::vector<TH1F*> v1; std::vector<TF1*> v2; fit2D(hist, hresults, v1, v2, false); }
+  void fit2DMean(const TH2F* hist, TH1F*& hresult,
+		 std::vector<TH1F*>& distributions, int color) const;
+  void fit2DMean(const TH2F* hist, TH1F*& hresult, int color) const;
+  void fit2DGaussMean(const TH2F* hist, TH1F*& hresult,
+		      std::vector<TH1F*>& distributions,
+		      std::vector<TF1*>& gaussFits, int color) const;
+  void fit2DGaussMean(const TH2F* hist, TH1F*& hresult, int color) const;
   bool readJetMETParameters();
   void resetFittedParameters();
   void setGStyle() const;
+  void setYRange(TH1F * h, double c1 = 0.9, double c2 = 1.1, double minLimit = 0.) const;
   void writeToRootFile(std::vector<TObject*> obj, std::string dir);
 
   ConfigFile  *config_;                         //!< Pointer to config file
