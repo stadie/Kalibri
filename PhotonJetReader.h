@@ -14,7 +14,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: PhotonJetReader.h,v 1.4 2009/04/17 14:28:08 mschrode Exp $
+//!  $Id: PhotonJetReader.h,v 1.5 2009/06/11 17:32:15 mschrode Exp $
 // ----------------------------------------------------------------   
 class PhotonJetReader : public EventReader{
  public:
@@ -28,30 +28,30 @@ class PhotonJetReader : public EventReader{
   TData* createSmearEvent();
 
 
-  GammaJetSel gammajet;        //!< Gamma-jet Selector
+  GammaJetSel gammaJet_;        //!< Gamma-jet Selector
 
-  int    dataClass;            //!< Data class, see also TData
-  int    n_gammajet_events;    //!< Maximum number of read photon jet events
+  int    dataClass_;            //!< Data class, see also TData
+  int    nGammaJetEvents_;    //!< Maximum number of read photon jet events
 
-  double Et_cut_on_jet;        //!< Minimum pt of jet
-  double Et_cut_on_gamma;      //!< Maximum pt of photon
-  double Rel_cut_on_gamma;     //!< Maximum relative pt of non-leading jet
-  double GenJetCutLow;         //!< Minimum pt of genJet
-  double GenJetCutUp;          //!< Maximum pt of genJet
-  double DeltaRMatchingCut;    //!< Maximum DeltaR
-  double Eta_cut_on_jet;       //!< Maximum absolute jet eta
-  double Had_cut_min;          //!< Minimum jet Had/(Had+EMF)
-  double Had_cut_max;          //!< Maximum jet Had/(Had+EMF)
+  double minJetEt_;            //!< Minimum pt of jet
+  double minGammaEt_;          //!< Minimum pt of photon
+  double maxRel2ndJetEt_;      //!< Maximum relative pt of non-leading jet
+  double minGenJetEt_;         //!< Minimum pt of genJet
+  double maxGenJetEt_;         //!< Maximum pt of genJet
+  double maxDeltaR_;           //!< Maximum DeltaR
+  double maxJetEta_;           //!< Maximum absolute jet eta
+  double minJetHadFraction_;   //!< Minimum jet Had/(Had+EMF)
+  double maxJetHadFraction_;   //!< Maximum jet Had/(Had+EMF)
 
-  int    nEt_cut_on_jet;       //!< Number of events rejected by Et_cut_on_jet
-  int    nEt_cut_on_gamma;     //!< Number of events rejected by Et_cut_on_gamma cut
-  int    nRel_cut_on_gamma;    //!< Number of events rejected by nRel_cut_on_gamma cut
-  int    nGenJetCutLow;        //!< Number of events rejected by GenJetCutLow cut
-  int    nGenJetCutUp;         //!< Number of events rejected by GenJetCutUp
-  int    nDeltaRMatchingCut;   //!< Number of events rejected by DeltaRMatchingCut
-  int    nEta_cut_on_jet;      //!< Number of events rejected by Eta_cut_on_jet
-  int    nHad_cut_min;         //!< Number of events rejected by Had_cut_min
-  int    nHad_cut_max;         //!< Number of events rejected by Had_cut_max
+  int    nMinJetEt_;           //!< Number of events rejected by \p minJetEt_ cut
+  int    nMinGammaEt_;         //!< Number of events rejected by \p minGammaEt_ cut
+  int    nMaxRel2ndJetEt_;     //!< Number of events rejected by \p maxRel2ndJetEt_ cut
+  int    nMinGenJetEt_;        //!< Number of events rejected by \p minGenJetEt_ cut
+  int    nMaxGenJetEt_;        //!< Number of events rejected by \p maxGenJetEt_ cut
+  int    nMaxDeltaR_;          //!< Number of events rejected by \p maxDeltaR_ cut
+  int    nMaxJetEta_;          //!< Number of events rejected by \p maxJetEta_ cut
+  int    nMinJetHadFraction_;  //!< Number of events rejected by \p minJetHadFraction_ cut
+  int    nMaxJetHadFraction_;  //!< Number of events rejected by \p maxJetHadFraction_ cut
 };
 
 

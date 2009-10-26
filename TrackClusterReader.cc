@@ -4,7 +4,7 @@
 //    This class reads events according to the TrackClusterSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
+//    $Id: TrackClusterReader.cc,v 1.1 2008/12/12 17:06:00 stadie Exp $
 //   
 #include "TrackClusterReader.h"
 
@@ -18,29 +18,22 @@
 TrackClusterReader::TrackClusterReader(const std::string& configfile, TParameters* p) :
   EventReader(configfile,p),Et_cut_on_track(0),Et_cut_on_cluster(0)
 {
-  n_trackcluster_events = config->read<int>("use Track-Cluster events",-1);
-  if(n_trackcluster_events == 0) {
-    delete config;
-    config = 0;
-    return ;
-  }
-  Et_cut_on_track = config->read<double>("Et cut on track",0.0); 
-  Et_cut_on_cluster = config->read<double>("Et cut on cluster",0.0);
+  n_trackcluster_events = config_->read<int>("use Track-Cluster events",-1);
+  if(n_trackcluster_events == 0) return ;
 
-  string default_tree_name = config->read<string>( "Default Tree Name","CalibTree");
-  string treename_trackcluster    = config->read<string>( "Track-Cluster tree", default_tree_name );
+  Et_cut_on_track = config_->read<double>("Et cut on track",0.0); 
+  Et_cut_on_cluster = config_->read<double>("Et cut on cluster",0.0);
+
+  string default_tree_name = config_->read<string>( "Default Tree Name","CalibTree");
+  string treename_trackcluster    = config_->read<string>( "Track-Cluster tree", default_tree_name );
   TChain * tchain_trackcluster = new TChain( treename_trackcluster.c_str() );
   vector<string> input_trackcluster = bag_of_string( 
-						    config->read<string>( "Track-Cluster input file", "input/trackcluster.root" ) );
+						    config_->read<string>( "Track-Cluster input file", "input/trackcluster.root" ) );
   for (bag_of_string::const_iterator it = input_trackcluster.begin(); it!=input_trackcluster.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Track-Cluster analysis." << endl;
     tchain_trackcluster->Add( it->c_str() );
   }  
   trackcluster.Init( tchain_trackcluster );
-  
- 
-  delete config;
-  config = 0;
 }
 
 TrackClusterReader::~TrackClusterReader()
@@ -78,7 +71,7 @@ int TrackClusterReader::readEvents(std::vector<TData*>& data)
 							1.,                                                //weight//
 							0,                                                 //params
 							0,                                                 //number of free jet param. p. bin
-							p->dummy_parametrization,                          //function
+							par_->dummy_parametrization,                          //function
 			                                jet_error_param,                                  //error param. function
 							clusterp);
     tc->SetType( TrackCluster );
@@ -87,7 +80,7 @@ int TrackClusterReader::readEvents(std::vector<TData*>& data)
       //if (trackcluster.TrackEt[n]<Et_cut_on_track)
       //   continue;
 
-      int index=p->GetBin(p->GetEtaBin(trackcluster.TowId_eta[n]),p->GetPhiBin(trackcluster.TowId_phi[n]));
+      int index=par_->GetBin(par_->GetEtaBin(trackcluster.TowId_eta[n]),par_->GetPhiBin(trackcluster.TowId_phi[n]));
       if (index<0) {
 	cerr << "INDEX = "<< index << endl;
 	continue;
@@ -110,9 +103,9 @@ int TrackClusterReader::readEvents(std::vector<TData*>& data)
 						    //trackcluster.TrackEterr[n],                              //error//
 						    sqrt(pow(0.5,2)+ pow(0.1*trackcluster.TrackEt ,2)),        //error//
 						    1.,                                                        //weight//
-						    p->GetTowerParRef( index ),                                //parameter//
-						    p->GetNumberOfTowerParametersPerBin(),                     //number of free cluster param. p. bin//
-						    p->tower_parametrization,                                  //function//
+						    par_->GetTowerParRef( index ),                                //parameter//
+						    par_->GetNumberOfTowerParametersPerBin(),                     //number of free cluster param. p. bin//
+						    par_->tower_parametrization,                                  //function//
 					            tower_error_param                                        //error param.func.//
 						    );
       tc->AddMess( tower );

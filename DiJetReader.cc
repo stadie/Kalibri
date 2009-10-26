@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.24 2009/09/21 06:52:56 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.25 2009/10/08 14:46:32 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -12,6 +12,7 @@
 #include "JetTruthEvent.h"
 #include "Jet.h"
 #include "JetWithTowers.h"
+#include "TwoJetsPtBalanceEvent.h"
 #include "TVector2.h"
 
 #include <iostream>
@@ -36,27 +37,23 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   : EventReader(configfile,p)
 {
   // Maximum number of read events
-  nDijetEvents_ = config->read<int>("use Di-Jet events",-1);
-  if(nDijetEvents_ == 0) {
-    delete config;
-    config = 0;
-    return;
-  }
+  nDijetEvents_ = config_->read<int>("use Di-Jet events",-1);
+  if(nDijetEvents_ == 0) return;
 
-  prescale_ = config->read<int>("Di-Jet prescale",1);
+  prescale_ = config_->read<int>("Di-Jet prescale",1);
   // Cuts
-  minJetEt_          = config->read<double>("Et cut on jet",0.0);
-  minDijetEt_        = config->read<double>("Et min cut on dijet",0.0); 
-  maxDijetEt_        = config->read<double>("Et max cut on dijet",100.0); 
-  max3rdJetEt_       = config->read<double>("Et cut on n+1 Jet",10.0);
-  maxRel3rdJetEt_    = config->read<double>("Relative n+1 Jet Et Cut",0.2);
-  maxJetEta_         = config->read<double>("Eta cut on jet",5.0);
-  minJetHadFraction_ = config->read<double>("Min had fraction",0.07);
-  maxJetHadFraction_ = config->read<double>("Max had fraction",0.95);
-  minDeltaPhi_       = config->read<double>("Min Delta Phi",2.5);
-  minGenJetEt_       = config->read<double>("Et genJet min",0.0);
-  maxGenJetEt_       = config->read<double>("Et genJet max",10000.0);
-  maxDeltaR_         = config->read<double>("DeltaR cut on jet matching",0.25);
+  minJetEt_          = config_->read<double>("Et cut on jet",0.0);
+  minDijetEt_        = config_->read<double>("Et min cut on dijet",0.0); 
+  maxDijetEt_        = config_->read<double>("Et max cut on dijet",100.0); 
+  max3rdJetEt_       = config_->read<double>("Et cut on n+1 Jet",10.0);
+  maxRel3rdJetEt_    = config_->read<double>("Relative n+1 Jet Et Cut",0.2);
+  maxJetEta_         = config_->read<double>("Eta cut on jet",5.0);
+  minJetHadFraction_ = config_->read<double>("Min had fraction",0.07);
+  maxJetHadFraction_ = config_->read<double>("Max had fraction",0.95);
+  minDeltaPhi_       = config_->read<double>("Min Delta Phi",2.5);
+  minGenJetEt_       = config_->read<double>("Et genJet min",0.0);
+  maxGenJetEt_       = config_->read<double>("Et genJet max",10000.0);
+  maxDeltaR_         = config_->read<double>("DeltaR cut on jet matching",0.25);
   // Counter for cutflow
   nDiJetCut_          = 0;
   nMinJetEt_          = 0;
@@ -71,23 +68,22 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   nMaxGenJetEt_       = 0;     
   nMaxDeltaR_         = 0;
   // Integration parameter for SmearData
-  maxNIter_          = config->read<int>("DiJet integration number of iterations",5);
-  eps_               = config->read<double>("DiJet integration epsilon",1.E-5);
-  std::vector<double> tBinEdges = bag_of<double>(config->read<string>("DiJet integration pt bin edges","0. 1."));
-  min_               = tBinEdges.front();
-  max_               = tBinEdges.back();
+  maxNIter_          = config_->read<int>("DiJet integration number of iterations",5);
+  eps_               = config_->read<double>("DiJet integration epsilon",1.E-5);
+  min_               = config_->read<double>("DiJet integration min",0.);
+  max_               = config_->read<double>("DiJet integration max",1.);
   // Data class
-  dataClass_ = config->read<int>("Di-Jet data class", 0);
-  if((dataClass_ != 0)&&(dataClass_ != 11)&&(dataClass_ != 12)&&(dataClass_ != 5)) {
+  dataClass_ = config_->read<int>("Di-Jet data class", 0);
+  if((dataClass_ != 0)&&(dataClass_ != 1)&&(dataClass_ != 11)&&(dataClass_ != 12)&&(dataClass_ != 5)) {
     std::cout << "DiJetReader: Unknown data class " << dataClass_ << ". Using data class 0." << std::endl;
     dataClass_ = 0;
   }
 
   // Input files
-  string default_tree_name   = config->read<string>("Default Tree Name","CalibTree");
-  string treename_dijet      = config->read<string>("Di-Jet tree",default_tree_name);
+  string default_tree_name   = config_->read<string>("Default Tree Name","CalibTree");
+  string treename_dijet      = config_->read<string>("Di-Jet tree",default_tree_name);
   TTree * tchain_dijet;
-  vector<string> input_dijet = bag_of_string(config->read<string>("Di-Jet input file","input/dijet.root"));  
+  vector<string> input_dijet = bag_of_string(config_->read<string>("Di-Jet input file","input/dijet.root"));  
   if(input_dijet[0] == "toy") { // Generate Toy MC sample
     std::cout << "generating " << nDijetEvents_ << " Di-Jet events\n";
     ToyMC* mc = new ToyMC();
@@ -119,14 +115,12 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
     tchain_dijet = chain;
   }
   nJet_.Init( tchain_dijet );
-  
-  delete config;
-  config = 0;
+
+  rand_ = new TRandom3(0);
 }
 
-DiJetReader::~DiJetReader()
-{
-  
+DiJetReader::~DiJetReader() {
+  delete rand_;
 }
 
 
@@ -155,14 +149,30 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
   nMinDeltaPhi_       = 0;
 
   //Run jet-Jet stuff  
-  int injet     = 2;
   int nevent    = nJet_.fChain->GetEntries();  // Number of events in chain
   int nReadEvts = 0;                          // Number of read events
   int nGoodEvts = 0;                          // Number of events passing all cuts
 
-  cout << "\nReading " << injet << "-jet events...\n";
+  // Some informative output for the interested calibrator
+  // Check of correct data class
+  cout << "\nDiJetReader: Reading events of type ";
+  if(dataClass_ == 0) {
+    std::cout << "'PtBalanceEvent'";
+  } else if(dataClass_ == 1) {
+    std::cout << "'TwoJetsPtBalanceEvent'";
+  } else if((dataClass_ == 11)  || (dataClass_ == 12)) {
+    std::cout << "'JetTruthEvent'";
+  } else if(dataClass_ == 5) {
+    std::cout << "'SmearData'";
+  } else {
+    std::cerr << "Unknown data class " << dataClass_ << '\n';
+    exit(9);
+  }
+  std::cout << " (data class " << dataClass_ << "):\n";
+
+  // Read the events
   for (int i=0 ; i < nevent ; i+= prescale_) {
-    if((i+1)%10000==0) cout << i+1 << endl;
+    if((i+1)%10000==0) cout << "  " << i+1 << endl;
     nJet_.fChain->GetEvent(i); 
     if (nJet_.NobjTow>10000 || nJet_.NobjJet>100) {
       cerr << "ERROR: Increase array sizes in NJet_Selector; NobjTow="
@@ -172,6 +182,13 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
     if(dataClass_ == 0) {
       nReadEvts++;
       TData* td = createPtBalanceEvent(); 
+      if(td) {
+	nGoodEvts++;    
+	data.push_back(td ); 
+      } 
+    } else if(dataClass_ == 1) {
+      nReadEvts++;
+      TData* td = createTwoJetsPtBalanceEvent(); 
       if(td) {
 	nGoodEvts++;    
 	data.push_back(td ); 
@@ -187,18 +204,37 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
 	nGoodEvts++;
 	data.push_back(td ); 
       } 
-    } else {
-      std::cerr << "unknown data class:" << dataClass_ << '\n';
-      exit(9);
     }
     if(nReadEvts>=nDijetEvents_ && nDijetEvents_>=0 ) break;
   }
 
   // Print cut flow
-  std::cout << "Read " << nReadEvts << " " << injet << "-jet events:\n";
-  if( dataClass_ == 11 || dataClass_ == 12 ) {
+  std::cout << "Read " << nReadEvts << " dijet events:\n";
+  if( dataClass_ == 1 ) {
     std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
-    std::cout << " events with " << injet << " or more jets\n";
+    std::cout << " events with 2 or more jets\n";
+    std::cout << "  " << (nReadEvts-=nMinGenJetEt_) << std::flush;
+    std::cout << " dijet events with ptgen > " << minGenJetEt_ << " GeV\n";
+    std::cout << "  " << (nReadEvts-=nMaxGenJetEt_) << std::flush;
+    std::cout << " dijet events with ptgen < " << maxGenJetEt_ << " GeV\n";
+    std::cout << "  " << (nReadEvts-=nMaxDeltaR_) << std::flush;
+    std::cout << " dijet events with DeltaR < " << maxDeltaR_ << "\n";
+    std::cout << "  " << (nReadEvts-=nMinJetEt_) << std::flush;
+    std::cout << " dijet events Et > " << minJetEt_ << " GeV\n";
+    std::cout << "  " << (nReadEvts-=nMaxJetEta_) << std::flush;
+    std::cout << " dijet events with |eta| < " << maxJetEta_ << "\n";
+    std::cout << "  " << (nReadEvts-=nMinJetHadFraction_) << std::flush;
+    std::cout << " dijet events with hadronic fraction > " << minJetHadFraction_ << "\n";
+    std::cout << "  " << (nReadEvts-=nMaxJetHadFraction_) << std::flush;
+    std::cout << " dijet events with hadronic fraction < " << maxJetHadFraction_ << "\n";
+    std::cout << "  " << (nReadEvts-=nCutOn3rdJet_) << std::flush;
+    std::cout << " dijet events with pt(jet3) / pt(dijet) < " << maxRel3rdJetEt_ << " or ";
+    std::cout << "pt(jet3) < " << max3rdJetEt_ << " GeV\n";
+    std::cout << "  " << (nReadEvts-=nMinDeltaPhi_) << std::flush;
+    std::cout << " dijet events with DeltaPhi > " << minDeltaPhi_ << "\n";
+  } else if( dataClass_ == 11 || dataClass_ == 12 ) {
+    std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
+    std::cout << " events with 2 or more jets\n";
     std::cout << "  That are " << (nReadEvts*=2) << " jet-truth events:\n";
     std::cout << "    " << (nReadEvts-=nMinGenJetEt_) << std::flush;
     std::cout << " jet-truth events with ptgen > " << minGenJetEt_ << "\n";
@@ -218,30 +254,30 @@ int DiJetReader::readEvents(std::vector<TData*>& data)
     std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
     std::cout << " events with more than 3 jets\n";
     std::cout << "  " << (nReadEvts-=nMinGenJetEt_) << std::flush;
-    std::cout << " dijet-jet events with ptgen > " << minGenJetEt_ << " GeV\n";
+    std::cout << " dijet events with ptgen > " << minGenJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMaxGenJetEt_) << std::flush;
-    std::cout << " dijet-jet events with ptgen < " << maxGenJetEt_ << " GeV\n";
+    std::cout << " dijet events with ptgen < " << maxGenJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMaxDeltaR_) << std::flush;
-    std::cout << " dijet-jet events with DeltaR < " << maxDeltaR_ << "\n";
+    std::cout << " dijet events with DeltaR < " << maxDeltaR_ << "\n";
     std::cout << "  " << (nReadEvts-=nMinJetEt_) << std::flush;
-    std::cout << " dijet-jet events Et > " << minJetEt_ << " GeV\n";
+    std::cout << " dijet events Et > " << minJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMaxJetEta_) << std::flush;
-    std::cout << " dijet-jet events with |eta| < " << maxJetEta_ << "\n";
+    std::cout << " dijet events with |eta| < " << maxJetEta_ << "\n";
     std::cout << "  " << (nReadEvts-=nMinJetHadFraction_) << std::flush;
-    std::cout << " dijet-jet events dijet pt > " << minDijetEt_ << " GeV\n";
+    std::cout << " dijet events dijet pt > " << minDijetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMinDijetEt_) << std::flush;
-    std::cout << " dijet-jet events dijet pt < " << maxDijetEt_ << " GeV\n";
+    std::cout << " dijet events dijet pt < " << maxDijetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMaxDijetEt_) << std::flush;
-    std::cout << " dijet-jet events with hadronic fraction > " << minJetHadFraction_ << "\n";
+    std::cout << " dijet events with hadronic fraction > " << minJetHadFraction_ << "\n";
     std::cout << "  " << (nReadEvts-=nMaxJetHadFraction_) << std::flush;
-    std::cout << " dijet-jet events with hadronic fraction < " << maxJetHadFraction_ << "\n";
+    std::cout << " dijet events with hadronic fraction < " << maxJetHadFraction_ << "\n";
     std::cout << "  " << (nReadEvts-=nCutOn3rdJet_) << std::flush;
-    std::cout << " dijet-jet events with pt(jet3) / pt(dijet) < " << maxRel3rdJetEt_ << " or ";
+    std::cout << " dijet events with pt(jet3) / pt(dijet) < " << maxRel3rdJetEt_ << " or ";
     std::cout << "pt(jet3) < " << max3rdJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMinDeltaPhi_) << std::flush;
-    std::cout << " dijet-jet events with DeltaPhi > " << minDeltaPhi_ << "\n";
+    std::cout << " dijet events with DeltaPhi > " << minDeltaPhi_ << "\n";
   }
-  std::cout << "Stored " << nGoodEvts << " events for analysis.\n";
+  std::cout << "Stored " << nGoodEvts << " dijet events for analysis.\n";
   return nGoodEvts;
 }
   
@@ -282,8 +318,8 @@ TData* DiJetReader::createPtBalanceEvent()
       Ltower.SetPtEtaPhiE(nJet_.TowEt[n],nJet_.TowEta[n],nJet_.TowPhi[n],nJet_.TowE[n]);
       double dr = Ltower.DeltaR(LJet);
       if (dr<min_tower_dr) {
-	jet_index = p->GetJetBin(p->GetJetEtaBin(nJet_.TowId_eta[n]),
-				 p->GetJetPhiBin(nJet_.TowId_phi[n]));
+	jet_index = par_->GetJetBin(par_->GetJetEtaBin(nJet_.TowId_eta[n]),
+				 par_->GetJetPhiBin(nJet_.TowId_phi[n]));
 	min_tower_dr = dr;
       }
     }
@@ -314,16 +350,16 @@ TData* DiJetReader::createPtBalanceEvent()
       jetp->OutF = out * factor;
       //Create an jet/Jet TData event
       jj_data[nstoredjets] = new TData_PtBalance( 
-          jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+          jet_index * par_->GetNumberOfJetParametersPerBin() + par_->GetNumberOfTowerParameters(),
 	  direction,                                     //p_T direction of this jet
 	  0.0,                                           //truth//
 	  sqrt(pow(0.5,2)+pow(0.10*nJet_.JetPt[ij],2)),   //error//
 	  //nJet_.Weight,                                   //weight//
 	  1.,                                          //weight//
-	  p->GetJetParRef( jet_index ),                  //params
-	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-	  p->jet_parametrization,                        //function
-	  //p->dummy_parametrization,
+	  par_->GetJetParRef( jet_index ),                  //params
+	  par_->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
+	  par_->jet_parametrization,                        //function
+	  //par_->dummy_parametrization,
           jet_error_param,                               //error param. function
 	  jetp                                           //jet momentum for plotting and scale
         );
@@ -334,8 +370,8 @@ TData* DiJetReader::createPtBalanceEvent()
         if (nJet_.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
 	//if (nJet_.TowEt[n]<0.01) continue;
 
-	int index = p->GetBin(p->GetEtaBin(nJet_.TowId_eta[n]),
-			      p->GetPhiBin(nJet_.TowId_phi[n]));
+	int index = par_->GetBin(par_->GetEtaBin(nJet_.TowId_eta[n]),
+			      par_->GetPhiBin(nJet_.TowId_phi[n]));
 //std::cout << "jet:" << ij << ", towid=" << n << ", bin index:" << index << "\n";
 	if (index<0){ cerr<<"WARNING: JJ tower_index = " << index << endl; continue; }
 
@@ -361,14 +397,14 @@ TData* DiJetReader::createPtBalanceEvent()
 	    sqrt(pow(0.5,2)+pow(0.1*nJet_.JetPt[ij]*relativEt,2)),   //error//
             //1.,                                                   //weight//
 	    nJet_.Weight,                                            //weight//
-	    p->GetTowerParRef( index ),                             //parameter//
-	    p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
-	    p->tower_parametrization,                               //function//
+	    par_->GetTowerParRef( index ),                             //parameter//
+	    par_->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
+	    par_->tower_parametrization,                               //function//
 	    tower_error_param                                      //error param. function//
 	  ));
       }
       //Add the jet's tracks to "gj_data":
-      double* EfficiencyMap = p->GetEffMap();
+      double* EfficiencyMap = par_->GetEffMap();
       int track_index;
       for (int n=0; n<nJet_.NobjTrack; ++n){
         if (nJet_.Track_jetidx[n]!=(int)ij) continue;//look for ij-jet's tracks
@@ -381,8 +417,8 @@ TData* DiJetReader::createPtBalanceEvent()
 	  else track_index = 0; //bent low momentum tracks with no HCAL hit
 	}
 	else
-	  track_index = p->GetTrackBin(p->GetTrackEtaBin(nJet_.TrackTowIdEta[n]),
-					   p->GetTrackPhiBin(nJet_.TrackTowIdPhi[n]));
+	  track_index = par_->GetTrackBin(par_->GetTrackEtaBin(nJet_.TrackTowIdEta[n]),
+					   par_->GetTrackPhiBin(nJet_.TrackTowIdPhi[n]));
 	if (track_index<0){ cerr<<"WARNING: JJ track_index = " << track_index << endl; continue; }
 	//create array with multidimensional measurement
 	//TMeasurement * Tmess = new TTrack;
@@ -410,24 +446,24 @@ TData* DiJetReader::createPtBalanceEvent()
 	Tmess->TrackQualityT = bool(nJet_.TrackQualityT[n]);
 	Tmess->MuDR = double(nJet_.MuDR[n]);
 	Tmess->MuDE = double(nJet_.MuDE[n]);
-	int TrackEffBin = p->GetTrackEffBin(nJet_.TrackPt[n],nJet_.TrackEta[n]);
+	int TrackEffBin = par_->GetTrackEffBin(nJet_.TrackPt[n],nJet_.TrackEta[n]);
 	Tmess->Efficiency = EfficiencyMap[TrackEffBin];
 	//mess[7] = double( cos( nJet_.JetCalPhi-nJet_.TowPhi[n] ) ); // Projection factor for summing tower Pt
 	//EM+=mess->EMF;
 	//F+=mess->pt;
 	jj_data[nstoredjets]->AddTrack(new TData_TruthMess(
-					      track_index  * p->GetNumberOfTrackParametersPerBin() + p->GetNumberOfTowerParameters() + p->GetNumberOfJetParameters() ,
+					      track_index  * par_->GetNumberOfTrackParametersPerBin() + par_->GetNumberOfTowerParameters() + par_->GetNumberOfJetParameters() ,
 					      Tmess,                                                    //mess//
 					      0,                           //truth//
 					      0.05 + 0.00015 * nJet_.TrackPt[n], //error//
 					      1.,                                                      //weight//
-					      p->GetTrackParRef( track_index ),                              //parameter//
-					      p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
-					      p->track_parametrization,                                //function//
+					      par_->GetTrackParRef( track_index ),                              //parameter//
+					      par_->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
+					      par_->track_parametrization,                                //function//
 					      track_error_param                                        //error param.func.//
 					      ));
       }
-      jj_data[nstoredjets]->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization  
+      jj_data[nstoredjets]->UseTracks(useTracks_);   //check if track information is sufficient to use Track Parametrization  
 
     if(nstoredjets> 0)  
       jj_data[0]->AddNewMultMess( jj_data[nstoredjets] );
@@ -605,16 +641,16 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 					   1.,                         // L5
 					   nJet_.JetCorrJPT[calJetIdx],
 					   nJet_.JetCorrL2[calJetIdx]*nJet_.JetCorrL3[calJetIdx]), //not the JPT specific L2L3 factors?
-			  p->jet_function(nJet_.TowId_eta[closestTower],
+			  par_->jet_function(nJet_.TowId_eta[closestTower],
 					  nJet_.TowId_phi[closestTower]),
-			  jet_error_param,p->global_jet_function(),minJetEt_);
+			  jet_error_param,par_->global_jet_function(),minJetEt_);
       for(int j = 0 ; j < nJet_.NobjTow ; ++j) {
 	if (nJet_.Tow_jetidx[j]!= calJetIdx) continue;//look for ij-jet's towers
 	double scale = nJet_.TowEt[j]/nJet_.TowE[j];
 	jt->addTower(nJet_.TowEt[j],nJet_.TowEm[j]*scale,
 		     nJet_.TowHad[j]*scale,nJet_.TowOE[j]*scale,
 		     nJet_.TowE[j],nJet_.TowEta[j],nJet_.TowPhi[j],
-		     p->tower_function(nJet_.TowId_eta[calJetIdx],nJet_.TowId_phi[calJetIdx]),
+		     par_->tower_function(nJet_.TowId_eta[calJetIdx],nJet_.TowId_phi[calJetIdx]),
 		     tower_error_param);
       }
       jet = jt;
@@ -630,9 +666,9 @@ int DiJetReader::createJetTruthEvents(std::vector<TData*>& data)
 				     1.,                         // L5
 				     nJet_.JetCorrJPT[calJetIdx],
 				     nJet_.JetCorrL2[calJetIdx]*nJet_.JetCorrL3[calJetIdx]), //not the JPT specific L2L3 factors?
-		    p->jet_function(nJet_.TowId_eta[closestTower],
+		    par_->jet_function(nJet_.TowId_eta[closestTower],
 				    nJet_.TowId_phi[closestTower]),
-		    jet_error_param,p->global_jet_function(),minJetEt_);    
+		    jet_error_param,par_->global_jet_function(),minJetEt_);    
     }
 
     JetTruthEvent* jte = new JetTruthEvent(jet,nJet_.GenJetColEt[genJetIdx],1.);//nJet_.Weight);
@@ -771,9 +807,9 @@ TData* DiJetReader::createSmearEvent()
 			       jet2,                       // Second jet
 			       jetp,                       // Third jet
 			       1.,                         // Weights from EventProcessor
-			       p->jet_function(etaBin,
+			       par_->jet_function(etaBin,
 					       phiBin),     // Response pdf
-			       p->global_jet_function(),   // Truth pdf
+			       par_->global_jet_function(),   // Truth pdf
 			       min_,                       // Integration minimum
 			       max_,                       // Integration maximum
 			       eps_,                       // Integration step length
@@ -839,4 +875,169 @@ TData* DiJetReader::createSmearEvent()
     jj_data = 0;
   }
   return jj_data;
+}
+
+
+
+//!  \brief Create an event of type \p TwoJetsPtBalanceEvent
+//!
+//!  The two jets leading in uncorrected calo pt are randomly
+//!  assigned jet 1 and 2.
+// ----------------------------------------------------------------   
+TData* DiJetReader::createTwoJetsPtBalanceEvent()
+{
+  // Number of jets in the event
+  int nJets = nJet_.NobjJet;
+
+  // There should be at least two jets
+  // and at the most three jets
+  if( nJets < 2 ) {
+    nDiJetCut_++;
+    return 0;
+  } else if( nJets >= 3 ) {
+    nJets = 3;
+  }
+
+  // Pointer to the three jets leading in pt calo
+  Jet * jet1 = 0;
+  Jet * jet2 = 0;
+  Jet * jet3 = 0;
+
+  // Loop over the two or, if existing, three jets
+  // leading in calo pt; the first two jets are
+  // assigned randomly to have an unbiased balance
+  // measure
+  int calJetIdx[3];
+  if( rand_->Uniform(0.,1.) < 0.5 ) {
+    calJetIdx[0] = 0;
+    calJetIdx[1] = 1;
+  } else {
+    calJetIdx[0] = 1;
+    calJetIdx[1] = 0;
+  }
+  calJetIdx[2] = 2;
+  for(int i = 0; i < nJets; i++) {
+    // Jet - GenJet matching
+    double dphi         = TVector2::Phi_mpi_pi( nJet_.JetPhi[calJetIdx[i]] - nJet_.GenJetPhi[calJetIdx[i]] );
+    double deta         = nJet_.JetEta[calJetIdx[i]] - nJet_.GenJetEta[calJetIdx[i]];
+    double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
+
+    // Summing up of hadronic fractions
+    // and finding tower closest to the
+    // jet axis
+    double min_tower_dr = 10.;
+    double emf          = 0;
+    double had          = 0;
+    double out          = 0;
+    int    closestTower = 0; 
+
+    // Loop over towers
+    for(int n=0; n<nJet_.NobjTow; ++n) {
+      if(nJet_.Tow_jetidx[n] != calJetIdx[i]) continue;//look for i-jet's towers
+      emf += nJet_.TowEm[n];
+      had += nJet_.TowHad[n];
+      out += nJet_.TowOE[n];
+      dphi = TVector2::Phi_mpi_pi( nJet_.JetPhi[calJetIdx[i]] - nJet_.TowPhi[n] );
+      deta = nJet_.JetEta[calJetIdx[i]] - nJet_.TowEta[n];
+      double dr = sqrt( deta*deta + dphi*dphi );     
+      if (dr < min_tower_dr) {
+	min_tower_dr = dr;
+	closestTower = n;
+      }
+    } // End of loop over towers
+
+
+    // Projection factor E --> Et
+    // The following is not quite correct, as this factor is different for all towers
+    // These values should be in the n-tupel as well
+    double projFac   = nJet_.JetEt[calJetIdx[i]] /  nJet_.JetE[calJetIdx[i]];
+
+    // Create jet
+    Jet * jet = new Jet(nJet_.JetPt[calJetIdx[i]],
+			emf * projFac,
+			had * projFac,
+			out * projFac,
+			nJet_.JetE[calJetIdx[i]],
+			nJet_.JetEta[calJetIdx[i]],
+			nJet_.JetPhi[calJetIdx[i]],
+			TJet::uds,
+			nJet_.GenJetPt[calJetIdx[i]],
+			drJetGenjet,
+			TJet::CorFactors( nJet_.JetCorrZSP[calJetIdx[i]],
+					  nJet_.JetCorrL2[calJetIdx[i]],
+					  nJet_.JetCorrL3[calJetIdx[i]],
+					  1., 
+					  1., 
+					  nJet_.JetCorrJPT[calJetIdx[i]],
+					  nJet_.JetCorrL2L3JPT[calJetIdx[i]] ),
+			par_->jet_function(nJet_.TowId_eta[closestTower],
+					nJet_.TowId_phi[closestTower]),
+			jet_error_param,
+			par_->global_jet_function(),
+			minJetEt_ );    
+  
+    // Store jet
+    if( i == 0 ) {
+      jet1 = jet;
+    } else if( i == 1 ) {
+      jet2 = jet;
+    } else if( i == 2 ) {
+      jet3 = jet;
+    }
+  }  // End of loop over jets
+
+  // Create TwoJetsInvMassEvent
+  TwoJetsPtBalanceEvent * evt
+    = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_.GenEvtScale,nJet_.Weight) ;
+
+  // Check if event is ok and return
+  bool isGoodEvt = true;
+  TJet * j1 = static_cast<TJet*>(evt->getJet1());
+  TJet * j2 = static_cast<TJet*>(evt->getJet2());
+  TJet * j3 = static_cast<TJet*>(evt->getJet3());
+  if     ( j1->genPt < minGenJetEt_ || j2->genPt < minGenJetEt_ ) {
+    nMinGenJetEt_++;
+    isGoodEvt = false;
+  }
+  else if( j1->genPt > maxGenJetEt_ || j2->genPt > maxGenJetEt_ ) {
+    nMaxGenJetEt_++;
+    isGoodEvt = false;
+  }
+  else if( j1->dR > maxDeltaR_ || j2->dR > maxDeltaR_ ) {
+    nMaxDeltaR_++;
+    isGoodEvt = false;
+  }
+  else if( j1->pt < minJetEt_ || j2->pt < minJetEt_ ) {
+    nMinJetEt_++;
+    isGoodEvt = false;
+  }
+  else if( std::abs(j1->eta) > maxJetEta_ || std::abs(j2->eta) > maxJetEta_ ) {
+    nMaxJetEta_++;
+    isGoodEvt = false;
+  }
+  else if( j1->HadF/(j1->HadF + j1->EMF) < minJetHadFraction_ ||
+	   j2->HadF/(j2->HadF + j2->EMF) < minJetHadFraction_ ) {
+    nMinJetHadFraction_++;
+    isGoodEvt = false;
+  }
+  else if( j1->HadF/(j1->HadF + j1->EMF) > maxJetHadFraction_ ||
+	   j2->HadF/(j2->HadF + j2->EMF) > maxJetHadFraction_ ) {
+    nMaxJetHadFraction_++;
+    isGoodEvt = false;
+  }
+  else if( evt->relPtJet3() > maxRel3rdJetEt_ && j3->pt > max3rdJetEt_ ) {
+    nCutOn3rdJet_++;
+    isGoodEvt = false;
+  }
+  else if( std::abs(TVector2::Phi_mpi_pi(j1->phi - j2->phi)) < minDeltaPhi_ ) {
+    nMinDeltaPhi_++;
+    isGoodEvt = false;
+  }
+
+  if(! isGoodEvt) {
+    if( evt ) delete evt;
+    evt = 0;
+  }
+
+  return evt;
 }

@@ -4,7 +4,7 @@
 //    This class add user defined tower constraints
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: PhotonJetReader.h,v 1.1 2008/12/12 13:43:15 stadie Exp $
+//    $Id: TowerConstraintsReader.cc,v 1.1 2008/12/12 17:06:00 stadie Exp $
 //   
 
 #include "TowerConstraintsReader.h"
@@ -19,7 +19,7 @@ TowerConstraintsReader::TowerConstraintsReader(const std::string& configfile, TP
   EventReader(configfile,p)
 {
   //specify constraints
-  vector<double> tower_constraint = bag_of<double>(config->read<string>( "Tower Constraint",""));
+  vector<double> tower_constraint = bag_of<double>(config_->read<string>( "Tower Constraint",""));
   if(tower_constraint.size() % 5 == 0) {
     for(unsigned int i = 0 ; i < tower_constraint.size() ; i += 5) {
       tower_constraints.push_back(TowerConstraint((int)tower_constraint[i],(int)tower_constraint[i+1],
@@ -29,10 +29,6 @@ TowerConstraintsReader::TowerConstraintsReader(const std::string& configfile, TP
   } else if(tower_constraint.size() > 1) {
     std::cout << "wrong number of arguments for tower constraint:" << tower_constraint.size() << '\n';
   }
-
-  
-  delete config;
-  config = 0;
 }
 
 TowerConstraintsReader::~TowerConstraintsReader()
@@ -62,15 +58,15 @@ int TowerConstraintsReader::readEvents(std::vector<TData*>& data)
 						       ic->weight, //weight
 						       0, //params
 						       0, //number of free jet param. p. bin
-						       p->dummy_parametrization, // function
-						       p->const_error<10000>, // function
+						       par_->dummy_parametrization, // function
+						       par_->const_error<10000>, // function
 						       constraintp);
     tc->SetType( typeTowerConstraint );
     //Add the towers to the event
     for(int ideta = ic->mineta ; ideta <= ic->maxeta  ; ++ideta) {
       if(ideta == 0) ideta = 1;
       for(int idphi = 1 ; idphi <= 72  ; ++idphi) {
-	int index=p->GetBin(p->GetEtaBin(ideta),p->GetPhiBin(idphi));
+	int index=par_->GetBin(par_->GetEtaBin(ideta),par_->GetPhiBin(idphi));
 	if (index<0) {
 	  cerr << "INDEX = "<< index << endl;
 	  continue;
@@ -90,10 +86,10 @@ int TowerConstraintsReader::readEvents(std::vector<TData*>& data)
 						     etsum, //"truth" for plotting only
 						     sqrt(pow(0.5,2)+ pow(0.1*etsum,2)), //error
 						     1.0, //weight ???
-						     p->GetTowerParRef(index), //parameter
-						     p->GetNumberOfTowerParametersPerBin(), //number of free cluster param. p. bin
-						     p->tower_parametrization, //function
-						     p->const_error<10> //error param.
+						     par_->GetTowerParRef(index), //parameter
+						     par_->GetNumberOfTowerParametersPerBin(), //number of free cluster param. p. bin
+						     par_->tower_parametrization, //function
+						     par_->const_error<10> //error param.
 						     );
 	tc->AddMess(tower);
       } 

@@ -2,10 +2,11 @@
 #define DIJETREADER_H
 
 #include "EventReader.h"
+#include "NJetSel.h"
 
 #include <string>
 
-#include "NJetSel.h"
+#include "TRandom3.h"
 
 
 //!
@@ -36,7 +37,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.11 2009/07/23 13:49:55 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.12 2009/10/08 14:46:32 stadie Exp $
 // ----------------------------------------------------------------   
 class DiJetReader : public EventReader{
  public:
@@ -47,14 +48,16 @@ class DiJetReader : public EventReader{
 
  private:
   TData* createPtBalanceEvent();
+  TData* createTwoJetsPtBalanceEvent();
   TData* createSmearEvent();
   int createJetTruthEvents(std::vector<TData*>& data);
 
   NJetSel nJet_;                //!< Njet Selector
+  TRandom3 * rand_;             //!< Random number generator
 
   int    dataClass_;            //!< Data class, see also TData
   int    nDijetEvents_;         //!< Maximum number of read dijet events
-  int    prescale_;             //!< onkly read every nth event
+  int    prescale_;             //!< only read every nth event
 
   double minJetEt_;             //!< Minimum pt of jet
   double minDijetEt_;           //!< Minimum dijet pt

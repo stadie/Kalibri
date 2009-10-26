@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.14 2009/08/05 12:16:30 stadie Exp $
+//    $Id: TopReader.cc,v 1.15 2009/08/07 12:33:32 snaumann Exp $
 //   
 #include "TopReader.h"
 
@@ -35,46 +35,40 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
   dataClass_(0),
   createGenWHist_(false)
 {
-  nTopEvents_     = config->read<int>("use Top events",-1); 
-  if(nTopEvents_ == 0) {
-    delete config;
-    config = 0;
-    return ;
-  }
+  nTopEvents_     = config_->read<int>("use Top events",-1); 
+  if(nTopEvents_ == 0) return;
 
-  minJetEt_  = config->read<double>("Et cut on jet",0.0);
-  maxJetEta_ = config->read<double>("Eta cut on jet",100.0);
-  minJetHadFrac_ = config->read<double>("Min had fraction", 0.07);
-  maxJetHadFrac_ = config->read<double>("Max had fraction", 0.95);
-  useToL3CorrectedJets_ = config->read<bool>("use to L3 corrected jets",false);
-  useMassConstraintW_   = config->read<bool>("use W mass constraint",true);
-  useMassConstraintTop_ = config->read<bool>("use Top mass constraint",false);
-  useGenJetInvMass_     = config->read<bool>("use GenJet inv mass constraint",false);
-  massConstraintW_   = config->read<double>("W mass",80.4);
-  massConstraintTop_ = config->read<double>("Top mass",172.4);
+
+  minJetEt_  = config_->read<double>("Et cut on jet",0.0);
+  maxJetEta_ = config_->read<double>("Eta cut on jet",100.0);
+  minJetHadFrac_ = config_->read<double>("Min had fraction", 0.07);
+  maxJetHadFrac_ = config_->read<double>("Max had fraction", 0.95);
+  useToL3CorrectedJets_ = config_->read<bool>("use to L3 corrected jets",false);
+  useMassConstraintW_   = config_->read<bool>("use W mass constraint",true);
+  useMassConstraintTop_ = config_->read<bool>("use Top mass constraint",false);
+  useGenJetInvMass_     = config_->read<bool>("use GenJet inv mass constraint",false);
+  massConstraintW_   = config_->read<double>("W mass",80.4);
+  massConstraintTop_ = config_->read<double>("Top mass",172.4);
   if(!useMassConstraintW_ && !useMassConstraintTop_) {
     std::cout << "W mass constraint and Top mass constraint were both turned off," << std::endl
 	      << "you should enable at least one of these constraints if you want to run with Top...!" << std::endl;
   }
-  dataClass_ = config->read<int>("Top data class", 0);
+  dataClass_ = config_->read<int>("Top data class", 0);
   if((dataClass_ != 0)&&(dataClass_ != 1)&&(dataClass_ != 2)) dataClass_ = 0;
   
-  string default_tree_name = config->read<string>("Default Tree Name","CalibTree");
-  string treename_top    = config->read<string>( "Top tree", default_tree_name );
+  string default_tree_name = config_->read<string>("Default Tree Name","CalibTree");
+  string treename_top    = config_->read<string>( "Top tree", default_tree_name );
   TChain * tchain_top = new TChain( treename_top.c_str() );
-  vector<string> input_top = bag_of_string( config->read<string>( "Top input file", "input/top.root" ) );
+  vector<string> input_top = bag_of_string( config_->read<string>( "Top input file", "input/top.root" ) );
   for (bag_of_string::const_iterator it = input_top.begin(); it!=input_top.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Top analysis." << endl;
     tchain_top->Add( it->c_str() );
   }  
   top_.Init( tchain_top );
 
-  createGenWHist_ = config->read<bool>("create genW histogram",false);
+  createGenWHist_ = config_->read<bool>("create genW histogram",false);
   if(createGenWHist_)
     genWPtEta_ = new TH2F("genWPtEta", "genWPtEta", 100, -5., 5., 400, 0., 400.);
-  
-  delete config;
-  config = 0;
 }
 
 TopReader::~TopReader()
@@ -131,8 +125,8 @@ int TopReader::readEvents(std::vector<TData*>& data)
 	  Ltower.SetPtEtaPhiE(top_.TowEt[n],top_.TowEta[n],top_.TowPhi[n],top_.TowE[n]);
 	  double dr = Ltower.DeltaR(Ljet);
 	  if (dr<min_tower_dr) {
-	    jet_index = p->GetJetBin(p->GetJetEtaBin(top_.TowId_eta[n]),
-				     p->GetJetPhiBin(top_.TowId_phi[n]));
+	    jet_index = par_->GetJetBin(par_->GetJetEtaBin(top_.TowId_eta[n]),
+				     par_->GetJetPhiBin(top_.TowId_phi[n]));
 	    min_tower_dr = dr;
 	  }
 	}
@@ -160,16 +154,16 @@ int TopReader::readEvents(std::vector<TData*>& data)
 	jetp->OutF = out * factor;
 	//Create an Top TData event
 	top_data[nstoredjets] = 
-	  new TData_InvMass2(jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+	  new TData_InvMass2(jet_index * par_->GetNumberOfJetParametersPerBin() + par_->GetNumberOfTowerParameters(),
 			     direction,                                     //p_T direction of this jet
 			     massConstraintW_,                                         //truth//
 			     sqrt(pow(0.5,2)+pow(0.10*top_.JetPt[ij],2)),    //error//
 			     top_.Weight,                                    //weight//
 			     //1.,                                          //weight//
-			     p->GetJetParRef( jet_index ),                  //params
-			     p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-			     p->jet_parametrization,                        //function
-			     //p->dummy_parametrization,
+			     par_->GetJetParRef( jet_index ),                  //params
+			     par_->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
+			     par_->jet_parametrization,                        //function
+			     //par_->dummy_parametrization,
 			     jet_error_param,                               //error param. function
 			     jetp                                           //jet momentum for plotting and scale
 			     );
@@ -179,8 +173,8 @@ int TopReader::readEvents(std::vector<TData*>& data)
 	  if (top_.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
 	  //if (top_.TowEt[n]<0.01) continue;
 	  
-	  int index = p->GetBin(p->GetEtaBin(top_.TowId_eta[n]),
-				p->GetPhiBin(top_.TowId_phi[n]));
+	  int index = par_->GetBin(par_->GetEtaBin(top_.TowId_eta[n]),
+				par_->GetPhiBin(top_.TowId_phi[n]));
 	  //std::cout << "jet:" << ij << "bin index:" << index << "\n";
 	  if (index<0){ cerr<<"WARNING: Top tower_index = " << index << endl; continue; }
 	  
@@ -206,9 +200,9 @@ int TopReader::readEvents(std::vector<TData*>& data)
 							     sqrt(pow(0.5,2)+pow(0.1*top_.JetPt[ij]*relativEt,2)),   //error//
 							     //1., //weight//
 							     top_.Weight,                                            //weight//
-							     p->GetTowerParRef( index ),                             //parameter//
-							     p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
-							     p->tower_parametrization,                               //function//
+							     par_->GetTowerParRef( index ),                             //parameter//
+							     par_->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
+							     par_->tower_parametrization,                               //function//
 							     tower_error_param                                       //error param. function//
 							     ));
 	}
@@ -250,8 +244,8 @@ int TopReader::readEvents(std::vector<TData*>& data)
 	  Ltower.SetPtEtaPhiE(top_.TowEt[n],top_.TowEta[n],top_.TowPhi[n],top_.TowE[n]);
 	  double dr = Ltower.DeltaR(Ljet);
 	  if (dr<min_tower_dr) {
-	    jet_index = p->GetJetBin(p->GetJetEtaBin(top_.TowId_eta[n]),
-				     p->GetJetPhiBin(top_.TowId_phi[n]));
+	    jet_index = par_->GetJetBin(par_->GetJetEtaBin(top_.TowId_eta[n]),
+				     par_->GetJetPhiBin(top_.TowId_phi[n]));
 	    min_tower_dr = dr;
 	  }
 	}
@@ -278,16 +272,16 @@ int TopReader::readEvents(std::vector<TData*>& data)
 	jetp->OutF = out * factor;
 	//Create an Top TData event
 	top_data[nstoredjets] = 
-	  new TData_InvMass2(jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+	  new TData_InvMass2(jet_index * par_->GetNumberOfJetParametersPerBin() + par_->GetNumberOfTowerParameters(),
 			     direction,                                     //p_T direction of this jet
 			     massConstraintTop_,                                         //truth//
 			     sqrt(pow(0.5,2)+pow(0.10*top_.JetPt[ij],2)),    //error//
 			     top_.Weight,                                    //weight//
 			     //1.,                                          //weight//
-			     p->GetJetParRef( jet_index ),                  //params
-			     p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-			     p->jet_parametrization,                        //function
-			     //p->dummy_parametrization,
+			     par_->GetJetParRef( jet_index ),                  //params
+			     par_->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
+			     par_->jet_parametrization,                        //function
+			     //par_->dummy_parametrization,
 			     jet_error_param,                               //error param. function
 			     jetp                                           //jet momentum for plotting and scale
 			     );
@@ -297,8 +291,8 @@ int TopReader::readEvents(std::vector<TData*>& data)
 	  if (top_.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
 	  //if (top_.TowEt[n]<0.01) continue;
 	  
-	  int index = p->GetBin(p->GetEtaBin(top_.TowId_eta[n]),
-				p->GetPhiBin(top_.TowId_phi[n]));
+	  int index = par_->GetBin(par_->GetEtaBin(top_.TowId_eta[n]),
+				par_->GetPhiBin(top_.TowId_phi[n]));
 	  //std::cout << "jet:" << ij << "bin index:" << index << "\n";
 	  if (index<0){ cerr<<"WARNING: Top tower_index = " << index << endl; continue; }
 	  
@@ -324,9 +318,9 @@ int TopReader::readEvents(std::vector<TData*>& data)
 							     sqrt(pow(0.5,2)+pow(0.1*top_.JetPt[ij]*relativEt,2)),   //error//
 							     //1., //weight//
 							     top_.Weight,                                            //weight//
-							     p->GetTowerParRef( index ),                             //parameter//
-							     p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
-							     p->tower_parametrization,                               //function//
+							     par_->GetTowerParRef( index ),                             //parameter//
+							     par_->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
+							     par_->tower_parametrization,                               //function//
 							     tower_error_param                                       //error param. function//
 							     ));
 	}
@@ -428,16 +422,16 @@ TData* TopReader::createTwoJetsInvMassEvents()
 			  top_.JetEta[i], top_.JetPhi[i],
 			  TJet::uds, top_.GenJetPt[i], 0.,
 			  corFactors,
-			  p->jet_function(top_.TowId_eta[closestTower],
+			  par_->jet_function(top_.TowId_eta[closestTower],
 					  top_.TowId_phi[closestTower]),
-			  jet_error_param, p->global_jet_function(), minJetEt_);
+			  jet_error_param, par_->global_jet_function(), minJetEt_);
       for(int j = 0 ; j < top_.NobjTow ; ++j) {
 	if (top_.Tow_jetidx[j]!= i) continue;//look for ij-jet's towers
 	double scale = top_.TowEt[j]/top_.TowE[j];
 	jt->addTower(top_.TowEt[j],top_.TowEm[j]*scale,
 		     top_.TowHad[j]*scale,top_.TowOE[j]*scale,
 		     top_.TowE[j],top_.TowEta[j],top_.TowPhi[j],
-		     p->tower_function(top_.TowId_eta[i],top_.TowId_phi[i]),
+		     par_->tower_function(top_.TowId_eta[i],top_.TowId_phi[i]),
 		     tower_error_param);
       }
       *jet = jt;
@@ -451,9 +445,9 @@ TData* TopReader::createTwoJetsInvMassEvents()
 		     top_.JetEta[i], top_.JetPhi[i],
 		     TJet::uds, top_.GenJetPt[i], 0.,
 		     corFactors,
-		     p->jet_function(top_.TowId_eta[closestTower],
+		     par_->jet_function(top_.TowId_eta[closestTower],
 				     top_.TowId_phi[closestTower]),
-		     jet_error_param, p->global_jet_function(), minJetEt_);    
+		     jet_error_param, par_->global_jet_function(), minJetEt_);    
     }
   }
   delete [] terr;
@@ -475,9 +469,9 @@ TData* TopReader::createTwoJetsInvMassEvents()
       TLorentzVector p1,p2;
       p1.SetPtEtaPhiM(jets[0]->GenPt(),jets[0]->eta(),jets[0]->phi(),0);
       p2.SetPtEtaPhiM(jets[1]->GenPt(),jets[1]->eta(),jets[1]->phi(),0);
-      return new TwoJetsInvMassEvent(jets[0],jets[1],(p1+p2).M(),1.0,p->GetPars());
+      return new TwoJetsInvMassEvent(jets[0],jets[1],(p1+p2).M(),1.0,par_->GetPars());
     }
-    return new TwoJetsInvMassEvent(jets[0],jets[1],massConstraintW_,1.0,p->GetPars());
+    return new TwoJetsInvMassEvent(jets[0],jets[1],massConstraintW_,1.0,par_->GetPars());
   } else {
     delete jets[0];
     delete jets[1];

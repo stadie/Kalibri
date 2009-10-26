@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.15 2009/06/11 17:32:15 mschrode Exp $
+//    $Id: ZJetReader.cc,v 1.16 2009/07/13 12:04:39 snaumann Exp $
 //   
 #include "ZJetReader.h"
 
@@ -26,38 +26,31 @@
 ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
  EventReader(configfile,p),Et_cut_on_Z(0),Et_cut_on_jet(0),Had_cut_min(0),Had_cut_max(1)
 {
-  n_zjet_events     = config->read<int>("use Z-Jet events",-1); 
-  if(n_zjet_events == 0) {
-    delete config;
-    config = 0;
-    return ;
-  }
+  n_zjet_events     = config_->read<int>("use Z-Jet events",-1); 
+  if(n_zjet_events == 0) return ;
 
-  Et_cut_on_Z       = config->read<double>("Et cut on Z",0.0); 
-  Et_cut_on_jet     = config->read<double>("Et cut on jet",0.0);
-  Et_cut_on_genJet  = config->read<double>("Et genJet min",0.0);
-  Eta_cut_on_jet    = config->read<double>("Eta cut on jet",5.0);
-  Had_cut_min       = config->read<double>("Min had fraction",0.07);
-  Had_cut_max       = config->read<double>("Max had fraction",0.95);
+  Et_cut_on_Z       = config_->read<double>("Et cut on Z",0.0); 
+  Et_cut_on_jet     = config_->read<double>("Et cut on jet",0.0);
+  Et_cut_on_genJet  = config_->read<double>("Et genJet min",0.0);
+  Eta_cut_on_jet    = config_->read<double>("Eta cut on jet",5.0);
+  Had_cut_min       = config_->read<double>("Min had fraction",0.07);
+  Had_cut_max       = config_->read<double>("Max had fraction",0.95);
 
-  string default_tree_name = config->read<string>("Default Tree Name","CalibTree");
-  string treename_zjet      = config->read<string>( "Z-Jet tree", default_tree_name );
+  string default_tree_name = config_->read<string>("Default Tree Name","CalibTree");
+  string treename_zjet      = config_->read<string>( "Z-Jet tree", default_tree_name );
   TChain * tchain_zjet      = new TChain( treename_zjet.c_str() );
-  vector<string> input_zjet = bag_of_string( config->read<string>( "Z-Jet input file", "input/zjet.root" ) );
+  vector<string> input_zjet = bag_of_string( config_->read<string>( "Z-Jet input file", "input/zjet.root" ) );
   for (bag_of_string::const_iterator it = input_zjet.begin(); it!=input_zjet.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Z-Jet analysis." << endl;
     tchain_zjet->Add( it->c_str() );
   }  
   zjet.Init( tchain_zjet );
     
-  dataClass = config->read<int>("Z-Jet data class", 0);
+  dataClass = config_->read<int>("Z-Jet data class", 0);
   if((dataClass < 0) || (dataClass > 3)) {
     std::cout << "ZJetReader: Unknown data class " << dataClass << ". Using data class 0." << std::endl;
     dataClass = 0;
   }
-
-  delete config;
-  config = 0;
 }
 
 ZJetReader::~ZJetReader()
@@ -179,15 +172,15 @@ TData* ZJetReader::createJetTruthEvent()
 					 1.,              // L5
 					 zjet.JetCorrJPT,
 					 zjet.JetCorrL2L3JPT),
-			p->jet_function(zjet.TowId_eta[closestTower],
+			par_->jet_function(zjet.TowId_eta[closestTower],
 					zjet.TowId_phi[closestTower]),
-			jet_error_param,p->global_jet_function());
+			jet_error_param,par_->global_jet_function());
     for(int i = 0; i < zjet.NobjTowCal; ++i) {
       double scale = zjet.TowEt[i]/zjet.TowE[i];
       jt->addTower(zjet.TowEt[i],zjet.TowEm[i]*scale,
 		   zjet.TowHad[i]*scale,zjet.TowOE[i]*scale,
 		   zjet.TowE[i],zjet.TowEta[i],zjet.TowPhi[i], 
-		   p->tower_function(zjet.TowId_eta[i],zjet.TowId_phi[i]),
+		   par_->tower_function(zjet.TowId_eta[i],zjet.TowId_phi[i]),
 		   tower_error_param);
     }
     j = jt;
@@ -203,20 +196,20 @@ TData* ZJetReader::createJetTruthEvent()
 					 1.,              // L5
 					 zjet.JetCorrJPT,
 					 zjet.JetCorrL2L3JPT),
-			p->jet_function(zjet.TowId_eta[closestTower],
+			par_->jet_function(zjet.TowId_eta[closestTower],
 					zjet.TowId_phi[closestTower]),
-			jet_error_param,p->global_jet_function());
-    double* EfficiencyMap = p->GetEffMap();
+			jet_error_param,par_->global_jet_function());
+    double* EfficiencyMap = par_->GetEffMap();
     for(int i = 0; i < zjet.NobjTrack; ++i) {
       double scale = zjet.TrackP[i]/zjet.TrackPt[i];  
-      int TrackEffBin = p->GetTrackEffBin(zjet.TrackPt[i],zjet.TrackEta[i]);
+      int TrackEffBin = par_->GetTrackEffBin(zjet.TrackPt[i],zjet.TrackEta[i]);
       double eff = EfficiencyMap[TrackEffBin];
       jt->addTrack(zjet.TrackP[i],zjet.TrackEMC3[i]*scale,zjet.TrackHAC3[i]*scale,0,zjet.TrackP[i],
 		   zjet.TrackEta[i],zjet.TrackPhi[i],zjet.TrackId[i],zjet.TrackTowId[i],
 		   zjet.TrackDR[i],zjet.TrackDROut[i],zjet.TrackEtaOut[i],zjet.TrackPhiOut[i],
 		   zjet.TrackEMC1[i]*scale,zjet.TrackEMC5[i]*scale,zjet.TrackHAC1[i],zjet.TrackHAC5[i],
 		   zjet.TrackChi2[i],zjet.TrackNHits[i],zjet.TrackQualityT[i],zjet.MuDR[i],zjet.MuDE[i],
-		   eff,p->track_function(zjet.TrackTowIdEta[i],zjet.TrackTowIdPhi[i]),track_error_param);
+		   eff,par_->track_function(zjet.TrackTowIdEta[i],zjet.TrackTowIdPhi[i]),track_error_param);
     }
     j = jt;
   } else { 
@@ -230,9 +223,9 @@ TData* ZJetReader::createJetTruthEvent()
 				 1.,              // L5
 				 zjet.JetCorrJPT,
 				 zjet.JetCorrL2L3JPT),
-		p->jet_function(zjet.TowId_eta[closestTower],
+		par_->jet_function(zjet.TowId_eta[closestTower],
 				zjet.TowId_phi[closestTower]),
-		jet_error_param,p->global_jet_function());
+		jet_error_param,par_->global_jet_function());
   }
   JetTruthEvent* jte = new JetTruthEvent(j,zjet.JetGenEt,1.0);//zjet.EventWeight);
   delete [] terr;
@@ -257,15 +250,15 @@ TData* ZJetReader::createTruthMultMessEvent()
       Ltower.SetPtEtaPhiE(zjet.TowEt[n],zjet.TowEta[n],zjet.TowPhi[n],zjet.TowE[n]);
       double dr = Ltower.DeltaR(Ljet);
       if (dr<min_tower_dr) {
-	jet_index = p->GetJetBin(p->GetJetEtaBin(zjet.TowId_eta[n]),
-				 p->GetJetPhiBin(zjet.TowId_phi[n]));
+	jet_index = par_->GetJetBin(par_->GetJetEtaBin(zjet.TowId_eta[n]),
+				 par_->GetJetPhiBin(zjet.TowId_phi[n]));
 	min_tower_dr = dr;
       }
     }
 
     if (jet_index<0){ cerr<<"WARNING: jet_index = " << jet_index << endl; return 0; }
     if(em == 0) { return 0;}
-    //jet_index: p->eta_granularity*p->phi_granularity*p->GetNumberOfTowerParametersPerBin()
+    //jet_index: par_->eta_granularity*par_->phi_granularity*par_->GetNumberOfTowerParametersPerBin()
     //           has to be added for a correct reference to k[...].
 
     TJet* jetp  = new TJet;
@@ -289,15 +282,15 @@ TData* ZJetReader::createTruthMultMessEvent()
 
     //Create an Z/Jet TData event
     TData_TruthMultMess * gj_data = new 
-      TData_TruthMultMess(jet_index  * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+      TData_TruthMultMess(jet_index  * par_->GetNumberOfJetParametersPerBin() + par_->GetNumberOfTowerParameters(),
 			  //zjet.ZPt,				    //truth//
 			  zjet.JetGenPt,
 			  sqrt(pow(0.5,2)+pow(0.10*zjet.ZEt,2)),    //error//
 			  //zjet.EventWeight,                       //weight//
 			  1.0,                                      //weight//
-			  p->GetJetParRef( jet_index ),             //params
-			  p->GetNumberOfJetParametersPerBin(),      //number of free jet param. p. bin
-			  p->jet_parametrization,                   //function
+			  par_->GetJetParRef( jet_index ),             //params
+			  par_->GetNumberOfJetParametersPerBin(),      //number of free jet param. p. bin
+			  par_->jet_parametrization,                   //function
 			  jet_error_param,                          //error param. function
 			  jetp
 			  );
@@ -306,8 +299,8 @@ TData* ZJetReader::createTruthMultMessEvent()
     for (int n=0; n<zjet.NobjTowCal; ++n){
       //if (zjet.TowEt[n]<0.01) continue;
       
-      int index = p->GetBin(p->GetEtaBin(zjet.TowId_eta[n]),
-			    p->GetPhiBin(zjet.TowId_phi[n]));
+      int index = par_->GetBin(par_->GetEtaBin(zjet.TowId_eta[n]),
+			    par_->GetPhiBin(zjet.TowId_phi[n]));
       if (index<0){ cerr<<"WARNING: towewer_index = " << index << endl; continue; }
       
       //double dR = deltaR(zjet.JetCalEta, zjet.JetCalPhi, zjet.TowEta[n], zjet.TowPhi[n]);
@@ -331,9 +324,9 @@ TData* ZJetReader::createTruthMultMessEvent()
 					   zjet.ZEt * relativEt,                           //truth//
 					   sqrt(pow(0.5,2)+pow(0.1*zjet.ZEt*relativEt,2)), //error//
 					   1.,                                             //weight//
-					   p->GetTowerParRef( index ),                     //parameter//
-					   p->GetNumberOfTowerParametersPerBin(),          //number of free tower param. p. bin//
-					   p->tower_parametrization,                       //function//
+					   par_->GetTowerParRef( index ),                     //parameter//
+					   par_->GetNumberOfTowerParametersPerBin(),          //number of free tower param. p. bin//
+					   par_->tower_parametrization,                       //function//
 					   tower_error_param                                        //error param.func.//
 					   ));
     } 
@@ -341,7 +334,7 @@ TData* ZJetReader::createTruthMultMessEvent()
     
     //Add the jet's tracks to "gj_data":
     int index;
-    double* EfficiencyMap = p->GetEffMap();
+    double* EfficiencyMap = par_->GetEffMap();
     for (int n=0; n<zjet.NobjTrack; ++n){
       if((zjet.TrackTowIdEta[n] == 0) || (zjet.TrackTowIdPhi[n] == 0)) {
 	if(zjet.TrackPt[n] > 2){
@@ -351,8 +344,8 @@ TData* ZJetReader::createTruthMultMessEvent()
 	else index = 0; //bent low momentum tracks with no HCAL hit
       }
       else
-	index = p->GetTrackBin(p->GetTrackEtaBin(zjet.TrackTowIdEta[n]),
-			       p->GetTrackPhiBin(zjet.TrackTowIdPhi[n]));
+	index = par_->GetTrackBin(par_->GetTrackEtaBin(zjet.TrackTowIdEta[n]),
+			       par_->GetTrackPhiBin(zjet.TrackTowIdPhi[n]));
       if (index<0){ cerr<<"WARNING: track_index = " << index << endl; continue; }
       //create array with multidimensional measurement
       //TMeasurement * Tmess = new TTrack;
@@ -380,22 +373,22 @@ TData* ZJetReader::createTruthMultMessEvent()
       Tmess->TrackQualityT = bool(zjet.TrackQualityT[n]);
       Tmess->MuDR = double(zjet.MuDR[n]);
       Tmess->MuDE = double(zjet.MuDE[n]);
-      int TrackEffBin = p->GetTrackEffBin(zjet.TrackPt[n],zjet.TrackEta[n]);
+      int TrackEffBin = par_->GetTrackEffBin(zjet.TrackPt[n],zjet.TrackEta[n]);
       Tmess->Efficiency = EfficiencyMap[TrackEffBin];
       //mess[7] = double( cos( zjet.JetCalPhi-zjet.TowPhi[n] ) ); // Projection factor for summing tower Pt
       //EM+=mess->EMF;
       //F+=mess->pt;
-       gj_data->AddTrack(new TData_TruthMess(index  * p->GetNumberOfTrackParametersPerBin() + p->GetNumberOfTowerParameters() + p->GetNumberOfJetParameters() ,
+       gj_data->AddTrack(new TData_TruthMess(index  * par_->GetNumberOfTrackParametersPerBin() + par_->GetNumberOfTowerParameters() + par_->GetNumberOfJetParameters() ,
 					   Tmess,                                                    //mess//
 					   0,                           //truth//
 					   0.015 * zjet.TrackPt[n], //error//
 					   1.,                                                      //weight//
-					   p->GetTrackParRef( index ),                              //parameter//
-					   p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
-					   p->track_parametrization,                                //function//
+					   par_->GetTrackParRef( index ),                              //parameter//
+					   par_->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
+					   par_->track_parametrization,                                //function//
 					   track_error_param                                        //error param.func.//
 					   ));
     } 
-    gj_data->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization
+    gj_data->UseTracks(useTracks_);   //check if track information is sufficient to use Track Parametrization
     return gj_data;
 }

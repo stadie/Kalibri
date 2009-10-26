@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TriJetReader.cc,v 1.1 2008/12/12 14:08:47 stadie Exp $
+//    $Id: TriJetReader.cc,v 1.2 2008/12/13 16:43:32 stadie Exp $
 //   
 #include "TriJetReader.h"
 
@@ -14,27 +14,21 @@
 TriJetReader::TriJetReader(const std::string& configfile, TParameters* p) 
   : EventReader(configfile,p),Et_cut_nplus1Jet(0),Rel_cut_on_nJet(10),n_trijet_events(0)
 {
-  n_trijet_events = config->read<int>("use Tri-Jet events",-1);
-  if(n_trijet_events == 0) {
-    delete config;
-    config = 0;
-    return;
-  }
-  Et_cut_nplus1Jet = config->read<double>("Et cut on n+1 Jet",10.0);
-  Rel_cut_on_nJet  =  config->read<double>("Relative n+1 Jet Et Cut",0.2);
+  n_trijet_events = config_->read<int>("use Tri-Jet events",-1);
+  if(n_trijet_events == 0) return;
+
+  Et_cut_nplus1Jet = config_->read<double>("Et cut on n+1 Jet",10.0);
+  Rel_cut_on_nJet  =  config_->read<double>("Relative n+1 Jet Et Cut",0.2);
   
-  string default_tree_name = config->read<string>("Default Tree Name","CalibTree"); 
-  string treename_trijet    = config->read<string>( "Tri-Jet tree", default_tree_name );
+  string default_tree_name = config_->read<string>("Default Tree Name","CalibTree"); 
+  string treename_trijet    = config_->read<string>( "Tri-Jet tree", default_tree_name );
   TChain * tchain_trijet = new TChain( treename_trijet.c_str() );
-  vector<string> input_trijet = bag_of_string(config->read<string>( "Tri-Jet input file", "input/trijet.root" ) );
+  vector<string> input_trijet = bag_of_string(config_->read<string>( "Tri-Jet input file", "input/trijet.root" ) );
   for (bag_of_string::const_iterator it = input_trijet.begin(); it!=input_trijet.end(); ++it){
     cout << "...opening root-file " << (*it) << " for Tri-Jet analysis." << endl;
     tchain_trijet->Add( it->c_str() );
   }  
   njet.Init( tchain_trijet );
-  
-  delete config;
-  config = 0;
 }
 
 TriJetReader::~TriJetReader()
@@ -84,8 +78,8 @@ int TriJetReader::readEvents(std::vector<TData*>& data)
 	Ltower.SetPtEtaPhiE(njet.TowEt[n],njet.TowEta[n],njet.TowPhi[n],njet.TowE[n]);
 	double dr = Ltower.DeltaR(Ljet);
 	if (dr<min_tower_dr) {
-	  jet_index = p->GetJetBin(p->GetJetEtaBin(njet.TowId_eta[n]),
-				   p->GetJetPhiBin(njet.TowId_phi[n]));
+	  jet_index = par_->GetJetBin(par_->GetJetEtaBin(njet.TowId_eta[n]),
+				   par_->GetJetPhiBin(njet.TowId_phi[n]));
 	  min_tower_dr = dr;
 	}
       }
@@ -108,16 +102,16 @@ int TriJetReader::readEvents(std::vector<TData*>& data)
       jetp->OutF = out * factor;
       //Create an jet/Jet TData event
       jj_data[nstoredjets] = new TData_PtBalance( 
-          jet_index * p->GetNumberOfJetParametersPerBin() + p->GetNumberOfTowerParameters(),
+          jet_index * par_->GetNumberOfJetParametersPerBin() + par_->GetNumberOfTowerParameters(),
 	  direction,                                     //p_T direction of this jet
 	  0.0,                                           //truth//
 	  sqrt(pow(0.5,2)+pow(0.10*njet.JetPt[ij],2)),   //error//
 	  njet.Weight,                                   //weight//
 	  //1.,                                          //weight//
-	  p->GetJetParRef( jet_index ),                  //params
-	  p->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
-	  p->jet_parametrization,                        //function
-	  //p->dummy_parametrization,
+	  par_->GetJetParRef( jet_index ),                  //params
+	  par_->GetNumberOfJetParametersPerBin(),           //number of free jet param. p. bin
+	  par_->jet_parametrization,                        //function
+	  //par_->dummy_parametrization,
           jet_error_param,                               //error param. function
 	  jetp                                           //jet momentum for plotting and scale
         );
@@ -128,8 +122,8 @@ int TriJetReader::readEvents(std::vector<TData*>& data)
         if (njet.Tow_jetidx[n]!=(int)ij) continue;//look for ij-jet's towers
 	//if (njet.TowEt[n]<0.01) continue;
 
-	int index = p->GetBin(p->GetEtaBin(njet.TowId_eta[n]),
-			      p->GetPhiBin(njet.TowId_phi[n]));
+	int index = par_->GetBin(par_->GetEtaBin(njet.TowId_eta[n]),
+			      par_->GetPhiBin(njet.TowId_phi[n]));
 //std::cout << "jet:" << ij << ", towid=" << n << ", bin index:" << index << "\n";
 	if (index<0){ cerr<<"WARNING: JJ tower_index = " << index << endl; continue; }
 
@@ -155,9 +149,9 @@ int TriJetReader::readEvents(std::vector<TData*>& data)
 	    sqrt(pow(0.5,2)+pow(0.1*njet.JetPt[ij]*relativEt,2)),   //error//
             //1.,                                                   //weight//
 	    njet.Weight,                                            //weight//
-	    p->GetTowerParRef( index ),                             //parameter//
-	    p->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
-	    p->tower_parametrization,                               //function//
+	    par_->GetTowerParRef( index ),                             //parameter//
+	    par_->GetNumberOfTowerParametersPerBin(),                  //number of free tower param. p. bin//
+	    par_->tower_parametrization,                               //function//
 	    tower_error_param                                      //error param. function//
 	  ));
       }
@@ -165,8 +159,8 @@ int TriJetReader::readEvents(std::vector<TData*>& data)
       for (int n=0; n<njet.NobjTrack; ++n){
         if (njet.Track_jetidx[n]!=(int)ij) continue;//look for ij-jet's tracks
 
-	int track_index = p->GetTrackBin(p->GetTrackEtaBin(njet.TrackTowIdEta[n]),
-					 p->GetTrackPhiBin(njet.TrackTowIdPhi[n]));
+	int track_index = par_->GetTrackBin(par_->GetTrackEtaBin(njet.TrackTowIdEta[n]),
+					 par_->GetTrackPhiBin(njet.TrackTowIdPhi[n]));
 	if (track_index<0){ cerr<<"WARNING: JJ track_index = " << track_index << endl; continue; }
 	//create array with multidimensional measurement
 	//TMeasurement * Tmess = new TTrack;
@@ -197,18 +191,18 @@ int TriJetReader::readEvents(std::vector<TData*>& data)
 	//EM+=mess->EMF;
 	//F+=mess->pt;
 	jj_data[nstoredjets]->AddTrack(new TData_TruthMess(
-					      track_index  * p->GetNumberOfTrackParametersPerBin() + p->GetNumberOfTowerParameters() + p->GetNumberOfJetParameters() ,
+					      track_index  * par_->GetNumberOfTrackParametersPerBin() + par_->GetNumberOfTowerParameters() + par_->GetNumberOfJetParameters() ,
 					      Tmess,                                                    //mess//
 					      0,                           //truth//
 					      0.05 + 0.00015 * njet.TrackPt[n], //error//
 					      1.,                                                      //weight//
-					      p->GetTrackParRef( track_index ),                              //parameter//
-					      p->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
-					      p->track_parametrization,                                //function//
+					      par_->GetTrackParRef( track_index ),                              //parameter//
+					      par_->GetNumberOfTrackParametersPerBin(),                   //number of free tower param. p. bin//
+					      par_->track_parametrization,                                //function//
 					      track_error_param                                        //error param.func.//
 					      ));
       }
-      jj_data[nstoredjets]->UseTracks(useTracks);   //check if track information is sufficient to use Track Parametrization
+      jj_data[nstoredjets]->UseTracks(useTracks_);   //check if track information is sufficient to use Track Parametrization
       
       if(nstoredjets> 0)  
       	jj_data[0]->AddNewMultMess( jj_data[nstoredjets] );
