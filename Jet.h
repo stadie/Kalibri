@@ -11,7 +11,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.21 2009/08/07 13:16:37 stadie Exp $
+//!    $Id: Jet.h,v 1.22 2009/10/09 14:00:35 stadie Exp $
 
 
 #include "gsl/gsl_errno.h"
@@ -49,6 +49,7 @@ class Jet : public TJet
     f.changeParBase(oldpar,newpar);
     gf.changeParBase(oldpar,newpar);
   }
+  virtual double correctedEt() const { return correctedEt(Et()); }
   virtual double correctedEt(double Et, bool fast = false) const;
   double expectedEt(double truth, double start, double& error,
 		    bool fast = false);
@@ -107,6 +108,9 @@ class Jet : public TJet
 
   void print();                       //!< Print some jet members
   static void printInversionStats();  //!< Print some info on inversion
+
+  int parIndex() const { return f.parIndex(); }
+
 
  protected:
   mutable VariationColl varcoll;

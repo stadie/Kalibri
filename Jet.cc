@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.29 2009/08/07 13:16:37 stadie Exp $
+//    $Id: Jet.cc,v 1.30 2009/10/09 14:00:35 stadie Exp $
 //   
 #include "Jet.h"  
 #include "TMath.h"
@@ -99,7 +99,7 @@ const Jet::VariationColl& Jet::varyParsDirectly(double eps)
     varcoll[i].upperEt = correctedEt(pt);
     varcoll[i].upperError = expectedError(varcoll[i].upperEt);
     varcoll[i].upperEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
-    f.firstPar()[i] = orig - eps;;
+    f.firstPar()[i] = orig - eps;
     varcoll[i].lowerEt = correctedEt(pt); 
     varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     varcoll[i].lowerEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
@@ -112,7 +112,7 @@ const Jet::VariationColl& Jet::varyParsDirectly(double eps)
     varcoll[j].upperEt = correctedEt(pt);
     varcoll[j].upperError = expectedError(varcoll[j].upperEt);
     varcoll[j].upperEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
-    gf.firstPar()[i] = orig - eps;;
+    gf.firstPar()[i] = orig - eps;
     varcoll[j].lowerEt = correctedEt(pt); 
     varcoll[j].lowerError = expectedError(varcoll[j].lowerEt);
     varcoll[j].lowerEtDeriv =  (correctedEt(pt+deltaE) -  correctedEt(pt-deltaE))/2/deltaE;
