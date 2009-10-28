@@ -12,7 +12,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.1 2009/10/26 20:59:28 mschrode Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public TData {
  public:
@@ -95,6 +95,7 @@ class TwoJetsPtBalanceEvent : public TData {
   mutable double chi2Plots_;   //!< Store chi2 value from last iteration for plots
 
   double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_simple_dRes2(double pt1, double pt2) const;
 };
 
 #endif

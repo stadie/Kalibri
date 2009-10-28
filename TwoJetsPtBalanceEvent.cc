@@ -13,19 +13,12 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
   double pt1 = GetParametrizedMess();
   double pt2 = GetParametrizedMess2();
 
-  // Derivativ d(corr pt) / d(pt); for simplification
-  // assuming constant correction function
-  double dPt1 = pt1 / jet1_->Et();
-  double dPt2 = pt2 / jet2_->Et();
-
   // Residual
   double res = pt1 - pt2;
 
   // Squared error on residual
   // TODO: Update error after major iterations
-  double dRes2 = dPt1 * jet1_->Error();
-  dRes2       += dPt2 * jet2_->Error();
-  dRes2       *= dRes2;
+  double dRes2 = chi2_fast_simple_dRes2(pt1, pt2);
 
   // Likelihood
   double chi2 = res * res / dRes2;
@@ -53,15 +46,10 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
     } else {
       pt2tmp = pt2;
     } 
-    double dPt1tmp = pt1tmp / jet1_->Et();
-    double dPt2tmp = pt2tmp / jet2_->Et();
 
     // Likelihood for lower parameter variation
     double temp1 = pt1tmp - pt2tmp;
-    dRes2  = dPt1tmp * jet1_->Error();
-    dRes2 += dPt2tmp * jet2_->Error();
-    dRes2 *= dRes2;
-
+    dRes2 = chi2_fast_simple_dRes2(pt1tmp, pt2tmp);
     temp1 = temp1 * temp1 / dRes2;
     temp1 = GetWeight() * TData::ScaleResidual(temp1);
 
@@ -76,15 +64,10 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
     } else {
       pt2tmp = pt2;
     } 
-    dPt1tmp = pt1tmp / jet1_->Et();
-    dPt2tmp = pt2tmp / jet2_->Et();
 
     // Likelihood for upper parameter variation
     double temp2 = pt1tmp - pt2tmp;
-    dRes2  = dPt1tmp * jet1_->Error();
-    dRes2 += dPt2tmp * jet2_->Error();
-    dRes2 *= dRes2;
-
+    dRes2 = chi2_fast_simple_dRes2(pt1tmp, pt2tmp);
     temp2 = temp2 * temp2 / dRes2;
     temp2 = GetWeight() * TData::ScaleResidual(temp2);
 
@@ -102,30 +85,21 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
     // lower parameter variation
     double pt1tmp = pt1;
     double pt2tmp = i2->lowerEt;
-    double dPt1tmp = pt1tmp / jet1_->Et();
-    double dPt2tmp = pt2tmp / jet2_->Et();
 
     // Likelihood for lower parameter variation
     double temp1 = pt1tmp - pt2tmp;
-    dRes2  = dPt1tmp * jet1_->Error();
-    dRes2 += dPt2tmp * jet2_->Error();
-    dRes2 *= dRes2;
-
+    dRes2 = chi2_fast_simple_dRes2(pt1tmp, pt2tmp);
     temp1 = temp1 * temp1 / dRes2;
     temp1 = GetWeight() * TData::ScaleResidual(temp1);
 
 
-    // Corrected pt and derivative in case of 
+    // Corrected pt in case of 
     // upper parameter variation
     pt2tmp = i2->upperEt;
-    dPt2tmp = pt2tmp / jet2_->Et();
 
     // Likelihood for upper parameter variation
     double temp2 = pt1tmp - pt2tmp;
-    dRes2  = dPt1tmp * jet1_->Error();
-    dRes2 += dPt2tmp * jet2_->Error();
-    dRes2 *= dRes2;
-
+    dRes2 = chi2_fast_simple_dRes2(pt1tmp, pt2tmp);
     temp2 = temp2 * temp2 / dRes2;
     temp2 = GetWeight() * TData::ScaleResidual(temp2);
 
@@ -135,6 +109,21 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
   }  // End variation of parameters of second jet
 
   return chi2;
+}
+
+
+
+// --------------------------------------------------
+double TwoJetsPtBalanceEvent::chi2_fast_simple_dRes2(double pt1, double pt2) const {
+  // Derivativ d(corr pt) / d(pt); for simplification
+  // assuming constant correction function
+  double dPt1 = pt1 / jet1_->Et();
+  double dPt2 = pt2 / jet2_->Et();
+
+  double dRes = dPt1 * jet1_->Error();
+  dRes       += dPt2 * jet2_->Error();
+  
+  return dRes * dRes;
 }
 
 
