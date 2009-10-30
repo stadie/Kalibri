@@ -1,4 +1,4 @@
-//  $Id: Parametrization.h,v 1.47 2009/09/21 06:52:56 mschrode Exp $
+//  $Id: Parametrization.h,v 1.48 2009/10/09 16:40:44 stadie Exp $
 
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -25,7 +25,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.47 2009/09/21 06:52:56 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.48 2009/10/09 16:40:44 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1059,8 +1059,8 @@ public:
   }
 
   double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
-    double a = 0.5*(par[1] - par[0] - x->HadF);
-    return x->EMF + x->OutF + sqrt( a*a + par[1]*x->HadF ) - a;
+    double a = 0.5*(par[1] - par[0] - x->pt);
+    return sqrt( a*a + par[1]*x->pt ) - a;
   }
 };
 
