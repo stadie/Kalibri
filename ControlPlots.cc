@@ -617,6 +617,12 @@ void TControlPlots::makeControlPlotsJetTruthEventResponse() {
     h2PttrueCorrL2L3.push_back(static_cast<TH2F*>(h2->Clone(name)));
   } // End of loop over eta bins
 
+  // Other control quantities
+  TH1F * hPttrueSpectrum = new TH1F("hPttrueSpectrum",";p^{true}_{T} (GeV);dN / dp^{true}_{T}  1 / (GeV)",50,bins.xLow(0),bins.xUp(bins.nBinsX()-1));
+  hPttrueSpectrum->Sumw2();
+  hPttrueSpectrum->SetLineWidth(2);
+  objToBeWritten.push_back(hPttrueSpectrum);
+
 
   // First loop over data and fill response of uncorrected
   // and Kalibri corrected data into the corresponding
@@ -646,6 +652,9 @@ void TControlPlots::makeControlPlotsJetTruthEventResponse() {
 	h2PttrueUncorr.at(etabin)->Fill(pttrue,ptmeas/pttrue,weight);
 	h2PttrueCorr.at(etabin)->Fill(pttrue,ptcorr/pttrue,weight);
       }
+
+      // Pttrue spectrum
+      hPttrueSpectrum->Fill(pttrue,weight);
     }
   } // End of first loop over data
 
@@ -952,6 +961,14 @@ void TControlPlots::makeControlPlotsJetTruthEventResponse() {
     c1->Draw();
     ps->NewPage();
   }
+  c1->cd();
+  c1->SetLogx(0);
+  c1->SetLogy(1);
+  hPttrueSpectrum->Draw("E");
+  c1->Draw();
+  ps->NewPage();
+
+  ps->Close();
   delete ps;
   delete leta;
   delete lpttrue;
@@ -960,6 +977,7 @@ void TControlPlots::makeControlPlotsJetTruthEventResponse() {
   ps = new TPostScript("controlplotsJetTruthEventResolution.ps",111);
   c1->cd();
   c1->SetLogx(0);
+  c1->SetLogy(0);
 
   // Resolution vs eta per pttrue bin
   for(int ptbin = 0; ptbin < bins.nBinsX(); ptbin++) {
@@ -2519,6 +2537,12 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   // Other control quantities
   TH2F * h2Eta = new TH2F("h2Eta",";#eta^{1};#eta^{2}",21,-5.,5.,20,-5.,5.);
   objToBeWritten.push_back(h2Eta);
+
+  TH1F * hPtDijetSpectrum = new TH1F("hPtDijetSpectrum",";p^{dijet}_{T} (GeV);dN / dp^{dijet}_{T}  1 / (GeV)",50,bins.xLow(0),bins.xUp(bins.nBinsX()-1));
+  hPtDijetSpectrum->Sumw2();
+  hPtDijetSpectrum->SetLineWidth(2);
+  objToBeWritten.push_back(hPtDijetSpectrum);
+
   
   if( debug ) std::cout << "Filling 2D histograms\n";
 
@@ -2532,6 +2556,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
       double weight = evt->GetWeight();
 
       h2Eta->Fill(evt->getJet1()->eta(),evt->getJet2()->eta(),evt->GetWeight());
+      hPtDijetSpectrum->Fill(evt->ptDijet(),evt->GetWeight());
 
       // Find ptDijet bins
       int ptDijetBin = bins.iX(evt->ptDijet());
@@ -2791,6 +2816,14 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   c1->Draw();
   ps1->NewPage();
 
+  c1->Draw();
+  ps1->NewPage();
+  hPtDijetSpectrum->Draw("E");
+  c1->SetLogy(1);
+  c1->Draw();
+  ps1->NewPage();
+  c1->SetLogy(0);
+
   TLegend * legBal = new TLegend(0.4,0.65,0.93,0.85);
   legBal->SetBorderSize(0);
   legBal->SetFillColor(0);
@@ -2926,8 +2959,8 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   // Draw response
   double rMin = 0.;
   double rMax = 2.5;
-  double rMinZoom = 0.;
-  double rMaxZoom = 0.5;
+  double rMinZoom = 0.8;
+  double rMaxZoom = 1.4;
 
   TLegend * legResp = new TLegend(0.4,0.65,0.93,0.85);
   legResp->SetBorderSize(0);
@@ -3041,7 +3074,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   double crh = cw/h;
   double mrh = mw/h;
 
-  TCanvas * const c2 = new TCanvas("c1","",(int)w,(int)h);
+  TCanvas * const c2 = new TCanvas("c2","",(int)w,(int)h);
 
   // Pads for the histograms
   std::vector<TPad*> cPads;
