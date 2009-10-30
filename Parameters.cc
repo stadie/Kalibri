@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.37 2009/09/17 13:01:32 mschrode Exp $
+// $Id: Parameters.cc,v 1.38 2009/10/09 13:59:21 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -1413,7 +1413,7 @@ void TParameters::writeCalibrationTex(const char* name, const ConfigFile& config
 {
   cout << "Writing calibration to file '" << name << "'" << endl;
 
-  // Getting fitted values from TParameters
+  // Getting fitted jet parameter values from TParameters
   std::vector<double> pJetFit;
   for(int i = 0; i < GetNumberOfJetParameters(); i++) {
     int jetbin = 0;
@@ -1448,6 +1448,11 @@ void TParameters::writeCalibrationTex(const char* name, const ConfigFile& config
     fixedJetPars.push_back(jetbin * GetNumberOfJetParametersPerBin() + GetNumberOfTowerParameters() + parid);
   }
 
+  // Getting fitted global parameter values from TParameters
+  std::vector<double> pGlobalJetFit;
+  for(int i = 0; i < GetNumberOfGlobalJetParameters(); i++) {
+    pGlobalJetFit.push_back(GetGlobalJetParRef()[i]);
+  }
 
   // Write to tex file
   ofstream outfile(name, ofstream::binary);
@@ -1517,7 +1522,13 @@ void TParameters::writeCalibrationTex(const char* name, const ConfigFile& config
 	outfile << pJetFit.at(i) << " \\\\ \n";
       }
     }
-      
+    outfile << "\\hline\n";
+    for(unsigned int i = 0; i < pGlobalJetFit.size(); i++) {
+      outfile << i << " & ";
+      outfile << 1. << " & ";
+      outfile << global_jet_start_values.at(i) << " & ";
+      outfile << pGlobalJetFit.at(i) << " \\\\ \n";
+    }
     outfile << "\\hline\n\\hline\n";
     outfile << "\\end{tabular}\n";
     outfile << "\\end{center}\n";
