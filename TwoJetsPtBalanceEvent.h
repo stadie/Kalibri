@@ -12,7 +12,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.1 2009/10/26 20:59:28 mschrode Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.2 2009/10/28 10:12:36 mschrode Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public TData {
  public:
@@ -23,7 +23,10 @@ class TwoJetsPtBalanceEvent : public TData {
     jet3_(j3),
     weight_(w),
     flaggedBad_(false),
-    chi2Plots_(1000.) {}
+    chi2Plots_(1000.) {
+    error1_ = jet1_->Error();
+    error2_ = jet2_->Error();
+  }
   ~TwoJetsPtBalanceEvent() { delete jet1_; delete jet2_; if( hasJet3() ) delete jet3_; }
 
   virtual TMeasurement *GetMess() const { return jet1_; }
@@ -60,7 +63,10 @@ class TwoJetsPtBalanceEvent : public TData {
     chi2Plots_ = chi2_fast_simple(temp_derivative1,temp_derivative2,epsilon);
     return chi2Plots_;
   }
-  virtual void UpdateError() {;}
+  virtual void updateError() {
+    error1_ = jet1_->expectedError(jet1_->correctedEt());
+    error2_ = jet2_->expectedError(jet2_->correctedEt());
+  }
 
   double ptDijet() const { return 0.5*(jet1_->Et()+jet2_->Et()); }
   double ptDijetGen() const { return 0.5*(jet1_->GenPt()+jet2_->GenPt()); }
@@ -86,6 +92,8 @@ class TwoJetsPtBalanceEvent : public TData {
  private:
   const double ptHat_;
 
+  double error1_;		//!< Store jet1_ error during major iteration
+  double error2_;		//!< Store jet2_ error during major iteration
   Jet *jet1_;
   Jet *jet2_;
   Jet *jet3_;
@@ -95,7 +103,12 @@ class TwoJetsPtBalanceEvent : public TData {
   mutable double chi2Plots_;   //!< Store chi2 value from last iteration for plots
 
   double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_simple_res(double pt1, double pt2) const;
   double chi2_fast_simple_dRes2(double pt1, double pt2) const;
+
+  double chi2_fast_balance(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_balance_res(double pt1, double pt2) const;
+  double chi2_fast_balance_dRes2(double pt1, double pt2) const;
 };
 
 #endif
