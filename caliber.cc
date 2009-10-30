@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.93 2009/09/02 14:17:34 mschrode Exp $
+//  $Id: caliber.cc,v 1.94 2009/09/10 15:46:32 mschrode Exp $
 
 #include "caliber.h"
 
@@ -142,10 +142,11 @@ void TCaliber::run()
     EventWeightProcessor ewp(configFile_,par_);
     ewp.process(data_);
 
-    if (fitMethod_==1) run_Lvmini();
-
-    time_t end = time(0);
-    cout << "Done, fitted " << par_->GetNumberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
+    if (fitMethod_==1) {
+      run_Lvmini();
+      time_t end = time(0);
+      cout << "Done, fitted " << par_->GetNumberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
+    }
   } 
   //Dummy Configuration: Nothing to be done, start-values are written to file
 }
@@ -200,9 +201,9 @@ void TCaliber::run_Lvmini()
   for( unsigned int loop = 0; loop < residualScalingScheme_.size() ; ++loop ) {
     cout<<"Updating Di-Jet Errors"<<endl;
     for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
-      (*it)->UpdateError();
+      (*it)->updateError();
     }
-    
+
     // Setting function to scale residuals in chi2 calculation
     cout << loop+1 << flush;
     if(  loop+1 == 1  ) cout << "st" << flush;

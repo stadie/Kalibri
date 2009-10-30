@@ -1,6 +1,6 @@
 //  \author Christian Autermann
 //  \date Wed Jul 18 13:54:50 CEST 2007
-// $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
+// $Id: CalibData.h,v 1.72 2009/07/23 15:54:12 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -29,7 +29,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa TJet, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
+//!  $Id: CalibData.h,v 1.72 2009/07/23 15:54:12 stadie Exp $
 class TMeasurement
 {
 public:
@@ -58,7 +58,7 @@ public:
 //!  \sa TMeasurement, TJet, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
+//!  $Id: CalibData.h,v 1.72 2009/07/23 15:54:12 stadie Exp $
 class TTower : public TMeasurement
 { 
 public:
@@ -80,7 +80,7 @@ public:
 //!  \sa TMeasurement, TTower, TTrack, Jet, JetWithTowers
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
+//!  $Id: CalibData.h,v 1.72 2009/07/23 15:54:12 stadie Exp $
 class TJet : public TMeasurement
 {
 public:
@@ -147,7 +147,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
+//!  $Id: CalibData.h,v 1.72 2009/07/23 15:54:12 stadie Exp $
 class TTrack : public TMeasurement
 {
 public:
@@ -207,7 +207,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
+//! $Id: CalibData.h,v 1.72 2009/07/23 15:54:12 stadie Exp $
 class TData
 {
 public:
@@ -271,7 +271,7 @@ public:
   virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
 
 
-  virtual void UpdateError() = 0;  //!< Update error terms using current corrected energies
+  virtual void updateError() = 0;  //!< Update error terms using current corrected energies
 
 
   //!  \brief Scale residual for outlier treatment
@@ -324,7 +324,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.71 2009/07/23 13:44:41 mschrode Exp $
+//!  $Id: CalibData.h,v 1.72 2009/07/23 15:54:12 stadie Exp $
 class TAbstractData : public TData
 {
 public:
@@ -444,7 +444,7 @@ public:
 
   double GetTruth() const { return _truth;};
   virtual double GetScale() const {return GetTruth();};//flatten spectrum w.r.t. this
-  virtual void UpdateError(){};
+  virtual void updateError(){};
   double GetError() const { return _error;};
   double GetWeight() const { return _weight;};
   virtual void setWeight(double w) { _weight = w;};
@@ -537,7 +537,7 @@ public:
   };
   virtual bool GetTrackuse(){return trackuse;};
 
-  virtual void UpdateError() {
+  virtual void updateError() {
     if(trackuse)
       {
 	double CaloRest = _mess->pt;
@@ -827,7 +827,7 @@ public:
       scale += (*it)->GetMess()->pt;
     return scale/2.;
   }
-  virtual void UpdateError() {
+  virtual void updateError() {
     if(trackuse) //update error on invisible energy 1st jet
       {
 	double CaloRest = _mess->pt;
@@ -864,7 +864,7 @@ public:
     double totalsum = GetParametrizedMess();
     for (std::vector<TData_MessMess*>::const_iterator it=_m2.begin();
 	 it!=_m2.end(); ++it) {
-      (*it)->UpdateError();  //update error on invisible energy other jets
+      (*it)->updateError();  //update error on invisible energy other jets
       totalsum += (*it)->GetParametrizedMess();
     }
     
@@ -885,7 +885,7 @@ public:
     }
     if( (GetParametrizedMess()>0) && (totalsum>GetParametrizedMess()))   //update only if new value is reasonable (Pt > 0)
     _error = sqrt(sum_error2);  
-};
+  };
 
   virtual double chi2() const{ 
     double new_mess;

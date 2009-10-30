@@ -1,4 +1,4 @@
-// $Id: SmearData.h,v 1.4 2009/07/23 13:44:41 mschrode Exp $
+// $Id: SmearData.h,v 1.5 2009/08/07 12:15:16 mschrode Exp $
 
 #ifndef SmearData_h
 #define SmearData_h
@@ -10,7 +10,7 @@
 //!  \brief Abstract base class for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 15:24:49 CEST 2009
-//!  $Id: SmearData.h,v 1.4 2009/07/23 13:44:41 mschrode Exp $
+//!  $Id: SmearData.h,v 1.5 2009/08/07 12:15:16 mschrode Exp $
 // --------------------------------------------------
 class SmearData : public TData {
  public:
@@ -37,7 +37,7 @@ class SmearData : public TData {
 
   virtual double chi2_plots() const { return 0.; }                 //!< Dummy, no functionality
   virtual double GetParametrizedMess() const { return 0.; }        //!< Dummy, no functionality
-  virtual void UpdateError() { }                                   //!< Dummy, no functionality
+  virtual void updateError() { }                                   //!< Dummy, no functionality
 
 
  protected:

@@ -3,7 +3,7 @@
 //
 //    first version: Hartmut Stadie 2008/12/14
 //
-//    $Id: TwoJetsInvMassEvent.h,v 1.6 2009/07/30 11:35:57 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.h,v 1.7 2009/08/04 10:11:58 stadie Exp $
 //   
 
 #ifndef TWOJETSINVMASSEVENT_H
@@ -57,7 +57,7 @@ public:
   double chi2_fast_const_error(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_fast_scaled(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   double chi2_fast_inv(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
-  void UpdateError() {}
+  void updateError() {}
 
  private:
   Jet *jet1,*jet2;
