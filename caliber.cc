@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.94 2009/09/10 15:46:32 mschrode Exp $
+//  $Id: caliber.cc,v 1.95 2009/10/30 08:14:24 mschrode Exp $
 
 #include "caliber.h"
 
@@ -28,8 +28,7 @@ boost::mutex io_mutex;
 #include "JetConstraintsReader.h"
 #include "EventProcessor.h"
 #include "EventWeightProcessor.h"
-#include "Jet.h"
-#include "JetTruthEvent.h"
+
 
 using namespace std;
 
@@ -569,47 +568,4 @@ void TCaliber::init()
 }
 //--^-TCaliber class-^------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-
-
-
-//--------------------------------------------------------------------------------------------
-int caliber(int argc, char *argv[])
-{
-  std::cout << "The University Hamburg Calorimeter Calibration Tool, 2007/08/15." << std::endl;
-  
-  TCaliber * Calibration;
-  if (argc>1)
-    Calibration = new TCaliber( argv[1] );
-  else  
-    Calibration = new TCaliber("config/calibration.cfg"); //Read input defined in config file
-  
-  Calibration->init();
-  Calibration->run();  //Run Fit
-  Calibration->done(); //Do Plots & Write Calibration to file
-  JetTruthEvent::printStats();
-  Jet::printInversionStats();
-  delete Calibration;    
-
-  return 0;
-}
-
-
-
-//--------------------------------------------------------------------------------------------
-void printUsage()
-{
-  std::cerr << "ERROR: You did something wrong! Better fix it." << std::endl;
-}
-
-
-
-//--------------------------------------------------------------------------------------------
-int main(int argc, char *argv[])
-{
-  if (argc>2) {
-    printUsage();
-    exit(EXIT_FAILURE);
-  }
-  return caliber(argc, argv);
-}
 

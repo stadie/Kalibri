@@ -10,7 +10,7 @@ else
 endif
 
 #O2 for optimization, g for debugging, pg for profiling
-SPECIALFLAGS= -g -O4  #-pg#-O2
+SPECIALFLAGS= -fPIC -g -O3#-pg#-O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
@@ -31,7 +31,7 @@ SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc
 all: runjunk
 
 lbfgs.o: lbfgs.F
-	$(F77) -fno-automatic -fno-backslash -O -c lbfgs.F
+	$(F77) -fPIC -fno-automatic -fno-backslash -O -c lbfgs.F
 
 ConfigFile.o: ConfigFile.cc ConfigFile.h
 	$(C) $(CFLAGS) -c ConfigFile.cc
@@ -132,11 +132,20 @@ JetWithTowers.o: CalibData.h Jet.h JetWithTowers.h Function.h JetWithTowers.cc P
 JetWithTracks.o: CalibData.h Jet.h JetWithTracks.h Function.h JetWithTracks.cc Parametrization.h
 	$(C) $(RCXX) -c JetWithTracks.cc
 
+libKalibri.so: $(SRC:.cc=.o) lbfgs.o
+	$(LD) $(RCXX) -shared $^ $(RLXX) -o libKalibri.so
+
 caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h JetConstraintsReader.h TrackClusterReader.h EventProcessor.h  EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h TwoJetsPtBalanceEvent.h 
 	$(C) $(RCXX)  -I/usr/include/boost -c caliber.cc 
 
-runjunk: $(SRC:.cc=.o) lbfgs.o
-	$(LD) $(SRC:.cc=.o) lbfgs.o $(RLXX) $(JCORR) -o junk
+junk.o: junk.cc caliber.h JetTruthEvent.h Jet.h
+	$(C) $(RCXX) -c junk.cc
+
+lib: libKalibri.so
+
+
+runjunk: $(SRC:.cc=.o) lbfgs.o junk.o
+	$(LD) $^ $(RLXX) -o junk
 	@echo '-> Calibration executable created.'
 
 clean:
