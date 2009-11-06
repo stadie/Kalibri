@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.38 2009/10/09 13:59:21 stadie Exp $
+// $Id: Parameters.cc,v 1.2 2009/11/01 17:10:55 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -75,8 +75,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     double ptDijetMin = config.read<double>("Et min cut on dijet",0.);
     double ptDijetMax = config.read<double>("Et max cut on dijet",1.);
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    std::vector<double> meanRespPar = bag_of<double>(config.read<string>("mean response parameters","1 0"));
-    return new SmearStepGaussInter(tMin,tMax,rMin,rMax,rNBins,ptDijetMin,ptDijetMax,scale,meanRespPar);
+    std::vector<double> gaussPar = bag_of<double>(config.read<string>("gauss parameters","1 1 0 0"));
+    return new SmearStepGaussInter(tMin,tMax,rMin,rMax,rNBins,ptDijetMin,ptDijetMax,scale,gaussPar);
   } else if(name == "SmearStepGaussInterPtBinned") {
     double rMin    = config.read<double>("Response pdf min",0.);
     double rMax    = config.read<double>("Response pdf max",1.8);

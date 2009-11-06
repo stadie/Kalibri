@@ -1,7 +1,7 @@
 //
 // Original Author:  Christian Autermann
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.55 2009/09/02 14:18:08 mschrode Exp $
+// $Id: Parameters.h,v 1.2 2009/10/30 13:15:09 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -28,7 +28,7 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.55 2009/09/02 14:18:08 mschrode Exp $
+//!  $Id: Parameters.h,v 1.2 2009/10/30 13:15:09 mschrode Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -86,6 +86,10 @@ public :
   int GetTrackEffBin(double pt, double eta);
 
   void print() const;
+
+  const char * name() const { return p->name(); }
+  bool needsUpdate() const { return p->needsUpdate(); }
+  void update() { p->update(GetPars()); }
   
   static double tower_parametrization(const TMeasurement* x, const double* par) {
     return instance->p->correctedTowerEt(x,par);

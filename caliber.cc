@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.95 2009/10/30 08:14:24 mschrode Exp $
+//  $Id: caliber.cc,v 1.96 2009/11/03 12:14:37 stadie Exp $
 
 #include "caliber.h"
 
@@ -141,10 +141,12 @@ void TCaliber::run()
     EventWeightProcessor ewp(configFile_,par_);
     ewp.process(data_);
 
-    if (fitMethod_==1) {
+    if(fitMethod_==1) {
       run_Lvmini();
       time_t end = time(0);
       cout << "Done, fitted " << par_->GetNumberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
+    } else {
+      if( par_->needsUpdate() ) par_->update();
     }
   } 
   //Dummy Configuration: Nothing to be done, start-values are written to file
@@ -202,6 +204,8 @@ void TCaliber::run_Lvmini()
     for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
       (*it)->updateError();
     }
+
+    if( par_->needsUpdate() ) par_->update();
 
     // Setting function to scale residuals in chi2 calculation
     cout << loop+1 << flush;
@@ -414,7 +418,7 @@ void TCaliber::done()
     } else if( mode == 1 ) {  // Control plots for jetsmearing
       ControlPlotsJetSmearing * plotsjs = new ControlPlotsJetSmearing(configFile_,&data_,par_);
       plotsjs->plotResponse();
-      //plotsjs->plotMeanResponseAndResolution();
+      //      plotsjs->plotMeanResponseAndResolution();
       plotsjs->plotDijets();
       delete plotsjs;
     }
