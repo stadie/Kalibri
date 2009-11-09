@@ -2461,7 +2461,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   for(int ptbin = 0; ptbin < bins.nBinsX(); ptbin++) {
     char name[50];
     sprintf(name,"h2BUncorrVsEta_ptDijet%i",ptbin);
-    TH2F * h2 = new TH2F(name,";#eta;"+ptSumLabel,21,-5,5,51,-2,2);
+    TH2F * h2 = new TH2F(name,";#eta;"+ptSumLabel,22,-5,5,81,-2,2);
     h2BUncorr.at(0).push_back(h2);
     
     sprintf(name,"h2BCorrVsEta_ptDijet%i",ptbin);
@@ -2472,7 +2472,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 
 
     sprintf(name,"h2BUncorrVsEta_ptDijetGen%i",ptbin);
-    h2 = new TH2F(name,";#eta;"+ptSumLabel,21,-5,5,51,-2,2);
+    h2 = new TH2F(name,";#eta;"+ptSumLabel,22,-5,5,81,-2,2);
     h2BUncorr.at(1).push_back(h2);
     
     sprintf(name,"h2BCorrVsEta_ptDijetGen%i",ptbin);
@@ -2483,7 +2483,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 
 
     sprintf(name,"h2RUncorrVsEta_ptGen%i",ptbin);
-    h2 = new TH2F(name,";#eta;"+respLabel,21,-5,5,51,0,2);
+    h2 = new TH2F(name,";#eta;"+respLabel,22,-5,5,81,0,2);
     h2RUncorr.at(0).push_back(h2);
     
     sprintf(name,"h2RCorrVsEta_ptGen%i",ptbin);
@@ -2543,6 +2543,22 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   hPtDijetSpectrum->SetLineWidth(2);
   objToBeWritten.push_back(hPtDijetSpectrum);
 
+  TH1F * hPtGenJetSpectrum = new TH1F("hPtGenJetSpectrum",";p^{gen}_{T} (GeV);dN / dp^{gen}_{T}  1 / (GeV)",50,bins.xLow(0),bins.xUp(bins.nBinsX()-1));
+  hPtGenJetSpectrum->Sumw2();
+  hPtGenJetSpectrum->SetLineWidth(2);
+  objToBeWritten.push_back(hPtGenJetSpectrum);
+
+  TH2F * hPt1vsPt2 = new TH2F("hPt1vsPt2",";p^{1}_{T} (GeV);p^{2}_{T} (GeV)",
+			      50,bins.xLow(0),bins.xUp(bins.nBinsX()-1),
+			      50,bins.xLow(0),bins.xUp(bins.nBinsX()-1));
+  hPt1vsPt2->Sumw2();
+  objToBeWritten.push_back(hPt1vsPt2);
+
+  TH2F * hCorrPt1vsCorrPt2 = new TH2F("hCorrPt1vsCorrPt2",";Corrected p^{1}_{T} (GeV);Corrected p^{2}_{T} (GeV)",
+			      50,bins.xLow(0),bins.xUp(bins.nBinsX()-1),
+			      50,bins.xLow(0),bins.xUp(bins.nBinsX()-1));
+  hCorrPt1vsCorrPt2->Sumw2();
+  objToBeWritten.push_back(hCorrPt1vsCorrPt2);
   
   if( debug ) std::cout << "Filling 2D histograms\n";
 
@@ -2557,6 +2573,8 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 
       h2Eta->Fill(evt->getJet1()->eta(),evt->getJet2()->eta(),evt->GetWeight());
       hPtDijetSpectrum->Fill(evt->ptDijet(),evt->GetWeight());
+      hPt1vsPt2->Fill(evt->getJet1()->Et(),evt->getJet2()->Et(),evt->GetWeight());
+      hCorrPt1vsCorrPt2->Fill(evt->getJet1()->correctedEt(),evt->getJet2()->correctedEt(),evt->GetWeight());
 
       // Find ptDijet bins
       int ptDijetBin = bins.iX(evt->ptDijet());
@@ -2565,6 +2583,8 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
       for(int i = 0; i < 2; i++) {
 	Jet * jet = evt->getJet1();
 	if( i == 1 ) evt->getJet2();
+
+	hPtGenJetSpectrum->Fill(jet->genPt,evt->GetWeight());
 
 	if( 0 <= ptDijetBin && ptDijetBin < bins.nBinsX() ) {
 	  h2BUncorr.at(0).at(ptDijetBin)->Fill(jet->eta(),evt->ptBalance(),weight);
@@ -2807,28 +2827,49 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 
   // -- Draw histograms into ps file ----------------------------
   // Draw mean balance
+  bool drawCorrL2L3 = false;
+
   TPostScript * const ps1 = new TPostScript("controlplotsTwoJetsPtBalanceMean.ps",111);
   TCanvas * const c1 = new TCanvas("c1","",500,500); // Mean values
 
   c1->Draw();
   ps1->NewPage();
-  h2Eta->Draw();
+
+  hPtGenJetSpectrum->Draw("E");
+  c1->SetLogy(1);
   c1->Draw();
   ps1->NewPage();
 
   hPtDijetSpectrum->Draw("E");
-  c1->SetLogy(1);
   c1->Draw();
   ps1->NewPage();
   c1->SetLogy(0);
 
-  TLegend * legBal = new TLegend(0.4,0.65,0.93,0.85);
+  h2Eta->Draw("COLZ");
+  c1->SetLogz(1);
+  c1->Draw();
+  ps1->NewPage();
+
+  hPt1vsPt2->Draw("COLZ");
+  c1->Draw();
+  ps1->NewPage();
+
+  hCorrPt1vsCorrPt2->Draw("COLZ");
+  c1->Draw();
+  ps1->NewPage();
+  c1->SetLogz(0);
+
+  TLegend * legBal = new TLegend(0.35,0.66,0.8,0.8);
+  if( drawCorrL2L3 ) {
+    delete legBal;
+    legBal = new TLegend(0.35,0.6,0.8,0.8);
+  }
   legBal->SetBorderSize(0);
   legBal->SetFillColor(0);
   legBal->SetTextFont(42);
   legBal->AddEntry(hBUncorr.at(0).at(0),"Uncorrected","P");
   legBal->AddEntry(hBCorr.at(0).at(0),"Kalibri","P");
-  //legBal->AddEntry(hBCorrL2L3.at(0).at(0),"L2L3 correction","P");
+  if( drawCorrL2L3 ) legBal->AddEntry(hBCorrL2L3.at(0).at(0),"L2L3 correction","P");
 
   TH1F * hist = hBUncorr.at(0).at(0);
   TLine *lEtaBal = new TLine(hist->GetXaxis()->GetBinLowEdge(1),0,
@@ -2850,7 +2891,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hBUncorr.at(0).at(ptDijetBin)->Draw("PE1");
     lEtaBal->Draw("same");
     hBCorr.at(0).at(ptDijetBin)->Draw("PE1same");
-    //hBCorrL2L3.at(0).at(ptDijetBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hBCorrL2L3.at(0).at(ptDijetBin)->Draw("PE1same");
     legBal->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -2862,7 +2903,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hBUncorr.at(0).at(ptDijetBin)->Draw("PE1");
     lEtaBal->Draw("same");
     hBCorr.at(0).at(ptDijetBin)->Draw("PE1same");
-    //hBCorrL2L3.at(0).at(ptDijetBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hBCorrL2L3.at(0).at(ptDijetBin)->Draw("PE1same");
     legBal->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -2876,7 +2917,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hBUncorr.at(1).at(ptDijetBin)->Draw("PE1");
     lEtaBal->Draw("same");
     hBCorr.at(1).at(ptDijetBin)->Draw("PE1same");
-    //hBCorrL2L3.at(1).at(ptDijetBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hBCorrL2L3.at(1).at(ptDijetBin)->Draw("PE1same");
     legBal->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -2888,7 +2929,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hBUncorr.at(1).at(ptDijetBin)->Draw("PE1");
     lEtaBal->Draw("same");
     hBCorr.at(1).at(ptDijetBin)->Draw("PE1same");
-    //hBCorrL2L3.at(1).at(ptDijetBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hBCorrL2L3.at(1).at(ptDijetBin)->Draw("PE1same");
     legBal->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -2909,7 +2950,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hBUncorr.at(2).at(etaBin)->Draw("PE1");
     lPtDijet->Draw("same");
     hBCorr.at(2).at(etaBin)->Draw("PE1same");
-    //hBCorrL2L3.at(2).at(etaBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hBCorrL2L3.at(2).at(etaBin)->Draw("PE1same");
     legBal->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -2921,7 +2962,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hBUncorr.at(2).at(etaBin)->Draw("PE1");
     lPtDijet->Draw("same");
     hBCorr.at(2).at(etaBin)->Draw("PE1same");
-    //hBCorrL2L3.at(2).at(etaBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hBCorrL2L3.at(2).at(etaBin)->Draw("PE1same");
     legBal->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -2935,7 +2976,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hBUncorr.at(3).at(etaBin)->Draw("PE1");
     lPtDijet->Draw("same");
     hBCorr.at(3).at(etaBin)->Draw("PE1same");
-    //hBCorrL2L3.at(3).at(etaBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hBCorrL2L3.at(3).at(etaBin)->Draw("PE1same");
     legBal->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -2947,7 +2988,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hBUncorr.at(3).at(etaBin)->Draw("PE1");
     lPtDijet->Draw("same");
     hBCorr.at(3).at(etaBin)->Draw("PE1same");
-    //hBCorrL2L3.at(3).at(etaBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hBCorrL2L3.at(3).at(etaBin)->Draw("PE1same");
     legBal->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -2957,16 +2998,20 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   // Draw response
   double rMin = 0.;
   double rMax = 2.5;
-  double rMinZoom = 0.8;
-  double rMaxZoom = 1.4;
+  double rMinZoom = 0.2;
+  double rMaxZoom = 0.8;
 
-  TLegend * legResp = new TLegend(0.4,0.65,0.93,0.85);
+  TLegend * legResp = new TLegend(0.35,0.66,0.8,0.8);
+  if( drawCorrL2L3 ) {
+    delete legResp;
+    legResp = new TLegend(0.35,0.6,0.8,0.8);
+  }
   legResp->SetBorderSize(0);
   legResp->SetFillColor(0);
   legResp->SetTextFont(42);
   legResp->AddEntry(hRUncorr.at(0).at(0),"Uncorrected","P");
   legResp->AddEntry(hRCorr.at(0).at(0),"Kalibri","P");
-  //legResp->AddEntry(hRCorrL2L3.at(0).at(0),"L2L3 correction","P");
+  if( drawCorrL2L3 ) legResp->AddEntry(hRCorrL2L3.at(0).at(0),"L2L3 correction","P");
 
   hist = hRUncorr.at(0).at(0);
   TLine *lEtaResp = new TLine(hist->GetXaxis()->GetBinLowEdge(1),1,
@@ -2990,7 +3035,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hRUncorr.at(0).at(ptGenBin)->Draw("PE1");
     lEtaResp->Draw("same");
     hRCorr.at(0).at(ptGenBin)->Draw("PE1same");
-    //hRCorrL2L3.at(0).at(ptGenBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hRCorrL2L3.at(0).at(ptGenBin)->Draw("PE1same");
     legResp->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -3001,7 +3046,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hRUncorr.at(0).at(ptGenBin)->GetYaxis()->SetRangeUser(rMinZoom,rMaxZoom);
     hRUncorr.at(0).at(ptGenBin)->Draw("PE1");
     hRCorr.at(0).at(ptGenBin)->Draw("PE1same");
-    //hRCorrL2L3.at(0).at(ptGenBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hRCorrL2L3.at(0).at(ptGenBin)->Draw("PE1same");
     legResp->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -3014,7 +3059,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hRUncorr.at(1).at(etaBin)->Draw("PE1");
     lPtGenResp->Draw("same");
     hRCorr.at(1).at(etaBin)->Draw("PE1same");
-    //hRCorrL2L3.at(1).at(etaBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hRCorrL2L3.at(1).at(etaBin)->Draw("PE1same");
     legResp->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -3025,7 +3070,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     hRUncorr.at(1).at(etaBin)->GetYaxis()->SetRangeUser(rMinZoom,rMaxZoom);
     hRUncorr.at(1).at(etaBin)->Draw("PE1");
     hRCorr.at(1).at(etaBin)->Draw("PE1same");
-    //hRCorrL2L3.at(1).at(etaBin)->Draw("PE1same");
+    if( drawCorrL2L3 ) hRCorrL2L3.at(1).at(etaBin)->Draw("PE1same");
     legResp->Draw("same");
     c1->Draw();
     ps1->NewPage();
@@ -3792,6 +3837,8 @@ void TControlPlots::resetFittedParameters() {
 //---------------------------------------------------------------
 void TControlPlots::setGStyle() const
 {
+  gStyle->SetPalette(1);
+
   // For the canvas:
   gStyle->SetCanvasBorderMode(0);
   gStyle->SetCanvasColor(kWhite);
@@ -3837,14 +3884,15 @@ void TControlPlots::setGStyle() const
   gStyle->SetStatH(0.16);
   gStyle->SetStatW(0.22);
 
-  // For the leegnd
+  // For the legend
   gStyle->SetLegendBorderSize(1);
 
-  // Margins:
-  gStyle->SetPadTopMargin(0.11);
+  //  Margins
+  // -------------------------------------------
+  gStyle->SetPadTopMargin(0.16);
   gStyle->SetPadBottomMargin(0.18);
-  gStyle->SetPadLeftMargin(0.25);
-  gStyle->SetPadRightMargin(0.04);
+  gStyle->SetPadLeftMargin(0.19);
+  gStyle->SetPadRightMargin(0.16);
 
   // For the Global title:
   gStyle->SetOptTitle(1);
@@ -3852,31 +3900,31 @@ void TControlPlots::setGStyle() const
   gStyle->SetTitleColor(1);
   gStyle->SetTitleTextColor(1);
   gStyle->SetTitleFillColor(0);
-  gStyle->SetTitleFontSize(0.1);
+  gStyle->SetTitleFontSize(0.12);
   gStyle->SetTitleAlign(23);
-  gStyle->SetTitleX(0.6);
-  gStyle->SetTitleH(0.05);
+  gStyle->SetTitleX(0.515);
+  gStyle->SetTitleH(0.06);
+  gStyle->SetTitleXOffset(0);
+  gStyle->SetTitleYOffset(0);
   gStyle->SetTitleBorderSize(0);
 
-  // For the axis titles:
+  // For the axis labels:
+  //  For the axis labels and titles
+  // -------------------------------------------
   gStyle->SetTitleColor(1,"XYZ");
   gStyle->SetLabelColor(1,"XYZ");
   // For the axis labels:
   gStyle->SetLabelFont(42,"XYZ");
   gStyle->SetLabelOffset(0.007,"XYZ");
   gStyle->SetLabelSize(0.045,"XYZ");
+  
   // For the axis titles:
   gStyle->SetTitleFont(42,"XYZ");
   gStyle->SetTitleSize(0.06,"XYZ");
   gStyle->SetTitleXOffset(1.2);
-  gStyle->SetTitleYOffset(2.0);
+  gStyle->SetTitleYOffset(1.5);
 
-  // For the axis:
-  gStyle->SetAxisColor(1,"XYZ");
-  gStyle->SetStripDecimals(kTRUE);
-  gStyle->SetTickLength(0.03,"XYZ");
-  gStyle->SetNdivisions(510,"XYZ");
-  gStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
+  gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
 }
 
