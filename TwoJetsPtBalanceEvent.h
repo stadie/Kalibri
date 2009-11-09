@@ -12,7 +12,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.3 2009/10/30 08:13:15 mschrode Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.3 2009/11/06 14:14:18 mschrode Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public TData {
  public:
@@ -64,8 +64,8 @@ class TwoJetsPtBalanceEvent : public TData {
     return chi2Plots_;
   }
   virtual void updateError() {
-    error1_ = jet1_->expectedError(jet1_->correctedEt());
-    error2_ = jet2_->expectedError(jet2_->correctedEt());
+    error1_ = jet1_->expectedError(ptDijetCorr());
+    error2_ = jet2_->expectedError(ptDijetCorr());
   }
 
   double ptDijet() const { return 0.5*(jet1_->Et()+jet2_->Et()); }
