@@ -2458,10 +2458,13 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   TString respLabel = "p_{T} / p_{T,gen}";
 
   // Loop over ptDijet bins
+  std::vector<double> etaBinEdges = getEtaBinEdges(22);
+  int nEtaBins = static_cast<int>(etaBinEdges.size()-1);
+  nEtaBins = etaBinEdges.size()-1;
   for(int ptbin = 0; ptbin < bins.nBinsX(); ptbin++) {
     char name[50];
     sprintf(name,"h2BUncorrVsEta_ptDijet%i",ptbin);
-    TH2F * h2 = new TH2F(name,";#eta;"+ptSumLabel,22,-5,5,81,-2,2);
+    TH2F * h2 = new TH2F(name,";#eta;"+ptSumLabel,nEtaBins,&etaBinEdges.front(),81,-2.,2.);
     h2BUncorr.at(0).push_back(h2);
     
     sprintf(name,"h2BCorrVsEta_ptDijet%i",ptbin);
@@ -2472,7 +2475,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 
 
     sprintf(name,"h2BUncorrVsEta_ptDijetGen%i",ptbin);
-    h2 = new TH2F(name,";#eta;"+ptSumLabel,22,-5,5,81,-2,2);
+    h2 = new TH2F(name,";#eta;"+ptSumLabel,nEtaBins,&etaBinEdges.front(),81,-2,2);
     h2BUncorr.at(1).push_back(h2);
     
     sprintf(name,"h2BCorrVsEta_ptDijetGen%i",ptbin);
@@ -2483,7 +2486,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 
 
     sprintf(name,"h2RUncorrVsEta_ptGen%i",ptbin);
-    h2 = new TH2F(name,";#eta;"+respLabel,22,-5,5,81,0,2);
+    h2 = new TH2F(name,";#eta;"+respLabel,nEtaBins,&etaBinEdges.front(),81,0,2);
     h2RUncorr.at(0).push_back(h2);
     
     sprintf(name,"h2RCorrVsEta_ptGen%i",ptbin);
@@ -2584,7 +2587,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 	Jet * jet = evt->getJet1();
 	if( i == 1 ) evt->getJet2();
 
-	hPtGenJetSpectrum->Fill(jet->genPt,evt->GetWeight());
+	hPtGenJetSpectrum->Fill(jet->genPt,weight);
 
 	if( 0 <= ptDijetBin && ptDijetBin < bins.nBinsX() ) {
 	  h2BUncorr.at(0).at(ptDijetBin)->Fill(jet->eta(),evt->ptBalance(),weight);
@@ -2624,6 +2627,12 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
       }
     }
   } // End of first loop over data
+  
+  char title[100];
+  sprintf(title,"Correlation #rho = %.2f",hPt1vsPt2->GetCorrelationFactor());
+  hPt1vsPt2->SetTitle(title);
+  sprintf(title,"Correlation #rho = %.2f",hCorrPt1vsCorrPt2->GetCorrelationFactor());
+  hCorrPt1vsCorrPt2->SetTitle(title);
 
   if( debug ) std::cout << "Projecting 1D histograms\n";
 
@@ -2880,8 +2889,8 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 
   double bMin = -1.;
   double bMax = 2.;
-  double bMinZoom = -0.1;
-  double bMaxZoom = 0.2;
+  double bMinZoom = config_->read<double>("dijet pt-balance plots balance min",-0.1);
+  double bMaxZoom = config_->read<double>("dijet pt-balance plots balance max",0.2);
 
   for(int ptDijetBin = 0; ptDijetBin < bins.nBinsX(); ptDijetBin++) {
     // Balance vs eta
@@ -2998,8 +3007,8 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   // Draw response
   double rMin = 0.;
   double rMax = 2.5;
-  double rMinZoom = 0.2;
-  double rMaxZoom = 0.8;
+  double rMinZoom = config_->read<double>("dijet pt-balance plots response min",-0.7);
+  double rMaxZoom = config_->read<double>("dijet pt-balance plots response max",1.4);
 
   TLegend * legResp = new TLegend(0.35,0.66,0.8,0.8);
   if( drawCorrL2L3 ) {
@@ -3019,6 +3028,13 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   lEtaResp->SetLineColor(1);
   lEtaResp->SetLineWidth(2);
   lEtaResp->SetLineStyle(2);
+
+  TLine *lEtaRespZoom = new TLine(hist->GetXaxis()->GetBinLowEdge(1),1,
+				  hist->GetXaxis()->GetBinUpEdge(hist->GetNbinsX()),1);
+
+  lEtaRespZoom->SetLineColor(2);
+  lEtaRespZoom->SetLineWidth(2);
+  lEtaRespZoom->SetLineStyle(2);
 
   hist = hRUncorr.at(1).at(0);
   TLine *lPtGenResp = new TLine(hist->GetXaxis()->GetBinLowEdge(1),1,
@@ -3045,6 +3061,11 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
     c1->cd();
     hRUncorr.at(0).at(ptGenBin)->GetYaxis()->SetRangeUser(rMinZoom,rMaxZoom);
     hRUncorr.at(0).at(ptGenBin)->Draw("PE1");
+    hRCorr.at(0).at(ptGenBin)->Fit("pol0","0Q");
+    double corrMean = hRCorr.at(0).at(ptGenBin)->GetFunction("pol0")->GetParameter(0);
+    lEtaRespZoom->SetY1(corrMean);
+    lEtaRespZoom->SetY2(corrMean);
+    lEtaRespZoom->Draw("same");
     hRCorr.at(0).at(ptGenBin)->Draw("PE1same");
     if( drawCorrL2L3 ) hRCorrL2L3.at(0).at(ptGenBin)->Draw("PE1same");
     legResp->Draw("same");
@@ -3376,6 +3397,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   delete lPtDijet;
   delete lEtaBal;
   delete lEtaResp;
+  delete lEtaRespZoom;
   delete lPtGenResp;
 
   if( debug ) std::cout << "Leaving makeControlPlotsTwoJetsPtBalance()\n";
@@ -3754,6 +3776,58 @@ void TControlPlots::fit2D(const TH2F* hist,
       }
     }
   delete htemp;
+}
+
+
+//!  \brief Returns the eta bin edges for different binning models
+//!
+//!  The method uses the eta binning of the CMS calo towers and
+//!  merges bins according to the Kalibri schemes
+//!  <tt>jet granularity in eta</tt> (see also \p TParameters).
+//!  The different merging models can be chosen by \p binningModel:
+//!  - 82: 82 bins from -5.191 to 5.191
+//!  - 41: 41 bins from -5.191 to 5.191 (merges two adjacent towers)
+//!  - 22: 22 bins from -5.191 to 5.191
+// ---------------------------------------------------------------
+std::vector<double> TControlPlots::getEtaBinEdges(int binningModel) const {
+  int nBins = 0;
+  if( binningModel == 82 ) nBins = 82;
+  else if( binningModel == 41 ) nBins = 41;
+  else if( binningModel == 22 ) nBins = 22;
+  std::vector<double> etaBinEdges(nBins+1);
+
+  if( binningModel == 82 ) {
+    int iEta = -42;
+    for(int i = 0; i < nBins; i++) {
+      iEta++;
+      if( iEta == 0 ) iEta++;
+      etaBinEdges.at(i) = static_cast<double>(par_->etaLowerEdge(iEta));
+    }
+    etaBinEdges.at(nBins) = static_cast<double>(par_->etaUpperEdge(iEta));
+  }
+  else if( binningModel == 41 ) {
+    int iEta = -43;
+    for(int i = 0; i < nBins; i++) {
+      iEta += 2;
+      if( iEta == 1 ) iEta++;
+      etaBinEdges.at(i) = static_cast<double>(par_->etaLowerEdge(iEta));
+    }
+    etaBinEdges.at(nBins) = static_cast<double>(par_->etaUpperEdge(iEta+1));
+  }
+  else if( binningModel == 22 ) {
+    int iEta = -41;
+    etaBinEdges.at(0) = static_cast<double>(par_->etaLowerEdge(iEta));
+    iEta = -42;
+    for(int i = 1; i <= nBins; i++) {
+      if( i == 1 || i == nBins )        iEta += 2;
+      else if( i == 2 || i == nBins-1 ) iEta += 3;
+      else                              iEta += 4;
+      if( iEta == 3 ) iEta++;
+      etaBinEdges.at(i) = static_cast<double>(par_->etaUpperEdge(iEta));
+    }
+  }
+
+  return etaBinEdges;
 }
 
 
