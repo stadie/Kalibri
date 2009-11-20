@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.2 2009/11/01 17:10:55 mschrode Exp $
+// $Id: Parameters.cc,v 1.40 2009/11/06 11:59:51 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -193,8 +193,8 @@ void TParameters::Init(const ConfigFile& config)
   }
 
   jet_start_values = bag_of<double>(config.read<string>("jet start values",""));
-  if( p->name() == "SmearStepGaussInterPtBinned" || 
-      p->name() == "SmearTwoGauss"                   ) {
+  if( (strcmp(p->name(),"SmearStepGaussInterPtBinned") == 0) || 
+      (strcmp(p->name(),"SmearTwoGauss") == 0) ) {
     // Duplicate start values for pt binned part of parametrization
     std::vector<double> ptBinEdges = bag_of<double>(config.read<string>("DiJet integration pt bin edges","0 100000"));
     size_t nPtBins = ptBinEdges.size()-1;
@@ -207,8 +207,8 @@ void TParameters::Init(const ConfigFile& config)
       std::cout << "Less than " << p->nJetPars() << " jet parameter start values -- ";
       std::cout << "filling up for " << nPtBins << " pt bins\n";
       size_t nParNotBinned = 0;
-      if( p->name() == "SmearStepGaussInterPtBinned" ) nParNotBinned = 2;
-      else if( p->name() == "SmearTwoGauss" ) nParNotBinned = 3;
+      if( strcmp(p->name(),"SmearStepGaussInterPtBinned") == 0 ) nParNotBinned = 2;
+      else if( strcmp(p->name(),"SmearTwoGauss") == 0 ) nParNotBinned = 3;
       for(size_t ptBin = 1; ptBin < nPtBins; ptBin++) {
 	for(size_t i = nParNotBinned; i < nJetStartValues; i++) {
 	  jet_start_values.push_back( jet_start_values.at(i) );
@@ -1422,11 +1422,11 @@ void TParameters::writeCalibrationTex(const char* name, const ConfigFile& config
   
   // Getting scales from config file
   std::vector<double> pJetScale = bag_of<double>(config.read<string>("jet parameter scales","")); 
-  if( p->name() == "SmearStepGaussInterPtBinned" || 
-      p->name() == "SmearTwoGauss"  ) {
+  if( (strcmp(p->name(),"SmearStepGaussInterPtBinned") == 0) || 
+      (strcmp(p->name(),"SmearTwoGauss") == 0 ) ) {
     size_t nParNotBinned = 0;
-    if( p->name() == "SmearStepGaussInterPtBinned" ) nParNotBinned = 2;
-    else if( p->name() == "SmearTwoGauss" ) nParNotBinned = 3;
+    if( strcmp(p->name(),"SmearStepGaussInterPtBinned") == 0 ) nParNotBinned = 2;
+    else if( strcmp(p->name(),"SmearTwoGauss") == 0 ) nParNotBinned = 3;
     size_t nPtBins = (jet_start_values.size() - nParNotBinned) / (pJetScale.size()-nParNotBinned);
     size_t jetScaleSize = pJetScale.size();
     for(size_t ptBin = 1; ptBin < nPtBins; ptBin++) {
