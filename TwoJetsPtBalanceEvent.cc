@@ -1,9 +1,9 @@
-// $Id: TwoJetsPtBalanceEvent.cc,v 1.3 2009/11/06 14:14:18 mschrode Exp $
+// $Id: TwoJetsPtBalanceEvent.cc,v 1.5 2009/11/09 12:32:44 mschrode Exp $
 
 #include "TwoJetsPtBalanceEvent.h"
 
 #include <iomanip>
-
+#include <algorithm>
 
 //!  \brief Calculates \f$ \chi^{2} \f$ from pt difference
 // --------------------------------------------------
