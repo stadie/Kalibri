@@ -10,28 +10,28 @@ else
 endif
 
 #O2 for optimization, g for debugging, pg for profiling
-SPECIALFLAGS= -fPIC -g -O3#-pg#-O2
+SPECIALFLAGS= -fpic -g -O3#-pg#-O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
 #-I. -I./include -I$(SRT_PUBLIC_CONTEXT)/include 
 CFLAGS= $(SPECIALFLAGS) -Wall $(ROOTAUXCFLAGS)
 #-L../../lib/$(SRT_SUBDIR)/
-LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS) -lgsl  -lgslcblas -lm
+LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS) -lgsl -lgslcblas -lm
 
 RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 
 
-SRC=caliber.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc JetConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc
+SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc TrackClusterSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parameters.cc ControlPlots.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc TowerConstraintsReader.cc JetConstraintsReader.cc TrackClusterReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
 
-all: runjunk
+all: lib junk caliber
 
 lbfgs.o: lbfgs.F
-	$(F77) -fPIC -fno-automatic -fno-backslash -O -c lbfgs.F
+	$(F77) $(SPECIALFLAGS) -fno-automatic -fno-backslash -O -c lbfgs.F
 
 ConfigFile.o: ConfigFile.cc ConfigFile.h
 	$(C) $(CFLAGS) -c ConfigFile.cc
@@ -134,18 +134,24 @@ JetWithTracks.o: CalibData.h Jet.h JetWithTracks.h Function.h JetWithTracks.cc P
 
 libKalibri.so: $(SRC:.cc=.o) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o libKalibri.so
+	@echo '-> Kalibri library created.'
 
-caliber.o: caliber.cc caliber.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h JetConstraintsReader.h TrackClusterReader.h EventProcessor.h  EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h TwoJetsPtBalanceEvent.h 
-	$(C) $(RCXX)  -I/usr/include/boost -c caliber.cc 
+Kalibri.o: Kalibri.cc Kalibri.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h TowerConstraintsReader.h JetConstraintsReader.h TrackClusterReader.h EventProcessor.h  EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h TwoJetsPtBalanceEvent.h 
+	$(C) $(RCXX)  -I/usr/include/boost -c Kalibri.cc 
 
-junk.o: junk.cc caliber.h JetTruthEvent.h Jet.h
-	$(C) $(RCXX) -c junk.cc
+caliber.o: caliber.cc Kalibri.h JetTruthEvent.h Jet.h
+	$(C) $(RCXX) -c caliber.cc
+
 
 lib: libKalibri.so
 
 
-runjunk: $(SRC:.cc=.o) lbfgs.o junk.o
+junk: $(SRC:.cc=.o) lbfgs.o caliber.o
 	$(LD) $^ $(RLXX) -o junk
+	@echo '-> Calibration executable created.'
+
+caliber: libKalibri.so caliber.o
+	$(LD) $^ $(RLXX) -o caliber
 	@echo '-> Calibration executable created.'
 
 clean:
@@ -156,6 +162,8 @@ clean:
 	@rm -f .nfs*
 	@rm -f *.bkp
 	@rm -f junk
+	@rm -f caliber
+	@rm -f libKalibri.so
 	@rm -f *.ps
 	@rm -f *.eps
 	@rm -f *.cfi

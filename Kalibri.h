@@ -1,4 +1,4 @@
-//  $Id: caliber.h,v 1.49 2009/07/23 13:47:40 mschrode Exp $
+//  $Id: caliber.h,v 1.50 2009/08/07 12:20:50 mschrode Exp $
 
 //!  \mainpage
 //!
@@ -134,16 +134,16 @@ class TMeasurement;
 //!         wget http://sam.zoy.org/writings/programming/gprof-helper.c
 //!         gcc -shared -fPIC gprof-helper.c -o gprof-helper.so -lpthread -ldl 
 //!         LD_PRELOAD=./gprof-helper.so ./junk
-//!  \author Christian Autermann
+//!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.49 2009/07/23 13:47:40 mschrode Exp $
+//!  $Id: caliber.h,v 1.50 2009/08/07 12:20:50 mschrode Exp $
 // -----------------------------------------------------------------
-class TCaliber {
+class Kalibri {
 public :
   //!  \brief Constructor
   //!  \param f Name of the configuration file
   // -----------------------------------------------------------------
-  TCaliber(const std::string& f)
+  Kalibri(const std::string& f)
   : configFile_(f),
   par_(0),
   fitMethod_(1),
@@ -163,7 +163,7 @@ public :
   wlf2_(0.9)
   {};
 
-  ~TCaliber(){};
+  ~Kalibri(){};
 
   void init();   //!< Read parameters from configfile, read data
   void run();    //!< Run the fit
