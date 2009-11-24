@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.6 2009/11/03 08:16:34 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.9 2009/11/06 11:59:51 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -16,11 +16,14 @@
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TVector2.h"
+#include "TH1F.h"
+#include "TH2F.h"
+
 
 #include "SmearData.h"
 #include "SmearDiJet.h"
 #include "SmearPhotonJet.h"
-
+#include "Jet.h"
 
 //!  \brief Constructor
 //!
@@ -31,7 +34,7 @@
 //!  \param data The data
 //!  \param param The parametrization
 // --------------------------------------------------
-ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, const std::vector<TData*> * data, TParameters * param)
+ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, const std::vector<Event*> * data, TParameters * param)
   : data_(data),
     config_(new ConfigFile(configfile.c_str())),
     param_(param),
@@ -165,19 +168,19 @@ void ControlPlotsJetSmearing::plotResponse() const
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
 
       for(int i = 0; i < 2; i++) {        // Loop over both jets
-	TJet * jet = static_cast<TJet*>(dijet->GetMess());
-	if( i == 1 ) jet = static_cast<TJet*>(dijet->GetSecondMess());
+	Jet * jet = static_cast<Jet*>(dijet->GetMess());
+	if( i == 1 ) jet = static_cast<Jet*>(dijet->GetSecondMess());
 
-	hPtGen->Fill( jet->genPt, dijet->GetWeight() );
-	hPtHat->Fill( jet->ptHat, dijet->GetWeight() );
+	hPtGen->Fill( jet->genPt(), dijet->GetWeight() );
+	hPtHat->Fill( jet->ptHat(), dijet->GetWeight() );
 
-	hRespMeasAbs.at(0)->Fill( jet->pt / jet->genPt, dijet->GetWeight() );
-	hRespMeas.at(0)->Fill( jet->pt / jet->genPt, dijet->GetWeight() );
+	hRespMeasAbs.at(0)->Fill( jet->pt() / jet->genPt(), dijet->GetWeight() );
+	hRespMeas.at(0)->Fill( jet->pt() / jet->genPt(), dijet->GetWeight() );
 
 	for(int i = 0; i < nPtGenBins; i++) {
-	  if( ptGenBinEdges.at(i) <= jet->genPt && jet->genPt < ptGenBinEdges.at(i+1) ) {
-	    hRespMeasAbs.at(i+1)->Fill( jet->pt / jet->genPt, dijet->GetWeight() );
-	    hRespMeas.at(i+1)->Fill( jet->pt / jet->genPt, dijet->GetWeight() );
+	  if( ptGenBinEdges.at(i) <= jet->genPt() && jet->genPt() < ptGenBinEdges.at(i+1) ) {
+	    hRespMeasAbs.at(i+1)->Fill( jet->pt() / jet->genPt(), dijet->GetWeight() );
+	    hRespMeas.at(i+1)->Fill( jet->pt() / jet->genPt(), dijet->GetWeight() );
 	    continue;
 	  }
 	}
@@ -609,14 +612,14 @@ void ControlPlotsJetSmearing::plotDijets() const
 
       // Loop over both jets
       for(int i = 0; i < 2; i++) {        
-	TJet         * jet = static_cast<TJet*>(dijet->GetMess());
-	if( i == 1 )   jet = static_cast<TJet*>(dijet->GetSecondMess());
+	Jet         * jet = static_cast<Jet*>(dijet->GetMess());
+	if( i == 1 )   jet = static_cast<Jet*>(dijet->GetSecondMess());
 
-	if( jet->genPt < minGenJetPt ) minGenJetPt = jet->genPt;
-	if( jet->genPt > maxGenJetPt ) maxGenJetPt = jet->genPt;
+	if( jet->genPt() < minGenJetPt ) minGenJetPt = jet->genPt();
+	if( jet->genPt() > maxGenJetPt ) maxGenJetPt = jet->genPt();
 
-	if( jet->pt < minCalJetPt ) minCalJetPt = jet->pt;
-	if( jet->pt > maxCalJetPt ) maxCalJetPt = jet->pt;
+	if( jet->pt() < minCalJetPt ) minCalJetPt = jet->pt();
+	if( jet->pt() > maxCalJetPt ) maxCalJetPt = jet->pt();
       }
 
       if( dijet->ptHat() < minPtHat ) minPtHat = dijet->ptHat();
@@ -625,9 +628,9 @@ void ControlPlotsJetSmearing::plotDijets() const
       if( dijet->dijetPt() < minDijetPt ) minDijetPt = dijet->dijetPt();
       if( dijet->dijetPt() > maxDijetPt ) maxDijetPt = dijet->dijetPt();
 
-      TJet * jet3 = static_cast<TJet*>(dijet->GetThirdMess());
-      if( jet3->pt < min3rdJetPt ) min3rdJetPt = jet3->pt;
-      if( jet3->pt > max3rdJetPt ) max3rdJetPt = jet3->pt;
+      Jet * jet3 = static_cast<Jet*>(dijet->GetThirdMess());
+      if( jet3->pt() < min3rdJetPt ) min3rdJetPt = jet3->pt();
+      if( jet3->pt() > max3rdJetPt ) max3rdJetPt = jet3->pt();
     }
   }
 
@@ -727,49 +730,49 @@ void ControlPlotsJetSmearing::plotDijets() const
     if( (*datait)->GetType() == TypeSmearDiJet )  { // Select DiJet events
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
 
-      TJet * jet1 = static_cast<TJet*>(dijet->GetMess());
-      TJet * jet2 = static_cast<TJet*>(dijet->GetSecondMess());
-      TJet * jet3 = static_cast<TJet*>(dijet->GetThirdMess());
+      Jet * jet1 = static_cast<Jet*>(dijet->GetMess());
+      Jet * jet2 = static_cast<Jet*>(dijet->GetSecondMess());
+      Jet * jet3 = static_cast<Jet*>(dijet->GetThirdMess());
 
       double weight = dijet->GetWeight();
 
-      double dPhi = std::abs(TVector2::Phi_mpi_pi( jet1->phi - jet2->phi ));
+      double dPhi = std::abs(TVector2::Phi_mpi_pi( jet1->phi() - jet2->phi() ));
       hDeltaPhi->Fill( dPhi, weight );
 
-      hRvsDeltaPhi->Fill( dPhi, jet1->pt / jet1->genPt, weight );
-      hRvsDeltaPhi->Fill( dPhi, jet2->pt / jet2->genPt, weight );
+      hRvsDeltaPhi->Fill( dPhi, jet1->pt() / jet1->genPt(), weight );
+      hRvsDeltaPhi->Fill( dPhi, jet2->pt() / jet2->genPt(), weight );
 
-      hRvsEMF->Fill( jet1->EMF / jet1->pt, jet1->pt / jet1->genPt, weight );
-      hRvsEMF->Fill( jet2->EMF / jet2->pt, jet2->pt / jet2->genPt, weight );
+      hRvsEMF->Fill( jet1->EmEt() / jet1->pt(), jet1->pt() / jet1->genPt(), weight );
+      hRvsEMF->Fill( jet2->EmEt() / jet2->pt(), jet2->pt() / jet2->genPt(), weight );
 
-      hRvsRel3rdJetPt->Fill( jet3->pt / dijet->dijetPt(), jet1->pt / jet1->genPt, weight );
-      hRvsRel3rdJetPt->Fill( jet3->pt / dijet->dijetPt(), jet2->pt / jet2->genPt, weight );
+      hRvsRel3rdJetPt->Fill( jet3->pt() / dijet->dijetPt(), jet1->pt() / jet1->genPt(), weight );
+      hRvsRel3rdJetPt->Fill( jet3->pt() / dijet->dijetPt(), jet2->pt() / jet2->genPt(), weight );
 
-      hRvs3rdJetPt->Fill( jet3->pt, jet1->pt / jet1->genPt, weight );
-      hRvs3rdJetPt->Fill( jet3->pt, jet2->pt / jet2->genPt, weight );
+      hRvs3rdJetPt->Fill( jet3->pt(), jet1->pt() / jet1->genPt(), weight );
+      hRvs3rdJetPt->Fill( jet3->pt(), jet2->pt() / jet2->genPt(), weight );
 
-      hRvsDeltaR->Fill( jet1->dR, jet1->pt / jet1->genPt, weight );
-      hRvsDeltaR->Fill( jet2->dR, jet2->pt / jet2->genPt, weight );
+      hRvsDeltaR->Fill( jet1->dR(), jet1->pt() / jet1->genPt(), weight );
+      hRvsDeltaR->Fill( jet2->dR(), jet2->pt() / jet2->genPt(), weight );
 
       hPtHat->Fill( dijet->ptHat(), weight );
 
-      hGenJetPt.at(0)->Fill( jet1->genPt, weight );
-      hGenJetPt.at(0)->Fill( jet2->genPt, weight );
-      hGenJetPt.at(1)->Fill( jet1->genPt, weight );
-      hGenJetPt.at(2)->Fill( jet2->genPt, weight );
+      hGenJetPt.at(0)->Fill( jet1->genPt(), weight );
+      hGenJetPt.at(0)->Fill( jet2->genPt(), weight );
+      hGenJetPt.at(1)->Fill( jet1->genPt(), weight );
+      hGenJetPt.at(2)->Fill( jet2->genPt(), weight );
 
-      hCalJetPt.at(0)->Fill( jet1->pt, weight );
-      hCalJetPt.at(0)->Fill( jet2->pt, weight );
-      hCalJetPt.at(1)->Fill( jet1->pt, weight );
-      hCalJetPt.at(2)->Fill( jet2->pt, weight );
+      hCalJetPt.at(0)->Fill( jet1->pt(), weight );
+      hCalJetPt.at(0)->Fill( jet2->pt(), weight );
+      hCalJetPt.at(1)->Fill( jet1->pt(), weight );
+      hCalJetPt.at(2)->Fill( jet2->pt(), weight );
 
-      hCalJet2vsCalJet1Pt->Fill( jet1->pt, jet2->pt, weight );
+      hCalJet2vsCalJet1Pt->Fill( jet1->pt(), jet2->pt(), weight );
       hDijetPt->Fill( dijet->dijetPt(), weight );
 
-      h3rdJetPt->Fill( jet3->pt, weight );
-      h3rdJetvsDijetPt->Fill( dijet->dijetPt(), jet3->pt, weight );
-      hRel3rdJetPt->Fill( jet3->pt / dijet->dijetPt(), weight );
-      hDeltaPhivsRel3rdJetPt->Fill( jet3->pt / dijet->dijetPt(), dPhi, weight );
+      h3rdJetPt->Fill( jet3->pt(), weight );
+      h3rdJetvsDijetPt->Fill( dijet->dijetPt(), jet3->pt(), weight );
+      hRel3rdJetPt->Fill( jet3->pt() / dijet->dijetPt(), weight );
+      hDeltaPhivsRel3rdJetPt->Fill( jet3->pt() / dijet->dijetPt(), dPhi, weight );
     }
   }
 
@@ -913,14 +916,14 @@ void ControlPlotsJetSmearing::plotMeanResponseAndResolution() const {
 
       // Loop over both jets
       for(int i = 0; i < 2; i++) {        
-	TJet         * jet = static_cast<TJet*>(dijet->GetMess());
-	if( i == 1 )   jet = static_cast<TJet*>(dijet->GetSecondMess());
+	Jet         * jet = static_cast<Jet*>(dijet->GetMess());
+	if( i == 1 )   jet = static_cast<Jet*>(dijet->GetSecondMess());
 
-	if( jet->genPt < minGenJetPt ) minGenJetPt = jet->genPt;
-	if( jet->genPt > maxGenJetPt ) maxGenJetPt = jet->genPt;
+	if( jet->genPt() < minGenJetPt ) minGenJetPt = jet->genPt();
+	if( jet->genPt() > maxGenJetPt ) maxGenJetPt = jet->genPt();
 
-	if( jet->pt < minCalJetPt ) minCalJetPt = jet->pt;
-	if( jet->pt > maxCalJetPt ) maxCalJetPt = jet->pt;
+	if( jet->pt() < minCalJetPt ) minCalJetPt = jet->pt();
+	if( jet->pt() > maxCalJetPt ) maxCalJetPt = jet->pt();
       }
     }
   }
@@ -952,11 +955,11 @@ void ControlPlotsJetSmearing::plotMeanResponseAndResolution() const {
 
       // Loop over both jets
       for(int i = 0; i < 2; i++) {        
-	TJet         * jet = static_cast<TJet*>(dijet->GetMess());
-	if( i == 1 )   jet = static_cast<TJet*>(dijet->GetSecondMess());
+	Jet         * jet = static_cast<Jet*>(dijet->GetMess());
+	if( i == 1 )   jet = static_cast<Jet*>(dijet->GetSecondMess());
 
-	hRespVsPtGen->Fill( jet->genPt, jet->pt / jet->genPt, dijet->GetWeight() );
-	hPtJetVsPtGenJet->Fill( jet->genPt, jet->pt, dijet->GetWeight() );
+	hRespVsPtGen->Fill( jet->genPt(), jet->pt() / jet->genPt(), dijet->GetWeight() );
+	hPtJetVsPtGenJet->Fill( jet->genPt(), jet->pt(), dijet->GetWeight() );
       }
     }
   }
@@ -1386,7 +1389,10 @@ void ControlPlotsJetSmearing::setYRange(TH1F * h, double c1, double c2, double m
   h->GetYaxis()->SetRangeUser( min, max );
 }
 
-
+void ControlPlotsJetSmearing::normHist(TH1F * h, std::string option) const
+{ 
+  if( h->Integral(option.c_str()) ) h->Scale(1./h->Integral(option.c_str())); 
+}
 
  //! \brief Convert to std::string
  //!

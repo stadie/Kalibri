@@ -1,4 +1,4 @@
-//  $Id: caliber.h,v 1.50 2009/08/07 12:20:50 mschrode Exp $
+//  $Id: Kalibri.h,v 1.1 2009/11/20 12:25:41 stadie Exp $
 
 //!  \mainpage
 //!
@@ -124,8 +124,8 @@
 
 class TParameters;
 class TControlPlots;
-class TData;
-class TMeasurement;
+class Event;
+class Measurement;
 
 
 //!  \brief Main program
@@ -136,7 +136,7 @@ class TMeasurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: caliber.h,v 1.50 2009/08/07 12:20:50 mschrode Exp $
+//!  $Id: Kalibri.h,v 1.1 2009/11/20 12:25:41 stadie Exp $
 // -----------------------------------------------------------------
 class Kalibri {
 public :
@@ -181,7 +181,7 @@ private:
   TParameters * par_;         //!< Fit parameters, depend on number of bins & geometry
   int fitMethod_;             //!< Running mode
   int nThreads_;              //!< Number of threads
-  std::vector<TData*> data_;  //!< The data
+  std::vector<Event*> data_;  //!< The data
   int nGammajetEvents_;       //!< Number of gamma-jet events
   int nDijetEvents_;          //!< Number of dijet events
   int nTrijetEvents_;         //!< Number of trijet events

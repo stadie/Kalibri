@@ -1,4 +1,4 @@
-//  $Id: caliber.cc,v 1.97 2009/11/06 11:59:51 mschrode Exp $
+//  $Id: Kalibri.cc,v 1.1 2009/11/20 12:25:41 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -22,9 +22,7 @@ boost::mutex io_mutex;
 #include "TriJetReader.h"
 #include "ZJetReader.h"
 #include "TopReader.h"
-#include "TrackClusterReader.h"
 #include "ParameterLimitsReader.h"
-#include "TowerConstraintsReader.h"
 #include "JetConstraintsReader.h"
 #include "EventProcessor.h"
 #include "EventWeightProcessor.h"
@@ -32,8 +30,8 @@ boost::mutex io_mutex;
 
 using namespace std;
 
-typedef std::vector<TData*>::iterator DataIter;
-typedef std::vector<TData*>::const_iterator DataConstIter;
+typedef std::vector<Event*>::iterator DataIter;
+typedef std::vector<Event*>::const_iterator DataConstIter;
 
 
 
@@ -41,7 +39,7 @@ typedef std::vector<TData*>::const_iterator DataConstIter;
 // -----------------------------------------------------------------
 struct OutlierRejection {
   OutlierRejection(double cut):_cut(cut){};
-  bool operator()(TData *d){
+  bool operator()(Event *d){
     if(d->GetType()==typeTowerConstraint) return true;
     return (d->chi2()/d->GetWeight())<_cut;
   }
@@ -59,7 +57,7 @@ private:
   double * td2;
   double *parorig, *mypar;
   double epsilon;
-  std::vector<TData*> data;
+  std::vector<Event*> data;
   bool data_changed;
   struct calc_chi2_on
   {
@@ -104,7 +102,7 @@ public:
     delete [] td2;
     delete [] mypar;
   }
-  void AddData(TData* d) { 
+  void AddData(Event* d) { 
     //d->ChangeParAddress(parorig, mypar);
     data_changed = true;
     data.push_back(d);
@@ -215,7 +213,7 @@ void Kalibri::run_Lvmini()
     else cout << "th" << flush;
     cout << " of " << residualScalingScheme_.size() <<" iteration(s): " << flush;
     if(  residualScalingScheme_.at(loop) == 0  ) {
-	TData::ScaleResidual = &TData::ScaleNone;	
+	Event::ScaleResidual = &Event::ScaleNone;	
 	cout << "no scaling of residuals." << endl;
 
 	cout << "Rejecting outliers " << flush;
@@ -227,15 +225,15 @@ void Kalibri::run_Lvmini()
 	cout << "and using " << data_.size() << " events." << endl;
       }
     else if(  residualScalingScheme_.at(loop) == 1  ) {
-	TData::ScaleResidual = &TData::ScaleCauchy;	
+	Event::ScaleResidual = &Event::ScaleCauchy;	
 	cout << "scaling of residuals with Cauchy-Function." << endl;
       }
     else if(  residualScalingScheme_.at(loop) == 2  ) {
-	TData::ScaleResidual = &TData::ScaleHuber;	
+	Event::ScaleResidual = &Event::ScaleHuber;	
 	cout << "scaling of residuals with Huber-Function." << endl;
       }
     else if(  residualScalingScheme_.at(loop) == 3  ) {
-      TData::ScaleResidual = &TData::ScaleTukey;	
+      Event::ScaleResidual = &Event::ScaleTukey;	
       cout << "scaling of residuals a la Tukey." << endl;
     }
     else {
@@ -558,14 +556,8 @@ void Kalibri::init()
   TopReader tr(configFile_,par_);
   nTopEvents_ = tr.readEvents(data_);
   
-  TrackClusterReader tcr(configFile_,par_);
-  nTrackClusterEvents_ = tcr.readEvents(data_);
-
   ParameterLimitsReader plr(configFile_,par_);
   plr.readEvents(data_);
-
-  TowerConstraintsReader cr(configFile_,par_);
-  cr.readEvents(data_);  
 
   JetConstraintsReader jcr(configFile_,par_);
   jcr.readEvents(data_);

@@ -5,7 +5,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date  2008/12/12
-//!  $Id: ParameterLimitsReader.cc,v 1.7 2009/09/17 13:01:33 mschrode Exp $
+//!  $Id: ParameterLimitsReader.cc,v 1.8 2009/10/26 20:56:29 mschrode Exp $
 //!   
 #include "ParameterLimitsReader.h"
 
@@ -18,7 +18,7 @@
 ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TParameters* p) :
   EventReader(configfile,p)
 {
-  vector<double> limits = bag_of<double>(config_->read<string>( "Jet Parameter Limits",""));
+  std::vector<double> limits = bag_of<double>(config_->read<std::string>( "Jet Parameter Limits",""));
   
   // In case limits are explicitly set via config file
   if( limits.size() > 0 && limits.size() % 4 == 0 ) {
@@ -35,7 +35,7 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TPar
   }
   // In case default limits are to be used
   else if( limits.size() == 1 ) {
-    string parclass = config_->read<string>("Parametrization Class","");
+    std::string parclass = config_->read<std::string>("Parametrization Class","");
     std::cout << "Using default parameter limits for '" << parclass << "':" << std::endl;
 
     // For SmearHistGauss
@@ -137,7 +137,7 @@ ParameterLimitsReader::~ParameterLimitsReader()
 {
 }
 
-int ParameterLimitsReader::readEvents(std::vector<TData*>& data)
+int ParameterLimitsReader::readEvents(std::vector<Event*>& data)
 {
   for(std::vector<ParameterLimit>::const_iterator pl = par_limits.begin() ;
       pl != par_limits.end() ; ++pl) {
@@ -149,7 +149,7 @@ int ParameterLimitsReader::readEvents(std::vector<TData*>& data)
     std::cout <<  " max: " << pl->max << "\t" << std::flush;
     std::cout <<  " k: "   << pl->k << std::endl;
 
-    TMeasurement* limitp  = new TMeasurement;
+    Measurement* limitp  = new Measurement;
     limitp->pt  = pl->min;
     limitp->EMF = pl->max;
     TData_ParLimit * parlim = new TData_ParLimit(pl->index,limitp,pl->k,par_->GetPars()+pl->index,par_->parameter_limit);

@@ -1,9 +1,6 @@
 //
-//    Base class for all event readers
+// $Id: EventReader.h,v 1.4 2009/10/26 20:56:29 mschrode Exp $
 //
-//    first version: Hartmut Stadie 2008/12/12
-//    $Id: EventReader.cc,v 1.1 2008/12/12 13:43:15 stadie Exp $
-//   
 #include "EventReader.h"
 
 #include "ConfigFile.h"
@@ -24,8 +21,8 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
 
   // Print info on track usage only once for all readers
   if( numberOfEventReaders_ == 1 ) {
-    if(useTracks_) cout<<"Tracks are used to calibrate jets"<<endl;
-    else cout<<"Only Calorimeter information is used"<<endl;
+    if(useTracks_)  std::cout<<"Tracks are used to calibrate jets"<< std::endl;
+    else std::cout<<"Only Calorimeter information is used"<< std::endl;
   }
   
   //Error Parametrization...
@@ -48,7 +45,7 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
   else  
     tower_error_param = par_->tower_error_parametrization;
   //...for jets:
-  string je = config_->read<string>("jet error parametrization","standard");
+   std::string je = config_->read<string>("jet error parametrization","standard");
   if (je=="standard")
     jet_error_param   = par_->jet_error_parametrization;
   else if (je=="fast")

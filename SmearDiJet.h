@@ -1,4 +1,4 @@
-// $Id: SmearDiJet.h,v 1.3 2009/07/22 11:48:06 mschrode Exp $
+// $Id: SmearDiJet.h,v 1.4 2009/07/23 13:44:41 mschrode Exp $
 
 #ifndef SmearDiJet_h
 #define SmearDiJet_h
@@ -10,13 +10,13 @@
 //!  \brief Dijet data for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 18:23:44 CEST 2009
-//!  $Id: SmearDiJet.h,v 1.3 2009/07/22 11:48:06 mschrode Exp $
+//!  $Id: SmearDiJet.h,v 1.4 2009/07/23 13:44:41 mschrode Exp $
 // --------------------------------------------------
 class SmearDiJet : public SmearData {
  public:
-  SmearDiJet(TMeasurement * mess,
-	     TMeasurement * secndMess,
-	     TMeasurement * thirdMess,
+  SmearDiJet(Measurement * mess,
+	     Measurement * secndMess,
+	     Measurement * thirdMess,
 	     double weight,
 	     const Function& respPDF,
 	     const Function& truthPDF,
@@ -33,8 +33,8 @@ class SmearDiJet : public SmearData {
   virtual double ptHat() const;
 
   double dijetPt() const { return 0.5 * (GetMess()->pt + GetSecondMess()->pt); } //!< Get dijet pt \f$ \frac{1}{2} (p^{1}_{T} + p^{2}_{T}) \f$
-  TMeasurement * GetSecondMess() const { return secndMess_; }  //!< Get second jet
-  TMeasurement * GetThirdMess() const { return thirdMess_; }   //!< Get third jet
+  Measurement * GetSecondMess() const { return secndMess_; }  //!< Get second jet
+  Measurement * GetThirdMess() const { return thirdMess_; }   //!< Get third jet
   double * getTruthPar() { return truthPDF_.firstPar(); }
   double truthPDF(double t) const;
 
@@ -45,8 +45,8 @@ class SmearDiJet : public SmearData {
   const double kMin_;        //!< Minimum of truth pdf
   const double kMax_;        //!< Maximum of truth pdf
 
-  TMeasurement * secndMess_; //!< Second jet
-  TMeasurement * thirdMess_; //!< Third jet
+  Measurement * secndMess_; //!< Second jet
+  Measurement * thirdMess_; //!< Third jet
   Function       truthPDF_;  //!< Truth pdf
 };
 #endif

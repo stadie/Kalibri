@@ -1,13 +1,11 @@
-//  $Id: Parametrization.h,v 1.4 2009/11/03 08:16:34 mschrode Exp $
-
+//
+//  $Id: Parametrization.h,v 1.50 2009/11/06 11:59:51 mschrode Exp $
+//
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
 
 #include <cmath>
 #include <vector>
-
-#include "TH1D.h"
-#include "TMath.h"
 
 #include "CalibData.h"
 
@@ -15,6 +13,7 @@
 #include "gsl/gsl_math.h"
 #include "gsl/gsl_roots.h"
      
+class TH1D;
 
 
 //!  \brief Abstract base class for parametrizations of
@@ -25,7 +24,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.4 2009/11/03 08:16:34 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.50 2009/11/06 11:59:51 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -50,7 +49,7 @@ public:
   //!
   //!  \param x Tower Et measurement that is to be corrected.
   //!           The measurement contains the following
-  //!           members (see also TMeasurement):
+  //!           members (see also Measurement):
   //!           - x->pt   : et  of whole tower
   //!           - x->EMF  : et  of ECAL  part
   //!           - x->HadF : et  of HCAL  part
@@ -61,7 +60,7 @@ public:
   //!  \param par Parameters of the correction function of this tower
   //!  \return The corrected Et of a tower 
   // -----------------------------------------------------------------
-  virtual double correctedTowerEt(const TMeasurement *x,const double *par) const = 0;
+  virtual double correctedTowerEt(const Measurement *x,const double *par) const = 0;
 
 
   //!  \brief Corrects the measured jet Et
@@ -71,7 +70,7 @@ public:
   //!
   //!  \param x Jet Et measurement that is to be corrected.
   //!           The measurement contains the following
-  //!           members (see also TMeasurement):
+  //!           members (see also Measurement):
   //!           - x->pt   : et  of whole jet
   //!           - x->EMF  : et  of ECAL  part
   //!           - x->HadF : et  of HCAL  part
@@ -82,7 +81,7 @@ public:
   //!  \param par Parameters of the correction function of this jet
   //!  \return The corrected Et of a jet
   // -----------------------------------------------------------------
-  virtual double correctedJetEt(const TMeasurement *x,const double *par) const = 0;
+  virtual double correctedJetEt(const Measurement *x,const double *par) const = 0;
 
  
   //!  \brief Returns the expected signal of a track in the Calorimeter
@@ -92,7 +91,7 @@ public:
   //!  \param par Parameters of the response function of this track
   //!  \return The expected calorimeter response
   // -----------------------------------------------------------------
-  virtual double GetExpectedResponse(const TMeasurement *x,const double *par) const { return x->pt;}
+  virtual double GetExpectedResponse(const Measurement *x,const double *par) const { return x->pt;}
 
 
   //!  \brief Corrects the measured jet Et with global
@@ -103,7 +102,7 @@ public:
   //!
   //!  \param x Jet Et measurement that is to be corrected.
   //!           The measurement contains the following
-  //!           members (see also TMeasurement):
+  //!           members (see also Measurement):
   //!           - x->pt   : et  of whole jet
   //!           - x->EMF  : et  of ECAL  part
   //!           - x->HadF : et  of HCAL  part
@@ -114,7 +113,7 @@ public:
   //!  \param par Parameters of the global correction function
   //!  \return The corrected Et of a jet
   // -----------------------------------------------------------------
-  virtual double correctedGlobalJetEt(const TMeasurement *x,const double *par) const { return x->pt;}
+  virtual double correctedGlobalJetEt(const Measurement *x,const double *par) const { return x->pt;}
 
 
   //!  \brief Get the name of the parametrization class
@@ -149,11 +148,11 @@ public:
   //!  \brief Returns the expected response for a jet with true x-> Et 
   //!         (this is the inverted jet correction
   //!
-  //!  \param x TMeasurement describing the true jet properties
+  //!  \param x Measurement describing the true jet properties
   //!  \param par Parameters of the jet response function
   //!  \return the expected calorimeter response
   // -----------------------------------------------------------------
-  virtual double inverseJetCorrection(const TMeasurement *x,const double *par) const { return -1;}
+  virtual double inverseJetCorrection(const Measurement *x,const double *par) const { return -1;}
 
   
   //!  \brief Get the number of parameters of the track p
@@ -184,11 +183,11 @@ public:
   ConstParametrization() : Parametrization(0,0,0,0) {}
   const char* name() const { return "ConstParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
     
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     return  x->pt;   
   }
 };
@@ -207,7 +206,7 @@ public:
   StepParametrization() : Parametrization(12,0,0,0) {}
   const char* name() const { return "StepParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     double result = 0;
     
     if(x->HadF>=0.0  && x->HadF<=1.0)  result = x->EMF+x->OutF + par[0]*x->HadF; 
@@ -225,7 +224,7 @@ public:
     return result;
   }
     
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     return  x->pt;   
     //OutOfCone, Dominant, parametrized in Et since cone R lorenz invariant
     //return x->pt * ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x->pt)); 
@@ -258,7 +257,7 @@ public:
   StepParametrizationEnergy() : Parametrization(12,2,0,0) {}
   const char* name() const { return "StepParametrizationEnergy";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     double result = 0;
     // reweight from et to en
     double e =  x->HadF * x->E / x->pt;
@@ -279,7 +278,7 @@ public:
     return result;
   }
     
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     //OutOfCone, Dominant, parametrized in Et since cone R lorenz invariant
     return x->pt * ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x->pt));   
   }
@@ -305,7 +304,7 @@ public:
   StepEfracParametrization() : Parametrization(36,0,0,0) {}  //(36,2) {}
   const char* name() const { return "StepEfracParametrization";}
 
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     double result=0;
     
     double Efrac = x->EMF/(x->HadF+x->OutF+x->EMF);
@@ -352,7 +351,7 @@ public:
     return result;
   }
   
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     return  x->pt;   
     //OutOfCone, Dominant, parametrized in Et since cone R lorenz invariant
     //return x->pt * ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x->pt));   
@@ -378,11 +377,11 @@ public:
   StepJetParametrization() : Parametrization(0,65,0,0) {}
   const char* name() const { return "StepJetParametrization";}
 
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
     
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     double pt     = x->pt;
     double Efrac  = x->EMF/( x->EMF+x->HadF+x->OutF);
     double result = 0.;
@@ -476,12 +475,12 @@ class MyParametrization: public Parametrization {
   MyParametrization() : Parametrization(0,2,0,0) {}
   const char* name() const { return "MyParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->EMF + x->HadF + x->OutF;
     //return x->EMF + par[0]*x->HadF + par[1]*log(x->pt) + par[2];
   }
   
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     return x->EMF + (par[0] + x->HadF * par[1]/1000) * x->HadF + x->OutF;;
   }
 };
@@ -501,11 +500,11 @@ public:
   JetMETParametrization() : Parametrization(3,5,0,0) {}
   const char* name() const { return "JetMETParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return par[1] * x->HadF + par[2] * x->EMF + x->OutF + par[0];
   }
   
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     double logx = log(x->HadF);
     if(logx < 0) logx = 0;
     return (par[0] - par[1]/(pow(logx,par[2]) + par[3]) + par[4]/x->HadF) * x->HadF;  
@@ -526,15 +525,15 @@ public:
   GlobalScaleFactorParametrization() : Parametrization(0,0,0,1) {}
   const char* name() const { return "GlobalScaleFactorParametrization";}
 
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
 
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
   
-  double correctedGlobalJetEt(const TMeasurement *x, const double *par) const {
+  double correctedGlobalJetEt(const Measurement *x, const double *par) const {
     return  par[0] * x->pt;
   }
 
@@ -554,11 +553,11 @@ public:
   SimpleParametrization() : Parametrization(3,3,0,0) {}
   const char* name() const { return "SimpleParametrization";}
 
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return par[1] * x->EMF + par[2] * x->HadF + x->OutF + par[0];
   }
 
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     return x->pt * ( par[2] + par[0] * exp( -par[1] * x->pt ) );  
   }
 };
@@ -581,11 +580,11 @@ public:
   ToyParametrization() : Parametrization(1,0,0,0) {}
   const char* name() const { return "ToyParametrization";}
 
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return par[0] * x->HadF + x->EMF + x->OutF;
   }
 
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     return x->pt;  
   }
 };
@@ -608,11 +607,11 @@ public:
   ToyJetParametrization() : Parametrization(0,1,0,0) {}
   const char* name() const { return "ToyJetParametrization";}
 
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
 
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     //return par[0] * x->HadF + x->EMF + x->OutF;
     return par[0] * x->pt;
   }
@@ -640,7 +639,7 @@ public:
   ToyStepParametrization() : Parametrization(15,0,0,0) {}
   const char* name() const { return "ToyStepParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     double result = 0.;
     double pt = x->HadF;
     
@@ -662,7 +661,7 @@ public:
     return result;
   }
     
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
 };
@@ -689,11 +688,11 @@ class ToyStepJetParametrization : public Parametrization {
   ToyStepJetParametrization() : Parametrization(0,15,0,0) {}
   const char* name() const { return "ToyStepJetParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
   
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     double pt = x->HadF;
     double result = 0.;
     
@@ -733,7 +732,7 @@ class TrackParametrization : public Parametrization {
   TrackParametrization() : Parametrization(12,3,6,0) {}  //(36,3,3,0) {}
   const char* name() const { return "TrackParametrization";}
 
-  double correctedTowerEt(const TMeasurement *x,const double *par) const 
+  double correctedTowerEt(const Measurement *x,const double *par) const 
     {
       double result=0;
       
@@ -756,7 +755,7 @@ class TrackParametrization : public Parametrization {
       return result;
     }
   
-  double correctedJetEt(const TMeasurement *x,const double *par) const 
+  double correctedJetEt(const Measurement *x,const double *par) const 
     {
     double result;
     /*
@@ -776,7 +775,7 @@ class TrackParametrization : public Parametrization {
     return result;
   }
    
-  double GetExpectedResponse(const TMeasurement *x,const double *par) const   
+  double GetExpectedResponse(const Measurement *x,const double *par) const   
     {
     double result=0;
     double PiFrac;
@@ -853,7 +852,7 @@ public:
   L2L3JetParametrization() : Parametrization(0,5,0,4) {}
   const char* name() const { return "L2L3JetParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
 
@@ -863,7 +862,7 @@ public:
   //!  double logpt = log10(pt);
   //!  double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
   //!  \endcode   
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     double  pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
     double c1 = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(par[3]+logpt*(par[4]+logpt*par[5]))));
@@ -877,7 +876,7 @@ public:
   //!  double log10pt = log10(pt);
   //!  double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
   //!  \endcode
-  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+  double correctedGlobalJetEt(const Measurement *x,const double *par) const {
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
     double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
@@ -904,11 +903,11 @@ public:
   L2L3JetParametrization2() : Parametrization(0,7,0,0) {}
   const char* name() const { return "L2L3JetParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
     
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     //code from L2RelativeCorrector
     //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
     //double logpt = log10(pt);
@@ -945,11 +944,11 @@ public:
   L2L3JetTrackParametrization() : Parametrization(0,3,5,4) {}
   const char* name() const { return "L2L3JetTrackParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
     
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     //code from L2RelativeCorrector
     //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
     //double logpt = log10(pt);
@@ -961,7 +960,7 @@ public:
     return c1 * x->pt;
   }
 
-  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+  double correctedGlobalJetEt(const Measurement *x,const double *par) const {
     // code from SimpleL3AbsoluteCorrector
     //double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
     //double log10pt = log10(pt);
@@ -976,7 +975,7 @@ public:
     return  c2 * x->pt; 
   }
   
-  double GetExpectedResponse(const TMeasurement *x,const double *par) const {
+  double GetExpectedResponse(const Measurement *x,const double *par) const {
     double result=0;
     //Groom
     double eh = 1.48 * par[0]; 
@@ -1053,15 +1052,15 @@ public:
   ToySimpleInverseParametrization() : Parametrization(0,1,0,2) {}
   const char* name() const { return "ToySimpleInverseParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
 
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     return par[0]*x->pt;
   }
 
-  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+  double correctedGlobalJetEt(const Measurement *x,const double *par) const {
     double a = 0.5*(par[1] - par[0] - x->pt);
     return sqrt( a*a + par[1]*x->pt ) - a;
   }
@@ -1076,17 +1075,17 @@ class SmearFermiTail : public Parametrization{
   SmearFermiTail() : Parametrization(0,3,0,0) {}
   const char * name() const { return "SmearFermiTail"; }
 
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return 0.;
   }
 
   //!  \brief Returns probability density of response
-  //!  \param x   TMeasurement::E is response for which the 
+  //!  \param x   Measurement::E is response for which the 
   //!             probability density is returned
   //!  \param par Pointer to parameters
   //!  \return Probability density of response
   // ------------------------------------------------------------------------
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     double c      = par[0];
     double mu     = 1.;
     double sigma  = par[1];
@@ -1102,7 +1101,7 @@ class SmearFermiTail : public Parametrization{
     return p;
   }
 
-  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+  double correctedGlobalJetEt(const Measurement *x,const double *par) const {
     return 0.;
   }
 };
@@ -1187,17 +1186,17 @@ class SmearTwoGauss : public Parametrization {
 
   const char* name() const { return "SmearTwoGauss";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return 0.;
   }
 
   //!  \brief Returns probability density of response
-  //!  \param x   TMeasurement::E is response for which the 
+  //!  \param x   Measurement::E is response for which the 
   //!             probability density is returned
   //!  \param par Pointer to parameters
   //!  \return Probability density of response
   // ------------------------------------------------------------------------
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     // Central Gaussian
     double u0 = meanRespPar_.at(0) + meanRespPar_.at(1)*x->pt;
     double a1 = respParScales_.at(0)*par[0];
@@ -1228,12 +1227,12 @@ class SmearTwoGauss : public Parametrization {
 
   //!  \brief Returns probability density of true pt multiplied by normalization
   //!         of dijet probability (see also \p SmearDiJet::truthPDF(t)).
-  //!  \param x   \p TMeasurement::pt is true pt for which the
+  //!  \param x   \p Measurement::pt is true pt for which the
   //!             probability density is returned
   //!  \param par Pointer to parameters
   //!  \return Probability density of truth times normalization of dijet probability
   // ------------------------------------------------------------------------
-  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+  double correctedGlobalJetEt(const Measurement *x,const double *par) const {
     double p = 0.;
     if( ptMin_ < x->pt && x->pt < ptMax_ ) {
       double n    = par[0];        // The exponent
@@ -1338,15 +1337,15 @@ class SmearStepGauss : public Parametrization
 
   const char* name() const { return "SmearStepGauss";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const { return 0.; }
+  double correctedTowerEt(const Measurement *x,const double *par) const { return 0.; }
 
   //!  \brief Returns probability density of response
-  //!  \param x   TMeasurement::E is response for which the 
+  //!  \param x   Measurement::E is response for which the 
   //!             probability density is returned
   //!  \param par Pointer to parameters
   //!  \return Probability density of response
   // ------------------------------------------------------------------------
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     // Probability density from Gaussian part
     double c = scale_.at(0)*par[0];
     double u = scale_.at(1)*par[1];
@@ -1429,35 +1428,9 @@ class SmearStepGaussInter : public Parametrization
   //!  \param rParScales    Jet parameter scales
   //!  \param gaussPar   Parameters for mean of Gaussian
   // ------------------------------------------------------------------------
-  SmearStepGaussInter(double tMin, double tMax, double rMin, double rMax, int rNBins, double ptDijetMin, double ptDijetMax, const std::vector<double>& rParScales, const std::vector<double>& gaussPar)
-    : Parametrization(0,rNBins+4,0,1),
-    tMin_(tMin),
-    tMax_(tMax),
-    rMin_(rMin),
-    rMax_(rMax),
-    ptDijetMin_(ptDijetMin),
-    ptDijetMax_(ptDijetMax),
-    nStepPar_(rNBins),
-    binWidth_((rMax_ - rMin_)/nStepPar_),
-    respParScales_(rParScales),
-    gaussPar_(gaussPar)
-    {
-      for(int i = 0; i < nStepPar_+1; i++) {
-	binCenters_.push_back( rMin_ + (0.5+i)*binWidth_ );
-      }
-      assert( 0.0 <= tMin_ && tMin_ < tMax_ );
-      assert( 0.0 <= rMin_ && rMin_ < rMax_ );
-      assert( 0.0 <= ptDijetMin_ && ptDijetMin_ < ptDijetMax_ );
-      assert( respParScales_.size() >= nJetPars() );
-      assert( gaussPar_.size() >= 1 );
+  SmearStepGaussInter(double tMin, double tMax, double rMin, double rMax, int rNBins, double ptDijetMin, double ptDijetMax, const std::vector<double>& rParScales, const std::vector<double>& gaussPar);
 
-      print();
-
-      // Integral over dijet resolution for truth pdf
-      ptDijetCutInt_ = new TH1D("norm","",400,tMin_,tMax_);
-    }
-
-  ~SmearStepGaussInter() { binCenters_.clear(); delete ptDijetCutInt_; }
+  ~SmearStepGaussInter();
 
   const char* name() const { return "SmearStepGaussInter";}
 
@@ -1480,40 +1453,17 @@ class SmearStepGaussInter : public Parametrization
   //!  \p ptDijetMin_ and \p ptDijetMax_.
   //!  \sa correctedGlobalJetEt()
   // ------------------------------------------------------------------------
-  virtual void update(const double * par) {
-    std::cout << "'" << name() << "': Updating ptDijet cut integral... ";
-    ptDijetCutInt_->Reset();
+  virtual void update(const double * par);
 
-    for(int bin = 1; bin < ptDijetCutInt_->GetNbinsX(); bin++) {
-      TMeasurement x;
-      x.pt = ptDijetCutInt_->GetBinCenter(bin);
-      double integral = 0.;
-      int nSteps = 400;
-      double dPtDijet = (ptDijetMax_ - ptDijetMin_) / nSteps;
-      for(int i = 0; i < nSteps; i++) {
-	double ptDijet = ptDijetMin_ + i*dPtDijet;
-	x.E = ptDijet / x.pt;
-	double prob = correctedJetEt(&x,par);
-	prob *= x.pt;
-	integral += prob;
-      }
-      integral /= sqrt(2.);
-      integral *= dPtDijet;
-      ptDijetCutInt_->SetBinContent(bin,integral);
-    }
-    std::cout << "ok\n";
-  }
-
-
-  double correctedTowerEt(const TMeasurement *x,const double *par) const { return 0.; }
+  double correctedTowerEt(const Measurement *x,const double *par) const { return 0.; }
 
 
   //!  \brief Returns probability density of response
-  //!  \param x   TMeasurement::E is the response, TMeasurement::pt the true pt
+  //!  \param x   Measurement::E is the response, Measurement::pt the true pt
   //!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
   //!  \return Probability density of response
   // ------------------------------------------------------------------------
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     // Probability density from Gaussian part
     double c = respParScales_.at(0)*par[0];
     double u = gaussPar_.at(0);
@@ -1544,29 +1494,12 @@ class SmearStepGaussInter : public Parametrization
 
   //!  \brief Returns probability density of true pt multiplied by normalization
   //!         of dijet probability (see also \p SmearDiJet::truthPDF(t)).
-  //!  \param x   \p TMeasurement::pt is truth for which the 
+  //!  \param x   \p Measurement::pt is truth for which the 
   //!             probability density is returned
   //!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
   //!  \return Probability density of truth times normalization of dijet probability
   // ------------------------------------------------------------------------
-  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
-    // Norm of probability of dijet event configuration
-    double norm = 0.;
-    for(int bin = 1; bin < ptDijetCutInt_->GetNbinsX(); bin++) {
-      double pt = ptDijetCutInt_->GetBinCenter(bin);
-      norm += pow(pt,2-par[0]) * ptDijetCutInt_->GetBinContent(bin) * ptDijetCutInt_->GetXaxis()->GetBinWidth(1);
-    }
-
-    double p = 0.;
-    if( norm ) {
-      p = truthPDF(x->pt,par[0]);
-      p /= norm;
-    }
-    
-    return p;
-  }
-
-
+  double correctedGlobalJetEt(const Measurement *x,const double *par) const;
  private:
   const double tMin_;                   //!< Minimum of non-zero range of truth pdf
   const double tMax_;                   //!< Maximum of non-zero range of truth pdf
@@ -1644,18 +1577,7 @@ class SmearStepGaussInter : public Parametrization
   //!  \f[ t^{-n} \int^{\texttt{ptDijetMax\_}}_{\texttt{ptDijetMin\_}}
   //!      dx\,\frac{r(x/t) \cdot t}{\sqrt{2}} \f]
   // ------------------------------------------------------------------------
-  double truthPDF(double pt, double n) const {
-    double prob = 0.;
-    if( tMin_ < pt && pt < tMax_ ) {
-      prob = 1. / pow( pt, n );
-      int bin = ptDijetCutInt_->FindBin(pt);
-      prob *= ptDijetCutInt_->GetBinContent(bin);
-    }
-
-    return prob;
-  }
-
-
+  double truthPDF(double pt, double n) const;
 
   //!  \brief Print some initialization details
   // ------------------------------------------------------------------------
@@ -1769,17 +1691,17 @@ class SmearStepGaussInterPtBinned : public Parametrization
 
   const char* name() const { return "SmearStepGaussInterPtBinned";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const { return 0.; }
+  double correctedTowerEt(const Measurement *x,const double *par) const { return 0.; }
 
 
 
   //!  \brief Returns probability density of response
-  //!  \param x \p TMeasurement::E is the response,
-  //!           \p TMeasurement::pt is the true pt
+  //!  \param x \p Measurement::E is the response,
+  //!           \p Measurement::pt is the true pt
   //!  \param par Pointer to parameters
   //!  \return Probability density of response
   // ------------------------------------------------------------------------
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     // Find index to start of step parameters of this pt bin
     // Per pt bin there are
     //  - 1 normalization constant,
@@ -1819,12 +1741,12 @@ class SmearStepGaussInterPtBinned : public Parametrization
 
   //!  \brief Returns probability density of true pt multiplied by normalization
   //!         of dijet probability (see also \p SmearDiJet::truthPDF(t)).
-  //!  \param x   \p TMeasurement::pt is true pt for which the
+  //!  \param x   \p Measurement::pt is true pt for which the
   //!             probability density is returned
   //!  \param par Pointer to parameters
   //!  \return Probability density of truth times normalization of dijet probability
   // ------------------------------------------------------------------------
-  double correctedGlobalJetEt(const TMeasurement *x,const double *par) const {
+  double correctedGlobalJetEt(const Measurement *x,const double *par) const {
     double p = 0.;
     if( ptMin_ < x->pt && x->pt < ptMax_ ) {
       double n    = par[0];        // The exponent
@@ -1985,11 +1907,11 @@ public:
   }
   const char* name() const { return "GroomParametrization";}
   
-  double correctedTowerEt(const TMeasurement *x,const double *par) const {
+  double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
   
-  double correctedJetEt(const TMeasurement *x,const double *par) const {
+  double correctedJetEt(const Measurement *x,const double *par) const {
     //return 1/par[0] * x->pt; int iter = 0, max_iter = 100;
     const gsl_root_fsolver_type *T;
     gsl_root_fsolver *s;
@@ -2024,7 +1946,7 @@ public:
     return r;
   }
 
-  double inverseJetCorrection(const TMeasurement *x,const double *par) const { 
+  double inverseJetCorrection(const Measurement *x,const double *par) const { 
     return (par[0] - par[1] * pow(0.01 * x->pt, -par[2])) * x->pt;
   }
  

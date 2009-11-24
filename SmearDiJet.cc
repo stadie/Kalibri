@@ -1,6 +1,8 @@
-// $Id: SmearDiJet.cc,v 1.5 2009/08/07 12:15:16 mschrode Exp $
+// $Id: SmearDiJet.cc,v 1.6 2009/09/02 13:52:26 mschrode Exp $
 
 #include "SmearDiJet.h"
+
+#include "Jet.h"
 
 
 //!  \brief Constructor
@@ -15,9 +17,9 @@
 //!  \param eps Integration precision for convergence
 //!  \param niter Maximum number of iterations in integration
 // --------------------------------------------------
-SmearDiJet::SmearDiJet(TMeasurement * mess,
-		       TMeasurement * secndMess,
-		       TMeasurement * thirdMess,
+SmearDiJet::SmearDiJet(Measurement * mess,
+		       Measurement * secndMess,
+		       Measurement * thirdMess,
 		       double weight,
 		       const Function& respPDF,
 		       const Function& truthPDF,
@@ -200,7 +202,7 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
 //!          is normalized
 // --------------------------------------------------
 double SmearDiJet::truthPDF(double t) const {
-  TMeasurement meas;
+  Measurement meas;
   meas.pt = t;
   return truthPDF_(&meas);
 }
@@ -223,7 +225,7 @@ void SmearDiJet::printInitStats() const {
 // --------------------------------------------------
 double SmearDiJet::ptHat() const {
   double ptHat = 0.;
-  TJet * jet = dynamic_cast<TJet*>(GetMess());
-  if( jet ) ptHat = jet->ptHat;
+  Jet* jet = dynamic_cast<Jet*>(GetMess());
+  if( jet ) ptHat = jet->ptHat();
   return ptHat;
 }

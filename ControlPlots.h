@@ -1,3 +1,6 @@
+//
+// $Id: CalibData.h,v 1.74 2009/11/20 12:25:41 stadie Exp $
+//
 #ifndef TControlPlots_h
 #define TControlPlots_h
 
@@ -5,36 +8,32 @@
 #include <string>
 #include <vector>
 
-#include "TF1.h"
-#include "TFile.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TObject.h"
-#include "TStyle.h"
-
 #include "CalibData.h"
 #include "ConfigFile.h"
 #include "Parameters.h"
 
-
-
+class TH1F;
+class TH2F;
+class TObject;
+class TF1;
+class TFile;
 
 //!  \brief Create control plots
 //!
 //!  Objects of \p TControlPlots can create control plots via
-//!  the \p makeControlPlots() method from several TData
+//!  the \p makeControlPlots() method from several Event
 //!  objects. The output is in .ps or both .ps and .root format.
 //!  The kind of the control plots and the output format is
 //!  specified via the config file.
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.2 2009/11/09 15:48:40 mschrode Exp $
+//!  $Id: ControlPlots.h,v 1.32 2009/11/18 18:47:23 mschrode Exp $
 // -------------------------------------------------------------
 class TControlPlots
 {
 public:
-  TControlPlots(const std::string& configfile, const std::vector<TData*> *data, TParameters *par);
+  TControlPlots(const std::string& configfile, const std::vector<Event*> *data, TParameters *par);
   ~TControlPlots();
 
   void makePlots();
@@ -70,7 +69,7 @@ public:
   void writeToRootFile(std::vector<TObject*> obj, std::string dir);
 
   ConfigFile  *config_;                         //!< Pointer to config file
-  const std::vector<TData*> *data_;             //!< Pointer to data
+  const std::vector<Event*> *data_;             //!< Pointer to data
   std::vector<double> fittedPar_;               //!< Stores fitted parameters
   TFile       *outFile_;                        //!< Pointer to root output file
   bool         outputROOT_;                     //!< If true, histograms are written to ROOT file

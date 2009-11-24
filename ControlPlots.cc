@@ -1,3 +1,6 @@
+//
+// $Id: CalibData.h,v 1.74 2009/11/20 12:25:41 stadie Exp $
+//
 #include "ControlPlots.h"
 
 #include <algorithm>
@@ -17,6 +20,12 @@ using namespace std;
 #include "TPostScript.h"
 #include "TString.h"
 #include "TROOT.h"
+#include "TF1.h"
+#include "TFile.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TStyle.h"
+
 
 #include "CalibMath.h"
 
@@ -28,10 +37,10 @@ using namespace std;
 //!  \brief Constructor
 //! 
 //!  \param configfile  Path to config file
-//!  \param data        TData objects to create controlplots from
+//!  \param data        Event objects to create controlplots from
 //!  \param par         Parameters
 // -------------------------------------------------------------
-TControlPlots::TControlPlots(const std::string& configfile, const std::vector<TData*> *data, TParameters *par)
+TControlPlots::TControlPlots(const std::string& configfile, const std::vector<Event*> *data, TParameters *par)
   : config_(new ConfigFile(configfile.c_str())), data_(data), outFile_(0), par_(par)
 { 
   // Open ROOT file for writing
@@ -127,7 +136,7 @@ void TControlPlots::makePlots()
 void TControlPlots::makeControlPlotsBinnedResponse()
 {
   std::vector<TObject*>                objToBeWritten;
-  std::vector<TData*>::const_iterator  data_it;
+  std::vector<Event*>::const_iterator  data_it;
 
 
   // Create a Et and eta binning
@@ -188,10 +197,10 @@ void TControlPlots::makeControlPlotsBinnedResponse()
 
 	  // For comparison reasons, correct with JetMET
 	  // correction; this works only for data class > 0
-	  TJet *jet = dynamic_cast<TJet*>((*data_it)->GetMess());
+	  Jet *jet = dynamic_cast<Jet*>((*data_it)->GetMess());
 	  if( jet )
 	    {
-	      double cjetmet = jet->corFactors.getL2L3();
+	      double cjetmet = jet->corFactors().getL2L3();
 	      hRespJetMet.at(bin)->Fill(cjetmet*etmeas/ettrue,weight);
 	    }
 	}
@@ -406,7 +415,7 @@ void TControlPlots::makeControlPlotsBinnedResponse()
 void TControlPlots::makeControlPlotsChi2()
 {
   std::vector<TObject*>                objToBeWritten;
-  std::vector<TData*>::const_iterator  data_it;
+  std::vector<Event*>::const_iterator  data_it;
 
   // Distribution of chi2 summands with last scaling
   // configuration scheme
@@ -459,11 +468,11 @@ void TControlPlots::makeControlPlotsChi2()
       h_chi2_last->Fill(lastchi2);
       h_prob->Fill(TMath::Prob(lastchi2,1));
 
-      TData::ScaleResidual = &TData::ScaleNone;
+      Event::ScaleResidual = &Event::ScaleNone;
       double res = ( (*data_it)->chi2() / weight );
-      TData::ScaleResidual = &TData::ScaleCauchy;
+      Event::ScaleResidual = &Event::ScaleCauchy;
       double res_cauchy = ( (*data_it)->chi2() / weight );
-      TData::ScaleResidual = &TData::ScaleHuber;
+      Event::ScaleResidual = &Event::ScaleHuber;
       double res_huber = ( (*data_it)->chi2() / weight );
 
       h_chi2->Fill(res);
@@ -563,7 +572,7 @@ void TControlPlots::makeControlPlotsChi2()
 // -------------------------------------------------------------
 void TControlPlots::makeControlPlotsJetTruthEventResponse() {
   std::vector<TObject*>                objToBeWritten;
-  std::vector<TData*>::const_iterator  data_it;
+  std::vector<Event*>::const_iterator  data_it;
 
   // -- Create 2D histograms of response vs eta, pt --------------
 
@@ -634,7 +643,7 @@ void TControlPlots::makeControlPlotsJetTruthEventResponse() {
       
       Jet * jet         = static_cast<Jet*>(jte->GetMess());
       double weight     = jte->GetWeight();
-      double ptmeas     = jet->pt;
+      double ptmeas     = jet->pt();
       double ptcorr     = jte->GetParametrizedMess();
       double eta        = jte->GetMess()->eta;
       double pttrue     = jte->GetTruth();
@@ -658,7 +667,7 @@ void TControlPlots::makeControlPlotsJetTruthEventResponse() {
     }
   } // End of first loop over data
 
-  // Either use L2L3 correction stored in TData or read from file
+  // Either use L2L3 correction stored in Event or read from file
   bool useReadConstants = readJetMETParameters();
 
   // Second loop over data and fill response of uncorrected
@@ -673,7 +682,7 @@ void TControlPlots::makeControlPlotsJetTruthEventResponse() {
       double weight     = jte->GetWeight();
       double ptcorr     = 0.;
       if( useReadConstants ) ptcorr = jte->GetParametrizedMess();
-      else                   ptcorr = jet->corFactors.getL2L3() * jet->pt;
+      else                   ptcorr = jet->corFactors().getL2L3() * jet->pt();
       double eta        = jte->GetMess()->eta;
       double pttrue     = jte->GetTruth();
       // Find pttrue bin for response vs eta plot
@@ -1047,7 +1056,7 @@ void TControlPlots::makeControlPlotsJetTruthEventResponse() {
 // -------------------------------------------------------------
 void TControlPlots::makeControlPlotsL2L3MCTruth() {
   std::vector<TObject*>                objToBeWritten;
-  std::vector<TData*>::const_iterator  data_it;
+  std::vector<Event*>::const_iterator  data_it;
 
 
   // Absolute eta bins
@@ -1257,32 +1266,26 @@ void TControlPlots::makeControlPlotsTop()
 
   //loop over all fit-events and fill hists
 
-  for( std::vector<TData*>::const_iterator i = data_->begin() ; i != data_->end() ; ++i )  
+  for( std::vector<Event*>::const_iterator i = data_->begin() ; i != data_->end() ; ++i )  
     {
 
-      TData* data = *i;
+      Event* data = *i;
       if(data->GetType() != InvMass) continue;
 
-      std::vector<TJet*> jets;
+      std::vector<Jet*> jets;
       
-      TData_InvMass2 *invM2 = dynamic_cast<TData_InvMass2*>(data);	
       TwoJetsInvMassEvent* ev = (TwoJetsInvMassEvent*)data;
-      if(invM2) {	
-	jets.push_back( (TJet*) invM2->GetMess() );
-	for(unsigned j=0; j<invM2->MultMessSize(); j++)
-	  jets.push_back( (TJet*) (*invM2->GetSecondaryJets())[j]->GetMess() );
-      } 
-      else if(ev) {
+      if(ev) {
 	jets.push_back( ev->GetJet1() );
 	jets.push_back( ev->GetJet2() );
       } else { 
-      continue;
+	continue;
       }
-
+      
       TLorentzVector jet4Vec;
       TLorentzVector recW;
       for(unsigned j=0; j<jets.size(); j++) {
-	jet4Vec.SetPtEtaPhiE( jets[j]->pt, jets[j]->eta, jets[j]->phi, jets[j]->E );
+	jet4Vec.SetPtEtaPhiE( jets[j]->pt(), jets[j]->eta(), jets[j]->phi(), jets[j]->E() );
 	if(j==0) recW = jet4Vec;
 	else recW += jet4Vec;
       }
@@ -1290,39 +1293,32 @@ void TControlPlots::makeControlPlotsTop()
       double s = 0.;
       double t = 0.;
       double w = 0.;      
-      if(invM2) {
-	s = invM2->GetScale();
-	w = invM2->GetWeight();
-	t = invM2->GetTruth();
-      }
-      if(ev) {
-	s = ev->GetTruth();
-	w = ev->GetWeight();
-	t = ev->GetTruth();
-      }
+      s = ev->GetTruth();
+      w = ev->GetWeight();
+      t = ev->GetTruth();
       scale ->Fill(s);
       weight->Fill(w);
       truth ->Fill(t);
-
+      
       if(jets[1]) {
 
-	recPt12->Fill(jets[0]->pt   , jets[1]->pt   );
-	genPt12->Fill(jets[0]->genPt, jets[1]->genPt);
-	eta12  ->Fill(jets[0]->eta  , jets[1]->eta  );
+	recPt12->Fill(jets[0]->pt()   , jets[1]->pt()   );
+	genPt12->Fill(jets[0]->genPt(), jets[1]->genPt());
+	eta12  ->Fill(jets[0]->eta()  , jets[1]->eta()  );
 
-	deltaRecPt->Fill( std::abs(jets[0]->pt    - jets[1]->pt    ) );
-	deltaGenPt->Fill( std::abs(jets[0]->genPt - jets[1]->genPt ) );
-	deltaEta  ->Fill( std::abs(jets[0]->eta   - jets[1]->eta   ) );
+	deltaRecPt->Fill( std::abs(jets[0]->pt()    - jets[1]->pt()    ) );
+	deltaGenPt->Fill( std::abs(jets[0]->genPt() - jets[1]->genPt() ) );
+	deltaEta  ->Fill( std::abs(jets[0]->eta()   - jets[1]->eta()   ) );
 
-	deltaRecPtRecPt1->Fill( jets[0]->pt , std::abs(jets[0]->pt - jets[1]->pt) );
-	deltaRecPtEta1  ->Fill( jets[0]->eta, std::abs(jets[0]->pt - jets[1]->pt) );
+	deltaRecPtRecPt1->Fill( jets[0]->pt() , std::abs(jets[0]->pt() - jets[1]->pt()) );
+	deltaRecPtEta1  ->Fill( jets[0]->eta(), std::abs(jets[0]->pt() - jets[1]->pt()) );
 
-	double dr = deltaR(jets[0]->eta, jets[0]->phi,
-			   jets[1]->eta, jets[1]->phi);
+	double dr = deltaR(jets[0]->eta(), jets[0]->phi(),
+			   jets[1]->eta(), jets[1]->phi());
 	dR->Fill(dr);
-	dRrecPt->Fill(jets[0]->pt      , dr);
-	dRgenPt->Fill(jets[0]->genPt   , dr);
-	dReta  ->Fill(jets[0]->eta     , dr);
+	dRrecPt->Fill(jets[0]->pt()      , dr);
+	dRgenPt->Fill(jets[0]->genPt()   , dr);
+	dReta  ->Fill(jets[0]->eta()     , dr);
 	dRwPt  ->Fill(recW.Pt(), dr);
       }
 
@@ -1332,8 +1328,8 @@ void TControlPlots::makeControlPlotsTop()
       invMass  [0]->Fill( recW.M()   );
       messTruth[0]->Fill( recW.M()/t );
 
-      invMass  [1]->Fill( invM2 ? invM2->GetMessCombination()   : ev->correctedMass()   );
-      messTruth[1]->Fill( invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+      invMass  [1]->Fill( ev->correctedMass()   );
+      messTruth[1]->Fill( ev->correctedMass()/t );
 
       double mPt  = 0.;
       double mEta = 0.;
@@ -1342,73 +1338,64 @@ void TControlPlots::makeControlPlotsTop()
       //      messTruthPtGen [1]->Fill( recW.Pt() , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
 
       for(unsigned j=0; j<jets.size(); j++) {
-	if(jets[j]->flavor != TJet::uds) continue;
+	if(jets[j]->flavor() != Jet::uds) continue;
 
-	pt ->Fill( jets[j]->pt  );
-	eta->Fill( jets[j]->eta );
-	phi->Fill( jets[j]->phi );
+	pt ->Fill( jets[j]->pt()  );
+	eta->Fill( jets[j]->eta() );
+	phi->Fill( jets[j]->phi() );
 
-	genPt->Fill( jets[j]->genPt );
+	genPt->Fill( jets[j]->genPt() );
 
-	mPt  += jets[j]->pt;
-	mEta += jets[j]->eta;
+	mPt  += jets[j]->pt();
+	mEta += jets[j]->eta();
 
-	messTruthPtGen[0]->Fill( jets[j]->genPt , recW.M()/t );
-	messTruthPtRec[0]->Fill( jets[j]->pt    , recW.M()/t );
-	messTruthEta  [0]->Fill( jets[j]->eta   , recW.M()/t );
+	messTruthPtGen[0]->Fill( jets[j]->genPt() , recW.M()/t );
+	messTruthPtRec[0]->Fill( jets[j]->pt()    , recW.M()/t );
+	messTruthEta  [0]->Fill( jets[j]->eta()   , recW.M()/t );
 	
-	messTruthPtGen[1]->Fill( jets[j]->genPt , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
-	messTruthPtRec[1]->Fill( jets[j]->pt    , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
-	messTruthEta  [1]->Fill( jets[j]->eta   , invM2 ? invM2->GetMessCombination()/t : ev->correctedMass()/t );
+	messTruthPtGen[1]->Fill( jets[j]->genPt() , ev->correctedMass()/t );
+	messTruthPtRec[1]->Fill( jets[j]->pt()    , ev->correctedMass()/t );
+	messTruthEta  [1]->Fill( jets[j]->eta()   , ev->correctedMass()/t );
 
 	double response[2]; // before and after Kalibri fit
 	if(j==0) {
-	  response[0] = invM2 ? invM2->GetMess()->pt / jets[j]->genPt : 
-	                           ev->GetMess()->pt / jets[j]->genPt;
-	  response[1] = invM2 ? invM2->GetParametrizedMess() / jets[j]->genPt : 
-	                           ev->GetParametrizedMess() / jets[j]->genPt;
-	}
-	else {
-	  if(invM2) {
-	    const TData_MessMess* mm = (*invM2->GetSecondaryJets())[j-1];
-	    response[0] = mm->GetMess()->pt         / jets[j]->genPt;
-	    response[1] = mm->GetParametrizedMess() / jets[j]->genPt;
-	  } else {
-	    response[0] = ev->GetMess2()->pt         / jets[j]->genPt;
-	    response[1] = ev->GetParametrizedMess2() / jets[j]->genPt;
-	  }
+	  response[0] = ev->GetMess()->pt / jets[j]->genPt();
+	  response[1] = ev->GetParametrizedMess() / jets[j]->genPt();
+	} else {
+	  response[0] = ev->GetMess2()->pt         / jets[j]->genPt();
+	  response[1] = ev->GetParametrizedMess2() / jets[j]->genPt();
 	}
 	for(unsigned a=0; a<2; a++){
-	  responsePtGen[a]->Fill( jets[j]->genPt , response[a] );
-	  responsePtRec[a]->Fill( jets[j]->pt    , response[a] );
-	  responseEta  [a]->Fill( jets[j]->eta   , response[a] );
+	  responsePtGen[a]->Fill( jets[j]->genPt() , response[a] );
+	  responsePtRec[a]->Fill( jets[j]->pt()    , response[a] );
+	  responseEta  [a]->Fill( jets[j]->eta()   , response[a] );
 	}
 
-	corrFacsPt [0]->Fill( jets[j]->genPt  , jets[j]->corFactors.getL1() );
-	corrFacsPt [1]->Fill( jets[j]->genPt  , jets[j]->corFactors.getL2() );
-	corrFacsPt [2]->Fill( jets[j]->genPt  , jets[j]->corFactors.getL3() );
-	corrFacsPt [3]->Fill( jets[j]->genPt  , jets[j]->corFactors.getL4() );
-	corrFacsPt [4]->Fill( jets[j]->genPt  , jets[j]->corFactors.getL5() );
+	corrFacsPt [0]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getL1() );
+	corrFacsPt [1]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getL2() );
+	corrFacsPt [2]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getL3() );
+	corrFacsPt [3]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getL4() );
+	corrFacsPt [4]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getL5() );
 
-	corrFacsEta[0]->Fill( jets[j]->eta , jets[j]->corFactors.getL1() );
-	corrFacsEta[1]->Fill( jets[j]->eta , jets[j]->corFactors.getL2() );
-	corrFacsEta[2]->Fill( jets[j]->eta , jets[j]->corFactors.getL3() );
-	corrFacsEta[3]->Fill( jets[j]->eta , jets[j]->corFactors.getL4() );
-	corrFacsEta[4]->Fill( jets[j]->eta , jets[j]->corFactors.getL5() );
+	corrFacsEta[0]->Fill( jets[j]->eta() , jets[j]->corFactors().getL1() );
+	corrFacsEta[1]->Fill( jets[j]->eta() , jets[j]->corFactors().getL2() );
+	corrFacsEta[2]->Fill( jets[j]->eta() , jets[j]->corFactors().getL3() );
+	corrFacsEta[3]->Fill( jets[j]->eta() , jets[j]->corFactors().getL4() );
+	corrFacsEta[4]->Fill( jets[j]->eta() , jets[j]->corFactors().getL5() );
 
-	correctedResponsePt [0]->Fill( jets[j]->genPt  ,                               jets[j]->pt/jets[j]->genPt );
-	correctedResponsePt [1]->Fill( jets[j]->genPt  , jets[j]->corFactors.getL1()  *jets[j]->pt/jets[j]->genPt );
-	correctedResponsePt [2]->Fill( jets[j]->genPt  , jets[j]->corFactors.getToL2()*jets[j]->pt/jets[j]->genPt );
-	correctedResponsePt [3]->Fill( jets[j]->genPt  , jets[j]->corFactors.getToL3()*jets[j]->pt/jets[j]->genPt );
-	correctedResponsePt [4]->Fill( jets[j]->genPt  , jets[j]->corFactors.getToL4()*jets[j]->pt/jets[j]->genPt );
-	correctedResponsePt [5]->Fill( jets[j]->genPt  , jets[j]->corFactors.getToL5()*jets[j]->pt/jets[j]->genPt );
+	correctedResponsePt [0]->Fill( jets[j]->genPt()  ,                               jets[j]->pt()/jets[j]->genPt() );
+	correctedResponsePt [1]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getL1()  *jets[j]->pt()/jets[j]->genPt() );
+	correctedResponsePt [2]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getToL2()*jets[j]->pt()/jets[j]->genPt() );
+	correctedResponsePt [3]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getToL3()*jets[j]->pt()/jets[j]->genPt() );
+	correctedResponsePt [4]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getToL4()*jets[j]->pt()/jets[j]->genPt() );
+	correctedResponsePt [5]->Fill( jets[j]->genPt()  , jets[j]->corFactors().getToL5()*jets[j]->pt()/jets[j]->genPt() );
 
-	correctedResponseEta[0]->Fill( jets[j]->eta ,                               jets[j]->pt/jets[j]->genPt );
-	correctedResponseEta[1]->Fill( jets[j]->eta , jets[j]->corFactors.getL1()  *jets[j]->pt/jets[j]->genPt );
-	correctedResponseEta[2]->Fill( jets[j]->eta , jets[j]->corFactors.getToL2()*jets[j]->pt/jets[j]->genPt );
-	correctedResponseEta[3]->Fill( jets[j]->eta , jets[j]->corFactors.getToL3()*jets[j]->pt/jets[j]->genPt );
-	correctedResponseEta[4]->Fill( jets[j]->eta , jets[j]->corFactors.getToL4()*jets[j]->pt/jets[j]->genPt );
-	correctedResponseEta[5]->Fill( jets[j]->eta , jets[j]->corFactors.getToL5()*jets[j]->pt/jets[j]->genPt );
+	correctedResponseEta[0]->Fill( jets[j]->eta() ,                               jets[j]->pt()/jets[j]->genPt() );
+	correctedResponseEta[1]->Fill( jets[j]->eta() , jets[j]->corFactors().getL1()  *jets[j]->pt()/jets[j]->genPt() );
+	correctedResponseEta[2]->Fill( jets[j]->eta() , jets[j]->corFactors().getToL2()*jets[j]->pt()/jets[j]->genPt() );
+	correctedResponseEta[3]->Fill( jets[j]->eta() , jets[j]->corFactors().getToL3()*jets[j]->pt()/jets[j]->genPt() );
+	correctedResponseEta[4]->Fill( jets[j]->eta() , jets[j]->corFactors().getToL4()*jets[j]->pt()/jets[j]->genPt() );
+	correctedResponseEta[5]->Fill( jets[j]->eta() , jets[j]->corFactors().getToL5()*jets[j]->pt()/jets[j]->genPt() );
       }
 
       mPt  /= jets.size();
@@ -2260,7 +2247,7 @@ void TControlPlots::makeControlPlotsParameterScan()
 	  double variedPar = origPar - 0.1 + 0.01*a;
 	  x_param[a] = variedPar;
 	  par_->GetPars()[i] = variedPar;
-	  for( std::vector<TData*>::const_iterator it = data_->begin();  it < data_->end();  ++it )
+	  for( std::vector<Event*>::const_iterator it = data_->begin();  it < data_->end();  ++it )
 	    {
 	      y_chi2[a] += (*it)->chi2();
 	    }
@@ -2349,7 +2336,7 @@ void TControlPlots::makeControlPlotsParameterScan()
 	      x_param[pointIdx] = variedParX;
 	      y_param[pointIdx] = variedParY;
 
-	      for( std::vector<TData*>::const_iterator it = data_->begin();  it < data_->end();  ++it )
+	      for( std::vector<Event*>::const_iterator it = data_->begin();  it < data_->end();  ++it )
 		{
 		  z_chi2[pointIdx] += (*it)->chi2();
 		}
@@ -2418,7 +2405,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
   if( debug ) std::cout << "Entering makeControlPlotsTwoJetsPtBalance()\n";
 
   std::vector<TObject*>                objToBeWritten;
-  std::vector<TData*>::const_iterator  data_it;
+  std::vector<Event*>::const_iterator  data_it;
 
   // -- Create 2D histograms of balance etc vs eta, ptdijet --------------
 
@@ -2587,7 +2574,7 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 	Jet * jet = evt->getJet1();
 	if( i == 1 ) evt->getJet2();
 
-	hPtGenJetSpectrum->Fill(jet->genPt,weight);
+	hPtGenJetSpectrum->Fill(jet->genPt(),weight);
 
 	if( 0 <= ptDijetBin && ptDijetBin < bins.nBinsX() ) {
 	  h2BUncorr.at(0).at(ptDijetBin)->Fill(jet->eta(),evt->ptBalance(),weight);
@@ -2602,11 +2589,11 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 	}
 
 	// Find ptGen bin
-	int ptGenBin = bins.iX(jet->GenPt());
+	int ptGenBin = bins.iX(jet->genPt());
 	if( 0 <= ptGenBin && ptGenBin < bins.nBinsX() ) {
-	  h2RUncorr.at(0).at(ptGenBin)->Fill(jet->eta(),jet->Et()/jet->GenPt(),weight);
-	  h2RCorr.at(0).at(ptGenBin)->Fill(jet->eta(),jet->correctedEt()/jet->GenPt(),weight);
-	  h2RCorrL2L3.at(0).at(ptGenBin)->Fill(jet->eta(),jet->corFactors.getL2L3()*jet->Et()/jet->GenPt(),weight);
+	  h2RUncorr.at(0).at(ptGenBin)->Fill(jet->eta(),jet->Et()/jet->genPt(),weight);
+	  h2RCorr.at(0).at(ptGenBin)->Fill(jet->eta(),jet->correctedEt()/jet->genPt(),weight);
+	  h2RCorrL2L3.at(0).at(ptGenBin)->Fill(jet->eta(),jet->corFactors().getL2L3()*jet->Et()/jet->genPt(),weight);
 	}
 	
 	// Find eta bin
@@ -2620,9 +2607,9 @@ void TControlPlots::makeControlPlotsTwoJetsPtBalance() {
 	  h2BCorr.at(3).at(etaBin)->Fill(evt->ptDijetGen(),evt->ptBalanceCorr(),weight);
 	  h2BCorrL2L3.at(3).at(etaBin)->Fill(evt->ptDijetGen(),evt->ptBalanceCorrL2L3(),weight);
 
-	  h2RUncorr.at(1).at(etaBin)->Fill(jet->GenPt(),jet->Et()/jet->GenPt(),weight);
-	  h2RCorr.at(1).at(etaBin)->Fill(jet->GenPt(),jet->correctedEt()/jet->GenPt(),weight);
-	  h2RCorrL2L3.at(1).at(etaBin)->Fill(jet->GenPt(),jet->corFactors.getL2L3()*jet->Et()/jet->GenPt(),weight);
+	  h2RUncorr.at(1).at(etaBin)->Fill(jet->genPt(),jet->Et()/jet->genPt(),weight);
+	  h2RCorr.at(1).at(etaBin)->Fill(jet->genPt(),jet->correctedEt()/jet->genPt(),weight);
+	  h2RCorrL2L3.at(1).at(etaBin)->Fill(jet->genPt(),jet->corFactors().getL2L3()*jet->Et()/jet->genPt(),weight);
 	}
       }
     }
@@ -3837,7 +3824,7 @@ std::vector<double> TControlPlots::getEtaBinEdges(int binningModel) const {
 //!  Reads the constants for L2 and L3 correction from
 //!  an ascii file in \p CondDB format and stores them
 //!  in \p TParameters::GetPars(). Afterwards 
-//!  \p TData::GetParametrizedMess() will return the
+//!  \p Event::GetParametrizedMess() will return the
 //!  correction pt using these constants.
 //!  The file names have to be specified in the
 //!  'Control plots JetMET L2L3 constants' string in

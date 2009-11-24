@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.40 2009/11/06 11:59:51 mschrode Exp $
+// $Id: Parameters.cc,v 1.41 2009/11/20 12:49:16 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -11,6 +11,7 @@
 
 #include "Parameters.h"
 
+#include "TMath.h"
 
 using namespace std;
 
@@ -1599,7 +1600,37 @@ Function TParameters::global_jet_function() {
 		  GetNumberOfGlobalJetParameters(),p);
 }
 
+double TParameters::toy_tower_error_parametrization(const double *x, const Measurement *xorig, double errorig)
+{
+  double hadet = x[0] - xorig->EMF - xorig->OutF;
+  if(hadet < 0.001) hadet = 0.001;
+  double hade = hadet * xorig->E / xorig->pt; 
+  //std::cout << "had Et:" << hadet << " , " << "had E:" << hade << '\n';
+  
+  double a = 4.44;
+  double b = 1.11;
+  double c = 0.03;
+  
+  double var = a*a/hade/hade + b*b/hade + c*c;
+  //truncate variance accordingly
+  double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
+  return sqrt(truncvar) * hadet;
+}
 
+double TParameters::toy_jet_error_parametrization(const double *x, const Measurement *xorig, double errorig)
+{
+  double a = 4.44;
+  double b = 1.11;
+  double c = 0.03;
+  
+  //return sqrt(a*a/x[0]/x[0] + b*b/x[0] + c*c)*x[0];
+  
+  double e   = x[0] * xorig->E / xorig->pt;
+  double var = a*a/e/e + b*b/e + c*c;
+  //truncate variance accordingly
+  double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
+  return sqrt(truncvar) * x[0];
+}
 
 //!  \brief Return one line of LaTeX tabular containing the
 //!         name and value of a given parameter from config file
