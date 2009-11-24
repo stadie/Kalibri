@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.cc,v 1.30 2009/06/11 17:34:45 mschrode Exp $
+// $Id: CalibData.cc,v 1.31 2009/11/24 16:52:58 stadie Exp $
 //
 #include "CalibData.h"
 
@@ -41,6 +41,22 @@ double Event::ScaleHuber(double const z2)
   double const z = sqrt(z2);
   return (  std::abs(z) <= c  ?  z2  :  c*(2.*std::abs(z) - c)  );
 }
+
+
+//!  \brief Cut on residuals
+//!
+//!  discards events with $|residual| > sqrt(c2) \sigma$
+//!
+//!  \param z2 Normalized and squared residual
+//!  \return Scaled residual
+double Event::ScaleTukey(const double z2)
+{
+  const double c2 = 16;
+  if(z2 > c2) return 0;
+  double w = 1-z2/c2;
+  return w*w * z2;
+}
+
 
 unsigned int TAbstractData::total_n_pars = 0;
 

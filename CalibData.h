@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.74 2009/11/20 12:25:41 stadie Exp $
+// $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -27,7 +27,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.74 2009/11/20 12:25:41 stadie Exp $
+//!  $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
 class Measurement
 {
 public:
@@ -58,7 +58,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.74 2009/11/20 12:25:41 stadie Exp $
+//!  $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
 class TTrack : public Measurement
 {
 public:
@@ -117,7 +117,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.74 2009/11/20 12:25:41 stadie Exp $
+//! $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
 class Event
 {
 public:
@@ -218,7 +218,7 @@ public:
   //!
   //!  \param z2 Normalized and squared residual
   //!  \return Scaled residual
-  static double ScaleTukey(double z2) { return ( z2 > 2.25) ? 0 : z2;}    //!< Scaling of residual a la  Tukey
+  static double ScaleTukey(double z2);  //!< Scaling of residual a la  Tukey
 };
 
 
@@ -232,7 +232,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.74 2009/11/20 12:25:41 stadie Exp $
+//!  $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
 class TAbstractData : public Event
 {
 public:
