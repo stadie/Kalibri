@@ -141,7 +141,7 @@ junk: $(SRC:.cc=.o) lbfgs.o caliber.o
 	$(LD) $^ $(RLXX) -o junk
 	@echo '-> static Kalibri executable created.'
 
-caliber: caliber.o Kalibri.h JetTruthEvent.h Jet.h
+caliber: caliber.o libKalibri.so
 	$(LD) caliber.o $(RLXX) -L. -lKalibri -o caliber
 	@echo '-> shared Kalibri executable created.'
 
