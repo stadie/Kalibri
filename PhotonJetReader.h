@@ -7,7 +7,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: PhotonJetReader.h,v 1.6 2009/10/26 20:56:29 mschrode Exp $
+//!  $Id: PhotonJetReader.h,v 1.7 2009/11/24 16:52:59 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -21,7 +21,7 @@ class GammaJetSel;
 class PhotonJetReader : public EventReader{
  public:
   PhotonJetReader(const std::string& configfile, TParameters *p);
-  virtual ~PhotonJetReader() {};
+  virtual ~PhotonJetReader();
   int readEvents(std::vector<Event*>& data);
 
  private:

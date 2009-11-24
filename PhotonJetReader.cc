@@ -1,5 +1,5 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.21 2009/10/26 20:56:29 mschrode Exp $
+//  $Id: PhotonJetReader.cc,v 1.22 2009/11/24 16:52:58 stadie Exp $
 //
 #include "PhotonJetReader.h"
 
@@ -19,9 +19,6 @@
 #include "TVector2.h"
 #include "TLorentzVector.h"
 
-
-
-// ----------------------------------------------------------------   
 PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) :
   EventReader(configfile,p), gammaJet_(new GammaJetSel())
 {
@@ -82,8 +79,10 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
   gammaJet_->Init( tchain_gammajet );
 }
 
+PhotonJetReader::~PhotonJetReader()
+{
+}
 
-// ----------------------------------------------------------------   
 int PhotonJetReader::readEvents(std::vector<Event*>& data)
 {
   if(nGammaJetEvents_ == 0) return 0;
