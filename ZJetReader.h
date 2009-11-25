@@ -7,7 +7,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/12
-//!    $Id: ZJetReader.h,v 1.4 2009/04/17 14:28:08 mschrode Exp $
+//!    $Id: ZJetReader.h,v 1.5 2009/11/24 16:52:59 stadie Exp $
 // ----------------------------------------------------------------   
 
 #include "EventReader.h"
@@ -24,6 +24,7 @@ class ZJetReader : public EventReader{
   int readEvents(std::vector<Event*>& data);
  private:
   Event* createJetTruthEvent();
+  CorFactors* createCorFactors(int jetid) const;
 
   std::auto_ptr<ZJetSel> zjet;
   double Et_cut_on_Z;          //!< Minimum Z Et

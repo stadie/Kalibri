@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.27 2009/11/06 11:44:40 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.28 2009/11/24 16:52:58 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -14,6 +14,7 @@
 #include "JetWithTowers.h"
 #include "TwoJetsPtBalanceEvent.h"
 #include "NJetSel.h"
+#include "CorFactors.h"
 
 #include "TVector2.h"
 #include "TRandom3.h"
@@ -385,14 +386,9 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       JetWithTowers *jt = 
 	new JetWithTowers(nJet_->JetEt[calJetIdx],em * factor,had * factor,
 			  out * factor,nJet_->JetE[calJetIdx],nJet_->JetEta[calJetIdx],
-			  nJet_->JetPhi[calJetIdx],Jet::uds,nJet_->GenJetColEt[genJetIdx],drJetGenjet,
-			  Jet::CorFactors(nJet_->JetCorrZSP[calJetIdx], // L1
-					  nJet_->JetCorrL2[calJetIdx],  // L2
-					  nJet_->JetCorrL3[calJetIdx],  // L3
-					  1.,                         // L4
-					  1.,                         // L5
-					  nJet_->JetCorrJPT[calJetIdx],
-					  nJet_->JetCorrL2[calJetIdx]*nJet_->JetCorrL3[calJetIdx]), //not the JPT specific L2L3 factors?
+			  nJet_->JetPhi[calJetIdx],Jet::uds,
+			  nJet_->GenJetColEt[genJetIdx],drJetGenjet,
+			  createCorFactors(calJetIdx),
 			  par_->jet_function(nJet_->TowId_eta[closestTower],
 					     nJet_->TowId_phi[closestTower]),
 			  jet_error_param,par_->global_jet_function(),minJetEt_);
@@ -411,13 +407,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       jet = new Jet(nJet_->JetEt[calJetIdx],em * factor,had * factor,out * factor,
 		    nJet_->JetE[calJetIdx],nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
 		    Jet::uds,nJet_->GenJetColEt[genJetIdx],drJetGenjet,
-		    Jet::CorFactors(nJet_->JetCorrZSP[calJetIdx], // L1
-				    nJet_->JetCorrL2[calJetIdx],  // L2
-				    nJet_->JetCorrL3[calJetIdx],  // L3
-				    1.,                         // L4
-				    1.,                         // L5
-				    nJet_->JetCorrJPT[calJetIdx],
-				    nJet_->JetCorrL2[calJetIdx]*nJet_->JetCorrL3[calJetIdx]), //not the JPT specific L2L3 factors?
+		    createCorFactors(calJetIdx),
 		    par_->jet_function(nJet_->TowId_eta[closestTower],
 				       nJet_->TowId_phi[closestTower]),
 		    jet_error_param,par_->global_jet_function(),minJetEt_);    
@@ -721,14 +711,7 @@ Event* DiJetReader::createTwoJetsPtBalanceEvent()
     nJet_->JetPhi[calJetIdx[i]],
     Jet::uds,
     nJet_->GenJetPt[calJetIdx[i]],
-    drJetGenjet,
-    Jet::CorFactors( nJet_->JetCorrZSP[calJetIdx[i]],
-    nJet_->JetCorrL2[calJetIdx[i]],
-    nJet_->JetCorrL3[calJetIdx[i]],
-    1., 
-    1., 
-    nJet_->JetCorrJPT[calJetIdx[i]],
-    nJet_->JetCorrL2L3JPT[calJetIdx[i]] ),
+    drJetGenjet,createCorFactors(calJetIdx[i]),
     par_->jet_function(nJet_->TowId_eta[closestTower],
     nJet_->TowId_phi[closestTower]),
     jet_error_param,
@@ -800,4 +783,15 @@ Event* DiJetReader::createTwoJetsPtBalanceEvent()
 
     return evt;
   */
+}
+
+CorFactors* DiJetReader::createCorFactors(int jetid) const 
+{
+  return new CorFactors(nJet_->JetCorrZSP[jetid], // L1
+			nJet_->JetCorrL2[jetid],  // L2
+			nJet_->JetCorrL3[jetid],  // L3
+			1.,                         // L4
+			1.,                         // L5
+			nJet_->JetCorrJPT[jetid],
+			nJet_->JetCorrL2L3JPT[jetid]); //JPTL2L3
 }

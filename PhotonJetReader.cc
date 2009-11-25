@@ -1,5 +1,5 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.22 2009/11/24 16:52:58 stadie Exp $
+//  $Id: PhotonJetReader.cc,v 1.23 2009/11/24 17:07:43 stadie Exp $
 //
 #include "PhotonJetReader.h"
 
@@ -12,6 +12,7 @@
 #include "ToyMC.h"
 #include "Parameters.h"
 #include "GammaJetSel.h"
+#include "CorFactors.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -243,14 +244,8 @@ Event* PhotonJetReader::createJetTruthEvent()
     JetWithTowers *jt = 
       new JetWithTowers(gammaJet_->JetCalEt,em * factor,had * factor,
 			out * factor,gammaJet_->JetCalE,gammaJet_->JetCalEta,
-			gammaJet_->JetCalPhi,Jet::uds,gammaJet_->JetGenEt,LJet.DeltaR(LGenJet),
-			Jet::CorFactors(gammaJet_->JetCorrZSP, // L1
-					gammaJet_->JetCorrL2,  // L2
-					gammaJet_->JetCorrL3,  // L3
-					1.,                  // L4
-					1.,                  // L5
-					gammaJet_->JetCorrJPT,
-					gammaJet_->JetCorrL2L3JPT),
+			gammaJet_->JetCalPhi,Jet::uds,gammaJet_->JetGenEt,
+			LJet.DeltaR(LGenJet),createCorFactors(0),
 			par_->jet_function(gammaJet_->TowId_eta[closestTower],
 					   gammaJet_->TowId_phi[closestTower]),
 			jet_error_param,par_->global_jet_function(),minJetEt_);
@@ -268,13 +263,7 @@ Event* PhotonJetReader::createJetTruthEvent()
     j = new Jet(gammaJet_->JetCalEt,em * factor,had * factor,out * factor,
 		gammaJet_->JetCalE,gammaJet_->JetCalEta,gammaJet_->JetCalPhi,
 		Jet::uds,gammaJet_->JetGenEt,LJet.DeltaR(LGenJet),
-		Jet::CorFactors(gammaJet_->JetCorrZSP, // L1
-				gammaJet_->JetCorrL2,  // L2
-				gammaJet_->JetCorrL3,  // L3
-				1.,                  // L4
-				1.,                  // L5
-				gammaJet_->JetCorrJPT,
-				gammaJet_->JetCorrL2L3JPT),
+		createCorFactors(0),
 		par_->jet_function(gammaJet_->TowId_eta[closestTower],
 				   gammaJet_->TowId_phi[closestTower]),
 		jet_error_param,par_->global_jet_function(),minJetEt_);
@@ -335,12 +324,7 @@ Event* PhotonJetReader::createSmearEvent()
   jet->E          = gammaJet_->JetCalE;
   jet->genPt      = gammaJet_->JetGenPt;
   jet->dR         = LJet.DeltaR(LGenJet);
-  jet->corFactors = Jet::CorFactors(gammaJet_->JetCorrZSP, // L1
-  gammaJet_->JetCorrL2,  // L2
-  gammaJet_->JetCorrL3,  // L3
-  1.,                  // L4
-  1.,                  // L5
-  gammaJet_->JetCorrJPT);
+  jet->corFactors = createCorFactors(0);
   //the following is not quite correct, as this factor is different for all towers. These values should be in the n-tupel as well
   double factor    = gammaJet_->JetCalEt /  gammaJet_->JetCalE;
   jet->HadF       = had * factor;
@@ -353,4 +337,15 @@ Event* PhotonJetReader::createSmearEvent()
 
   return pje;
   */
+}
+
+CorFactors* PhotonJetReader::createCorFactors(int jetid) const
+{
+  return new CorFactors(gammaJet_->JetCorrZSP, // L1
+			gammaJet_->JetCorrL2,  // L2
+			gammaJet_->JetCorrL3,  // L3
+			1.,                  // L4
+			1.,                  // L5
+			gammaJet_->JetCorrJPT,
+			gammaJet_->JetCorrL2L3JPT);
 }

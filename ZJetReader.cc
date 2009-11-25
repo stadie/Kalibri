@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.17 2009/10/26 20:56:30 mschrode Exp $
+//    $Id: ZJetReader.cc,v 1.18 2009/11/24 16:52:59 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -17,6 +17,7 @@
 #include "JetWithTowers.h"
 #include "JetWithTracks.h"
 #include "ZJetSel.h"
+#include "CorFactors.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -165,16 +166,10 @@ Event* ZJetReader::createJetTruthEvent()
     JetWithTowers *jt = 
       new JetWithTowers(zjet->JetCalEt,em * factor,had * factor,
 			out * factor,zjet->JetCalE,zjet->JetCalEta,
-			zjet->JetCalPhi,Jet::uds,zjet->JetGenEt,LJet.DeltaR(LGenJet),
-			Jet::CorFactors(zjet->JetCorrZSP, // L1
-					 zjet->JetCorrL2,  // L2
-					 zjet->JetCorrL3,  // L3
-					 1.,              // L4
-					 1.,              // L5
-					 zjet->JetCorrJPT,
-					 zjet->JetCorrL2L3JPT),
+			zjet->JetCalPhi,Jet::uds,zjet->JetGenEt,
+			LJet.DeltaR(LGenJet),createCorFactors(0),
 			par_->jet_function(zjet->TowId_eta[closestTower],
-					zjet->TowId_phi[closestTower]),
+					   zjet->TowId_phi[closestTower]),
 			jet_error_param,par_->global_jet_function());
     for(int i = 0; i < zjet->NobjTowCal; ++i) {
       double scale = zjet->TowEt[i]/zjet->TowE[i];
@@ -189,16 +184,10 @@ Event* ZJetReader::createJetTruthEvent()
     JetWithTracks *jt = 
       new JetWithTracks(zjet->JetCalEt,em * factor,had * factor,
 			out * factor, zjet->JetCalE,zjet->JetCalEta,
-			zjet->JetCalPhi,Jet::uds,zjet->JetGenEt,LJet.DeltaR(LGenJet),
-			Jet::CorFactors(zjet->JetCorrZSP, // L1
-					 zjet->JetCorrL2,  // L2
-					 zjet->JetCorrL3,  // L3
-					 1.,              // L4
-					 1.,              // L5
-					 zjet->JetCorrJPT,
-					 zjet->JetCorrL2L3JPT),
+			zjet->JetCalPhi,Jet::uds,zjet->JetGenEt,
+			LJet.DeltaR(LGenJet),createCorFactors(0),
 			par_->jet_function(zjet->TowId_eta[closestTower],
-					zjet->TowId_phi[closestTower]),
+					   zjet->TowId_phi[closestTower]),
 			jet_error_param,par_->global_jet_function());
     double* EfficiencyMap = par_->GetEffMap();
     for(int i = 0; i < zjet->NobjTrack; ++i) {
@@ -216,19 +205,23 @@ Event* ZJetReader::createJetTruthEvent()
   } else { 
     j = new Jet(zjet->JetCalEt,em * factor,had * factor,out * factor,
 		zjet->JetCalE,zjet->JetCalEta,zjet->JetCalPhi,Jet::uds,
-		zjet->JetGenEt,LJet.DeltaR(LGenJet),
-		Jet::CorFactors(zjet->JetCorrZSP, // L1
-				 zjet->JetCorrL2,  // L2
-				 zjet->JetCorrL3,  // L3
-				 1.,              // L4
-				 1.,              // L5
-				 zjet->JetCorrJPT,
-				 zjet->JetCorrL2L3JPT),
+		zjet->JetGenEt,LJet.DeltaR(LGenJet),createCorFactors(0),
 		par_->jet_function(zjet->TowId_eta[closestTower],
-				zjet->TowId_phi[closestTower]),
+				   zjet->TowId_phi[closestTower]),
 		jet_error_param,par_->global_jet_function());
   }
   JetTruthEvent* jte = new JetTruthEvent(j,zjet->JetGenEt,1.0);//zjet->EventWeight);
   delete [] terr;
   return jte;
+}
+
+CorFactors* ZJetReader::createCorFactors(int jetid) const
+{
+  return new CorFactors(zjet->JetCorrZSP, // L1
+			zjet->JetCorrL2,  // L2
+			zjet->JetCorrL3,  // L3
+			1.,              // L4
+			1.,              // L5
+			zjet->JetCorrJPT,
+			zjet->JetCorrL2L3JPT);
 }

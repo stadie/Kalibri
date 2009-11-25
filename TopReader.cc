@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.16 2009/10/26 20:56:29 mschrode Exp $
+//    $Id: TopReader.cc,v 1.17 2009/11/24 16:52:59 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -15,6 +15,7 @@
 #include "Jet.h"
 #include "JetWithTowers.h"
 #include "TopSel.h"
+#include "CorFactors.h"
 
 #include "TLorentzVector.h"
 #include "TH2F.h"
@@ -167,15 +168,11 @@ Event* TopReader::createTwoJetsInvMassEvents()
     double err =  jet_error_param(&tower.pt,&tower,0);
     err2 += err * err;
     Jet **jet = jets[0] ? &jets[1] : &jets[0];
-    Jet::CorFactors corFactors = Jet::CorFactors(top_->JetCorrL1[i],
-						 top_->JetCorrL2[i],
-						 top_->JetCorrL3[i],
-						 top_->JetCorrL4[i],            
-						 top_->JetCorrL5[i]);
+    CorFactors* corFactors = createCorFactors(i);
     // use to L3 corrected jets as input if desired
     double jecFactor = 1.;
     if(useToL3CorrectedJets_)
-      jecFactor = corFactors.getToL3();
+      jecFactor = corFactors->getToL3();
     if(dataClass_ == 2) {
       JetWithTowers *jt = 
 	new JetWithTowers(top_->JetEt[i] * jecFactor,
@@ -241,4 +238,13 @@ Event* TopReader::createTwoJetsInvMassEvents()
     delete jets[1];
   }
   return 0;
+}
+
+CorFactors* TopReader::createCorFactors(int jetid) const
+{
+  return new CorFactors(top_->JetCorrL1[jetid],
+			top_->JetCorrL2[jetid],
+			top_->JetCorrL3[jetid],
+			top_->JetCorrL4[jetid],            
+			top_->JetCorrL5[jetid]);
 }

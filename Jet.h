@@ -1,23 +1,22 @@
-#ifndef JET_H
-#define JET_H
-
-#include"CalibData.h"
-#include "Function.h"
-
-
 //!    \brief Class for basic jets 
 //!
 //!    \author Hartmut Stadie
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.23 2009/10/26 21:00:36 mschrode Exp $
+//!    $Id: Jet.h,v 1.24 2009/11/24 16:52:59 stadie Exp $
+#ifndef JET_H
+#define JET_H
 
+#include"CalibData.h"
+#include "Function.h"
 
 #include "gsl/gsl_errno.h"
 #include "gsl/gsl_math.h"
 #include "gsl/gsl_roots.h"
      
+class CorFactors;
+
 class Jet : public Measurement
 {
  public:
@@ -30,43 +29,14 @@ class Jet : public Measurement
   //!  - 3: b quark
   enum Flavor{ gluon=0, uds=1, c=2, b=3 };
 
-  //!  \brief   Container class for jet correction factors
-  class CorFactors
-  {
-  public :
-  CorFactors(double L1=1.0, double L2=1.0, double L3=1.0, double L4=1.0, 
-	     double L5=1.0, double JPT=1.0, double JPTL2L3=1.0) 
-    : l1_(L1),l2_(L2),l3_(L3),l4_(L4),l5_(L5),jpt_(JPT),jptL2L3_(JPTL2L3) {};
-    double getL1()  const { return l1_; }    //!< Return L1 correction factor (zero-suppression)
-    double getL2()  const { return l2_; }    //!< Return L2 correction factor (relative, in eta)
-    double getL3()  const { return l3_; }    //!< Return L3 correction factor (absolute, in pt)
-    double getL4()  const { return l4_; }    //!< Return L4 correction factor (electromagnetic fraction)
-    double getL5()  const { return l5_; }    //!< Return L5 correction factor (flavor)
-    double getJPT() const { return jpt_; }   //!< Return Jet+Track correction factor
-    double getL2L3() const { return l2_*l3_; }   //!< Return product of L2 and L3 correction factors
-    double getJPTL2L3() const { return jptL2L3_; }   //!< Return product of L2 and L3 correction factors for Jet+Track
-    double getToL2() const { return l1_*l2_; }         //!< Return factor needed to get L2 corrected from raw jets: L1*L2
-    double getToL3() const { return getToL2()*l3_; }   //!< Return factor needed to get L3 corrected from raw jets: L1*L2*L3
-    double getToL4() const { return getToL3()*l4_; }   //!< Return factor needed to get L4 corrected from raw jets: L1*L2*L3*L4
-    double getToL5() const { return getToL4()*l5_; }   //!< Return factor needed to get L5 corrected from raw jets: L1*L2*L3*L4*L5
-    double getToJPTL3() const { return jpt_*l1_*jptL2L3_; }   //!< Return factor needed to get L3 corrected from raw jets for JPT: JPT*L1*JPTL2L3
-  private :
-    double l1_;      //!< Level 1 correction factor (zero-suppression)
-    double l2_;      //!< Level 2 correction factor (relative, in eta)
-    double l3_;      //!< Level 3 correction factor (absolute, in pt)
-    double l4_;      //!< Level 4 correction factor (electromagnetic fraction)
-    double l5_;      //!< Level 5 correction factor (flavor)
-    double jpt_;     //!< Jet+Track correction factor
-    double jptL2L3_; //!< Product of level 2 and level 3 correction factors for Jet+Track
-  };
-  
+
  public:
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
       double eta,double phi, Flavor flavor, double genPt, double dR,
-      CorFactors corFactors, const Function& f,
+      CorFactors* corFactors, const Function& f,
       double (*errfunc)(const double *x, const Measurement *xorig, double err), 
       const Function& gf, double Etmin = 0); 
-  virtual ~Jet() {};
+  virtual ~Jet();
 
   double Et()     const {return Measurement::pt;}                 //!< Return transverse energy Et
   double pt()     const {return Measurement::pt;}                 //!< Return transverse energy Et
@@ -80,7 +50,7 @@ class Jet : public Measurement
   double genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
   double ptHat()  const {return ptHat_;}     //!< \f$ \hat{p}_{T} \f$ of the event
   double dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet
-  const CorFactors& corFactors() const { return corFactors_;}
+  const CorFactors& corFactors() const { return *corFactors_;}
   //!  \brief Change address of parameters covered by this jet
   //!  \sa Parameters
   // ---------------------------------------------------------
@@ -158,7 +128,7 @@ class Jet : public Measurement
   double genPt_;            //!< The genjet pt
   double dR_;               //!< \f$ \Delta R \f$ between jet and genjet
   double ptHat_;            //!< \f$ \hat{p}_{T} \f$ of the event
-  CorFactors corFactors_;   //!< The correction factors
+  const CorFactors* corFactors_;   //!< The correction factors
   double    error;                //!< Stores error for constant error mode
   Function  f;                    //!< Jet correction function
   Function  gf;                   //!< Global jet correction function

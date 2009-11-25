@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.13 2009/10/26 20:56:29 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.14 2009/11/24 16:52:59 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -44,7 +44,7 @@ class TRandom;
 class DiJetReader : public EventReader{
  public:
   DiJetReader(const std::string& configfile, TParameters *p);
-  virtual ~DiJetReader();
+  ~DiJetReader();
   int readEvents(std::vector<Event*>& data);
 
 
@@ -52,6 +52,7 @@ class DiJetReader : public EventReader{
   Event* createTwoJetsPtBalanceEvent();
   Event* createSmearEvent();
   int createJetTruthEvents(std::vector<Event*>& data);
+  CorFactors* createCorFactors(int jetid) const;
 
   std::auto_ptr<NJetSel> nJet_;                //!< Njet Selector
   TRandom* rand_;             //!< Random number generator

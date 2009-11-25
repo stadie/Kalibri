@@ -5,6 +5,7 @@
 
 #include "CalibData.h"
 #include "Jet.h"
+#include "CorFactors.h"
 
 //!
 //!  \brief Class for relative calibration in pseudorapidity
@@ -12,7 +13,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.5 2009/11/09 12:32:44 mschrode Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.6 2009/11/24 16:52:59 stadie Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:

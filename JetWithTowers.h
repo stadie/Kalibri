@@ -12,14 +12,14 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTowers.h,v 1.15 2009/07/13 12:04:39 snaumann Exp $
+//!    $Id: JetWithTowers.h,v 1.16 2009/11/24 16:52:59 stadie Exp $
 // ----------------------------------------------------------------   
 class JetWithTowers : public Jet
 {
  public:
   JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
 		double eta,double phi, Flavor flavor,double genPt, double dR,
-		Jet::CorFactors corFactors, const Function& f,
+		CorFactors* corFactors, const Function& f,
 		double (*errfunc)(const double *x, const Measurement *xorig, double err), 
 		const Function& gf, double Etmin = 0); 
   virtual ~JetWithTowers(); 

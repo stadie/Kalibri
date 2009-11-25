@@ -2,16 +2,18 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.31 2009/10/26 21:00:36 mschrode Exp $
+//    $Id: Jet.cc,v 1.32 2009/11/24 16:52:58 stadie Exp $
 //   
 #include "Jet.h"  
+
+#include "CorFactors.h"
 
 #include <iostream>
 #include <iomanip>
 
 Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
          double eta,double phi, Flavor flavor, double genPt, double dR,
-	 CorFactors corFactors, const Function& f, 
+	 CorFactors* corFactors, const Function& f, 
 	 double (*errfunc)(const double *x, const Measurement *xorig, double err), 
 	 const Function& gf, double Etmin) 
   : Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi),flavor_(flavor), genPt_(genPt), 
@@ -21,7 +23,12 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());
 }
- 
+
+Jet::~Jet()
+{
+  delete corFactors_;
+}
+
 //!  \brief Varies all parameters for this jet by +/-eps
 //!
 //!  The corrected Et and errors obtained by applying the

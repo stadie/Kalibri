@@ -2,7 +2,7 @@
 //    Class for jets with tracks 
 //
 //    first version: Hartmut Stadie 2009/04/08
-//    $Id: JetWithTracks.cc,v 1.5 2009/07/23 11:43:42 stadie Exp $
+//    $Id: JetWithTracks.cc,v 1.6 2009/11/24 16:52:58 stadie Exp $
 //   
 #include"JetWithTracks.h"
 
@@ -10,7 +10,7 @@
 
 JetWithTracks::JetWithTracks(double Et, double EmEt, double HadEt ,double OutEt, double E,
 			     double eta,double phi, Flavor flavor, double genPt, double dR,
-			     CorFactors corFactors, const Function& func, 
+			     CorFactors* corFactors, const Function& func, 
 			     double (*errfunc)(const double *x, const Measurement *xorig, double err), 
 			     const Function& gfunc, double Etmin) 
   :  Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,dR,corFactors,

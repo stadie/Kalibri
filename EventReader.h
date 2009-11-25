@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.4 2009/10/26 20:56:29 mschrode Exp $
+// $Id: EventReader.h,v 1.5 2009/11/24 16:52:59 stadie Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -8,6 +8,7 @@ class Event;
 class TParameters;
 class ConfigFile;
 class Measurement;
+class CorFactors;
 
 #include <vector>
 #include <string>
@@ -22,6 +23,8 @@ class EventReader
   virtual int readEvents(std::vector<Event*>& data) = 0;
 
  protected:
+  virtual CorFactors* createCorFactors(int jetid) const { return 0;}
+
   ConfigFile* config_;   //!< The configfile
   TParameters* par_;     //!< The parametrization
   bool useTracks_;       //!< True, if tracks are used in calibration
