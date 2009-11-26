@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.2 2009/11/26 12:41:02 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.3 2009/11/26 13:03:28 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -56,7 +56,7 @@ JetMETCorFactorsFactory::Register::Register()
   } 
   try {
     new JetMETCorFactorsFactory("Summer09_7TeV_ReReco332_AK5Calo",
-				"Summer09_7TeV_ReReco332_L2Relative_AK5Calo.txt:Summer09_7TeV_ReReco332_L3Absolute_AK5Calo.txt");
+				"JetMETObjects/data/Summer09_7TeV_ReReco332_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_ReReco332_L3Absolute_AK5Calo.txt");
   } 
   catch(std::exception) {
     std::cout << "... failed to create!\n";
