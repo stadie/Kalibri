@@ -1,7 +1,7 @@
 //
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: CorFactors.h,v 1.1 2009/11/25 13:07:45 stadie Exp $
+//    $Id: CorFactorsFactory.cc,v 1.1 2009/11/26 10:27:48 stadie Exp $
 // 
 #include "CorFactorsFactory.h"  
 #include "CorFactors.h"
@@ -22,4 +22,5 @@ CorFactorsFactory::CorFactorsFactory(const std::string& name) : name_(name)
 CorFactorsFactory::~CorFactorsFactory()
 {
   std::cout << "deleting CorFactorsFactory: " << name_ << '\n';
+  map[name_] = 0;
 }

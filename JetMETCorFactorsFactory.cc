@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.1 2009/11/26 10:28:48 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.2 2009/11/26 12:41:02 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -38,9 +38,27 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j)
 			levels[1]/levels[0],
 			1.0,1.0,0.0,0.0);			
 }
+JetMETCorFactorsFactory::Register JetMETCorFactorsFactory::register_;
 
-JetMETCorFactorsFactory* JetMETCorFactorsFactory::Summer09_7TeV_AK5Calo = new JetMETCorFactorsFactory("Summer09_7TeV_AK5Calo","JetMETObjects/data/Summer09_7TeV_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_L3Absolute_AK5Calo.txt");
-
-JetMETCorFactorsFactory* JetMETCorFactorsFactory::Summer09_AK5Calo = new JetMETCorFactorsFactory("Summer09_AK5Calo","JetMETObjects/data/Summer09_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_L3Absolute_AK5Calo.txt");
-				      
-JetMETCorFactorsFactory* JetMETCorFactorsFactory::Summer09_7TeV_ReReco332_AK5Calo = new JetMETCorFactorsFactory("Summer09_7TeV_ReReco332_AK5Calo","Summer09_7TeV_ReReco332_L2Relative_AK5Calo:Summer09_7TeV_ReReco332_L3Absolute_AK5Calo");
+JetMETCorFactorsFactory::Register::Register() 
+{
+  try {
+    new JetMETCorFactorsFactory("Summer09_7TeV_AK5Calo","JetMETObjects/data/Summer09_7TeV_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_L3Absolute_AK5Calo.txt");
+  } 
+  catch(std::exception) {
+    std::cout << "... failed to create!\n";
+  } 
+  try {
+    new JetMETCorFactorsFactory("Summer09_AK5Calo","JetMETObjects/data/Summer09_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_L3Absolute_AK5Calo.txt");
+  } 
+  catch(std::exception) {
+    std::cout << "... failed to create!\n";
+  } 
+  try {
+    new JetMETCorFactorsFactory("Summer09_7TeV_ReReco332_AK5Calo",
+				"Summer09_7TeV_ReReco332_L2Relative_AK5Calo.txt:Summer09_7TeV_ReReco332_L3Absolute_AK5Calo.txt");
+  } 
+  catch(std::exception) {
+    std::cout << "... failed to create!\n";
+  } 
+}
