@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.41 2009/11/20 12:49:16 stadie Exp $
+// $Id: Parameters.cc,v 1.42 2009/11/24 16:52:58 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -87,6 +87,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     return new SmearStepGaussInterPtBinned(ptBinEdges,rMin,rMax,rNBins,scale);
   } else if(name == "GroomParametrization") {
     return new GroomParametrization();
+  } else if(name == "EtaEtaParametrization") {
+    return new EtaEtaParametrization();
   }
   return 0;
 }

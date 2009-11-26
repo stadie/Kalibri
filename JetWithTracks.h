@@ -12,13 +12,13 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTracks.h,v 1.5 2009/11/24 16:52:59 stadie Exp $
+//!    $Id: JetWithTracks.h,v 1.6 2009/11/25 13:07:45 stadie Exp $
 // ---------------------------------------------------------------   
 class JetWithTracks : public Jet
 {
  public:
   JetWithTracks(double Et, double EmEt, double HadEt ,double OutEt, double E,
-		double eta,double phi, Flavor flavor,double genPt, double dR,
+		double eta,double phi, double etaeta, Flavor flavor,double genPt, double dR,
 		CorFactors* corFactors, const Function& f,
 		double (*errfunc)(const double *x, const Measurement *xorig, double err), 
 		const Function& gf, double Etmin = 0); 

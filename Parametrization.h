@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.50 2009/11/06 11:59:51 mschrode Exp $
+//  $Id: Parametrization.h,v 1.51 2009/11/24 16:52:59 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1D;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.50 2009/11/06 11:59:51 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.51 2009/11/24 16:52:59 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1967,4 +1967,33 @@ public:
     return p->y - (p->par[0] - p->par[1] * pow(0.01 * x, -p->par[2])) * x;
   };
 };
+
+//!  \brief Parametrization of jet response based to eta-eta moment
+//!
+//!  This parametrization has 14 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class EtaEtaParametrization: public Parametrization {
+public:
+  EtaEtaParametrization() : Parametrization(0,14,0,0) {}
+  const char* name() const { return "EtaEtaParametrization";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+    double y = x->etaeta > 0.25 ? 0.12 : x->etaeta - 0.13;
+    
+    double c = 1/(par[0] + exp((x->pt-par[1])/par[2])) + par[3];
+    c += y * ( par[4] - par[5]/(pow(log(x->pt),par[6])+par[7]) + par[8]/x->pt);
+    c += y *y *(par[9] * x->pt + par[10] * pow(x->pt,2.0/3.0) + par[11] * pow(x->pt,-1.0/3.0) + par[12] * (x->pt - par[13])/x->pt);
+    
+    return c * x->pt;  
+  }
+};
+
+
+
 #endif

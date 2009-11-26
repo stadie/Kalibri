@@ -4,7 +4,7 @@
 //    This class add user defined jet constraints
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: JetConstraintsReader.cc,v 1.6 2009/11/24 16:52:58 stadie Exp $
+//    $Id: JetConstraintsReader.cc,v 1.7 2009/11/25 13:07:45 stadie Exp $
 //   
 
 #include "JetConstraintsReader.h"
@@ -49,7 +49,7 @@ int JetConstraintsReader::readEvents(std::vector<Event*>& data)
     JetConstraintEvent* jce = new JetConstraintEvent(ic->Et,ic->weight);
     for(int ideta = ic->mineta ; ideta <= ic->maxeta  ; ++ideta) {
       if(ideta == 0) ideta = 1;
-      jce->addJet(new  Jet(ic->Et,0,ic->Et,0,ic->Et,0,0,Jet::uds,ic->Et,0,
+      jce->addJet(new  Jet(ic->Et,0,ic->Et,0,ic->Et,0,0,0.13,Jet::uds,ic->Et,0,
 			   new CorFactors(1,1,1,1,1,1,1),par_->jet_function(ideta,1),
 			   jet_error_param,Function(&Parametrization::correctedJetEt,0,0,0,0,cp),0));
     }

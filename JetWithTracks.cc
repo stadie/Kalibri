@@ -2,18 +2,18 @@
 //    Class for jets with tracks 
 //
 //    first version: Hartmut Stadie 2009/04/08
-//    $Id: JetWithTracks.cc,v 1.6 2009/11/24 16:52:58 stadie Exp $
+//    $Id: JetWithTracks.cc,v 1.7 2009/11/25 13:07:45 stadie Exp $
 //   
 #include"JetWithTracks.h"
 
 #include "TLorentzVector.h"
 
 JetWithTracks::JetWithTracks(double Et, double EmEt, double HadEt ,double OutEt, double E,
-			     double eta,double phi, Flavor flavor, double genPt, double dR,
+			     double eta,double phi, double etaeta, Flavor flavor, double genPt, double dR,
 			     CorFactors* corFactors, const Function& func, 
 			     double (*errfunc)(const double *x, const Measurement *xorig, double err), 
 			     const Function& gfunc, double Etmin) 
-  :  Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,flavor,genPt,dR,corFactors,
+  :  Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,etaeta,flavor,genPt,dR,corFactors,
 	 func,errfunc,gfunc,Etmin),
      ntrackpars(0), expectedCaloEt(0), trackPt(0)
 {

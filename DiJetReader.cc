@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.29 2009/11/25 13:07:45 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.30 2009/11/26 10:27:48 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -333,7 +333,10 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     double err2 = 0;
     Measurement tower;
     double dR        = 10;
-    int closestTower = 0; 
+    int closestTower = 0;
+    double seta = 0;
+    double seta2 = 0;
+    double sumpt = 0;
     for(int n=0; n<nJet_->NobjTow; ++n){
       if(nJet_->Tow_jetidx[n] != calJetIdx) continue;//look for ij-jet's towers
 
@@ -357,6 +360,9 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       err2     += terr[n];
       dphi      = TVector2::Phi_mpi_pi(nJet_->JetPhi[calJetIdx]-tower.phi);
       deta      = nJet_->JetEta[calJetIdx]-tower.eta;
+      seta += tower.pt * tower.eta;
+      seta2 += tower.pt * tower.eta * tower.eta;
+      sumpt += tower.pt;
       double dr = sqrt( deta*deta + dphi*dphi );     
       if(dr < dR) {
 	dR = dr;
@@ -379,6 +385,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     tower.eta     = nJet_->JetEta[calJetIdx];
     tower.phi     = nJet_->JetPhi[calJetIdx];
     tower.E       = nJet_->JetE[calJetIdx];
+    tower.etaeta  = sqrt(seta2/sumpt - seta * seta /(sumpt * sumpt));
     double err    = jet_error_param(&tower.pt,&tower,0);
     err2         += err * err;
 
@@ -387,7 +394,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       JetWithTowers *jt = 
 	new JetWithTowers(nJet_->JetEt[calJetIdx],em * factor,had * factor,
 			  out * factor,nJet_->JetE[calJetIdx],nJet_->JetEta[calJetIdx],
-			  nJet_->JetPhi[calJetIdx],Jet::uds,
+			  nJet_->JetPhi[calJetIdx],tower.etaeta, Jet::uds,
 			  nJet_->GenJetColEt[genJetIdx],drJetGenjet,
 			  createCorFactors(calJetIdx),
 			  par_->jet_function(nJet_->TowId_eta[closestTower],
@@ -406,7 +413,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     }
     else { 
       jet = new Jet(nJet_->JetEt[calJetIdx],em * factor,had * factor,out * factor,
-		    nJet_->JetE[calJetIdx],nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
+		    nJet_->JetE[calJetIdx],nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],tower.etaeta,
 		    Jet::uds,nJet_->GenJetColEt[genJetIdx],drJetGenjet,
 		    createCorFactors(calJetIdx),
 		    par_->jet_function(nJet_->TowId_eta[closestTower],

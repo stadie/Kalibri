@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.18 2009/11/25 13:07:45 stadie Exp $
+//    $Id: TopReader.cc,v 1.19 2009/11/26 10:27:48 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -127,6 +127,9 @@ Event* TopReader::createTwoJetsInvMassEvents()
     Measurement tower;
     double dR = 10;
     int closestTower = 0; 
+    double seta = 0;
+    double seta2 = 0;
+    double sumpt = 0;
     for(int n=0; n<top_->NobjTow; ++n){
       if(top_->Tow_jetidx[n] != i) continue;//look for ij-jet's towers
       
@@ -148,6 +151,9 @@ Event* TopReader::createTwoJetsInvMassEvents()
       }
       terr[n] *= terr[n];
       err2 += terr[n];
+      seta += tower.pt  * tower.eta;
+      seta2 += tower.pt  * tower.eta * tower.eta;
+      sumpt += tower.pt;
       double dphi = TVector2::Phi_mpi_pi(top_->JetPhi[i]-tower.phi);
       double dr = sqrt((top_->JetEta[i]-tower.eta)*(top_->JetEta[i]-tower.eta)+
 		       dphi*dphi);     
@@ -166,6 +172,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
     tower.eta = top_->JetEta[i];
     tower.phi = top_->JetPhi[i];
     tower.E   = top_->JetE[i];
+    tower.etaeta = sqrt(seta2/sumpt - seta * seta /(sumpt * sumpt));
     double err =  jet_error_param(&tower.pt,&tower,0);
     err2 += err * err;
     Jet **jet = jets[0] ? &jets[1] : &jets[0];
@@ -182,6 +189,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
 			  out * jecFactor * factor,
 			  top_->JetE[i] * jecFactor,
 			  top_->JetEta[i], top_->JetPhi[i],
+			  tower.etaeta,
 			  Jet::uds, top_->GenJetPt[i], 0.,
 			  corFactors,
 			  par_->jet_function(top_->TowId_eta[closestTower],
@@ -205,6 +213,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
 		     out * jecFactor * factor,
 		     top_->JetE[i] * jecFactor,
 		     top_->JetEta[i], top_->JetPhi[i],
+		     tower.etaeta,
 		     Jet::uds, top_->GenJetPt[i], 0.,
 		     corFactors,
 		     par_->jet_function(top_->TowId_eta[closestTower],

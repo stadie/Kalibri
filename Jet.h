@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.25 2009/11/25 13:07:45 stadie Exp $
+//!    $Id: Jet.h,v 1.26 2009/11/26 10:24:42 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -32,8 +32,8 @@ class Jet : public Measurement
 
  public:
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
-      double eta,double phi, Flavor flavor, double genPt, double dR,
-      CorFactors* corFactors, const Function& f,
+      double eta,double phi, double etaeta, Flavor flavor, double genPt, 
+      double dR, CorFactors* corFactors, const Function& f,
       double (*errfunc)(const double *x, const Measurement *xorig, double err), 
       const Function& gf, double Etmin = 0); 
   virtual ~Jet();
@@ -46,6 +46,7 @@ class Jet : public Measurement
   double E()      const {return Measurement::E;}    //!< Return energy
   double eta()    const {return Measurement::eta;}  //!< Return pseudorapidity
   double phi()    const {return Measurement::phi;}  //!< Return azimuthal angle
+  double momentEtaEta() const {return Measurement::etaeta;}  //!< Return eta-eta moment (width of jet in eta)
   Flavor flavor() const {return flavor_;}       //!< Return jet flavor
   double genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
   double ptHat()  const {return ptHat_;}     //!< \f$ \hat{p}_{T} \f$ of the event

@@ -93,13 +93,13 @@ TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameter
 ZJetReader.o: EventReader.h ZJetReader.h ZJetReader.cc ZJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h JetWithTracks.h Function.h CorFactors.h CorFactorsFactory.h
 	$(C) $(RCXX) -c ZJetReader.cc
 
-TopReader.o: EventReader.h TopReader.h TopReader.cc TopSel.h Parameters.h ConfigFile.h CorFactors.h CorFactorsFactory.h
+TopReader.o: EventReader.h TopReader.h TopReader.cc TopSel.h Parameters.h ConfigFile.h CorFactors.h CorFactorsFactory.h Jet.h
 	$(C) $(RCXX) -c TopReader.cc
 
 ParameterLimitsReader.o: EventReader.h ParameterLimitsReader.h ParameterLimitsReader.cc Parameters.h ConfigFile.h CorFactorsFactory.h
 	$(C) $(CFLAGS) -c ParameterLimitsReader.cc
 
-JetConstraintsReader.o:  EventReader.h JetConstraintsReader.h JetConstraintsReader.cc Parameters.h ConfigFile.h JetConstraintEvent.h JetConstraintsReader.cc
+JetConstraintsReader.o:  EventReader.h JetConstraintsReader.h JetConstraintsReader.cc Parameters.h ConfigFile.h JetConstraintEvent.h JetConstraintsReader.cc Jet.h
 	$(C) $(CFLAGS) -c JetConstraintsReader.cc
 
 EventProcessor.o: CalibData.h ConfigFile.h Parameters.h EventProcessor.h EventProcessor.cc

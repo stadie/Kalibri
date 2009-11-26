@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.19 2009/11/25 13:07:45 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.20 2009/11/26 10:27:48 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -117,6 +117,9 @@ Event* ZJetReader::createJetTruthEvent()
   double* terr = new double[zjet->NobjTowCal];
   double dR = 10;
   int closestTower = 0;
+  double seta = 0;
+  double seta2 = 0;
+  double sumpt = 0;
   for(int n = 0; n < zjet->NobjTowCal; ++n) {
     em += zjet->TowEm[n];
     had +=  zjet->TowHad[n];
@@ -135,7 +138,10 @@ Event* ZJetReader::createJetTruthEvent()
       terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
     }
     terr[n] *= terr[n];
-    err2 += terr[n];
+    err2 += terr[n];  
+    seta += tower.pt  * tower.eta;
+    seta2 += tower.pt  * tower.eta * tower.eta;
+    sumpt += tower.pt;
     double dphi = TVector2::Phi_mpi_pi(zjet->JetCalPhi-tower.phi);
     double dr = sqrt((zjet->JetCalEta-tower.eta)*(zjet->JetCalEta-tower.eta)+
 		     dphi*dphi);     
@@ -154,6 +160,7 @@ Event* ZJetReader::createJetTruthEvent()
   tower.eta = zjet->JetCalEta;
   tower.phi = zjet->JetCalPhi;
   tower.E   = zjet->JetCalE;
+  tower.etaeta = sqrt(seta2/sumpt - seta * seta /(sumpt * sumpt));
   double err =  jet_error_param(&tower.pt,&tower,0);
   err2 += err * err;
 
@@ -167,7 +174,7 @@ Event* ZJetReader::createJetTruthEvent()
     JetWithTowers *jt = 
       new JetWithTowers(zjet->JetCalEt,em * factor,had * factor,
 			out * factor,zjet->JetCalE,zjet->JetCalEta,
-			zjet->JetCalPhi,Jet::uds,zjet->JetGenEt,
+			zjet->JetCalPhi,tower.etaeta,Jet::uds,zjet->JetGenEt,
 			LJet.DeltaR(LGenJet),createCorFactors(0),
 			par_->jet_function(zjet->TowId_eta[closestTower],
 					   zjet->TowId_phi[closestTower]),
@@ -185,7 +192,7 @@ Event* ZJetReader::createJetTruthEvent()
     JetWithTracks *jt = 
       new JetWithTracks(zjet->JetCalEt,em * factor,had * factor,
 			out * factor, zjet->JetCalE,zjet->JetCalEta,
-			zjet->JetCalPhi,Jet::uds,zjet->JetGenEt,
+			zjet->JetCalPhi,tower.etaeta,Jet::uds,zjet->JetGenEt,
 			LJet.DeltaR(LGenJet),createCorFactors(0),
 			par_->jet_function(zjet->TowId_eta[closestTower],
 					   zjet->TowId_phi[closestTower]),
@@ -205,8 +212,8 @@ Event* ZJetReader::createJetTruthEvent()
     j = jt;
   } else { 
     j = new Jet(zjet->JetCalEt,em * factor,had * factor,out * factor,
-		zjet->JetCalE,zjet->JetCalEta,zjet->JetCalPhi,Jet::uds,
-		zjet->JetGenEt,LJet.DeltaR(LGenJet),createCorFactors(0),
+		zjet->JetCalE,zjet->JetCalEta,zjet->JetCalPhi,tower.etaeta,
+		Jet::uds,zjet->JetGenEt,LJet.DeltaR(LGenJet),createCorFactors(0),
 		par_->jet_function(zjet->TowId_eta[closestTower],
 				   zjet->TowId_phi[closestTower]),
 		jet_error_param,par_->global_jet_function());

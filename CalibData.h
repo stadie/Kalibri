@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
+// $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -27,16 +27,20 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
+//!  $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
 class Measurement
 {
 public:
- Measurement():pt(0.),EMF(0.),HadF(0.),OutF(0.),E(0.),eta(0.),phi(0.){};  //!< All quantities are initialized with 0
+ Measurement() :
+  pt(0.),EMF(0.),HadF(0.),OutF(0.),E(0.),eta(0.),phi(0.),etaeta(0.0)
+    {
+    }
  Measurement(double Et,double EmEt,double HadEt,double OutEt,double E,
-	       double eta,double phi)
-    : pt(Et),EMF(EmEt),HadF(HadEt),OutF(OutEt),E(E),eta(eta),phi(phi) {}
- Measurement(Measurement* m):pt(m->pt),EMF(m->EMF),HadF(m->HadF),OutF(m->OutF),
-                                E(m->E),eta(m->eta),phi(m->phi){};
+	     double eta,double phi, double etaeta = 0)
+   : pt(Et),EMF(EmEt),HadF(HadEt),OutF(OutEt),E(E),eta(eta),phi(phi),
+    etaeta(etaeta) 
+  {
+  }
   virtual ~Measurement() {};
   //all common variables
   double pt;     //!< Total transverse momentum (pt = EMF + HadF + OutF)
@@ -46,6 +50,7 @@ public:
   double E;      //!< Total energy					
   double eta;    //!< Pseudorapidity eta				
   double phi;    //!< Polar angle phi  
+  double etaeta; //!< Eta-Eta moment (width in eta) 
 };
 
 
@@ -58,7 +63,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
+//!  $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
 class TTrack : public Measurement
 {
 public:
@@ -72,8 +77,6 @@ public:
     DR(DR),DRout(DRout),etaOut(etaOut),phiOut(phiOut),EM1(EM1),EM5(EM5),Had1(Had1),
     Had5(Had5),TrackChi2(TrackChi2),NValidHits(NValidHits),TrackQualityT(TrackQualityT),
     MuDR(MuDR),MuDE(MuDE),Efficiency(Efficiency) {}
-  TTrack(Measurement* tr):Measurement(tr){};
-  //TTrack(TTrack* tr):Measurement(tr){/*further initialization*/};
   virtual ~TTrack() {}
 //variables specific only to Tracks
   int TrackId;
@@ -117,7 +120,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
+//! $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
 class Event
 {
 public:
@@ -232,7 +235,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.75 2009/11/24 16:52:59 stadie Exp $
+//!  $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
 class TAbstractData : public Event
 {
 public:
@@ -303,7 +306,7 @@ public:
   //!
   //!  \sa GetParametrizedMess()
   virtual double GetParametrizedMess(double *const paramess) const {
-    Measurement m(_mess);
+    Measurement m(*_mess);
     m.pt = paramess[0];
     return _func(&m,_par);
   };
