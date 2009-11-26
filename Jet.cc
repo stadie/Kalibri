@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.32 2009/11/24 16:52:58 stadie Exp $
+//    $Id: Jet.cc,v 1.33 2009/11/25 13:07:45 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -27,6 +27,12 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 Jet::~Jet()
 {
   delete corFactors_;
+}
+
+void Jet::updateCorFactors(CorFactors *cor)
+{
+  delete corFactors_;
+  corFactors_ = cor;
 }
 
 //!  \brief Varies all parameters for this jet by +/-eps

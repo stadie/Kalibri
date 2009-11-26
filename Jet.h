@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.24 2009/11/24 16:52:59 stadie Exp $
+//!    $Id: Jet.h,v 1.25 2009/11/25 13:07:45 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -51,6 +51,8 @@ class Jet : public Measurement
   double ptHat()  const {return ptHat_;}     //!< \f$ \hat{p}_{T} \f$ of the event
   double dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet
   const CorFactors& corFactors() const { return *corFactors_;}
+  void updateCorFactors(CorFactors *cor);
+
   //!  \brief Change address of parameters covered by this jet
   //!  \sa Parameters
   // ---------------------------------------------------------
