@@ -1,16 +1,18 @@
 //
-// $Id: EventReader.h,v 1.4 2009/10/26 20:56:29 mschrode Exp $
+// $Id: EventReader.cc,v 1.3 2009/11/24 16:52:58 stadie Exp $
 //
 #include "EventReader.h"
 
 #include "ConfigFile.h"
 #include "Parameters.h" 
+#include "CorFactorsFactory.h"
 
+#include <dlfcn.h>
 
 unsigned int EventReader::numberOfEventReaders_ = 0;
 
 EventReader::EventReader(const std::string& configfile, TParameters* param) 
-  : config_(0),par_(param)
+  : config_(0),par_(param),corFactorsFactory_(0)
 {
   numberOfEventReaders_++;
 
@@ -62,6 +64,19 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
     jet_error_param   = par_->jet_only_jet_error_parametrization_energy;
   else  
     jet_error_param   = par_->jet_error_parametrization;
+
+  std::string jcs = config_->read<string>("jet correction source","");
+  std::string jcn = config_->read<string>("jet correction name","");
+  
+  if(jcs != "") {
+    std::string libname = "lib/lib"+jcs+".so";
+    void *hndl = dlopen(libname.c_str(), RTLD_NOW);
+    if(hndl == NULL){
+      std::cerr << "failed to load plugin: " << dlerror() << std::endl;
+      exit(-1);
+    }
+  }
+  corFactorsFactory_ = CorFactorsFactory::map[jcn];
 }
 
 EventReader::~EventReader()

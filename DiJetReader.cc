@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.28 2009/11/24 16:52:58 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.29 2009/11/25 13:07:45 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -15,6 +15,7 @@
 #include "TwoJetsPtBalanceEvent.h"
 #include "NJetSel.h"
 #include "CorFactors.h"
+#include "CorFactorsFactory.h"
 
 #include "TVector2.h"
 #include "TRandom3.h"
@@ -412,7 +413,9 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 				       nJet_->TowId_phi[closestTower]),
 		    jet_error_param,par_->global_jet_function(),minJetEt_);    
     }
-
+    if(corFactorsFactory_) {
+      jet->updateCorFactors(corFactorsFactory_->create(jet));
+    }
     JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColEt[genJetIdx],1.);//nJet_->Weight);
     data.push_back(jte);
     ++njets;

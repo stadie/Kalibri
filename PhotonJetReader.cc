@@ -1,5 +1,5 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.23 2009/11/24 17:07:43 stadie Exp $
+//  $Id: PhotonJetReader.cc,v 1.24 2009/11/25 13:07:45 stadie Exp $
 //
 #include "PhotonJetReader.h"
 
@@ -13,6 +13,7 @@
 #include "Parameters.h"
 #include "GammaJetSel.h"
 #include "CorFactors.h"
+#include "CorFactorsFactory.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -268,6 +269,7 @@ Event* PhotonJetReader::createJetTruthEvent()
 				   gammaJet_->TowId_phi[closestTower]),
 		jet_error_param,par_->global_jet_function(),minJetEt_);
   }
+  if(corFactorsFactory_) j->updateCorFactors(corFactorsFactory_->create(j));
   JetTruthEvent * jte = new JetTruthEvent(j,gammaJet_->PhotonEt,gammaJet_->EventWeight);
   
   return jte;

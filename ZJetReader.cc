@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.18 2009/11/24 16:52:59 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.19 2009/11/25 13:07:45 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -18,6 +18,7 @@
 #include "JetWithTracks.h"
 #include "ZJetSel.h"
 #include "CorFactors.h"
+#include "CorFactorsFactory.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -209,6 +210,9 @@ Event* ZJetReader::createJetTruthEvent()
 		par_->jet_function(zjet->TowId_eta[closestTower],
 				   zjet->TowId_phi[closestTower]),
 		jet_error_param,par_->global_jet_function());
+  } 
+  if(corFactorsFactory_) {
+      j->updateCorFactors(corFactorsFactory_->create(j));
   }
   JetTruthEvent* jte = new JetTruthEvent(j,zjet->JetGenEt,1.0);//zjet->EventWeight);
   delete [] terr;

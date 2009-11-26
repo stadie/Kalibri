@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.17 2009/11/24 16:52:59 stadie Exp $
+//    $Id: TopReader.cc,v 1.18 2009/11/25 13:07:45 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -16,6 +16,7 @@
 #include "JetWithTowers.h"
 #include "TopSel.h"
 #include "CorFactors.h"
+#include "CorFactorsFactory.h"
 
 #include "TLorentzVector.h"
 #include "TH2F.h"
@@ -210,7 +211,10 @@ Event* TopReader::createTwoJetsInvMassEvents()
 					top_->TowId_phi[closestTower]),
 		     jet_error_param, par_->global_jet_function(), minJetEt_);    
     }
-  }
+    if(corFactorsFactory_) {
+      (*jet)->updateCorFactors(corFactorsFactory_->create(*jet));
+    }
+  } 
   delete [] terr;
   if(createGenWHist_) {
     TLorentzVector genW, genJet;

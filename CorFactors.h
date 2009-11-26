@@ -1,6 +1,6 @@
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: DiJetReader.cc,v 1.28 2009/11/24 16:52:58 stadie Exp $
+//    $Id: CorFactors.h,v 1.1 2009/11/25 13:07:45 stadie Exp $
 //   
 #ifndef CORFACTORS_H
 #define CORFACTORS_H
@@ -32,6 +32,6 @@ class CorFactors
   double l5_;      //!< Level 5 correction factor (flavor)
   double jpt_;     //!< Jet+Track correction factor
   double jptL2L3_; //!< Product of level 2 and level 3 correction factors for Jet+Track
-};
-  
+}; 
+
 #endif
