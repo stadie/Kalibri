@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.3 2009/11/26 13:03:28 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.4 2009/11/26 13:09:54 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -42,23 +42,21 @@ JetMETCorFactorsFactory::Register JetMETCorFactorsFactory::register_;
 
 JetMETCorFactorsFactory::Register::Register() 
 {
+  create("Summer09_7TeV_AK5Calo","JetMETObjects/data/Summer09_7TeV_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_L3Absolute_AK5Calo.txt");
+  create("Summer09_AK5Calo","JetMETObjects/data/Summer09_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_L3Absolute_AK5Calo.txt");
+  create("Summer09_7TeV_ReReco332_AK5Calo","JetMETObjects/data/Summer09_7TeV_ReReco332_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_ReReco332_L3Absolute_AK5Calo.txt");
+}
+
+JetMETCorFactorsFactory* JetMETCorFactorsFactory::Register::create(const std::string& name, const std::string& files) const
+{
+  JetMETCorFactorsFactory* jmcff = 0;
   try {
-    new JetMETCorFactorsFactory("Summer09_7TeV_AK5Calo","JetMETObjects/data/Summer09_7TeV_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_L3Absolute_AK5Calo.txt");
+    jmcff = new JetMETCorFactorsFactory(name,files);
   } 
-  catch(std::exception) {
-    std::cout << "... failed to create!\n";
+  catch(std::exception& e) {
+    std::cout << "...failed to create " << name << ":\n";
+    std::cout << "     " << e.what() << std::endl;
+    jmcff = 0;
   } 
-  try {
-    new JetMETCorFactorsFactory("Summer09_AK5Calo","JetMETObjects/data/Summer09_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_L3Absolute_AK5Calo.txt");
-  } 
-  catch(std::exception) {
-    std::cout << "... failed to create!\n";
-  } 
-  try {
-    new JetMETCorFactorsFactory("Summer09_7TeV_ReReco332_AK5Calo",
-				"JetMETObjects/data/Summer09_7TeV_ReReco332_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_ReReco332_L3Absolute_AK5Calo.txt");
-  } 
-  catch(std::exception) {
-    std::cout << "... failed to create!\n";
-  } 
+  return jmcff;
 }

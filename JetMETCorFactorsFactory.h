@@ -1,6 +1,6 @@
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: JetMETCorFactorsFactory.h,v 1.2 2009/11/26 12:41:02 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.h,v 1.3 2009/11/26 13:03:28 stadie Exp $
 //   
 #ifndef JETMETCORFACTORSFACTORY_H
 #define JETMETCORFACTORSFACTORY_H
@@ -22,6 +22,8 @@ class JetMETCorFactorsFactory : public CorFactorsFactory
   class Register {
   public:
     Register();
+  private:
+    JetMETCorFactorsFactory* create(const std::string& name, const std::string& files) const;
   };
   static Register register_;
 };
