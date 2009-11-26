@@ -1,6 +1,6 @@
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: CorFactors.h,v 1.1 2009/11/25 13:07:45 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.h,v 1.1 2009/11/26 10:28:48 stadie Exp $
 //   
 #ifndef JETMETCORFACTORSFACTORY_H
 #define JETMETCORFACTORSFACTORY_H
@@ -19,7 +19,8 @@ class JetMETCorFactorsFactory : public CorFactorsFactory
  private:
   FactorizedJetCorrector* cor_;
 
-  static JetMETCorFactorsFactory *Summer09_7TeV_AK5Calo,*Summer09_AK5Calo;
+  static JetMETCorFactorsFactory *Summer09_7TeV_AK5Calo,*Summer09_AK5Calo,
+    *Summer09_7TeV_ReReco332_AK5Calo;
   
 };
 
