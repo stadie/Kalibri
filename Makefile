@@ -28,9 +28,9 @@ SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc Cali
 %.o: %.cc
 		$(C) $(RCXX) -c $<
 
-all: dirs lib junk caliber
+all: dirs lib bin
 
-dirs: bin lib tmp
+dirs:
 	@mkdir -p bin
 	@mkdir -p lib
 	@mkdir -p tmp
@@ -144,8 +144,9 @@ caliber.o: caliber.cc Kalibri.h JetTruthEvent.h Jet.h
 	$(C) $(RCXX) -c caliber.cc
 
 
-lib: lib/libKalibri.so
+lib: dirs lib/libKalibri.so
 
+bin: dirs junk caliber
 
 junk: $(SRC:.cc=.o) lbfgs.o caliber.o
 	$(LD) $^ $(RLXX) -o bin/junk
@@ -167,6 +168,9 @@ clean:
 	@rm -f junk
 	@rm -f caliber
 	@rm -f libKalibri.so
+	@rm -rf tmp
+	@rm -rf lib
+	@rm -rf bin
 	@rm -f *.ps
 	@rm -f *.eps
 	@rm -f *.cfi
@@ -189,14 +193,14 @@ comp: 	ControlPlotsComparison.o compareControlPlots.o
 	$(LD) ControlPlotsComparison.o compareControlPlots.o $(RLXX) -o compControlPlots
 	@echo '-> Comparison executable created. Type "compControlPlots" to compare control plots.'
 
-libJetMETObjects: JetMETObjects
+lib/libJetMETObjects.so: dirs JetMETObjects
 	@env STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS} /bin/sh -c 'make -C JetMETObjects'
 
 JetMETObjects:
 	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 
 
-plugins: lib/libJetMETCor.so
+plugins: dirs lib/libJetMETCor.so
 
 lib/libJetMETCor.so: CorFactors.h lib/libJetMETObjects.so JetMETCorFactorsFactory.h JetMETCorFactorsFactory.cc CorFactorsFactory.h Jet.h
 	$(C) $(CFLAGS) -c JetMETCorFactorsFactory.cc
