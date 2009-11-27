@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.30 2009/11/26 10:27:48 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.31 2009/11/26 18:24:41 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -422,6 +422,9 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     }
     if(corFactorsFactory_) {
       jet->updateCorFactors(corFactorsFactory_->create(jet));
+    }
+    if(correctToL3_) {
+      jet->correctToL3();
     }
     JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColEt[genJetIdx],1.);//nJet_->Weight);
     data.push_back(jte);

@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.20 2009/11/26 10:27:48 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.21 2009/11/26 18:24:41 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -221,6 +221,7 @@ Event* ZJetReader::createJetTruthEvent()
   if(corFactorsFactory_) {
       j->updateCorFactors(corFactorsFactory_->create(j));
   }
+  if(correctToL3_) j->correctToL3();
   JetTruthEvent* jte = new JetTruthEvent(j,zjet->JetGenEt,1.0);//zjet->EventWeight);
   delete [] terr;
   return jte;

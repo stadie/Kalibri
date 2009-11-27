@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.6 2009/11/25 13:07:45 stadie Exp $
+// $Id: EventReader.h,v 1.7 2009/11/26 10:27:48 stadie Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -31,6 +31,7 @@ class EventReader
   TParameters* par_;     //!< The parametrization
   bool useTracks_;       //!< True, if tracks are used in calibration
   CorFactorsFactory* corFactorsFactory_; //! Factory class for external source of CorFactors;
+  bool correctToL3_;     //!< correct jets to L3?
 
   double (*tower_error_param)(const double *x, const Measurement *xorig, double err);
   double (*jet_error_param)  (const double *x, const Measurement *xorig, double err);

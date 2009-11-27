@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.3 2009/11/24 16:52:58 stadie Exp $
+// $Id: EventReader.cc,v 1.4 2009/11/26 10:27:48 stadie Exp $
 //
 #include "EventReader.h"
 
@@ -77,6 +77,8 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
     }
   }
   corFactorsFactory_ = CorFactorsFactory::map[jcn];
+
+  correctToL3_ = config_->read<bool>("correct jets to L3",false);
 }
 
 EventReader::~EventReader()

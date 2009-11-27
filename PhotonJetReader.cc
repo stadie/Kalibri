@@ -1,5 +1,5 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.25 2009/11/26 10:27:48 stadie Exp $
+//  $Id: PhotonJetReader.cc,v 1.26 2009/11/26 18:24:41 stadie Exp $
 //
 #include "PhotonJetReader.h"
 
@@ -276,6 +276,7 @@ Event* PhotonJetReader::createJetTruthEvent()
 		jet_error_param,par_->global_jet_function(),minJetEt_);
   }
   if(corFactorsFactory_) j->updateCorFactors(corFactorsFactory_->create(j));
+  if(correctToL3_) j->correctToL3();
   JetTruthEvent * jte = new JetTruthEvent(j,gammaJet_->PhotonEt,gammaJet_->EventWeight);
   
   return jte;

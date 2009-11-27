@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.19 2009/11/26 10:27:48 stadie Exp $
+//    $Id: TopReader.cc,v 1.20 2009/11/26 18:24:41 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -177,17 +177,13 @@ Event* TopReader::createTwoJetsInvMassEvents()
     err2 += err * err;
     Jet **jet = jets[0] ? &jets[1] : &jets[0];
     CorFactors* corFactors = createCorFactors(i);
-    // use to L3 corrected jets as input if desired
-    double jecFactor = 1.;
-    if(useToL3CorrectedJets_)
-      jecFactor = corFactors->getToL3();
     if(dataClass_ == 2) {
       JetWithTowers *jt = 
-	new JetWithTowers(top_->JetEt[i] * jecFactor,
-			  em * jecFactor * factor,
-			  had * jecFactor * factor,
-			  out * jecFactor * factor,
-			  top_->JetE[i] * jecFactor,
+	new JetWithTowers(top_->JetEt[i],
+			  em * factor,
+			  had * factor,
+			  out * factor,
+			  top_->JetE[i],
 			  top_->JetEta[i], top_->JetPhi[i],
 			  tower.etaeta,
 			  Jet::uds, top_->GenJetPt[i], 0.,
@@ -207,11 +203,11 @@ Event* TopReader::createTwoJetsInvMassEvents()
       *jet = jt;
     }
     else { 
-      *jet = new Jet(top_->JetEt[i] * jecFactor,
-		     em * jecFactor * factor,
-		     had * jecFactor * factor,
-		     out * jecFactor * factor,
-		     top_->JetE[i] * jecFactor,
+      *jet = new Jet(top_->JetEt[i],
+		     em * factor,
+		     had * factor,
+		     out * factor,
+		     top_->JetE[i],
 		     top_->JetEta[i], top_->JetPhi[i],
 		     tower.etaeta,
 		     Jet::uds, top_->GenJetPt[i], 0.,
@@ -223,6 +219,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
     if(corFactorsFactory_) {
       (*jet)->updateCorFactors(corFactorsFactory_->create(*jet));
     }
+    if(correctToL3_ || useToL3CorrectedJets_) (*jet)->correctToL3();
   } 
   delete [] terr;
   if(createGenWHist_) {
