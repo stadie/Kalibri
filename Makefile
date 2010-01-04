@@ -23,7 +23,7 @@ RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
 ROOTSYS=$(shell root-config --prefix)
 
-SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc JetConstraintsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc CorFactorsFactory.cc
+SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc JetConstraintsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc CorFactorsFactory.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -72,8 +72,17 @@ Parametrization.o: Parametrization.h Parametrization.cc
 Parameters.o: Parameters.cc Parameters.h Parametrization.h Function.h ConfigFile.h
 	$(C) $(RCXX) -c Parameters.cc
 
-ControlPlots.o: ControlPlots.cc ControlPlots.h CalibData.h CalibMath.h ConfigFile.h TwoJetsInvMassEvent.h TwoJetsPtBalanceEvent.h Parameters.h Jet.h CorFactors.h
+ControlPlots.o: ControlPlots.cc ControlPlots.h ControlPlotsConfig.h ControlPlotsProfile.h ControlPlotsFunction.h CalibData.h Function.h Jet.h JetTruthEvent.h
 	$(C) $(RCXX) -c ControlPlots.cc
+
+ControlPlotsProfile.o: ControlPlotsProfile.cc ControlPlotsProfile.h ControlPlotsConfig.h ControlPlotsFunction.h ConfigFile.h CalibData.h
+	$(C) $(RCXX) -c ControlPlotsProfile.cc
+
+ControlPlotsFunction.o: ControlPlotsFunction.cc ControlPlotsFunction.h ControlPlotsConfig.h Jet.h JetTruthEvent.h CorFactors.h
+	$(C) $(RCXX) -c ControlPlotsFunction.cc
+
+ControlPlotsConfig.o: ControlPlotsConfig.cc ControlPlotsConfig.h ConfigFile.h
+	$(C) $(RCXX) -c ControlPlotsConfig.cc
 
 ControlPlotsJetSmearing.o: ControlPlotsJetSmearing.cc ControlPlotsJetSmearing.h CalibData.h ConfigFile.h Parameters.h SmearData.h SmearDiJet.h SmearPhotonJet.h Jet.h 	
 	$(C) $(RCXX) -c ControlPlotsJetSmearing.cc
@@ -130,7 +139,8 @@ JetWithTracks.o: CalibData.h Jet.h JetWithTracks.h Function.h JetWithTracks.cc P
 	$(C) $(RCXX) -c JetWithTracks.cc
 
 CorFactorsFactory.o: CorFactors.h CorFactorsFactory.h CorFactorsFactory.cc
-	$(C) $(CFLAGS) -c CorFactorsFactory.cc	
+	$(C) $(CFLAGS) -c CorFactorsFactory.cc
+
 
 
 lib/libKalibri.so: $(SRC:.cc=.o) lbfgs.o
@@ -138,7 +148,7 @@ lib/libKalibri.so: $(SRC:.cc=.o) lbfgs.o
 	@echo '-> Kalibri library created.'
 
 Kalibri.o: Kalibri.cc Kalibri.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h JetConstraintsReader.h EventProcessor.h  EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h TwoJetsPtBalanceEvent.h 
-	$(C) $(CFLAGS) -I/usr/include/boost -c Kalibri.cc 
+	$(C) $(CFLAGS) $(RCXX) -I/usr/include/boost -c Kalibri.cc 
 
 caliber.o: caliber.cc Kalibri.h JetTruthEvent.h Jet.h
 	$(C) $(RCXX) -c caliber.cc

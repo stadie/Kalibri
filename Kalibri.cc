@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.1 2009/11/20 12:25:41 stadie Exp $
+//  $Id: Kalibri.cc,v 1.2 2009/11/24 16:52:58 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -410,7 +410,7 @@ void Kalibri::done()
   if( config.read<bool>("create plots",0) ) {
     int mode = config.read<int>("Mode",0);
     if( mode == 0 ) {  // Control plots for calibration
-      TControlPlots * plots = new TControlPlots(configFile_,&data_,par_);
+      ControlPlots * plots = new ControlPlots(&config,&data_);
       plots->makePlots();
       delete plots;
     } else if( mode == 1 ) {  // Control plots for jetsmearing

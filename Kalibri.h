@@ -1,4 +1,4 @@
-//  $Id: Kalibri.h,v 1.1 2009/11/20 12:25:41 stadie Exp $
+//  $Id: Kalibri.h,v 1.2 2009/11/24 16:52:59 stadie Exp $
 
 //!  \mainpage
 //!
@@ -123,7 +123,7 @@
 #include <string>
 
 class TParameters;
-class TControlPlots;
+class Controlplots;
 class Event;
 class Measurement;
 
@@ -136,7 +136,7 @@ class Measurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Kalibri.h,v 1.1 2009/11/20 12:25:41 stadie Exp $
+//!  $Id: Kalibri.h,v 1.2 2009/11/24 16:52:59 stadie Exp $
 // -----------------------------------------------------------------
 class Kalibri {
 public :
