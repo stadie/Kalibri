@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.7 2009/11/26 10:27:48 stadie Exp $
+// $Id: EventReader.h,v 1.8 2009/11/27 15:28:12 stadie Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -10,6 +10,7 @@ class ConfigFile;
 class Measurement;
 class CorFactors;
 class CorFactorsFactory;
+class TTree;
 
 #include <vector>
 #include <string>
@@ -24,9 +25,11 @@ class EventReader
   virtual int readEvents(std::vector<Event*>& data) = 0;
 
  protected:
-  // read CorFactors from Ntuple
+  //! Read CorFactors from Ntuple
   virtual CorFactors* createCorFactors(int jetid) const { return 0;}
- 
+  //! Create TTree with data files
+  TTree * createTree(const std::string &dataType) const;
+
   ConfigFile* config_;   //!< The configfile
   TParameters* par_;     //!< The parametrization
   bool useTracks_;       //!< True, if tracks are used in calibration

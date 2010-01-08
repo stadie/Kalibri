@@ -1,11 +1,14 @@
 //
-// $Id: EventReader.cc,v 1.4 2009/11/26 10:27:48 stadie Exp $
+// $Id: EventReader.cc,v 1.5 2009/11/27 15:28:12 stadie Exp $
 //
 #include "EventReader.h"
 
 #include "ConfigFile.h"
 #include "Parameters.h" 
 #include "CorFactorsFactory.h"
+#include "TChain.h"
+#include "ToyMC.h"
+#include "TTree.h"
 
 #include <dlfcn.h>
 
@@ -85,3 +88,79 @@ EventReader::~EventReader()
 {
   delete config_;
 }
+
+
+
+TTree * EventReader::createTree(const std::string &dataType) const {
+  std::string readerName;
+  std::string treeName;
+  std::vector<std::string> inputFileNames;
+  int nEvts = 0;
+  if( dataType == "dijet" ) {
+    readerName = "DiJetReader";
+    treeName = config_->read<string>("Di-Jet tree","CalibTree");
+    inputFileNames = bag_of_string(config_->read<std::string>("Di-Jet input file","input/dijet.root"));  
+    nEvts = config_->read<int>("use Di-Jet events",-1);
+  }
+
+  int inputMode = -1;
+  if( inputFileNames[0] == "toy" ) {
+    inputMode = 0;
+  } else {
+    std::string fileEnding = "";
+    if( inputFileNames[0].size() > 5 ) {
+      fileEnding = inputFileNames[0].substr(inputFileNames[0].size()-5,inputFileNames[0].size());
+      if( fileEnding == ".root" ) {
+	inputMode = 1;
+      }
+    }
+    if( fileEnding != ".root" && inputFileNames.size() == 1 ) {
+      inputMode = 2;
+    }
+  }
+  
+  TTree *tree = 0;
+
+  if( inputMode == 0 ) { // Generate Toy MC sample
+    std::cout << "\n" << readerName << ": generating ToyMC events\n";
+    ToyMC* mc = new ToyMC();
+    mc->init(config_);
+    mc->print();
+    tree = new TTree(treeName.c_str(),dataType.c_str());
+    if( dataType == "dijet" ) {
+      mc->generateDiJetTree(tree,nEvts);
+    }
+    delete mc;
+  } else if( inputMode == 1 ) { // Open all files listed in configfile
+    TChain* chain = new TChain(treeName.c_str()); 
+    std::cout << "\n" << readerName << ": opening files\n";
+    for(std::vector<std::string>::const_iterator it = inputFileNames.begin();
+	it!=inputFileNames.end(); ++it){
+      std::cout << " " << (*it) << std::endl;
+      chain->Add( it->c_str() );
+    }  
+    tree = chain;
+  } else if( inputMode == 2 ) { // Open all files listed in input file
+    std::cout << "\n" << readerName << ": opening files in list '" << inputFileNames[0] << "'\n";
+    TChain* chain = new TChain(treeName.c_str()); 
+    std::ifstream filelist;
+    filelist.open(inputFileNames[0].c_str());
+    int nOpenedFiles = 0;
+    std::string name = "";
+    while( !filelist.eof() ) {
+      filelist >> name;
+      if( filelist.eof() ) break;
+      chain->Add( name.c_str() );
+      nOpenedFiles++;
+    }
+    filelist.close();
+    tree = chain;
+    std::cout << "Opened " << nOpenedFiles << " files\n";
+  } else {
+    tree = new TTree();
+    std::cerr << "WARNING: Wrong input file name syntax. No files opened.\n";
+  }
+
+  return tree;
+}
+ 
