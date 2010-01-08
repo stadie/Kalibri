@@ -9,11 +9,13 @@ class TH2F;
 class TRandom;
 class TTree;
 class TLorentzVector;
+class ConfigFile;
+
 //!  \brief Generate toy MC data
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.23 2009/11/13 13:18:08 mschrode Exp $
+//!  $Id: ToyMC.h,v 1.24 2009/11/24 16:52:59 stadie Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -170,6 +172,7 @@ class ToyMC {
   int makeDiJet(const char* filename, int nevents);
   int makeTop(const char* filename, int nevents);
   void init(const std::string& configfile);
+  void init(const ConfigFile *config);
   void print() const;
 };
 

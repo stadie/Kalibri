@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.39 2009/11/13 13:18:08 mschrode Exp $
+// $Id: ToyMC.cc,v 1.40 2009/11/24 16:52:59 stadie Exp $
 
 #include "ToyMC.h"
 
@@ -1337,16 +1337,21 @@ int ToyMC::makeTop(const char* filename, int nevents) {
 //----------------------------------------------------------
 void ToyMC::init(const std::string& configfile) {
   ConfigFile config(configfile.c_str());
+  init(&config);
+}
+
+//----------------------------------------------------------
+void ToyMC::init(const ConfigFile* config) {
 
   // Ranges
-  minEta_ = config.read<double>("ToyMC min eta",-2.5);
-  maxEta_ = config.read<double>("ToyMC max eta",2.5);
-  minPt_  = config.read<double>("ToyMC min pt",30);
-  maxPt_  = config.read<double>("ToyMC max pt",400);
+  minEta_ = config->read<double>("ToyMC min eta",-2.5);
+  maxEta_ = config->read<double>("ToyMC max eta",2.5);
+  minPt_  = config->read<double>("ToyMC min pt",30);
+  maxPt_  = config->read<double>("ToyMC max pt",400);
 
   // Truth spectrum
-  std::string spectrum = config.read<std::string>("ToyMC pt spectrum","uniform");
-  parTruth_            = bag_of<double>(config.read<string>("ToyMC pt spectrum parameters",";"));
+  std::string spectrum = config->read<std::string>("ToyMC pt spectrum","uniform");
+  parTruth_            = bag_of<double>(config->read<string>("ToyMC pt spectrum parameters",";"));
   if(spectrum == "powerlaw") {
     ptSpectrum_ = PowerLaw; 
     assert( parTruth_.size() > 0 );
@@ -1363,8 +1368,8 @@ void ToyMC::init(const std::string& configfile) {
   }
 
   // Response model
-  parResp_ = bag_of<double>(config.read<string>("ToyMC response parameters","1"));
-  std::string response = config.read<std::string>("ToyMC response model","Constant");
+  parResp_ = bag_of<double>(config->read<string>("ToyMC response parameters","1"));
+  std::string response = config->read<std::string>("ToyMC response model","Constant");
   if        ( response == "Constant" ) {
     responseModel_ = Constant;
     assert( parResp_.size() >= 1 );
@@ -1398,8 +1403,8 @@ void ToyMC::init(const std::string& configfile) {
   }
 
   // Resolution model
-  parReso_               = bag_of<double>(config.read<string>("ToyMC resolution parameters","4.44 1.11 0.03"));
-  std::string resolution = config.read<std::string>("ToyMC resolution model","Gauss");
+  parReso_               = bag_of<double>(config->read<string>("ToyMC resolution parameters","4.44 1.11 0.03"));
+  std::string resolution = config->read<std::string>("ToyMC resolution model","Gauss");
   if(resolution == "Gauss") {
     resolutionModel_ = Gauss;
     assert( parReso_.size() >= 3 );
@@ -1449,21 +1454,21 @@ void ToyMC::init(const std::string& configfile) {
    }
 
   // Calculate smear factor for each tower or each jet
-  smearTowersIndividually_ = config.read<bool>("ToyMC smear towers individually",false);
+  smearTowersIndividually_ = config->read<bool>("ToyMC smear towers individually",false);
 
   // Jets
-  jetSpreadA_  = config.read<double>("ToyMC jet spread A",0.5);
-  jetSpreadB_  = config.read<double>("ToyMC jet spread B",0);
-  noOutOfCone_ = config.read<bool>("ToyMC avoid out-of-cone",true);
-  useTowerCenterEtaPhi_ = config.read<bool>("ToyMC use eta and phi at tower center",true);
-  chunks_      = config.read<int>("ToyMC chunks",200);
-  maxPi0Frac_  = config.read<double>("ToyMC max pi0 fraction",0.5);
-  maxEmf_      = config.read<double>("ToyMC tower max EMF",0.5);
+  jetSpreadA_  = config->read<double>("ToyMC jet spread A",0.5);
+  jetSpreadB_  = config->read<double>("ToyMC jet spread B",0);
+  noOutOfCone_ = config->read<bool>("ToyMC avoid out-of-cone",true);
+  useTowerCenterEtaPhi_ = config->read<bool>("ToyMC use eta and phi at tower center",true);
+  chunks_      = config->read<int>("ToyMC chunks",200);
+  maxPi0Frac_  = config->read<double>("ToyMC max pi0 fraction",0.5);
+  maxEmf_      = config->read<double>("ToyMC tower max EMF",0.5);
   
   // General
-  int seed = config.read<int>("ToyMC seed",0); 
+  int seed = config->read<int>("ToyMC seed",0); 
   random_->SetSeed(seed);
-  type_ = config.read<int>("ToyMC type",1);
+  type_ = config->read<int>("ToyMC type",1);
   if( !( type_ == 1 || type_ == 2 || type_ == 3 ) ) {
     std::cout << "unknown ToyMC event type " << type_ << std::endl;
     exit(1);
