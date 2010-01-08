@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.42 2009/11/24 16:52:58 stadie Exp $
+// $Id: Parameters.cc,v 1.43 2009/11/26 18:24:41 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -56,17 +56,6 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     return new ToySimpleInverseParametrization();
   } else if(name == "SmearFermiTail") {
     return new SmearFermiTail();
-  } else if(name == "SmearTwoGauss") {
-    std::vector<double> ptBinEdges = bag_of<double>(config.read<string>("DiJet integration pt bin edges","0 100000"));
-    std::vector<double> meanRespPar = bag_of<double>(config.read<string>("mean response parameters","1 0"));
-    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    return new SmearTwoGauss(ptBinEdges,meanRespPar,scale);
-  } else if(name == "SmearStepGauss") {
-    double min    = config.read<double>("Response pdf min",0.);
-    double max    = config.read<double>("Response pdf max",1.8);
-    int    nsteps = config.read<int>("Response pdf nsteps",10);
-    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    return new SmearStepGauss(min,max,nsteps,scale);
   } else if(name == "SmearStepGaussInter") {
     double rMin       = config.read<double>("Response pdf min",0.);
     double rMax       = config.read<double>("Response pdf max",1.8);
@@ -78,13 +67,6 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
     std::vector<double> gaussPar = bag_of<double>(config.read<string>("gauss parameters","1 1 0 0"));
     return new SmearStepGaussInter(tMin,tMax,rMin,rMax,rNBins,ptDijetMin,ptDijetMax,scale,gaussPar);
-  } else if(name == "SmearStepGaussInterPtBinned") {
-    double rMin    = config.read<double>("Response pdf min",0.);
-    double rMax    = config.read<double>("Response pdf max",1.8);
-    int    rNBins  = config.read<int>("Response pdf nsteps",10);
-    std::vector<double> ptBinEdges = bag_of<double>(config.read<string>("DiJet integration pt bin edges","0 100000"));
-    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    return new SmearStepGaussInterPtBinned(ptBinEdges,rMin,rMax,rNBins,scale);
   } else if(name == "GroomParametrization") {
     return new GroomParametrization();
   } else if(name == "EtaEtaParametrization") {
@@ -132,14 +114,8 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "TrackParametrization";
   } else if(parclass == "SmearParametrizationFermiTail") {
     parclass = "SmearFermiTail";
-  } else if(parclass == "SmearParametrizationTwoGauss") {
-    parclass = "SmearTwoGauss";
-  } else if(parclass == "SmearParametrizationStepGauss") {
-    parclass = "SmearStepGauss";
   } else if(parclass == "SmearParametrizationStepGaussInter") {
     parclass = "SmearStepGaussInter";
-  } else if(parclass == "SmearParametrizationStepGaussInterPtBinned") {
-    parclass = "SmearStepGaussInterPtBinned";
   }
 
   Parametrization *param = CreateParametrization(parclass,config);
@@ -196,29 +172,6 @@ void TParameters::Init(const ConfigFile& config)
   }
 
   jet_start_values = bag_of<double>(config.read<string>("jet start values",""));
-  if( (strcmp(p->name(),"SmearStepGaussInterPtBinned") == 0) || 
-      (strcmp(p->name(),"SmearTwoGauss") == 0) ) {
-    // Duplicate start values for pt binned part of parametrization
-    std::vector<double> ptBinEdges = bag_of<double>(config.read<string>("DiJet integration pt bin edges","0 100000"));
-    size_t nPtBins = ptBinEdges.size()-1;
-    if( nPtBins < 1 ) {
-      std::cerr << "ERROR: Less than 1 pt bins for dijet integration\n";
-      exit(3);
-    }
-    size_t nJetStartValues = jet_start_values.size(); 
-    if( nJetStartValues < p->nJetPars() ) {
-      std::cout << "Less than " << p->nJetPars() << " jet parameter start values -- ";
-      std::cout << "filling up for " << nPtBins << " pt bins\n";
-      size_t nParNotBinned = 0;
-      if( strcmp(p->name(),"SmearStepGaussInterPtBinned") == 0 ) nParNotBinned = 2;
-      else if( strcmp(p->name(),"SmearTwoGauss") == 0 ) nParNotBinned = 3;
-      for(size_t ptBin = 1; ptBin < nPtBins; ptBin++) {
-	for(size_t i = nParNotBinned; i < nJetStartValues; i++) {
-	  jet_start_values.push_back( jet_start_values.at(i) );
-	}
-      }
-    } 
-  }
   if ( jet_start_values.size()< p->nJetPars()){
     cerr<< "ERROR: Number of jet start values and free jet parameters does not match!"<<endl
         << "       There must be at least " << p->nJetPars() << " parameters!" << endl;

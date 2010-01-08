@@ -1,7 +1,8 @@
-// $Id: SmearData.cc,v 1.6 2009/09/02 13:52:26 mschrode Exp $
+// $Id: SmearData.cc,v 1.7 2009/11/24 16:52:58 stadie Exp $
 
 #include "SmearData.h"
 
+#include "CalibData.h"
 
 
 //!  \brief Constructor
@@ -14,10 +15,10 @@
 SmearData::SmearData(DataType type, Measurement * mess, double truth, double weight, const Function& respPDF)
   : Event(),
     respPDF_(respPDF),
+    mess_(mess),
     kTruth_(truth),
     kType_(type),
-    weight_(weight),
-    mess_(mess) {};
+    weight_(weight) {};
 
 
 

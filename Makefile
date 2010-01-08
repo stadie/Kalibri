@@ -57,10 +57,10 @@ NJetSel.o: NJetSel.cc NJetSel.h
 CalibData.o: CalibData.cc CalibData.h Parametrization.h Parameters.h
 	$(C) $(CFLAGS) -c CalibData.cc
 
-SmearData.o: SmearData.cc SmearData.h Parametrization.h Parameters.h CalibData.h
+SmearData.o: SmearData.cc SmearData.h CalibData.h Function.h
 	$(C) $(CFLAGS) -c SmearData.cc
 
-SmearDiJet.o: SmearDiJet.cc SmearDiJet.h Parametrization.h Parameters.h CalibData.h SmearData.h Jet.h
+SmearDiJet.o: SmearDiJet.cc SmearDiJet.h Function.h Jet.h SmearData.h
 	$(C) $(CFLAGS) -c SmearDiJet.cc
 
 SmearPhotonJet.o: SmearPhotonJet.cc SmearPhotonJet.h Parametrization.h Parameters.h CalibData.h SmearData.h
@@ -87,13 +87,13 @@ ControlPlotsConfig.o: ControlPlotsConfig.cc ControlPlotsConfig.h ConfigFile.h
 ControlPlotsJetSmearing.o: ControlPlotsJetSmearing.cc ControlPlotsJetSmearing.h CalibData.h ConfigFile.h Parameters.h SmearData.h SmearDiJet.h SmearPhotonJet.h Jet.h 	
 	$(C) $(RCXX) -c ControlPlotsJetSmearing.cc
 
-EventReader.o: EventReader.h EventReader.cc Parameters.h ConfigFile.h CorFactorsFactory.h CorFactors.h
-	$(C) $(CFLAGS) -c EventReader.cc
+EventReader.o: EventReader.h EventReader.cc Parameters.h ConfigFile.h CorFactorsFactory.h CorFactors.h ToyMC.h 
+	$(C) $(RCXX) -c EventReader.cc
 
 PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h Function.h CorFactors.h CorFactorsFactory.h
 	$(C) $(RCXX) -c PhotonJetReader.cc
 
-DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h TwoJetsPtBalanceEvent.h JetWithTowers.h Function.h CorFactors.h CorFactorsFactory.h
+DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h TwoJetsPtBalanceEvent.h JetWithTowers.h Function.h CorFactors.h CorFactorsFactory.h
 	$(C) $(RCXX) -c DiJetReader.cc
 
 TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameters.h ConfigFile.h CorFactors.h CorFactorsFactory.h
