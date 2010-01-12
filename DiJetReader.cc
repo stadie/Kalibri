@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.32 2009/11/27 15:28:12 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.33 2010/01/08 18:22:55 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -19,6 +19,7 @@
 #include "TVector2.h"
 #include "TRandom3.h"
 
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <cstdlib>
@@ -43,8 +44,8 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   // Maximum number of read events
   nDijetEvents_ = config_->read<int>("use Di-Jet events",-1);
   if(nDijetEvents_ == 0) return;
-
   prescale_ = config_->read<int>("Di-Jet prescale",1);
+
   // Cuts
   minJetEt_          = config_->read<double>("Et cut on jet",0.0);
   minDijetEt_        = config_->read<double>("Et min cut on dijet",0.0); 
@@ -129,6 +130,10 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     std::cout << "'JetTruthEvent'";
   } else if(dataClass_ == 5) {
     std::cout << "'SmearData'";
+    if( !correctToL3_ ) {
+      std::cerr << "WARNING: Jets are not L2L3 corrected! Aborting\n";
+      exit(9);
+    }
   } else {
     std::cerr << "Unknown data class " << dataClass_ << '\n';
     exit(9);
@@ -413,132 +418,34 @@ Event* DiJetReader::createSmearEvent()
     nDiJetCut_++;
     return 0;
   }
-  
-  // Pointer to the three leading jets
-  SmearDiJet * jj_data = 0;
-  Jet   * jet1        = 0;
-  Jet   * jet2        = 0;
 
-  //! \todo Enable usage of JetMET corrections read on-the-fly
-  // Find three jets with highest L2L3 corrected
-  // calojet Et
-  int idx[3] = { 1, 1, 1 };	// Indices of the three leading jets
-  for(int j = 0; j < 3; j++) {
-    int maxIdx = 0;
-    if( j == 1 ) {
-      if( maxIdx == idx[0] ) {
-	maxIdx++;
-      }
-    }
-    if( j == 2 ) {
-      if( maxIdx == idx[0] || maxIdx == idx[1] ) {
-	maxIdx++;
-	if( maxIdx == idx[0] || maxIdx == idx[1] ) {
-	  maxIdx++;
-	}
-      }
-    }
-    for(int i = 0; i < nJet_->NobjJet; i++) {
-      if( j == 1 ) {
-	if( i == idx[0] ) {
-	  continue;
-	}
-      }	else if( j == 2 ) {
-	if( i == idx[0] || i == idx[1] ) {
-	  continue;
-	}
-      }
-      double corrMaxPt = nJet_->JetCorrL2[maxIdx] * nJet_->JetCorrL3[maxIdx] * nJet_->JetPt[maxIdx];
-      double corrPt = nJet_->JetCorrL2[i] * nJet_->JetCorrL3[i] * nJet_->JetPt[i];
-      if( corrPt > corrMaxPt ) {
-	maxIdx = i;
-      }
-    }
-    idx[j] = maxIdx;
-  }
-  
-  // Loop over three jets with highest corrected calojet Et
-  for(int i = 0; i < 3; i++) {
-    int jetIdx = idx[i];
-  
-    double dphi         = TVector2::Phi_mpi_pi( nJet_->JetPhi[jetIdx] - nJet_->GenJetPhi[jetIdx] );
-    double deta         = nJet_->JetEta[jetIdx] - nJet_->GenJetEta[jetIdx];
-    double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
-    double min_tower_dr = 10.;
-    double emf          = 0;
-    double had          = 0;
-    double out          = 0;
-    int    closestTower = 0; 
+  // Read jets and apply L3 correction
+  std::vector<Jet*> jets = readCaloJets(-1);
 
-    // Loop over towers
-    for (int n=0; n<nJet_->NobjTow; ++n) {
-      if (nJet_->Tow_jetidx[n]!=(int)jetIdx) continue;//look for jetIdx-jet's towers
-      emf += nJet_->TowEm[n];
-      had += nJet_->TowHad[n];
-      out += nJet_->TowOE[n];
-      dphi = TVector2::Phi_mpi_pi( nJet_->JetPhi[jetIdx] - nJet_->TowPhi[n] );
-      deta = nJet_->JetEta[jetIdx] - nJet_->TowEta[n];
-      double dr = sqrt( deta*deta + dphi*dphi );     
-      if (dr < min_tower_dr) {
-	min_tower_dr = dr;
-	closestTower = n;
-      }
-    } // End of loop over towers
+  // Sort jets by corrected pt
+  std::sort(jets.begin(),jets.end(),Jet::caloPtGreaterThan);
 
+  // Create SmearDiJet event from three jets
+  // with highest corrected pt
+  SmearDiJet * smearDijet = new SmearDiJet(jets[0],                    // First jet
+					   jets[1],                    // Second jet
+					   jets[2],                    // Third jet
+					   1.,                         // Weights from EventProcessor
+					   par_->jet_function(1,1),
+					   par_->global_jet_function(),   // Truth pdf
+					   min_,                       // Integration minimum
+					   max_,                       // Integration maximum
+					   eps_,                       // Integration step length
+					   maxNIter_);                 // Integration n iterations
 
-    // Projection factor E --> Et
-    // The following is not quite correct, as this factor is different for all towers
-    // These values should be in the n-tupel as well
-    double projFac   = nJet_->JetEt[jetIdx] /  nJet_->JetE[jetIdx];
-
-    // Want L2L3 corrected jets
-    double corrFac   = nJet_->JetCorrL2[jetIdx] * nJet_->JetCorrL3[jetIdx];
-
-    // Set up jet
-    Jet * jetp = new Jet(corrFac * nJet_->JetPt[jetIdx],
-			 corrFac * emf * projFac,
-			 corrFac * had * projFac,
-			 corrFac * out * projFac,
-			 corrFac * nJet_->JetE[jetIdx],
-			 nJet_->JetEta[jetIdx],
-			 nJet_->JetPhi[jetIdx],
-			 0.,
-			 Jet::uds,
-			 nJet_->GenJetPt[jetIdx],
-			 drJetGenjet,
-			 new CorFactors(),
-			 par_->jet_function(nJet_->TowId_eta[closestTower],
-					    nJet_->TowId_phi[closestTower]),
-			 0,
-			 par_->global_jet_function());
-
-    if     ( jetIdx == idx[0] ) { // Store first jet
-      jet1 = jetp;
-    }
-    else if( jetIdx == idx[1] ) { // Store second jet
-      jet2 = jetp;
-    }
-    else if( jetIdx == idx[2] ) { // Create a SmearDiJet event
-      jj_data = new SmearDiJet(jet1,                       // First jet
-			       jet2,                       // Second jet
-			       jetp,                       // Third jet
-			       1.,                         // Weights from EventProcessor
-			       par_->jet_function(nJet_->TowId_eta[closestTower],
-						  nJet_->TowId_phi[closestTower]),
-			       par_->global_jet_function(),   // Truth pdf
-			       min_,                       // Integration minimum
-			       max_,                       // Integration maximum
-			       eps_,                       // Integration step length
-			       maxNIter_);                 // Integration n iterations
-    }
-  }  // End of loop over jets
-
+  // Delete other jets
+  jets.erase(jets.begin()+3,jets.end());
 
   // Check if event is ok and return
   bool isGoodEvt = true;
-  const Jet * j1 = jj_data->jet1();
-  const Jet * j2 = jj_data->jet2();
-  const Jet * j3 = jj_data->jet3();
+  const Jet * j1 = smearDijet->jet1();
+  const Jet * j2 = smearDijet->jet2();
+  const Jet * j3 = smearDijet->jet3();
   if     ( j1->genPt() < minGenJetEt_ || j2->genPt() < minGenJetEt_ ) {
     nMinGenJetEt_++;
     isGoodEvt = false;
@@ -555,11 +462,11 @@ Event* DiJetReader::createSmearEvent()
     nMinJetEt_++;
     isGoodEvt = false;
   }
-  else if( jj_data->dijetPt() < minDijetEt_ ) {
+  else if( smearDijet->dijetPt() < minDijetEt_ ) {
     nMinDijetEt_++;
     isGoodEvt = false;
   }
-  else if( jj_data->dijetPt() > maxDijetEt_ ) {
+  else if( smearDijet->dijetPt() > maxDijetEt_ ) {
     nMaxDijetEt_++;
     isGoodEvt = false;
   }
@@ -577,7 +484,7 @@ Event* DiJetReader::createSmearEvent()
     nMaxJetHadFraction_++;
     isGoodEvt = false;
   }
-  else if( j3->pt() / jj_data->dijetPt() > maxRel3rdJetEt_ && j3->pt() > max3rdJetEt_ ) {
+  else if( j3->pt() / smearDijet->dijetPt() > maxRel3rdJetEt_ && j3->pt() > max3rdJetEt_ ) {
     nCutOn3rdJet_++;
     isGoodEvt = false;
   }
@@ -587,10 +494,10 @@ Event* DiJetReader::createSmearEvent()
   }
 
   if(! isGoodEvt) {
-    if( jj_data ) delete jj_data;
-    jj_data = 0;
+    if( smearDijet ) delete smearDijet;
+    smearDijet = 0;
   }
-  return jj_data;
+  return smearDijet;
 }
 
 
@@ -765,3 +672,73 @@ CorFactors* DiJetReader::createCorFactors(int jetid) const
 			nJet_->JetCorrJPT[jetid],
 			nJet_->JetCorrL2L3JPT[jetid]); //JPTL2L3
 }
+
+
+std::vector<Jet*> DiJetReader::readCaloJets(int nJets) const {
+  int maxNJets = nJets;
+  if( maxNJets < 0 ) maxNJets = nJet_->NobjJet;
+  std::vector<Jet*> caloJets(maxNJets);
+  for(int j = 0; j < maxNJets; j++) {
+    double dphi         = TVector2::Phi_mpi_pi( nJet_->JetPhi[j] - nJet_->GenJetPhi[j] );
+    double deta         = nJet_->JetEta[j] - nJet_->GenJetEta[j];
+    double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
+    double min_tower_dr = 10.;
+    double emf          = 0;
+    double had          = 0;
+    double out          = 0;
+    int    closestTower = 0; 
+
+    // Loop over towers
+    for (int n=0; n<nJet_->NobjTow; ++n) {
+      if (nJet_->Tow_jetidx[n]!=(int)j) continue;//look for j-jet's towers
+      emf += nJet_->TowEm[n];
+      had += nJet_->TowHad[n];
+      out += nJet_->TowOE[n];
+      dphi = TVector2::Phi_mpi_pi( nJet_->JetPhi[j] - nJet_->TowPhi[n] );
+      deta = nJet_->JetEta[j] - nJet_->TowEta[n];
+      double dr = sqrt( deta*deta + dphi*dphi );     
+      if (dr < min_tower_dr) {
+	min_tower_dr = dr;
+	closestTower = n;
+      }
+    } // End of loop over towers
+
+
+    // Projection factor E --> Et
+    // The following is not quite correct, as this factor is different for all towers
+    // These values should be in the n-tupel as well
+    double projFac   = nJet_->JetEt[j] /  nJet_->JetE[j];
+
+    // Set up jet
+    caloJets[j] = new Jet(nJet_->JetPt[j],
+			  emf * projFac,
+			  had * projFac,
+			  out * projFac,
+			  nJet_->JetE[j],
+			  nJet_->JetEta[j],
+			  nJet_->JetPhi[j],
+			  0.,
+			  Jet::uds,
+			  nJet_->GenJetPt[j],
+			  drJetGenjet,
+			  createCorFactors(j),
+			  par_->jet_function(nJet_->TowId_eta[closestTower],
+					     nJet_->TowId_phi[closestTower]),
+			  jet_error_param,
+			  par_->global_jet_function());
+    // Read external correction factors
+    if(corFactorsFactory_) {
+      caloJets[j]->updateCorFactors(corFactorsFactory_->create(caloJets[j]));
+    }
+    // Correct measurement to L3
+    if(correctToL3_) {
+      caloJets[j]->correctToL3();
+    }
+  }
+
+  return caloJets;
+}
+
+
+
+

@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.27 2009/11/26 18:24:42 stadie Exp $
+//!    $Id: Jet.h,v 1.28 2009/11/27 15:28:12 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -20,6 +20,19 @@ class CorFactors;
 class Jet : public Measurement
 {
  public:
+  //! For sorting jets in calo pt
+  static bool caloPtGreaterThan(const Jet *j1, const Jet *j2) {
+    // check for 0
+    if (j1 == 0) {
+      return j2 != 0;
+    } else if (j2 == 0) {
+      return false;
+    } else {
+      return j1->pt() > j2->pt();
+    }
+  }
+
+
   //!  \brief Jet flavor
   //!
   //!  The possible flavors are
