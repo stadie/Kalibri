@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.43 2009/11/26 18:24:41 stadie Exp $
+// $Id: Parameters.cc,v 1.44 2010/01/08 18:16:02 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -65,8 +65,17 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     double ptDijetMin = config.read<double>("Et min cut on dijet",0.);
     double ptDijetMax = config.read<double>("Et max cut on dijet",1.);
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    std::vector<double> gaussPar = bag_of<double>(config.read<string>("gauss parameters","1 1 0 0"));
+    std::vector<double> gaussPar = bag_of<double>(config.read<string>("mean response parameters","1 0"));
     return new SmearStepGaussInter(tMin,tMax,rMin,rMax,rNBins,ptDijetMin,ptDijetMax,scale,gaussPar);
+  } else if(name == "SmearCrystalBall") {
+    double rMin       = config.read<double>("Response pdf min",0.);
+    double rMax       = config.read<double>("Response pdf max",1.8);
+    double tMin       = config.read<double>("DiJet integration min",0.);
+    double tMax       = config.read<double>("DiJet integration max",1.);
+    double ptDijetMin = config.read<double>("Et min cut on dijet",0.);
+    double ptDijetMax = config.read<double>("Et max cut on dijet",1.);
+    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
+    return new SmearCrystalBall(tMin,tMax,rMin,rMax,ptDijetMin,ptDijetMax,scale);
   } else if(name == "GroomParametrization") {
     return new GroomParametrization();
   } else if(name == "EtaEtaParametrization") {
@@ -74,7 +83,6 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
   }
   return 0;
 }
-
 TParameters* TParameters::CreateParameters(const std::string& configfile) 
 {
   static Cleaner cleanup;
@@ -116,6 +124,8 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "SmearFermiTail";
   } else if(parclass == "SmearParametrizationStepGaussInter") {
     parclass = "SmearStepGaussInter";
+  } else if(parclass == "SmearParametrizationCrystalBall") {
+    parclass = "SmearCrystalBall";
   }
 
   Parametrization *param = CreateParametrization(parclass,config);

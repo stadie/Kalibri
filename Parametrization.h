@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.52 2009/11/26 18:24:42 stadie Exp $
+//  $Id: Parametrization.h,v 1.53 2010/01/08 18:16:02 mschrode Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1D;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.52 2009/11/26 18:24:42 stadie Exp $
+//!  $Id: Parametrization.h,v 1.53 2010/01/08 18:16:02 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1109,7 +1109,7 @@ class SmearFermiTail : public Parametrization{
 
 
 
-//! \brief Parametrization used for SmearFunction estimation
+//! \brief Parametrization used for response function estimation
 //!        with one Gaussian and an interpolated step function
 //!
 //! The response pdf consists of a central Gaussians around 1 and an
@@ -1177,6 +1177,59 @@ class SmearStepGaussInter : public Parametrization
 
   //! Linear interpolation between two bins
   double interpolate(double r, const std::vector<double>& par) const;
+
+  //! Returns probability density (not normalised!) of truth
+  //! considering cuts on dijet pt
+  double truthPDF(double pt, double n) const;
+
+  //! Print some initialization details
+  void print() const;
+};
+
+
+
+//! \brief Parametrization used for response function estimation
+//!        with a crystal ball function
+// ------------------------------------------------------------------------
+class SmearCrystalBall : public Parametrization
+{ 
+ public:
+  //! Constructor
+  SmearCrystalBall(double tMin, double tMax, double rMin, double rMax, double ptDijetMin, double ptDijetMax, const std::vector<double>& rParScales);
+
+  ~SmearCrystalBall();
+
+  const char* name() const { return "SmearCrystalBall";}
+
+  virtual bool needsUpdate() const { return true; }
+
+  //! Update integral over dijet resolution \p ptDijetCutInt_
+  virtual void update(const double * par);
+
+  //! Returns 0
+  double correctedTowerEt(const Measurement *x,const double *par) const { return 0.; }
+
+  //! Returns probability density of response
+  double correctedJetEt(const Measurement *x,const double *par) const;
+
+  //! Returns probability density of true pt multiplied by normalization
+  //! of dijet probability (see also \p SmearDiJet::truthPDF(t)).
+  double correctedGlobalJetEt(const Measurement *x,const double *par) const;
+
+
+ private:
+  const double tMin_;                   //!< Minimum of non-zero range of truth pdf
+  const double tMax_;                   //!< Maximum of non-zero range of truth pdf
+  const double rMin_;                   //!< Minimum of non-zero range of response pdf
+  const double rMax_;                   //!< Maximum of non-zero range of response pdf
+  const double ptDijetMin_;             //!< Minimum of pt dijet
+  const double ptDijetMax_;             //!< Maximum of pt dijet
+  const std::vector<double> respParScales_;     //!< Parameter scales
+  TH1D * ptDijetCutInt_;	        //!< Integral over dijet response for truth pdf for different t
+
+  //! Returns the function value of a non-normalized crystal
+  //! ball function
+  double crystallBallFunc(double x, double mean, double sigma, double alpha, double n) const;
 
   //! Returns probability density (not normalised!) of truth
   //! considering cuts on dijet pt
