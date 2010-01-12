@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.10 2009/11/24 16:52:58 stadie Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.11 2010/01/08 18:16:02 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -72,6 +72,7 @@ void ControlPlotsJetSmearing::plotResponse() const
   std::vector<TH1F*> hRespFitStep(nPlotBins);   // Step function part of the response pdf
   std::vector<TH1F*> hRespFitGaus(nPlotBins);   // Gauss part of the response pdf
   std::vector<TH1F*> hRespFitSum(nPlotBins);    // Sum of step and Gauss part
+  std::vector<TH1F*> hRatio(nPlotBins);
   TH1F * hTruthPDF = 0;      // Truth pdf
   TH1F * hPtGen = 0;         // PtGen spectrum
   TH1F * hPtHat = 0;         // PtHat spectrum
@@ -126,6 +127,11 @@ void ControlPlotsJetSmearing::plotResponse() const
     hRespFitSum.at(plotBin)->Sumw2();
     hRespFitSum.at(plotBin)->SetLineColor(1);
     hRespFitSum.at(plotBin)->SetLineWidth(2);
+
+    name = "hRatio_" + toString(plotBin);
+    hRatio.at(plotBin) = new TH1F(name.c_str(),";Prediction / truth",
+				  respNBins_,respMin_,respMax_);
+    hRatio.at(plotBin)->SetLineWidth(2);
   }
   
   hPtGen = new TH1F("hPtGen",";p^{gen}_{T} (GeV);1/(Nw)  dN / dp^{gen}_{T}  1 / (GeV)"
@@ -208,7 +214,7 @@ void ControlPlotsJetSmearing::plotResponse() const
   std::vector<double> scale = bag_of<double>(config_->read<string>("jet parameter scales",""));
   std::vector<double> startParJet = bag_of<double>(config_->read<string>("jet start values",""));
   std::vector<double> startParGlobal = bag_of<double>(config_->read<string>("global jet start values",""));
-  std::vector<double> gaussPar = bag_of<double>(config_->read<string>("gauss parameters","1 1 0 0"));
+  std::vector<double> auxPar = bag_of<double>(config_->read<string>("mean response parameters","1 0"));
 
   // Find bin centers for response function evaluation
   std::vector<double> ptGenBinCenters(nPlotBins);
@@ -227,6 +233,23 @@ void ControlPlotsJetSmearing::plotResponse() const
       for(int bin = 1; bin <= hRespFit.at(plotBin)->GetNbinsX(); bin++) {
 	double r = hRespFit.at(plotBin)->GetBinCenter(bin);
 	hRespFit.at(plotBin)->SetBinContent(bin,smearData->respPDF(r,ptGenBinCenters.at(plotBin)));
+      }
+      // Ratio plot
+      for(int bin = 1; bin <= hRatio[plotBin]->GetNbinsX(); bin++) {
+	double rMin = hRatio[plotBin]->GetBinLowEdge(bin);
+	double rMax = rMin + hRatio[plotBin]->GetBinWidth(bin);
+	int min = hRespFit[plotBin]->FindBin(rMin);
+	int max = hRespFit[plotBin]->FindBin(rMax);
+	double pred = (hRespFit[plotBin]->Integral(min,max))/(1+max-min);
+	double truth = hRespMeas[plotBin]->GetBinContent(bin);
+	double ratio = 0.;
+	double error = 0.;
+	if( truth ) {
+	  ratio = pred / truth;
+	  error = pred / truth / truth * hRespMeas[plotBin]->GetBinError(bin);
+	}
+	hRatio[plotBin]->SetBinContent(bin,ratio);
+	hRatio[plotBin]->SetBinError(bin,error);
       }
 
       // Interpolated fit function with start values
@@ -260,7 +283,7 @@ void ControlPlotsJetSmearing::plotResponse() const
 	// Gauss part of fit function
 	for(int bin = 1; bin <= hRespFitGaus.at(plotBin)->GetNbinsX(); bin++) {
 	  // Mean
-	  double mu = gaussPar.at(0);
+	  double mu = auxPar.at(0);
 	  // Width
 	  double a1 = scale.at(1)*(smearData->respPar()[1]);
 	  double a2 = scale.at(2)*(smearData->respPar()[2]);
@@ -281,6 +304,7 @@ void ControlPlotsJetSmearing::plotResponse() const
 	    + hRespFitGaus.at(plotBin)->GetBinContent(binGaus);
 	  hRespFitSum.at(plotBin)->SetBinContent(binGaus,val);
 	}
+      } else if( param == "SmearParametrizationCrystalBall" ) {
       } else {
 	std::cout << "WARNING: No controlplots implemented for parametrization '" << param << "'\n";
       }
@@ -316,6 +340,7 @@ void ControlPlotsJetSmearing::plotResponse() const
   for(int plotBin = 0; plotBin < nPlotBins; plotBin++) {
     hRespMeas.at(plotBin)->GetXaxis()->SetRange(minBin,maxBin);
     hRespMeasAbs.at(plotBin)->GetXaxis()->SetRange(minBin,maxBin);
+    hRatio.at(plotBin)->GetXaxis()->SetRange(minBin,maxBin);
   }
 
   hPtGen->GetXaxis()->SetRangeUser(tMin,tMax);
@@ -434,6 +459,12 @@ void ControlPlotsJetSmearing::plotResponse() const
     legPtRangeAndCenters.at(plotBin)->Draw("same");
     c1->SetLogy();
     c1->Draw();
+
+    ps->NewPage();
+    c1->cd();
+    hRatio[plotBin]->Draw();
+    c1->SetLogy(0);
+    c1->Draw();
   }
 
   // Truth spectrum
@@ -478,6 +509,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     rootfile.WriteTObject(hRespFitStep.at(plotBin));
     rootfile.WriteTObject(hRespFitGaus.at(plotBin));
     rootfile.WriteTObject(hRespFitSum.at(plotBin));
+    rootfile.WriteTObject(hRatio.at(plotBin));
   }
   rootfile.WriteTObject(hPtGen);
   rootfile.WriteTObject(hPtHat);
@@ -497,6 +529,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     delete hRespFitGaus.at(plotBin);
     delete hRespFitSum.at(plotBin);
     delete legPtRangeAndCenters.at(plotBin);
+    delete hRatio[plotBin];
   }
   delete legFitStart;
   delete hPtGen;
@@ -564,8 +597,8 @@ void ControlPlotsJetSmearing::plotDijets() const
   hPtHat->SetLineWidth(2);
   hPtHat->Sumw2();
 
-  vector<TH1F*> hGenJetPt;
-  vector<TH1F*> hCalJetPt;
+  std::vector<TH1F*> hGenJetPt;
+  std::vector<TH1F*> hCalJetPt;
   std::string genJetNames[3] = { "hGenJetPtBothJets",
 				 "hGenJetPtJet1", 
 				 "hGenJetPtJet2" };
@@ -757,7 +790,7 @@ void ControlPlotsJetSmearing::plotDijets() const
   leg->AddEntry(hGenJetPt.at(1),"Jet 1","L");
   leg->AddEntry(hGenJetPt.at(2),"Jet 2","L");
 
-  vector<TObject*> objs;
+  std::vector<TObject*> objs;
   for(size_t i = 1; i < hGenJetPt.size(); i++) {
     objs.push_back(hGenJetPt.at(i));
   }
@@ -827,7 +860,7 @@ void ControlPlotsJetSmearing::plotDijets() const
 //!  \param log    Sets log-scale on last axis if true
 // --------------------------------------------------
 void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, TObject * obj, std::string option, bool log) const {
-  vector<TObject*> objs;
+  std::vector<TObject*> objs;
   objs.push_back(obj);
   drawPSPage(ps,can,objs,option,log);
 }
@@ -849,7 +882,7 @@ void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, TObjec
 //!                see above)
 //!  \param log    Sets log-scale on last axis if true
 // --------------------------------------------------
-void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, vector<TObject*> objs, std::string option, bool log) const {
+void ControlPlotsJetSmearing::drawPSPage(TPostScript * ps, TCanvas * can, std::vector<TObject*> objs, std::string option, bool log) const {
   ps->NewPage();
   can->cd();
   for( size_t i = 0; i < objs.size(); i++ ) {
