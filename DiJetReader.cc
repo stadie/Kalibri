@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.33 2010/01/08 18:22:55 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.34 2010/01/12 19:24:48 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -439,6 +439,10 @@ Event* DiJetReader::createSmearEvent()
 					   maxNIter_);                 // Integration n iterations
 
   // Delete other jets
+  for(std::vector<Jet*>::iterator jetIt = jets.begin()+3;
+      jetIt != jets.end(); jetIt++) {
+    delete *jetIt;
+  }
   jets.erase(jets.begin()+3,jets.end());
 
   // Check if event is ok and return
