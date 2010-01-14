@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.cc,v 1.2 2010/01/08 18:16:02 mschrode Exp $
+//  $Id: Parametrization.cc,v 1.3 2010/01/12 16:00:37 mschrode Exp $
 //
 #include "Parametrization.h"
 
@@ -245,7 +245,7 @@ void SmearStepGaussInter::print() const {
 
 // ------------------------------------------------------------------------
 SmearCrystalBall::SmearCrystalBall(double tMin, double tMax, double rMin, double rMax, double ptDijetMin, double ptDijetMax, const std::vector<double>& rParScales)
-  : Parametrization(0,3,0,1),
+  : Parametrization(0,4,0,1),
     tMin_(tMin),
     tMax_(tMax),
     rMin_(rMin),
@@ -319,7 +319,7 @@ void SmearCrystalBall::update(const double * par) {
 //! - 1: sigma
 //! - 2: alpha
 //! - 3: n
-//! The pdf is 0 for \f$ R < rMin_ \f$ and \f$ R > rMax_ \f$.
+//! The pdf is 0 for \f$ R < rMin\_ \f$ and \f$ R > rMax\_ \f$.
 //! \param x   Measurement::E is the response, Measurement::pt the true pt
 //! \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
 //! \return Probability density of response
@@ -332,6 +332,10 @@ double SmearCrystalBall::correctedJetEt(const Measurement *x,const double *par) 
     double sigma = respParScales_[1]*par[1];
     double alpha = respParScales_[2]*par[2];
     double n = respParScales_[3]*par[3];
+
+    if( sigma <= 0 ) sigma = 1E-5;
+    if( alpha <= 0 ) alpha = 1E-5;
+    if( n <= 0 ) n = 1E-5;
     
     double norm = 0.;
     int nSteps = 100;
