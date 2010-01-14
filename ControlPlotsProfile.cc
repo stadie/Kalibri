@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: ControlPlotsProfile.cc,v 1.1 2010/01/04 17:04:51 mschrode Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -214,7 +214,7 @@ void ControlPlotsProfile::fill(const Event * evt) {
 
 
 
-//! \sa ControlPlotsProfile::Bin::fitProfiles()
+//! see also \p ControlPlotsProfile::Bin::fitProfiles()
 // ----------------------------------------------------------------   
 void ControlPlotsProfile::fitProfiles() {
   for(std::vector<Bin*>::iterator it = bins_.begin(); it != bins_.end(); it++) {

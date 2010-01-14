@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
+// $Id: CalibData.h,v 1.77 2009/11/26 18:24:42 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -27,7 +27,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann
-//!  $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
+//!  $Id: CalibData.h,v 1.77 2009/11/26 18:24:42 stadie Exp $
 class Measurement
 {
 public:
@@ -63,7 +63,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
+//!  $Id: CalibData.h,v 1.77 2009/11/26 18:24:42 stadie Exp $
 class TTrack : public Measurement
 {
 public:
@@ -120,7 +120,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
+//! $Id: CalibData.h,v 1.77 2009/11/26 18:24:42 stadie Exp $
 class Event
 {
 public:
@@ -217,7 +217,7 @@ public:
   
   //!  \brief Cut on residuals
   //!
-  //!  discards events with $|residual| > 1.5 \sigma$
+  //!  discards events with \f$ |residual| > 1.5 \sigma \f$
   //!
   //!  \param z2 Normalized and squared residual
   //!  \return Scaled residual
@@ -235,7 +235,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.76 2009/11/24 17:13:17 stadie Exp $
+//!  $Id: CalibData.h,v 1.77 2009/11/26 18:24:42 stadie Exp $
 class TAbstractData : public Event
 {
 public:
