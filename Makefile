@@ -34,6 +34,7 @@ dirs:
 	@mkdir -p bin
 	@mkdir -p lib
 	@mkdir -p tmp
+	@mkdir -p controlPlots
 
 
 lbfgs.o: lbfgs.F
