@@ -2,18 +2,19 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.20 2009/11/25 13:07:45 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.21 2009/11/26 18:24:41 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
 #include "TLorentzVector.h"
 
 JetWithTowers::JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
-			     double eta,double phi, double etaeta, Flavor flavor, double genPt, double dR,
+			     double eta,double phi, double phiphi, double etaeta, 
+			     Flavor flavor, double genPt, double dR,
 			     CorFactors* corFactors, const Function& func, 
 			     double (*errfunc)(const double *x, const Measurement *xorig, double err), 
 			     const Function& gfunc, double Etmin) 
-  :  Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,etaeta,flavor,genPt,dR,corFactors,
+  :  Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,phiphi,etaeta,flavor,genPt,dR,corFactors,
 	 func,errfunc,gfunc,Etmin),
      ntowerpars(0)
 {
