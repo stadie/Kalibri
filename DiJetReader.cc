@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.35 2010/01/14 13:11:28 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.36 2010/01/25 17:35:20 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -375,8 +375,8 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       jet = jt;
     }
     else { 
-      jet = new Jet(nJet_->JetCorrL2L3[calJetIdx]*nJet_->JetEt[calJetIdx],em * factor,had * factor,out * factor,
-		    nJet_->JetCorrL2L3[calJetIdx]*nJet_->JetE[calJetIdx],
+      jet = new Jet(nJet_->JetEt[calJetIdx],em * factor,had * factor,
+		    out * factor,nJet_->JetE[calJetIdx],
 		    nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaEta[calJetIdx],
