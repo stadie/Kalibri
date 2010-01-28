@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.h,v 1.3 2009/10/30 08:14:24 mschrode Exp $
+//    $Id: JetConstraintEvent.h,v 1.4 2009/11/24 16:52:59 stadie Exp $
 //   
 #ifndef JETCONSTRAINTEVENT_H
 #define JETCONSTRAINTEVENT_H
@@ -20,7 +20,7 @@
 class JetConstraintEvent : public Event
 {
  public:
-  JetConstraintEvent(double t, double w) : truth(t), weight(w) {}
+  JetConstraintEvent(double w) : trusum(0),weight(w) {}
   ~JetConstraintEvent();
     
   void addJet(Jet* j);
@@ -28,7 +28,7 @@ class JetConstraintEvent : public Event
 
   //interface from TData
   Measurement *GetMess() const {return jets[0];}
-  double GetTruth() const { return truth;}
+  double GetTruth() const { return jets.size() ? trusum / jets.size() : 0;}
   double GetParametrizedMess() const { return jets[0]->correctedEt(jets[0]->Et());}
 
   void ChangeParAddress(double* oldpar, double* newpar);
@@ -40,7 +40,7 @@ class JetConstraintEvent : public Event
   double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   void updateError() { } 
   void setWeight(double w) {weight = w;}
-  double ptHat() const { return truth;}
+  double ptHat() const { return GetTruth();}
  private:
   struct Variation{
     double uppersum;
@@ -50,7 +50,7 @@ class JetConstraintEvent : public Event
   typedef std::map<int, Variation> VarMap;
   mutable VarMap varmap;
   std::vector<Jet*> jets;
-  double truth;
+  double trusum;
   double weight;
   mutable double chi2plots;   //!< Store chi2 value from last iteration for plots
 };
