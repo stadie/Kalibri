@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.44 2010/01/08 18:16:02 mschrode Exp $
+// $Id: Parameters.cc,v 1.45 2010/01/12 16:00:37 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -80,6 +80,10 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     return new GroomParametrization();
   } else if(name == "EtaEtaParametrization") {
     return new EtaEtaParametrization();
+  } else if(name == "PhiPhiParametrization") {
+    return new PhiPhiParametrization();
+  } else if(name == "BinnedEMFParametrization") {
+    return new BinnedEMFParametrization();
   }
   return 0;
 }

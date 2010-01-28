@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.53 2010/01/08 18:16:02 mschrode Exp $
+//  $Id: Parametrization.h,v 1.54 2010/01/12 16:00:37 mschrode Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1D;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.53 2010/01/08 18:16:02 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.54 2010/01/12 16:00:37 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1332,6 +1332,7 @@ public:
   }
  
   double correctedJetEt(const Measurement *x,const double *par) const {
+    if(std::abs(x->eta) > 1.2) return x->pt;
     double y = x->etaeta > 0.25 ? 0.12 : x->etaeta - 0.13;
     
     double c = 1/(par[0] + exp((x->pt-par[1])/par[2])) + par[3];
@@ -1342,6 +1343,65 @@ public:
   }
 };
 
+//!  \brief Parametrization of jet response based to eta-eta moment
+//!
+//!  This parametrization has 14 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class PhiPhiParametrization: public Parametrization {
+public:
+  PhiPhiParametrization() : Parametrization(0,14,0,0) {}
+  const char* name() const { return "PhiPhiParametrization";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+    if(std::abs(x->eta) > 1.2) return x->pt;
+    double y = x->phiphi > 0.25 ? 0.12 : x->phiphi - 0.13;
+    
+    double c = 1/(par[0] + exp((x->pt-par[1])/par[2])) + par[3];
+    c += y * ( par[4] - par[5]/(pow(log(x->pt),par[6])+par[7]) + par[8]/x->pt);
+    c += y *y *(par[9] * x->pt + par[10] * pow(x->pt,2.0/3.0) + par[11] * pow(x->pt,-1.0/3.0) + par[12] * (x->pt - par[13])/x->pt);
+    
+    return c * x->pt;  
+  }
+};
 
+
+//!  \brief Parametrization of jet response based on emf
+//!
+//!  This parametrization has 30 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class BinnedEMFParametrization: public Parametrization {
+public:
+  BinnedEMFParametrization() : Parametrization(0,40,0,0) {}
+  const char* name() const { return "BinnedEMFParametrization";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+    if(std::abs(x->eta) > 1.2) return x->pt;
+    // please note that Measurement::EMF is EmEt!!!
+    double emf = x->EMF / (x->EMF+x->HadF);
+    if(emf < 0) return x->pt;
+    if(emf > 1) return x->pt;
+    int bin = (int)(emf * 10);
+    if(bin == 10) bin = 9;
+    
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
+    double logpt = log10(pt);
+
+    int id = 4 * bin;
+    double c = par[id] + logpt *(par[id+1] + logpt * (par[id+2]+ par[id+3]*logpt));
+    return c * x->pt;  
+  }
+};
 
 #endif
