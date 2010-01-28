@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.5 2009/11/27 15:28:12 stadie Exp $
+// $Id: EventReader.cc,v 1.6 2010/01/08 18:23:28 mschrode Exp $
 //
 #include "EventReader.h"
 
@@ -82,6 +82,9 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
   corFactorsFactory_ = CorFactorsFactory::map[jcn];
 
   correctToL3_ = config_->read<bool>("correct jets to L3",false);
+  if(correctToL3_) {
+    std::cout << "Jets will be corrected to Level3." << std::endl;
+  }
 }
 
 EventReader::~EventReader()
