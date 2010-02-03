@@ -9,6 +9,7 @@ else
  F77LDFLAGS=-lgfortran
 endif
 
+
 #O2 for optimization, g for debugging, pg for profiling
 SPECIALFLAGS= -fpic -g -O3#-pg#-O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
@@ -18,6 +19,14 @@ ROOTLIBS=$(shell root-config --libs) -lMinuit
 CFLAGS= $(SPECIALFLAGS) -Wall $(ROOTAUXCFLAGS)
 #-L../../lib/$(SRT_SUBDIR)/
 LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS) -lgsl -lgslcblas -lm
+BOOSTFLAGS=-I/usr/include/boost
+
+# change path for fink@MacOS
+ifeq (exists, $(shell [ -d /sw/include ] && echo exists)) 
+ BOOSTFLAGS=-I/sw/include/boost
+ SPECIALFLAGS += -arch i386 -I/sw/include
+ LFLAGS += -L/sw/lib
+endif
 
 RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
@@ -149,7 +158,7 @@ lib/libKalibri.so: $(SRC:.cc=.o) lbfgs.o
 	@echo '-> Kalibri library created.'
 
 Kalibri.o: Kalibri.cc Kalibri.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h JetConstraintsReader.h EventProcessor.h  EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h TwoJetsPtBalanceEvent.h 
-	$(C) $(CFLAGS) $(RCXX) -I/usr/include/boost -c Kalibri.cc 
+	$(C) $(CFLAGS) $(RCXX) $(BOOSTFLAGS) -c Kalibri.cc 
 
 caliber.o: caliber.cc Kalibri.h JetTruthEvent.h Jet.h
 	$(C) $(RCXX) -c caliber.cc
@@ -205,7 +214,7 @@ comp: 	ControlPlotsComparison.o compareControlPlots.o
 	@echo '-> Comparison executable created. Type "compControlPlots" to compare control plots.'
 
 lib/libJetMETObjects.so: dirs JetMETObjects
-	@env STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS} /bin/sh -c 'make -C JetMETObjects'
+	@env STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX} -DSTANDALONE -I.'  /bin/sh -c 'make -e -C JetMETObjects'
 
 JetMETObjects:
 	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -d JetMETObjects CMSSW/CondFormats/JetMETObjects
@@ -215,5 +224,5 @@ plugins: dirs lib/libJetMETCor.so
 
 lib/libJetMETCor.so: CorFactors.h lib/libJetMETObjects.so JetMETCorFactorsFactory.h JetMETCorFactorsFactory.cc CorFactorsFactory.h Jet.h
 	$(C) $(CFLAGS) -c JetMETCorFactorsFactory.cc
-	$(LD) $(CFLAGS) -shared JetMETCorFactorsFactory.o lib/libJetMETObjects.so $(RLXX) -o lib/libJetMETCor.so
+	$(LD) $(CFLAGS) -shared JetMETCorFactorsFactory.o lib/libJetMETObjects.so lib/libKalibri.so $(RLXX) -o lib/libJetMETCor.so
 	@echo '-> JetMETCor plugin created.'
