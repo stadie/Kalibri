@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.36 2009/11/27 15:28:12 stadie Exp $
+//    $Id: Jet.cc,v 1.37 2010/01/25 17:35:20 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -19,6 +19,15 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
   : Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi,phiphi,etaeta),flavor_(flavor), 
     genPt_(genPt),dR_(dR), ptHat_(0.), corFactors_(corFactors),f(f),gf(gf),
     errf(errfunc),etmin(Etmin),EoverPt(E/Et),gsl_impl(this)
+{
+  temp = *this;
+  varcoll.resize(f.nPars() + gf.nPars());
+}
+
+Jet::Jet(const Jet& j) 
+  : Measurement(j), flavor_(j.flavor_), genPt_(j.genPt_),dR_(j.dR_), 
+    ptHat_(j.ptHat_),corFactors_(new CorFactors(*(j.corFactors_))),f(j.f),
+    gf(j.gf),errf(j.errf),etmin(j.etmin),EoverPt(j.EoverPt),gsl_impl(this)
 {
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());

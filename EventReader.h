@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.8 2009/11/27 15:28:12 stadie Exp $
+// $Id: EventReader.h,v 1.9 2010/01/08 18:23:28 mschrode Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -11,9 +11,12 @@ class Measurement;
 class CorFactors;
 class CorFactorsFactory;
 class TTree;
+class JetConstraintEvent;
+class Parametrization;
 
 #include <vector>
 #include <string>
+
 
 class EventReader
 {
@@ -23,6 +26,8 @@ class EventReader
   EventReader(const std::string& configfile, TParameters* p);
   virtual ~EventReader();
   virtual int readEvents(std::vector<Event*>& data) = 0;
+
+  static int addConstraints(std::vector<Event*>& data);
 
  protected:
   //! Read CorFactors from Ntuple
@@ -38,7 +43,10 @@ class EventReader
 
   double (*tower_error_param)(const double *x, const Measurement *xorig, double err);
   double (*jet_error_param)  (const double *x, const Measurement *xorig, double err);
-  double (*track_error_param)(const double *x, const Measurement *xorig, double err);
+  double (*track_error_param)(const double *x, const Measurement *xorig, double err);  
+
+  static std::vector<JetConstraintEvent*> constraints_;
+  Parametrization *cp_;
 };
 
 

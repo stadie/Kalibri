@@ -12,7 +12,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTracks.h,v 1.7 2009/11/26 18:24:42 stadie Exp $
+//!    $Id: JetWithTracks.h,v 1.8 2010/01/25 17:35:20 stadie Exp $
 // ---------------------------------------------------------------   
 class JetWithTracks : public Jet
 {
@@ -40,9 +40,11 @@ class JetWithTracks : public Jet
 		double Had5, double TrackChi2, int NValidHits, bool TrackQualityT, 
 		double MuDR, double MuDE, double Efficiency, const Function& f,
 		double (*errfunc)(const double *x, const Measurement *xorig, double err));
+  virtual Jet* clone() const { return new JetWithTracks(*this);} //!< Clone this jet
  protected:
   virtual double expectedEt(double truth, double start, bool fast = false);
  private:
+  JetWithTracks(const JetWithTracks& j); //!< disallow copies!
   class Track : public TTrack {
   public:
     Track(double Et, double EmEt, double HadEt ,double OutEt, double E,
@@ -73,6 +75,8 @@ class JetWithTracks : public Jet
   private:
     Function f;
     double (*errf)(const double *x, const Measurement *xorig, double err);
+
+    friend class JetWithTracks;
   };
   typedef std::vector<Track*> TrackColl;
   typedef TrackColl::iterator TrackCollIter;

@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.2 2009/11/24 16:52:58 stadie Exp $
+//  $Id: Kalibri.cc,v 1.3 2010/01/04 17:04:51 mschrode Exp $
 
 #include "Kalibri.h"
 
@@ -23,7 +23,6 @@ boost::mutex io_mutex;
 #include "ZJetReader.h"
 #include "TopReader.h"
 #include "ParameterLimitsReader.h"
-#include "JetConstraintsReader.h"
 #include "EventProcessor.h"
 #include "EventWeightProcessor.h"
 
@@ -559,8 +558,7 @@ void Kalibri::init()
   ParameterLimitsReader plr(configFile_,par_);
   plr.readEvents(data_);
 
-  JetConstraintsReader jcr(configFile_,par_);
-  jcr.readEvents(data_);
+  EventReader::addConstraints(data_);
 }
 //--^-Kalibri class-^------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------

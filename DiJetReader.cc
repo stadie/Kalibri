@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.36 2010/01/25 17:35:20 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.37 2010/01/25 17:51:35 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -12,6 +12,7 @@
 #include "Jet.h"
 #include "JetWithTowers.h"
 #include "TwoJetsPtBalanceEvent.h"
+#include "JetConstraintEvent.h"
 #include "NJetSel.h"
 #include "CorFactors.h"
 #include "CorFactorsFactory.h"
@@ -395,6 +396,10 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColEt[genJetIdx],1.);//nJet_->Weight);
     data.push_back(jte);
     ++njets;
+    //add jet to constraints
+    for(unsigned int i = 0 ; i < constraints_.size() ; ++i) {
+      constraints_[i]->addJet(jet,new Function(&Parametrization::correctedJetEt,0,0,0,0,cp_));
+    }
   }     
   delete [] terr;
   return njets;

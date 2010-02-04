@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.54 2010/01/12 16:00:37 mschrode Exp $
+//  $Id: Parametrization.h,v 1.55 2010/01/28 16:05:44 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1D;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.54 2010/01/12 16:00:37 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.55 2010/01/28 16:05:44 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1373,7 +1373,7 @@ public:
 
 //!  \brief Parametrization of jet response based on emf
 //!
-//!  This parametrization has 30 jet parameters.
+//!  This parametrization has 40 jet parameters.
 //!
 //!  \sa Parametrization
 // -----------------------------------------------------------------
@@ -1394,6 +1394,36 @@ public:
     if(emf > 1) return x->pt;
     int bin = (int)(emf * 10);
     if(bin == 10) bin = 9;
+    
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
+    double logpt = log10(pt);
+
+    int id = 4 * bin;
+    double c = par[id] + logpt *(par[id+1] + logpt * (par[id+2]+ par[id+3]*logpt));
+    return c * x->pt;  
+  }
+};
+
+//!  \brief Parametrization of jet response based on width in phi
+//!
+//!  This parametrization has 40 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class BinnedPhiPhiParametrization: public Parametrization {
+public:
+  BinnedPhiPhiParametrization() : Parametrization(0,40,0,0) {}
+  const char* name() const { return "BinnedEMFParametrization";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+    if(std::abs(x->eta) > 1.2) return x->pt;
+    
+    int bin = (int)(x->phiphi * 4 );
+    if(bin > 9) bin = 9;
     
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
     double logpt = log10(pt);

@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.21 2009/11/26 18:24:41 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.22 2010/01/25 17:35:20 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -20,11 +20,22 @@ JetWithTowers::JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt,
 {
 }
 
+JetWithTowers::JetWithTowers(const JetWithTowers& j) 
+  : Jet(j),ntowerpars(0)
+{ 
+  for(TowerCollConstIter i = j.towers.begin() ; i != j.towers.end() ; ++i) {
+    const Tower *t = *i;
+    addTower(t->Et(),t->EmEt(),t->HadEt(),t->OutEt(),t->E(),t->eta(),t->phi(),
+	     t->f,t->errf);
+  }
+}
+
 JetWithTowers::~JetWithTowers() 
 {
   for(TowerCollIter i = towers.begin() ; i != towers.end() ; ++i) {
     delete *i;
   }
+  towers.clear();
 }  
 
 void JetWithTowers::ChangeParAddress(double* oldpar, double* newpar) 

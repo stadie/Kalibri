@@ -1,11 +1,13 @@
 //
-// $Id: EventReader.cc,v 1.6 2010/01/08 18:23:28 mschrode Exp $
+// $Id: EventReader.cc,v 1.7 2010/01/28 16:06:22 stadie Exp $
 //
 #include "EventReader.h"
 
 #include "ConfigFile.h"
 #include "Parameters.h" 
+#include "Parametrization.h"
 #include "CorFactorsFactory.h"
+#include "JetConstraintEvent.h" 
 #include "TChain.h"
 #include "ToyMC.h"
 #include "TTree.h"
@@ -13,9 +15,10 @@
 #include <dlfcn.h>
 
 unsigned int EventReader::numberOfEventReaders_ = 0;
+std::vector<JetConstraintEvent*> EventReader::constraints_;
 
 EventReader::EventReader(const std::string& configfile, TParameters* param) 
-  : config_(0),par_(param),corFactorsFactory_(0)
+  : config_(0),par_(param),corFactorsFactory_(0),cp_(new ConstParametrization())
 {
   numberOfEventReaders_++;
 
@@ -84,12 +87,32 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
   correctToL3_ = config_->read<bool>("correct jets to L3",false);
   if(correctToL3_) {
     std::cout << "Jets will be corrected to Level3." << std::endl;
+  } 
+  if(! constraints_.size() ) {
+    std::vector<double> jet_constraint = bag_of<double>(config_->read<std::string>( "jet constraints",""));
+    if(jet_constraint.size() % 5 == 0) {
+      for(unsigned int i = 0 ; i < jet_constraint.size() ; i += 5) {
+	constraints_.push_back(new JetConstraintEvent(jet_constraint[i],jet_constraint[i+1],jet_constraint[i+2],jet_constraint[i+3],jet_constraint[i+4]));
+      } 
+    } else if(jet_constraint.size() > 1) {
+      std::cout << "wrong number of arguments for jet constraint:" << jet_constraint.size() << '\n';
+    }
+    for(unsigned int i = 0 ; i < constraints_.size() ; ++i) {
+      const JetConstraintEvent* jce = constraints_[i];
+      std::cout << "adding constraint for jets with " << jce->minEta() << " < |eta| <  " 
+		<< jce->maxEta() << " and " << jce->minPt() << " < pt < " << jce->maxPt() 
+		<< " with weight " << jce->weight() << "\n";
+    }
   }
 }
 
 EventReader::~EventReader()
 {
   delete config_;
+  for(unsigned int i = 0 ; i < constraints_.size() ; ++i) {
+    delete constraints_[i];
+  }
+  constraints_.clear();
 }
 
 
@@ -167,3 +190,16 @@ TTree * EventReader::createTree(const std::string &dataType) const {
   return tree;
 }
  
+int EventReader::addConstraints(std::vector<Event*>& data) {
+  unsigned int n = constraints_.size();
+  for(unsigned int i = 0 ; i < n ; ++i) { 
+    JetConstraintEvent* jce = constraints_[i];
+    std::cout << "added constraint for jets with " << jce->minEta() << " < |eta| <  " 
+	      << jce->maxEta() << " and " << jce->minPt() << " < pt < " << jce->maxPt() 
+	      << " with weight " << jce->weight() << " and " << jce->nJets() 
+	      << " jets " << "\n";
+    data.push_back(jce);
+  }
+  constraints_.clear();
+  return n;
+}

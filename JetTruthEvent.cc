@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.17 2009/07/23 15:51:17 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.18 2009/11/24 16:52:58 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -336,8 +336,8 @@ double JetTruthEvent::chi2_log_fast_invert(double * temp_derivative1,
   }
 
   for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
-    if((std::abs((i->lowerEt - expectedEt)/expectedEt) > 0.01) || 
-       (std::abs((i->upperEt - expectedEt)/expectedEt) > 0.01)) {
+    if((std::abs((i->lowerEt - expectedEt)/expectedEt) > 0.05) || 
+       (std::abs((i->upperEt - expectedEt)/expectedEt) > 0.05)) {
       std::cout << "strange extrapolation result modifying par:" << i->parid << ":" 
 		<< expectedEt << "  - " << i->lowerEt << "  + " << i->upperEt 
 		<< "  uncor  jet Et:" << jet->Et() << " truth:" << truth << std::endl;

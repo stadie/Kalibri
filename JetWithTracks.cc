@@ -2,7 +2,7 @@
 //    Class for jets with tracks 
 //
 //    first version: Hartmut Stadie 2009/04/08
-//    $Id: JetWithTracks.cc,v 1.8 2009/11/26 18:24:41 stadie Exp $
+//    $Id: JetWithTracks.cc,v 1.9 2010/01/25 17:35:20 stadie Exp $
 //   
 #include"JetWithTracks.h"
 
@@ -17,6 +17,18 @@ JetWithTracks::JetWithTracks(double Et, double EmEt, double HadEt ,double OutEt,
 	 func,errfunc,gfunc,Etmin),
      ntrackpars(0), expectedCaloEt(0), trackPt(0)
 {
+}
+
+JetWithTracks::JetWithTracks(const JetWithTracks& j) 
+  :  Jet(j),ntrackpars(0), expectedCaloEt(0), trackPt(0)
+{
+  for(TrackCollConstIter i = j.tracks.begin() ; i != j.tracks.end() ; ++i) {
+    const Track *t = *i;
+    addTrack(t->Et(),t->EmEt(),t->HadEt(),t->OutEt(),t->E(),t->eta(),t->phi(),
+	     t->TrackId,t->TowerId,t->DR,t->DRout,t->etaOut,t->phiOut,
+	     t->EM1,t->EM5,t->Had1,t->Had5,t->TrackChi2,t->NValidHits,
+	     t->TrackQualityT,t->MuDR,t->MuDE,t->Efficiency,t->f,t->errf);
+  }
 }
 
 JetWithTracks::~JetWithTracks() 

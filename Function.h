@@ -2,7 +2,7 @@
 //    Class representing a correction function
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.17 2009/07/23 15:51:17 stadie Exp $
+//    $Id: Function.h,v 1.4 2009/11/24 16:52:59 stadie Exp $
 //   
 #ifndef FUNCTION_H
 #define FUNCTION_H
@@ -30,8 +30,8 @@ class Function {
   bool hasInverse() { return invfunc_;}
   double inverse(const Measurement* x) const { return invfunc_ ? (param_->*invfunc_)(x,firstpar_) : 0;}
  private:
-  const ParametrizationFunction func_;
-  const ParametrizationFunction invfunc_;
+  ParametrizationFunction func_;
+  ParametrizationFunction invfunc_;
   double *firstpar_;
   int parindex_;
   int npars_;

@@ -12,7 +12,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTowers.h,v 1.18 2009/11/26 18:24:42 stadie Exp $
+//!    $Id: JetWithTowers.h,v 1.19 2010/01/25 17:35:20 stadie Exp $
 // ----------------------------------------------------------------   
 class JetWithTowers : public Jet
 {
@@ -37,7 +37,9 @@ class JetWithTowers : public Jet
   void addTower(double Et, double EmEt, double HadEt ,double OutEt, double E,
 		double eta,double phi,const Function& f,
 		double (*errfunc)(const double *x, const Measurement *xorig, double err));
+  virtual Jet* clone() const { return new JetWithTowers(*this);} //!< Clone this jet
  private:
+  JetWithTowers(const JetWithTowers& j); //!< disallow copies!
   class Tower : public Measurement {
   public:
     Tower(double Et, double EmEt, double HadEt ,double OutEt, double E,
@@ -78,6 +80,8 @@ class JetWithTowers : public Jet
     mutable double fraction;
     Function f;
     double (*errf)(const double *x, const Measurement *xorig, double err);
+
+    friend class JetWithTowers;
   };
   typedef std::vector<Tower*> TowerColl;
   typedef TowerColl::iterator TowerCollIter;

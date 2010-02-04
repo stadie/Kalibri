@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.29 2010/01/12 19:24:48 mschrode Exp $
+//!    $Id: Jet.h,v 1.30 2010/01/25 17:35:20 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -137,10 +137,13 @@ class Jet : public Measurement
   static void printInversionStats();  //!< Print some info on inversion
 
   int parIndex() const { return f.parIndex(); }
+
+  virtual Jet* clone() const { return new Jet(*this);} //!< Clone this jet
+  void setGlobalFunction(const Function& ngf) { gf = ngf;} //!< Set global correction function, needed for constraints
  protected:
   mutable VariationColl varcoll;
   virtual double expectedEt(double truth, double start, bool fast = false);
-
+  Jet(const Jet&j); //!< disallow copies!
  private: 
   Flavor flavor_;           //!< The jet's Flavor
   double genPt_;            //!< The genjet pt
