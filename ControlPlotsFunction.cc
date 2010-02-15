@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: ControlPlotsFunction.cc,v 1.1 2010/01/04 17:04:51 mschrode Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -47,6 +47,18 @@ double ControlPlotsFunction::jetTruthEventJetEta(const Event *evt) const {
   return jet->eta();
 }
 
+
+//!  \brief Returns the #phi #phi moment of the jet
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventJetMomentPhiPhi(const Event *evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  Jet * jet = static_cast<Jet*>(jte->GetMess());
+
+  return jet->momentPhiPhi();
+}
 
 
 //!  \brief Returns truth pt

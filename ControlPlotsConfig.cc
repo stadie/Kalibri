@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.1 2010/01/04 17:04:51 mschrode Exp $
+// $Id: ControlPlotsConfig.cc,v 1.2 2010/02/15 12:36:44 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -484,6 +484,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
   
   if( varName == "Eta" )
     title = "#eta";
+  else if( varName == "momentPhiPhi" ) 
+    title = "#sigma_{#phi#phi}";
   else if( varName == "GenJetPt" )
     title = "p^{gen}_{T}";
   else if( varName == "GenJetResponse" )
