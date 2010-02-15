@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.30 2010/01/25 17:35:20 stadie Exp $
+//!    $Id: Jet.h,v 1.31 2010/02/04 09:55:05 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -131,8 +131,8 @@ class Jet : public Measurement
   typedef std::vector<ParameterVariation> VariationColl;
   typedef std::vector<ParameterVariation>::const_iterator VariationCollIter;
   virtual const VariationColl& varyPars(double eps, double Et, double start);
-  virtual const VariationColl& varyParsDirectly(double eps);
-
+  virtual const VariationColl& varyParsDirectly(double eps, bool computeDeriv = true);
+  
   void print();                       //!< Print some jet members
   static void printInversionStats();  //!< Print some info on inversion
 
@@ -165,6 +165,7 @@ class Jet : public Measurement
   static long long nwarns;        //!< Number of warnings during inversion
 
   mutable Measurement temp;
+  mutable double root;
   const double EoverPt;
   class GslImplementation {
     struct rf_par {

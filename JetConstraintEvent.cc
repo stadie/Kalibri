@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.cc,v 1.3 2010/01/28 16:07:27 stadie Exp $
+//    $Id: JetConstraintEvent.cc,v 1.4 2010/02/04 09:55:05 stadie Exp $
 //   
 
 
@@ -18,14 +18,17 @@ JetConstraintEvent::~JetConstraintEvent()
   jets_.clear();
 }
 
-void JetConstraintEvent::addJet(const Jet* j, const Function* globalFunc) 
+void JetConstraintEvent::addJet(double truePt, const Jet* j, 
+				const Function* globalFunc) 
 {
-  if((j->pt() > maxpt_) || (j->pt() < minpt_) || 
+  if((truePt > maxpt_) || (truePt < minpt_) || 
      (std::abs(j->eta()) > maxeta_) || (std::abs(j->eta()) < mineta_)) return; 
   
   Jet* jet = j->clone();
   if(globalFunc) jet->setGlobalFunction(*globalFunc);
+  error_ = error_ * jets_.size() + jet->Error();
   jets_.push_back(jet); 
+  error_ /= jets_.size();
   trusum_ += jet->Et();
   //add parameter ids to variation  map
   const Jet::VariationColl& varcoll = jet->varyParsDirectly(0.001);
@@ -49,8 +52,8 @@ double JetConstraintEvent::chi2() const
   for(unsigned int i = 0 ; i < njets ; ++i) {
     sumet += jets_[i]->correctedEt(jets_[i]->Et());
   }
-  double chi2 = sumet / trusum_ -1;
-  return weight_ * chi2 * chi2;
+  double chi2 = (sumet - trusum_) / error_;
+  return weight_ * chi2 * chi2 / jets_.size();
 }
 
 double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const
@@ -64,9 +67,9 @@ double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_de
   for(unsigned int i = 0 ; i < njets ; ++i) {
     sumet += jets_[i]->correctedEt(jets_[i]->Et());
   }
-  double chi2 = sumet / trusum_ - 1;
+  double chi2 = (sumet - trusum_) / error_;
   chi2 *= chi2;
-  chi2 *= weight_;
+  chi2 *= weight_ / jets_.size();
   //std::cout << "JetConstraintEvent::chi2_fast:  Et:" << jets[0]->Et() 
   //   	    << " chi2:" << chi2 << " sum Et:" << sumet << std::endl;
   //derivative....
@@ -75,7 +78,7 @@ double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_de
     i->second.lowersum_ = sumet;
   }
   for(unsigned int i = 0 ; i < njets ; ++i) {
-    const Jet::VariationColl& varcoll = jets_[i]->varyParsDirectly(epsilon);
+    const Jet::VariationColl& varcoll = jets_[i]->varyParsDirectly(epsilon,false);
     double et = jets_[i]->correctedEt(jets_[i]->Et());
     for(Jet::VariationCollIter j = varcoll.begin() ; j != varcoll.end() ; ++j) {
       VarMap::iterator k = varmap_.find(j->parid);
@@ -85,12 +88,12 @@ double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_de
     }
   }
   for(VarMap::iterator i = varmap_.begin() ; i != varmap_.end() ; ++i) {
-    double temp1 = i->second.lowersum_ / trusum_ - 1;
+    double temp1 = (i->second.lowersum_ - trusum_) / error_;
     temp1 *= temp1;
-    temp1 *= weight_;
-    double temp2 = i->second.uppersum_ / trusum_ - 1;
+    temp1 *= weight_ / jets_.size();
+    double temp2 = (i->second.uppersum_ - trusum_) / error_;
     temp2 *= temp2;
-    temp2 *= weight_;
+    temp2 *= weight_ / jets_.size();
 //     std::cout << "JetConstraintEvent::chi2_fast:  Et:" << jets[0]->Et() 
 // 	      << " temp1:" << temp1 << " sum Et:" <<  i->second.lowersum 
 // 	      << std::endl;

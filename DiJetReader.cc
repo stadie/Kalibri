@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.37 2010/01/25 17:51:35 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.38 2010/02/04 09:55:04 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -398,7 +398,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     ++njets;
     //add jet to constraints
     for(unsigned int i = 0 ; i < constraints_.size() ; ++i) {
-      constraints_[i]->addJet(jet,new Function(&Parametrization::correctedJetEt,0,0,0,0,cp_));
+      constraints_[i]->addJet(nJet_->GenJetColEt[genJetIdx],jet,new Function(&Parametrization::correctedJetEt,0,0,0,0,cp_));
     }
   }     
   delete [] terr;

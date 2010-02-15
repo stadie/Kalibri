@@ -12,7 +12,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTowers.h,v 1.19 2010/01/25 17:35:20 stadie Exp $
+//!    $Id: JetWithTowers.h,v 1.20 2010/02/04 09:55:05 stadie Exp $
 // ----------------------------------------------------------------   
 class JetWithTowers : public Jet
 {
@@ -32,7 +32,7 @@ class JetWithTowers : public Jet
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
   virtual const VariationColl& varyPars(double eps, double Et, double start);
-  virtual const VariationColl& varyParsDirectly(double eps);
+  virtual const VariationColl& varyParsDirectly(double eps, bool computeDeriv = false);
 
   void addTower(double Et, double EmEt, double HadEt ,double OutEt, double E,
 		double eta,double phi,const Function& f,
