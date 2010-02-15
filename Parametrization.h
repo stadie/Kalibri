@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.55 2010/01/28 16:05:44 stadie Exp $
+//  $Id: Parametrization.h,v 1.56 2010/02/04 09:55:05 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1D;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.55 2010/01/28 16:05:44 stadie Exp $
+//!  $Id: Parametrization.h,v 1.56 2010/02/04 09:55:05 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -40,7 +40,6 @@ public:
     nglobaljetpars_(nglobaljetpars) {}
 
   virtual ~Parametrization() {}
-
 
   //!  \brief Corrects the measured tower Et
   //!
@@ -163,6 +162,31 @@ public:
   virtual bool needsUpdate() const { return false; }
   virtual void update(const double * par) {;}
 
+ protected:
+  //interpolotion code from JetMETObjects/Utilities
+  static double quadraticInterpolation(double fZ, const double fX[3], const double fY[3])
+  {
+    // Quadratic interpolation through the points (x[i],y[i]). First find the parabola that
+    // is defined by the points and then calculate the y(z).
+    float D[4],a[3];
+    D[0] = fX[0]*fX[1]*(fX[0]-fX[1])+fX[1]*fX[2]*(fX[1]-fX[2])+fX[2]*fX[0]*(fX[2]-fX[0]);
+    D[3] = fY[0]*(fX[1]-fX[2])+fY[1]*(fX[2]-fX[0])+fY[2]*(fX[0]-fX[1]);
+    D[2] = fY[0]*(pow(fX[2],2)-pow(fX[1],2))+fY[1]*(pow(fX[0],2)-pow(fX[2],2))+fY[2]*(pow(fX[1],2)-pow(fX[0],2));
+    D[1] = fY[0]*fX[1]*fX[2]*(fX[1]-fX[2])+fY[1]*fX[0]*fX[2]*(fX[2]-fX[0])+fY[2]*fX[0]*fX[1]*(fX[0]-fX[1]);
+    if (D[0] != 0)
+      {
+        a[0] = D[1]/D[0];
+        a[1] = D[2]/D[0];
+        a[2] = D[3]/D[0];
+      }
+    else
+      {
+        a[0] = 0.0;
+        a[1] = 0.0;
+        a[2] = 0.0;
+      }
+    return a[0]+fZ*(a[1]+fZ*a[2]);
+  }
 private: 
   Parametrization();
   unsigned int ntowerpars_;      //!< Number of parameters of the tower parametrization
@@ -179,17 +203,18 @@ private:
 //!  \sa Parametrization
 // -----------------------------------------------------------------
 class ConstParametrization : public Parametrization { 
-public:
-  ConstParametrization() : Parametrization(0,0,0,0) {}
-  const char* name() const { return "ConstParametrization";}
-  
-  double correctedTowerEt(const Measurement *x,const double *par) const {
-    return x->pt;
-  }
+ public:
+  ConstParametrization() : Parametrization(0,0,0,0) {} 
     
-  double correctedJetEt(const Measurement *x,const double *par) const {
-    return  x->pt;   
-  }
+  const char* name() const { return "ConstParametrization";}
+    
+    double correctedTowerEt(const Measurement *x,const double *par) const {
+      return x->pt;
+    }
+    
+    double correctedJetEt(const Measurement *x,const double *par) const {
+      return  x->pt;   
+    }
 };
 
 //!  \brief Parametrization of the hadronic tower response 
@@ -202,8 +227,9 @@ public:
 //!  \sa Parametrization
 // -----------------------------------------------------------------
 class StepParametrization : public Parametrization { 
-public:
+ public:
   StepParametrization() : Parametrization(12,0,0,0) {}
+    
   const char* name() const { return "StepParametrization";}
   
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -223,7 +249,7 @@ public:
     else if (x->HadF>1000.0 )                   result = x->EMF+x->OutF+par[11]*x->HadF;
     return result;
   }
-    
+  
   double correctedJetEt(const Measurement *x,const double *par) const {
     return  x->pt;   
     //OutOfCone, Dominant, parametrized in Et since cone R lorenz invariant
@@ -236,7 +262,7 @@ public:
       else if (x->pt>80.0 )                 result =  par[6]*x->pt + par[7];
       return result;
     */
-  }
+    }
 };
 
 
@@ -497,7 +523,7 @@ class MyParametrization: public Parametrization {
 // -----------------------------------------------------------------
 class JetMETParametrization: public Parametrization {
 public:
-  JetMETParametrization() : Parametrization(3,5,0,0) {}
+  JetMETParametrization() : Parametrization(3,5,0,0) {} 
   const char* name() const { return "JetMETParametrization";}
   
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -522,7 +548,7 @@ public:
 // -----------------------------------------------------------------
 class GlobalScaleFactorParametrization: public Parametrization {
 public:
-  GlobalScaleFactorParametrization() : Parametrization(0,0,0,1) {}
+  GlobalScaleFactorParametrization() : Parametrization(0,0,0,1) {} 
   const char* name() const { return "GlobalScaleFactorParametrization";}
 
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -550,7 +576,7 @@ public:
 // -----------------------------------------------------------------
 class SimpleParametrization: public Parametrization {
 public:
-  SimpleParametrization() : Parametrization(3,3,0,0) {}
+  SimpleParametrization() : Parametrization(3,3,0,0) {} 
   const char* name() const { return "SimpleParametrization";}
 
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -577,7 +603,7 @@ public:
 // -----------------------------------------------------------------
 class ToyParametrization: public Parametrization {
 public:
-  ToyParametrization() : Parametrization(1,0,0,0) {}
+  ToyParametrization() : Parametrization(1,0,0,0) {} 
   const char* name() const { return "ToyParametrization";}
 
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -604,7 +630,7 @@ public:
 // -----------------------------------------------------------------
 class ToyJetParametrization: public Parametrization {
 public:
-  ToyJetParametrization() : Parametrization(0,1,0,0) {}
+  ToyJetParametrization() : Parametrization(0,1,0,0) {} 
   const char* name() const { return "ToyJetParametrization";}
 
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -636,7 +662,7 @@ public:
 // -----------------------------------------------------------------
 class ToyStepParametrization : public Parametrization { 
 public:
-  ToyStepParametrization() : Parametrization(15,0,0,0) {}
+  ToyStepParametrization() : Parametrization(15,0,0,0) {} 
   const char* name() const { return "ToyStepParametrization";}
   
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -685,7 +711,7 @@ public:
 // -----------------------------------------------------------------
 class ToyStepJetParametrization : public Parametrization { 
  public:
-  ToyStepJetParametrization() : Parametrization(0,15,0,0) {}
+  ToyStepJetParametrization() : Parametrization(0,15,0,0) {} 
   const char* name() const { return "ToyStepJetParametrization";}
   
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -729,7 +755,7 @@ class ToyStepJetParametrization : public Parametrization {
 // -----------------------------------------------------------------
 class TrackParametrization : public Parametrization {
  public:
-  TrackParametrization() : Parametrization(12,3,6,0) {}  //(36,3,3,0) {}
+  TrackParametrization() : Parametrization(12,3,6,0) {}  //(36,3,3,0) {} 
   const char* name() const { return "TrackParametrization";}
 
   double correctedTowerEt(const Measurement *x,const double *par) const 
@@ -849,7 +875,7 @@ class TrackParametrization : public Parametrization {
 // -----------------------------------------------------------------
 class L2L3JetParametrization : public Parametrization { 
 public:
-  L2L3JetParametrization() : Parametrization(0,5,0,4) {}
+  L2L3JetParametrization() : Parametrization(0,5,0,4) {} 
   const char* name() const { return "L2L3JetParametrization";}
   
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -901,7 +927,7 @@ public:
 // -----------------------------------------------------------------
 class L2L3JetParametrization2 : public Parametrization { 
 public:
-  L2L3JetParametrization2() : Parametrization(0,7,0,0) {}
+  L2L3JetParametrization2() : Parametrization(0,7,0,0) {} 
   const char* name() const { return "L2L3JetParametrization";}
   
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -942,7 +968,7 @@ public:
 
 class L2L3JetTrackParametrization : public Parametrization { 
 public:
-  L2L3JetTrackParametrization() : Parametrization(0,3,5,4) {}
+  L2L3JetTrackParametrization() : Parametrization(0,3,5,4) {} 
   const char* name() const { return "L2L3JetTrackParametrization";}
   
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -1073,7 +1099,7 @@ public:
 // -----------------------------------------------------------------
 class SmearFermiTail : public Parametrization{
  public:
-  SmearFermiTail() : Parametrization(0,3,0,0) {}
+  SmearFermiTail() : Parametrization(0,3,0,0) {} 
   const char * name() const { return "SmearFermiTail"; }
 
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -1397,10 +1423,26 @@ public:
     
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
     double logpt = log10(pt);
-
+    double fX[3],fY[3];
+    if((bin > 0) && (bin < 9)) {
+      for(int i = 0 ; i < 3 ; ++i) {
+	int id = 4 * (bin + i - 1);
+	fX[i] = (bin + i - 1) / 10.0 + 0.05;
+	fY[i] = par[id] + logpt *(0.1*par[id+1] + logpt * (0.001*par[id+2]+ 0.001*par[id+3]*logpt));
+	//std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
+      }
+      double c = quadraticInterpolation(emf,fX,fY);
+      if(c != c) { 
+	for(int i = 0 ; i < 3 ; ++i) {
+	  std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
+	}
+	std::cout << "interpolated:" << emf << ":" << c << '\n';
+      }
+      return c * x->pt;	
+    } 
     int id = 4 * bin;
-    double c = par[id] + logpt *(par[id+1] + logpt * (par[id+2]+ par[id+3]*logpt));
-    return c * x->pt;  
+    double c = par[id] + logpt *(0.1*par[id+1] + logpt * (0.001*par[id+2]+ 0.001*par[id+3]*logpt));
+    return c * x->pt;
   }
 };
 
@@ -1422,16 +1464,33 @@ public:
   double correctedJetEt(const Measurement *x,const double *par) const {
     if(std::abs(x->eta) > 1.2) return x->pt;
     
-    int bin = (int)(x->phiphi * 4 );
+    int bin = (int)(x->phiphi * 40 );
     if(bin > 9) bin = 9;
     
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
     double logpt = log10(pt);
 
+    double fX[3],fY[3];
+    if((bin > 0) && (bin < 9)) {
+      for(int i = 0 ; i < 3 ; ++i) {
+	int id = 4 * (bin + i - 1);
+	fX[i] = (bin + i - 1) / 40.0;
+	fY[i] = par[id] + logpt *(0.1*par[id+1] + logpt * (0.001*par[id+2]+ 0.001*par[id+3]*logpt));
+	//std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
+      }
+      double c = quadraticInterpolation(x->phiphi,fX,fY);
+      if(c != c) { 
+	for(int i = 0 ; i < 3 ; ++i) {
+	  std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
+	}
+	std::cout << "interpolated:" << x->phiphi << ":" << c << '\n';
+      }
+      return c * x->pt;	
+    } 
     int id = 4 * bin;
-    double c = par[id] + logpt *(par[id+1] + logpt * (par[id+2]+ par[id+3]*logpt));
-    return c * x->pt;  
-  }
+    double c = par[id] + logpt *(0.1*par[id+1] + logpt * (0.001*par[id+2]+ 0.001*par[id+3]*logpt));
+    return c * x->pt;
+  }  
 };
 
 #endif
