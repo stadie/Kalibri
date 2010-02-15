@@ -1,7 +1,7 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.57 2009/11/06 11:59:51 mschrode Exp $
+// $Id: Parameters.h,v 1.58 2009/11/24 16:52:59 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -25,7 +25,7 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.57 2009/11/06 11:59:51 mschrode Exp $
+//!  $Id: Parameters.h,v 1.58 2009/11/24 16:52:59 stadie Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -199,13 +199,13 @@ public :
   //!  \return The absolute resolution
   // -----------------------------------------------------
   static double jet_only_jet_error_parametrization_et(const double *x, const Measurement *xorig=0, double errorig=0) {
-    const static double a[5] = { 4.44 , 4.35 , 4.34 , 4.08 , 3.90 };
-    const static double b[5] = { 1.11 , 1.17 , 0.85 , 0.45 , 0.29 };
-    const static double c[5] = { 0.03 , 0.04 , 0.03 , 0.04 , 0.09 };
+    const static double a[5] = { 4.44 * 4.44, 4.35 * 4.35, 4.34 * 4.34 , 4.08 * 4.08, 3.90 * 3.90 };
+    const static double b[5] = { 1.11 * 1.11, 1.17 * 1.17, 0.85 * 0.85, 0.45 * 0.45, 0.29 * 0.29};
+    const static double c[5] = { 0.03 * 0.03, 0.04 * 0.04, 0.03 * 0.03, 0.04 * 0.04, 0.09 * 0.09};
 
     double abseta = std::abs(xorig->eta);
     int i = (abseta < 0.8) ? 0 : ((abseta < 1.5) ? 1 : ((abseta < 2.4) ? 2 : (abseta < 3.2) ? 3 : 4));
-    return sqrt(a[i]*a[i]/x[0]/x[0] + b[i]*b[i]/x[0] + c[i]*c[i]) * x[0];
+    return sqrt(a[i] + (b[i] + c[i] *x[0]) * x[0]);
   }
 
   static double jet_only_jet_error_parametrization_energy(const double *x, const Measurement *xorig=0, double errorig=0) {
