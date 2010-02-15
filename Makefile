@@ -11,7 +11,7 @@ endif
 
 
 #O2 for optimization, g for debugging, pg for profiling
-SPECIALFLAGS= -fpic -g -O3#-pg#-O2
+SPECIALFLAGS= -fpic -g -O2# -pg -O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
@@ -43,8 +43,6 @@ dirs:
 	@mkdir -p bin
 	@mkdir -p lib
 	@mkdir -p tmp
-	@mkdir -p controlPlots
-
 
 lbfgs.o: lbfgs.F
 	$(F77) $(SPECIALFLAGS) -fno-automatic -fno-backslash -O -c lbfgs.F
@@ -188,8 +186,6 @@ clean:
 	@rm -rf tmp
 	@rm -rf lib
 	@rm -rf bin
-	@rm -f *.ps
-	@rm -f *.eps
 	@rm -f *.cfi
 	@rm -f fort.*
 	@rm -f .#*
