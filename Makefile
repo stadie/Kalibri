@@ -20,16 +20,21 @@ CFLAGS= $(SPECIALFLAGS) -Wall $(ROOTAUXCFLAGS)
 #-L../../lib/$(SRT_SUBDIR)/
 LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS) -lgsl -lgslcblas -lm
 BOOSTFLAGS=-I/usr/include/boost
-
-# change path for fink@MacOS
-ifeq (exists, $(shell [ -d /sw/include ] && echo exists)) 
+BOOSTLINKFLAGS=-lboost_thread -lpthread
+# change path for MacPort or fink@MacOS
+ ifeq (exists, $(shell [ -d /opt/local/include/boost ] && echo exists)) 
+ BOOSTFLAGS=-I/opt/local/include/boost
+ SPECIALFLAGS += -I/opt/local/include
+ LFLAGS += -L/opt/local/lib
+ BOOSTLINKFLAGS=-lboost_thread-mt -lpthread
+else ifeq (exists, $(shell [ -d /sw/include/boost ] && echo exists)) 
  BOOSTFLAGS=-I/sw/include/boost
  SPECIALFLAGS += -arch i386 -I/sw/include
  LFLAGS += -L/sw/lib
 endif
 
 RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS)
-RLXX=$(LFLAGS) $(ROOTLIBS) -lboost_thread -lpthread  #-lrt -lpthread # -lposix4
+RLXX=$(LFLAGS) $(ROOTLIBS) $(BOOSTLINKFLAGS)  #-lrt -lpthread # -lposix4
 ROOTSYS=$(shell root-config --prefix)
 
 SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc CorFactorsFactory.cc
@@ -45,7 +50,7 @@ dirs:
 	@mkdir -p tmp
 
 lbfgs.o: lbfgs.F
-	$(F77) $(SPECIALFLAGS) -fno-automatic -fno-backslash -O -c lbfgs.F
+	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
 
 ConfigFile.o: ConfigFile.cc ConfigFile.h
 	$(C) $(CFLAGS) -c ConfigFile.cc
