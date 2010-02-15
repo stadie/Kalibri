@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: ControlPlotsConfig.cc,v 1.1 2010/01/04 17:04:51 mschrode Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "TFile.h"
+#include "TSystem.h"
 
 #include "ConfigFile.h"
 
@@ -401,6 +402,7 @@ void ControlPlotsConfig::init() {
 
   // Store directory name for output
   outDirName_ = config_->read<std::string>("plots output directory","controlPlots");
+  gSystem->MakeDirectory(outDirName_.c_str()); 
 
   // Define style for different correction types
   // This should become configurable via config file
