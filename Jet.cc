@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.38 2010/02/04 09:55:04 stadie Exp $
+//    $Id: Jet.cc,v 1.39 2010/02/15 12:40:18 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -22,6 +22,7 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 {
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());
+  assert(Measurement::phiphi == Measurement::phiphi);
 }
 
 Jet::Jet(const Jet& j) 
@@ -259,10 +260,11 @@ double Jet::expectedEt(double truth, double start, bool fast)
       f2 = correctedEt(x2,false);
       ++ntries;
     } else break;
-    if(i > 3) {
-      std::cout << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " 
-		<< f2 << std::endl;
-      assert(i < 4);
+    if(i > 20) {
+      ++nfails;
+      //std::cout << "Warning failed to bag: " << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " << f2 << std::endl;
+      //assert(i < 10);
+      return -1;
     }
   }
   if(! gsl_impl.root(truth,x1,x2,eps)) return -1;
