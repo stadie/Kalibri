@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.1 2010/01/04 17:04:51 mschrode Exp $
+// $Id: ControlPlotsFunction.cc,v 1.2 2010/02/15 16:13:19 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -42,9 +42,7 @@ void ControlPlotsFunction::addYFunction(ControlPlotsConfig::CorrectionType type,
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::jetTruthEventJetEta(const Event *evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
-  Jet * jet = static_cast<Jet*>(jte->GetMess());
-
-  return jet->eta();
+  return jte->jet()->eta();
 }
 
 
@@ -55,9 +53,7 @@ double ControlPlotsFunction::jetTruthEventJetEta(const Event *evt) const {
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::jetTruthEventJetMomentPhiPhi(const Event *evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
-  Jet * jet = static_cast<Jet*>(jte->GetMess());
-
-  return jet->momentPhiPhi();
+  return jte->jet()->momentPhiPhi();
 }
 
 
@@ -71,6 +67,15 @@ double ControlPlotsFunction::jetTruthEventTruthPt(const Event *evt) const {
   return jte->GetTruth();
 }
 
+//!  \brief Returns flavor of jet
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventJetFlavor(const Event *evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  return jte->jet()->flavor();
+}
 
 
 //!  \brief Returns the jet response

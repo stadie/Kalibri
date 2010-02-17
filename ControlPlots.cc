@@ -124,6 +124,8 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
     f = &ControlPlotsFunction::jetTruthEventTruthPt;
   else if( varName == "momentPhiPhi" )
     f = &ControlPlotsFunction::jetTruthEventJetMomentPhiPhi;
+  else if( varName == "Flavor" )
+    f = &ControlPlotsFunction::jetTruthEventJetFlavor;
   else if( varName == "GenJetResponse" && type == ControlPlotsConfig::Uncorrected )
     f = &ControlPlotsFunction::jetTruthEventResponse;
   else if( varName == "GenJetResponse" && type == ControlPlotsConfig::Kalibri )
