@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.38 2010/02/04 09:55:04 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.39 2010/02/15 12:40:18 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -292,7 +292,18 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       nMaxJetEta_++;
       continue;
     }
-
+    if(nJet_->JetEtWeightedSigmaPhi[calJetIdx] < 0) {
+      std::cout << "warning: weighted sigma_phi < 0 : " << nJet_->JetEtWeightedSigmaPhi[calJetIdx] << std::endl;
+      continue;
+    }   
+    if(nJet_->JetEtWeightedSigmaPhi[calJetIdx] > 1.0) {
+      std::cout << "warning: weighted sigma_phi < 1.0 : " << nJet_->JetEtWeightedSigmaPhi[calJetIdx] << " jet Et: " << nJet_->JetEt[calJetIdx] << std::endl;
+      continue;
+    }
+    if(nJet_->JetEtWeightedSigmaPhi[calJetIdx] != nJet_->JetEtWeightedSigmaPhi[calJetIdx]) {
+      std::cout << "warning: weighted sigma_phi is nan: " << nJet_->JetEtWeightedSigmaPhi[calJetIdx] << " jet Et: " << nJet_->JetEt[calJetIdx] << std::endl;
+      continue;
+    }
     // Construct event
     double em   = 0;
     double had  = 0;
@@ -381,7 +392,8 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 		    nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaEta[calJetIdx],
-		    Jet::uds,nJet_->GenJetColEt[genJetIdx],drJetGenjet,
+		    Jet::flavorFromPDG(nJet_->GenPartId_algo[calJetIdx]),
+		    nJet_->GenJetColEt[genJetIdx],drJetGenjet,
 		    createCorFactors(calJetIdx),
 		    par_->jet_function(nJet_->TowId_eta[closestTower],
 				       nJet_->TowId_phi[closestTower]),

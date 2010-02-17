@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.31 2010/02/04 09:55:05 stadie Exp $
+//!    $Id: Jet.h,v 1.32 2010/02/15 12:40:18 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -40,8 +40,18 @@ class Jet : public Measurement
   //!  - 1: u, d, or s quark
   //!  - 2: c quark
   //!  - 3: b quark
-  enum Flavor{ gluon=0, uds=1, c=2, b=3 };
+  enum Flavor{ unknown = -1, gluon=0, uds=1, c=2, b=3 };
 
+  //! return flavor for pdg id
+  static Flavor flavorFromPDG(int pdg) {
+    if(pdg == 21) return gluon;
+    if(pdg == 0) return unknown;
+    unsigned int id = std::abs(pdg);
+    if(id < 4) return uds;
+    if(id == 4) return c;
+    if(id == 5) return b;
+    return unknown;
+  }
 
  public:
   Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
