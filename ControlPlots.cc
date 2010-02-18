@@ -45,17 +45,7 @@ void ControlPlots::createJetTruthEventPlots() const {
   std::cout << "Creating JetTruthEvent plots\n";
     
   // Read different control plot names
-  std::vector<std::string> names;
-  int nNames = 1;
-  std::string tmpName = "";
-  char nameLabel[100];
-  do {
-    sprintf(nameLabel,"JetTruthEvent plots name %i",nNames);
-    tmpName = config_->read<std::string>(nameLabel,"");
-    if( tmpName != "" ) names.push_back(tmpName);
-    nNames++;
-  } while( tmpName != "" );
-
+  std::vector<std::string> names = bag_of_string(config_->read<std::string>("JetTruthEvent plots names",""));
   // Loop over names
   std::vector<ControlPlotsConfig*> configs(names.size());
   std::vector<ControlPlotsFunction*> functions(names.size());
@@ -94,7 +84,8 @@ void ControlPlots::createJetTruthEventPlots() const {
   }
 
   // Fitting profiles and writing plots to file
-  std::cout << "  Fitting profiles and writing plots to file'\n";	  
+  std::cout << "  Fitting profiles and writing plots to file" << std::endl;
+	  
   for(size_t i = 0; i < configs.size(); i++) {
     profiles.at(i)->fitProfiles();
     profiles.at(i)->draw();
@@ -120,6 +111,10 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
   ControlPlotsFunction::Function f = 0;
   if( varName == "Eta" )
     f = &ControlPlotsFunction::jetTruthEventJetEta;
+  if( varName == "EMF" )
+    f = &ControlPlotsFunction::jetTruthEventJetEMF;
+  if( varName == "momentEtaEta" )
+    f = &ControlPlotsFunction::jetTruthEventJetMomentEtaEta;
   else if( varName == "GenJetPt" )
     f = &ControlPlotsFunction::jetTruthEventTruthPt;
   else if( varName == "momentPhiPhi" )
