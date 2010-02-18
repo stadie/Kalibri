@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.39 2010/02/15 12:40:18 stadie Exp $
+//    $Id: Jet.cc,v 1.40 2010/02/16 17:39:44 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -231,14 +231,14 @@ double Jet::expectedEt(double truth, double start, bool fast)
     temp.E    = Measurement::E * truth/Measurement::pt;
     return f.inverse(&temp);
   }
-  static const double eps = 1.0e-7;
+  static const double eps = 1.0e-9;
   double x1 = root;
   //find root of truth - jet->correctedEt(expectedEt)
   // x: expectedEt
   // y: truth -  jet->correctedEt(expectedEt)
   // f: jet->correctedEt(expectedEt)
   double f1 = correctedEt(x1,false);
-  if(std::abs(f1 - truth) < eps) {
+  if(std::abs(f1 - truth) < eps * truth) {
     //std::cout << "this really happens!?\n";
     return x1;
   }
@@ -247,26 +247,36 @@ double Jet::expectedEt(double truth, double start, bool fast)
   double x2 = x1 + 0.2;
   
   double f2 = correctedEt(x2,false);
-  assert(f2 > f1);
   for( int i = 0 ; ; ++i) {
-    if(f1 > truth) {
-      double step = (f1 - truth < 0.01) ? 0.1 : (f1 - truth) * (x2-x1)/(f2-f1);
-      x1 -=  2 * step;
-      f1 = correctedEt(x1,false);
-      ++ntries;
-    } else if(f2 < truth) {
-      double step = (truth - f2 < 0.01) ? 0.1 : (truth - f2) * (x2-x1)/(f2-f1);
+    if(f1 >= f2) {
+      if((f1 > truth) && (f2 < truth)) break; 
+      double step = 0.5 * i;
+      x1 -= 2 * step;
       x2 += 2 * step;
+      f1 = correctedEt(x1,false);
       f2 = correctedEt(x2,false);
-      ++ntries;
-    } else break;
+    }
+    else {
+      if(f1 > truth) {
+	double step = (f1 - truth < 0.01) ? 0.1 : (f1 - truth) * (x2-x1)/(f2-f1);
+	x1 -=  2 * step;
+	f1 = correctedEt(x1,false);
+	++ntries;
+      } else if(f2 < truth) {
+	double step = (truth - f2 < 0.01) ? 0.1 : (truth - f2) * (x2-x1)/(f2-f1);
+	x2 += 2 * step;
+	f2 = correctedEt(x2,false);
+	++ntries;
+      } else break;
+    }
     if(i > 20) {
       ++nfails;
-      //std::cout << "Warning failed to bag: " << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " << f2 << std::endl;
+      std::cout << "Warning failed to bag: " << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " << f2 << std::endl;
       //assert(i < 10);
       return -1;
     }
   }
+  //assert((x1 == x1) && (x2 == x2));
   if(! gsl_impl.root(truth,x1,x2,eps)) return -1;
   return root = x2;
   
