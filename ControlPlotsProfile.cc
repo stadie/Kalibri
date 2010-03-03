@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.1 2010/01/04 17:04:51 mschrode Exp $
+// $Id: ControlPlotsProfile.cc,v 1.2 2010/01/14 13:13:17 mschrode Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -7,6 +7,7 @@
 #include "TCanvas.h"
 #include "TF1.h"
 #include "TROOT.h"
+#include "TImage.h"
 
 #include "CalibData.h"
 #include "ControlPlotsFunction.h"
@@ -66,7 +67,10 @@ ControlPlotsProfile::~ControlPlotsProfile() {
 // ----------------------------------------------------------------   
 void ControlPlotsProfile::draw() {
   TCanvas *c1 = new TCanvas("c1","",500,500);
+  TPad *p1 = new TPad("i1", "i1", 0.84, 0.84,0.995,0.995);
   c1->cd();
+  TImage* img = TImage::Open("kalibriLogoSmall.jpg");
+  img->Scale(img->GetWidth(),img->GetHeight()); 
   std::string fileName;
 
   // Draw 2D histograms
@@ -75,11 +79,15 @@ void ControlPlotsProfile::draw() {
     ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->correctionTypesBegin();
     for(; corrTypeIt != config_->correctionTypesEnd(); corrTypeIt++) {
       c1->Clear();
+      img->Draw("T100,100");
       TH2D *h = (*binIt)->hYvsX(*corrTypeIt);
       h->Draw("COLZ");
       if( config_->logX() ) c1->SetLogx(1);
-      c1->RedrawAxis();
-
+      c1->RedrawAxis();      
+      p1->DrawClone();
+      p1->cd();
+      img->Draw();
+      c1->cd();
       fileName = config_->outDirName() + "/";
       fileName += (*binIt)->hist2DFileName(*corrTypeIt) + "." + config_->outFileType();
       c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
@@ -111,7 +119,10 @@ void ControlPlotsProfile::draw() {
 
       if( config_->logX() ) c1->SetLogx(1);
       c1->RedrawAxis();
-
+      p1->DrawClone();
+      p1->cd();
+      img->Draw();
+      c1->cd();
       fileName = config_->outDirName() + "/";
       fileName += (*binIt)->profileFileName(*profTypeIt) + "." + config_->outFileType();
       c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
@@ -141,7 +152,10 @@ void ControlPlotsProfile::draw() {
 
       if( config_->logX() ) c1->SetLogx(1);
       c1->RedrawAxis();
-
+      p1->DrawClone();
+      p1->cd();
+      img->Draw();
+      c1->cd();
       fileName = config_->outDirName() + "/";
       fileName += (*binIt)->profileFileName(*profTypeIt) + "_zoom." + config_->outFileType();
       c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
@@ -159,7 +173,10 @@ void ControlPlotsProfile::draw() {
 	h->Draw("HIST");
 	c1->SetLogx(0);
 	c1->RedrawAxis();
-
+	p1->DrawClone();
+	p1->cd();
+	img->Draw();
+	c1->cd();
 	fileName = config_->outDirName() + "/";
 	fileName += (*binIt)->distributionFileName(n,*corrTypeIt) + "." + config_->outFileType();
 	c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
@@ -173,7 +190,10 @@ void ControlPlotsProfile::draw() {
   hXSpectrum_->Draw();
   c1->SetLogx(0);
   c1->SetLogy(1);
-
+  p1->DrawClone();
+  p1->cd();
+  img->Draw();
+  c1->cd();
   fileName = config_->outDirName() + "/";
   fileName += hXSpectrum_->GetName();
   fileName += "." + config_->outFileType();
@@ -181,6 +201,7 @@ void ControlPlotsProfile::draw() {
   config_->toRootFile(hXSpectrum_);
 
   // Clean up
+  delete p1;
   delete c1;
   delete leg;
   delete hLine;
