@@ -99,7 +99,9 @@ void plotFlavorDiff()
   TH1D* hglu2= (TH1D*)gDirectory->Get("MCTruthRespFlavorVsGenJetPt/MCTruthRespFlavorVsGenJetPt_GenJetResponseVsGenJetPt_Kalibri_Flavor0_GaussFitMean");
   TH1D* huds2= (TH1D*)gDirectory->Get("MCTruthRespFlavorVsGenJetPt/MCTruthRespFlavorVsGenJetPt_GenJetResponseVsGenJetPt_Kalibri_Flavor1_GaussFitMean");
 
-  TCanvas* c= new TCanvas("c","",500,500);
+  TCanvas* c= new TCanvas("c","",500,500); 
+  c->SetRightMargin(0.02);
+  c->SetTopMargin(0.13);
   //c->SetLogx();
   c->SetGridy(); 
   c->SetGridx();
@@ -123,20 +125,19 @@ void plotFlavorDiff()
   hdiff2->SetBinContent(4,10);
   hdiff2->SetBinContent(5,10);
 
-  hdiff1->Draw();
+  hdiff1->Draw("C E0 X0 L");
   hdiff1->GetXaxis()->SetRange(-1,25);
-  hdiff2->Draw("SAME"); 
-  
-  TPad *p1 = new TPad("i1", "i1", 0.84, 0.86,0.99,0.99);
+  hdiff2->Draw("C E0 X0 L SAME"); 
+  TPad *p1 = new TPad("i1", "i1",0.79, 0.71,0.94,0.84);
   p1->SetFillStyle(4000);  
   TImage* img = TImage::Open("kalibriLogoSmall.gif");
   //img->Scale(img->GetWidth(),img->GetHeight()); 
   p1->cd();
   img->Draw("XZ");
   c->cd();
-  p1->Draw();
+  p1->DrawClone();  
   int nEntries =2;
-  TLegend * leg = leg = new TLegend(0.5,0.8-nEntries*0.07,0.8,0.8);
+  TLegend * leg = leg = new TLegend(0.5,0.85-nEntries*0.07,0.8,0.85);
   leg->SetBorderSize(0);
   leg->SetFillColor(0);
   leg->SetTextFont(42);
@@ -155,11 +156,16 @@ void plotFlavorDiff()
   //hres->Fit("resol");
   //hres2->Fit("resol");  
   c2->SetGridy(); 
-  c2->SetGridx();
-  hres->Draw();
+  c2->SetGridx();  
+  c2->SetRightMargin(0.02);
+  c2->SetTopMargin(0.13);
+  hres->SetFillColor(hres->GetMarkerColor());
+  hres->Draw("PE0 X0");
   hres->SetMaximum(0.3);
+  hres2->SetMaximum(0.3);
   hres->GetXaxis()->SetRange(-1,25);
-  hres2->Draw("SAME");
+  hres2->SetFillColor(hres2->GetMarkerColor());
+  hres2->Draw("PE0 X0 SAME");
   p1->DrawClone();
   leg->DrawClone();
 }
