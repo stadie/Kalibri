@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.39 2010/02/15 12:40:18 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.40 2010/02/17 11:19:48 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -141,6 +141,13 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   }
   std::cout << " (data class " << dataClass_ << "):\n";
 
+  if(dataClass_ == 11) { 
+    nJet_->fChain->SetBranchStatus("Track*",0);
+    //nJet_->fChain->SetBranchStatus("Tow*",0);
+  }
+  if(dataClass_ == 12) {
+    nJet_->fChain->SetBranchStatus("Track*",0);
+  }
   // Read the events
   for (int i=0 ; i < nevent ; i+= prescale_) {
     if((i+1)%10000==0) std::cout << "  " << i+1 << std::endl;
@@ -303,40 +310,41 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     if(nJet_->JetEtWeightedSigmaPhi[calJetIdx] != nJet_->JetEtWeightedSigmaPhi[calJetIdx]) {
       std::cout << "warning: weighted sigma_phi is nan: " << nJet_->JetEtWeightedSigmaPhi[calJetIdx] << " jet Et: " << nJet_->JetEt[calJetIdx] << std::endl;
       continue;
+    }    
+    // Cuts on hadronic fraction 
+    if((1-nJet_->JetEMF[calJetIdx]) < minJetHadFraction_) {
+      nMinJetHadFraction_++;
+      continue;
+    } else if((1- nJet_->JetEMF[calJetIdx]) > maxJetHadFraction_) { 
+      nMaxJetHadFraction_++;
+      continue;
     }
     // Construct event
-    double em   = 0;
-    double had  = 0;
-    double out  = 0;
     double err2 = 0;
     Measurement tower;
     double dR        = 10;
     int closestTower = 0;
-    double sumpt = 0;
     for(int n=0; n<nJet_->NobjTow; ++n){
       if(nJet_->Tow_jetidx[n] != calJetIdx) continue;//look for ij-jet's towers
-
-      em          += nJet_->TowEm[n];
-      had         += nJet_->TowHad[n];
-      out         += nJet_->TowOE[n];  
-      tower.pt     = nJet_->TowEt[n];
-      double scale = nJet_->TowEt[n]/nJet_->TowE[n];
-      tower.EMF    = nJet_->TowEm[n]*scale;
-      tower.HadF   = nJet_->TowHad[n]*scale;
-      tower.OutF   = nJet_->TowOE[n]*scale;
-      tower.eta    = nJet_->TowEta[n];
-      tower.phi    = nJet_->TowPhi[n];
-      tower.E      = nJet_->TowE[n];
-      terr[n]      = tower_error_param(&tower.pt,&tower,0); 
-      if(terr[n] == 0) {
-	//assume toy MC???
-	terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
+      if( dataClass_ == 12) {
+	tower.pt     = nJet_->TowEt[n];
+	double scale = nJet_->TowEt[n]/nJet_->TowE[n];
+	tower.EMF    = nJet_->TowEm[n]*scale;
+	tower.HadF   = nJet_->TowHad[n]*scale;
+	tower.OutF   = nJet_->TowOE[n]*scale;
+	tower.eta    = nJet_->TowEta[n];
+	tower.phi    = nJet_->TowPhi[n];
+	tower.E      = nJet_->TowE[n];
+	terr[n]      = tower_error_param(&tower.pt,&tower,0); 
+	if(terr[n] == 0) {
+	  //assume toy MC???
+	  terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
+	}
+	terr[n]  *= terr[n];
+	err2     += terr[n];
       }
-      terr[n]  *= terr[n];
-      err2     += terr[n];
       dphi      = TVector2::Phi_mpi_pi(nJet_->JetPhi[calJetIdx]-tower.phi);
       deta      = nJet_->JetEta[calJetIdx]-tower.eta;
-      sumpt += tower.pt;
       double dr = sqrt( deta*deta + dphi*dphi );     
       if(dr < dR) {
 	dR = dr;
@@ -344,18 +352,17 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       }
     }
     // Cuts on hadronic fraction 
-    if(had/(had + em) < minJetHadFraction_) {
+    if(nJet_->JetEMF[calJetIdx] < minJetHadFraction_) {
       nMinJetHadFraction_++;
       continue;
-    } else if(had/(had + em) > maxJetHadFraction_) { 
+    } else if(nJet_->JetEMF[calJetIdx] > maxJetHadFraction_) { 
       nMaxJetHadFraction_++;
       continue;
     }
-    double factor = nJet_->JetEt[calJetIdx] /  nJet_->JetE[calJetIdx];
     tower.pt      = nJet_->JetEt[calJetIdx];
-    tower.EMF     = em * factor;
-    tower.HadF    = had * factor;
-    tower.OutF    = out * factor;
+    tower.EMF     = tower.pt * nJet_->JetEMF[calJetIdx];
+    tower.HadF    = tower.pt * (1.0 - nJet_->JetEMF[calJetIdx]);
+    tower.OutF    = 0;
     tower.eta     = nJet_->JetEta[calJetIdx];
     tower.phi     = nJet_->JetPhi[calJetIdx];
     tower.E       = nJet_->JetE[calJetIdx];
@@ -365,8 +372,8 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     Jet *jet;
     if(dataClass_ == 12) {
       JetWithTowers *jt = 
-	new JetWithTowers(nJet_->JetEt[calJetIdx],em * factor,had * factor,
-			  out * factor,nJet_->JetE[calJetIdx],
+	new JetWithTowers(nJet_->JetEt[calJetIdx],tower.EMF,tower.HadF,
+			  tower.OutF,nJet_->JetE[calJetIdx],
 			  nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
 			  nJet_->JetEtWeightedSigmaPhi[calJetIdx],
 			  nJet_->JetEtWeightedSigmaEta[calJetIdx], Jet::uds,
@@ -387,8 +394,8 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       jet = jt;
     }
     else { 
-      jet = new Jet(nJet_->JetEt[calJetIdx],em * factor,had * factor,
-		    out * factor,nJet_->JetE[calJetIdx],
+      jet = new Jet(nJet_->JetEt[calJetIdx],tower.EMF,tower.HadF,
+		    tower.OutF,nJet_->JetE[calJetIdx],
 		    nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaEta[calJetIdx],
@@ -704,37 +711,24 @@ std::vector<Jet*> DiJetReader::readCaloJets(int nJets) const {
     double deta         = nJet_->JetEta[j] - nJet_->GenJetEta[j];
     double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
     double min_tower_dr = 10.;
-    double emf          = 0;
-    double had          = 0;
-    double out          = 0;
     int    closestTower = 0; 
-
-    // Loop over towers
+    
+     // Loop over towers
     for (int n=0; n<nJet_->NobjTow; ++n) {
       if (nJet_->Tow_jetidx[n]!=(int)j) continue;//look for j-jet's towers
-      emf += nJet_->TowEm[n];
-      had += nJet_->TowHad[n];
-      out += nJet_->TowOE[n];
       dphi = TVector2::Phi_mpi_pi( nJet_->JetPhi[j] - nJet_->TowPhi[n] );
       deta = nJet_->JetEta[j] - nJet_->TowEta[n];
       double dr = sqrt( deta*deta + dphi*dphi );     
       if (dr < min_tower_dr) {
-	min_tower_dr = dr;
-	closestTower = n;
+ 	min_tower_dr = dr;
+ 	closestTower = n;
       }
     } // End of loop over towers
-
-
-    // Projection factor E --> Et
-    // The following is not quite correct, as this factor is different for all towers
-    // These values should be in the n-tupel as well
-    double projFac   = nJet_->JetEt[j] /  nJet_->JetE[j];
-
-    // Set up jet
+    
     caloJets[j] = new Jet(nJet_->JetPt[j],
-			  emf * projFac,
-			  had * projFac,
-			  out * projFac,
+			  nJet_->JetEMF[j]*nJet_->JetEt[j],
+			  (1-nJet_->JetEMF[j]) * nJet_->JetEt[j],
+			  0,
 			  nJet_->JetE[j],
 			  nJet_->JetEta[j],
 			  nJet_->JetPhi[j],
