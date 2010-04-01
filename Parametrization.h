@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.56 2010/02/04 09:55:05 stadie Exp $
+//  $Id: Parametrization.h,v 1.57 2010/02/15 12:38:11 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1D;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.56 2010/02/04 09:55:05 stadie Exp $
+//!  $Id: Parametrization.h,v 1.57 2010/02/15 12:38:11 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1387,12 +1387,12 @@ public:
   double correctedJetEt(const Measurement *x,const double *par) const {
     if(std::abs(x->eta) > 1.2) return x->pt;
     double y = x->phiphi > 0.25 ? 0.12 : x->phiphi - 0.13;
-    
-    double c = 1/(par[0] + exp((x->pt-par[1])/par[2])) + par[3];
-    c += y * ( par[4] - par[5]/(pow(log(x->pt),par[6])+par[7]) + par[8]/x->pt);
-    c += y *y *(par[9] * x->pt + par[10] * pow(x->pt,2.0/3.0) + par[11] * pow(x->pt,-1.0/3.0) + par[12] * (x->pt - par[13])/x->pt);
-    
-    return c * x->pt;  
+    double pt =  (x->pt < 20) ? 20 : ((x->pt > 1000) ? 1000 : x->pt);
+    double c = 1/(par[0] + exp((pt-par[1])/par[2])) + par[3];
+    c += y * ( par[4] - par[5]/(pow(log(pt),par[6])+par[7]) + par[8]/pt);
+    c += y *y *(par[9] * pt + par[10] * pow(pt,2.0/3.0) + par[11] * pow(pt,-1.0/3.0) + par[12] * (pt - par[13])/pt);
+    // std::cout << x->pt << ":" << c << ", " << 1/c << std::endl;
+    return 1/c * x->pt;  
   }
 };
 
@@ -1454,8 +1454,8 @@ public:
 // -----------------------------------------------------------------
 class BinnedPhiPhiParametrization: public Parametrization {
 public:
-  BinnedPhiPhiParametrization() : Parametrization(0,40,0,0) {}
-  const char* name() const { return "BinnedEMFParametrization";}
+  BinnedPhiPhiParametrization() : Parametrization(0,50,0,0) {}
+  const char* name() const { return "BinnedPhiPhiParametrization";}
     
   double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
@@ -1466,16 +1466,20 @@ public:
     
     int bin = (int)(x->phiphi * 40 );
     if(bin > 9) bin = 9;
-    
+    if(bin < 0) {
+      std::cout << "error: wrong bin " << bin << " for phiphi: " << x->phiphi 
+		<< std::endl;
+      assert(bin >= 0);
+    }
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt; 
     double logpt = log10(pt);
 
     double fX[3],fY[3];
     if((bin > 0) && (bin < 9)) {
       for(int i = 0 ; i < 3 ; ++i) {
-	int id = 4 * (bin + i - 1);
+	int id = 5 * (bin + i - 1);
 	fX[i] = (bin + i - 1) / 40.0;
-	fY[i] = par[id] + logpt *(0.1*par[id+1] + logpt * (0.001*par[id+2]+ 0.001*par[id+3]*logpt));
+	fY[i] = par[id] + logpt *(0.1*par[id+1] + logpt * (0.001*par[id+2]+ logpt * (0.001*par[id+3] + logpt * 0.001*par[id+4])));
 	//std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
       }
       double c = quadraticInterpolation(x->phiphi,fX,fY);
@@ -1487,9 +1491,211 @@ public:
       }
       return c * x->pt;	
     } 
-    int id = 4 * bin;
-    double c = par[id] + logpt *(0.1*par[id+1] + logpt * (0.001*par[id+2]+ 0.001*par[id+3]*logpt));
+    int id = 5 * bin;
+    double c = par[id] + logpt *(0.1*par[id+1] + logpt * (0.001*par[id+2]+ logpt * (0.001*par[id+3] + logpt * 0.001 * par[id+4])));
     return c * x->pt;
+  }  
+};
+
+
+class BinnedPhiPhiParametrization2 : public Parametrization {
+public:
+  BinnedPhiPhiParametrization2() : Parametrization(0,40,0,0) {}
+  const char* name() const { return "BinnedPhiPhiParametrization2";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+    //if(std::abs(x->eta) > 3.0) return x->pt;
+    
+    int bin = (int)((x->phiphi-0.025) * 45 );
+    if(bin > 9) bin = 9;
+    if(bin < 0) bin = 0;
+
+    double pt = (x->E < 15.0) ? 15.0 : (x->E > 1200.0) ? 1200.0 : x->pt; 
+    double logpt = log10(pt);
+    double fX[3],fY[3];
+    
+    if((bin > 0) && (bin < 9)) {
+      for(int i = 0 ; i < 3 ; ++i) {
+	int id = 4 * (bin + i - 1);
+	fX[i] = (bin + i - 1) / 40.0;
+	fY[i] = par[id] + 0.1 * logpt * ( par[id+1] + 0.1 * logpt * ( par[id+2] + 0.1 * par[id+3] * logpt));
+	if(std::isnan(fY[i])) { 
+	  std::cout << i << ":" << fX[i] << ", " << fY[i] << ", " << pt << ", " << logpt << '\n';
+	}
+      }
+      double c = quadraticInterpolation(x->phiphi,fX,fY);
+      if(c != c) { 
+	for(int i = 0 ; i < 3 ; ++i) {
+	  std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
+	}
+	std::cout << "interpolated:" << x->phiphi << ":" << c << '\n';
+      }
+      return 1/c * x->pt;	
+    } 
+    int id = 4 * bin;
+    double c = par[id] + 0.1 * logpt * ( par[id+1] + 0.1 * logpt * ( par[id+2] + 0.1 * par[id+3] * logpt));
+    if(c <= 0)  {
+      std::cout << "bad factor:" << c << " from " <<  par[id] << ", " 
+		<< par[id+1] << ", " << par[id+2] << ", " << par[id+3] 
+		<< " and pt " << pt << std::endl; 
+    }
+    return 1/c * x->pt;
+  }  
+};
+
+//!  \brief Parametrization of jet response based on width in phi
+//!
+//!  This parametrization has 10 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class BinnedScaledPhiPhiParametrization: public Parametrization {
+public:
+  BinnedScaledPhiPhiParametrization() : Parametrization(0,45,0,0) {}
+  const char* name() const { return "BinnedScaledPhiPhiParametrization";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+    if(std::abs(x->eta) > 1.2) return x->pt;
+
+    //hack use original Jet pt for scaling
+    double scaled = x->phiphi /(0.2 - 0.02 * log(x->EMF + x->HadF));
+    int bin = (int)(scaled * 10);
+    if(bin > 14) bin = 14;
+    if(bin < 0) bin = 0;
+    
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 1200.0) ? 1200.0 : x->pt; 
+    double logpt = log10(pt);
+    double fX[3],fY[3];
+    if((bin > 0) && (bin < 9)) {
+      for(int i = 0 ; i < 3 ; ++i) {
+	int id = 3 * (bin + i - 1);
+	fX[i] = (bin + i - 1) / 20.0 + 0.2;
+	fY[i] = par[id] + 0.1 * logpt * ( par[id+1] + 0.1 * logpt );
+	if(std::isnan(fY[i])) { 
+	  std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
+	}
+      }
+      double c = quadraticInterpolation(scaled,fX,fY);
+      if(c != c) { 
+	for(int i = 0 ; i < 3 ; ++i) {
+	  std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
+	}
+	std::cout << "interpolated:" << scaled << ":" << c << '\n';
+      }
+      return 1/c * x->pt;	
+    } 
+    int id = 3 * bin;
+    double c = par[id] + 0.1 * logpt * ( par[id+1] + 0.1 * logpt);
+    if(c <= 0)  {
+      std::cout << "bad factor:" << c << " from " <<  par[bin] << std::endl; 
+    }
+    return 1/c * x->pt;
+  }
+};
+
+
+//!  \brief Parametrization of jet response based on width in eta
+//!
+//!  This parametrization has 10 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class BinnedScaledEtaEtaParametrization: public Parametrization {
+public:
+  BinnedScaledEtaEtaParametrization() : Parametrization(0,10,0,0) {}
+  const char* name() const { return "BinnedScaledEtaEtaParametrization";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+    if(std::abs(x->eta) > 1.2) return x->pt;
+
+    //hack use original Jet pt for scaling
+    double scaled = x->etaeta * log(x->EMF + x->HadF);
+    int bin = (int)((scaled - 0.2) * 20);
+    if(bin > 9) bin = 9;
+    if(bin < 0) bin = 0;
+    
+    double fX[3],fY[3];
+    if((bin > 0) && (bin < 9)) {
+      for(int i = 0 ; i < 3 ; ++i) {
+	int id = bin + i - 1;
+	fX[i] = (bin + i - 1) / 20.0 + 0.2;
+	fY[i] = par[id];
+	if(std::isnan(fY[i])) { 
+	  std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
+	}
+      }
+      double c = quadraticInterpolation(scaled,fX,fY);
+      if(c != c) { 
+	for(int i = 0 ; i < 3 ; ++i) {
+	  std::cout << i << ":" << fX[i] << ", " << fY[i] << '\n';
+	}
+	std::cout << "interpolated:" << scaled << ":" << c << '\n';
+      }
+      return c * x->pt;	
+    } 
+    
+    double c = par[bin];
+    if(c <= 0)  {
+      std::cout << "bad factor:" << c << " from " <<  par[bin] << std::endl; 
+    }
+    return c * x->pt;
+  }
+};
+
+
+//!  \brief Parametrization of jet response based on width in phi
+//!
+//!  This parametrization has 5 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class SimplePhiPhiParametrization : public Parametrization {
+public:
+  SimplePhiPhiParametrization() : Parametrization(0,10,0,0) {}
+  const char* name() const { return "SimplePhiPhiParametrization";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+    //if(std::abs(x->eta) > 1.2) return x->pt;
+    
+    double cut = 30 * x->pt / x->E;
+    double pt = (x->pt < cut) ? cut : (x->pt > 800.0) ? 800.0 : x->pt; 
+    double logpt = log10(pt);
+    double phi = x->phiphi;
+    //phi *= (1 + (par[0] + (0.1 * par[1] + (0.01 * par[2] + 0.001 * par[3] * logpt) * logpt) * logpt) * 
+    double phimean =  0.1 * par[8] - 0.01 * par[9] * logpt;
+    //std::cout << par[8] << ", " << par[9] << ", " <<  phimean << '\n';
+    if(phimean > 0.2) phimean = 0.2;
+    if(phimean < 0.05) phimean = 0.05;
+    phi -= phimean;
+    //if(phi < -0.15) phi = -0.15;
+    //else if(phi > 0.3) phi = 0.3;
+    //phi =- 0.213 - 0.0486 * logpt;
+    double a = par[0] + logpt * ( par[1] + logpt * (par[2] + logpt * par[3]));
+    double b = par[4] + logpt * ( par[5] + logpt * (par[6] + logpt * par[7])); 
+    double c = 1 + (0.1 * a + 0.1 * b * phi) * phi;
+    //if(c <= 0) {
+    //  std::cout << pt << ", " << phi << '\n';
+    //}
+    if(c < 0.3) c = 0.3;
+    if(c > 3.0) c = 3.0;
+    assert(c > 0);
+    return x->pt / c;
   }  
 };
 

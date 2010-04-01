@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.46 2010/01/28 16:05:45 stadie Exp $
+// $Id: Parameters.cc,v 1.47 2010/02/04 09:55:05 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -86,9 +86,18 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     return new BinnedEMFParametrization();
   } else if(name == "BinnedPhiPhiParametrization") {
     return new BinnedPhiPhiParametrization();
+  } else if(name == "BinnedPhiPhiParametrization2") {
+    return new BinnedPhiPhiParametrization2();
+  } else if(name == "BinnedScaledPhiPhiParametrization") {
+    return new BinnedScaledPhiPhiParametrization();
+  } else if(name == "BinnedScaledEtaEtaParametrization") {
+    return new BinnedScaledEtaEtaParametrization();
+  } else if(name == "SimplePhiPhiParametrization") {
+    return new SimplePhiPhiParametrization();
   }
   return 0;
 }
+
 TParameters* TParameters::CreateParameters(const std::string& configfile) 
 {
   static Cleaner cleanup;
