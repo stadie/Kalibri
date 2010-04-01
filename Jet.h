@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.32 2010/02/15 12:40:18 stadie Exp $
+//!    $Id: Jet.h,v 1.33 2010/02/17 11:19:48 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -71,6 +71,8 @@ class Jet : public Measurement
   double phi()    const {return Measurement::phi;}  //!< Return azimuthal angle
   double momentPhiPhi() const {return Measurement::phiphi;}  //!< Return phi-phi moment (width of jet in phi)
   double momentEtaEta() const {return Measurement::etaeta;}  //!< Return eta-eta moment (width of jet in eta)
+  double scaledPhiWidth() const { return (sphi_ > 0 ? sphi_ : sphi_ = momentPhiPhi() /( 0.2 - 0.02 * log(Et())));}
+  double scaledEtaWidth() const { return (seta_ > 0 ? seta_ : seta_ = momentEtaEta() /(0.2 -  0.02 * log(Et())));}  
   Flavor flavor() const {return flavor_;}       //!< Return jet flavor
   double genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
   double ptHat()  const {return ptHat_;}     //!< \f$ \hat{p}_{T} \f$ of the event
@@ -176,6 +178,7 @@ class Jet : public Measurement
 
   mutable Measurement temp;
   mutable double root;
+  mutable double sphi_,seta_;
   const double EoverPt;
   class GslImplementation {
     struct rf_par {

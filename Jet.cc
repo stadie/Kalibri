@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.40 2010/02/16 17:39:44 stadie Exp $
+//    $Id: Jet.cc,v 1.41 2010/02/18 12:41:25 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -71,14 +71,17 @@ void Jet::correctToL3()
 const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
 {
   //start = Et;
+  double oldroot = root;
   for(int i = 0 ; i < f.nPars() ; ++i) {
     double orig = f.firstPar()[i];
     f.firstPar()[i] += eps;
     varcoll[i].upperEt = expectedEt(Et,start,varcoll[i].upperError);
+    root = oldroot;
     //if( varcoll[i].upperEt < 0) return varcoll;
     //varcoll[i].upperEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig - eps;;
     varcoll[i].lowerEt = expectedEt(Et,start,varcoll[i].lowerError); 
+    root = oldroot;
     //if( varcoll[i].lowerEt < 0) return varcoll;
     //varcoll[i].lowerEt = expectedEt(Et,s,false);
     f.firstPar()[i] = orig;
@@ -88,10 +91,12 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
     double orig = gf.firstPar()[i];
     gf.firstPar()[i] += eps;
     varcoll[j].upperEt = expectedEt(Et,start,varcoll[j].upperError);
+    root = oldroot;
     //if( varcoll[j].upperEt < 0) return varcoll;
     //varcoll[j].upperEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig - eps;;
     varcoll[j].lowerEt = expectedEt(Et,start,varcoll[j].lowerError);
+    root = oldroot;
     //if( varcoll[j].lowerEt < 0) return varcoll;
     //varcoll[j].lowerEt = expectedEt(Et,s,false);
     gf.firstPar()[i] = orig;
@@ -185,6 +190,7 @@ double Jet::correctedEt(double Et, bool fast) const {
   if(temp.pt <= 0.0) {
     //std::cout << "WARNING: jet cor. Et <= 0.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
     temp.pt = 1.0;
+    temp.E = EoverPt;
   }
   //temp.HadF = corEt - OutF - EMF;
   //if(temp.HadF < 0) temp.HadF = 0;
@@ -196,6 +202,7 @@ double Jet::correctedEt(double Et, bool fast) const {
   if(temp.pt <= 1.0) {
     //std::cout << "WARNING: global jet cor. Et <= 1.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
     temp.pt = 1.0;
+    temp.E = EoverPt;
   }
   return temp.pt;
 }
@@ -231,13 +238,14 @@ double Jet::expectedEt(double truth, double start, bool fast)
     temp.E    = Measurement::E * truth/Measurement::pt;
     return f.inverse(&temp);
   }
-  static const double eps = 1.0e-9;
+  static const double eps = 1.0e-12;
   double x1 = root;
   //find root of truth - jet->correctedEt(expectedEt)
   // x: expectedEt
   // y: truth -  jet->correctedEt(expectedEt)
   // f: jet->correctedEt(expectedEt)
   double f1 = correctedEt(x1,false);
+
   if(std::abs(f1 - truth) < eps * truth) {
     //std::cout << "this really happens!?\n";
     return x1;
@@ -258,12 +266,14 @@ double Jet::expectedEt(double truth, double start, bool fast)
     }
     else {
       if(f1 > truth) {
-	double step = (f1 - truth < 0.01) ? 0.1 : (f1 - truth) * (x2-x1)/(f2-f1);
+	double step = (f1 - truth) * (x2-x1)/(f2-f1);
+	if(step < 0.1) step = 0.1;
 	x1 -=  2 * step;
 	f1 = correctedEt(x1,false);
 	++ntries;
       } else if(f2 < truth) {
-	double step = (truth - f2 < 0.01) ? 0.1 : (truth - f2) * (x2-x1)/(f2-f1);
+	double step = (truth - f2) * (x2-x1)/(f2-f1);
+	if(step < 0.1) step = 0.1;
 	x2 += 2 * step;
 	f2 = correctedEt(x2,false);
 	++ntries;
