@@ -108,27 +108,33 @@ void ControlPlots::createJetTruthEventPlots() const {
 //!  \p type.
 // -------------------------------------------------------------
 ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type) const {
-  ControlPlotsFunction::Function f = 0;
   if( varName == "Eta" )
-    f = &ControlPlotsFunction::jetTruthEventJetEta;
+    return  &ControlPlotsFunction::jetTruthEventJetEta;
+  if( varName == "Pt" )
+   return  &ControlPlotsFunction::jetTruthEventJetPt;
   if( varName == "EMF" )
-    f = &ControlPlotsFunction::jetTruthEventJetEMF;
+    return  &ControlPlotsFunction::jetTruthEventJetEMF;
   if( varName == "momentEtaEta" )
-    f = &ControlPlotsFunction::jetTruthEventJetMomentEtaEta;
-  else if( varName == "GenJetPt" )
-    f = &ControlPlotsFunction::jetTruthEventTruthPt;
-  else if( varName == "momentPhiPhi" )
-    f = &ControlPlotsFunction::jetTruthEventJetMomentPhiPhi;
-  else if( varName == "Flavor" )
-    f = &ControlPlotsFunction::jetTruthEventJetFlavor;
-  else if( varName == "GenJetResponse" && type == ControlPlotsConfig::Uncorrected )
-    f = &ControlPlotsFunction::jetTruthEventResponse;
-  else if( varName == "GenJetResponse" && type == ControlPlotsConfig::Kalibri )
-    f = &ControlPlotsFunction::jetTruthEventResponseKalibriCorrected;
-  else if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3 )
-    f = &ControlPlotsFunction::jetTruthEventResponseL2L3Corrected;
+    return  &ControlPlotsFunction::jetTruthEventJetMomentEtaEta;
+  if( varName == "scaledEtaEta" )
+    return  &ControlPlotsFunction::jetTruthEventJetScaledEtaEta;
+  if( varName == "scaledPhiPhi" )
+    return  &ControlPlotsFunction::jetTruthEventJetScaledPhiPhi;
+  if( varName == "GenJetPt" )
+    return  &ControlPlotsFunction::jetTruthEventTruthPt;
+  if( varName == "momentPhiPhi" )
+    return &ControlPlotsFunction::jetTruthEventJetMomentPhiPhi;
+  if( varName == "Flavor" )
+    return &ControlPlotsFunction::jetTruthEventJetFlavor;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::Uncorrected )
+   return &ControlPlotsFunction::jetTruthEventResponse;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::Kalibri )
+    return &ControlPlotsFunction::jetTruthEventResponseKalibriCorrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3 )
+    return  &ControlPlotsFunction::jetTruthEventResponseL2L3Corrected;
 
-  return f;
+  std::cerr << "ControlPlots: unknown variable " << varName << std::endl;
+  return 0;
 }
 
 

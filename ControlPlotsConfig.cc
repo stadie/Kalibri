@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.4 2010/02/17 11:20:41 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.5 2010/02/18 12:40:16 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -470,8 +470,8 @@ std::string ControlPlotsConfig::axisTitle(const std::string &varName) const {
 std::string ControlPlotsConfig::unitTitle(const std::string &varName) const {
   std::string title = "";
 
-  if( varName == "GenJetPt" )
-    title = "GeV";
+  //if( varName == "GenJetPt" )
+  //  title = "GeV";
 
   return title;
 }
@@ -484,8 +484,14 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
   
   if( varName == "Eta" )
     title = "#eta";
+  if( varName == "JetPt" )
+    title = "p_{T} [GeV]";
   else if( varName == "momentPhiPhi" ) 
     title = "#sigma_{#phi#phi}";
+  else if( varName == "scaledPhiPhi" ) 
+    title = "#sigma_{#phi#phi} ln(p_{T}/GeV)";
+  else if( varName == "scaledEtaEta" ) 
+    title = "#sigma_{#eta#eta} ln(p_{T}/GeV)";
   else if( varName == "momentEtaEta" ) 
     title = "#sigma_{#eta#eta}";
   else if( varName == "Flavor" )
@@ -493,7 +499,7 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
   else if ( varName == "EMF" ) 
     title = "emf";
   else if( varName == "GenJetPt" )
-    title = "p^{gen}_{T}";
+    title = "p^{gen}_{T} [GeV]";
   else if( varName == "GenJetResponse" )
     title = "p_{T} / p^{gen}_{T}";
 

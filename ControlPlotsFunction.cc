@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.3 2010/02/17 11:20:41 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.4 2010/02/18 12:40:16 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -46,6 +46,16 @@ double ControlPlotsFunction::jetTruthEventJetEta(const Event *evt) const {
 }
 
 
+//!  \brief Returns p_{T} of the jet
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventJetPt(const Event *evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  return jte->jet()->pt();
+}
+
 //!  \brief Returns ECal fraction of the jet
 //!
 //!  The \p Event \p evt has to be of type \p JetTruthEvent.
@@ -53,7 +63,7 @@ double ControlPlotsFunction::jetTruthEventJetEta(const Event *evt) const {
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::jetTruthEventJetEMF(const Event *evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
-  return jte->jet()->EmEt() / jte->jet()->Et();
+  return jte->jet()->EmEt() / (jte->jet()->EmEt() + jte->jet()->HadEt());
 }
 
 
@@ -76,6 +86,28 @@ double ControlPlotsFunction::jetTruthEventJetMomentPhiPhi(const Event *evt) cons
 double ControlPlotsFunction::jetTruthEventJetMomentEtaEta(const Event *evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
   return jte->jet()->momentEtaEta();
+}
+
+
+//!  \brief Returns the scaled #eta #eta moment of the jet
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventJetScaledEtaEta(const Event *evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  return jte->jet()->scaledEtaWidth();
+}
+
+
+//!  \brief Returns the scaled #phi #phi moment of the jet
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventJetScaledPhiPhi(const Event *evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  return jte->jet()->scaledPhiWidth();
 }
 
 
