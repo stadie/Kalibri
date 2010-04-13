@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.3 2010/01/04 17:04:51 mschrode Exp $
+//  $Id: Kalibri.cc,v 1.6 2010/03/24 14:30:19 mschrode Exp $
 
 #include "Kalibri.h"
 
@@ -136,7 +136,9 @@ void Kalibri::run()
 
     // Apply event weights if enabled
     EventWeightProcessor ewp(configFile_,par_);
-    ewp.process(data_);
+    if( ewp.applyWeights() ) {
+      ewp.process(data_);
+    }
 
     if(fitMethod_==1) {
       run_Lvmini();
@@ -157,8 +159,10 @@ void Kalibri::run_Lvmini()
   int naux = 3000000, iret=0;
   
   int npar = par_->GetNumberOfParameters();
+  int mvec = mvec_;
+  if( calcCov_ ) mvec = -mvec_;
 
-  naux = lvmdim_(npar,mvec_);
+  naux = lvmdim_(npar,mvec);
   cout<<"array of size "<<naux<<" needed."<<endl;
 
   double* aux = new double[naux], fsum = 0;
@@ -239,11 +243,11 @@ void Kalibri::run_Lvmini()
       cerr << "ERROR: " << residualScalingScheme_.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
       break;
     }
-    if(lvmdim_(npar,mvec_) > naux)
-      cout<<"Aux field too small. "<<lvmdim_(npar,mvec_)<<" enntires needed."<<endl;
+    if(lvmdim_(npar,mvec) > naux)
+      cout<<"Aux field too small. "<<lvmdim_(npar,mvec)<<" enntires needed."<<endl;
     if (npar>0) npar*=-1; //Show output
     //initialization
-    lvmini_( npar, mvec_, nIter_, aux);
+    lvmini_( npar, mvec, nIter_, aux);
     npar=std::abs(npar);
     
     int n = 0;
@@ -260,16 +264,6 @@ void Kalibri::run_Lvmini()
 	temp_derivative1[param]=0.0;
 	temp_derivative2[param]=0.0;
       } 
-      //set local parameters to global value
-      for( std::vector<int>::const_iterator iter = globalJetPars_.begin();
-	   iter != globalJetPars_.end() ; ++ iter) {
-	double val = par_->GetPars()[*iter];
-	for(int id = *iter + par_->GetNumberOfJetParametersPerBin(); 
-	    id < par_->GetNumberOfJetParameters() ; 
-	    id += par_->GetNumberOfJetParametersPerBin()) {
-	  par_->GetPars()[id] = val;
-	}
-      }
       fsum = 0;
       for (int ithreads=0; ithreads<nThreads_; ++ithreads) t[ithreads]->Start();
       
@@ -280,19 +274,6 @@ void Kalibri::run_Lvmini()
 	    temp_derivative1[param] += t[ithreads]->TempDeriv1(param);
 	    temp_derivative2[param] += t[ithreads]->TempDeriv2(param);
 	  }
-	}
-      }
-      //sum up derivative results for global par
-      for( std::vector<int>::const_iterator iter = globalJetPars_.begin();
-	   iter != globalJetPars_.end() ; ++ iter) {
-	int gid = *iter;
-	for(int id = *iter + par_->GetNumberOfJetParametersPerBin(); 
-	    id < par_->GetNumberOfJetParameters() ; 
-	    id += par_->GetNumberOfJetParametersPerBin()) {
-	  temp_derivative1[gid] += temp_derivative1[id];
-	  temp_derivative2[gid] += temp_derivative2[id];
-	  temp_derivative1[id] = 0;
-	  temp_derivative2[id] = 0;
 	}
       }
       //zero derivative of fixed pars
@@ -310,8 +291,8 @@ void Kalibri::run_Lvmini()
       for( int param = 0 ; param < npar ; ++param ) {
 	aux[param]      = temp_derivative1[param]/(2.0*derivStep_);
 	aux[param+npar] = temp_derivative2[param]/(derivStep_*derivStep_);
-	assert(aux[param] == aux[param]);
-	assert(aux[param+npar] == aux[param+npar]);
+ 	assert(aux[param] == aux[param]);
+ 	assert(aux[param+npar] == aux[param+npar]);
       }
       //print derivatives:
       if(printParNDeriv_) {
@@ -325,13 +306,12 @@ void Kalibri::run_Lvmini()
 	  std::cout << std::setw(15) << aux[param];
 	  std::cout << std::setw(15) << aux[param+npar] << std::endl;
 	}
+	std::cout << "fsum " << fsum << std::endl;
       }
+      assert( fsum > 0 );
       lvmfun_(par_->GetPars(),fsum,iret,aux);
-      //par_->SetParameters(aux + par_index); 
-      lvmprt_(2,aux,2); //print out
     } while (iret<0); 
 
-    lvmprt_(2,aux,2); //print out
     for (int ithreads=0; ithreads<nThreads_; ++ithreads){
       t[ithreads]->ClearData();
     }  
@@ -340,19 +320,47 @@ void Kalibri::run_Lvmini()
     par_->SetParameters(aux + par_index);
   }
   //Copy Parameter errors from aux array to the TParameter::e array
-  error_index=2;
-  error_index = lvmind_(error_index);
-  par_->SetErrors(aux+error_index);
-  for( std::vector<int>::const_iterator iter = globalJetPars_.begin();
-       iter != globalJetPars_.end() ; ++ iter) {
-    double val =  par_->GetPars()[*iter];
-    double err = par_->GetErrors()[*iter];
-    for(int id = *iter + par_->GetNumberOfJetParametersPerBin(); 
-	id < par_->GetNumberOfJetParameters() ; 
-	id += par_->GetNumberOfJetParametersPerBin()) {
-      par_->GetPars()[id] = val;
-      par_->GetErrors()[id] = err;
+  if( !calcCov_ ) {
+    error_index=2;
+    error_index = lvmind_(error_index);
+    par_->SetErrors(aux+error_index);
+  } else {
+    // Retrieve parameter errors
+    error_index = 3;
+    error_index = lvmind_(error_index);
+    par_->SetErrors(aux+error_index);
+    // Retrieve global parameter correlation coefficients
+    error_index = 4;
+    error_index = lvmind_(error_index);
+    bool nanOccured = false;
+    for(int i = 0; i < par_->GetNumberOfParameters(); i++) {
+      if( aux[error_index+i] != aux[error_index+i] ) { // Check for NAN
+	if( !nanOccured ) {
+	  nanOccured = true;
+	  std::cout << "The following global correlation coefficients are NAN and set to 0:\n";
+	}
+	std::cout << i << std::endl;
+	aux[error_index+i] = 0.;
+      }
     }
+    par_->SetGlobalCorrCoeff(aux+error_index);
+    // Retrieve parameter covariances
+    error_index = 5;
+    error_index = lvmind_(error_index);
+    // Set cov = 0 for fixed parameters
+    nanOccured = false;
+    for(int i = 0; i < par_->GetNumberOfCovCoeffs(); i++) {
+      if( aux[error_index+i] != aux[error_index+i] ) { // Check for NAN
+	if( !nanOccured ) {
+	  nanOccured = true;
+	  std::cout << "The following covariance elements are NAN and set to 0:\n";
+	}
+	std::cout << i << std::endl;
+
+	aux[error_index+i] = 0.;
+      }
+    }
+    par_->SetCovCoeff(aux+error_index);
   }
   par_->SetFitChi2(fsum);
   
@@ -414,9 +422,7 @@ void Kalibri::done()
       delete plots;
     } else if( mode == 1 ) {  // Control plots for jetsmearing
       ControlPlotsJetSmearing * plotsjs = new ControlPlotsJetSmearing(configFile_,&data_,par_);
-      plotsjs->plotResponse();
-      //      plotsjs->plotMeanResponseAndResolution();
-      plotsjs->plotDijets();
+      plotsjs->makePlots();
       delete plotsjs;
     }
   }
@@ -473,9 +479,8 @@ void Kalibri::init()
   eps_        = config.read<double>("BFGS eps",1e-02);
   wlf1_       = config.read<double>("BFGS 1st wolfe parameter",1e-04);
   wlf2_       = config.read<double>("BFGS 2nd wolfe parameter",0.9);
+  calcCov_    = config.read<double>("BFGS calculate covariance",false);
   printParNDeriv_ = config.read<bool>("BFGS print derivatives",false);
-  //global parameters ?
-  globalJetPars_ = bag_of<int>(config.read<string>("global jet parameters","")); 
 
   //fixed jet parameters
   std::vector<int> fixJetPars = bag_of<int>(config.read<string>("fixed jet parameters",""));
@@ -513,9 +518,22 @@ void Kalibri::init()
       }
     }
   } else {
-    cerr << "ERROR: Syntax error for fixed jet parameters. Syntax is:\n";
-    cerr << "       'fixed jet parameter = { <eta_id> <phi_id> <par_id> }' or\n"; 
-    cerr << "       'fixed jet parameter = { <eta_id> <phi_id> }'\n"; 
+//     cerr << "ERROR: Syntax error for fixed jet parameters. Syntax is:\n";
+//     cerr << "       'fixed jet parameter = { <eta_id> <phi_id> <par_id> }' or\n"; 
+//     cerr << "       'fixed jet parameter = { <eta_id> <phi_id> }'\n"; 
+    // Fix specified parameters in all jet bins
+    for(int jetBin = 0; jetBin < par_->GetEtaGranularityJet(); jetBin++) {
+      for(unsigned int i = 0 ; i < fixJetPars.size() ; i++) {
+	int parIdx = par_->GetNumberOfTowerParameters()
+	  + jetBin * par_->GetNumberOfJetParametersPerBin()
+	  + fixJetPars[i];
+	fixedJetPars_.push_back(parIdx);
+      }
+    }
+  }
+  for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
+       iter != fixedJetPars_.end() ; ++ iter) {
+    par_->fixPar(*iter);
   }
 
   //fixed global parameters
@@ -535,6 +553,10 @@ void Kalibri::init()
 				       par_->GetNumberOfTrackParameters() +
 				       globalJetBin );
       }
+  }
+  for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
+       iter != fixedGlobalJetPars_.end() ; ++ iter) {
+    par_->fixPar(*iter);
   }
 
   outputFile_ = config.read<string>( "Output file", "calibration_k.cfi" );

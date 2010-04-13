@@ -1,7 +1,7 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.58 2009/11/24 16:52:59 stadie Exp $
+// $Id: Parameters.h,v 1.59 2010/02/15 12:34:47 stadie Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -19,13 +19,14 @@
 #include "ConfigFile.h"
 #include "Parametrization.h"
 #include "Function.h"
+#include "SmearFunction.h"
 
 
 //!  \brief Connection between detector geometry and fit parameters,
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.58 2009/11/24 16:52:59 stadie Exp $
+//!  $Id: Parameters.h,v 1.59 2010/02/15 12:34:47 stadie Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
@@ -48,11 +49,22 @@ public :
   int GetNumberOfJetParameters() const{return p->nJetPars()*eta_granularity_jet*phi_granularity_jet;}
   int GetNumberOfTrackParameters() const{return p->nTrackPars()*eta_granularity_track*phi_granularity_track;}
   int GetNumberOfGlobalJetParameters() const{return p->nGlobalJetPars();}
+  int GetNumberOfFixedParameters() const {
+    int n = 0;
+    for(std::vector<bool>::const_iterator it = isFixedPar_.begin();
+	it != isFixedPar_.end(); it++) {
+      if( *it ) n++;
+    }
+    return n;
+  }
 
   int GetNumberOfParameters() const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters() + GetNumberOfTrackParameters()+GetNumberOfGlobalJetParameters();}
   int GetNumberOfTowerParametersPerBin() const {return p->nTowerPars();}
   int GetNumberOfJetParametersPerBin() const {return p->nJetPars();}
   int GetNumberOfTrackParametersPerBin() const {return p->nTrackPars();}
+  int GetNumberOfCovCoeffs() const { 
+    return (GetNumberOfParameters()*GetNumberOfParameters()+GetNumberOfParameters())/2;
+  }
 
   int GetEtaGranularity() const { return eta_granularity;}
   int GetPhiGranularity() const { return phi_granularity;}
@@ -70,15 +82,66 @@ public :
   double* GetTrackParRef(int trackbin)  { return k + GetNumberOfTowerParameters() + GetNumberOfJetParameters() +trackbin*p->nTrackPars();}
   double* GetGlobalJetParRef()  { return k + GetNumberOfTowerParameters() + GetNumberOfJetParameters() + GetNumberOfTrackParameters();}
 
-  void SetErrors(double *ne) { std::memcpy(e,ne,GetNumberOfParameters()*sizeof(double));}  
-  void SetParameters(double *np) { std::memcpy(k,np,GetNumberOfParameters()*sizeof(double));}
+  double* GetTowerParErrorRef(int bin) { 
+    return parErrors_ + bin*p->nTowerPars();
+  }
+  double* GetJetParErrorRef(int jetbin)  { 
+    return parErrors_ + GetNumberOfTowerParameters()+jetbin*p->nJetPars();
+  }
+  double* GetTrackParErrorRef(int trackbin)  {
+    return parErrors_ + GetNumberOfTowerParameters() + GetNumberOfJetParameters() +trackbin*p->nTrackPars();
+  }
+  double* GetGlobalJetParErrorRef()  { 
+    return parErrors_ + GetNumberOfTowerParameters() + GetNumberOfJetParameters() + GetNumberOfTrackParameters();
+  }
+
+  double* GetTowerParGlobalCorrCoeffRef(int bin) { 
+    return parGCorr_ + bin*p->nTowerPars();
+  }
+  double* GetJetParGlobalCorrCoeffRef(int jetbin)  { 
+    return parGCorr_ + GetNumberOfTowerParameters()+jetbin*p->nJetPars();
+  }
+  double* GetTrackParGlobalCorrCoeffRef(int trackbin)  {
+    return parGCorr_ + GetNumberOfTowerParameters() + GetNumberOfJetParameters() +trackbin*p->nTrackPars();
+  }
+  double* GetGlobalJetParGlobalCorrCoeffRef()  { 
+    return parGCorr_ + GetNumberOfTowerParameters() + GetNumberOfJetParameters() + GetNumberOfTrackParameters();
+  }
+
+  bool isFixedPar(int i) const { 
+    assert( i >= 0 && i < GetNumberOfParameters() );
+    return isFixedPar_[i];
+  }
+  std::string parName(int i) const {
+    assert( i >= 0 && i < GetNumberOfParameters() );
+    return parNames_[i];
+  }
+
+  void SetParameters(double *np) {
+    std::memcpy(k,np,GetNumberOfParameters()*sizeof(double));
+  }
+  void SetErrors(double *ne) {
+    std::memcpy(parErrors_,ne,GetNumberOfParameters()*sizeof(double));
+  }  
+  void SetGlobalCorrCoeff(double *gcc) {
+    std::memcpy(parGCorr_,gcc,GetNumberOfParameters()*sizeof(double));
+  }  
+  void SetCovCoeff(double *cov) {
+    std::memcpy(parCov_,cov,GetNumberOfCovCoeffs()*sizeof(double));
+  }
+  void fixPar(int i) {
+    assert( i >= 0 && i < GetNumberOfParameters() );
+    isFixedPar_[i] = true;
+  }
   void SetFitChi2(double chi2) { fitchi2 = chi2;}
   double GetFitChi2() const { return fitchi2;}
   void FillErrors(double* copy) const {
-    std::memcpy(copy,e,GetNumberOfParameters()*sizeof(double));
+    std::memcpy(copy,parErrors_,GetNumberOfParameters()*sizeof(double));
   }
   double* GetPars() { return k; }
-  double* GetErrors() { return e; }
+  double* GetErrors() { return parErrors_; }
+  double* GetGlobalCorrCoeff() { return parGCorr_; }
+  double* GetCovCoeff() { return parCov_; }
   double* GetEffMap() {return trackEff;}
   int GetTrackEffBin(double pt, double eta);
 
@@ -282,6 +345,7 @@ public :
   Function jet_function(int etaid, int phiid);
   Function track_function(int etaid, int phiid);
   Function global_jet_function();
+  SmearFunction resolutionFitPDF(int etaid, int phiid);
 
   void readCalibrationCfi(const std::string& file);
   void readCalibrationTxt(const std::string& file);
@@ -292,23 +356,22 @@ public :
 
 protected:
   TParameters(Parametrization* p) 
-    : p(p),k(0),e(0),trackEff(0),fitchi2(0) {
+    : p(p),k(0),parErrors_(0),parGCorr_(0),trackEff(0),fitchi2(0) {
   };
-  virtual ~TParameters() {
-    delete p;
-    delete [] k;
-    delete [] e;
-    delete [] trackEff;
-  };
+  virtual ~TParameters();
+
+
 private:
   TParameters();
   TParameters(const TParameters&) {}
   int GetEtaBin(int phi_id, int etagranu, int phigranu, bool etasym) const;
   int GetPhiBin(int phi_id, int phigranu) const;
-
+  //! Return one line of LaTeX tabular containing the name and value of a given parameter from config file
   template<class T> std::string texTabularLine(const ConfigFile& config, const std::string& fieldname) const;
-
-  
+  //! Return submatrix of covariance matrix for \p nPar parameters from \p firstPar
+  std::vector<int> findCovIndices(int firstPar, int nPar) const;
+  //! Return stati (is fixed?) for \p nPar parameters from \p firstPar
+  std::vector<bool> findParStatus(int firstPar, int nPar) const;
 
   //Towers in Eta-, Phi- direction (according to PTDR Vol I, p.201)
   unsigned const static eta_ntwr=82, phi_ntwr=72;
@@ -316,12 +379,16 @@ private:
   bool eta_symmetry;
   unsigned int eta_granularity, phi_granularity,eta_granularity_jet, phi_granularity_jet, eta_granularity_track, phi_granularity_track;
   std::vector<double> start_values, jet_start_values, track_start_values, global_jet_start_values;
+  std::vector<std::string> parNames_;
 
   //The parametrization functions:
   Parametrization* p;
 
   double * k; //!< all fit-parameters
-  double * e; //!< all fit-parameter errors
+  std::vector<bool> isFixedPar_;
+  double * parErrors_; //!< all fit-parameter errors
+  double * parGCorr_; //!< Global correlation coefficients of parameters
+  double * parCov_;
   double * trackEff; //!< track Efficiency 13eta X 13 ptbins;
   double fitchi2;
 

@@ -1,4 +1,4 @@
-//  $Id: Kalibri.h,v 1.2 2009/11/24 16:52:59 stadie Exp $
+//  $Id: Kalibri.h,v 1.2 2010/02/09 10:19:52 mschrode Exp $
 
 //!  \mainpage
 //!
@@ -35,7 +35,7 @@
 //!
 //!  \section label_sec_geninfo General information about and results of the calibration method
 //!
-//!  - J. Naumann-Emme:
+//!  - S. Naumann-Emme:
 //!    <A HREF="http://indico.cern.ch/conferenceDisplay.py?confId=65022">
 //!    JEC from top using "Kalibri" method</A>,
 //!    CMS Jet Energy Corrections Meeting, 24th July, 2009
@@ -136,7 +136,7 @@ class Measurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Kalibri.h,v 1.2 2009/11/24 16:52:59 stadie Exp $
+//!  $Id: Kalibri.h,v 1.2 2010/02/09 10:19:52 mschrode Exp $
 // -----------------------------------------------------------------
 class Kalibri {
 public :
@@ -160,7 +160,8 @@ public :
   nIter_(100),
   eps_(1e-02),
   wlf1_(1e-04),
-  wlf2_(0.9)
+  wlf2_(0.9),
+  calcCov_(false)
   {};
 
   ~Kalibri(){};
@@ -193,7 +194,6 @@ private:
   bool printParNDeriv_;     //!< Control whether to print derivatives in each iteration
   std::vector<int> residualScalingScheme_;    //!< Iteration scheme of scaling of residuals
   double outlierChi2Cut_;                     //!< Cut on outlier when no scaling is chosen
-  std::vector<int> globalJetPars_;            //!< List of global jet parameters
   std::vector<int> fixedJetPars_;             //!< List of fixed jet parameters
   std::vector<int> fixedGlobalJetPars_;       //!< List of fixed global jet parameters
 
@@ -204,6 +204,7 @@ private:
   float eps_;               //!< Convergence parameter in LVMINI
   float wlf1_;              //!< Parameter 1 of strong Wolfe condition in LVMINI
   float wlf2_;              //!< Parameter 2 of strong Wolfe condition in LVMINI
+  bool calcCov_;            //!< If true, calculate covariance matrix of fitted parameters
 };
 
 #endif

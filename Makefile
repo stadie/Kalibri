@@ -70,19 +70,19 @@ NJetSel.o: NJetSel.cc NJetSel.h
 CalibData.o: CalibData.cc CalibData.h Parametrization.h Parameters.h
 	$(C) $(CFLAGS) -c CalibData.cc
 
-SmearData.o: SmearData.cc SmearData.h CalibData.h Function.h
+SmearData.o: SmearData.cc SmearData.h CalibData.h SmearFunction.h
 	$(C) $(CFLAGS) -c SmearData.cc
 
-SmearDiJet.o: SmearDiJet.cc SmearDiJet.h Function.h Jet.h SmearData.h
+SmearDiJet.o: SmearDiJet.cc SmearDiJet.h SmearFunction.h Jet.h SmearData.h
 	$(C) $(CFLAGS) -c SmearDiJet.cc
 
-SmearPhotonJet.o: SmearPhotonJet.cc SmearPhotonJet.h Parametrization.h Parameters.h CalibData.h SmearData.h
+SmearPhotonJet.o: SmearPhotonJet.cc SmearPhotonJet.h Jet.h SmearData.h SmearFunction.h
 	$(C) $(CFLAGS) -c SmearPhotonJet.cc
 
 Parametrization.o: Parametrization.h Parametrization.cc
 	$(C) $(RCXX) -c Parametrization.cc
 
-Parameters.o: Parameters.cc Parameters.h Parametrization.h Function.h ConfigFile.h
+Parameters.o: Parameters.cc Parameters.h Parametrization.h Function.h SmearFunction.h ConfigFile.h
 	$(C) $(RCXX) -c Parameters.cc
 
 ControlPlots.o: ControlPlots.cc ControlPlots.h ControlPlotsConfig.h ControlPlotsProfile.h ControlPlotsFunction.h CalibData.h Function.h Jet.h JetTruthEvent.h
@@ -106,7 +106,7 @@ EventReader.o: EventReader.h EventReader.cc Parameters.h Parametrization.h Confi
 PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h Function.h CorFactors.h CorFactorsFactory.h
 	$(C) $(RCXX) -c PhotonJetReader.cc
 
-DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h TwoJetsPtBalanceEvent.h JetWithTowers.h Function.h CorFactors.h CorFactorsFactory.h JetConstraintEvent.h
+DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h TwoJetsPtBalanceEvent.h JetWithTowers.h Function.h SmearFunction.h CorFactors.h CorFactorsFactory.h JetConstraintEvent.h
 	$(C) $(RCXX) -c DiJetReader.cc
 
 TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameters.h ConfigFile.h CorFactors.h CorFactorsFactory.h
