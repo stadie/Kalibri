@@ -1,5 +1,8 @@
 #include "EventWeightProcessor.h"
 
+#include "SmearDiJet.h"
+
+#include <cmath>
 
 //!  \param configfile Name of configuration file
 //!  \param param The parameters
@@ -16,25 +19,48 @@ EventWeightProcessor::EventWeightProcessor(const std::string& configfile, TParam
     std::cout << "  Config file " << weightConfigFileName << "\n";
 
     ConfigFile weightConfig(weightConfigFileName.c_str());
-    minPtHat_                    = bag_of<double>(weightConfig.read<string>("Min pthat","0."));
-    std::vector<double> xSection = bag_of<double>(weightConfig.read<string>("XS","0."));
-    std::vector<int> nEvents     = bag_of<int>(weightConfig.read<string>("Number evts","0"));
-    double lumi                  = weightConfig.read<double>("Lumi",0.);
-    int refPtHatBin              = weightConfig.read<int>("Reference pthat bin",-1);
+    std::string type = weightConfig.read<string>("Type","");
+    if( type == "pthat bins" ) type_ = 0;
+    else if( type == "pthat" ) type_ = 1;
+    else type_ = -1;
 
-    assert( xSection.size() == minPtHat_.size() );
-    assert( nEvents.size() == minPtHat_.size() );
-    calculateWeights(xSection,nEvents,lumi,refPtHatBin);
-    assert( weights_.size() == minPtHat_.size() );
+    double lumi = weightConfig.read<double>("Lumi",0.);
+    
+    // Weights per pthat bin
+    if( type_ == 0 ) {
+      minPtHat_                    = bag_of<double>(weightConfig.read<string>("Min pthat","0."));
+      std::vector<double> xSection = bag_of<double>(weightConfig.read<string>("XS","0."));
+      std::vector<int> nEvents     = bag_of<int>(weightConfig.read<string>("Number evts","0"));
+      int refPtHatBin              = weightConfig.read<int>("Reference pthat bin",-1);
 
-    std::cout << "  Calculating weights ";
-    if( refPtHatBin < 0 ) std::cout << "for a luminosity of " << lumi << " pb-1:\n";
-    else                  std::cout << "relative to pthat bin " << refPtHatBin << ":\n";
-    for(size_t i = 0; i < minPtHat_.size(); i++) {
-      std::cout << "    " << i << ": " << minPtHat_.at(i) << " < pthat < ";
-      if( i < minPtHat_.size() - 1 ) std::cout << minPtHat_.at(i+1);
-      else                           std::cout << " infty";
-      std::cout << ":  " << weights_.at(i) << std::endl;
+      assert( xSection.size() == minPtHat_.size() );
+      assert( nEvents.size() == minPtHat_.size() );
+      calculateWeightsForBins(xSection,nEvents,lumi,refPtHatBin);
+      assert( weights_.size() == minPtHat_.size() );
+      
+      std::cout << "  Calculating weights ";
+      if( refPtHatBin < 0 ) std::cout << "for a luminosity of " << lumi << " pb-1:\n";
+      else                  std::cout << "relative to pthat bin " << refPtHatBin << ":\n";
+      for(size_t i = 0; i < minPtHat_.size(); i++) {
+	std::cout << "    " << i << ": " << minPtHat_.at(i) << " < pthat < ";
+	if( i < minPtHat_.size() - 1 ) std::cout << minPtHat_.at(i+1);
+	else                           std::cout << " infty";
+	std::cout << ":  " << weights_.at(i) << std::endl;
+      }
+    }
+    // Weights dependend on pthat
+    else if( type_ == 1 ) {
+      expo_ = weightConfig.read<double>("Exponent",1.);
+      double xs = weightConfig.read<double>("XS",0.);
+      double num = weightConfig.read<double>("Number evts",0);
+      globalWeight_ = lumi*xs/num;
+      std::cout << "  Weighting events for a luminosity of " << lumi << " pb-1" << std::flush;
+      std::cout << " (xs = " << xs << ", N*pthat^(" << expo_ << ") = " << num << "):" << std::endl;
+      std::cout << "    weight = " << globalWeight_ << "*pthat^(" << expo_ << ")" << std::endl;
+    }
+    else {
+      std::cerr << "ERROR: Unknown weighting type '" << type << "'" << std::endl;
+      exit(-8);
     }
   }
 }
@@ -65,16 +91,26 @@ int EventWeightProcessor::process(std::vector<Event*>& data) {
     std::vector<Event*>::iterator evt = data.begin();
     for(; evt != data.end(); evt++) {
       if( (*evt)->GetType() == ParLimit ) continue;
-
       double weight   = 0.;
-      for(size_t ptHatBin = 0; ptHatBin < minPtHat_.size(); ptHatBin++) {
-	if( (*evt)->ptHat() > minPtHat_.at(ptHatBin) )
-	  weight = weights_.at(ptHatBin);
-        else
-	  break;
-      }
-      (*evt)->setWeight( weight );
 
+      if( type_ == 0 ) {
+	for(size_t ptHatBin = 0; ptHatBin < minPtHat_.size(); ptHatBin++) {
+	  if( (*evt)->ptHat() > minPtHat_.at(ptHatBin) )
+	    weight = weights_.at(ptHatBin);
+	  else
+	    break;
+	}
+      }
+      else if( type_ == 1 ) {
+	weight = globalWeight_*pow((*evt)->ptHat(),expo_);
+	
+// 	// Hack
+// 	SmearDiJet *dijet = dynamic_cast<SmearDiJet*>(*evt);  
+// 	weight *= pow((dijet->dijetPt() - 40.),4.5);
+// 	weight *= 1E-6;
+      }
+
+      (*evt)->setWeight( weight );
       nProcEvts++;
     }
 
@@ -86,7 +122,7 @@ int EventWeightProcessor::process(std::vector<Event*>& data) {
 
 
 
-//!  \brief Calculate weights
+//!  \brief Calculate weights for ptHat binned samples
 //!
 //!  A weighting factor \f$ w \f$ is calculated per
 //!  \f$ \hat{p}_{T} \f$ bin \f$ i \f$ as
@@ -111,9 +147,9 @@ int EventWeightProcessor::process(std::vector<Event*>& data) {
 //!  \param refPtHatBin If \f$ \ge 0 \f$, the \f$ \hat{p}_{T} \f$
 //!                     bin to which the events are weighted
 // -----------------------------------------------------------------
-void EventWeightProcessor::calculateWeights(const std::vector<double>& xSection,
-					    const std::vector<int>& nEvents,
-					    double lumi, int refPtHatBin) {
+void EventWeightProcessor::calculateWeightsForBins(const std::vector<double>& xSection,
+						   const std::vector<int>& nEvents,
+						   double lumi, int refPtHatBin) {
   // Set up new empty vector of weights
   weights_.clear();
   weights_ = std::vector<double>(xSection.size());
