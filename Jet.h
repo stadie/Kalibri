@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.33 2010/02/17 11:19:48 stadie Exp $
+//!    $Id: Jet.h,v 1.34 2010/04/01 16:28:19 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -75,11 +75,13 @@ class Jet : public Measurement
   double scaledEtaWidth() const { return (seta_ > 0 ? seta_ : seta_ = momentEtaEta() /(0.2 -  0.02 * log(Et())));}  
   Flavor flavor() const {return flavor_;}       //!< Return jet flavor
   double genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
-  double ptHat()  const {return ptHat_;}     //!< \f$ \hat{p}_{T} \f$ of the event
   double dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet
   const CorFactors& corFactors() const { return *corFactors_;}
   void updateCorFactors(CorFactors *cor);
+  //! Correct measurement by product \p L1*L2*L3
   void correctToL3();
+  //! Correct measurement by product \p L2*L3
+  void correctL2L3();
 
   //!  \brief Change address of parameters covered by this jet
   //!  \sa Parameters
@@ -152,15 +154,16 @@ class Jet : public Measurement
 
   virtual Jet* clone() const { return new Jet(*this);} //!< Clone this jet
   void setGlobalFunction(const Function& ngf) { gf = ngf;} //!< Set global correction function, needed for constraints
+
  protected:
   mutable VariationColl varcoll;
   virtual double expectedEt(double truth, double start, bool fast = false);
   Jet(const Jet&j); //!< disallow copies!
+
  private: 
   Flavor flavor_;           //!< The jet's Flavor
   double genPt_;            //!< The genjet pt
   double dR_;               //!< \f$ \Delta R \f$ between jet and genjet
-  double ptHat_;            //!< \f$ \hat{p}_{T} \f$ of the event
   const CorFactors* corFactors_;   //!< The correction factors
   double    error;                //!< Stores error for constant error mode
   Function  f;                    //!< Jet correction function

@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.15 2009/11/25 13:07:45 stadie Exp $
+//!  $Id: DiJetReader.h,v 1.5 2010/04/12 13:46:53 mschrode Exp $
 // ----------------------------------------------------------------   
 
 
@@ -52,10 +52,11 @@ class DiJetReader : public EventReader{
 
  private:
   Event* createTwoJetsPtBalanceEvent();
-  Event* createSmearEvent();
+  Event* createSmearEvent(int callIdx = 0);
   int createJetTruthEvents(std::vector<Event*>& data);
   CorFactors* createCorFactors(int jetid) const;
   std::vector<Jet*> readCaloJets(int nJets) const;
+  std::vector<Jet*> readGenJetSortedJets(int nJets) const;
 
 
   std::auto_ptr<NJetSel> nJet_;                //!< Njet Selector
@@ -66,6 +67,7 @@ class DiJetReader : public EventReader{
   int    prescale_;             //!< only read every nth event
 
   double minJetEt_;             //!< Minimum pt of jet
+  double maxJetEt_;             //!< Maximum pt of jet
   double minDijetEt_;           //!< Minimum dijet pt
   double maxDijetEt_;           //!< Maximum dijet pt
   double max3rdJetEt_;          //!< Maximum pt of 3rd jet in dijet event
@@ -80,6 +82,7 @@ class DiJetReader : public EventReader{
 
   int    nDiJetCut_;            //!< Number of events with less than 2 jets
   int    nMinJetEt_;            //!< Number of events rejected by minJetEt_ cut
+  int    nMaxJetEt_;            //!< Number of events rejected by maxJetEt_ cut
   int    nMinDijetEt_;          //!< Number of events rejected by minDijetEt_ cut
   int    nMaxDijetEt_;          //!< Number of events rejected by maxDijetEt_ cut
   int    nCutOn3rdJet_;         //!< Number of events rejected by max3rdJetEt_ or maxRelJetEt_ cut

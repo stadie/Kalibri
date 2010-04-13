@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.12 2009/11/24 16:52:59 stadie Exp $
+//    $Id: JetTruthEvent.h,v 1.13 2010/02/17 11:18:43 stadie Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -27,7 +27,6 @@ public:
   DataType GetType() const { return GammaJet;} 
   double GetWeight() const { return weight_;}
   void setWeight(double w) { weight_ = w; }
-  double ptHat() const { return 0.; }                  //!< Dummy
   Jet* jet() const {return jet_;}
   
   double chi2() const;

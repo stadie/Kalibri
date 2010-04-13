@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.7 2010/01/28 16:06:22 stadie Exp $
+// $Id: EventReader.cc,v 1.8 2010/02/04 09:55:04 stadie Exp $
 //
 #include "EventReader.h"
 
@@ -83,11 +83,18 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
     }
   }
   corFactorsFactory_ = CorFactorsFactory::map[jcn];
-
   correctToL3_ = config_->read<bool>("correct jets to L3",false);
+  correctL2L3_ = config_->read<bool>("correct jets L2L3",false);
+  if( correctToL3_ && correctL2L3_ ) {
+    std::cerr << "WARNING: Jets are corrected twice (to L3 and L2L3).\n" << std::endl;
+    exit(-9);
+  }
   if(correctToL3_) {
-    std::cout << "Jets will be corrected to Level3." << std::endl;
+    std::cout << "Jets will be corrected to Level 3 (i.e. with L1 * L2 * L3)" << std::endl;
+  } else if(correctL2L3_) {
+    std::cout << "Jets will be corrected with L2 * L3" << std::endl;
   } 
+
   if(! constraints_.size() ) {
     std::vector<double> jet_constraint = bag_of<double>(config_->read<std::string>( "jet constraints",""));
     if(jet_constraint.size() % 5 == 0) {

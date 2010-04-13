@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.78 2010/01/14 13:13:17 mschrode Exp $
+// $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -27,7 +27,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.78 2010/01/14 13:13:17 mschrode Exp $
+//!  $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
 class Measurement
 {
 public:
@@ -65,7 +65,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.78 2010/01/14 13:13:17 mschrode Exp $
+//!  $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
 class TTrack : public Measurement
 {
 public:
@@ -122,7 +122,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.78 2010/01/14 13:13:17 mschrode Exp $
+//! $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
 class Event
 {
 public:
@@ -134,7 +134,7 @@ public:
   virtual DataType GetType() const = 0;                                //!< Get DataType
   virtual double GetWeight() const = 0;                                //!< Get weight
   virtual void setWeight(double w) = 0;                              //!< Set weight
-  virtual double ptHat() const = 0;                                    //!< Get event scale
+  double ptHat() const { return ptHat_; }                                    //!< Get event scale
 
 
   //!  \brief Get the normalized, squared residual \f$ z^{2} \f$ of this event
@@ -224,6 +224,10 @@ public:
   //!  \param z2 Normalized and squared residual
   //!  \return Scaled residual
   static double ScaleTukey(double z2);  //!< Scaling of residual a la  Tukey
+
+
+ protected:
+  double ptHat_;
 };
 
 
@@ -237,7 +241,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.78 2010/01/14 13:13:17 mschrode Exp $
+//!  $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
 class TAbstractData : public Event
 {
 public:
