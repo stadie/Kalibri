@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 
+class TF1;
 class TH1F;
 class TH2F;
 class TRandom;
@@ -15,7 +16,7 @@ class ConfigFile;
 //!
 //!  \author Hartmut Stadie
 //!  \date   Mon Jun 30 11:00:00 CEST 2008
-//!  $Id: ToyMC.h,v 1.24 2009/11/24 16:52:59 stadie Exp $
+//!  $Id: ToyMC.h,v 1.6 2010/04/12 13:50:06 mschrode Exp $
 // ----------------------------------------------------------------  
 class ToyMC {
 
@@ -25,7 +26,7 @@ class ToyMC {
   //!  - For calibration:
   //!    - 'Gauss': An energy dependent Gaussian resolution
   //!      \f[
-  //!       \frac{\sigma}{E} = \frac{b}{E} \oplus \frac{b}{\sqrt{E}} \oplus b
+  //!       \frac{\sigma}{E} = \frac{a}{E} \oplus \frac{b}{\sqrt{E}} \oplus c
   //!      \f]
   //!      
   //!    - 'Landau': An energy dependent Landau resolution
@@ -43,7 +44,7 @@ class ToyMC {
   //!      The appropriate parametrizations are
   //!      - SmearParametrizationStepGauss
   // ----------------------------------------------------------------  
-  enum ResolutionModel { Gauss, Landau, GaussUniform, TwoGauss, Dirac };
+  enum ResolutionModel { Gauss, Landau, GaussUniform, TwoGauss, Dirac, Box, CrystalBall };
 
 
   //!  \brief Response for generation
@@ -109,7 +110,7 @@ class ToyMC {
 
   //!  \brief Truth pt spectrum
   // ----------------------------------------------------------------  
-  enum TruthSpectrum { Uniform, PowerLaw, PtEtaHistogram };
+  enum TruthSpectrum { Uniform, PowerLaw, PtEtaHistogram, Exponential };
 
 
   // Global variables
@@ -138,13 +139,20 @@ class ToyMC {
 
   ResponseModel responseModel_;        //!< Response models
   std::vector<double> parResp_;        //!< Parameters for Response
-  TH1F          * histResp_;           //!< For histogramed response
 
   ResolutionModel resolutionModel_;    //!< Resolution model
+  bool energyDependentReso_;           //!< If false, pt dependent resolution
   std::vector<double> parReso_;        //!< Parameters for Respolution
+  TF1           * fRes_;              //!< For parameterized resolution / response
+  TH1F          * histRes_;           //!< For histogramed resolution / response
 
   double          smearFactor_;        //!< Combined smear factor from response and resolution
   bool            smearTowersIndividually_;  //!< If true, mSmearTowersIndividually is determined individually for each tower, else for each jet
+
+  // Additional jets (gluon radiation)
+  bool gluonRadiation_;
+  double dPt_;
+  double dPhi_;
 
 
   void genInput();
@@ -153,6 +161,11 @@ class ToyMC {
 		  float& tout, float& temtrue, float& thadtrue, float& touttrue);  
   int  splitJet(const TLorentzVector* jet ,float* et,float* eta,float * phi, int* ieta,int* iphi);
   void calculateSmearFactor(const TLorentzVector* jet, double pt);
+  void splitLorentzVector(const TLorentzVector &v, double dPt, double dPhi, TLorentzVector &v1, TLorentzVector &v2) const;
+  double getRandomCrystalBall(double pt, const std::vector<double> &par) const;
+
+  static double crystalBallFunc(double *x, double *par);
+
 
 
  public:
