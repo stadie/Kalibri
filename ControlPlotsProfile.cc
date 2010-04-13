@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.4 2010/03/03 11:12:25 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.5 2010/03/05 16:00:56 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -121,7 +121,8 @@ void ControlPlotsProfile::draw() {
 	}
 	config_->toRootFile(h);
       }
-      hLine->Draw("same");
+      if( *profTypeIt == ControlPlotsConfig::Mean
+	  || *profTypeIt == ControlPlotsConfig::GaussFitMean ) hLine->Draw("same");
       leg->Draw("same");
 
       if( config_->logX() ) c1->SetLogx(1);
@@ -151,7 +152,8 @@ void ControlPlotsProfile::draw() {
 	  h->Draw("PE1X0same");
 	}
       }
-      hLine->Draw("same");
+      if( *profTypeIt == ControlPlotsConfig::Mean
+	  || *profTypeIt == ControlPlotsConfig::GaussFitMean ) hLine->Draw("same");
       leg->Draw("same");
 
       if( config_->logX() ) c1->SetLogx(1);
