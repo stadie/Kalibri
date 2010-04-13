@@ -1,45 +1,46 @@
-// $Id: SmearDiJet.h,v 1.5 2009/11/24 16:52:59 stadie Exp $
+// $Id: SmearDiJet.h,v 1.6 2010/03/24 14:30:19 mschrode Exp $
 
 #ifndef SmearDiJet_h
 #define SmearDiJet_h
 
 #include "SmearData.h"
-#include "Function.h"
+#include "SmearFunction.h"
 #include "Jet.h"
 
 
 //!  \brief Dijet data for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 18:23:44 CEST 2009
-//!  $Id: SmearDiJet.h,v 1.5 2009/11/24 16:52:59 stadie Exp $
+//!  $Id: SmearDiJet.h,v 1.6 2010/03/24 14:30:19 mschrode Exp $
 // --------------------------------------------------
 class SmearDiJet : public SmearData {
  public:
   SmearDiJet(Jet * jet1,
 	     Jet * jet2,
 	     Jet * jet3,
+	     double ptHat,
 	     double weight,
-	     const Function& respPDF,
-	     const Function& truthPDF,
+	     const SmearFunction& pdf,
 	     double min,
 	     double max,
 	     double eps,
 	     int niter);
   ~SmearDiJet();
 
-  virtual void ChangeParAddress(double* oldpar, double* newpar);
+  //  virtual void ChangeParAddress(double* oldpar, double* newpar);
   virtual double chi2() const;
   virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
   virtual void printInitStats() const;
-  virtual double ptHat() const { return jet1()->ptHat(); }
 
   const Jet * jet1() const { return static_cast<Jet*>(mess_); }
   const Jet * jet2() const { return jet2_; }
   const Jet * jet3() const { return jet3_; }
 
-  double dijetPt() const { return 0.5 * (jet1()->pt() + jet2()->pt()); } //!< Get dijet pt \f$ \frac{1}{2} (p^{1}_{T} + p^{2}_{T}) \f$
-  double * getTruthPar() { return truthPDF_.firstPar(); }
-  double truthPDF(double t) const;
+  double pdfPtMeasJet1(double ptMeas, double ptTrue) const { return pdf_.pdfPtMeasJet1(ptMeas,ptTrue); }
+  double pdfPtMeasJet2(double ptMeas, double ptTrue) const { return pdf_.pdfPtMeasJet2(ptMeas,ptTrue); }
+
+  //! Get dijet pt \f$ \frac{1}{2} (p^{1}_{T} + p^{2}_{T}) \f$
+  double dijetPt() const { return 0.5 * (jet1()->pt() + jet2()->pt()); } 
 
 
  private:
@@ -50,6 +51,5 @@ class SmearDiJet : public SmearData {
 
   Jet * jet2_; //!< Second jet
   Jet * jet3_; //!< Third jet
-  Function  truthPDF_;  //!< Truth pdf
 };
 #endif

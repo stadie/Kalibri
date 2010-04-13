@@ -1,423 +1,388 @@
 //
-//  $Id: Parametrization.cc,v 1.3 2010/01/12 16:00:37 mschrode Exp $
+//  $Id: Parametrization.cc,v 1.10 2010/04/12 14:36:12 mschrode Exp $
 //
 #include "Parametrization.h"
 
 
+#include "TF1.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TH1F.h"
 #include "TH1D.h"
 #include "TMath.h"
 
 
 
-//!  \param tMin          Minimum of non-zero part of truth pdf
-//!  \param tMax          Maximum of non-zero part of truth pdf
-//!  \param rMin          Minimum of binned part of response pdf \f$ H_{inter} \f$
-//!  \param rMax          Maximum of binned part of response pdf \f$ H_{inter} \f$
-//!  \param ptDijetMin    Minimum of dijet pt
-//!  \param ptDijetMax    Maximum of dijet pt
-//!  \param rNBins        Number of bins of binned part of response pdf \f$ H_{inter} \f$
-//!  \param rParScales    Jet parameter scales
-//!  \param gaussPar   Parameters for mean of Gaussian
+
 // ------------------------------------------------------------------------
-SmearStepGaussInter::SmearStepGaussInter(double tMin, double tMax, double rMin, double rMax, int rNBins, double ptDijetMin, double ptDijetMax, const std::vector<double>& rParScales, const std::vector<double>& gaussPar)
-  : Parametrization(0,rNBins+4,0,1),
+SmearGauss::SmearGauss(double tMin, double tMax, double xMin, double xMax, const std::vector<double>& parScales)
+  : Parametrization(0,4,0,0),
     tMin_(tMin),
     tMax_(tMax),
-    rMin_(rMin),
-    rMax_(rMax),
-    ptDijetMin_(ptDijetMin),
-    ptDijetMax_(ptDijetMax),
-    nStepPar_(rNBins),
-    binWidth_((rMax_ - rMin_)/nStepPar_),
-    respParScales_(rParScales),
-    gaussPar_(gaussPar) {
-  for(int i = 0; i < nStepPar_+1; i++) {
-    binCenters_.push_back( rMin_ + (0.5+i)*binWidth_ );
-  }
+    xMin_(xMin),
+    xMax_(xMax),
+    scale_(parScales),
+    hPdfPtTrue_(0) {
   assert( 0.0 <= tMin_ && tMin_ < tMax_ );
-  assert( 0.0 <= rMin_ && rMin_ < rMax_ );
-  assert( 0.0 <= ptDijetMin_ && ptDijetMin_ < ptDijetMax_ );
-  assert( respParScales_.size() >= nJetPars() );
-  assert( gaussPar_.size() >= 1 );
-  
+  assert( 0.0 <= xMin_ && xMin_ < xMax_ );
+  assert( scale_.size() >= nJetPars() );
+
+  hPdfPtTrue_ = new TH1F("hPdfPtTrue_","",10000,tMin,tMax);
+//   //Fill values of unnormalised truth pdf
+//   double *truePar = new double[nJetPars()];
+//   // Sigma parameters
+//   truePar[0] = 4.;
+//   truePar[1] = 1.2;
+//   truePar[2] = 0.05;
+//   // Spectrum parameters
+//   truePar[3] = 80.;
+//   for(int bin = 1; bin <= hPdfPtTrue_->GetNbinsX(); bin++) {
+//     double ptTrue = hPdfPtTrue_->GetBinCenter(bin);
+//     hPdfPtTrue_->SetBinContent(bin,pdfPtTrueNotNorm(ptTrue,truePar));
+//   }
+//   // Normalise values of truth pdf
+//   hPdfPtTrue_->Scale(1./hPdfPtTrue_->Integral("width"));
+//   delete [] truePar;
+
+// //   TFile file("~/UserCode/mschrode/resolutionFit/jsResponse.root","READ");
+// //   file.GetObject("hPtGen",hPdfPtTrue_);
+// //   if( !hPdfPtTrue_ ) {
+// //     std::cerr << "ERROR: No histogram found in file '" << file.GetName() << "'\n";
+// //     exit(1);
+// //   } else {
+// //     hPdfPtTrue_->SetDirectory(0);
+// //     hPdfPtTrue_->SetName("hPdfPtTrue");
+// //     int binMin = hPdfPtTrue_->FindBin(tMin_);
+// //     int binMax = hPdfPtTrue_->FindBin(tMax_);
+// //     std::cout << "Integal: " << hPdfPtTrue_->Integral(binMin,binMax,"width") << std::endl;
+// //   }
+// //   file.Close();
+
   print();
+}
+
+
+SmearGauss::~SmearGauss() { if( hPdfPtTrue_ ) delete hPdfPtTrue_; }
+
+
+// ------------------------------------------------------------------------
+double SmearGauss::pdfPtMeasJet1(double ptMeas, double ptTrue, const double *par) const {
+  double s = sigma(ptTrue,par);
+  s *= corr3rdJet(ptTrue);
+  double u = (ptMeas - ptTrue)/s;
+  double norm = sqrt(M_PI/2.)*s*( erf((xMax_-ptTrue)/sqrt(2.)/s) - erf((xMin_-ptTrue)/sqrt(2.)/s) );
+  // This should be caught more cleverly
+  if( norm < 1E-10 ) norm = 1E-10;
+
+  return exp(-0.5*u*u)/norm;
+}
+
+// ------------------------------------------------------------------------
+double SmearGauss::pdfPtMeasJet2(double ptMeas, double ptTrue, const double *par) const {
+  double s = sigma(ptTrue,par);
+  s *= corr3rdJet(ptTrue);
+  double u = (ptMeas - ptTrue)/s;
+  double norm = sqrt(M_PI/2.)*s*( 1. + erf(ptTrue/sqrt(2.)/s) );
+  // This should be caught more cleverly
+  if( norm < 1E-10 ) norm = 1E-10;
+
+  return exp(-0.5*u*u)/norm;
+}
+
+
+// ------------------------------------------------------------------------
+double  SmearGauss::pdfPtTrue(double ptTrue, const double *par) const {
+  double pdf = 0.;
+  if( tMin_ < ptTrue && ptTrue < tMax_ ) {
+//     double m = 1.-exponent(par);
+//     double norm = ( m == 0. ? log(tMax_/tMin_) : (pow(tMax_,m)-pow(tMin_,m))/m );
+//     pdf = 1./pow(ptTrue,exponent(par))/norm;
+
+    // ToyMC parametrization of spectrum
+    double tau = exponent(par);
+    double norm = tau*(exp(-tMin_/tau)-exp(-tMax_/tau));
+    pdf = exp(-ptTrue/tau)/norm;
+
+//     double norm = exp(-specPar(par,0))*(exp(-specPar(par,1)*tMin_)-exp(-specPar(par,1)*tMax_))/specPar(par,1);
+//     norm += exp(-specPar(par,2))*(exp(-specPar(par,3)*tMin_)-exp(-specPar(par,3)*tMax_))/specPar(par,3);
+//     norm += exp(-specPar(par,4))*(exp(-specPar(par,5)*tMin_)-exp(-specPar(par,5)*tMax_))/specPar(par,5);
+
+//     pdf = exp(-specPar(par,0)-specPar(par,1)*ptTrue);
+//     pdf += exp(-specPar(par,2)-specPar(par,3)*ptTrue);
+//     pdf += exp(-specPar(par,4)-specPar(par,5)*ptTrue);
+//     pdf /= norm;
+
+//    pdf = 1./(tMax_-tMin_);
+  }
+  return pdf;
   
-  // Integral over dijet resolution for truth pdf
-  ptDijetCutInt_ = new TH1D("norm","",400,tMin_,tMax_);
+  //  return hPdfPtTrue_->GetBinContent(hPdfPtTrue_->FindBin(ptTrue));
 }
 
 
-
 // ------------------------------------------------------------------------
-SmearStepGaussInter::~SmearStepGaussInter() { 
-  binCenters_.clear(); 
-  delete ptDijetCutInt_; 
+double SmearGauss::pdfResponse(double r, double ptTrue, const double *par) const {
+  double s = sigma(ptTrue,par)/ptTrue;
+  double u = (r - 1.)/s;
+  return exp(-0.5*u*u)/sqrt(2.*M_PI)/s;
 }
 
 
-
-//!  The truth pdf contains an integral over the dijet response
-//!  describing the cuts on ptdijet:
-//!  \f[
-//!   \int^{x_{1}}_{x_{0}}dx\,\frac{r(x/t)\cdot t}{\sqrt{2}}
-//!  \f]
-//!  The values of this integral for different truth \p t are
-//!  stored in the histogram \p ptDijetCutInt_.
-//!
-//!  Calling this function recalculates the integrals using the current
-//!  parameter values for the response function \p r. The integrals
-//!  are calculated numerically by summing over 400 bins between
-//!  \p ptDijetMin_ and \p ptDijetMax_.
-//!  \sa correctedGlobalJetEt()
 // ------------------------------------------------------------------------
-void SmearStepGaussInter::update(const double * par) {
-  std::cout << "'" << name() << "': Updating ptDijet cut integral... ";
-  ptDijetCutInt_->Reset();
-    
-  for(int bin = 1; bin < ptDijetCutInt_->GetNbinsX(); bin++) {
-    Measurement x;
-    x.pt = ptDijetCutInt_->GetBinCenter(bin);
-    double integral = 0.;
-    int nSteps = 400;
-    double dPtDijet = (ptDijetMax_ - ptDijetMin_) / nSteps;
-    for(int i = 0; i < nSteps; i++) {
-      double ptDijet = ptDijetMin_ + i*dPtDijet;
-      x.E = ptDijet / x.pt;
-      double prob = correctedJetEt(&x,par);
-      prob *= x.pt;
-      integral += prob;
-    }
-    integral /= sqrt(2.);
-    integral *= dPtDijet;
-    ptDijetCutInt_->SetBinContent(bin,integral);
-  }
-  std::cout << "ok\n";
+double SmearGauss::pdfDijetAsym(double a, double ptTrue, const double *par) const {
+  double s = sigma(ptTrue,par)/ptTrue/sqrt(2.);
+  double u = a/s;
+  return exp(-0.5*u*u)/sqrt(2.*M_PI)/s;
 }
 
 
-
-//!  \param x   Measurement::E is the response, Measurement::pt the true pt
-//!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
-//!  \return Probability density of response
 // ------------------------------------------------------------------------
-double SmearStepGaussInter::correctedJetEt(const Measurement *x,const double *par) const {
-  // Probability density from Gaussian part
-  double c = respParScales_.at(0)*par[0];
-  double u = gaussPar_.at(0);
-  double a1 = respParScales_.at(1)*par[1];
-  double a2 = respParScales_.at(2)*par[2];
-  double a3 = respParScales_.at(3)*par[3];
-  double s = sqrt( a1*a1/x->pt/x->pt + a2*a2/x->pt + a3*a3 );
-
-  double p = c / sqrt(2* M_PI ) / s * exp(-pow((x->E - u) / s, 2) / 2);
-        
-  // Probability density from step function part
-  // Copy parameter values to temp vector for normalization
-  std::vector<double> stepPar(nStepPar_,1.);
-  double norm = 0.;
-  for(int i = 0; i < nStepPar_; i++) {
-    stepPar.at(i) = respParScales_.at(4+i)*par[4+i];
-    if( stepPar.at(i) < 0. ) stepPar.at(i) = 0.;
-    norm += stepPar.at(i);
-  }
-  norm = (1.-c)/norm/binWidth_;
-    
-  p += norm*interpolate(x->E,stepPar);
-    
-  return p;
-}
-
-
-
-//!         of dijet probability (see also \p SmearDiJet::truthPDF(t)).
-//!  \param x   \p Measurement::pt is truth for which the 
-//!             probability density is returned
-//!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
-//!  \return Probability density of truth times normalization of dijet probability
-// ------------------------------------------------------------------------
-double SmearStepGaussInter::correctedGlobalJetEt(const Measurement *x,const double *par) const {
-  // Norm of probability of dijet event configuration
-  double norm = 0.;
-  for(int bin = 1; bin < ptDijetCutInt_->GetNbinsX(); bin++) {
-    double pt = ptDijetCutInt_->GetBinCenter(bin);
-    norm += pow(pt,2-par[0]) * ptDijetCutInt_->GetBinContent(bin) * ptDijetCutInt_->GetXaxis()->GetBinWidth(1);
-  }
-  
-  double p = 0.;
-  if( norm ) {
-    p = truthPDF(x->pt,par[0]);
-    p /= norm;
-  }
-  
-  return p;
-}
-
-
-//!  Returns the linearly weighted mean value of two adjacent bin
-//!  contents, where the two bins are the ones whose bin centers
-//!  are closest to \p r. The contents are weighted with the distance
-//!  of r from the corresponding bin center. The interpolation
-//!  assumes \p nStepPar_ bins. At the left and right edges of the
-//!  binned range, the interpolation is done assuming 0 bin content
-//!  outside the binned range.
-//!
-//!  \param r   Response
-//!  \param par Parameters / bin content to be interpolated
-//!  \return    Interpolated bin content
-// ------------------------------------------------------------------------
-double SmearStepGaussInter::interpolate(double r, const std::vector<double>& par) const {
-  double p = 0.;     // The interpolated parameter
-
-  // Check that r is in range of binning +/- 0.5*mBinWidth
-  if( r > rMin_ - 0.5*binWidth_  &&  r < rMax_ + 0.5*binWidth_ ) {
-    // Find index i of the next larger bin center
-    unsigned int i = 0;                              
-    while( r > binCenters_.at(i) ) i++;
-    assert( i < binCenters_.size() );
-
-    double dx  = binCenters_.at(i) - r;  // Distance to next larger bin center
-    dx        /= binWidth_;              // dx relative to bin width
-    double a   = 0.;
-    double b   = 0.;
-
-    // Find bin contents to be interpolated
-    if( i == 0 ) { // Left edge
-      a = 0.;
-      b = par.front();
-    }
-    else if( i == binCenters_.size()-1 ) { // Right edge
-      a = par.back();
-      b = 0.;
-    }
-    else { // Central part
-      a = par.at(i-1);
-      b = par.at(i);
-    }
-
-    // Interpolate contents
-    p = dx * a + (1-dx) * b;
+double SmearGauss::pdfResponseError(double r, double ptTrue, const double *par, const double *cov, const std::vector<int> &covIdx) const {
+  // Store derivatives
+  std::vector<double> df(nJetPars());
+  for(size_t i = 0; i < nJetPars(); i++) {
+    df[i] = pdfResponseDeriv(r,ptTrue,par,i);
   }
 
-  return p;
+  // Calculate variance
+  double var = 0.;
+  for(int i = 0; i < static_cast<int>(nJetPars()); i++) { // Outer loop over parameters
+    for(int j = 0; j < i+1; j++) { // Inner loop over parameters
+      int idx = (i*i + i)/2 + j; // Index of (i,j) in covariance vector
+      if( cov[idx] ) {
+	if( i == j ) { // Diagonal terms
+	  var += df[i]*df[i]*scale_[i]*scale_[i]*cov[idx];
+	} else { // Off-diagonal terms
+	  var += 2*df[i]*df[j]*scale_[i]*scale_[j]*cov[idx];
+	}
+      }
+    } // End of inner loop over parameters
+  } // End of outer loop over parameters
+  // Return standard deviation
+  return sqrt(var);
 }
 
 
-
-//!  The probability density of \p pt if cuts
-//!  \f$ \texttt{ptDijetMin\_} < p^{\textrm{dijet}}_{T} < \texttt{ptDijetMax\_} \f$
-//!  are applied:
-//!  \f[ t^{-n} \int^{\texttt{ptDijetMax\_}}_{\texttt{ptDijetMin\_}}
-//!      dx\,\frac{r(x/t) \cdot t}{\sqrt{2}} \f]
 // ------------------------------------------------------------------------
-double  SmearStepGaussInter::truthPDF(double pt, double n) const {
-  double prob = 0.;
-  if( tMin_ < pt && pt < tMax_ ) {
-    prob = 1. / pow( pt, n );
-    int bin = ptDijetCutInt_->FindBin(pt);
-    prob *= ptDijetCutInt_->GetBinContent(bin);
+double SmearGauss::pdfResponseDeriv(double r, double ptTrue, const double *par, int i) const {
+  double df = 0.;
+  if( i < 3 ) {
+    double s = sigma(ptTrue,par);
+    double u = ptTrue*(r-1.)/s;
+    df = pdfResponse(r,ptTrue,par) * scale_[i]*par[i]/s/s * (u*u - 1.);
+    if( i == 1 ) df *= ptTrue;
+    if( i == 2 ) df *= ptTrue*ptTrue;
   }
-  
-  return prob;
+
+  return df;
+}
+
+
+// ------------------------------------------------------------------------
+double SmearGauss::corr3rdJet(double ptTrue) const {
+  std::vector<double> a(3);
+  a[0] = 1.;
+  a[1] = 8E-4;
+  a[2] = -7E-7;
+  return a[0] + a[1]*ptTrue + a[2]*ptTrue*ptTrue;
+}
+
+
+// ------------------------------------------------------------------------
+double  SmearGauss::pdfPtTrueNotNorm(double ptTrue, const double *par) const {
+  double pdf = 0.;
+
+  // Underlying truth pdf
+
+  // ToyMC parametrization of spectrum, normalized from 0 to infty
+  pdf = exp(-ptTrue/par[3])/par[3];
+
+//   double norm = exp(-specPar(par,0))*(exp(-specPar(par,1)*tMin_)-exp(-specPar(par,1)*tMax_))/specPar(par,1);
+//   norm += exp(-specPar(par,2))*(exp(-specPar(par,3)*tMin_)-exp(-specPar(par,3)*tMax_))/specPar(par,3);
+//   norm += exp(-specPar(par,4))*(exp(-specPar(par,5)*tMin_)-exp(-specPar(par,5)*tMax_))/specPar(par,5);
+
+//   pdf = exp(-specPar(par,0)-specPar(par,1)*ptTrue);
+//   pdf += exp(-specPar(par,2)-specPar(par,3)*ptTrue);
+//   pdf += exp(-specPar(par,4)-specPar(par,5)*ptTrue);
+//   pdf /= norm;
+
+//   // Convolution with cuts on ptdijet
+//   double s = sigma(ptTrue,par)/sqrt(2.);
+//   double c = 0.5*( erf((xMax_-ptTrue)/s/sqrt(2.)) - erf((xMin_-ptTrue)/s/sqrt(2.)) );
+
+  // Convolution with cuts on 1. jet (randomly assigned)
+  double s = sqrt( par[0]*par[0] + par[1]*par[1]*ptTrue + par[2]*par[2]*ptTrue*ptTrue );
+  double c = 0.5*( erf((xMax_-ptTrue)/s/sqrt(2.)) - erf((xMin_-ptTrue)/s/sqrt(2.)) );
+
+  return c*pdf;
 }
 
 
 
 // ------------------------------------------------------------------------
-void SmearStepGaussInter::print() const {
+void SmearGauss::print() const {
   std::cout << "Parametrization class '" << name() << "'\n";
   std::cout << "  Probability density of ptTrue spectrum:\n";
-  std::cout << "    Powerlaw\n";
   std::cout << "    " << tMin_ << " < ptTrue < " << tMax_ << " GeV\n";
-  std::cout << "    " << ptDijetMin_ << " < ptDijet < " << ptDijetMax_ << " GeV\n";
-  std::cout << "  Probability density of response:\n";
-  std::cout << "    Non-zero for " << rMin_ << " < R < " << rMax_ << "\n";
-  std::cout << "    " << nStepPar_ << " step parameters\n";
-  std::cout << "    " << gaussPar_.size() << " Gauss parameters: ";
-  for(size_t i = 0; i < gaussPar_.size(); i++) {
-    std::cout << gaussPar_.at(i);
-    if( i != gaussPar_.size() - 1 ) std::cout << ", ";
-  }
+  std::cout << "    " << xMin_ << " < pt < " << xMax_ << " GeV\n";
   std::cout << std::endl;
 }
 
 
 
-
 // ------------------------------------------------------------------------
-SmearCrystalBall::SmearCrystalBall(double tMin, double tMax, double rMin, double rMax, double ptDijetMin, double ptDijetMax, const std::vector<double>& rParScales)
-  : Parametrization(0,4,0,1),
+SmearGaussPtBin::SmearGaussPtBin(double tMin, double tMax, double xMin, double xMax, const std::vector<double> &parScales, const std::vector<double> &startPar)
+  : Parametrization(0,10,0,0),
     tMin_(tMin),
     tMax_(tMax),
-    rMin_(rMin),
-    rMax_(rMax),
-    ptDijetMin_(ptDijetMin),
-    ptDijetMax_(ptDijetMax),
-    respParScales_(rParScales) {
+    xMin_(xMin),
+    xMax_(xMax),
+    scale_(parScales) {
   assert( 0.0 <= tMin_ && tMin_ < tMax_ );
-  assert( 0.0 <= rMin_ && rMin_ < rMax_ );
-  assert( 0.0 <= ptDijetMin_ && ptDijetMin_ < ptDijetMax_ );
-  assert( respParScales_.size() >= nJetPars() );
-  
+  assert( 0.0 <= xMin_ && xMin_ < xMax_ );
+  assert( scale_.size() >= nJetPars() );
+  assert( startPar.size() >= nJetPars() );
+
   print();
-  
-  // Integral over dijet resolution for truth pdf
-  ptDijetCutInt_ = new TH1D("norm","",400,tMin_,tMax_);
+
+  hashTablePdfPtTrue_ = new TH1D("hashTablePdfPtTrue_","",5000,tMin_,tMax_);
+  hashPdfPtTrue(&(startPar.front()));
+}
+
+SmearGaussPtBin::~SmearGaussPtBin() { 
+  delete hashTablePdfPtTrue_;
 }
 
 
 
 // ------------------------------------------------------------------------
-SmearCrystalBall::~SmearCrystalBall() { 
-  delete ptDijetCutInt_; 
-}
-
-
-
-//!  The truth pdf contains an integral over the dijet response
-//!  describing the cuts on ptdijet:
-//!  \f[
-//!   \int^{x_{1}}_{x_{0}}dx\,\frac{r(x/t)\cdot t}{\sqrt{2}}
-//!  \f]
-//!  The values of this integral for different truth \p t are
-//!  stored in the histogram \p ptDijetCutInt_.
-//!
-//!  Calling this function recalculates the integrals using the current
-//!  parameter values for the response function \p r. The integrals
-//!  are calculated numerically by summing over 400 bins between
-//!  \p ptDijetMin_ and \p ptDijetMax_.
-//!  \sa correctedGlobalJetEt()
-// ------------------------------------------------------------------------
-void SmearCrystalBall::update(const double * par) {
-  std::cout << "'" << name() << "': Updating ptDijet cut integral... ";
-
-  ptDijetCutInt_->Reset();
-  for(int bin = 1; bin < ptDijetCutInt_->GetNbinsX(); bin++) {
-    Measurement x;
-    x.pt = ptDijetCutInt_->GetBinCenter(bin);
-    double integral = 0.;
-    int nSteps = 400;
-    double dPtDijet = (ptDijetMax_ - ptDijetMin_) / nSteps;
-    for(int i = 0; i < nSteps; i++) {
-      double ptDijet = ptDijetMin_ + i*dPtDijet;
-      x.E = ptDijet / x.pt;
-      double prob = correctedJetEt(&x,par);
-      prob *= x.pt;
-      integral += prob;
-    }
-    integral /= sqrt(2.);
-    integral *= dPtDijet;
-    ptDijetCutInt_->SetBinContent(bin,integral);
-  }
-  std::cout << "ok\n";
-}
-
-
-
-//! The response pdf parametrization is a crystall ball function
-//! with the parameters
-//! - 0: mean response
-//! - 1: sigma
-//! - 2: alpha
-//! - 3: n
-//! The pdf is 0 for \f$ R < rMin\_ \f$ and \f$ R > rMax\_ \f$.
-//! \param x   Measurement::E is the response, Measurement::pt the true pt
-//! \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
-//! \return Probability density of response
-// ------------------------------------------------------------------------
-double SmearCrystalBall::correctedJetEt(const Measurement *x,const double *par) const {
-  double p = 0.;
-
-  if( x->E > rMin_ && x->E < rMax_ ) {
-    double mean = respParScales_[0]*par[0];
-    double sigma = respParScales_[1]*par[1];
-    double alpha = respParScales_[2]*par[2];
-    double n = respParScales_[3]*par[3];
-
-    if( sigma <= 0 ) sigma = 1E-5;
-    if( alpha <= 0 ) alpha = 1E-5;
-    if( n <= 0 ) n = 1E-5;
+double SmearGaussPtBin::pdfPtMeasJet1(double ptMeas, double ptTrue, const double *par) const {
+  double pdf = 0.;
+  if( xMin_ < ptMeas && ptMeas < xMax_ ) {
+    double s = sigma(par);
+    double u = (ptMeas - ptTrue)/s;
+    double norm = sqrt(M_PI/2.)*s*( erf((xMax_-ptTrue)/sqrt(2.)/s) - erf((xMin_-ptTrue)/sqrt(2.)/s) );
+    // This should be caught more cleverly
+    if( norm < 1E-10 ) norm = 1E-10;
     
-    double norm = 0.;
-    int nSteps = 100;
-    double deltaResp = (rMax_-rMin_)/nSteps;
-    for(int i = 0; i < nSteps; i++) {
-      norm += crystallBallFunc(rMin_+deltaResp*i,mean,sigma,alpha,n);
-    }
-    if( norm > 0 ) p = crystallBallFunc(x->E,mean,sigma,alpha,n)/norm/deltaResp;
+    pdf = exp(-0.5*u*u)/norm; 
   }
 
-  return p;
+  return pdf;
 }
 
 
 
-//!  \param x   \p Measurement::pt is truth for which the 
-//!             probability density is returned
-//!  \param par Pointer to parameters (parameters are multiplied by the corresponding scale)
-//!  \return Probability density of truth times normalization of dijet probability
 // ------------------------------------------------------------------------
-double SmearCrystalBall::correctedGlobalJetEt(const Measurement *x,const double *par) const {
-  // Norm of probability of dijet event configuration
-  double norm = 0.;
-  for(int bin = 1; bin < ptDijetCutInt_->GetNbinsX(); bin++) {
-    double pt = ptDijetCutInt_->GetBinCenter(bin);
-    norm += pow(pt,2-par[0]) * ptDijetCutInt_->GetBinContent(bin) * ptDijetCutInt_->GetXaxis()->GetBinWidth(1);
+double SmearGaussPtBin::pdfPtMeasJet2(double ptMeas, double ptTrue, const double *par) const {
+  double s = sigma(par);
+  double u = (ptMeas - ptTrue)/s;
+  double norm = sqrt(M_PI/2.)*s*( 1. + erf(ptTrue/sqrt(2.)/s) );
+  // This should be caught more cleverly
+  if( norm < 1E-10 ) norm = 1E-10;
+
+  return exp(-0.5*u*u)/norm;
+}
+
+
+
+// ------------------------------------------------------------------------
+double SmearGaussPtBin::pdfPtTrue(double ptTrue, const double *par) const {
+  return hashTablePdfPtTrue_->GetBinContent(hashTablePdfPtTrue_->FindBin(ptTrue));
+}
+
+
+// ------------------------------------------------------------------------
+double SmearGaussPtBin::pdfResponse(double r, double ptTrue, const double *par) const {
+  double s = sigma(par)/ptTrue;
+  double u = (r - 1.)/s;
+  double cut = (1.+erf(ptTrue/sqrt(2.)/s))/2.;
+  return exp(-0.5*u*u)/sqrt(2.*M_PI)/s/cut;
+}
+
+
+// ------------------------------------------------------------------------
+double SmearGaussPtBin::pdfResponseError(double r, double ptTrue, const double *par, const double *cov, const std::vector<int> &covIdx) const {
+  // Store derivatives
+  double s = sigma(par)/ptTrue;
+  double u = (r-1.)/s;
+  double df = pdfResponse(r,ptTrue,par)*(u*u - 1.)/s;
+
+  // Calculate variance
+  double var = df*df*scale_[0]*scale_[0]*cov[0]/ptTrue/ptTrue;
+
+  // Return standard deviation
+  return sqrt(var);
+}
+
+
+// ------------------------------------------------------------------------
+double SmearGaussPtBin::pdfDijetAsym(double a, double ptTrue, const double *par) const {
+  double s = sigma(par)/ptTrue/sqrt(2.);
+  double u = a/s;
+  return exp(-0.5*u*u)/sqrt(2.*M_PI)/s;
+}
+
+
+// ------------------------------------------------------------------------
+void SmearGaussPtBin::hashPdfPtTrue(const double *par) const {
+  std::cout << "  Hashing truth pdf... " << std::flush;
+
+  // Loop over tMin_ < ptTrue < tMax_ values
+  for(int bin = 1; bin <= hashTablePdfPtTrue_->GetNbinsX(); bin++) {
+    double ptTrue = hashTablePdfPtTrue_->GetBinCenter(bin);
+    // Store (un-normalized) truth pdf for
+    // this value of ptTrue in hash table
+    hashTablePdfPtTrue_->SetBinContent(bin,pdfPtTrueNotNorm(ptTrue,par));
   }
+  // Normalise values of truth pdf
+  hashTablePdfPtTrue_->Scale(1./hashTablePdfPtTrue_->Integral("width"));
+
+  std::cout << "ok" << std::endl;
+}
+
+
+
+// ------------------------------------------------------------------------
+double SmearGaussPtBin::pdfPtTrueNotNorm(double ptTrue, const double *par) const {
+  double pdf = underlyingPdfPtTrue(ptTrue,par);
+  // Convolution with cuts on 1. jet
+  double s = sqrt( specSigmaPar(par,0)*specSigmaPar(par,0) +
+		   specSigmaPar(par,1)*specSigmaPar(par,1)*ptTrue +
+		   specSigmaPar(par,2)*specSigmaPar(par,2)*ptTrue*ptTrue );
+  double c = 0.5*( erf((xMax_-ptTrue)/s/sqrt(2.)) - erf((xMin_-ptTrue)/s/sqrt(2.)) );
+
+  return c*pdf;
+}
+
+
+// ------------------------------------------------------------------------
+double SmearGaussPtBin::underlyingPdfPtTrue(double ptTrue, const double *par) const {
+//   // For ToyMC
+//   double tau = specSlopePar(par,0);
+//   double norm = tau*(exp(-tMin_/tau)-exp(-tMax_/tau));
+//   double pdf = exp(-ptTrue/tau)/norm;
+
+  // For QCD
+  double norm = exp(-specSlopePar(par,0))
+    *(exp(-specSlopePar(par,1)*tMin_)-exp(-specSlopePar(par,1)*tMax_))/specSlopePar(par,1);
+  norm += exp(-specSlopePar(par,2))
+    *(exp(-specSlopePar(par,3)*tMin_)-exp(-specSlopePar(par,3)*tMax_))/specSlopePar(par,3);
+  norm += exp(-specSlopePar(par,4))
+    *(exp(-specSlopePar(par,5)*tMin_)-exp(-specSlopePar(par,5)*tMax_))/specSlopePar(par,5);
   
-  double p = 0.;
-  if( norm ) {
-    p = truthPDF(x->pt,par[0]);
-    p /= norm;
-  }
- 
- return p;
-  return 1.;
+  double pdf = exp(-specSlopePar(par,0)-specSlopePar(par,1)*ptTrue);
+  pdf += exp(-specSlopePar(par,2)-specSlopePar(par,3)*ptTrue);
+  pdf += exp(-specSlopePar(par,4)-specSlopePar(par,5)*ptTrue);
+
+  return pdf / norm;
 }
 
 
-
 // ------------------------------------------------------------------------
-double SmearCrystalBall::crystallBallFunc(double x, double mean, double sigma, double alpha, double n) const {
-  double f = 0.;
-  double t = (x - mean)/sigma;
-   if( t > -alpha ) {             // Gaussian part
-    f = exp(-0.5*t*t);
-  } else {                       // Powerlaw part
-    f = pow(n/alpha,n)*exp(-0.5*alpha*alpha) * pow(((n/alpha - alpha) - t),-n);
-  }
-
-  return f;
-}
-
-
-
-//!  The probability density of \p pt if cuts
-//!  \f$ \texttt{ptDijetMin\_} < p^{\textrm{dijet}}_{T} < \texttt{ptDijetMax\_} \f$
-//!  are applied:
-//!  \f[ t^{-n} \int^{\texttt{ptDijetMax\_}}_{\texttt{ptDijetMin\_}}
-//!      dx\,\frac{r(x/t) \cdot t}{\sqrt{2}} \f]
-// ------------------------------------------------------------------------
-double  SmearCrystalBall::truthPDF(double pt, double n) const {
-  double prob = 0.;
-  if( tMin_ < pt && pt < tMax_ ) {
-    prob = 1. / pow( pt, n );
-    int bin = ptDijetCutInt_->FindBin(pt);
-    prob *= ptDijetCutInt_->GetBinContent(bin);
-  }
-  
-  return prob;
-}
-
-
-
-// ------------------------------------------------------------------------
-void SmearCrystalBall::print() const {
+void SmearGaussPtBin::print() const {
   std::cout << "Parametrization class '" << name() << "'\n";
-  std::cout << "  Probability density of ptTrue spectrum:\n";
-  std::cout << "    Powerlaw\n";
-  std::cout << "    " << tMin_ << " < ptTrue < " << tMax_ << " GeV\n";
-  std::cout << "    " << ptDijetMin_ << " < ptDijet < " << ptDijetMax_ << " GeV\n";
-  std::cout << "  Probability density of response:\n";
-  std::cout << "    Non-zero for " << rMin_ << " < R < " << rMax_ << "\n";
+  std::cout << "  " << tMin_ << " < ptTrue < " << tMax_ << " GeV\n";
+  std::cout << "  " << xMin_ << " < ptMeas < " << xMax_ << " GeV\n";
   std::cout << std::endl;
 }
