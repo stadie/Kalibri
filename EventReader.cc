@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.8 2010/02/04 09:55:04 stadie Exp $
+// $Id: EventReader.cc,v 1.9 2010/04/13 13:44:09 mschrode Exp $
 //
 #include "EventReader.h"
 
@@ -27,12 +27,6 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
   useTracks_ = config_->read<bool>("use Tracks",true);
   if(par_->GetNumberOfTrackParameters() < 1) useTracks_ = false;
 
-  // Print info on track usage only once for all readers
-  if( numberOfEventReaders_ == 1 ) {
-    if(useTracks_)  std::cout<<"Tracks are used to calibrate jets"<< std::endl;
-    else std::cout<<"Only Calorimeter information is used"<< std::endl;
-  }
-  
   //Error Parametrization...
   //...for tracks:
   track_error_param = par_->track_error_parametrization;
@@ -89,11 +83,19 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
     std::cerr << "WARNING: Jets are corrected twice (to L3 and L2L3).\n" << std::endl;
     exit(-9);
   }
-  if(correctToL3_) {
-    std::cout << "Jets will be corrected to Level 3 (i.e. with L1 * L2 * L3)" << std::endl;
-  } else if(correctL2L3_) {
-    std::cout << "Jets will be corrected with L2 * L3" << std::endl;
-  } 
+
+  // Print info only once for all readers
+  if( numberOfEventReaders_ == 1 ) {
+    // Track usage
+    if(useTracks_)  std::cout<<"Tracks are used to calibrate jets"<< std::endl;
+    else std::cout<<"Only Calorimeter information is used"<< std::endl;
+    // Correction of jets
+    if(correctToL3_) {
+      std::cout << "Jets will be corrected to Level 3 (i.e. with L1 * L2 * L3)" << std::endl;
+    } else if(correctL2L3_) {
+      std::cout << "Jets will be corrected with L2 * L3" << std::endl;
+    } 
+  }
 
   if(! constraints_.size() ) {
     std::vector<double> jet_constraint = bag_of<double>(config_->read<std::string>( "jet constraints",""));
