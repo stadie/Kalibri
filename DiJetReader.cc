@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.41 2010/03/12 17:50:02 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.42 2010/04/13 13:44:09 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -149,9 +149,11 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   if(dataClass_ == 11) { 
     nJet_->fChain->SetBranchStatus("Track*",0);
     //nJet_->fChain->SetBranchStatus("Tow*",0);
-  }
-  if(dataClass_ == 12) {
+  } else if(dataClass_ == 12) {
     nJet_->fChain->SetBranchStatus("Track*",0);
+  } else if(dataClass_ == 5) {
+    nJet_->fChain->SetBranchStatus("Track*",0);
+    nJet_->fChain->SetBranchStatus("GenPart*",0);
   }
   // Read the events
   for (int i=0 ; i < nevent ; i+= prescale_) {
