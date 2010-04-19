@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.13 2010/04/13 13:38:24 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.14 2010/04/18 14:40:38 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -1743,12 +1743,17 @@ void ControlPlotsJetSmearing::plot3rdJet() const {
   TH1 *hRelJet3Pt = new TH1D("hRelJet3Pt",
 			     ";p^{rel}_{T,3};Number of events",
 			     25,0.,0.3);
+  TH2 *hRelJet3PtVsPtGen31 = new TH2D("hRelJet3PtVsPtGen31",
+				      ";p^{rel}_{T,3};p^{gen}_{T,3} / p^{gen}_{T,1}",
+				      50,0.,0.2,50,0,0.2);
+  hRelJet3PtVsPtGen31->SetNdivisions(505,"XY");
 
   // Pt of (i+1)th jet relative to ith jet
   // in different pt bins
   std::vector<TH1*> hPtGen21Bins(nPtBins());
   std::vector<TH1*> hPtGen31Bins(nPtBins());
   std::vector<TH1*> hRelJet3PtBins(nPtBins());
+  std::vector<TH2*> hRelJet3PtVsPtGen31Bins(nPtBins());
   for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
     TString name = "hPtGen21Bin";
     name += ptBin;
@@ -1767,6 +1772,10 @@ void ControlPlotsJetSmearing::plot3rdJet() const {
     hRelJet3PtBins[ptBin] = static_cast<TH1D*>(hRelJet3Pt->Clone(name));
     hRelJet3PtBins[ptBin]->SetYTitle("Relative number of events");
     hRelJet3PtBins[ptBin]->Sumw2();
+
+    name = "hRelJet3PtVsPtGen31Bins";
+    name += ptBin;
+    hRelJet3PtVsPtGen31Bins[ptBin] = static_cast<TH2D*>(hRelJet3PtVsPtGen31->Clone(name));
   }
 
 
@@ -1863,17 +1872,16 @@ void ControlPlotsJetSmearing::plot3rdJet() const {
       hPtGen21->Fill(j2->genPt()/j1->genPt());
       hPtGen31->Fill(j3->genPt()/j1->genPt());
       hRelJet3Pt->Fill(dijet->relJet3Pt());
+      hRelJet3PtVsPtGen31->Fill(j3->genPt()/j1->genPt(),dijet->relJet3Pt());
 
       int ptBin = findPtBin(j1->genPt());
       if( ptBin >= 0 ) {
 	hPtGen21Bins[ptBin]->Fill(j2->genPt()/j1->genPt());
-	hResMC[ptBin]->Fill(j1->pt()/j1->genPt());
-	hRelJet3PtBins[ptBin]->Fill(dijet->relJet3Pt());
-      }
-      ptBin = findPtBin(j2->genPt());
-      if( ptBin >= 0 ) {
 	hPtGen31Bins[ptBin]->Fill(j3->genPt()/j1->genPt());
+	hResMC[ptBin]->Fill(j1->pt()/j1->genPt());
 	hResMC[ptBin]->Fill(j2->pt()/j2->genPt());
+	hRelJet3PtBins[ptBin]->Fill(dijet->relJet3Pt());
+	hRelJet3PtVsPtGen31Bins[ptBin]->Fill(j3->genPt()/j1->genPt(),dijet->relJet3Pt());
       }
       double meanPtGen = 0.5*(j1->genPt()+j2->genPt());
       ptBin = findPtBin(meanPtGen);
@@ -1959,14 +1967,16 @@ void ControlPlotsJetSmearing::plot3rdJet() const {
 
   drawPSPage(ps,c1,hPtGen21,"PE1");
   drawPSPage(ps,c1,hPtGen31,"PE1");
-  drawPSPage(ps,c1,hPtGen21,"PE1",true);
-  drawPSPage(ps,c1,hPtGen31,"PE1",true);
+  //  drawPSPage(ps,c1,hPtGen21,"PE1",true);
+  //  drawPSPage(ps,c1,hPtGen31,"PE1",true);
+  drawPSPage(ps,c1,hRelJet3Pt,"PE1");
+  drawPSPage(ps,c1,hRelJet3PtVsPtGen31,"COLZ",true);
 
   std::vector<TPaveText*> ptBinLabels(nPtBins());
   for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
     ptBinLabels[ptBin] = createPaveText(1,0.8);
     char txt[50];
-    sprintf(txt,"%.0f < p^{gen}_{T} < %.0f GeV",ptBinEdges_[ptBin],ptBinEdges_[ptBin+1]);
+    sprintf(txt,"%.0f < p^{gen}_{T,1} < %.0f GeV",ptBinEdges_[ptBin],ptBinEdges_[ptBin+1]);
     ptBinLabels[ptBin]->AddText(txt);
   }
 
@@ -1983,20 +1993,17 @@ void ControlPlotsJetSmearing::plot3rdJet() const {
     objs.push_back(ptBinLabels[ptBin]);
     drawPSPage(ps,c1,objs,"PE1");
   }
-  drawPSPage(ps,c1,hRelJet3Pt,"PE1");
-
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    delete ptBinLabels[ptBin];
-    ptBinLabels[ptBin] = createPaveText(1,0.8);
-    char txt[50];
-    sprintf(txt,"%.0f < p^{gen}_{T,1} < %.0f GeV",ptBinEdges_[ptBin],ptBinEdges_[ptBin+1]);
-    ptBinLabels[ptBin]->AddText(txt);
-  }
   for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
     objs.clear();
     objs.push_back(hRelJet3PtBins[ptBin]);
     objs.push_back(ptBinLabels[ptBin]);
     drawPSPage(ps,c1,objs,"PE1");
+  }
+  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
+    objs.clear();
+    objs.push_back(hRelJet3PtVsPtGen31Bins[ptBin]);
+    objs.push_back(ptBinLabels[ptBin]);
+    drawPSPage(ps,c1,objs,"COLZ",true);
   }
 
   for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
@@ -2033,19 +2040,24 @@ void ControlPlotsJetSmearing::plot3rdJet() const {
   for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
     rootfile.WriteTObject(hPtGen21Bins[ptBin]);
     rootfile.WriteTObject(hPtGen31Bins[ptBin]);
+    rootfile.WriteTObject(hRelJet3PtBins[ptBin]);
+    rootfile.WriteTObject(hRelJet3PtVsPtGen31Bins[ptBin]);
     rootfile.WriteTObject(gSigmaVsPt3[ptBin]);
     rootfile.WriteTObject(fSigmaVsPt3[ptBin]);
   }
   rootfile.WriteTObject(hPtGen21);
   rootfile.WriteTObject(hPtGen31);
+  rootfile.WriteTObject(hRelJet3PtVsPtGen31);
 
 
   // ----- Clean up -----
   delete hPtGen21;
   delete hPtGen31;
+  delete hRelJet3PtVsPtGen31;
   for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
     delete hPtGen21Bins[ptBin];
     delete hPtGen31Bins[ptBin];
+    delete hRelJet3PtVsPtGen31Bins[ptBin];
     delete hResMC[ptBin];
     delete ptBinLabels[ptBin];
     delete hSigmaMCVsPt3[ptBin];
@@ -2066,26 +2078,6 @@ void ControlPlotsJetSmearing::plot3rdJet() const {
   delete c1;
   delete ps;
 }
-
-
-// // --------------------------------------------------
-// void ControlPlotsJetSmearing::plotPdfs() const {
-//   std::cout << "Creating pdf control plots\n";
-
-//   // ----- Create histograms -----
-
-//   // -- Probability density p(t|x) --
-//   std::vector<TH1*> hPdf(nPtBins());
-//   for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-//     TString name = "hPdfTruthGivenMeas";
-//     name += ptBin;
-//     hPdf[ptBin] = new TH1D(name,";");
-
-//     hPtGen21Bins[ptBin] = static_cast<TH1D*>(hPtGen21->Clone(name));
-//     hPtGen21Bins[ptBin]->SetYTitle("Relative number of events");
-//     hPtGen21Bins[ptBin]->Sumw2();
-//   }
-// }
 
 
 // --------------------------------------------------
