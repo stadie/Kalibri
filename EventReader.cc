@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.9 2010/04/13 13:44:09 mschrode Exp $
+// $Id: EventReader.cc,v 1.10 2010/04/14 09:07:40 mschrode Exp $
 //
 #include "EventReader.h"
 
@@ -181,12 +181,17 @@ TTree * EventReader::createTree(const std::string &dataType) const {
     std::ifstream filelist;
     filelist.open(inputFileNames[0].c_str());
     int nOpenedFiles = 0;
-    std::string name = "";
-    while( !filelist.eof() ) {
-      filelist >> name;
-      if( filelist.eof() ) break;
-      chain->Add( name.c_str() );
-      nOpenedFiles++;
+    if( filelist.is_open() ) {
+      std::string name = "";
+      while( !filelist.eof() && nOpenedFiles < 25 ) {
+	filelist >> name;
+	if( filelist.eof() ) break;
+	chain->Add( name.c_str() );
+	nOpenedFiles++;
+      }
+    } else {
+      std::cerr << "ERROR opening file '" << inputFileNames[0] << "'\n";
+      exit(1);
     }
     filelist.close();
     tree = chain;
