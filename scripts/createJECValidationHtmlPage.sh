@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: $
+# $Id: createJECValidationHtmlPage.sh,v 1.1 2010/04/23 08:34:25 mschrode Exp $
 
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -336,7 +336,11 @@ html_tag title "${ID} ${JET_ALGO} ${JET_TYPE} jets JEC validation"
 html_tag_end head
 html_newline 2
 html_tag_start body "" "style=\"text-align:left; margin-left:5%; margin-right:5%; font-size:1.2em\""
-html_tag h1 "${ID} ${JET_ALGO} ${JET_TYPE} jets JEC validation"
+if [[ ${MODE} == "kalibri" ]]; then
+    html_tag h1 "${ID} ${JET_ALGO} ${JET_TYPE} jets Kalibri JEC validation"
+else
+    html_tag h1 "${ID} ${JET_ALGO} ${JET_TYPE} jets JEC validation"
+fi
 html_newline
 html_comment "Definitions of sample and JEC file etc."
 html_line "<p>On this page, validation plots are presented for the ${ID} jet energy corrections for ${JET_ALGO} ${JET_TYPE} jets in CMS. See the top-level <a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisJECValidation\">JEC validation</a> TWiki page for a detailed description of the used datasets, the applied event selection, and the validation technique.</p>"
