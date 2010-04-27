@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.49 2010/04/13 13:53:21 mschrode Exp $
+// $Id: Parameters.cc,v 1.50 2010/04/21 09:29:53 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -77,7 +77,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     double xMin = config.read<double>("Et min cut on jet",0.);
     double xMax = config.read<double>("Et max cut on jet",1.);
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    return new SmearGaussExtrapolation(tMin,tMax,xMin,xMax,scale);
+    //return new SmearGaussExtrapolation(tMin,tMax,xMin,xMax,scale);
+    return 0;
   } else if(name == "GroomParametrization") {
     return new GroomParametrization();
   } else if(name == "EtaEtaParametrization") {
