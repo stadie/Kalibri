@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.58 2010/04/01 16:27:35 stadie Exp $
+//  $Id: Parametrization.h,v 1.59 2010/04/13 13:38:24 mschrode Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.58 2010/04/01 16:27:35 stadie Exp $
+//!  $Id: Parametrization.h,v 1.59 2010/04/13 13:38:24 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -903,9 +903,12 @@ public:
   double correctedJetEt(const Measurement *x,const double *par) const {
     double  pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
-    double c1 = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(0.01*par[3]+logpt*(0.01*par[4]))));
-
-    return c1 * x->pt;
+    double c = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(0.01*par[3]+logpt*(0.01*par[4]))));
+    
+    if(c < 0.2) c = 0.2;
+    if(c > 5.0) c = 5.0;
+    //assert(c > 0);
+    return c * x->pt;
   }
 
   //!  \brief Code from SimpleL3AbsoluteCorrector
@@ -917,9 +920,11 @@ public:
   double correctedGlobalJetEt(const Measurement *x,const double *par) const {
     double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
-    double c2 = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
-
-    return  c2 * x->pt;
+    double c = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
+    if(c < 0.3) c = 0.3;
+    if(c > 3.0) c = 3.0;
+    assert(c > 0);
+    return  c * x->pt;
   }
 };
 
