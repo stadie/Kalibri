@@ -1,4 +1,4 @@
-// $Id: SmearDiJet.h,v 1.6 2010/03/24 14:30:19 mschrode Exp $
+// $Id: SmearDiJet.h,v 1.7 2010/04/13 13:38:24 mschrode Exp $
 
 #ifndef SmearDiJet_h
 #define SmearDiJet_h
@@ -11,7 +11,7 @@
 //!  \brief Dijet data for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 18:23:44 CEST 2009
-//!  $Id: SmearDiJet.h,v 1.6 2010/03/24 14:30:19 mschrode Exp $
+//!  $Id: SmearDiJet.h,v 1.7 2010/04/13 13:38:24 mschrode Exp $
 // --------------------------------------------------
 class SmearDiJet : public SmearData {
  public:
@@ -41,6 +41,7 @@ class SmearDiJet : public SmearData {
 
   //! Get dijet pt \f$ \frac{1}{2} (p^{1}_{T} + p^{2}_{T}) \f$
   double dijetPt() const { return 0.5 * (jet1()->pt() + jet2()->pt()); } 
+  double relJet3Pt() const { return jet3()->pt() / dijetPt(); }
 
 
  private:
