@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.4 2009/11/26 13:09:54 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.5 2009/11/26 13:23:40 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -13,7 +13,7 @@ JetMETCorFactorsFactory::JetMETCorFactorsFactory(const std::string& name,
 						 const std::string& files)
   : CorFactorsFactory(name)
 {
-  cor_ = new FactorizedJetCorrector("L2:L3",files);
+  cor_ = new FactorizedJetCorrector("L2Relative:L3Absolute",files);
   std::cout << "created JetMETCorFactorsFactory: " << name << '\n';
 }
 
