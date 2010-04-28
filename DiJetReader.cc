@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.42 2010/04/13 13:44:09 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.43 2010/04/14 09:07:14 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -148,7 +148,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
 
   if(dataClass_ == 11) { 
     nJet_->fChain->SetBranchStatus("Track*",0);
-    //nJet_->fChain->SetBranchStatus("Tow*",0);
+    nJet_->fChain->SetBranchStatus("Tow*",0);
   } else if(dataClass_ == 12) {
     nJet_->fChain->SetBranchStatus("Track*",0);
   } else if(dataClass_ == 5) {
@@ -328,13 +328,11 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 //       continue;
 //     }
     // Construct event
-    double err2 = 0;
     Measurement tower;
-    double dR        = 10;
-    int closestTower = 0;
-    for(int n=0; n<nJet_->NobjTow; ++n){
-      if(nJet_->Tow_jetidx[n] != calJetIdx) continue;//look for ij-jet's towers
-      if( dataClass_ == 12) {
+    double err2 = 0;
+    if(dataClass_ == 12) {
+      for(int n=0; n<nJet_->NobjTow; ++n){
+	if(nJet_->Tow_jetidx[n] != calJetIdx) continue;//look for ij-jet's towers
 	tower.pt     = nJet_->TowEt[n];
 	double scale = nJet_->TowEt[n]/nJet_->TowE[n];
 	tower.EMF    = nJet_->TowEm[n]*scale;
@@ -350,13 +348,6 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 	}
 	terr[n]  *= terr[n];
 	err2     += terr[n];
-      }
-      dphi      = TVector2::Phi_mpi_pi(nJet_->JetPhi[calJetIdx]-tower.phi);
-      deta      = nJet_->JetEta[calJetIdx]-tower.eta;
-      double dr = sqrt( deta*deta + dphi*dphi );     
-      if(dr < dR) {
-	dR = dr;
-	closestTower = n;
       }
     }
     // Cuts on hadronic fraction 
@@ -387,8 +378,8 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 			  nJet_->JetEtWeightedSigmaEta[calJetIdx], Jet::uds,
 			  nJet_->GenJetColEt[genJetIdx],drJetGenjet,
 			  createCorFactors(calJetIdx),
-			  par_->jet_function(nJet_->TowId_eta[closestTower],
-					     nJet_->TowId_phi[closestTower]),
+			  par_->jet_function(nJet_->JetIEta[calJetIdx],
+					     nJet_->JetIPhi[calJetIdx]),
 			  jet_error_param,par_->global_jet_function(),minJetEt_);
       for(int j = 0 ; j < nJet_->NobjTow ; ++j) {
 	if (nJet_->Tow_jetidx[j]!= calJetIdx) continue;//look for ij-jet's towers
@@ -396,7 +387,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 	jt->addTower(nJet_->TowEt[j],nJet_->TowEm[j]*scale,
 		     nJet_->TowHad[j]*scale,nJet_->TowOE[j]*scale,
 		     nJet_->TowE[j],nJet_->TowEta[j],nJet_->TowPhi[j],
-		     par_->tower_function(nJet_->TowId_eta[calJetIdx],nJet_->TowId_phi[calJetIdx]),
+		     par_->tower_function(nJet_->TowId_eta[j],nJet_->TowId_phi[j]),
 		     tower_error_param);
       }
       jet = jt;
@@ -405,13 +396,12 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       jet = new Jet(nJet_->JetEt[calJetIdx],tower.EMF,tower.HadF,
 		    tower.OutF,nJet_->JetE[calJetIdx],
 		    nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
-		    0.,//nJet_->JetEtWeightedSigmaPhi[calJetIdx],
-		    0.,//nJet_->JetEtWeightedSigmaEta[calJetIdx],
+		    nJet_->JetEtWeightedSigmaPhi[calJetIdx],
+		    nJet_->JetEtWeightedSigmaEta[calJetIdx],
 		    Jet::flavorFromPDG(nJet_->GenPartId_algo[calJetIdx]),
 		    nJet_->GenJetColEt[genJetIdx],drJetGenjet,
 		    createCorFactors(calJetIdx),
-		    par_->jet_function(nJet_->TowId_eta[closestTower],
-				       nJet_->TowId_phi[closestTower]),
+		    par_->jet_function(nJet_->JetIEta[calJetIdx],nJet_->JetIPhi[calJetIdx]),
 		    jet_error_param,par_->global_jet_function(),minJetEt_);    
     }
     if(corFactorsFactory_) {

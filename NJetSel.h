@@ -89,6 +89,8 @@ public :
    Float_t         JetCorrJPT[100];   //[NobjJet]
    Float_t         JetCorrL2L3[100];   //[NobjJet]
    Float_t         JetCorrL2L3JPT[100];   //[NobjJet]
+   Int_t           JetIEta[100];   //[NobjJet]
+   Int_t           JetIPhi[100];   //[NobjJet]
    Float_t         JetGenJetDeltaR[100];   //[NobjJet]
    Float_t         GenJetPt[100];   //[NobjJet]
    Float_t         GenJetPhi[100];   //[NobjJet]
@@ -194,6 +196,8 @@ public :
    TBranch        *b_JetCorrJPT;   //!
    TBranch        *b_JetCorrL2L3;   //!
    TBranch        *b_JetCorrL2L3JPT;   //!
+   TBranch        *b_JetIEta;   //!
+   TBranch        *b_JetIPhi;   //!
    TBranch        *b_JetGenJetDeltaR;   //!
    TBranch        *b_GenJetPt;   //!
    TBranch        *b_GenJetPhi;   //!
@@ -335,6 +339,8 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetCorrJPT", JetCorrJPT, &b_JetCorrJPT);
    fChain->SetBranchAddress("JetCorrL2L3", JetCorrL2L3, &b_JetCorrL2L3);
    fChain->SetBranchAddress("JetCorrL2L3JPT", JetCorrL2L3JPT, &b_JetCorrL2L3JPT);
+   fChain->SetBranchAddress("JetIEta", JetIEta, &b_JetIEta);
+   fChain->SetBranchAddress("JetIPhi", JetIPhi, &b_JetIPhi);
    fChain->SetBranchAddress("JetGenJetDeltaR", JetGenJetDeltaR, &b_JetGenJetDeltaR);
    fChain->SetBranchAddress("GenJetPt", GenJetPt, &b_GenJetPt);
    fChain->SetBranchAddress("GenJetPhi", GenJetPhi, &b_GenJetPhi);
@@ -376,7 +382,6 @@ Bool_t NJetSel::Notify()
    // is started when using PROOF. It is normally not necessary to make changes
    // to the generated code, but the routine can be extended by the
    // user if needed. The return value is currently not used.
-
    return kTRUE;
 }
 
