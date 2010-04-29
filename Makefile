@@ -11,7 +11,7 @@ endif
 
 
 #O2 for optimization, g for debugging, pg for profiling
-SPECIALFLAGS= -fpic -g -O2# -pg -O2
+SPECIALFLAGS= -fpic -g -O2 -pg# -O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
@@ -216,7 +216,7 @@ lib/libJetMETObjects.so: dirs JetMETObjects
 
 JetMETObjects:
 	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -d JetMETObjects CMSSW/CondFormats/JetMETObjects
-
+	patch -d JetMETObjects/src < JetMETObjects.patch
 
 plugins: dirs lib/libJetMETCor.so
 

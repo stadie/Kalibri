@@ -1,0 +1,14 @@
+Index: JetMETObjects/src/JetCorrectorParameters.cc
+===================================================================
+RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/src/JetCorrectorParameters.cc,v
+retrieving revision 1.8
+diff -r1.8 JetCorrectorParameters.cc
+327,329d326
+< #include "FWCore/Utilities/interface/typelookup.h"
+<  
+< TYPELOOKUP_DATA_REG(JetCorrectorParameters);
+330a328,331
+> #ifndef STANDALONE
+>   #include "FWCore/Utilities/interface/typelookup.h"
+>   TYPELOOKUP_DATA_REG(JetCorrectorParameters);
+> #endif
