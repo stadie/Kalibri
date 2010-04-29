@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.10 2010/04/14 09:07:40 mschrode Exp $
+// $Id: EventReader.cc,v 1.11 2010/04/21 09:30:15 mschrode Exp $
 //
 #include "EventReader.h"
 
@@ -77,6 +77,13 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
     }
   }
   corFactorsFactory_ = CorFactorsFactory::map[jcn];
+  if(jcn !="" && (! corFactorsFactory_)) {
+    std::cerr << "Failed to apply correction " << jcn << " from " << jcs << std::endl;
+    exit(-1);
+  } 
+  if(corFactorsFactory_) {
+    std::cout << "Jet corrections will be overwritten with " << jcn << " from " << jcs << std::endl; 
+  }
   correctToL3_ = config_->read<bool>("correct jets to L3",false);
   correctL2L3_ = config_->read<bool>("correct jets L2L3",false);
   if( correctToL3_ && correctL2L3_ ) {
@@ -183,7 +190,7 @@ TTree * EventReader::createTree(const std::string &dataType) const {
     int nOpenedFiles = 0;
     if( filelist.is_open() ) {
       std::string name = "";
-      while( !filelist.eof() && nOpenedFiles < 25 ) {
+      while( !filelist.eof() ) {
 	filelist >> name;
 	if( filelist.eof() ) break;
 	chain->Add( name.c_str() );

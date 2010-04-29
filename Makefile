@@ -215,7 +215,7 @@ lib/libJetMETObjects.so: dirs JetMETObjects
 	@env STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX} -DSTANDALONE -I.'  /bin/sh -c 'make -e -C JetMETObjects'
 
 JetMETObjects:
-	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -d JetMETObjects CMSSW/CondFormats/JetMETObjects
+	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -r V01-09-01-06 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 	patch -d JetMETObjects/src < JetMETObjects.patch
 
 plugins: dirs lib/libJetMETCor.so

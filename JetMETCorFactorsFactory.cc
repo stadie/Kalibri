@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.5 2009/11/26 13:23:40 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.6 2010/04/28 08:57:57 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -14,7 +14,7 @@ JetMETCorFactorsFactory::JetMETCorFactorsFactory(const std::string& name,
   : CorFactorsFactory(name)
 {
   cor_ = new FactorizedJetCorrector("L2Relative:L3Absolute",files);
-  std::cout << "created JetMETCorFactorsFactory: " << name << '\n';
+  //std::cout << "created JetMETCorFactorsFactory: " << name << '\n';
 }
 
 JetMETCorFactorsFactory::~JetMETCorFactorsFactory()
@@ -42,9 +42,10 @@ JetMETCorFactorsFactory::Register JetMETCorFactorsFactory::register_;
 
 JetMETCorFactorsFactory::Register::Register() 
 {
-  create("Summer09_7TeV_AK5Calo","JetMETObjects/data/Summer09_7TeV_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_L3Absolute_AK5Calo.txt");
-  create("Summer09_AK5Calo","JetMETObjects/data/Summer09_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_L3Absolute_AK5Calo.txt");
-  create("Summer09_7TeV_ReReco332_AK5Calo","JetMETObjects/data/Summer09_7TeV_ReReco332_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_ReReco332_L3Absolute_AK5Calo.txt");
+  //create("Summer09_7TeV_AK5Calo","JetMETObjects/data/Summer09_7TeV_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_L3Absolute_AK5Calo.txt");
+  //create("Summer09_AK5Calo","JetMETObjects/data/Summer09_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_L3Absolute_AK5Calo.txt");
+  create("Summer09_7TeV_ReReco332_AK5Calo","JetMETObjects/data/Summer09_7TeV_ReReco332_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_ReReco332_L3Absolute_AK5Calo.txt");  
+  create("Spring10_AK5Calo","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt");
 }
 
 JetMETCorFactorsFactory* JetMETCorFactorsFactory::Register::create(const std::string& name, const std::string& files) const
