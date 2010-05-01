@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.43 2010/04/14 09:07:14 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.44 2010/04/28 12:36:32 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -295,10 +295,10 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     }
 
     // Cuts
-    if( nJet_->GenJetColEt[genJetIdx] < minGenJetEt_ ) {
+    if( nJet_->GenJetColPt[genJetIdx] < minGenJetEt_ ) {
       nMinGenJetEt_++;
       continue;
-    } else if( nJet_->GenJetColEt[genJetIdx] > maxGenJetEt_ ) {
+    } else if( nJet_->GenJetColPt[genJetIdx] > maxGenJetEt_ ) {
       nMaxGenJetEt_++;
       continue;
     }
@@ -308,7 +308,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     if( drJetGenjet > maxDeltaR_ ) {
       nMaxDeltaR_++;
       continue;
-    } else if( nJet_->JetEt[calJetIdx] < minJetEt_ ) {
+    } else if( nJet_->JetPt[calJetIdx] < minJetEt_ ) {
       nMinJetEt_++;
       continue;
     } else if( std::abs(nJet_->JetEta[calJetIdx]) > maxJetEta_ ) {
@@ -358,7 +358,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       nMaxJetHadFraction_++;
       continue;
     }
-    tower.pt      = nJet_->JetEt[calJetIdx];
+    tower.pt      = nJet_->JetPt[calJetIdx];
     tower.EMF     = tower.pt * nJet_->JetEMF[calJetIdx];
     tower.HadF    = tower.pt * (1.0 - nJet_->JetEMF[calJetIdx]);
     tower.OutF    = 0;
@@ -371,12 +371,12 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     Jet *jet;
     if(dataClass_ == 12) {
       JetWithTowers *jt = 
-	new JetWithTowers(nJet_->JetEt[calJetIdx],tower.EMF,tower.HadF,
+	new JetWithTowers(nJet_->JetPt[calJetIdx],tower.EMF,tower.HadF,
 			  tower.OutF,nJet_->JetE[calJetIdx],
 			  nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
 			  nJet_->JetEtWeightedSigmaPhi[calJetIdx],
 			  nJet_->JetEtWeightedSigmaEta[calJetIdx], Jet::uds,
-			  nJet_->GenJetColEt[genJetIdx],drJetGenjet,
+			  nJet_->GenJetColPt[genJetIdx],drJetGenjet,
 			  createCorFactors(calJetIdx),
 			  par_->jet_function(nJet_->JetIEta[calJetIdx],
 					     nJet_->JetIPhi[calJetIdx]),
@@ -393,13 +393,13 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       jet = jt;
     }
     else { 
-      jet = new Jet(nJet_->JetEt[calJetIdx],tower.EMF,tower.HadF,
+      jet = new Jet(nJet_->JetPt[calJetIdx],tower.EMF,tower.HadF,
 		    tower.OutF,nJet_->JetE[calJetIdx],
 		    nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaEta[calJetIdx],
 		    Jet::flavorFromPDG(nJet_->GenPartId_algo[calJetIdx]),
-		    nJet_->GenJetColEt[genJetIdx],drJetGenjet,
+		    nJet_->GenJetColPt[genJetIdx],drJetGenjet,
 		    createCorFactors(calJetIdx),
 		    par_->jet_function(nJet_->JetIEta[calJetIdx],nJet_->JetIPhi[calJetIdx]),
 		    jet_error_param,par_->global_jet_function(),minJetEt_);    
@@ -412,12 +412,12 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     } else if(correctL2L3_) {
       jet->correctL2L3();
     }
-    JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColEt[genJetIdx],1.);//nJet_->Weight);
+    JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],1.);//nJet_->Weight);
     data.push_back(jte);
     ++njets;
     //add jet to constraints
     for(unsigned int i = 0 ; i < constraints_.size() ; ++i) {
-      constraints_[i]->addJet(nJet_->GenJetColEt[genJetIdx],jet,new Function(&Parametrization::correctedJetEt,0,0,0,0,cp_));
+      constraints_[i]->addJet(nJet_->GenJetColPt[genJetIdx],jet,new Function(&Parametrization::correctedJetEt,0,0,0,0,cp_));
     }
   }     
   delete [] terr;
