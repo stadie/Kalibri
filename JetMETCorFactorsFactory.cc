@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.6 2010/04/28 08:57:57 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.7 2010/04/29 13:29:41 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -29,7 +29,7 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j)
   cor_->setJetPt(j->pt()); 
   cor_->setJetE(j->E());
   cor_->setJetPhi(j->phi());
-  cor_->setJetEMF(j->EmEt()/j->pt()); 
+  cor_->setJetEMF(j->EmEt()/(j->EmEt() + j->HadEt())); 
   
   std::vector<float> levels = cor_->getSubCorrections();
 
@@ -46,6 +46,9 @@ JetMETCorFactorsFactory::Register::Register()
   //create("Summer09_AK5Calo","JetMETObjects/data/Summer09_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_L3Absolute_AK5Calo.txt");
   create("Summer09_7TeV_ReReco332_AK5Calo","JetMETObjects/data/Summer09_7TeV_ReReco332_L2Relative_AK5Calo.txt:JetMETObjects/data/Summer09_7TeV_ReReco332_L3Absolute_AK5Calo.txt");  
   create("Spring10_AK5Calo","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt");
+  create("Spring10_AK5PF","JetMETObjects/data/Spring10_L2Relative_AK5PF.txt:JetMETObjects/data/Spring10_L3Absolute_AK5PF.txt");
+  create("Spring10_AK5TRK","JetMETObjects/data/Spring10_L2Relative_AK5TRK.txt:JetMETObjects/data/Spring10_L3Absolute_AK5TRK.txt");
+  create("Spring10_AK5JPT","JetMETObjects/data/Spring10_L2Relative_AK5JPT.txt:JetMETObjects/data/Spring10_L3Absolute_AK5JPT.txt");
 }
 
 JetMETCorFactorsFactory* JetMETCorFactorsFactory::Register::create(const std::string& name, const std::string& files) const
