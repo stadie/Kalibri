@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.1 2010/04/23 08:34:25 mschrode Exp $
-
+# $Id: createJECValidationHtmlPage.sh,v 1.2 2010/04/23 08:56:39 mschrode Exp $
+
 #  This script creates an html webpage listing JEC validation
 #  plots.
 #
@@ -239,11 +239,10 @@ if [[ `ls -1 *.eps 2>/dev/null | wc -l` -ne 0 ]]; then
     echo -n " and to "
 fi
 echo "png format and resizing plots"
-for pdf in `ls -1 *.pdf 2>/dev/null`; do
-    pos=(`expr index ${pdf} ${ID_RVs}`)
-    ((pos=$pos-1))
-    new_pdf=(${pdf:pos})
-    new_pdf=(${DIR_OUT}_${new_pdf})
+for pdf in `ls -1 *${ID_RVs}*.pdf 2>/dev/null`; do
+    #pos=(`expr index ${pdf} ${ID_RVs}`)
+	new_pdf=`awk 'BEGIN { print substr("'${pdf}'",index("'${pdf}'","'${ID_RVs}'")) }'`
+    new_pdf="${DIR_OUT}_${new_pdf}"
     mv ${pdf} ${new_pdf}
     convert ${new_pdf} -resize 400x400 `basename ${new_pdf} .pdf`.png
 done
@@ -261,7 +260,7 @@ HTML_INDENT=0
 
 function html_newline {
     if [[ $1 -gt 0 ]]; then
-	for i in `seq 1 $1`; do
+	for i in {1..$1} ; do
 	    echo "" >> $FILE_OUT
 	done
     else
@@ -270,7 +269,7 @@ function html_newline {
 }
 
 function html_indentation {
-    for i in `seq 1 $HTML_INDENT`; do
+    for i in {1..$HTML_INDENT} ; do
 	echo -n " " >> $FILE_OUT
     done
 }
