@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
+// $Id: ControlPlotsConfig.h,v 1.2 2010/05/04 13:50:24 stadie Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -52,7 +52,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.2 2010/05/04 13:50:24 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -114,9 +114,15 @@ class ControlPlotsConfig {
   //! Returns the maximum of the y range
   double yMax() const { return yBinEdges_.back(); }
   //! Returns the zoomed minimum of the y range
-  double yMinZoom() const { return yMinZoom_; }
+  double yMinZoom(ProfileType profType) const { 
+    std::map<ProfileType,double>::const_iterator i = yMinZoom_.find(profType);
+    return i->second; 
+  }
   //! Returns the zoomed maximum of the y range
-  double yMaxZoom() const { return yMaxZoom_; }
+  double yMaxZoom(ProfileType profType) const {
+    std::map<ProfileType,double>::const_iterator i = yMaxZoom_.find(profType);
+    return i->second; 
+  }  
   //! Returns the name of the y variable
   std::string yVariable() const { return yVar_; }
   //! Returns the title of the y axis
@@ -187,8 +193,9 @@ class ControlPlotsConfig {
   std::string yVar_;
   std::vector<double> yBinEdges_;
   int nYBins_;
-  double yMinZoom_;
-  double yMaxZoom_;
+  std::map<ProfileType,double> yMinZoom_;
+  std::map<ProfileType,double> yMaxZoom_;
+
 
   std::vector<CorrectionType> corrTypes_;
   std::vector<CorrectionType> corrTypesDistributions_;

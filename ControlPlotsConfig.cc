@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.6 2010/04/01 16:29:17 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.7 2010/05/04 13:50:24 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -347,25 +347,37 @@ void ControlPlotsConfig::init() {
     assert( xBinEdges_.at(i) < xBinEdges_.at(i+1) );
   }
 
+  // Store which profile types are to be drawn
+  std::vector<std::string> profTypesStr = bag_of_string(config_->read<std::string>(name_+" profile types","Uncorrected"));
+  for(std::vector<std::string>::const_iterator profTypesIt = profTypesStr.begin();
+      profTypesIt != profTypesStr.end(); profTypesIt++) {
+    profTypes_.push_back(profileType(*profTypesIt));
+  }
+
   // Read y axis
   strVar = bag_of_string(config_->read<std::string>(name_+" y variable","GenJetResponse"));
-  yVar_ = strVar.at(0);
+  yVar_ = strVar[0];
   min = 0.;
   max = 2.;
   var = bag_of<double>(config_->read<std::string>(name_+" y edges","51 0 2 0.5 1.5"));
-  if( var.size() == 5 ) {
-    nYBins_ = static_cast<int>(var.at(0));
-    min = var.at(1);
-    max = var.at(2);
-    yMinZoom_ = var.at(3);
-    yMaxZoom_ = var.at(4);
+  if( var.size() == 3 + 2 *  profTypes_.size()) {
+    nYBins_ = static_cast<int>(var[0]);
+    min = var[1];
+    max = var[2];
+    for(ProfileTypeIt pi = profTypes_.begin() ; pi != profTypes_.end() ; ++pi) { 
+      unsigned int index = 2 *(pi-profTypes_.begin() +1) + 1;
+      yMinZoom_[*pi] = var[index];
+      yMaxZoom_[*pi] = var[index+1];
+    }
   } else {
     std::cerr << "WARNING: Wrong number of arguments in config line '" << name_ << " y edges'\n";
     nYBins_ = 51;
     min = 0.;
     max = 2.;
-    yMinZoom_ = 0.5;
-    yMaxZoom_ = 1.5;
+    for(ProfileTypeIt pi = profTypes_.begin() ; pi != profTypes_.end() ; ++pi) { 
+      yMinZoom_[*pi] = 0.5;
+      yMaxZoom_[*pi] = 1.5;
+    }
   }
   yBinEdges_ = std::vector<double>(nYBins_+1);
   double width = (max - min) / nYBins_;
@@ -391,13 +403,6 @@ void ControlPlotsConfig::init() {
   for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr.begin();
       corrTypesIt != corrTypesStr.end(); corrTypesIt++) {
     corrTypesDistributions_.push_back(correctionType(*corrTypesIt));
-  }
-
-  // Store which profile types are to be drawn
-  std::vector<std::string> profTypesStr = bag_of_string(config_->read<std::string>(name_+" profile types","Uncorrected"));
-  for(std::vector<std::string>::const_iterator profTypesIt = profTypesStr.begin();
-      profTypesIt != profTypesStr.end(); profTypesIt++) {
-    profTypes_.push_back(profileType(*profTypesIt));
   }
 
   // Store directory name for output

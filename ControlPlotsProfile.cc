@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.5 2010/03/05 16:00:56 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.6 2010/04/13 13:56:47 mschrode Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -144,7 +144,7 @@ void ControlPlotsProfile::draw() {
       ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->correctionTypesBegin();
       for(; corrTypeIt != config_->correctionTypesEnd(); corrTypeIt++) {
 	TH1D *h = (*binIt)->hXProfile(*corrTypeIt,*profTypeIt);
-	h->GetYaxis()->SetRangeUser(config_->yMinZoom(),config_->yMaxZoom());
+	h->GetYaxis()->SetRangeUser(config_->yMinZoom(*profTypeIt),config_->yMaxZoom(*profTypeIt));
 	if( firstHist ) {
 	  h->Draw("PE1X0");
 	  firstHist = false;
