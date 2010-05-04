@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.3 2010/05/03 16:27:18 stadie Exp $
-
+# $Id: createJECValidationHtmlPage.sh,v 1.4 2010/05/04 13:42:45 stadie Exp $
+#
 #  This script creates an html webpage listing JEC validation
 #  plots.
 #
