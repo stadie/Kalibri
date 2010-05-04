@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.2 2010/04/23 08:56:39 mschrode Exp $
+# $Id: createJECValidationHtmlPage.sh,v 1.3 2010/05/03 16:27:18 stadie Exp $
 
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -58,6 +58,7 @@
 #    - 'calo' for calorimeter jets
 #    - 'jpt' for jet-plus-track jets
 #    - 'pf' for particle-flow jets
+#    - 'track' track jets
 #
 #   Author: Matthias Schroeder
 #   Date: Tue Apr 20 21:17:49 CEST 2010
@@ -178,8 +179,11 @@ until [[ ${CORRECT_INPUT} -eq 1 ]]; do
     elif [[ ${JET_TYPE} == "pf" ]]; then
 	CORRECT_INPUT=1
 	JET_TYPE="PF"
+    elif [[ ${JET_TYPE} == "track" ]]; then
+	CORRECT_INPUT=1
+	JET_TYPE="Track"
     else	
-	echo -n "Enter jet type ('calo','jpt','pf'): "
+	echo -n "Enter jet type ('calo','jpt','pf','track'): "
 	read JET_TYPE
     fi
 done    
