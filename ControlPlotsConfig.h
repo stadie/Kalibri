@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: ControlPlotsConfig.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -52,7 +52,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: $
+//!  $Id: ControlPlotsConfig.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -166,7 +166,7 @@ class ControlPlotsConfig {
   //! Returns the name of the directory in which the control plots are stored
   std::string outDirName() const { return outDirName_; }
   //! Returns the file ending ("eps") of the control plots
-  std::string outFileType() const { return "eps"; }
+  std::string outFileType() const { return outFileType_; }
   //! Writes a \p obj to ROOT file 
   void toRootFile(TObject *obj) const;
 
@@ -195,6 +195,7 @@ class ControlPlotsConfig {
   std::vector<ProfileType> profTypes_;
 
   std::string outDirName_;
+  std::string outFileType_;
 
   std::map<CorrectionType,int> colors_;
   std::map<CorrectionType,int> markerStyles_;

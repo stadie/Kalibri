@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.5 2010/02/18 12:40:16 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.6 2010/04/01 16:29:17 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -404,6 +404,7 @@ void ControlPlotsConfig::init() {
   outDirName_ = config_->read<std::string>("plots output directory","controlPlots");
   gSystem->MakeDirectory(outDirName_.c_str()); 
 
+  outFileType_ = config_->read<std::string>("plots format","eps");
   // Define style for different correction types
   // This should become configurable via config file
   colors_[Uncorrected] = 1;
