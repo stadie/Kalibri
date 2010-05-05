@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.59 2010/04/13 13:38:24 mschrode Exp $
+//  $Id: Parametrization.h,v 1.60 2010/04/27 16:03:41 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.59 2010/04/13 13:38:24 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.60 2010/04/27 16:03:41 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -897,13 +897,13 @@ public:
   //!  \brief Code from L2RelativeCorrector
   //!  \code
   //!  double pt = (fPt < p[0]) ? p[0] : (fPt > p[1]) ? p[1] : fPt;
-  //!  double logpt = log10(pt);
-  //!  double result = p[2]+logpt*(p[3]+logpt*(p[4]+logpt*(p[5]+logpt*(p[6]+logpt*p[7]))));
+  //!  double x = pt
+  //!  double result = [0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*pow(x/500.0,3)
   //!  \endcode   
   double correctedJetEt(const Measurement *x,const double *par) const {
     double  pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
-    double c = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(0.01*par[3]+logpt*(0.01*par[4]))));
+    double c = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(0.01*par[3])))+par[4] * pow(pt/500.0,3);
     
     if(c < 0.2) c = 0.2;
     if(c > 5.0) c = 5.0;
@@ -918,7 +918,7 @@ public:
   //!  double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
   //!  \endcode
   double correctedGlobalJetEt(const Measurement *x,const double *par) const {
-    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
+    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 5000.0) ? 5000.0 : x->pt;
     double logpt = log10(pt);
     double c = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
     if(c < 0.3) c = 0.3;
