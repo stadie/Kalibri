@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.42 2010/04/01 16:28:19 stadie Exp $
+//    $Id: Jet.cc,v 1.43 2010/04/13 13:44:10 mschrode Exp $
 //   
 #include "Jet.h"  
 
@@ -266,6 +266,16 @@ double Jet::expectedEt(double truth, double start, bool fast)
   
   double f2 = correctedEt(x2,false);
   for( int i = 0 ; ; ++i) {
+    if(i > 20) {
+      ++nfails;
+      //std::cout << "Warning failed to bag: " << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " << f2 << std::endl;
+      //assert(i < 10);
+      x1 = 0.1 * (truth - 20);
+      if(x1 < 0.1) x1 = 0.1;
+      x2 = 10 * truth;
+      break;
+      //return -1;
+    }
     if(f1 >= f2) {
       if((f1 > truth) && (f2 < truth)) break; 
       double step = 0.5 * i;
@@ -273,8 +283,7 @@ double Jet::expectedEt(double truth, double start, bool fast)
       x2 += 2 * step;
       f1 = correctedEt(x1,false);
       f2 = correctedEt(x2,false);
-    }
-    else {
+    } else {
       if(f1 > truth) {
 	double step = (f1 - truth) * (x2-x1)/(f2-f1);
 	if(step < 0.1) step = 0.1;
@@ -288,12 +297,6 @@ double Jet::expectedEt(double truth, double start, bool fast)
 	f2 = correctedEt(x2,false);
 	++ntries;
       } else break;
-    }
-    if(i > 20) {
-      ++nfails;
-      std::cout << "Warning failed to bag: " << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " << f2 << std::endl;
-      //assert(i < 10);
-      return -1;
     }
   }
   //assert((x1 == x1) && (x2 == x2));
