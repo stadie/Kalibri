@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.4 2010/05/04 13:42:45 stadie Exp $
+# $Id: createJECValidationHtmlPage.sh,v 1.5 2010/05/04 13:53:14 stadie Exp $
 #
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -98,10 +98,10 @@ CORRECT_INPUT=0
 until [[ ${CORRECT_INPUT} -eq 1 ]]; do
     if [[ ${MODE} == "kalibri" ]]; then
 	CORRECT_INPUT=1
-	JET_TYPE="Kalibri"
+	MODE="Kalibri"
     elif [[ ${MODE} == "jetmet" ]]; then
 	CORRECT_INPUT=1
-	JET_TYPE="JetMET"
+	MODE="JetMET"
     else	
 	echo -n "Enter mode ('kalibri','jetmet'): "
 	read MODE
@@ -214,6 +214,9 @@ DIR_OUT=(${DIR_OUT//_[_*]/_})
 DIR_OUT=(${DIR_OUT%_})
 DIR_OUT=(${DIR_OUT}_${JET_ALGO})
 DIR_OUT=(${DIR_OUT}_${JET_TYPE})
+if [[ ${MODE} == "Kalibri" ]]; then
+    DIR_OUT=(${MODE}_${DIR_OUT})
+fi
 echo "Preparing working directory '$DIR_OUT'"
 mkdir $DIR_OUT
 cp $PLOTS_PATH $DIR_OUT
@@ -339,14 +342,19 @@ html_tag title "${ID} ${JET_ALGO} ${JET_TYPE} jets JEC validation"
 html_tag_end head
 html_newline 2
 html_tag_start body "" "style=\"text-align:left; margin-left:5%; margin-right:5%; font-size:1.2em\""
-if [[ ${MODE} == "kalibri" ]]; then
+if [[ ${MODE} == "Kalibri" ]]; then
     html_tag h1 "${ID} ${JET_ALGO} ${JET_TYPE} jets Kalibri JEC validation"
 else
     html_tag h1 "${ID} ${JET_ALGO} ${JET_TYPE} jets JEC validation"
 fi
 html_newline
 html_comment "Definitions of sample and JEC file etc."
-html_line "<p>On this page, validation plots are presented for the ${ID} jet energy corrections for ${JET_ALGO} ${JET_TYPE} jets in CMS. See the top-level <a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisJECValidation\">JEC validation</a> TWiki page for a detailed description of the used datasets, the applied event selection, and the validation technique.</p>"
+html_line "<p>On this page, validation plots are presented for the ${ID} jet energy corrections for ${JET_ALGO} ${JET_TYPE} jets in CMS. "
+if [[ ${MODE} == "Kalibri" ]]; then
+    html_line "The corrections were derived with an unbinned maximum likelihood fit using the Kalibri tool. See the top-level <a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisCalibration\">Kalibri TWiki</a> page for a detailed description of the fitting technique, the used datasets, the applied event selection, and the validation technique.</p>"
+else
+    html_line "See the top-level <a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisJECValidation\">JEC validation</a> TWiki page for a detailed description of the used datasets, the applied event selection, and the validation technique.</p>"
+fi
  
 # Table listing dataset, JEC tag, etc
 html_tag_start table "" "style=\"width:100%; text-align:left; font-size:1em\""
