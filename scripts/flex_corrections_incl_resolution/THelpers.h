@@ -14,6 +14,7 @@
 #include <TH1F.h>
 #include <TH2D.h>
 #include <TGraphErrors.h>
+#include <TPaveText.h>
 #include <TH1.h>
 #include <TF1.h>
 #include <TCanvas.h>
@@ -234,7 +235,7 @@ draw_TH1D_save_PS(histos_,PS_name, format, draw_options, Logxyz, ru_xlow, ru_xhi
 
 
 
-void draw_TH2D_save_PS(std::vector<TH2D*> histos_, TString PS_name ="DEFAULT_PS", TString format = "six", TString draw_options ="", TString Logxyz="x0_y0_z0", Double_t ru_xlow=0, Double_t ru_xhig=-1, Double_t ru_ylow=0, Double_t ru_yhig=-1, Double_t ru_zlow=0, Double_t ru_zhig=-1, TString img_exp="ENTER_WITH_POINT") {
+void draw_TH2D_save_PS(std::vector<TH2D*> histos_, TString PS_name ="DEFAULT_PS", TString format = "six", TString draw_options ="", TString Logxyz="x0_y0_z0", Double_t ru_xlow=0, Double_t ru_xhig=-1, Double_t ru_ylow=0, Double_t ru_yhig=-1, Double_t ru_zlow=0, Double_t ru_zhig=-1, TString img_exp="ENTER_WITH_POINT", Bool_t with_correlation_factors = false) {
 
   TCanvas* temp_canvas;
   std::string s;
@@ -249,6 +250,14 @@ if(format == "six") temp_canvas = new TCanvas("temp_canvas", "temp_canvas", 1, 1
  else if(format == "nice") temp_canvas = new TCanvas("temp_canvas", "temp_canvas", 1, 1, 800, 600 );
  else {cout << "No valid format defined, use default 'six' instead" << endl; temp_canvas = new TCanvas("temp_canvas", "temp_canvas", 1, 1, 420, 460 );
     }
+
+TPaveText pt(.7,.55,.9,.65,"NDC ARC br");
+pt.SetFillColor(kWhite);
+pt.SetBorderSize(5);
+pt.SetLineColor(kBlack);
+pt.SetLabel("Correlation:");
+
+
 
 
 
@@ -282,11 +291,23 @@ if(format == "six") temp_canvas = new TCanvas("temp_canvas", "temp_canvas", 1, 1
       chdir(pngFolder);
     }
 
+
+
+
     if(format.Contains("norm")){
 cout << filename <<endl;
       histo->Draw(draw_options);
       histo_profile->SetStats(0);
       histo_profile->Draw("same");
+
+      if(with_correlation_factors)
+	{
+	  char buffer [10];
+	  sprintf (buffer, "is %f", histo->GetCorrelationFactor());
+	  pt.Clear();
+	  pt.AddText( buffer);
+	  pt.Draw();
+	}
       if(i_histos==0)temp_canvas->Print(filename + "_norm.ps[");
       temp_canvas->Print(filename + "_norm.ps");
       if(img_exp.Contains("."))temp_canvas->Print(histo->GetName() + ("_norm" + img_exp));
@@ -298,6 +319,14 @@ cout << filename <<endl;
       histo->Draw(draw_options);
       histo_profile->SetStats(0);
       histo_profile->Draw("same");
+      if(with_correlation_factors)
+	{
+	  char buffer [10];
+	  sprintf (buffer, "is %f", histo->GetCorrelationFactor());
+	  pt.Clear();
+	  pt.AddText( buffer);
+	  pt.Draw();
+	}
       if(i_histos==0)      temp_canvas->Print(filename + ".ps[");
       temp_canvas->Print(filename + ".ps");
       if(img_exp.Contains("."))temp_canvas->Print(histo->GetName() + img_exp);
@@ -318,6 +347,12 @@ cout << filename <<endl;
 void draw_TH2D_save_PS(TString img_exp, std::vector<TH2D*> histos_, TString PS_name ="DEFAULT_PS", TString format = "six", TString draw_options ="", TString Logxyz="x0_y0_z0", Double_t ru_xlow=0, Double_t ru_xhig=-1, Double_t ru_ylow=0, Double_t ru_yhig=-1, Double_t ru_zlow=0, Double_t ru_zhig=-1) {
 
   draw_TH2D_save_PS(histos_, PS_name,format, draw_options,Logxyz,ru_xlow, ru_xhig, ru_ylow, ru_yhig, ru_zlow, ru_zhig, img_exp);
+
+}
+
+void draw_TH2D_save_PS(Bool_t with_correlation_factors, TString img_exp, std::vector<TH2D*> histos_, TString PS_name ="DEFAULT_PS", TString format = "six", TString draw_options ="", TString Logxyz="x0_y0_z0", Double_t ru_xlow=0, Double_t ru_xhig=-1, Double_t ru_ylow=0, Double_t ru_yhig=-1, Double_t ru_zlow=0, Double_t ru_zhig=-1) {
+
+  draw_TH2D_save_PS(histos_, PS_name,format, draw_options,Logxyz,ru_xlow, ru_xhig, ru_ylow, ru_yhig, ru_zlow, ru_zhig, img_exp,with_correlation_factors);
 
 }
 
