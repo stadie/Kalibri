@@ -15,6 +15,7 @@ public :
 
 
   ////RESOLUTION PART
+  std::vector< std::vector < std::vector < TH2D* > > >tlj_Sel_Correlations_2D_all_;
 
   std::vector < std::vector < TH1D* > > tlj_corrected_response_barrel_all_;
   std::vector < TGraphErrors* > tlj_Response_Graphs_mean_all_;

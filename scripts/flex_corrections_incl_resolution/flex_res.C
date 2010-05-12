@@ -90,6 +90,23 @@ void flex_res::Book_Histos()
     }
 
 
+ for(unsigned int Sel_Corr_i=0;Sel_Corr_i<Corr_selected_labels_.size();Sel_Corr_i++)
+   {
+  std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_;
+   for(unsigned int Sel_Corr_j=0;Sel_Corr_j<Corr_selected_labels_.size();Sel_Corr_j++)
+     {
+      std::vector < TH2D* >  tlj_Sel_Correlations_2D_;
+       for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
+	 {
+	   tlj_Sel_Correlations_2D_.push_back(define_pt_histo( "tlj_Sel_Correlations_2D_"+
+	   Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+"_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first + "_", ";"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+";"+  Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first, pt_bins_, pt_i, s_phi_bins_x,s_phi_xlow,s_phi_xhigh, s_phi_bins_x,s_phi_xlow,s_phi_xhigh));
+	 }
+       tlj_Sel_Correlations_2D_one_corr_.push_back(tlj_Sel_Correlations_2D_);
+     }
+   tlj_Sel_Correlations_2D_all_.push_back(tlj_Sel_Correlations_2D_one_corr_);
+   }
+
+
 }
 
 void flex_res::Write_Histos()
@@ -126,16 +143,21 @@ void flex_res::Write_Histos()
 
     }
 
-  for (Int_t X_i=0;X_i<no_X_labels_;X_i++)
+  for(unsigned int Sel_Corr_i=0;Sel_Corr_i<Corr_selected_labels_.size();Sel_Corr_i++)
     {
-      /*
-      draw_TH1D_save_PS(tlj_X_counts_all_[X_i],tlj_X_counts_all_[X_i].at(0)->GetName(), "nice");
-       for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
-	 {
-	   tlj_X_counts_all_[X_i].at(pt_i)->Write();
-	 }
-      */
+      //			 std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_;
+      for(unsigned int Sel_Corr_j=0;Sel_Corr_j<Corr_selected_labels_.size();Sel_Corr_j++)
+	{
+	  //			     std::vector < TH2D* >  tlj_Sel_Correlations_2D_;
+	  
+	        draw_TH2D_save_PS(true,img_choice,tlj_Sel_Correlations_2D_all_[Sel_Corr_i].at(Sel_Corr_j)," tlj_Sel_Correlations_"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first + "_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first ,"nice","colz");
+	  for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
+	    {
+	      tlj_Sel_Correlations_2D_all_[Sel_Corr_i].at(Sel_Corr_j).at(pt_i)->Write();
+	    }
+	}
     }
+
 
    outf->Close();
 
@@ -378,7 +400,7 @@ void flex_res::Loop()
    Long64_t nentries = fChain->GetEntriesFast();
 
 
-   //           nentries=100000;
+   //          nentries=20000;
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -465,6 +487,20 @@ void flex_res::Loop()
 			 //			 tlj_X_response_prof_all_[Corr_i].at(pt_i)->Fill(Correction_Var_[Corr_i],L2L3JetResponse_.back());
 			 //  cout << "test" << endl;
 		       }
+
+
+		     for(unsigned int Sel_Corr_i=0;Sel_Corr_i<Corr_selected_labels_.size();Sel_Corr_i++)
+		       {
+			 //			 std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_;
+			 for(unsigned int Sel_Corr_j=0;Sel_Corr_j<Corr_selected_labels_.size();Sel_Corr_j++)
+			   {
+			     //			     std::vector < TH2D* >  tlj_Sel_Correlations_2D_;
+
+			     tlj_Sel_Correlations_2D_all_[Sel_Corr_i].at(Sel_Corr_j).at(pt_i)->Fill(Correction_Var_[Corr_selected_labels_[Sel_Corr_i]],Correction_Var_[Corr_selected_labels_[Sel_Corr_j]]);
+			   }
+		       }
+
+
 		   }
 	       }
 
