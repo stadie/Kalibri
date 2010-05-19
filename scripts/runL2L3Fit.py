@@ -28,17 +28,17 @@ jet error parametrization   = jet et
 
 start values = 1.0
 jet start values        = 1. 0. 0. 0. 0. 0.
-global jet start values = 0.998 4.997 3.084 2.048
+global jet start values =  0.981669 4.16531 3.03254 2.0096
 
 # Scaling of residuals: 0 - none, 1 - with Cauchy-Function, 2 - with Huber-Function
-Residual Scaling Scheme    = 111 #   221 : default
+Residual Scaling Scheme    = 0 #   221 : default
 Outlier Cut on Chi2        = 1000.0 # Applied before each iteration with no scaling
 
-BFGS derivative step     = 1e-07
-BFGS mvec                = 6
-BFGS niter               = 100
-BFGS eps                 = 1e-02
-BFGS 1st wolfe parameter = 1.E-4
+BFGS derivative step     = 1e-04
+BFGS mvec                = 20
+BFGS niter               = 1000
+BFGS eps                 = 1e-04
+BFGS 1st wolfe parameter = 1.E-04
 BFGS 2nd wolfe parameter = 0.9
 BFGS print derivatives   = false
 
@@ -110,7 +110,7 @@ use Top events           = 0
 
 Gamma-Jet data class     = 1
 Z-Jet data class     = 3
-Di-Jet data class    = 11
+Di-Jet data class    = 21
 Top data class       = 1
 
 #Di-Jet prescale = 1000
@@ -127,13 +127,13 @@ create JetTruthEvent plots    =  true
 
 JetTruthEvent plots names =  MCTruthResponseVsGenJetPt; MCTruthResponseVsEta
 MCTruthResponseVsGenJetPt x variable        =  GenJetPt;  log
-MCTruthResponseVsGenJetPt x edges           =  30 10 3000
+MCTruthResponseVsGenJetPt x edges           =  30 10 2000
 MCTruthResponseVsGenJetPt y variable        =  GenJetResponse
 MCTruthResponseVsGenJetPt y edges           =  51 0 2.0 0.9 1.1 0.0 0.5
 MCTruthResponseVsGenJetPt bin variable      =  Eta
 MCTruthResponseVsGenJetPt bin edges         =  -5.0 -3.0 -1.3 1.3 3.0 5.0
 MCTruthResponseVsGenJetPt correction types  =  Uncorrected; L2L3; Kalibri
-MCTruthResponseVsGenJetPt profile types     =  GaussFitMean; GaussFitWidth
+MCTruthResponseVsGenJetPt profile types     =  Mean; StandardDeviation
 #MCTruthResponseVsGenJetPt distributions    =  Uncorrected; L2L3; Kalibri
 MCTruthResponseVsGenJetPt legend label      =  L2L3:CMS default
 
@@ -145,7 +145,7 @@ MCTruthResponseVsEta y edges            =  51 0 2.0 0.9 1.1 0.0 0.5
 MCTruthResponseVsEta bin variable       =  GenJetPt
 MCTruthResponseVsEta bin edges          =  10 50 100 500 2000
 MCTruthResponseVsEta correction types   =  Uncorrected; L2L3; Kalibri
-MCTruthResponseVsEta profile types      =  GaussFitMean; GaussFitWidth
+MCTruthResponseVsEta profile types      =  Mean; StandardDeviation
 #MCTruthResponseVsEta distributions      =  Uncorrected; L2L3; Kalibri
 MCTruthResponseVsEta legend label       =  L2L3:CMS default
 
@@ -153,10 +153,11 @@ MCTruthResponseVsEta legend label       =  L2L3:CMS default
 
 jettype = "Calo"
 datadir = "/scratch/hh/current/cms/user/stadie/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C"
-nthreads = 4
-nevents = -1
-dirname = "L2L3fit"
+nthreads = 2
+nevents =  -1
+dirname = "L2L3small"
 useconstraint = False
+batch = False
 
 print "fit L2L3 correction for "+jettype+" using "+datadir
 
@@ -180,23 +181,27 @@ if(useconstraint):
 else:
     fcfg.write("fixed jet parameters = 7 1\n") 
     
+
 fcfg.write("use Di-Jet events = "+str(nevents)+"\n")
 fcfg.close()
 
-
-fjob = open(dirname+"/fitL2L3.sh", "w")
-fjob.write("#! /bin/sh\n")
-fjob.write("#\n")
-fjob.write("#$ -V\n")
-fjob.write("#$ -pe  multicore "+str(nthreads)+"\n")
-fjob.write("#$ -R Y\n")
-fjob.write("#$ -l h_cpu=23:00:00\n")
-fjob.write("#$ -l h_vmem=5000M\n")
-fjob.write("cd "+os.getcwd()+"/"+dirname+"\n")
-fjob.write("./junk L2L3.cfg\n")
-fjob.close()
-
-qsubcmd = "qsub "+dirname+"/fitL2L3.sh"
-print "running "+qsubcmd
-os.system(qsubcmd)
-
+if batch:
+    fjob = open(dirname+"/fitL2L3.sh", "w")
+    fjob.write("#! /bin/sh\n")
+    fjob.write("#\n")
+    fjob.write("#$ -V\n")
+    fjob.write("#$ -pe  multicore "+str(nthreads)+"\n")
+    fjob.write("#$ -R Y\n")
+    fjob.write("#$ -l h_cpu=23:00:00\n")
+    fjob.write("#$ -l h_vmem=5000M\n")
+    fjob.write("cd "+os.getcwd()+"/"+dirname+"\n")
+    fjob.write("./junk L2L3.cfg > $TMPDIR/L2L3.log\n")
+    fjob.write("mv $TMPDIR/L2L3.log .\n")
+    fjob.close()
+    qsubcmd = "qsub "+dirname+"/fitL2L3.sh"
+    print "running "+qsubcmd
+    os.system(qsubcmd)
+else:
+    kalibricmd = "cd "+dirname+"; ./junk L2L3.cfg; cd -";
+    print "running "+kalibricmd
+    os.system(kalibricmd)
