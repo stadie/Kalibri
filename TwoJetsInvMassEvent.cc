@@ -2,7 +2,7 @@
 //    Class for all events with two jets constraint to one invariant mass
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: TwoJetsInvMassEvent.cc,v 1.8 2009/11/24 16:52:59 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.cc,v 1.9 2010/05/19 13:34:48 stadie Exp $
 //     
 #include "TwoJetsInvMassEvent.h"
 
@@ -45,9 +45,9 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
   double dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
   double dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
   
-  double err2inv = dmdp1 * c1 * jet1_->Error();
+  double err2inv = dmdp1 * c1 * jet1_->error();
   err2inv *= err2inv;
-  double err2 = dmdp2 * c2 * jet2_->Error();
+  double err2 = dmdp2 * c2 * jet2_->error();
   err2inv += err2 * err2;
   err2inv = 1/err2inv;
  
@@ -71,18 +71,18 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
       assert(i1->parid == i2->parid);
       p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
       c2 = i2->lowerEt/jet2_->Et();
-      err2 = c2 * jet2_->Error();
+      err2 = c2 * jet2_->error();
     } else {
       p2.SetPtEtaPhiM(et2,jet2_->eta(),jet2_->phi(),0);
       c2 = et2/ jet2_->Et();
-      err2 = c2 * jet2_->Error();
+      err2 = c2 * jet2_->error();
     } 
     m = sqrt(2 * p1.P()*p2.P() * alpha);
     dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
     dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
     err2 *= dmdp2;
     temp1 = truth_ - m;
-    err2inv = dmdp1 * c1 * jet1_->Error();
+    err2inv = dmdp1 * c1 * jet1_->error();
     err2inv *= err2inv;
     err2inv += err2 * err2;
     err2inv = 1/err2inv;
@@ -93,16 +93,16 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
     if(i2 != varcoll2.end()) {
       p2.SetPtEtaPhiM(i2->upperEt,jet2_->eta(),jet2_->phi(),0);
       c2 = i2->upperEt/ jet2_->Et();
-      err2 = c2 * jet2_->Error();
+      err2 = c2 * jet2_->error();
     } else {
-      err2 = c2 * jet2_->Error();
+      err2 = c2 * jet2_->error();
     }
     m = sqrt(2 * p1.P()*p2.P() * alpha);
     dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
     dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
     temp2 = truth_ - m;
     err2 *= dmdp2;
-    err2inv = dmdp1 * c1 * jet1_->Error();
+    err2inv = dmdp1 * c1 * jet1_->error();
     err2inv *= err2inv;
     err2inv += err2 * err2;
     err2inv = 1/err2inv;
@@ -124,13 +124,13 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
     } else {
       p1.SetPtEtaPhiM(et1,jet1_->eta(),jet1_->phi(),0);
       c1 = et1/ jet1_->Et();
-      err2 = c1 * jet1_->Error();
+      err2 = c1 * jet1_->error();
     }
     m = sqrt(2 * p1.P()*p2.P() * alpha);
     dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
     dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
     temp1 = truth_ - m;
-    err2inv = dmdp2 * c2 * jet2_->Error();
+    err2inv = dmdp2 * c2 * jet2_->error();
     err2inv *= err2inv;
     err2 *= dmdp1;
     err2inv += err2 * err2;
@@ -143,8 +143,8 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
     dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
     dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
     temp2 = truth_ - m;
-    err2 = dmdp1 * c1 * jet1_->Error();
-    err2inv = dmdp2 * c2 * jet2_->Error();
+    err2 = dmdp1 * c1 * jet1_->error();
+    err2inv = dmdp2 * c2 * jet2_->error();
     err2inv *= err2inv;
     err2inv += err2 * err2;
     err2inv = 1/err2inv;
@@ -260,9 +260,9 @@ double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1,
   double dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
   double dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
   
-  double err2inv = dmdp1 * c1 * jet1_->Error();
+  double err2inv = dmdp1 * c1 * jet1_->error();
   err2inv *= err2inv;
-  double err2 = dmdp2 * c2 * jet2_->Error();
+  double err2 = dmdp2 * c2 * jet2_->error();
   //std::cout << "m:" << m << " = " << (p1+p2).M() << " sigma:" << sqrt(err2inv) << ", " << err2 << '\n';
   err2inv += err2 * err2;
   err2inv = 1/err2inv;
@@ -286,18 +286,18 @@ double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1,
     if(i2 != varcoll2.end()) {
       p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
       c2 = (i2->lowerEt + i2->lowerEtDeriv)/jet2_->Et();
-      err2 = c2 * jet2_->Error();
+      err2 = c2 * jet2_->error();
     } else {
       p2.SetPtEtaPhiM(et2,jet2_->eta(),jet2_->phi(),0);
       c2 = et2/jet2_->Et() + et2prime;
-      err2 = c2 * jet2_->Error();
+      err2 = c2 * jet2_->error();
     } 
     m = sqrt(2 * p1.P()*p2.P() * alpha);
     dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
     dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
     err2 *= dmdp2;
     temp1 = truth_ - m;
-    err2inv = dmdp1 * c1 * jet1_->Error();
+    err2inv = dmdp1 * c1 * jet1_->error();
     //std::cout << "m:" << m << " sigma:" << err2inv << ", " << err2 << '\n';
     err2inv *= err2inv;
     err2inv += err2 * err2;
@@ -315,16 +315,16 @@ double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1,
     if(i2 != varcoll2.end()) {
       p2.SetPtEtaPhiM(i2->upperEt,jet2_->eta(),jet2_->phi(),0);
       c2 = (i2->upperEt + i2->upperEtDeriv)/jet2_->Et();
-      err2 = c2 * jet2_->Error();
+      err2 = c2 * jet2_->error();
     }  else {
-      err2 = c2 * jet2_->Error();
+      err2 = c2 * jet2_->error();
     }
     m = sqrt(2 * p1.P()*p2.P() * alpha);
     dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
     dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
     temp2 = truth_ - m;
     err2 *= dmdp2;
-    err2inv = dmdp1 * c1 * jet1_->Error();
+    err2inv = dmdp1 * c1 * jet1_->error();
     err2inv *= err2inv;
     err2inv += err2 * err2;
     err2inv = 1/err2inv;
@@ -344,13 +344,13 @@ double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1,
     } else {
       p1.SetPtEtaPhiM(et1,jet1_->eta(),jet1_->phi(),0);
       c1 = et1/jet1_->Et() + et1prime;
-      err2 = c1 * jet1_->Error();
+      err2 = c1 * jet1_->error();
     }
     m = sqrt(2 * p1.P()*p2.P() * alpha);
     dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
     dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
     temp1 = truth_ - m;
-    err2inv = dmdp2 * c2 * jet2_->Error();
+    err2inv = dmdp2 * c2 * jet2_->error();
     err2inv *= err2inv;
     err2 *= dmdp1;
     err2inv += err2 * err2;
@@ -365,8 +365,8 @@ double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1,
     dmdp1 = p2.P() * alpha / m * jet1_->E() / jet1_->Et();
     dmdp2 = p1.P() * alpha / m * jet2_->E() / jet2_->Et();
     temp2 = truth_ - m;
-    err2 = dmdp1 * c1 * jet1_->Error();
-    err2inv = dmdp2 * c2 * jet2_->Error();
+    err2 = dmdp1 * c1 * jet1_->error();
+    err2inv = dmdp2 * c2 * jet2_->error();
     err2inv *= err2inv;
     err2inv += err2 * err2;
     err2inv = 1/err2inv;

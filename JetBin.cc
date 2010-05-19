@@ -2,7 +2,7 @@
 //    Class for jet bins
 //
 //    first version: Hartmut Stadie 2010/05/10
-//    $Id: JetConstraintEvent.cc,v 1.5 2010/02/15 12:40:18 stadie Exp $
+//    $Id: JetBin.cc,v 1.1 2010/05/19 13:34:48 stadie Exp $
 //   
 
 
@@ -24,7 +24,8 @@ void JetBin::addJet(double Et, double EmEt, double HadEt ,double OutEt, double E
   //sumMess_.phi += phi;
   sumMess_.phiphi += phiphi;
   sumMess_.etaeta += etaeta;
-  
+  sumPt2_ += Et * Et;
+
   sumGenPt_ += genPt;
   sumdR_ += dR;
   
@@ -44,13 +45,17 @@ Jet* JetBin::createJet() const {
   double w = 1.0/njets_;
   //std::cout << "Jet:" << sumMess_.pt*w << " , " << sumGenPt_ * w 
   //	    << ", " << sumL3_ * w << std::endl;
-  return new Jet(sumMess_.pt*w, sumMess_.EMF*w, sumMess_.HadF*w, 
-		 sumMess_.OutF*w, sumMess_.E*w,
-		 sumMess_.eta*w, sumMess_.phi*w, sumMess_.phiphi*w, 
-		 sumMess_.etaeta*w, Jet::unknown,
-		 sumGenPt_*w, sumdR_*w, 
-		 new CorFactors(sumL1_*w,sumL2_/sumMess_.pt,sumL3_/sumL2_,
-				sumL4_/sumL3_,sumL5_/sumL4_,sumJPT_/sumMess_.pt,
-				sumJPTL2L3_/sumMess_.pt),
-		 f_,errf_,gf_);		       
+  Jet* j = new Jet(sumMess_.pt*w, sumMess_.EMF*w, sumMess_.HadF*w, 
+		   sumMess_.OutF*w, sumMess_.E*w,
+		   sumMess_.eta*w, sumMess_.phi*w, sumMess_.phiphi*w, 
+		   sumMess_.etaeta*w, Jet::unknown,
+		   sumGenPt_*w, sumdR_*w, 
+		   new CorFactors(sumL1_*w,sumL2_/sumMess_.pt,sumL3_/sumL2_,
+				  sumL4_/sumL3_,sumL5_/sumL4_,sumJPT_/sumMess_.pt,
+				  sumJPTL2L3_/sumMess_.pt),
+		   f_,errf_,gf_);
+  double err = sqrt(w*sumPt2_ - j->pt() * j->pt());
+  j->setError(err);
+  //std::cout << j->pt() << ":" << j->error() << " ; " << err << '\n';
+  return j;
 }

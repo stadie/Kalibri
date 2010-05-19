@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.35 2010/04/13 13:44:10 mschrode Exp $
+//!    $Id: Jet.h,v 1.36 2010/05/19 13:34:48 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -86,9 +86,9 @@ class Jet : public Measurement
   //!  \brief Change address of parameters covered by this jet
   //!  \sa Parameters
   // ---------------------------------------------------------
-  virtual void ChangeParAddress(double* oldpar, double* newpar) {
-    f.changeParBase(oldpar,newpar);
-    gf.changeParBase(oldpar,newpar);
+  virtual void changeParAddress(double* oldpar, double* newpar) {
+    f_.changeParBase(oldpar,newpar);
+    gf_.changeParBase(oldpar,newpar);
   }
   virtual double correctedEt() const { return correctedEt(Et()); }
   virtual double correctedEt(double Et, bool fast = false) const;
@@ -103,7 +103,10 @@ class Jet : public Measurement
   //!  
   //!  \return Error of original measurement
   // ---------------------------------------------------------
-  virtual double Error() const {return errf(&(Measurement::pt),this,0);}
+  virtual double error() const {return errf_(&(Measurement::pt),this,error_);}
+
+
+  void setError(double error) { error_ = error;}
 
   //!  \brief Calculate error from given Et
   //!
@@ -113,7 +116,7 @@ class Jet : public Measurement
   //!  \param et Jet Et
   //!  \return Error from jet Et
   // ---------------------------------------------------------
-  virtual double expectedError(double et) const { return errf(&et,this,0);}
+  virtual double expectedError(double et) const { return errf_(&et,this,error_);}
 
   //!  \brief Get number of parameters of this jet
   //!
@@ -123,7 +126,7 @@ class Jet : public Measurement
   //!
   //!  \return Number of parameters of this jet
   // ---------------------------------------------------------
-  virtual int nPar() const {return f.nPars() + gf.nPars();}
+  virtual int nPar() const {return f_.nPars() + gf_.nPars();}
 
   //!  \brief Represents a corrected jet if one parameter of
   //!         the correction function is varied (for derivative
@@ -150,14 +153,14 @@ class Jet : public Measurement
   void print();                       //!< Print some jet members
   static void printInversionStats();  //!< Print some info on inversion
 
-  int parIndex() const { return f.parIndex(); }
+  int parIndex() const { return f_.parIndex(); }
 
   virtual Jet* clone() const { return new Jet(*this);} //!< Clone this jet
-  void setGlobalFunction(const Function& ngf) { gf = ngf;} //!< Set global correction function, needed for constraints
+  void setGlobalFunction(const Function& ngf) { gf_ = ngf;} //!< Set global correction function, needed for constraints
 
-  const VariationColl& lastVariations() const { return varcoll;} 
+  const VariationColl& lastVariations() const { return varcoll_;} 
  protected:
-  mutable VariationColl varcoll;
+  mutable VariationColl varcoll_;
   virtual double expectedEt(double truth, double start, bool fast = false);
   Jet(const Jet&j); //!< disallow copies!
 
@@ -166,41 +169,41 @@ class Jet : public Measurement
   double genPt_;            //!< The genjet pt
   double dR_;               //!< \f$ \Delta R \f$ between jet and genjet
   const CorFactors* corFactors_;   //!< The correction factors
-  double    error;                //!< Stores error for constant error mode
-  Function  f;                    //!< Jet correction function
-  Function  gf;                   //!< Global jet correction function
-  double    (*errf)(const double *x, const Measurement *xorig, double err);   //!< Error function
-  double    etmin;                //!< Lower cut on measured Et
+  double    error_;                //!< Stores error for constant error mode
+  Function  f_;                    //!< Jet correction function
+  Function  gf_;                   //!< Global jet correction function
+  double    (*errf_)(const double *x, const Measurement *xorig, double err);   //!< Error function
+  double    etmin_;                //!< Lower cut on measured Et
 
   bool      secant(double truth, double& x1, double& x2, double eps);
   bool      falseposition(double truth, double& x1, double& x2, double eps);
 
-  static long long ncalls;        //!< Number of calls of inversion methods secant and falseposition
-  static long long ntries;        //!< Number of tries in iteration during inversion
-  static long long nfails;        //!< Number of failed tries during inversion
-  static long long nwarns;        //!< Number of warnings during inversion
+  static long long ncalls_;        //!< Number of calls of inversion methods secant and falseposition
+  static long long ntries_;        //!< Number of tries in iteration during inversion
+  static long long nfails_;        //!< Number of failed tries during inversion
+  static long long nwarns_;        //!< Number of warnings during inversion
 
-  mutable Measurement temp;
-  mutable double root;
+  mutable Measurement temp_;
+  mutable double root_;
   mutable double sphi_,seta_;
-  const double EoverPt;
+  const double EoverPt_;
   class GslImplementation {
     struct rf_par {
-      double y;
-      const Jet* jet;
-      rf_par(double y, const Jet *jet) : y(y), jet(jet) {}
-    } par;
-    gsl_root_fsolver *s;
-    gsl_function F;
+      double y_;
+      const Jet* jet_;
+      rf_par(double y, const Jet *jet) : y_(y), jet_(jet) {}
+    } par_;
+    gsl_root_fsolver *s_;
+    gsl_function F_;
     static double rf(double x, void* params) {
       rf_par* p = (rf_par*)params;
-      return p->y - p->jet->correctedEt(x,true);
+      return p->y_ - p->jet_->correctedEt(x,true);
     };
   public:
     GslImplementation(const Jet* jet);
     ~GslImplementation();
     bool root(double truth, double& x1, double& x2, double eps);
-  } gsl_impl;
+  } gsl_impl_;
 };
 
 #endif

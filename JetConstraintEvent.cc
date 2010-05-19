@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.cc,v 1.5 2010/02/15 12:40:18 stadie Exp $
+//    $Id: JetConstraintEvent.cc,v 1.6 2010/05/19 13:34:48 stadie Exp $
 //   
 
 
@@ -26,7 +26,7 @@ void JetConstraintEvent::addJet(double truePt, const Jet* j,
   
   Jet* jet = j->clone();
   if(globalFunc) jet->setGlobalFunction(*globalFunc);
-  error_ = error_ * jets_.size() + jet->Error();
+  error_ = error_ * jets_.size() + jet->error();
   jets_.push_back(jet); 
   error_ /= jets_.size();
   trusum_ += jet->Et();
@@ -41,7 +41,7 @@ void JetConstraintEvent::addJet(double truePt, const Jet* j,
 
 void JetConstraintEvent::changeParAddress(double* oldpar, double* newpar) { 
   for(unsigned int i = 0, njets = jets_.size() ; i < njets ; ++i) {
-    jets_[i]->ChangeParAddress(oldpar,newpar);
+    jets_[i]->changeParAddress(oldpar,newpar);
   }
 }
  

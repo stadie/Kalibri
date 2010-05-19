@@ -13,7 +13,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.7 2009/11/25 13:07:45 stadie Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.8 2010/05/19 13:34:49 stadie Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
@@ -24,8 +24,8 @@ class TwoJetsPtBalanceEvent : public Event {
     jet3_(j3),
     flaggedBad_(false),
     chi2Plots_(1000.) {
-    error1_ = jet1_->Error();
-    error2_ = jet2_->Error();
+    error1_ = jet1_->error();
+    error2_ = jet2_->error();
   }
   ~TwoJetsPtBalanceEvent() { delete jet1_; delete jet2_; if( hasJet3() ) delete jet3_; }
 
@@ -45,9 +45,9 @@ class TwoJetsPtBalanceEvent : public Event {
   bool hasJet3() const { return jet3_ != 0 ? true : false; }
 
   virtual void changeParAddress(double* oldpar, double* newpar) {
-    jet1_->ChangeParAddress(oldpar,newpar);
-    jet2_->ChangeParAddress(oldpar,newpar);
-    if( hasJet3() ) jet3_->ChangeParAddress(oldpar,newpar);
+    jet1_->changeParAddress(oldpar,newpar);
+    jet2_->changeParAddress(oldpar,newpar);
+    if( hasJet3() ) jet3_->changeParAddress(oldpar,newpar);
   }
 
   virtual double truth() const { return 0.; }

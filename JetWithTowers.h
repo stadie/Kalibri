@@ -12,7 +12,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTowers.h,v 1.21 2010/02/15 12:40:18 stadie Exp $
+//!    $Id: JetWithTowers.h,v 1.22 2010/05/19 13:34:49 stadie Exp $
 // ----------------------------------------------------------------   
 class JetWithTowers : public Jet
 {
@@ -24,10 +24,10 @@ class JetWithTowers : public Jet
 		double (*errfunc)(const double *x, const Measurement *xorig, double err), 
 		const Function& gf, double Etmin = 0); 
   virtual ~JetWithTowers(); 
-  virtual int nPar() const {return Jet::nPar() + towerpars.size() * ntowerpars;}
-  virtual void ChangeParAddress(double* oldpar, double* newpar);
+  virtual int nPar() const {return Jet::nPar() + towerpars_.size() * ntowerpars_;}
+  virtual void changeParAddress(double* oldpar, double* newpar);
   virtual double correctedEt(double Et,bool fast = false) const; 
-  virtual double Error() const;
+  virtual double error() const;
   virtual double expectedError(double et) const;
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
@@ -57,38 +57,38 @@ class JetWithTowers : public Jet
     double E()      const {return Measurement::E;}
     double eta()    const {return Measurement::eta;}
     double phi()    const {return Measurement::phi;}
-    double projectionToJetAxis() const {return alpha;}
-    double fractionOfJetHadEt() const { return fraction;}
-    void setFractionOfJetHadEt(double frac) const { fraction = frac;}
-    void ChangeParAddress(double* oldpar, double* newpar) {f.changeParBase(oldpar,newpar);}
+    double projectionToJetAxis() const {return alpha_;}
+    double fractionOfJetHadEt() const { return fraction_;}
+    void setFractionOfJetHadEt(double frac) const { fraction_ = frac;}
+    void changeParAddress(double* oldpar, double* newpar) {f_.changeParBase(oldpar,newpar);}
     double correctedHadEt(double HadEt) const;
-    double lastCorrectedHadEt() const { return lastCorHadEt;}  
-    double Error() const {return errf(&(Measurement::pt),this,0);}
-    double expectedError(double et) const { return  errf(&et,this,0);}
-    int nPar() const {return f.nPars();}
-    int FirstPar() const {return f.parIndex();}
-    double *Par() const {return f.firstPar();}
+    double lastCorrectedHadEt() const { return lastCorHadEt_;}  
+    double error() const {return errf_(&(Measurement::pt),this,error_);}
+    double expectedError(double et) const { return  errf_(&et,this,error_);}
+    int nPar() const {return f_.nPars();}
+    int firstPar() const {return f_.parIndex();}
+    double *par() const {return f_.firstPar();}
   private:
-    double alpha;                //!< Projection factor onto jet axis
-    double error;                //!< Error for constant error mode
-    double mEttrue;              //!< True total transverse energy
-    double mEmEttrue;            //!< True Et from the ECAL part of the tower		
-    double mHadEttrue;           //!< True Et from the HCAL part of the towers
-    double mOutEttrue;           //!< True Et from the HO part of the tower
-    mutable Measurement temp;
-    mutable double lastCorHadEt;
-    mutable double fraction;
-    Function f;
-    double (*errf)(const double *x, const Measurement *xorig, double err);
+    double alpha_;                //!< Projection factor onto jet axis
+    double error_;                //!< Error for constant error mode
+    double mEttrue_;              //!< True total transverse energy
+    double mEmEttrue_;            //!< True Et from the ECAL part of the tower		
+    double mHadEttrue_;           //!< True Et from the HCAL part of the towers
+    double mOutEttrue_;           //!< True Et from the HO part of the tower
+    mutable Measurement temp_;
+    mutable double lastCorHadEt_;
+    mutable double fraction_;
+    Function f_;
+    double (*errf_)(const double *x, const Measurement *xorig, double err);
 
     friend class JetWithTowers;
   };
   typedef std::vector<Tower*> TowerColl;
   typedef TowerColl::iterator TowerCollIter;
   typedef TowerColl::const_iterator TowerCollConstIter;
-  TowerColl towers;
-  int ntowerpars;
-  std::map<int,double*> towerpars;
+  TowerColl towers_;
+  int ntowerpars_;
+  std::map<int,double*> towerpars_;
 };
 
 #endif

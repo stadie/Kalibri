@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.20 2010/02/17 11:18:43 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.21 2010/05/19 13:34:48 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -16,7 +16,7 @@ JetTruthEvent::~JetTruthEvent()
 
 double JetTruthEvent::chi2() const
 {
-  double diff = (jet_->correctedEt(jet_->Et()) - truth_)/jet_->Error();
+  double diff = (jet_->correctedEt(jet_->Et()) - truth_)/jet_->error();
   return weight_ * Event::scaleResidual(diff*diff);
 }
 
@@ -25,7 +25,7 @@ double JetTruthEvent::chi2_fast_blobel(double * temp_derivative1,
 				       const double* epsilon) const
 {
   double et = jet_->correctedEt(jet_->Et());
-  double err2inv = jet_->Error();
+  double err2inv = jet_->error();
   err2inv *= err2inv;
   err2inv = 1/err2inv;
   double chi2 = truth_ - et;
@@ -107,7 +107,7 @@ double JetTruthEvent::chi2_fast_scaled(double * temp_derivative1,
   const double deltaE = 1e-7 * jet_->Et();
   double etprime  = (jet_->correctedEt(jet_->Et() + deltaE) - 
 		     jet_->correctedEt(jet_->Et() - deltaE))/2/deltaE;
-  if(etprime < 0.5) {
+  if(etprime < 0.1) {
     //std::cout <<"low deriv:" << etprime << " for " << jet_->Et() << " " 
     //	      << jet_->correctedEt(jet_->Et() + deltaE) 
     //	      << " - " << jet_->correctedEt(jet_->Et() - deltaE) << " step:" << deltaE << "\n";
@@ -142,7 +142,7 @@ double JetTruthEvent::chi2_fast_scaled(double * temp_derivative1,
     c = i->lowerEt / jet_->Et();
     //if(c <= 0) c = 1.0;
     err2 = i->lowerEtDeriv * jet_->expectedError(jet_->Et());
-    if((i->lowerEtDeriv < 0.5)|| (c <= 0)) {
+    if((i->lowerEtDeriv < 0.1)|| (c <= 0)) {
       //std::cout << "warning: deriv too low!\n"; 
       flagged_bad_ = true;
       ++nflagged_;
@@ -160,7 +160,7 @@ double JetTruthEvent::chi2_fast_scaled(double * temp_derivative1,
     c = i->upperEt / jet_->Et();  
     //if(c <= 0) c = 1.0;
     err2 = i->upperEtDeriv * jet_->expectedError(jet_->Et());
-    if((i->upperEtDeriv < 0.5) || (c <= 0)) {
+    if((i->upperEtDeriv < 0.1) || (c <= 0)) {
       //std::cout << "warning: deriv too low!\n";
       flagged_bad_ = true; 
       ++nflagged_;
