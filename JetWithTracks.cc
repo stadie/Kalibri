@@ -2,7 +2,7 @@
 //    Class for jets with tracks 
 //
 //    first version: Hartmut Stadie 2009/04/08
-//    $Id: JetWithTracks.cc,v 1.10 2010/02/04 09:55:05 stadie Exp $
+//    $Id: JetWithTracks.cc,v 1.11 2010/02/15 12:40:18 stadie Exp $
 //   
 #include"JetWithTracks.h"
 
@@ -88,7 +88,7 @@ double JetWithTracks::correctedEt(double Et,bool fast) const
 
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& JetWithTracks::varyPars(double eps, double Et, double start)
+const Jet::VariationColl& JetWithTracks::varyPars(const double* eps, double Et, double start)
 {
   Jet::varyPars(eps,Et,start);
   int i = Jet::nPar();
@@ -101,9 +101,9 @@ const Jet::VariationColl& JetWithTracks::varyPars(double eps, double Et, double 
     for(int trkpar = 0 ; trkpar < ntrackpars ; ++trkpar) {
       //std::cout <<  "truth: " << Et << " alternating par:" << id + trkpar << "  = " << p[trkpar] << std::endl;
       double orig = p[trkpar]; 
-      p[trkpar] += eps;
+      p[trkpar] += eps[id + trkpar];
       varcoll[i].upperEt = Jet::expectedEt(Et,start,varcoll[i].upperError);
-      p[trkpar] = orig - eps;
+      p[trkpar] = orig - eps[id + trkpar];
       varcoll[i].lowerEt = Jet::expectedEt(Et,start,varcoll[i].lowerError); 
       p[trkpar] = orig;
       varcoll[i].parid = id + trkpar;
@@ -115,12 +115,12 @@ const Jet::VariationColl& JetWithTracks::varyPars(double eps, double Et, double 
 }
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& JetWithTracks::varyParsDirectly(double eps, bool computeDeriv)
+const Jet::VariationColl& JetWithTracks::varyParsDirectly(const double* eps, bool computeDeriv)
 {
   Jet::varyParsDirectly(eps,computeDeriv);
   int i = Jet::nPar();
 
-  const double deltaE = eps * 100.0;
+  const double deltaE = 0.1;
   for(std::map<int,double*>::const_iterator iter = trackpars.begin() ;
       iter != trackpars.end() ; ++iter) {
     double *p = iter->second;
@@ -130,13 +130,13 @@ const Jet::VariationColl& JetWithTracks::varyParsDirectly(double eps, bool compu
       //std::cout <<  " alternating par:" << id + trkpar << "  = " << p[trkpar] 
       //		<< ", " << p << std::endl;
       double orig = p[trkpar]; 
-      p[trkpar] += eps;
+      p[trkpar] += eps[id + trkpar];
       varcoll[i].upperEt = correctedEt(Measurement::pt);
       varcoll[i].upperError = expectedError(varcoll[i].upperEt);
       if(computeDeriv) {
 	varcoll[i].upperEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
       }
-      p[trkpar] = orig - eps;
+      p[trkpar] = orig - eps[id + trkpar];
       varcoll[i].lowerEt = correctedEt(Measurement::pt); 
       varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
       if(computeDeriv) {

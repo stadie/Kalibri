@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.44 2010/04/28 12:36:32 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.45 2010/05/01 09:36:16 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -18,6 +18,7 @@
 #include "CorFactorsFactory.h"
 #include "Function.h"
 #include "SmearFunction.h"
+#include "JetBin.h"
 
 #include "TVector2.h"
 #include "TRandom3.h"
@@ -84,7 +85,7 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   max_               = config_->read<double>("DiJet integration max",1.);
   // Data class
   dataClass_ = config_->read<int>("Di-Jet data class", 0);
-  if((dataClass_ != 1)&&(dataClass_ != 11)&&(dataClass_ != 12)&&(dataClass_ != 5)) {
+  if((dataClass_ != 1)&&(dataClass_ != 11)&&(dataClass_ != 12)&&(dataClass_ != 21)&&(dataClass_ != 5)) {
     std::cerr << "DiJetReader: Unknown data class " << dataClass_ << ". Aborting!" << std::endl;
     exit(9);
   }
@@ -132,7 +133,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   std::cout << "Reading events of type ";
   if(dataClass_ == 1) {
     std::cout << "'TwoJetsPtBalanceEvent'";
-  } else if((dataClass_ == 11)  || (dataClass_ == 12)) {
+  } else if((dataClass_ == 11)  || (dataClass_ == 12) || (dataClass_ == 21)) {
     std::cout << "'JetTruthEvent'";
   } else if(dataClass_ == 5) {
     std::cout << "'SmearData'";
@@ -146,7 +147,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   }
   std::cout << " (data class " << dataClass_ << "):\n";
 
-  if(dataClass_ == 11) { 
+  if((dataClass_ == 11)||(dataClass_ == 21)) { 
     nJet_->fChain->SetBranchStatus("Track*",0);
     nJet_->fChain->SetBranchStatus("Tow*",0);
   } else if(dataClass_ == 12) {
@@ -171,7 +172,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
 	nGoodEvts++;    
 	data.push_back(td ); 
       } 
-    } else if((dataClass_ == 11)  || (dataClass_ == 12)) {
+    } else if((dataClass_ == 11)  || (dataClass_ == 12) || (dataClass_ == 21)) {
       nReadEvts++;
       int nAddedJets = createJetTruthEvents(data);
       if( nAddedJets ) nGoodEvts += nAddedJets;    
@@ -187,7 +188,25 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     }
     if(nReadEvts>=nDijetEvents_ && nDijetEvents_>=0 ) break;
   }
-
+  if(dataClass_ == 21) {
+    for(std::map<int,JetBin*>::const_iterator ijb = jetbins_.begin() ; ijb != jetbins_.end() ; ++ijb) {
+      if(ijb->second->nJets() > 100) {
+	Jet *jet = ijb->second->jet();
+	
+	if(corFactorsFactory_) {
+	  jet->updateCorFactors(corFactorsFactory_->create(jet));
+	}
+	if(correctToL3_) {
+	  jet->correctToL3();
+	} else if(correctL2L3_) {
+	  jet->correctL2L3();
+	}
+	data.push_back(new JetTruthEvent(jet,ijb->second->genPt(),ijb->second->nJets(),true));
+      }      
+      delete ijb->second;
+    }
+    jetbins_.clear();
+  }
   // Print cut flow
   std::cout << "Read " << nReadEvts << " dijet events:\n";
   if( dataClass_ == 1 ) {
@@ -368,6 +387,27 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     double err    = jet_error_param(&tower.pt,&tower,0);
     err2         += err * err;
 
+
+    if(dataClass_ == 21) {
+      int ibin = findBin(nJet_->JetEta[calJetIdx],nJet_->GenJetColPt[genJetIdx]);
+      // std::cout << "adding jet to bin:" << ibin << " with pt=" << nJet_->GenJetColPt[genJetIdx] << ", eta = " << nJet_->JetEta[calJetIdx] << std::endl;
+      std::map<int,JetBin*>::iterator jbi = jetbins_.find(ibin);
+      if(jbi == jetbins_.end()) {
+	jbi = (jetbins_.insert(std::pair<int,JetBin*>(ibin,new JetBin(par_->jet_function(nJet_->JetIEta[calJetIdx],nJet_->JetIPhi[calJetIdx]),jet_error_param,par_->global_jet_function())))).first;
+      }
+      CorFactors* cf = createCorFactors(calJetIdx); 
+      jbi->second->addJet(nJet_->JetPt[calJetIdx],tower.EMF,tower.HadF,
+			  tower.OutF,nJet_->JetE[calJetIdx],
+			  nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
+			  nJet_->JetEtWeightedSigmaPhi[calJetIdx],
+			  nJet_->JetEtWeightedSigmaEta[calJetIdx],
+			  nJet_->GenJetColPt[genJetIdx],drJetGenjet,
+			  *cf);
+      delete cf;
+      ++njets;
+      continue;
+    }
+
     Jet *jet;
     if(dataClass_ == 12) {
       JetWithTowers *jt = 
@@ -419,7 +459,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     for(unsigned int i = 0 ; i < constraints_.size() ; ++i) {
       constraints_[i]->addJet(nJet_->GenJetColPt[genJetIdx],jet,new Function(&Parametrization::correctedJetEt,0,0,0,0,cp_));
     }
-  }     
+  }
   delete [] terr;
   return njets;
 }

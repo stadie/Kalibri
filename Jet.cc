@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.43 2010/04/13 13:44:10 mschrode Exp $
+//    $Id: Jet.cc,v 1.44 2010/05/05 16:10:35 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -22,7 +22,6 @@ Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
 {
   temp = *this;
   varcoll.resize(f.nPars() + gf.nPars());
-  assert(Measurement::phiphi == Measurement::phiphi);
 }
 
 Jet::Jet(const Jet& j) 
@@ -78,18 +77,18 @@ void Jet::correctL2L3()
 //!  \return Vector of ParameterVariation
 //!  \sa varyParsDirectly
 // -------------------------------------------------------
-const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
+const Jet::VariationColl& Jet::varyPars(const double* eps, double Et, double start)
 {
   //start = Et;
   double oldroot = root;
   for(int i = 0 ; i < f.nPars() ; ++i) {
     double orig = f.firstPar()[i];
-    f.firstPar()[i] += eps;
+    f.firstPar()[i] += eps[f.parIndex() + i];
     varcoll[i].upperEt = expectedEt(Et,start,varcoll[i].upperError);
     root = oldroot;
     //if( varcoll[i].upperEt < 0) return varcoll;
     //varcoll[i].upperEt = expectedEt(Et,s,false);
-    f.firstPar()[i] = orig - eps;;
+    f.firstPar()[i] = orig - eps[f.parIndex() + i];
     varcoll[i].lowerEt = expectedEt(Et,start,varcoll[i].lowerError); 
     root = oldroot;
     //if( varcoll[i].lowerEt < 0) return varcoll;
@@ -99,12 +98,12 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
   }
   for(int i = 0,j =  f.nPars(); i < gf.nPars() ; ++i,++j) {
     double orig = gf.firstPar()[i];
-    gf.firstPar()[i] += eps;
+    gf.firstPar()[i] += eps[gf.parIndex() + i];
     varcoll[j].upperEt = expectedEt(Et,start,varcoll[j].upperError);
     root = oldroot;
     //if( varcoll[j].upperEt < 0) return varcoll;
     //varcoll[j].upperEt = expectedEt(Et,s,false);
-    gf.firstPar()[i] = orig - eps;;
+    gf.firstPar()[i] = orig - eps[gf.parIndex() + i];
     varcoll[j].lowerEt = expectedEt(Et,start,varcoll[j].lowerError);
     root = oldroot;
     //if( varcoll[j].lowerEt < 0) return varcoll;
@@ -127,18 +126,18 @@ const Jet::VariationColl& Jet::varyPars(double eps, double Et, double start)
 //!  \return Vector of ParameterVariation
 //!  \sa varyPars
 // -------------------------------------------------------
-const Jet::VariationColl& Jet::varyParsDirectly(double eps, bool computeDeriv)
+const Jet::VariationColl& Jet::varyParsDirectly(const double* eps, bool computeDeriv)
 {
-  const double deltaE = eps * 100.0;
+  const double deltaE = 1e-07 * Measurement::pt;
   for(int i = 0 ; i < f.nPars() ; ++i) {
     double orig = f.firstPar()[i];
-    f.firstPar()[i] += eps;
+    f.firstPar()[i] += eps[f.parIndex() + i];
     varcoll[i].upperEt = correctedEt(Measurement::pt);
     varcoll[i].upperError = expectedError(varcoll[i].upperEt);
     if(computeDeriv) {
       varcoll[i].upperEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
     }
-    f.firstPar()[i] = orig - eps;
+    f.firstPar()[i] = orig - eps[f.parIndex() + i];
     varcoll[i].lowerEt = correctedEt(Measurement::pt); 
     varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     if(computeDeriv) {
@@ -149,13 +148,13 @@ const Jet::VariationColl& Jet::varyParsDirectly(double eps, bool computeDeriv)
   }  
   for(int i = 0, j =  f.nPars(); i < gf.nPars() ; ++i,++j) {
     double orig = gf.firstPar()[i];
-    gf.firstPar()[i] += eps;
+    gf.firstPar()[i] += eps[gf.parIndex() + i];
     varcoll[j].upperEt = correctedEt(Measurement::pt);
     varcoll[j].upperError = expectedError(varcoll[j].upperEt);
     if(computeDeriv) {
       varcoll[j].upperEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
     }
-    gf.firstPar()[i] = orig - eps;
+    gf.firstPar()[i] = orig - eps[gf.parIndex() + i];
     varcoll[j].lowerEt = correctedEt(Measurement::pt); 
     varcoll[j].lowerError = expectedError(varcoll[j].lowerEt);
     if(computeDeriv) {
@@ -197,10 +196,10 @@ double Jet::correctedEt(double Et, bool fast) const {
     assert(corEt == corEt);
     //if(corEt <  OutF + EMF) corEt = OutF + EMF;
   */
-  if(temp.pt <= 0.0) {
-    //std::cout << "WARNING: jet cor. Et <= 0.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
-    temp.pt = 1.0;
-    temp.E = EoverPt;
+  if(temp.pt <= 0.1) {
+    std::cout << "WARNING: jet cor. Et <= 0.1 GeV:" << temp.pt << " at eta " << Measurement::eta << '\n';
+    temp.pt = 0.1;
+    temp.E = EoverPt * 0.1;
   }
   //temp.HadF = corEt - OutF - EMF;
   //if(temp.HadF < 0) temp.HadF = 0;
@@ -210,7 +209,7 @@ double Jet::correctedEt(double Et, bool fast) const {
   //assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
   if(temp.pt <= 1.0) {
-    //std::cout << "WARNING: global jet cor. Et <= 1.0 GeV:" << corEt << " at eta " << TJet::eta << '\n';
+    std::cout << "WARNING: global jet cor. Et <= 1.0 GeV:" << temp.pt << " at eta " << Measurement::eta << '\n';
     temp.pt = 1.0;
     temp.E = EoverPt;
   }
@@ -248,7 +247,18 @@ double Jet::expectedEt(double truth, double start, bool fast)
     temp.E    = Measurement::E * truth/Measurement::pt;
     return f.inverse(&temp);
   }
-  static const double eps = 1.0e-12;
+  static const double eps = 1.0e-14;
+
+  /*
+  double step = 2.0 * Error();
+  double x1 = Measurement::pt - step;
+  double x2 = Measurement::pt + step;
+  if(falseposition(truth,x1,x2,eps)) {
+    return root = x2;
+  } 
+  return -1;
+  */
+  
   double x1 = root;
   //find root of truth - jet->correctedEt(expectedEt)
   // x: expectedEt
@@ -256,51 +266,88 @@ double Jet::expectedEt(double truth, double start, bool fast)
   // f: jet->correctedEt(expectedEt)
   double f1 = correctedEt(x1,false);
 
+  
   if(std::abs(f1 - truth) < eps * truth) {
     //std::cout << "this really happens!?\n";
     return x1;
   }
- 
-  //bracket the root
-  double x2 = x1 + 0.2;
   
-  double f2 = correctedEt(x2,false);
-  for( int i = 0 ; ; ++i) {
-    if(i > 20) {
-      ++nfails;
-      //std::cout << "Warning failed to bag: " << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " << f2 << std::endl;
-      //assert(i < 10);
-      x1 = 0.1 * (truth - 20);
-      if(x1 < 0.1) x1 = 0.1;
-      x2 = 10 * truth;
-      break;
-      //return -1;
+  //bracket the root
+  /*
+    double x2 = 1.01 * x1;
+    
+    double f2 = correctedEt(x2,false);
+    for( int i = 0 ; ; ++i) {
+    if(i > 100) {
+    ++nwarns;
+    //std::cout << "Warning failed to bag: " << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " << f2 << std::endl;
+    //assert(i < 10);
+    x1 = 0.1 * (truth - 20);
+    if(x1 < 0.1) x1 = 0.1;
+    x2 = 10 * truth;
+    break;
+    //++nfails;
+    //return -1;
     }
     if(f1 >= f2) {
-      if((f1 > truth) && (f2 < truth)) break; 
-      double step = 0.5 * i;
-      x1 -= 2 * step;
-      x2 += 2 * step;
-      f1 = correctedEt(x1,false);
-      f2 = correctedEt(x2,false);
+    if((f1 > truth) && (f2 < truth)) break; 
+    double step = 0.5 * i;
+    x1 -= 2 * step;
+    x2 += 2 * step;
+    f1 = correctedEt(x1,false);
+    f2 = correctedEt(x2,false);
     } else {
-      if(f1 > truth) {
-	double step = (f1 - truth) * (x2-x1)/(f2-f1);
-	if(step < 0.1) step = 0.1;
-	x1 -=  2 * step;
-	f1 = correctedEt(x1,false);
-	++ntries;
-      } else if(f2 < truth) {
-	double step = (truth - f2) * (x2-x1)/(f2-f1);
-	if(step < 0.1) step = 0.1;
-	x2 += 2 * step;
-	f2 = correctedEt(x2,false);
-	++ntries;
-      } else break;
+    if(f1 > truth) {
+    double step = (f1 - truth) * (x2-x1)/(f2-f1);
+    if(step < 0.1) step = 0.1;
+    x1 -=  2 * step;
+    f1 = correctedEt(x1,false);
+    ++ntries;
+    } else if(f2 < truth) {
+    double step = (truth - f2) * (x2-x1)/(f2-f1);
+    if(step < 0.1) step = 0.1;
+    x2 += 2 * step;
+    f2 = correctedEt(x2,false);
+    ++ntries;
+    } else break;
     }
+    }
+  */
+  //x1 = truth * Measurement::pt / correctedEt(Measurement::pt,false);
+  
+  x1 = Measurement::pt;
+  double f2,step = 2.0 * Error(),x2 = x1 + step;
+  x1 -= step;
+  for(int i = 0 ; i < 1000 ; ++i) {
+    f1 = correctedEt(x1,false);
+    f2 = correctedEt(x2,false);
+    if(f1 > f2) {
+      ++nwarns;
+//       std::cout << "Warning: corrected jet Pt not monotonically increasing: " << std::endl
+// 		<< "bounds: " << x1 << " -> " << f1 << " and " << x2 << " -> " << f2 
+// 		<< " for measured pt = " << Measurement::pt << " and true pt = " << truth 
+// 		<< " and eta " << Measurement::eta << std::endl;
+      x1 -= step;
+      if(x1 < 0.1) x1 = 0.1;
+      x2 += step;
+    } else {
+      assert(f1 <= f2);
+      if(f1 > truth) x1 -= step;
+      if(f2 < truth) x2 += step;
+    }
+    ++ntries;
+    step *= 2;
+    //std::cout << x1 << ", " << x2 << std::endl;
+    if(i > 100) {
+      std::cout << "Warning failed to bag: " << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " << f2 << std::endl;
+      ++nfails;
+      return -1;
+    }
+    if((f1 < truth) && (f2 > truth)) break;
   }
   //assert((x1 == x1) && (x2 == x2));
   if(! gsl_impl.root(truth,x1,x2,eps)) return -1;
+  //assert(std::abs(correctedEt(x2)-truth) < eps * truth); 
   return root = x2;
   
   //get second point assuming a constant correction factor
@@ -529,7 +576,7 @@ bool Jet::GslImplementation::root(double truth, double& x1, double& x2, double e
   ++ncalls;
  
   if(gsl_root_fsolver_set(s,&F,x1,x2)) {
-    //std::cout << "Warning: root not bracketed\n";
+    std::cout << "Warning: root not bracketed\n";
     ++nfails;
     return false;
   }

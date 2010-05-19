@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.34 2010/04/01 16:28:19 stadie Exp $
+//!    $Id: Jet.h,v 1.35 2010/04/13 13:44:10 mschrode Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -144,8 +144,8 @@ class Jet : public Measurement
   };
   typedef std::vector<ParameterVariation> VariationColl;
   typedef std::vector<ParameterVariation>::const_iterator VariationCollIter;
-  virtual const VariationColl& varyPars(double eps, double Et, double start);
-  virtual const VariationColl& varyParsDirectly(double eps, bool computeDeriv = true);
+  virtual const VariationColl& varyPars(const double* eps, double Et, double start);
+  virtual const VariationColl& varyParsDirectly(const double* eps, bool computeDeriv = true);
   
   void print();                       //!< Print some jet members
   static void printInversionStats();  //!< Print some info on inversion
@@ -155,6 +155,7 @@ class Jet : public Measurement
   virtual Jet* clone() const { return new Jet(*this);} //!< Clone this jet
   void setGlobalFunction(const Function& ngf) { gf = ngf;} //!< Set global correction function, needed for constraints
 
+  const VariationColl& lastVariations() const { return varcoll;} 
  protected:
   mutable VariationColl varcoll;
   virtual double expectedEt(double truth, double start, bool fast = false);

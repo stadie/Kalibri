@@ -1,4 +1,4 @@
-// $Id: SmearDiJet.cc,v 1.6 2010/03/24 14:30:19 mschrode Exp $
+// $Id: SmearDiJet.cc,v 1.9 2010/04/13 13:38:24 mschrode Exp $
 
 #include "SmearDiJet.h"
 
@@ -109,7 +109,7 @@ double SmearDiJet::chi2() const
 
   if( pint <= 0 ) return 0.;
 
-  return  -1. * GetWeight() * log(pint);
+  return  -1. * weight() * log(pint);
 }
 
 
@@ -140,7 +140,7 @@ double SmearDiJet::chi2() const
 // --------------------------------------------------
 double SmearDiJet::chi2_fast(double * temp_derivative1,
 			     double * temp_derivative2,
-			     double const epsilon) const {
+			     const double* epsilon) const {
   double f = chi2();
 
   double oldpar;
@@ -152,13 +152,13 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
     if( !pdf_.isFixedPar(i) ) {
       oldpar = pdf_.par()[i];
       
-      pdf_.par()[i] += epsilon;
+      pdf_.par()[i] += epsilon[pdf_.parIdx()+i];
       temp1 = chi2();
       
       //     std::cout << std::setprecision(10) << i << ": " << oldpar << " -- > " << f << std::endl;
       //     std::cout << "   " << pdf_.respPar()[i] << " -- > " << temp1 << std::endl;
       
-      pdf_.par()[i] -= 2.*epsilon;
+      pdf_.par()[i] -= 2.*epsilon[pdf_.parIdx()+i];
       temp2 = chi2();
       
       //     std::cout << "   " << pdf_.respPar()[i] << " -- > " << temp1 << std::endl;
@@ -180,7 +180,7 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
 //!  \brief Print event parameters
 // --------------------------------------------------
 void SmearDiJet::printInitStats() const {
-  std::cout << "Event type: " << GetType() << "\n";
+  std::cout << "Event type: " << type() << "\n";
   std::cout << "Integration parameters\n";
   std::cout << "  niter: " << kMaxNIter_ << "\n";
   std::cout << "  eps:   " << kEps_ << "\n";

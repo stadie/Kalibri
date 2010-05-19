@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.60 2010/04/27 16:03:41 stadie Exp $
+//  $Id: Parametrization.h,v 1.61 2010/05/05 14:16:04 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.60 2010/04/27 16:03:41 stadie Exp $
+//!  $Id: Parametrization.h,v 1.61 2010/05/05 14:16:04 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -901,12 +901,20 @@ public:
   //!  double result = [0]+[1]*log10(x)+[2]*pow(log10(x),2)+[3]*pow(log10(x),3)+[4]*pow(x/500.0,3)
   //!  \endcode   
   double correctedJetEt(const Measurement *x,const double *par) const {
-    double  pt = (x->pt < 4.0) ? 4.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
+    double  pt = (x->pt < 1.0) ? 1.0 : (x->pt > 2000.0) ? 2000.0 : x->pt;
     double logpt = log10(pt);
-    double c = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(0.01*par[3])))+par[4] * pow(pt/500.0,3);
+    double c = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(0.01*par[3])))+ par[4] * pow(pt/500.0,3);
     
-    if(c < 0.2) c = 0.2;
-    if(c > 5.0) c = 5.0;
+    if(c < 0.05) {
+      std::cout << "L2L3JetParametrization::correctedJetEt: at limit " << c << " for pt=" << x->pt
+		<< " and eta = " << x->eta << std ::endl;
+      c = 0.05;
+    }
+    if(c > 20.0) {
+      std::cout << "L2L3JetParametrization::correctedJetEt: at limit " << c << " for pt=" << x->pt
+		<< " and eta = " << x->eta << std ::endl;
+      c = 20.0;
+    }
     //assert(c > 0);
     return c * x->pt;
   }
@@ -918,12 +926,20 @@ public:
   //!  double result = p[2]+p[3]/(pow(log10pt,p[4])+p[5]);
   //!  \endcode
   double correctedGlobalJetEt(const Measurement *x,const double *par) const {
-    double pt = (x->pt < 4.0) ? 4.0 : (x->pt > 5000.0) ? 5000.0 : x->pt;
+    double pt = (x->pt < 1.0) ? 1.0 : (x->pt > 5000.0) ? 5000.0 : x->pt;
     double logpt = log10(pt);
     double c = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
-    if(c < 0.3) c = 0.3;
-    if(c > 3.0) c = 3.0;
-    assert(c > 0);
+    if(c < 0.1) {
+      std::cout << "L2L3JetParametrization::correctedGlobalJetEt: at limit " << c << " for pt=" << x->pt
+		<< " and eta = " << x->eta << std ::endl;
+      c = 0.1;
+    }
+    if(c > 10.0) {
+      std::cout << "L2L3JetParametrization::correctedGlobalJetEt: at limit " << c << " for pt=" << x->pt
+		<< " and eta = " << x->eta << std ::endl;
+      c = 10.0;
+    }
+    //assert(c > 0);
     return  c * x->pt;
   }
 };

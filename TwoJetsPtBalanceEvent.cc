@@ -1,4 +1,4 @@
-// $Id: TwoJetsPtBalanceEvent.cc,v 1.6 2009/11/20 12:40:57 stadie Exp $
+// $Id: TwoJetsPtBalanceEvent.cc,v 1.7 2009/11/24 16:52:59 stadie Exp $
 
 #include "TwoJetsPtBalanceEvent.h"
 
@@ -8,11 +8,11 @@
 //!  \brief Calculates \f$ \chi^{2} \f$ from pt difference
 // --------------------------------------------------
 double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1, 
-					       double * temp_derivative2, double const epsilon) const
+					       double * temp_derivative2, const double* epsilon) const
 {
   // Corrected jet pt
-  double pt1 = GetParametrizedMess();
-  double pt2 = GetParametrizedMess2();
+  double pt1 = parametrizedMess();
+  double pt2 = parametrizedMess2();
 
   // Residual
   double res = chi2_fast_simple_res(pt1,pt2);
@@ -25,7 +25,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
   if(chi2 != chi2) {//check for NAN
     std::cout <<pt1 << ", " << pt2 << ", " <<  jet1_->Et() << ", " << jet2_->Et() << ", " << chi2 << '\n';
   }
-  chi2 = GetWeight() * Event::ScaleResidual(chi2);
+  chi2 = weight() * Event::scaleResidual(chi2);
 
   if(!temp_derivative1) return chi2;
 
@@ -51,7 +51,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
     double temp1 = chi2_fast_simple_res(pt1tmp,pt2tmp);
     dRes2 = chi2_fast_simple_dRes2(pt1tmp, pt2tmp);
     temp1 = temp1 * temp1 / dRes2;
-    temp1 = GetWeight() * Event::ScaleResidual(temp1);
+    temp1 = weight() * Event::scaleResidual(temp1);
 
 
     // Corrected pt and derivative in case of 
@@ -69,7 +69,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
     double temp2 = chi2_fast_simple_res(pt1tmp,pt2tmp);
     dRes2 = chi2_fast_simple_dRes2(pt1tmp, pt2tmp);
     temp2 = temp2 * temp2 / dRes2;
-    temp2 = GetWeight() * Event::ScaleResidual(temp2);
+    temp2 = weight() * Event::scaleResidual(temp2);
 
     // Contribution to global derivative
     temp_derivative1[i1->parid] += (temp2 - temp1); // for 1st derivative
@@ -90,7 +90,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
     double temp1 = chi2_fast_simple_res(pt1tmp,pt2tmp);
     dRes2 = chi2_fast_simple_dRes2(pt1tmp, pt2tmp);
     temp1 = temp1 * temp1 / dRes2;
-    temp1 = GetWeight() * Event::ScaleResidual(temp1);
+    temp1 = weight() * Event::scaleResidual(temp1);
 
 
     // Corrected pt in case of 
@@ -101,7 +101,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
     double temp2 = chi2_fast_simple_res(pt1tmp,pt2tmp);
     dRes2 = chi2_fast_simple_dRes2(pt1tmp, pt2tmp);
     temp2 = temp2 * temp2 / dRes2;
-    temp2 = GetWeight() * Event::ScaleResidual(temp2);
+    temp2 = weight() * Event::scaleResidual(temp2);
 
     // Contribution to global derivative
     temp_derivative1[i2->parid] += (temp2 - temp1); // for 1st derivative
@@ -138,11 +138,11 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple_dRes2(double pt1, double pt2) con
 //!  \brief Calculates \f$ \chi^{2} \f$ from pt balance
 // --------------------------------------------------
 double TwoJetsPtBalanceEvent::chi2_fast_balance(double * temp_derivative1, 
-						double * temp_derivative2, double const epsilon) const
+						double * temp_derivative2, const double* epsilon) const
 {
   // Corrected jet pt
-  double pt1 = GetParametrizedMess();
-  double pt2 = GetParametrizedMess2();
+  double pt1 = parametrizedMess();
+  double pt2 = parametrizedMess2();
 
   // Residual
   double res = chi2_fast_balance_res(pt1,pt2);
@@ -155,7 +155,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_balance(double * temp_derivative1,
   if(chi2 != chi2) {//check for NAN
     std::cout <<pt1 << ", " << pt2 << ", " <<  jet1_->Et() << ", " << jet2_->Et() << ", " << chi2 << '\n';
   }
-  chi2 = GetWeight() * Event::ScaleResidual(chi2);
+  chi2 = weight() * Event::scaleResidual(chi2);
 
   if(!temp_derivative1) return chi2;
 
@@ -181,7 +181,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_balance(double * temp_derivative1,
     double temp1 = chi2_fast_balance_res(pt1tmp,pt2tmp);
     dRes2 = chi2_fast_balance_dRes2(pt1tmp, pt2tmp);
     temp1 = temp1 * temp1 / dRes2;
-    temp1 = GetWeight() * Event::ScaleResidual(temp1);
+    temp1 = weight() * Event::scaleResidual(temp1);
 
 
     // Corrected pt and derivative in case of 
@@ -199,7 +199,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_balance(double * temp_derivative1,
     double temp2 = chi2_fast_balance_res(pt1tmp,pt2tmp);
     dRes2 = chi2_fast_balance_dRes2(pt1tmp, pt2tmp);
     temp2 = temp2 * temp2 / dRes2;
-    temp2 = GetWeight() * Event::ScaleResidual(temp2);
+    temp2 = weight() * Event::scaleResidual(temp2);
 
     // Contribution to global derivative
     temp_derivative1[i1->parid] += (temp2 - temp1); // for 1st derivative
@@ -220,7 +220,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_balance(double * temp_derivative1,
     double temp1 = chi2_fast_balance_res(pt1tmp,pt2tmp);
     dRes2 = chi2_fast_balance_dRes2(pt1tmp, pt2tmp);
     temp1 = temp1 * temp1 / dRes2;
-    temp1 = GetWeight() * Event::ScaleResidual(temp1);
+    temp1 = weight() * Event::scaleResidual(temp1);
 
 
     // Corrected pt in case of 
@@ -231,7 +231,7 @@ double TwoJetsPtBalanceEvent::chi2_fast_balance(double * temp_derivative1,
     double temp2 = chi2_fast_balance_res(pt1tmp,pt2tmp);
     dRes2 = chi2_fast_balance_dRes2(pt1tmp, pt2tmp);
     temp2 = temp2 * temp2 / dRes2;
-    temp2 = GetWeight() * Event::ScaleResidual(temp2);
+    temp2 = weight() * Event::scaleResidual(temp2);
 
     // Contribution to global derivative
     temp_derivative1[i2->parid] += (temp2 - temp1); // for 1st derivative

@@ -90,7 +90,7 @@ int EventWeightProcessor::process(std::vector<Event*>& data) {
   if( weightEvents_ ) {
     std::vector<Event*>::iterator evt = data.begin();
     for(; evt != data.end(); evt++) {
-      if( (*evt)->GetType() == ParLimit ) continue;
+      if( (*evt)->type() == ParLimit ) continue;
       double weight   = 0.;
 
       if( type_ == 0 ) {

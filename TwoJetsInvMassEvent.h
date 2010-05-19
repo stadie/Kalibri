@@ -3,7 +3,7 @@
 //
 //    first version: Hartmut Stadie 2008/12/14
 //
-//    $Id: TwoJetsInvMassEvent.h,v 1.8 2009/10/30 08:14:24 mschrode Exp $
+//    $Id: TwoJetsInvMassEvent.h,v 1.9 2009/11/24 16:52:59 stadie Exp $
 //   
 
 #ifndef TWOJETSINVMASSEVENT_H
@@ -18,54 +18,49 @@ class TwoJetsInvMassEvent : public Event
 {
 public:
   TwoJetsInvMassEvent(Jet *j1, Jet *j2, double t, double w, double* p) 
-    : jet1(j1), jet2(j2),truth(t),weight(w),flagged_bad(false),chi2plots(1000.),par(p) {}
-  ~TwoJetsInvMassEvent() { delete jet1; delete jet2;}
+    : jet1_(j1), jet2_(j2),truth_(t),flagged_bad_(false),chi2plots_(1000.),par_(p) {}
+  ~TwoJetsInvMassEvent() { delete jet1_; delete jet2_;}
 
   //interface from Event
-  Measurement *GetMess() const {return jet1;}
-  double GetTruth() const { return truth;}
-  double GetParametrizedMess() const { return jet1->correctedEt(jet1->Et());}
+  Measurement *mess() const {return jet1_;}
+  double truth() const { return truth_;}
+  double parametrizedMess() const { return jet1_->correctedEt(jet1_->Et());}
   
-  Measurement *GetMess2() const {return jet2;}
-  double GetParametrizedMess2() const { return jet2->correctedEt(jet2->Et());}
+  Measurement *mess2() const {return jet2_;}
+  double parametrizedMess2() const { return jet2_->correctedEt(jet2_->Et());}
 
-  Jet *GetJet1() const {return jet1;}
-  Jet *GetJet2() const {return jet2;}
+  Jet *jet1() const {return jet1_;}
+  Jet *jet2() const {return jet2_;}
 
-  void ChangeParAddress(double* oldpar, double* newpar) {
-    par = newpar;
-    jet1->ChangeParAddress(oldpar,newpar);
-    jet2->ChangeParAddress(oldpar,newpar);
+  void changeParAddress(double* oldpar, double* newpar) {
+    par_ = newpar;
+    jet1_->ChangeParAddress(oldpar,newpar);
+    jet2_->ChangeParAddress(oldpar,newpar);
   }
-  DataType GetType() const { return InvMass;} 
-  double GetWeight() const { return weight;}
-  virtual void setWeight(double w) { weight = w; }
-  virtual double ptHat() const { return 0.; }             //!< Dummy
-
+  DataType type() const { return InvMass;} 
   double correctedMass() const;
   
   double chi2() const;
-  double chi2_plots() const { return chi2plots; }
-  double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const { 
+  double chi2_plots() const { return chi2plots_; }
+  double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const { 
     //chi2plots = chi2_fast_simple(temp_derivative1,temp_derivative2,epsilon);
     //chi2plots = chi2_fast_scaled(temp_derivative1,temp_derivative2,epsilon);
     //chi2plots = chi2_fast_const_error(temp_derivative1,temp_derivative2,epsilon);
-    chi2plots = chi2_fast_inv(temp_derivative1,temp_derivative2,epsilon);
-    return chi2plots;
+    chi2plots_ = chi2_fast_inv(temp_derivative1,temp_derivative2,epsilon);
+    return chi2plots_;
   }
-  double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
-  double chi2_fast_const_error(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
-  double chi2_fast_scaled(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
-  double chi2_fast_inv(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
+  double chi2_fast_const_error(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
+  double chi2_fast_scaled(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
+  double chi2_fast_inv(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
   void updateError() {}
 
  private:
-  Jet *jet1,*jet2;
-  double truth;
-  double weight;
-  mutable bool flagged_bad;
-  mutable double chi2plots;   //!< Store chi2 value from last iteration for plots
-  double *par;
+  Jet *jet1_,*jet2_;
+  double truth_;
+  mutable bool flagged_bad_;
+  mutable double chi2plots_;   //!< Store chi2 value from last iteration for plots
+  double *par_;
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.14 2010/04/18 14:40:38 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.15 2010/04/19 08:50:23 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -317,10 +317,10 @@ void ControlPlotsJetSmearing::plotResponse() const
   // --- Fill histograms of measured response --------------
   for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
     // Select DiJet events
-    if( (*datait)->GetType() == TypeSmearDiJet )  {
+    if( (*datait)->type() == TypeSmearDiJet )  {
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
 
-      hPtHat->Fill( dijet->ptHat(), dijet->GetWeight() );
+      hPtHat->Fill( dijet->ptHat(), dijet->weight() );
 
       const Jet *j1 = dijet->jet1();
       const Jet *j2 = dijet->jet2();
@@ -337,9 +337,9 @@ void ControlPlotsJetSmearing::plotResponse() const
 	const Jet * jet = dijet->jet1();
 	if( i == 1 ) jet = dijet->jet2();
 
-	hPtGenAbs->Fill( jet->genPt(), dijet->GetWeight() );
-	hPtGen->Fill( jet->genPt(), dijet->GetWeight() );
-	if( i == 0 ) hPtGenJet1->Fill( jet->genPt(), dijet->GetWeight() );
+	hPtGenAbs->Fill( jet->genPt(), dijet->weight() );
+	hPtGen->Fill( jet->genPt(), dijet->weight() );
+	if( i == 0 ) hPtGenJet1->Fill( jet->genPt(), dijet->weight() );
 
 	for(int bin = 0; bin < nPtBins(); bin++) {
 	  double var = 0.;
@@ -347,18 +347,18 @@ void ControlPlotsJetSmearing::plotResponse() const
 	  else if( ptBinningVar_ == "pt" ) var = jet->pt();
 	  else if( ptBinningVar_ == "ptDijet" ) var = dijet->dijetPt();
 	  if( ptBinEdges_[bin] <= var && var < ptBinEdges_[bin+1] ) {
-	    hRespMeasAbs[bin]->Fill( jet->pt() / jet->genPt(), dijet->GetWeight() );
-	    hRespMeas[bin]->Fill( jet->pt() / jet->genPt(), dijet->GetWeight() );
-	    hAbsResp[bin]->Fill( jet->pt(), dijet->GetWeight() );
-	    hPtGenAbsBins[bin]->Fill( jet->genPt(), dijet->GetWeight() );
-	    hPtGenAsym[bin]->Fill( ptGenAsym, dijet->GetWeight() );
-	    hPtAsym[bin]->Fill( ptAsym, dijet->GetWeight() );
-	    hRespMCPtHat[bin]->Fill( jet->pt()/dijet->ptHat(), dijet->GetWeight() );
+	    hRespMeasAbs[bin]->Fill( jet->pt() / jet->genPt(), dijet->weight() );
+	    hRespMeas[bin]->Fill( jet->pt() / jet->genPt(), dijet->weight() );
+	    hAbsResp[bin]->Fill( jet->pt(), dijet->weight() );
+	    hPtGenAbsBins[bin]->Fill( jet->genPt(), dijet->weight() );
+	    hPtGenAsym[bin]->Fill( ptGenAsym, dijet->weight() );
+	    hPtAsym[bin]->Fill( ptAsym, dijet->weight() );
+	    hRespMCPtHat[bin]->Fill( jet->pt()/dijet->ptHat(), dijet->weight() );
 	    continue;
 	  }
 	}
       }
-      hPtDijet->Fill( dijet->dijetPt(), dijet->GetWeight() );
+      hPtDijet->Fill( dijet->dijetPt(), dijet->weight() );
     }
   } // End of loop over data
   for(int ptBin = 0; ptBin < nPtBins(); ptBin++) {
@@ -467,7 +467,7 @@ void ControlPlotsJetSmearing::plotResponse() const
 
   // Fill histogram of assumed dijet truth pdf
   for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
-    if( (*datait)->GetType() == TypeSmearDiJet ) {
+    if( (*datait)->type() == TypeSmearDiJet ) {
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
       
       for(int bin = 1; bin <= hTruthPDF->GetNbinsX(); bin++) {
@@ -867,7 +867,7 @@ void ControlPlotsJetSmearing::plotDijets() const
   double max3rdJetPt = 0.;
   for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
     // Select DiJet events
-    if( (*datait)->GetType() == TypeSmearDiJet )  {
+    if( (*datait)->type() == TypeSmearDiJet )  {
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
 
       // Loop over both jets
@@ -990,14 +990,14 @@ void ControlPlotsJetSmearing::plotDijets() const
 
   // --- Fill histograms ----------------------------
   for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
-    if( (*datait)->GetType() == TypeSmearDiJet )  { // Select DiJet events
+    if( (*datait)->type() == TypeSmearDiJet )  { // Select DiJet events
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
 
       const Jet * jet1 = dijet->jet1();
       const Jet * jet2 = dijet->jet2();
       const Jet * jet3 = dijet->jet3();
 
-      double weight = dijet->GetWeight();
+      double weight = dijet->weight();
 
       double dPhi = std::abs(TVector2::Phi_mpi_pi( jet1->phi() - jet2->phi() ));
       hDeltaPhi->Fill( dPhi, weight );
@@ -1264,7 +1264,7 @@ void ControlPlotsJetSmearing::plotParameterScan() const {
   // Store likelihood for original parameter values
   double offset = 0.;
   for(DataIt dataIt = data_->begin(); dataIt != data_->end(); dataIt++) {
-    if( (*dataIt)->GetType() == TypeSmearDiJet )  { // Select DiJet events
+    if( (*dataIt)->type() == TypeSmearDiJet )  { // Select DiJet events
       offset += (*dataIt)->chi2();
     }
   }     
@@ -1310,7 +1310,7 @@ void ControlPlotsJetSmearing::plotParameterScan() const {
 	  // Calculate likelihood for varied parameters
 	  if( is != n || js != n ) {
 	    for(DataIt dataIt = data_->begin(); dataIt != data_->end(); dataIt++) {
-	      if( (*dataIt)->GetType() == TypeSmearDiJet )  { // Select DiJet events
+	      if( (*dataIt)->type() == TypeSmearDiJet )  { // Select DiJet events
 		deltaLkh += (*dataIt)->chi2();
 	      }
 	    }    
@@ -1445,9 +1445,9 @@ void ControlPlotsJetSmearing::plotLogP() const {
   // parameter values
   for(DataIt dataIt = data_->begin(); dataIt != data_->end(); dataIt++) {
     // Select DiJet events
-    if( (*dataIt)->GetType() == TypeSmearDiJet )  {
+    if( (*dataIt)->type() == TypeSmearDiJet )  {
       logPWend.push_back((*dataIt)->chi2());
-      logPend.push_back((*dataIt)->chi2()/(*dataIt)->GetWeight());
+      logPend.push_back((*dataIt)->chi2()/(*dataIt)->weight());
     }
   }
 
@@ -1468,9 +1468,9 @@ void ControlPlotsJetSmearing::plotLogP() const {
   // parameter values
   for(DataIt dataIt = data_->begin(); dataIt != data_->end(); dataIt++) {
     // Select DiJet events
-    if( (*dataIt)->GetType() == TypeSmearDiJet )  {
+    if( (*dataIt)->type() == TypeSmearDiJet )  {
       logPWstart.push_back((*dataIt)->chi2());
-      logPstart.push_back((*dataIt)->chi2()/(*dataIt)->GetWeight());
+      logPstart.push_back((*dataIt)->chi2()/(*dataIt)->weight());
     }
   }
   // Copy back fitted values into parameter array
@@ -1600,19 +1600,19 @@ void ControlPlotsJetSmearing::plotMeanResponseAndResolution() const {
   // ----- Fill histograms -----
   for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
     // Select DiJet events
-    if( (*datait)->GetType() == TypeSmearDiJet )  {
+    if( (*datait)->type() == TypeSmearDiJet )  {
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait); 
 
-      hLogPtGen->Fill(dijet->jet1()->genPt(),dijet->GetWeight());
-      hPtGen->Fill(dijet->jet1()->genPt(),dijet->GetWeight());
+      hLogPtGen->Fill(dijet->jet1()->genPt(),dijet->weight());
+      hPtGen->Fill(dijet->jet1()->genPt(),dijet->weight());
 
-      hLogPtGen->Fill(dijet->jet2()->genPt(),dijet->GetWeight());
-      hPtGen->Fill(dijet->jet2()->genPt(),dijet->GetWeight());
+      hLogPtGen->Fill(dijet->jet2()->genPt(),dijet->weight());
+      hPtGen->Fill(dijet->jet2()->genPt(),dijet->weight());
 
-      hRespVsLogPtGen->Fill(dijet->jet1()->genPt(),dijet->jet1()->pt()/dijet->jet1()->genPt(),dijet->GetWeight());
-      hRespVsLogPtGen->Fill(dijet->jet2()->genPt(),dijet->jet2()->pt()/dijet->jet2()->genPt(),dijet->GetWeight());
-      hRespVsPtGen->Fill(dijet->jet1()->genPt(),dijet->jet1()->pt()/dijet->jet1()->genPt(),dijet->GetWeight());
-      hRespVsPtGen->Fill(dijet->jet2()->genPt(),dijet->jet2()->pt()/dijet->jet2()->genPt(),dijet->GetWeight());
+      hRespVsLogPtGen->Fill(dijet->jet1()->genPt(),dijet->jet1()->pt()/dijet->jet1()->genPt(),dijet->weight());
+      hRespVsLogPtGen->Fill(dijet->jet2()->genPt(),dijet->jet2()->pt()/dijet->jet2()->genPt(),dijet->weight());
+      hRespVsPtGen->Fill(dijet->jet1()->genPt(),dijet->jet1()->pt()/dijet->jet1()->genPt(),dijet->weight());
+      hRespVsPtGen->Fill(dijet->jet2()->genPt(),dijet->jet2()->pt()/dijet->jet2()->genPt(),dijet->weight());
     }
   }
 
@@ -1862,7 +1862,7 @@ void ControlPlotsJetSmearing::plot3rdJet() const {
   // ----- Fill histograms -----
   for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
     // Select DiJet events
-    if( (*datait)->GetType() == TypeSmearDiJet )  {
+    if( (*datait)->type() == TypeSmearDiJet )  {
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
 
       const Jet *j1 = dijet->jet1();

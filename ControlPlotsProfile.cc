@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.6 2010/04/13 13:56:47 mschrode Exp $
+// $Id: ControlPlotsProfile.cc,v 1.7 2010/05/04 17:54:20 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -215,14 +215,14 @@ void ControlPlotsProfile::draw() {
 // ----------------------------------------------------------------   
 void ControlPlotsProfile::fill(const Event * evt) {
   double x = function_->xValue(evt);
-  hXSpectrum_->Fill(x,evt->GetWeight());
+  hXSpectrum_->Fill(x,evt->weight());
 
   int bin = findBin(evt);
   if( bin >= 0 ) {
-    ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->correctionTypesBegin();
-    for(; corrTypeIt != config_->correctionTypesEnd(); corrTypeIt++) {
+    for(ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->correctionTypesBegin(); 
+	corrTypeIt != config_->correctionTypesEnd(); ++corrTypeIt) {
       double y = function_->yValue(evt,*corrTypeIt);
-      if( bins_.at(bin)->fill(x,y,evt->GetWeight(),*corrTypeIt) ) {
+      if( bins_[bin]->fill(x,y,evt->weight(),*corrTypeIt) ) {
 	std::cerr << "ERROR when filling YvsX histograms of CorrectionType '" << *corrTypeIt << "'\n";
       }
     }
@@ -248,7 +248,7 @@ int ControlPlotsProfile::findBin(const Event * evt) const {
   int bin = -1;
   double binValue = function_->binValue(evt);
   if( binValue >= config_->min() && binValue <= config_->max() ) {
-    for(int i = 0; i < static_cast<int>(bins_.size()); i++) {
+    for(int i = 0, nbins = bins_.size(); i < nbins ; ++i) {
       bin = i;
       if( binValue <= bins_.at(i)->max() ) break;
     }

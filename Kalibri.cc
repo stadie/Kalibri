@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.5 2010/04/13 13:53:21 mschrode Exp $
+//  $Id: Kalibri.cc,v 1.6 2010/04/24 14:10:52 mschrode Exp $
 
 #include "Kalibri.h"
 
@@ -39,8 +39,8 @@ typedef std::vector<Event*>::const_iterator DataConstIter;
 struct OutlierRejection {
   OutlierRejection(double cut):_cut(cut){};
   bool operator()(Event *d){
-    if(d->GetType()==typeTowerConstraint) return true;
-    return (d->chi2()/d->GetWeight())<_cut;
+    if(d->type()==typeTowerConstraint) return true;
+    return (d->chi2()/d->weight())<_cut;
   }
   double _cut;
 };
@@ -50,75 +50,75 @@ struct OutlierRejection {
 // -----------------------------------------------------------------
 class ComputeThread {
 private:
-  int npar;
-  double chi2;
-  double * td1;
-  double * td2;
-  double *parorig, *mypar;
-  double epsilon;
-  std::vector<Event*> data;
-  bool data_changed;
+  int npar_;
+  double chi2_;
+  double * td1_;
+  double * td2_;
+  double *parorig_, *mypar_;
+  const double *epsilon_;
+  std::vector<Event*> data_;
+  bool data_changed_;
   struct calc_chi2_on
   {
   private:
-    ComputeThread *parent;
+    ComputeThread *parent_;
   public:
-    calc_chi2_on(ComputeThread *parent) : parent(parent) {}
+    calc_chi2_on(ComputeThread *parent) : parent_(parent) {}
     void operator()()
     {
       //      {
       // 	boost::mutex::scoped_lock lock(io_mutex);
       // 	std::cout << "start Thread for " << parent << std::endl; 
       //       }   
-      if(parent->data_changed) {
-	for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it)
-	  (*it)->ChangeParAddress(parent->parorig,parent->mypar); 
-	parent->data_changed = false;
+      if(parent_->data_changed_) {
+	for (DataIter it=parent_->data_.begin() ; it!= parent_->data_.end() ; ++it)
+	  (*it)->changeParAddress(parent_->parorig_,parent_->mypar_); 
+	parent_->data_changed_ = false;
       }
-      for (int param=0; param< parent->npar ; ++param) {
-	parent->td1[param]= 0.0;
-	parent->td2[param]= 0.0;
-	parent->mypar[param] = parent->parorig[param];
+      for (int param = 0 ; param < parent_->npar_ ; ++param) {
+	parent_->td1_[param]= 0.0;
+	parent_->td2_[param]= 0.0;
+	parent_->mypar_[param] = parent_->parorig_[param];
       }
-      parent->chi2 =0.0;   
-      for (DataIter it=parent->data.begin() ; it!= parent->data.end() ; ++it) { 
+      parent_->chi2_ =0.0;   
+      for (DataIter it=parent_->data_.begin() ; it != parent_->data_.end() ; ++it) { 
 	//boost::mutex::scoped_lock lock(io_mutex);
-	parent->chi2 += (*it)->chi2_fast(parent->td1, parent->td2, parent->epsilon);
+	parent_->chi2_ += (*it)->chi2_fast(parent_->td1_, parent_->td2_, parent_->epsilon_);
       }
     }
   };
-  boost::thread *thread;
+  boost::thread *thread_;
   friend class calc_chi2_on;
 public:
-  ComputeThread(int npar,double *par, double epsilon) 
-    : npar(npar), td1(new double[npar]), td2(new double[npar]), parorig(par),
-      mypar(new double[npar]), epsilon(epsilon), data_changed(false) {
+  ComputeThread(int npar,double *par, const double *epsilon) 
+    : npar_(npar), td1_(new double[npar]), td2_(new double[npar]), parorig_(par),
+      mypar_(new double[npar]), epsilon_(epsilon), data_changed_(false) {
     //std::cout << "threads par array:" << mypar << '\n';
   }
   ~ComputeThread() {
-    ClearData();
-    delete [] td1;
-    delete [] td2;
-    delete [] mypar;
+    clearData();
+    delete [] td1_;
+    delete [] td2_;
+    delete [] mypar_;
   }
-  void AddData(Event* d) { 
+  void addData(Event* d) { 
     //d->ChangeParAddress(parorig, mypar);
-    data_changed = true;
-    data.push_back(d);
+    data_changed_ = true;
+    data_.push_back(d);
   }
-  void ClearData() {   
-    for (DataIter it= data.begin() ; it!= data.end() ; ++it)  
-      (*it)->ChangeParAddress(mypar,parorig);
-    data.clear();
+  void clearData() {   
+    for (DataIter it= data_.begin() ; it!= data_.end() ; ++it)  
+      (*it)->changeParAddress(mypar_,parorig_);
+    data_.clear();
   }
-  void Start() { thread = new boost::thread(calc_chi2_on(this)); }
-  bool IsDone() { thread->join(); delete thread; return true;}
-  void SyncParameters() {
-    for (int param=0; param< npar ; ++param) mypar[param] = parorig[param];
+  void start() { thread_ = new boost::thread(calc_chi2_on(this)); }
+  bool isDone() { thread_->join(); delete thread_; return true;}
+  void syncParameters() {
+    for (int param = 0 ; param < npar_ ; ++param) mypar_[param] = parorig_[param];
   }
-  double Chi2() const { return chi2;}
-  double TempDeriv1(int i) const { return td1[i];}
-  double TempDeriv2(int i) const { return td2[i];}
+  double chi2() const { return chi2_;}
+  double tempDeriv1(int i) const { return td1_[i];}
+  double tempDeriv2(int i) const { return td2_[i];}
 };
 
 
@@ -166,7 +166,7 @@ void Kalibri::run_Lvmini()
   cout<<"array of size "<<naux<<" needed."<<endl;
 
   double* aux = new double[naux], fsum = 0;
-
+  double *epsilon = new double[npar];
   double *temp_derivative1 = new double[npar];
   double *temp_derivative2 = new double[npar];
 
@@ -189,10 +189,10 @@ void Kalibri::run_Lvmini()
   
   ComputeThread *t[nThreads_];
   for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-    t[ithreads] = new ComputeThread(npar, par_->GetPars(),derivStep_);
+    t[ithreads] = new ComputeThread(npar, par_->GetPars(),epsilon);
   }
 
-  lvmeps_(data_.size()*eps_,wlf1_,wlf2_);
+  //lvmeps_(data_.size()*eps_,wlf1_,wlf2_);
   lvmeps_(eps_,wlf1_,wlf2_);
 
   //Set errors per default to 0 //@@ doesn't seem to work...
@@ -217,7 +217,7 @@ void Kalibri::run_Lvmini()
     cout << " of " << residualScalingScheme_.size() <<" iteration(s)" << flush;
     if( mode_ == 0 ) {
       if(  residualScalingScheme_.at(loop) == 0  ) {
-	Event::ScaleResidual = &Event::ScaleNone;	
+	Event::scaleResidual = &Event::scaleNone;	
 	cout << ": no scaling of residuals." << endl;
 	
 	cout << "Rejecting outliers " << flush;
@@ -229,15 +229,15 @@ void Kalibri::run_Lvmini()
 	cout << "and using " << data_.size() << " events." << endl;
       }
       else if(  residualScalingScheme_.at(loop) == 1  ) {
-	Event::ScaleResidual = &Event::ScaleCauchy;	
+	Event::scaleResidual = &Event::scaleCauchy;	
 	cout << ": scaling of residuals with Cauchy-Function." << endl;
       }
       else if(  residualScalingScheme_.at(loop) == 2  ) {
-	Event::ScaleResidual = &Event::ScaleHuber;	
+	Event::scaleResidual = &Event::scaleHuber;	
 	cout << ": scaling of residuals with Huber-Function." << endl;
       }
       else if(  residualScalingScheme_.at(loop) == 3  ) {
-	Event::ScaleResidual = &Event::ScaleTukey;	
+	Event::scaleResidual = &Event::scaleTukey;	
 	cout << ": scaling of residuals a la Tukey." << endl;
       }
       else {
@@ -249,15 +249,15 @@ void Kalibri::run_Lvmini()
     }
     if(lvmdim_(npar,mvec) > naux)
       cout<<"Aux field too small. "<<lvmdim_(npar,mvec)<<" enntires needed."<<endl;
-    if (npar>0) npar*=-1; //Show output
+  
     //initialization
-    lvmini_( npar, mvec, nIter_, aux);
-    npar=std::abs(npar);
+    int nparm = -npar; //Show output
+    lvmini_(nparm, mvec, nIter_, aux);
     
     int n = 0;
     
     for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
-      t[n]->AddData(*it);
+      t[n]->addData(*it);
       n++;
       if(n == nThreads_) n = 0;
     }
@@ -268,23 +268,28 @@ void Kalibri::run_Lvmini()
 	temp_derivative1[param]=0.0;
 	temp_derivative2[param]=0.0;
       } 
-      fsum = 0;
-      for (int ithreads=0; ithreads<nThreads_; ++ithreads) t[ithreads]->Start();
-      
-      for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-	if(t[ithreads]->IsDone()) {
-	  fsum += t[ithreads]->Chi2();
-	  for (int param=0 ; param < npar ; ++param) {
-	    temp_derivative1[param] += t[ithreads]->TempDeriv1(param);
-	    temp_derivative2[param] += t[ithreads]->TempDeriv2(param);
-	  }
-	}
+      //computed step sizes for derivative calculation
+      for(int param = 0 ; param < npar ; ++param) {
+	epsilon[param] = derivStep_ * std::abs(par_->GetPars()[param]);
+	if(epsilon[param] < 1e-06) epsilon[param] = 1e-06;
       }
-      //zero derivative of fixed pars
+      //use zero step for fixed pars
       for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
 	   iter != fixedJetPars_.end() ; ++ iter) {
-	temp_derivative1[*iter] = 0;
-	temp_derivative2[*iter] = 0;
+	epsilon[*iter] = 0;
+      }
+      
+      fsum = 0;
+      for (int ithreads=0; ithreads<nThreads_; ++ithreads) t[ithreads]->start();
+      
+      for (int ithreads=0; ithreads<nThreads_; ++ithreads){
+	if(t[ithreads]->isDone()) {
+	  fsum += t[ithreads]->chi2();
+	  for (int param=0 ; param < npar ; ++param) {
+	    temp_derivative1[param] += t[ithreads]->tempDeriv1(param);
+	    temp_derivative2[param] += t[ithreads]->tempDeriv2(param);
+	  }
+	}
       }
       for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
 	   iter != fixedGlobalJetPars_.end() ; ++ iter) {
@@ -293,11 +298,17 @@ void Kalibri::run_Lvmini()
       }
       //fast derivative calculation:
       for( int param = 0 ; param < npar ; ++param ) {
-	aux[param]      = temp_derivative1[param]/(2.0*derivStep_);
-	aux[param+npar] = temp_derivative2[param]/(derivStep_*derivStep_);
+	if(epsilon[param] > 0) {
+	aux[param]      = temp_derivative1[param]/(2.0*epsilon[param]);
+	aux[param+npar] = temp_derivative2[param]/(epsilon[param]*epsilon[param]);
+	} else {
+	  aux[param] = 0;
+	  aux[param+npar] = 0;
+	}
  	assert(aux[param] == aux[param]);
  	assert(aux[param+npar] == aux[param+npar]);
       }
+      //lvmout_(npar,mvec_,aux);
       //print derivatives:
       if(printParNDeriv_) {
 	std::cout << std::setw(5) << "\npar";
@@ -310,14 +321,15 @@ void Kalibri::run_Lvmini()
 	  std::cout << std::setw(15) << aux[param];
 	  std::cout << std::setw(15) << aux[param+npar] << std::endl;
 	}
-	std::cout << "fsum " << fsum << std::endl;
+	std::cout << "fsum:" << fsum << std::endl;
       }
       assert( fsum > 0 );
       lvmfun_(par_->GetPars(),fsum,iret,aux);
+      //lvmout_(npar,mvec_,aux);
     } while (iret<0); 
 
     for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-      t[ithreads]->ClearData();
+      t[ithreads]->clearData();
     }  
     int par_index = 1;
     par_index = lvmind_(par_index);
@@ -372,6 +384,7 @@ void Kalibri::run_Lvmini()
     delete t[ithreads];
   }
   delete [] aux;  
+  delete [] epsilon;
   delete [] temp_derivative1;
   delete [] temp_derivative2;
 }

@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.cc,v 1.4 2010/02/04 09:55:05 stadie Exp $
+//    $Id: JetConstraintEvent.cc,v 1.5 2010/02/15 12:40:18 stadie Exp $
 //   
 
 
@@ -31,14 +31,15 @@ void JetConstraintEvent::addJet(double truePt, const Jet* j,
   error_ /= jets_.size();
   trusum_ += jet->Et();
   //add parameter ids to variation  map
-  const Jet::VariationColl& varcoll = jet->varyParsDirectly(0.001);
+  const Jet::VariationColl& varcoll = jet->lastVariations();
   for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     varmap_[i->parid] = Variation();
   }
+  ptHat_ = truth();
 }
 
 
-void JetConstraintEvent::ChangeParAddress(double* oldpar, double* newpar) { 
+void JetConstraintEvent::changeParAddress(double* oldpar, double* newpar) { 
   for(unsigned int i = 0, njets = jets_.size() ; i < njets ; ++i) {
     jets_[i]->ChangeParAddress(oldpar,newpar);
   }
@@ -56,7 +57,7 @@ double JetConstraintEvent::chi2() const
   return weight_ * chi2 * chi2 / jets_.size();
 }
 
-double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const
+double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const
 {
   double sumet = 0;
   unsigned int njets = jets_.size();

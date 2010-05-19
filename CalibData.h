@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
+// $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -27,7 +27,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
+//!  $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
 class Measurement
 {
 public:
@@ -37,10 +37,11 @@ public:
     {
     }
  Measurement(double Et,double EmEt,double HadEt,double OutEt,double E,
-	     double eta,double phi, double phiphi = 0,double etaeta = 0)
+	     double eta,double phi, double nphiphi = 0,double netaeta = 0)
    : pt(Et),EMF(EmEt),HadF(HadEt),OutF(OutEt),E(E),eta(eta),phi(phi),
-    phiphi(phiphi),etaeta(etaeta) 
+    phiphi(nphiphi),etaeta(netaeta) 
   {
+    assert(phiphi == phiphi);
   }
   virtual ~Measurement() {};
   //all common variables
@@ -65,7 +66,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
+//!  $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
 class TTrack : public Measurement
 {
 public:
@@ -122,19 +123,20 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
+//! $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
 class Event
 {
 public:
+ Event(double w = 0, double pthat = 0) : weight_(w),ptHat_(pthat) {}
   virtual ~Event() {}
-  virtual Measurement *GetMess() const = 0;                           //!< Get Measurement object
-  virtual double GetTruth() const = 0;                                 //!< Get truth of measurement
-  virtual double GetParametrizedMess() const = 0;                      //!< Get corrected measurement
-  virtual void ChangeParAddress(double* oldpar, double* newpar) = 0;   //!< Change adress of parameter array
-  virtual DataType GetType() const = 0;                                //!< Get DataType
-  virtual double GetWeight() const = 0;                                //!< Get weight
-  virtual void setWeight(double w) = 0;                              //!< Set weight
-  double ptHat() const { return ptHat_; }                                    //!< Get event scale
+  virtual Measurement *mess() const = 0;                           //!< Get Measurement object
+  virtual double truth() const = 0;                                 //!< Get truth of measurement
+  virtual double parametrizedMess() const = 0;                      //!< Get corrected measurement
+  virtual void changeParAddress(double* oldpar, double* newpar) = 0;   //!< Change adress of parameter array
+  virtual DataType type() const = 0;                                //!< Get DataType
+  double weight() const { return weight_;}                          //!< Get weight
+  void   setWeight(double w)  {weight_ = w;}                           //!< Set weight
+  double ptHat() const { return ptHat_; }                              //!< Get event scale
 
 
   //!  \brief Get the normalized, squared residual \f$ z^{2} \f$ of this event
@@ -181,9 +183,9 @@ public:
   //!
   //!  \param temp_derivative1 Pointer to first derivative contribution
   //!  \param temp_derivative2 Pointer to second derivative contribution
-  //!  \param epsilon Step size \f$ \epsilon \f$  for derivative calculation
+  //!  \param epsilon Step sizes \f$ \epsilon \f$  for derivative calculation
   //!  \return The normalized, squared residual\f$ z^{2} \f$ of this event
-  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
+  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double *epsilon) const = 0;
 
 
   virtual void updateError() = 0;  //!< Update error terms using current corrected energies
@@ -195,14 +197,14 @@ public:
   //!  scale the squared, normalized, and weighted
   //!  residual
   //!  \f$ z^{2} = \chi^{2}/\textrm{weight} \f$:
-  //!   - ScaleNone(double z2)
-  //!   - ScaleCauchy(double z2)
-  //!   - ScaleHuber(double z2)
-  //!   - ScaleTukey(double z2)
+  //!   - scaleNone(double z2)
+  //!   - scaleCauchy(double z2)
+  //!   - scaleHuber(double z2)
+  //!   - scaleTukey(double z2)
   //!
   //!  \param z2 Normalized and squared residual
   //!  \return Scaled residual
-  static double (*ScaleResidual)(double z2);
+  static double (*scaleResidual)(double z2);
 
 
   //!  \brief No scaling of residuals
@@ -211,11 +213,11 @@ public:
   //!
   //!  \param z2 Normalized and squared residual
   //!  \return Scaled residual
-  static double ScaleNone(double z2){ return z2; }
+  static double scaleNone(double z2){ return z2; }
 
 
-  static double ScaleCauchy(double z2);  //!< Scaling of residual with Cauchy function
-  static double ScaleHuber(double z2);   //!< Scaling of residual with Huber function  
+  static double scaleCauchy(double z2);  //!< Scaling of residual with Cauchy function
+  static double scaleHuber(double z2);   //!< Scaling of residual with Huber function  
   
   //!  \brief Cut on residuals
   //!
@@ -223,11 +225,12 @@ public:
   //!
   //!  \param z2 Normalized and squared residual
   //!  \return Scaled residual
-  static double ScaleTukey(double z2);  //!< Scaling of residual a la  Tukey
+  static double scaleTukey(double z2);  //!< Scaling of residual a la  Tukey
 
 
  protected:
-  double ptHat_;
+  double weight_;
+  double ptHat_;  
 };
 
 
@@ -241,7 +244,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.79 2010/01/25 17:35:20 stadie Exp $
+//!  $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
 class TAbstractData : public Event
 {
 public:
@@ -266,7 +269,7 @@ public:
   TAbstractData(unsigned short int index, Measurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
         double (*func)(const Measurement*, const double*),
 	double (*err)(const double *,const Measurement *,double))
-  : _index(index), _mess(mess),_truth(truth),_error(error),_weight(weight),_par(par),_n_par(n_par),_func(func),_err(err){};
+    : Event(weight),_index(index), _mess(mess),_truth(truth),_error(error),_par(par),_n_par(n_par),_func(func),_err(err){};
 
 
   //!  \brief Destructor
@@ -274,7 +277,7 @@ public:
     delete _mess;
   };
 
-  Measurement *GetMess() const { return _mess;}; //!< Get Measurement object
+  Measurement *mess() const { return _mess;}; //!< Get Measurement object
 
 
   //!  \brief Get corrected measurement
@@ -289,7 +292,7 @@ public:
   //!  \return Corrected measurement
   //!
   //!  \sa GetParametrizedMess(double *const paramess)
-  double GetParametrizedMess() const { return _func(_mess,_par); };  
+  double parametrizedMess() const { return _func(_mess,_par); };  
 
   //!  \brief Correct a user defined measurement
   //!
@@ -357,24 +360,21 @@ public:
     return error *error;
   };
 
-  double GetTruth() const { return _truth;};
-  virtual double GetScale() const {return GetTruth();};//flatten spectrum w.r.t. this
+  double truth() const { return _truth;};
+  virtual double GetScale() const {return truth();};//flatten spectrum w.r.t. this
   virtual void updateError(){};
   double GetError() const { return _error;};
-  double GetWeight() const { return _weight;};
-  virtual void setWeight(double w) { _weight = w;};
-  virtual double ptHat() const { return 0.; }                                    //!< Dummy
-  DataType GetType() const {return _type;};
+  DataType type() const {return _type;};
   void SetType(DataType type) {_type=type;};
   unsigned short int GetIndex(){return _index;};
   virtual const std::vector<TAbstractData*>& GetRef() = 0;
   virtual const std::vector<TAbstractData*>& GetRefTrack() = 0;
   virtual double chi2() const {return 0.;};
   double chi2_plots() const { return chi2(); }
-  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
+  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double *epsilon) const = 0;
   double * GetPar(){return _par;};
   unsigned short int GetNumberOfPars() const {return _n_par;};
-  virtual void ChangeParAddress(double* oldpar, double* newpar) { _par += newpar - oldpar;}
+  virtual void changeParAddress(double* oldpar, double* newpar) { _par += newpar - oldpar;}
   virtual bool GetTrackuse() {return true;}
 
   static unsigned int total_n_pars;
@@ -421,13 +421,13 @@ class TData_ParLimit : public TAbstractData
   };
   
   virtual double chi2() const{  
-    double new_mess  = GetParametrizedMess();
+    double new_mess  = parametrizedMess();
     double new_error = GetParametrizedErr(&new_mess);
     return new_mess * new_mess / (new_error * new_error);
   };
   
   virtual double chi2_fast(double* temp_derivative1, 
-			   double* temp_derivative2, double const epsilon) const;
+			   double* temp_derivative2, const double* epsilon) const;
   
  private:
   static std::vector<TAbstractData*> _cache;

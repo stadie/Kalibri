@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.4 2010/02/18 12:40:16 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.5 2010/04/01 16:29:17 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -7,7 +7,7 @@
 #include "JetTruthEvent.h"
 
 
-
+/*
 //!  Will return 0 if \p type does not exist in \p types_
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::yValue(const Event * evt, ControlPlotsConfig::CorrectionType type) const {
@@ -17,7 +17,7 @@ double ControlPlotsFunction::yValue(const Event * evt, ControlPlotsConfig::Corre
 
   return yValue;
 }
-
+*/
 
 
 // ----------------------------------------------------------------   
@@ -118,7 +118,7 @@ double ControlPlotsFunction::jetTruthEventJetScaledPhiPhi(const Event *evt) cons
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::jetTruthEventTruthPt(const Event *evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
-  return jte->GetTruth();
+  return jte->truth();
 }
 
 //!  \brief Returns flavor of jet
@@ -141,9 +141,9 @@ double ControlPlotsFunction::jetTruthEventJetFlavor(const Event *evt) const {
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::jetTruthEventResponse(const Event * evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
-  Jet * jet = static_cast<Jet*>(jte->GetMess());
+  Jet * jet = static_cast<Jet*>(jte->mess());
 
-  return jet->pt() / jte->GetTruth();
+  return jet->pt() / jte->truth();
 }
 
 
@@ -159,9 +159,9 @@ double ControlPlotsFunction::jetTruthEventResponse(const Event * evt) const {
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::jetTruthEventResponseKalibriCorrected(const Event * evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
-  Jet * jet = static_cast<Jet*>(jte->GetMess());
+  Jet * jet = static_cast<Jet*>(jte->mess());
 
-  return jet->correctedEt() / jte->GetTruth();
+  return jet->correctedEt() / jte->truth();
 }
 
 
@@ -177,9 +177,9 @@ double ControlPlotsFunction::jetTruthEventResponseKalibriCorrected(const Event *
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::jetTruthEventResponseL2L3Corrected(const Event * evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
-  Jet * jet = static_cast<Jet*>(jte->GetMess());
+  Jet * jet = static_cast<Jet*>(jte->mess());
 
-  return jet->corFactors().getL2L3() * jet->pt() / jte->GetTruth();
+  return jet->corFactors().getL2L3() * jet->pt() / jte->truth();
 }
 
 

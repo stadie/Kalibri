@@ -12,7 +12,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTracks.h,v 1.9 2010/02/04 09:55:05 stadie Exp $
+//!    $Id: JetWithTracks.h,v 1.10 2010/02/15 12:40:18 stadie Exp $
 // ---------------------------------------------------------------   
 class JetWithTracks : public Jet
 {
@@ -31,8 +31,8 @@ class JetWithTracks : public Jet
   virtual double expectedError(double et) const;
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
-  virtual const VariationColl& varyPars(double eps, double Et, double start);
-  virtual const VariationColl& varyParsDirectly(double eps, bool computeDeriv);
+  virtual const VariationColl& varyPars(const double* eps, double Et, double start);
+  virtual const VariationColl& varyParsDirectly(const double* eps, bool computeDeriv);
 
   void addTrack(double Et, double EmEt, double HadEt ,double OutEt, double E,
 		double eta,double phi,int TrackId, int TowerId, double DR, double DRout,

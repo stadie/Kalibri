@@ -1,4 +1,4 @@
-// $Id: SmearDiJet.h,v 1.7 2010/04/13 13:38:24 mschrode Exp $
+// $Id: SmearDiJet.h,v 1.8 2010/04/27 14:57:57 mschrode Exp $
 
 #ifndef SmearDiJet_h
 #define SmearDiJet_h
@@ -11,7 +11,7 @@
 //!  \brief Dijet data for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 18:23:44 CEST 2009
-//!  $Id: SmearDiJet.h,v 1.7 2010/04/13 13:38:24 mschrode Exp $
+//!  $Id: SmearDiJet.h,v 1.8 2010/04/27 14:57:57 mschrode Exp $
 // --------------------------------------------------
 class SmearDiJet : public SmearData {
  public:
@@ -29,7 +29,7 @@ class SmearDiJet : public SmearData {
 
   //  virtual void ChangeParAddress(double* oldpar, double* newpar);
   virtual double chi2() const;
-  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
   virtual void printInitStats() const;
 
   const Jet * jet1() const { return static_cast<Jet*>(mess_); }

@@ -2,7 +2,7 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.23 2010/02/04 09:55:05 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.24 2010/02/15 12:40:18 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
@@ -75,7 +75,7 @@ double JetWithTowers::correctedEt(double Et,bool fast) const
 
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double start)
+const Jet::VariationColl& JetWithTowers::varyPars(const double* eps, double Et, double start)
 {
   Jet::varyPars(eps,Et,start);
   int i = Jet::nPar();
@@ -89,10 +89,10 @@ const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double 
       //std::cout <<  "truth: " << Et << " alternating par:" << id + towpar << "  = " << p[towpar] 
       //		<< std::endl;
       double orig = p[towpar]; 
-      p[towpar] += eps;
+      p[towpar] += eps[id + towpar];
       varcoll[i].upperEt = Jet::expectedEt(Et,start,varcoll[i].upperError);
       if( varcoll[i].upperEt < 0) varcoll[i].upperEt = Measurement::pt;
-      p[towpar] = orig - eps;
+      p[towpar] = orig - eps[id + towpar];
       varcoll[i].lowerEt = Jet::expectedEt(Et,start,varcoll[i].lowerError); 
       if( varcoll[i].lowerEt < 0) varcoll[i].lowerEt = Measurement::pt;
       p[towpar] = orig;
@@ -105,12 +105,12 @@ const Jet::VariationColl& JetWithTowers::varyPars(double eps, double Et, double 
 }
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& JetWithTowers::varyParsDirectly(double eps, bool computeDeriv)
+const Jet::VariationColl& JetWithTowers::varyParsDirectly(const double* eps, bool computeDeriv)
 {
   Jet::varyParsDirectly(eps,computeDeriv);
   int i = Jet::nPar();
   
-  const double deltaE = eps * 100.0;
+  const double deltaE = 0.1;
   for(std::map<int,double*>::const_iterator iter = towerpars.begin() ;
       iter != towerpars.end() ; ++iter) {
     double *p = iter->second;
@@ -120,13 +120,13 @@ const Jet::VariationColl& JetWithTowers::varyParsDirectly(double eps, bool compu
       //std::cout <<  " alternating par:" << id + towpar << "  = " << p[towpar] 
       //		<< ", " << p << std::endl;
       double orig = p[towpar]; 
-      p[towpar] += eps;
+      p[towpar] += eps[id + towpar];
       varcoll[i].upperEt = correctedEt(Measurement::pt);
       varcoll[i].upperError = expectedError(varcoll[i].upperEt);
       if(computeDeriv) {
 	varcoll[i].upperEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
       }
-      p[towpar] = orig - eps;
+      p[towpar] = orig - eps[id + towpar];
       varcoll[i].lowerEt = correctedEt(Measurement::pt); 
       varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
       if(computeDeriv) {

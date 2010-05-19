@@ -1,4 +1,4 @@
-// $Id: SmearPhotonJet.h,v 1.5 2010/02/16 13:33:16 mschrode Exp $
+// $Id: SmearPhotonJet.h,v 1.5 2010/04/13 13:38:24 mschrode Exp $
 
 #ifndef SmearPhotonJet_h
 #define SmearPhotonJet_h
@@ -13,7 +13,7 @@
 //!  \brief Photon-jet data for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 18:23:44 CEST 2009
-//!  $Id: SmearPhotonJet.h,v 1.5 2010/02/16 13:33:16 mschrode Exp $
+//!  $Id: SmearPhotonJet.h,v 1.5 2010/04/13 13:38:24 mschrode Exp $
 // --------------------------------------------------
 class SmearPhotonJet : public SmearData {
  public:
@@ -22,9 +22,9 @@ class SmearPhotonJet : public SmearData {
   ~SmearPhotonJet() {};
 
   virtual double chi2() const;
-  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const;
+  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
   virtual void printInitStats() const {};  //!< No functionality yet
-  virtual double ptHat() const { return GetTruth(); }
+  virtual double ptHat() const { return truth(); }
 
   const Jet * jet() const { return static_cast<Jet*>(mess_); }
 };

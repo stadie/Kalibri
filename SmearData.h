@@ -1,4 +1,4 @@
-// $Id: SmearData.h,v 1.8 2010/04/12 14:36:12 mschrode Exp $
+// $Id: SmearData.h,v 1.9 2010/04/13 13:38:23 mschrode Exp $
 
 #ifndef SmearData_h
 #define SmearData_h
@@ -10,7 +10,7 @@
 //!  \brief Abstract base class for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 15:24:49 CEST 2009
-//!  $Id: SmearData.h,v 1.8 2010/04/12 14:36:12 mschrode Exp $
+//!  $Id: SmearData.h,v 1.9 2010/04/13 13:38:23 mschrode Exp $
 // --------------------------------------------------
 class SmearData : public Event {
  public:
@@ -21,15 +21,13 @@ class SmearData : public Event {
   //!  \return The negative log-likelihood of this event
   // --------------------------------------------------
   virtual double chi2() const = 0;
-  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) const = 0;
+  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const = 0;
   virtual void printInitStats() const = 0;
 
-  virtual void ChangeParAddress(double* oldpar, double* newpar) { pdf_.changeParBase(oldpar,newpar); }
-  virtual Measurement * GetMess() const { return mess_; }
-  virtual double GetTruth() const { return kTruth_; }
-  virtual DataType GetType() const { return kType_; }
-  virtual double GetWeight() const { return weight_; }
-
+  virtual void changeParAddress(double* oldpar, double* newpar) { pdf_.changeParBase(oldpar,newpar); }
+  virtual Measurement * mess() const { return mess_; }
+  virtual double truth() const { return kTruth_; }
+  virtual DataType type() const { return kType_; }
   double par(int i) { return pdf_.par(i); }
   double pdfPtMeas(double ptMeas, double ptTrue) const { return pdf_.pdfPtMeasJet1(ptMeas,ptTrue); }
   double pdfPtTrue(double ptTrue) const { return pdf_.pdfPtTrue(ptTrue); }
@@ -38,10 +36,8 @@ class SmearData : public Event {
   double pdfRespError(double r, double ptTrue) const { return pdf_.pdfRespError(r,ptTrue); }
   double pdfDijetAsym(double a, double ptTrue) const { return pdf_.pdfDijetAsym(a,ptTrue); }
 
-  virtual void setWeight(double w) { weight_ = w; } 
-
   virtual double chi2_plots() const { return 0.; }                 //!< Dummy, no functionality
-  virtual double GetParametrizedMess() const { return 0.; }        //!< Dummy, no functionality
+  virtual double parametrizedMess() const { return 0.; }        //!< Dummy, no functionality
   virtual void updateError() { }                                   //!< Dummy, no functionality
 
 
@@ -53,7 +49,6 @@ class SmearData : public Event {
  private:
   const double    kTruth_;                     //!< Truth
   const DataType  kType_;                      //!< Event type
-  double          weight_;                     //!< Event weight
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: SmearPhotonJet.cc,v 1.4 2010/02/16 13:33:16 mschrode Exp $
+// $Id: SmearPhotonJet.cc,v 1.5 2010/04/13 13:38:24 mschrode Exp $
 
 #include "SmearPhotonJet.h"
 
@@ -8,8 +8,8 @@
 //!  \return The negative log-likelihood of this event
 // --------------------------------------------------
 double SmearPhotonJet::chi2() const {
-  double pdf = pdfPtMeas(GetMess()->pt,GetTruth());
-  return -1. * GetWeight() * log(pdf/GetTruth()); // Need to divide by truth to have probability (!= density)
+  double pdf = pdfPtMeas(mess()->pt,truth());
+  return -1. * weight() * log(pdf/truth()); // Need to divide by truth to have probability (!= density)
 }
 
 
@@ -35,12 +35,12 @@ double SmearPhotonJet::chi2() const {
 //!
 //!  \param temp_derivative1 Pointer to first derivative contribution
 //!  \param temp_derivative2 Pointer to second derivative contribution
-//!  \param epsilon Step size \f$ \epsilon \f$ for derivative calculation
+//!  \param epsilon Step sizes \f$ \epsilon \f$ for derivative calculation
 //!  \return The negative log-likelihood of this event
 // --------------------------------------------------
 double SmearPhotonJet::chi2_fast(double * temp_derivative1,
 			     double * temp_derivative2,
-			     double const epsilon) const {
+			     const double* epsilon) const {
   double f = chi2();
 
   double   oldpar;
@@ -51,10 +51,10 @@ double SmearPhotonJet::chi2_fast(double * temp_derivative1,
   for(int i = 0; i < pdf_.nPars(); i++) {
     oldpar = pdf_.par()[i];
 
-    pdf_.par()[i] += epsilon;
+    pdf_.par()[i] += epsilon[pdf_.parIdx()+i];
     temp1 = chi2();
 
-    pdf_.par()[i] -= 2.*epsilon;
+    pdf_.par()[i] -= 2.*epsilon[pdf_.parIdx()+i];
     temp2 = chi2();
 
     pdf_.par()[i] = oldpar;

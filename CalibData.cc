@@ -1,12 +1,12 @@
 //
-// $Id: CalibData.cc,v 1.31 2009/11/24 16:52:58 stadie Exp $
+// $Id: CalibData.cc,v 1.32 2009/11/24 17:13:17 stadie Exp $
 //
 #include "CalibData.h"
 
 #include <map>
 #include <cmath>
 
-double (*Event::ScaleResidual)(double z2) = &Event::ScaleNone;
+double (*Event::scaleResidual)(double z2) = &Event::scaleNone;
 
 //!  Scale the normalized, squared residual
 //!  \f$ z^{2} = \chi^{2}/\textrm{weight} \f$
@@ -15,7 +15,7 @@ double (*Event::ScaleResidual)(double z2) = &Event::ScaleNone;
 //!
 //!  \param z2 Normalized and squared residual
 //!  \return Scaled residual
-double Event::ScaleCauchy(double const z2)
+double Event::scaleCauchy(double const z2)
 {
   double const c = 2.3849;
   return (c*c) * log( 1 + z2*(1.0/(c*c)) );
@@ -35,7 +35,7 @@ double Event::ScaleCauchy(double const z2)
 //!
 //!  \param z2 Normalized and squared residual
 //!  \return Scaled residual
-double Event::ScaleHuber(double const z2)
+double Event::scaleHuber(double const z2)
 {
   static double const c = 1.345;
   double const z = sqrt(z2);
@@ -49,7 +49,7 @@ double Event::ScaleHuber(double const z2)
 //!
 //!  \param z2 Normalized and squared residual
 //!  \return Scaled residual
-double Event::ScaleTukey(const double z2)
+double Event::scaleTukey(const double z2)
 {
   const double c2 = 16;
   if(z2 > c2) return 0;
@@ -62,15 +62,15 @@ unsigned int TAbstractData::total_n_pars = 0;
 
 
 double TData_ParLimit::chi2_fast(double* temp_derivative1, 
- 				 double* temp_derivative2, double const epsilon) const {
+ 				 double* temp_derivative2, const double* epsilon) const {
   // Penalty term with current parameter values
   double new_chi2  = chi2();
  
   // Variation of parameters
   double oldpar    = _par[0];
-  _par[0]         += epsilon;
+  _par[0]         += epsilon[_index];
   double temp2     = chi2();
-  _par[0]          = oldpar - epsilon;
+  _par[0]          = oldpar - epsilon[_index];
   double temp1     = chi2();
  
   // Difference of chi2 at par+epsilon and par-epsilon

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.h,v 1.4 2010/02/18 12:40:16 stadie Exp $
+// $Id: ControlPlotsFunction.h,v 1.5 2010/04/01 16:29:17 stadie Exp $
 
 #ifndef CONTROLPLOTS_FUNCTION_H
 #define CONTROLPLOTS_FUNCTION_H
@@ -24,7 +24,7 @@ class Event;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsFunction.h,v 1.4 2010/02/18 12:40:16 stadie Exp $
+//!  $Id: ControlPlotsFunction.h,v 1.5 2010/04/01 16:29:17 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsFunction {
  public:
@@ -48,8 +48,9 @@ class ControlPlotsFunction {
   //! Interface to the profile: return the value of the x quantity from \p evt
   double xValue(const Event * evt) const { return (this->*xFunc_)(evt); }
   //! Interface to the profile: return the value of the y quantity from \p evt for the correction type \p type
-  double yValue(const Event * evt, ControlPlotsConfig::CorrectionType type) const;
-
+  double yValue(const Event * evt, ControlPlotsConfig::CorrectionType type) const {
+    return (this->*(yFuncs_.find(type)->second))(evt);
+  }
   //! Set the function returning the binning value from an event
   void setBinFunction(Function func) { binFunc_ = func; }
   //! Set the function returning the x value from an event

@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventProcessor.cc,v 1.2 2009/07/23 13:46:20 mschrode Exp $
+//    $Id: EventProcessor.cc,v 1.3 2009/11/24 16:52:58 stadie Exp $
 //   
 #include "EventProcessor.h"
 
@@ -67,13 +67,13 @@ bool EventProcessor::NotBalancedRejection::operator()(Event *d) {
   TAbstractData *ad = dynamic_cast<TAbstractData*>(d);
   if(! ad) return true;
   
-  if(ad->GetType()!=GammaJet ||
-     ad->GetMess()->pt<_min ||
-     ad->GetMess()->pt>_max ||
-     ad->GetMess()->pt==0.0 ) result = true;
+  if(ad->type()!=GammaJet ||
+     ad->mess()->pt<_min ||
+     ad->mess()->pt>_max ||
+     ad->mess()->pt==0.0 ) result = true;
   else
-    result = (1.0-ad->GetTruth()/ad->GetMess()->pt) >
-      _cut[(int)(ad->GetMess()->pt-_min)];
+    result = (1.0-ad->truth()/ad->mess()->pt) >
+      _cut[(int)(ad->mess()->pt-_min)];
   return result;
 }
 
@@ -145,12 +145,12 @@ int EventProcessor::flattenSpectra(std::vector<Event*>& data)
   for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
     TAbstractData* dt = dynamic_cast<TAbstractData*>(*it);
     if(! dt) continue;
-    if( dt->GetType() == ParLimit ) continue;
+    if( dt->type() == ParLimit ) continue;
     numProcEvts++;
-    alltotal+=dt->GetWeight();
+    alltotal+=dt->weight();
     for (int type=0; type<7; ++type){
-      if (dt->GetType()!=type) continue;
-      if (dt->GetType()==InvMass) continue;
+      if (dt->type()!=type) continue;
+      if (dt->type()==InvMass) continue;
       double em = 0.;
       double had = 0.;
       int index=0;
@@ -158,13 +158,13 @@ int EventProcessor::flattenSpectra(std::vector<Event*>& data)
       //double ptmax=0;
        
       TLorentzVector Ljet(0.,0.,0.,0.);
-      Ljet.SetPtEtaPhiE(dt->GetMess()->pt,dt->GetMess()->eta,dt->GetMess()->phi,dt->GetMess()->E);
+      Ljet.SetPtEtaPhiE(dt->mess()->pt,dt->mess()->eta,dt->mess()->phi,dt->mess()->E);
       for(std::vector<TAbstractData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
-	em  += (*t)->GetMess()->EMF;
-	had += (*t)->GetMess()->HadF;
-	had += (*t)->GetMess()->OutF;
+	em  += (*t)->mess()->EMF;
+	had += (*t)->mess()->HadF;
+	had += (*t)->mess()->OutF;
 	TLorentzVector Ltower(0.,0.,0.,0.);
-	Ltower.SetPtEtaPhiE((*t)->GetMess()->pt,(*t)->GetMess()->eta,(*t)->GetMess()->phi,(*t)->GetMess()->E);
+	Ltower.SetPtEtaPhiE((*t)->mess()->pt,(*t)->mess()->eta,(*t)->mess()->phi,(*t)->mess()->E);
 	double dr = Ltower.DeltaR(Ljet);
 	if (dr<min_tower_dr) {
 	  index = (*t)->GetIndex();
@@ -174,9 +174,9 @@ int EventProcessor::flattenSpectra(std::vector<Event*>& data)
       //int bin = getSpectraBin( dt->GetScale(), index, em/(em+had)  );
       //int bin = getSpectraBin( dt->GetScale(), index );
       int bin = getSpectraBin( dt->GetScale() );
-      double error = 1.;//dt->GetParametrizedErr( &dt->GetMess()->pt );
-      weights[type][bin]+=dt->GetWeight()/error;
-      tot[type]+=dt->GetWeight()/error;
+      double error = 1.;//dt->GetParametrizedErr( &dt->mess()->pt );
+      weights[type][bin]+=dt->weight()/error;
+      tot[type]+=dt->weight()/error;
     }
   }
   for (int type=0; type<7; ++type){
@@ -184,8 +184,8 @@ int EventProcessor::flattenSpectra(std::vector<Event*>& data)
       for (DataIter it = data.begin(); it!=data.end(); ++it) {
 	TAbstractData* dt = dynamic_cast<TAbstractData*>(*it);
 	if(! dt) continue;
-	if (dt->GetType()!=type) continue;
-	if (dt->GetType()==InvMass) continue;
+	if (dt->type()!=type) continue;
+	if (dt->type()==InvMass) continue;
 	 
 	 
 	double em = 0;
@@ -194,13 +194,13 @@ int EventProcessor::flattenSpectra(std::vector<Event*>& data)
 	double min_tower_dr = 10.;
 	TLorentzVector Ljet(0,0,0,0);
 	 
-	Ljet.SetPtEtaPhiE(dt->GetMess()->pt,dt->GetMess()->eta,dt->GetMess()->phi,dt->GetMess()->E);
+	Ljet.SetPtEtaPhiE(dt->mess()->pt,dt->mess()->eta,dt->mess()->phi,dt->mess()->E);
 	for(std::vector<TAbstractData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
-	  em  += (*t)->GetMess()->EMF;
-	  had += (*t)->GetMess()->HadF;
-	  had += (*t)->GetMess()->OutF;
+	  em  += (*t)->mess()->EMF;
+	  had += (*t)->mess()->HadF;
+	  had += (*t)->mess()->OutF;
 	  TLorentzVector Ltower(0.,0.,0.,0.);
-	  Ltower.SetPtEtaPhiE((*t)->GetMess()->pt,(*t)->GetMess()->eta,(*t)->GetMess()->phi,(*t)->GetMess()->E);
+	  Ltower.SetPtEtaPhiE((*t)->mess()->pt,(*t)->mess()->eta,(*t)->mess()->phi,(*t)->mess()->E);
 	  double dr = Ltower.DeltaR(Ljet);
 	  if (dr<min_tower_dr) {
 	    index = (*t)->GetIndex();
@@ -213,9 +213,9 @@ int EventProcessor::flattenSpectra(std::vector<Event*>& data)
 	//dt->SetWeight(1);
 	 
 	 
-	//dt->SetWeight(dt->GetWeight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
+	//dt->SetWeight(dt->weight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
 	 
-	dt->setWeight(dt->GetWeight()/weights[type][bin] * (alltotal / double(weights[type].size()) )  * relWeight_[type] / allweights );
+	dt->setWeight(dt->weight()/weights[type][bin] * (alltotal / double(weights[type].size()) )  * relWeight_[type] / allweights );
 	 
 	 
 	//dt->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
@@ -224,41 +224,41 @@ int EventProcessor::flattenSpectra(std::vector<Event*>& data)
     /*
     // Old version using leading tower bin as jet bin
     for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
-    if (dt->GetType()!=type) continue;
+    if (dt->type()!=type) continue;
     double em = 0;
     double had = 0;
     int index=0;
     double ptmax=0;
     for(std::vector<Event*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
-    em  += (*t)->GetMess()[1];
-    had += (*t)->GetMess()[2];
-    had += (*t)->GetMess()[3];
-    if ((*t)->GetMess()[1]>ptmax) {
-    ptmax=(*t)->GetMess()[1];
+    em  += (*t)->mess()[1];
+    had += (*t)->mess()[2];
+    had += (*t)->mess()[3];
+    if ((*t)->mess()[1]>ptmax) {
+    ptmax=(*t)->mess()[1];
     index=(*t)->GetIndex();
     }
     }
     //int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had)  );
     int bin = GetSpectraBin( dt->GetScale(), index );
     //int bin = GetSpectraBin( dt->GetScale() );
-    weights[bin]+=dt->GetWeight();
-    tot+=dt->GetWeight();
+    weights[bin]+=dt->weight();
+    tot+=dt->weight();
     }
 	
     if (tot!=0.)
     for (DataIter it = data.begin(); it!=data.end(); ++it) {
-    if (dt->GetType()!=type) continue;
+    if (dt->type()!=type) continue;
     
     double em = 0;
     double had = 0;
     int index=0;
     double ptmax=0;
     for(std::vector<Event*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
-    em  += (*t)->GetMess()[1];
-    had += (*t)->GetMess()[2];
-    had += (*t)->GetMess()[3];
-    if ((*t)->GetMess()[1]>ptmax) {
-    ptmax=(*t)->GetMess()[1];
+    em  += (*t)->mess()[1];
+    had += (*t)->mess()[2];
+    had += (*t)->mess()[3];
+    if ((*t)->mess()[1]>ptmax) {
+    ptmax=(*t)->mess()[1];
     index=(*t)->GetIndex();
     }
     }
@@ -310,14 +310,14 @@ void EventProcessor::balanceSpectra(std::vector<Event*>& data)
         i != data.end() ; ++i )  {
     TAbstractData* jg = dynamic_cast<TAbstractData*>(*i);
     if(! jg) continue;
-    if (jg->GetType()!=GammaJet) continue;
+    if (jg->type()!=GammaJet) continue;
     
     //double etjetcor = jg->GetParametrizedMess();
-    if(jg->GetMess()->pt>min && jg->GetMess()->pt<max) {
-      gauss_forpt[(int)(jg->GetMess()->pt-min)]->Fill( (jg->GetMess()->pt-jg->GetTruth())/jg->GetMess()->pt,jg->GetWeight() );
-      gauss_forpt_truth[(int)(jg->GetMess()->pt-min)]->Fill( jg->GetTruth(),jg->GetWeight() );
-      EMF[(int)(jg->GetMess()->pt-min)] += jg->GetWeight()*jg->GetMess()->EMF;
-      TOT[(int)(jg->GetMess()->pt-min)] += jg->GetWeight()*jg->GetMess()->pt;
+    if(jg->mess()->pt>min && jg->mess()->pt<max) {
+      gauss_forpt[(int)(jg->mess()->pt-min)]->Fill( (jg->mess()->pt-jg->truth())/jg->mess()->pt,jg->weight() );
+      gauss_forpt_truth[(int)(jg->mess()->pt-min)]->Fill( jg->truth(),jg->weight() );
+      EMF[(int)(jg->mess()->pt-min)] += jg->weight()*jg->mess()->EMF;
+      TOT[(int)(jg->mess()->pt-min)] += jg->weight()*jg->mess()->pt;
     }      
   }
 
