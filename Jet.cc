@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.45 2010/05/19 13:34:48 stadie Exp $
+//    $Id: Jet.cc,v 1.46 2010/05/19 16:01:33 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -197,7 +197,7 @@ double Jet::correctedEt(double Et, bool fast) const {
     //if(corEt <  OutF + EMF) corEt = OutF + EMF;
   */
   if(temp_.pt <= 0.1) {
-    std::cout << "WARNING: jet cor. Et <= 0.1 GeV:" << temp_.pt << " at eta " << Measurement::eta << '\n';
+    //std::cout << "WARNING: jet cor. Et <= 0.1 GeV:" << temp_.pt << " at eta " << Measurement::eta << '\n';
     temp_.pt = 0.1;
     temp_.E = EoverPt_ * 0.1;
   }
@@ -208,9 +208,9 @@ double Jet::correctedEt(double Et, bool fast) const {
   //if(corEt != corEt) std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
   //assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
-  if(temp_.pt <= 1.0) {
-    std::cout << "WARNING: global jet cor. Et <= 1.0 GeV:" << temp_.pt << " at eta " << Measurement::eta << '\n';
-    temp_.pt = 1.0;
+  if(temp_.pt <= 0.1) {
+    //std::cout << "WARNING: global jet cor. Et <= 0.1 GeV:" << temp_.pt << " at eta " << Measurement::eta << '\n';
+    temp_.pt = 0.1;
     temp_.E = EoverPt_;
   }
   return temp_.pt;

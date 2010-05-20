@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.61 2010/05/05 14:16:04 stadie Exp $
+//  $Id: Parametrization.h,v 1.62 2010/05/19 13:34:49 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.61 2010/05/05 14:16:04 stadie Exp $
+//!  $Id: Parametrization.h,v 1.62 2010/05/19 13:34:49 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -906,13 +906,13 @@ public:
     double c = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(0.01*par[3])))+ par[4] * pow(pt/500.0,3);
     
     if(c < 0.05) {
-      std::cout << "L2L3JetParametrization::correctedJetEt: at limit " << c << " for pt=" << x->pt
-		<< " and eta = " << x->eta << std ::endl;
+      //std::cout << "L2L3JetParametrization::correctedJetEt: at limit " << c << " for pt=" << x->pt
+      //	<< " and eta = " << x->eta << std ::endl;
       c = 0.05;
     }
     if(c > 20.0) {
-      std::cout << "L2L3JetParametrization::correctedJetEt: at limit " << c << " for pt=" << x->pt
-		<< " and eta = " << x->eta << std ::endl;
+      //std::cout << "L2L3JetParametrization::correctedJetEt: at limit " << c << " for pt=" << x->pt
+      //	<< " and eta = " << x->eta << std ::endl;
       c = 20.0;
     }
     //assert(c > 0);
@@ -930,13 +930,13 @@ public:
     double logpt = log10(pt);
     double c = par[0] + par[1]/(pow(logpt,par[2]) + par[3]);
     if(c < 0.1) {
-      std::cout << "L2L3JetParametrization::correctedGlobalJetEt: at limit " << c << " for pt=" << x->pt
-		<< " and eta = " << x->eta << std ::endl;
+      //std::cout << "L2L3JetParametrization::correctedGlobalJetEt: at limit " << c << " for pt=" << x->pt
+      //	<< " and eta = " << x->eta << std ::endl;
       c = 0.1;
     }
     if(c > 10.0) {
-      std::cout << "L2L3JetParametrization::correctedGlobalJetEt: at limit " << c << " for pt=" << x->pt
-		<< " and eta = " << x->eta << std ::endl;
+      //std::cout << "L2L3JetParametrization::correctedGlobalJetEt: at limit " << c << " for pt=" << x->pt
+      //	<< " and eta = " << x->eta << std ::endl;
       c = 10.0;
     }
     //assert(c > 0);
