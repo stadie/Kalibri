@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.42 2010/04/13 13:55:36 mschrode Exp $
+// $Id: ToyMC.cc,v 1.43 2010/04/18 14:39:34 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -760,6 +760,8 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   float jeteta[kjMAX];
   float jetet[kjMAX];
   float jete[kjMAX]; 
+  int jetieta[kjMAX];
+  int jetiphi[kjMAX];
 
   float genevtscale;
   float jetgenpt[kjMAX];
@@ -935,6 +937,8 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
   CalibTree->Branch("JetEtWeightedSigmaPhi",jetEtWeightedSigmaPhi,"JetEtWeightedSigmaPhi[NobjJet]/F" );
   CalibTree->Branch("JetEtWeightedSigmaEta",jetEtWeightedSigmaEta,"JetEtWeightedSigmaEta[NobjJet]/F" );
   CalibTree->Branch("JetGenJetDeltaR",jetgenjetDeltaR,"JetGenJetDeltaR[NobjJet]/F");
+  CalibTree->Branch("JetIEta",jetieta,"JetIEta[NobjJet]/I");
+  CalibTree->Branch("JetIPhi",jetiphi,"JetIPhi[NobjJet]/I");
 
   // Correction factors
   CalibTree->Branch( "JetCorrZSP",     jscaleZSP, "JetCorrZSP[NobjJet]/F" );
@@ -1031,7 +1035,12 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
     if( gluonRadiation_ ) {
       genjet[0].SetPtEtaPhiM(jetgenpt[1],jetgeneta[1],jetgenphi[1],0.);
       double dPhi = random_->Uniform() > 0.5 ? dPhi_ : -dPhi_;
-      double dPt = random_->Uniform()*dPt_;
+      double dPt = 0.;
+      double sig = dPt_/sqrt(genjet[0].Pt());
+      do {
+	dPt = random_->Gaus(0.,sig);
+      } while( dPt < 0. || dPt > 5.*sig ); 
+	//(random_->Uniform()*dPt_;
       splitLorentzVector(genjet[0],dPt,dPhi,genjet[2],genjet[1]);
       for(int i = 1; i < 3; i++) {
 	jetgenpt[i]  = genjet[i].Pt();
@@ -1120,6 +1129,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       jetgeneta[i]    = genjet[i].Eta();
       jetgenet[i]     = genjet[i].Pt();
       jetgene[i]      = genjet[i].E();
+      calIds(jeteta[i],jetphi[i],jetieta[i],jetiphi[i]);
 
       genJetColPt[i]  = genjet[i].Pt();
       genJetColPhi[i] = genjet[i].Phi();
@@ -1148,7 +1158,9 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
       jetgeneta[2]    = 0.;
       jetgenet[2]     = 0.;
       jetgene[2]      = 0.;
-      
+      jetieta[2] = 1;
+      jetiphi[2] = 1;
+
       genJetColPt[2]  = 0.;
       genJetColPhi[2] = 0.;
       genJetColEta[2] = 0.;
