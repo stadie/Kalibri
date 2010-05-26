@@ -20,19 +20,19 @@ Mode = 0
 #Fit method: LVMini=1, use existing calibration=2, write start values=3
 Fit method = 1
 #Parametrization
-Parametrization Class = L2L3JetParametrization
-
+#Parametrization Class = SimplePhiPhiParametrization
+Parametrization Class = PhiPhiParametrization
 #Error Parametrization
 tower error parametrization = const
 #jet error parametrization   = jet et
 #jet error parametrization   = const
 
 start values = 1.0
-jet start values        = 1. 0. 0. 0. 0. 0.
-global jet start values =  0.981669 4.16531 3.03254 2.0096
+#jet start values = -9.0 5.4 -0.5 -1.9 22.4 -105.5 0.32 -40.3 2.13 -4.86
+jet start values = 7.4 -21.4 46.0 0.95 -117.8 -410.2 -0.3333 2.97 137.5 -0.015 .0.18 26.1 1.40 275.2
 
 # Scaling of residuals: 0 - none, 1 - with Cauchy-Function, 2 - with Huber-Function
-Residual Scaling Scheme    = 1111 #   221 : default
+Residual Scaling Scheme    = 111 #   221 : default
 Outlier Cut on Chi2        = 1000.0 # Applied before each iteration with no scaling
 
 BFGS derivative step     = 1e-05
@@ -48,20 +48,21 @@ BFGS print derivatives   = false
 #   Geometry / Binning for fitting
 #---------------------------------------------------------------------------------
 maximum eta twr used  = 82
-granularity in eta    = 2   # allowed values are: 1,3,5,11,21,41 (*2)
+granularity in eta    = 1   # allowed values are: 1,3,5,11,21,41 (*2)
 granularity in phi    = 1   # allowed values are: 1,2,3,6,9,18,36,72
-symmetry in eta       = false
+symmetry in eta       = true
 
-jet granularity in eta = 82 #  allowed values are: 1,3,5,11,21,41 (*2)
+jet granularity in eta = 3 #  allowed values are: 1,3,5,11,21,41 (*2)
 jet granularity in phi = 1 #   1 : default
 
 track granularity in eta = 1
 track granularity in phi = 1
-
-jet binning variables = eta;pt
-jet binning eta bins = -5.191 -4.889 -4.716 -4.538 -4.363 -4.191 -4.013 -3.839 -3.664 -3.489 -3.314 -3.139 -2.964 -2.853 -2.650 -2.500 -2.322 -2.172 -2.043 -1.930 -1.830 -1.740 -1.653 -1.566 -1.479 -1.392 -1.305 -1.218 -1.131 -1.044 -0.957 -0.879 -0.783 -0.696 -0.609 -0.522 -0.435 -0.348 -0.261 -0.174 -0.087 0.000 0.087 0.174 0.261 0.348 0.435 0.522 0.609 0.696 0.783 0.879 0.957 1.044 1.131 1.218 1.305 1.392 1.479 1.566 1.653 1.740 1.830 1.930 2.043 2.172 2.322 2.500 2.650 2.853 2.964 3.139 3.314 3.489 3.664 3.839 4.013 4.191 4.363 4.538 4.716 4.889 5.191
+ 
+jet binning variables = eta;pt;sigmaphi
+jet binning eta bins = -5.191 -2.964 -1.392  1.392 2.964 5.191
 jet binning pt bins = 5 10 12 15 18 22 26 30 35 40 45 51 57 64 72 80 90 105 120 135 150 175 200 250 300 350 400 500 650 800 1000 1500 5000
 jet binning emf bins = 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+jet binning sigmaphi bins = 0 0.02 0.04 0.06 0.08 0.09 0.10 0.11 0.12 0.13 0.14 0.15 0.16 0.18 0.20 0.22 0.24 1.0
 #---------------------------------------------------------------------------------
 #   Analyses (GammaJet, TrackTower, ... )
 #---------------------------------------------------------------------------------
@@ -117,6 +118,7 @@ Z-Jet data class     = 3
 #Di-Jet data class    = 21
 Top data class       = 1
 
+correct jets L2L3 = true
 #Di-Jet prescale = 1000
 #-----------------------------------------------------------------
 #  Control plots
@@ -129,29 +131,61 @@ plots output directory           = plots
 # JetTruthEvent plots
 create JetTruthEvent plots    =  true
 
-JetTruthEvent plots names =  MCTruthResponseVsGenJetPt; MCTruthResponseVsEta
+JetTruthEvent plots names =  MCTruthResponseVsGenJetPt; MCTruthResponseVsEta; MCTruthResponseVsPhiPhi; MCTruthResponseVsEtaEta;MCTruthRespFlavorVsGenJetPt
 MCTruthResponseVsGenJetPt x variable        =  GenJetPt;  log
 MCTruthResponseVsGenJetPt x edges           =  30 10 2000
 MCTruthResponseVsGenJetPt y variable        =  GenJetResponse
 MCTruthResponseVsGenJetPt y edges           =  51 0 2.0 0.9 1.1 0.9 1.1 0.0 0.5
 MCTruthResponseVsGenJetPt bin variable      =  Eta
 MCTruthResponseVsGenJetPt bin edges         =  -5.0 -3.0 -1.3 1.3 3.0 5.0
-MCTruthResponseVsGenJetPt correction types  =  Uncorrected; L2L3; Kalibri
+MCTruthResponseVsGenJetPt correction types  =  Uncorrected; Kalibri
 MCTruthResponseVsGenJetPt profile types     =  Mean; GaussFitMean; GaussFitWidth
-#MCTruthResponseVsGenJetPt distributions    =  Uncorrected; L2L3; Kalibri
-MCTruthResponseVsGenJetPt legend label      =  L2L3:CMS default
+#MCTruthResponseVsGenJetPt distributions    =  Uncorrected; Kalibri
+MCTruthResponseVsGenJetPt legend label      =  Uncorrected:CMS L2L3
 
-JetTruthEvent plots name 2              =  MCTruthResponseVsEta
 MCTruthResponseVsEta x variable         =  Eta
 MCTruthResponseVsEta x edges            =  20 -5 5
 MCTruthResponseVsEta y variable         =  GenJetResponse
 MCTruthResponseVsEta y edges            =  51 0 2.0 0.9 1.1 0.9 1.1 0.0 0.5
 MCTruthResponseVsEta bin variable       =  GenJetPt
 MCTruthResponseVsEta bin edges          =  10 50 100 500 2000
-MCTruthResponseVsEta correction types   =  Uncorrected; L2L3; Kalibri
+MCTruthResponseVsEta correction types   =  Uncorrected; Kalibri
 MCTruthResponseVsEta profile types      =  Mean; GaussFitMean; GaussFitWidth
-#MCTruthResponseVsEta distributions      =  Uncorrected; L2L3; Kalibri
-MCTruthResponseVsEta legend label       =  L2L3:CMS default
+#MCTruthResponseVsEta distributions      =  Uncorrected; Kalibri
+MCTruthResponseVsEta legend label       =  Uncorrected:CMS L2L3
+
+MCTruthResponseVsPhiPhi x variable         =  momentPhiPhi
+MCTruthResponseVsPhiPhi x edges            =  20 0 0.5
+MCTruthResponseVsPhiPhi y variable         =  GenJetResponse
+MCTruthResponseVsPhiPhi y edges            =  51 0 2 0.9 1.1 0.9 1.1 0.0 0.5
+MCTruthResponseVsPhiPhi bin variable       =  GenJetPt
+MCTruthResponseVsPhiPhi bin edges          =  10 30 50 80 120 300 600 2000
+MCTruthResponseVsPhiPhi correction types   =  Uncorrected; Kalibri
+MCTruthResponseVsPhiPhi profile types      =  Mean; GaussFitMean; GaussFitWidth
+#MCTruthResponseVsPhiPhi distributions     =  Uncorrected; Kalibri
+MCTruthResponseVsPhiPhi legend label       =  Uncorrected:CMS L2L3
+
+MCTruthResponseVsEtaEta x variable         =  momentEtaEta
+MCTruthResponseVsEtaEta x edges            =  20 0 0.5
+MCTruthResponseVsEtaEta y variable         =  GenJetResponse
+MCTruthResponseVsEtaEta y edges            =  1 0 2 0.9 1.1 0.9 1.1 0.0 0.5
+MCTruthResponseVsEtaEta bin variable       =  GenJetPt
+MCTruthResponseVsEtaEta bin edges          =  10 30 50 80 120 300 600 2000
+MCTruthResponseVsEtaEta correction types   =  Uncorrected; Kalibri
+MCTruthResponseVsEtaEta profile types      =  Mean; GaussFitMean; GaussFitWidth
+#MCTruthResponseVsEtaEta distributions     =  Uncorrected; Kalibri
+MCTruthResponseVsEtaEta legend label       =  Uncorrected:CMS L2L3
+
+MCTruthRespFlavorVsGenJetPt x variable        =  GenJetPt;  log
+MCTruthRespFlavorVsGenJetPt x edges           =  30 10 3000
+MCTruthRespFlavorVsGenJetPt y variable        =  GenJetResponse
+MCTruthRespFlavorVsGenJetPt y edges           =  51 0 2 0.9 1.1 0.9 1.1
+MCTruthRespFlavorVsGenJetPt bin variable      =  Flavor
+MCTruthRespFlavorVsGenJetPt bin edges         =  -0.5 0.5 1.5
+MCTruthRespFlavorVsGenJetPt correction types  =  Uncorrected; Kalibri
+MCTruthRespFlavorVsGenJetPt profile types     =  Mean; GaussFitMean
+#MCTruthResponseVsGenJetPt distributions      =  Uncorrected; Kalibri
+MCTruthRespFlavorVsGenJetPt legend label      =  Uncorrected:CMS L2L3
 
 """
     fcfg = open(filename, "w")
@@ -161,8 +195,6 @@ MCTruthResponseVsEta legend label       =  L2L3:CMS default
     fcfg.write("Number of Threads = "+str(nthreads)+"\n")
     if(useconstraint):
         fcfg.write("jet constraints =  5.0 10.0 0.0 1.2 1 10.0 15.0 0.0 1.2 1 15.0 20.0 0 1.2 1 20.0 25.0 0 1.2 1 25.0 30.0 0 1.2 1 30.0 40.0 0 1.2 1 40.0 50.0 0 1.2  1 50.0 60.0 0 1.2 1 60.0 70.0 0 1.2  1 70.0 80 0 1.2 1  80.0 90.0 0 1.2 1 90.0 100.0 0 1.2 1 100.0 120. 0 1.2 1 120 150 0 1.2 1 150 200 0 1.2 1 200 280 0 1.2 1 280 350 0 1.2 1 350 500 0 1.2 1 500 800 0 1.2 1 800 1400 0 1.2 1 1400 7000 0 1.2 1\n")
-    else:
-        fcfg.write("fixed jet parameters = 7 1\n")
         
     if(binned):
         fcfg.write("Di-Jet data class    = 21\n")
@@ -184,17 +216,17 @@ MCTruthResponseVsEta legend label       =  L2L3:CMS default
 #change these variables to steer the fit
 jettype = "Calo"
 datadir = "/scratch/hh/current/cms/user/stadie/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C"
-nthreads = 3
+nthreads = 5
 nevents =  -1
-dirname = "L2L3small"
+dirname = "L4small"
 useconstraint = False
-batch = False
+batch = True
 doBinnedFit = True
-doUnbinnedFit = False
+doUnbinnedFit = True
 
 
 #write configs and run the fit
-print "fit L2L3 correction for "+jettype+" using "+datadir
+print "fit L4 correction for "+jettype+" using "+datadir
 
 if os.path.exists(dirname):
     os.system("rm -rf "+dirname+"/*")
@@ -208,14 +240,16 @@ os.system("ls "+datadir+"/*"+jettype+"*.root > "+dirname+"/dijetlist");
 binned= True
 output="Kalibri.txt"
 input =""
-writeCfg(dirname+"/L2L3.cfg")
+writeCfg(dirname+"/L4.cfg")
 binned = False
 output="Kalibri2.txt"
-input ="Kalibri.txt"
-writeCfg(dirname+"/L2L3b.cfg")
+if doBinnedFit:
+    input ="Kalibri.txt"
+
+writeCfg(dirname+"/L4b.cfg")
 
 if batch:
-    fjob = open(dirname+"/fitL2L3.sh", "w")
+    fjob = open(dirname+"/fitL4.sh", "w")
     fjob.write("#! /bin/sh\n")
     fjob.write("#\n")
     fjob.write("#$ -V\n")
@@ -226,27 +260,27 @@ if batch:
     fjob.write("cd "+os.getcwd()+"/"+dirname+"\n")
     fjob.write("date\n")
     if doBinnedFit:
-        fjob.write("./junk L2L3.cfg > $TMPDIR/L2L3.log\n")
+        fjob.write("./junk L4.cfg > $TMPDIR/L4.log\n")
         fjob.write("date\n")
         fjob.write("mv $TMPDIR/L2L3.log .\n")
 
     if doUnbinnedFit:
-        fjob.write("./junk L2L3b.cfg > $TMPDIR/L2L3b.log\n")
+        fjob.write("./junk L4b.cfg > $TMPDIR/L4b.log\n")
         fjob.write("date\n")
-        fjob.write("mv $TMPDIR/L2L3b.log .\n")
+        fjob.write("mv $TMPDIR/L4b.log .\n")
 
     fjob.close()
-    qsubcmd = "qsub "+dirname+"/fitL2L3.sh"
+    qsubcmd = "qsub "+dirname+"/fitL4.sh"
     print "running "+qsubcmd
     os.system(qsubcmd)
 else:
     if doBinnedFit:
-        kalibricmd = "cd "+dirname+"; ./junk L2L3.cfg; cd -";
+        kalibricmd = "cd "+dirname+"; ./junk L4.cfg; cd -";
         print "running "+kalibricmd
         os.system(kalibricmd)
 
     if doUnbinnedFit:
-        kalibricmd = "cd "+dirname+"; ./junk L2L3b.cfg; cd -";
+        kalibricmd = "cd "+dirname+"; ./junk L4b.cfg; cd -";
         print "running "+kalibricmd
         os.system(kalibricmd)
 
