@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.10 2010/02/04 09:55:05 stadie Exp $
+// $Id: EventReader.h,v 1.11 2010/04/13 13:44:09 mschrode Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -13,10 +13,10 @@ class CorFactorsFactory;
 class TTree;
 class JetConstraintEvent;
 class Parametrization;
+class Binning;
 
 #include <vector>
 #include <string>
-
 
 class EventReader
 {
@@ -51,6 +51,7 @@ class EventReader
 
   static std::vector<JetConstraintEvent*> constraints_;
   Parametrization *cp_;
+  static Binning* binning_;
 };
 
 

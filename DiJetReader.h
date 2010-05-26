@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.17 2010/04/13 13:44:09 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.18 2010/05/19 13:34:48 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -37,8 +37,6 @@
 
 #include <string>
 #include <memory>
-#include <map>
-#include <set>
 #include <iterator>
 
 class Jet;
@@ -101,21 +99,9 @@ class DiJetReader : public EventReader{
   double min_;                  //!< Minimum of truth spectrum in integration
   double max_;                  //!< Maximum of truth spectrum in integration
   double truthSpecExp_;         //!< Exponent of truth spectrum
-
-  //handle binned events
-  int findBin(double eta, double pt) {
-    //from CMSSW/JetMETCorrections/MCJet/test/Settings.h
-    static const double Pt[33] = {5,10,12,15,18,22,26,30,35,40,45,51,57,64,72,80,90,105,120,135,150,175,200,250,300,350,400,500,650,800,1000,1500,5000};
-    //static const double Pt[1] = {7000};
-    static const double eta_boundaries[83] = {-5.191,-4.889,-4.716,-4.538,-4.363,-4.191,-4.013,-3.839,-3.664,-3.489,-3.314,-3.139,-2.964,-2.853,-2.650,-2.500,-2.322,-2.172,-2.043,-1.930,-1.830,-1.740,-1.653,-1.566,-1.479,-1.392,-1.305,-1.218,-1.131,-1.044,-0.957,-0.879,-0.783,-0.696,-0.609,-0.522,-0.435,-0.348,-0.261,-0.174,-0.087,0.000,0.087,0.174,0.261,0.348,0.435,0.522,0.609,0.696,0.783,0.879,0.957,1.044,1.131,1.218,1.305,1.392,1.479,1.566,1.653,1.740,1.830,1.930,2.043,2.172,2.322,2.500,2.650,2.853,2.964,3.139,3.314,3.489,3.664,3.839,4.013,4.191,4.363,4.538,4.716,4.889,5.191};
-    static const std::set<double> ptbins(Pt,Pt+33);
-    static const std::set<double> etabins(eta_boundaries,eta_boundaries+83);
-    int ipt = std::distance(ptbins.begin(),ptbins.lower_bound(pt));
-    int ieta = std::distance(etabins.begin(),etabins.lower_bound(eta));
-    return ipt * 100 + ieta;
-  }
-  std::map<int,JetBin*> jetbins_;
-
+  double genjetpt_,jeteta_,sigmaphi_,sigmaeta_,sumsigmaetaphi_,emf_; //!< possible binning variables
+  const double* vars_[4];             //!< Jet binning variables
+  const double zero_;           //!< just null
 };
 
 

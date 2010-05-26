@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.45 2010/05/01 09:36:16 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.46 2010/05/19 13:34:48 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -19,6 +19,7 @@
 #include "Function.h"
 #include "SmearFunction.h"
 #include "JetBin.h"
+#include "Binning.h"
 
 #include "TVector2.h"
 #include "TRandom3.h"
@@ -43,7 +44,8 @@
 //!  \param p Pointer to \p TParameters object
 // ----------------------------------------------------------------   
 DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
-  : EventReader(configfile,p), nJet_(new NJetSel()), rand_(new TRandom3(0))
+  : EventReader(configfile,p), nJet_(new NJetSel()), rand_(new TRandom3(0)),
+    zero_(0)
 {
   // Maximum number of read events
   nDijetEvents_ = config_->read<int>("use Di-Jet events",-1);
@@ -90,7 +92,32 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
     exit(9);
   }
   // Input files
-  nJet_->Init(createTree("dijet"));
+  nJet_->Init(createTree("dijet")); 
+
+  const std::string name = "jet binning";
+  std::vector<std::string> vars = bag_of_string(config_->read<std::string>(name+" variables","")); 
+  int j = 0;
+  for(std::vector<std::string>::const_iterator i = vars.begin() ; 
+      i != vars.end() ; ++i) {
+    if(*i == "pt") {
+      vars_[j] = &genjetpt_;
+    } else if(*i == "eta") {
+      vars_[j] = &jeteta_;
+    } else if(*i == "sigmaphi") {
+      vars_[j] = &sigmaphi_;    
+    } else if(*i == "sigmaeta") {
+      vars_[j] = &sigmaeta_;   
+    } else if(*i == "sumsigmaetaphi") {
+      vars_[j] = &sumsigmaetaphi_;
+    } else if(*i == "emf") {
+      vars_[j] = &emf_;  
+    } else {
+      std::cerr << "unknown binning varible: " << *i << '\n';
+      exit(3);
+    }
+    ++j;
+  }
+  for(; j < 4 ; ++j) vars_[j] = &zero_;
 }
 
 DiJetReader::~DiJetReader() {
@@ -189,8 +216,9 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     if(nReadEvts>=nDijetEvents_ && nDijetEvents_>=0 ) break;
   }
   if(dataClass_ == 21) {
-    for(std::map<int,JetBin*>::const_iterator ijb = jetbins_.begin() ; ijb != jetbins_.end() ; ++ijb) {
-      if(ijb->second->nJets() > 100) {
+    for(Binning::BinMap::const_iterator ijb = binning_->bins().begin() ; 
+	ijb != binning_->bins().end() ; ++ijb) {
+      if(ijb->second->nJets() > 10) {
 	Jet *jet = ijb->second->jet();
 	
 	if(corFactorsFactory_) {
@@ -200,12 +228,12 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
 	  jet->correctToL3();
 	} else if(correctL2L3_) {
 	  jet->correctL2L3();
-	}
+	} 
 	data.push_back(new JetTruthEvent(jet,ijb->second->genPt(),ijb->second->nJets(),true));
       }      
       delete ijb->second;
     }
-    jetbins_.clear();
+    binning_->clear();
   }
   // Print cut flow
   std::cout << "Read " << nReadEvts << " dijet events:\n";
@@ -233,7 +261,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     std::cout << "pt(jet3) < " << max3rdJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMinDeltaPhi_) << std::flush;
     std::cout << " dijet events with DeltaPhi > " << minDeltaPhi_ << "\n";
-  } else if( dataClass_ == 11 || dataClass_ == 12 ) {
+  } else if( dataClass_ == 11 || dataClass_ == 12 || dataClass_ == 21 ) {
     std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
     std::cout << " events with 2 or more jets\n";
     std::cout << "  That are " << (nReadEvts*=2) << " jet-truth events:\n";
@@ -245,7 +273,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     std::cout << " jet-truth events with DeltaR < " << maxDeltaR_ << "\n";
     std::cout << "    " << (nReadEvts-=nMinJetEt_) << std::flush;
     std::cout << " jet-truth events Et > " << minJetEt_ << "\n";
-    std::cout << "  " << (nReadEvts-=nMaxJetEt_) << std::flush;
+    std::cout << "    " << (nReadEvts-=nMaxJetEt_) << std::flush;
     std::cout << " jet-truth events Et < " << maxJetEt_ << " GeV\n";
     std::cout << "    " << (nReadEvts-=nMaxJetEta_) << std::flush;
     std::cout << " jet-truth events with |eta| < " << maxJetEta_ << "\n";
@@ -389,20 +417,25 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 
 
     if(dataClass_ == 21) {
-      int ibin = findBin(nJet_->JetEta[calJetIdx],nJet_->GenJetColPt[genJetIdx]);
+      jeteta_ = nJet_->JetEta[calJetIdx];
+      genjetpt_ = nJet_->GenJetColPt[genJetIdx];
+      sigmaeta_ = nJet_->JetEtWeightedSigmaEta[calJetIdx];
+      sigmaphi_ = nJet_->JetEtWeightedSigmaPhi[calJetIdx];
+      sumsigmaetaphi_ = sigmaeta_ + sigmaphi_;
+      emf_ = nJet_->JetEMF[calJetIdx];
+      JetBin* bin = (*binning_)(*vars_[0],*vars_[1],*vars_[2],*vars_[3]);
       // std::cout << "adding jet to bin:" << ibin << " with pt=" << nJet_->GenJetColPt[genJetIdx] << ", eta = " << nJet_->JetEta[calJetIdx] << std::endl;
-      std::map<int,JetBin*>::iterator jbi = jetbins_.find(ibin);
-      if(jbi == jetbins_.end()) {
-	jbi = (jetbins_.insert(std::pair<int,JetBin*>(ibin,new JetBin(par_->jet_function(nJet_->JetIEta[calJetIdx],nJet_->JetIPhi[calJetIdx]),jet_error_param,par_->global_jet_function())))).first;
+      if(! bin) { 
+	bin = binning_->setBin(new JetBin(par_->jet_function(nJet_->JetIEta[calJetIdx],nJet_->JetIPhi[calJetIdx]),jet_error_param,par_->global_jet_function()),*vars_[0],*vars_[1],*vars_[2],*vars_[3]);
       }
       CorFactors* cf = createCorFactors(calJetIdx); 
-      jbi->second->addJet(nJet_->JetPt[calJetIdx],tower.EMF,tower.HadF,
-			  tower.OutF,nJet_->JetE[calJetIdx],
-			  nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
-			  nJet_->JetEtWeightedSigmaPhi[calJetIdx],
-			  nJet_->JetEtWeightedSigmaEta[calJetIdx],
-			  nJet_->GenJetColPt[genJetIdx],drJetGenjet,
-			  *cf);
+      bin->addJet(nJet_->JetPt[calJetIdx],tower.EMF,tower.HadF,
+		  tower.OutF,nJet_->JetE[calJetIdx],
+		  nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
+		  nJet_->JetEtWeightedSigmaPhi[calJetIdx],
+		  nJet_->JetEtWeightedSigmaEta[calJetIdx],
+		  nJet_->GenJetColPt[genJetIdx],drJetGenjet,
+		  *cf);
       delete cf;
       ++njets;
       continue;

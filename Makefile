@@ -37,7 +37,7 @@ RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) $(BOOSTLINKFLAGS)  #-lrt -lpthread # -lposix4
 ROOTSYS=$(shell root-config --prefix)
 
-SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc CorFactorsFactory.cc JetBin.cc
+SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc CorFactorsFactory.cc JetBin.cc Binning.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -100,7 +100,7 @@ ControlPlotsConfig.o: ControlPlotsConfig.cc ControlPlotsConfig.h ConfigFile.h
 ControlPlotsJetSmearing.o: ControlPlotsJetSmearing.cc ControlPlotsJetSmearing.h CalibData.h ConfigFile.h Parameters.h SmearData.h SmearDiJet.h SmearPhotonJet.h Jet.h 	
 	$(C) $(RCXX) -c ControlPlotsJetSmearing.cc
 
-EventReader.o: EventReader.h EventReader.cc Parameters.h Parametrization.h ConfigFile.h CorFactorsFactory.h CorFactors.h ToyMC.h  JetConstraintEvent.h
+EventReader.o: EventReader.h EventReader.cc Parameters.h Parametrization.h ConfigFile.h CorFactorsFactory.h CorFactors.h ToyMC.h  JetConstraintEvent.h Binning.h
 	$(C) $(RCXX) -c EventReader.cc
 
 PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h Function.h CorFactors.h CorFactorsFactory.h
@@ -126,6 +126,9 @@ EventProcessor.o: CalibData.h ConfigFile.h Parameters.h EventProcessor.h EventPr
 
 EventWeightProcessor.o: CalibData.h ConfigFile.h EventProcessor.h Parameters.h EventWeightProcessor.cc
 	$(C) $(RCXX) -c EventWeightProcessor.cc
+
+Binning.o: Binning.h JetBin.h Binning.cc ConfigFile.h
+	$(C) $(CFLAGS) -c Binning.cc
 
 Jet.o: CalibData.h Jet.h Jet.cc Parametrization.h Function.h CorFactors.h
 	$(C) $(CFLAGS) -c Jet.cc

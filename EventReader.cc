@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.11 2010/04/21 09:30:15 mschrode Exp $
+// $Id: EventReader.cc,v 1.12 2010/04/29 13:29:41 stadie Exp $
 //
 #include "EventReader.h"
 
@@ -7,7 +7,8 @@
 #include "Parameters.h" 
 #include "Parametrization.h"
 #include "CorFactorsFactory.h"
-#include "JetConstraintEvent.h" 
+#include "JetConstraintEvent.h"
+#include "Binning.h" 
 #include "TChain.h"
 #include "ToyMC.h"
 #include "TTree.h"
@@ -16,6 +17,7 @@
 
 unsigned int EventReader::numberOfEventReaders_ = 0;
 std::vector<JetConstraintEvent*> EventReader::constraints_;
+Binning* EventReader::binning_ = 0;
 
 EventReader::EventReader(const std::string& configfile, TParameters* param) 
   : config_(0),par_(param),corFactorsFactory_(0),cp_(new ConstParametrization())
@@ -120,6 +122,9 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
 		<< " with weight " << jce->weight() << "\n";
     }
   }
+  if(! binning_) {
+    binning_ = new Binning(config_);
+  }
 }
 
 EventReader::~EventReader()
@@ -129,6 +134,8 @@ EventReader::~EventReader()
     delete constraints_[i];
   }
   constraints_.clear();
+  delete binning_;
+  binning_ = 0;
 }
 
 
