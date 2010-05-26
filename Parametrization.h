@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.62 2010/05/19 13:34:49 stadie Exp $
+//  $Id: Parametrization.h,v 1.63 2010/05/20 15:15:47 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.62 2010/05/19 13:34:49 stadie Exp $
+//!  $Id: Parametrization.h,v 1.63 2010/05/20 15:15:47 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1406,13 +1406,15 @@ public:
   }
  
   double correctedJetEt(const Measurement *x,const double *par) const {
-    if(std::abs(x->eta) > 1.2) return x->pt;
+    //if(std::abs(x->eta) > 1.2) return x->pt;
     double y = x->phiphi > 0.25 ? 0.12 : x->phiphi - 0.13;
     double pt =  (x->pt < 20) ? 20 : ((x->pt > 1000) ? 1000 : x->pt);
     double c = 1/(par[0] + exp((pt-par[1])/par[2])) + par[3];
     c += y * ( par[4] - par[5]/(pow(log(pt),par[6])+par[7]) + par[8]/pt);
     c += y *y *(par[9] * pt + par[10] * pow(pt,2.0/3.0) + par[11] * pow(pt,-1.0/3.0) + par[12] * (pt - par[13])/pt);
-    // std::cout << x->pt << ":" << c << ", " << 1/c << std::endl;
+    // std::cout << x->pt << ":" << c << ", " << 1/c << std::endl;  
+    if(c < 0.3) c = 0.3;
+    if(c > 3.0) c = 3.0;
     return 1/c * x->pt;  
   }
 };
