@@ -111,15 +111,15 @@ create plots                     = true
 # JetTruthEvent plots
 create JetTruthEvent plots    =  true
 
-JetTruthEvent plots names =  MCTruthResponseVsGenJetPt; MCTruthResponseVsEta; MCTruthResolVsGenJetPt;
+JetTruthEvent plots names =  MCTruthResponseVsGenJetPt; MCTruthResponseVsEta
 MCTruthResponseVsGenJetPt x variable        =  GenJetPt;  log
 MCTruthResponseVsGenJetPt x edges           =  30 10 3000
 MCTruthResponseVsGenJetPt y variable        =  GenJetResponse
-MCTruthResponseVsGenJetPt y edges           =  51 0 2.0 0.9 1.1
+MCTruthResponseVsGenJetPt y edges           =  51 0 2.0 0.9 1.1 0.0 0.5
 MCTruthResponseVsGenJetPt bin variable      =  Eta
 MCTruthResponseVsGenJetPt bin edges         =  -5.0 -3.0 -1.3 1.3 3.0 5.0
 MCTruthResponseVsGenJetPt correction types  =  Uncorrected; L2L3
-MCTruthResponseVsGenJetPt profile types     =  GaussFitMean
+MCTruthResponseVsGenJetPt profile types     =  GaussFitMean; GaussFitWidth
 #MCTruthResponseVsGenJetPt distributions     =  Uncorrected; L2L3
 MCTruthResponseVsGenJetPt legend label      =  L2L3:CMS default
 
@@ -127,11 +127,11 @@ JetTruthEvent plots name 2              =  MCTruthResponseVsEta
 MCTruthResponseVsEta x variable         =  Eta
 MCTruthResponseVsEta x edges            =  20 -5 5
 MCTruthResponseVsEta y variable         =  GenJetResponse
-MCTruthResponseVsEta y edges            =  51 0 2.0 0.9 1.1
+MCTruthResponseVsEta y edges            =  51 0 2.0 0.9 1.1 0.0 0.5
 MCTruthResponseVsEta bin variable       =  GenJetPt
 MCTruthResponseVsEta bin edges          =  10 50 100 500 2000
 MCTruthResponseVsEta correction types   =  Uncorrected; L2L3
-MCTruthResponseVsEta profile types      =  GaussFitMean
+MCTruthResponseVsEta profile types      =  GaussFitMean; GaussFitWidth
 #MCTruthResponseVsEta distributions      =  Uncorrected; L2L3
 MCTruthResponseVsEta legend label       =  L2L3:CMS default
 
@@ -148,9 +148,9 @@ MCTruthResolVsGenJetPt legend label      =  L2L3:CMS default
 """
 
 jettypes = ["Calo","PF","JPT","Track"]
-datadir = "/scratch/hh/current/cms/user/stadie/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C"
-jecname = "Spring10"
-datasetname="/QCDFlat_Pt15to3000/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO"
+datadir = "/scratch/hh/current/cms/user/stadie/QCDFlat_Pt15to3000-herwigSpring10-START3X_V26_S09-v1B"
+jecname = "Spring10_on_herwig"
+datasetname="/QCDFlat_Pt15to3000-herwig/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO"
 
 for jettype in jettypes:
     print "make plots for jettype "+jettype
@@ -162,7 +162,7 @@ for jettype in jettypes:
     os.system("ls "+datadir+"/*"+jettype+"*.root > tempdijetlist");
     fcfg = open("valid.cfg", "w")
     fcfg.write(config)
-    fcfg.write("plots output directory           = tempplots\n")
+    fcfg.write("plots output directory = tempplots\n")
     fcfg.write("Di-Jet input file = tempdijetlist\n")
     fcfg.close()
     
