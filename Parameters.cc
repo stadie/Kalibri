@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.51 2010/04/27 16:04:16 stadie Exp $
+// $Id: Parameters.cc,v 1.52 2010/05/26 13:09:26 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -454,7 +454,17 @@ void TParameters::readCalibrationTxt(std::string const& configFile)
     }
     // catch last character
     //trkPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
-    globaljetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+    if((entry-5)<=p->nTowerPars()){
+      twrPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+    }
+    else if((entry-5)<=p->nTowerPars()+p->nJetPars()){
+      jetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+    }
+    else if((entry-5)<=p->nTowerPars()+p->nJetPars()+p->nTrackPars()) {
+      trkPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+    } else {
+      globaljetPars.push_back(std::atof( line.substr(0, line.find(" ")).c_str() ));
+    }
 
     // fill parameters
     for(phiBin = 1; phiBin <= 72; phiBin++) {
