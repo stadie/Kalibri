@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.6 2010/04/24 14:10:52 mschrode Exp $
+//  $Id: Kalibri.cc,v 1.7 2010/05/19 13:34:48 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -139,7 +139,10 @@ void Kalibri::run()
     if( ewp.applyWeights() ) {
       ewp.process(data_);
     }
-
+    if(! data_.size()) {
+      std::cout << "Warning: No events to perform the fit!\n";
+      return;
+    }
     if(fitMethod_==1) {
       run_Lvmini();
       time_t end = time(0);
