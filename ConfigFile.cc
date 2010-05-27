@@ -7,6 +7,7 @@ using std::string;
 #include <iostream>
 
 bag_of_string::bag_of_string(std::string s) : std::vector<std::string>::vector() {
+  if(s == "") return;
   std::string buffer;
   size_type pos1 = 0, pos2 = 0, pos2a = 0, pos2b = 0;
   
