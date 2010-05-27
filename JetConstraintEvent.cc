@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.cc,v 1.6 2010/05/19 13:34:48 stadie Exp $
+//    $Id: JetConstraintEvent.cc,v 1.7 2010/05/19 16:01:36 stadie Exp $
 //   
 
 
@@ -30,11 +30,6 @@ void JetConstraintEvent::addJet(double truePt, const Jet* j,
   jets_.push_back(jet); 
   error_ /= jets_.size();
   trusum_ += jet->Et();
-  //add parameter ids to variation  map
-  const Jet::VariationColl& varcoll = jet->lastVariations();
-  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
-    varmap_[i->parid] = Variation();
-  }
   ptHat_ = truth();
 }
 
@@ -83,7 +78,11 @@ double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_de
     double et = jets_[i]->correctedEt(jets_[i]->Et());
     for(Jet::VariationCollIter j = varcoll.begin() ; j != varcoll.end() ; ++j) {
       VarMap::iterator k = varmap_.find(j->parid);
-      assert(k != varmap_.end());
+      if(k == varmap_.end()) {
+	k = varmap_.insert(k,std::make_pair(j->parid,Variation()));
+	k->second.uppersum_ = sumet;
+	k->second.lowersum_ = sumet;
+      }
       k->second.uppersum_ += j->upperEt - et;
       k->second.lowersum_ += j->lowerEt - et;
     }

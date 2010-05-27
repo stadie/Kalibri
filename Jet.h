@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.36 2010/05/19 13:34:48 stadie Exp $
+//!    $Id: Jet.h,v 1.37 2010/05/19 16:01:41 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -158,7 +158,6 @@ class Jet : public Measurement
   virtual Jet* clone() const { return new Jet(*this);} //!< Clone this jet
   void setGlobalFunction(const Function& ngf) { gf_ = ngf;} //!< Set global correction function, needed for constraints
 
-  const VariationColl& lastVariations() const { return varcoll_;} 
  protected:
   mutable VariationColl varcoll_;
   virtual double expectedEt(double truth, double start, bool fast = false);
