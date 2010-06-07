@@ -34,6 +34,9 @@ public :
   std::stringstream testout;
   std::string s;
 
+                 const static Int_t entries_to_run = -1; //set to -1 to run over all events
+  //           const static Int_t entries_to_run = 100000; //set to -1 to run over all events
+
   
   const static Bool_t debug=0;
   const static Bool_t img_exp=1;
@@ -41,17 +44,22 @@ public :
   std::stringstream img_extension;
 
   const static Int_t pt_bins_x = 100;
-  const static Int_t s_phi_bins_x = 200;
+  const static Int_t s_phi_bins_x = 100;
   const static Int_t response_bins = 100;
 
-  const static Double_t s_phi_xlow = -.5;
+  const static Double_t s_phi_xlow = -1.05;
   const static Double_t s_phi_xhigh = 1.05;
+  std::vector < std::pair < Double_t,Double_t > > corr_var_x_edges_;///////////////////////////////////////////////////////////////////
+  //  std::vector < Double_t > corr_var_xhigh;/////////////////////////////////////DIES HIER ERGAENZEN!!!
+  std::vector < std::pair < Double_t,Double_t > > param_fit_y_edges_;
+
   const static Double_t response_low = -0.5;
   const static Double_t response_high = 2.0;
 
   const static Double_t iso_max       = 0.5;
 
   Int_t no_pt_bins_;
+  Int_t no_small_pt_bins_;
   std::vector< std::pair <Double_t,Double_t> > pt_bins_;
 
   Int_t no_X_labels_;
@@ -65,8 +73,10 @@ public :
   std::vector <  TString > X_labels_;
   std::vector < std::pair < TString,TString > > Corr_labels_;
   std::vector <  TString > double_gauss_labels_;
+  std::vector <  TString > param_fit_labels_;
   std::vector < Int_t > Corr_selected_labels_;
 
+std::vector < std::vector < TH1D* > > tlj_X_counts_all_;
 
   TCanvas *test;
 
@@ -87,7 +97,7 @@ public :
       Double_t _JetCorrEmE;
       Double_t _JetEMFCorr;
 
-
+      TH1D * deltar_area_norm;
 
 
     /////base functions for variables, labels and histo-definitions 
@@ -105,7 +115,10 @@ public :
    std::vector < Double_t > base_corr::get_Correction_Vars_(Int_t genjet_i, Int_t match);
    std::vector<Double_t> base_corr::doublefit_gaus(TH1D *histo);
 
- 
+    TGraphErrors* base_corr::make_graph(std::vector < std::vector < Double_t > >  Double_gauss_, Int_t y_para, TString title, Int_t X_par=-1);
+    TGraphErrors* base_corr::make_graph(std::vector < TString > params_labels_, std::vector < std::vector < Double_t > >  Double_gauss_, Int_t y_para, TString title, Int_t X_par=-1);
+  virtual void base_corr::draw_graphs(std::vector <TGraphErrors*> graphs_, Double_t ylow, Double_t yhigh, TLegend *legend, TString PDF_PNG_name);
+
 
    ////////ENDE EIGENER TEIL
 
@@ -397,7 +410,7 @@ base_corr::base_corr(TTree *tree)
 
    }
    Init(tree);
-test = new TCanvas("TEST", "TEST",341,360,700,530);
+test = new TCanvas("TEST", "TEST",341,360,1024,768);
 }
 
 base_corr::~base_corr()
