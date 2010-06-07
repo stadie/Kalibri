@@ -21,15 +21,18 @@ void flex_corr::Book_Histos()
   
   for (Int_t Corr_i=0;Corr_i<no_Corr_labels_;Corr_i++)
     {
+      std::vector < TH1D* >  tlj_Corr_Vars_counts_;
       std::vector < TH2D* >  tlj_X_response_2D_;
       std::vector < TProfile* >  tlj_X_response_prof_;
        for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
 	 {
-	   tlj_X_response_2D_.push_back(define_pt_histo( "tlj_X_response_2D_"+Corr_labels_[Corr_i].first+"_", ";"+Corr_labels_[Corr_i].first+";L2L3-Response", pt_bins_, pt_i, s_phi_bins_x,s_phi_xlow,s_phi_xhigh,response_bins,response_low, response_high));
-	   tlj_X_response_prof_.push_back(define_pt_histo( "tlj_X_response_prof_"+Corr_labels_[Corr_i].first+"_", ";"+Corr_labels_[Corr_i].first+";L2L3-Response", pt_bins_, pt_i, s_phi_bins_x,s_phi_xlow,s_phi_xhigh,response_low, response_high));
+	   tlj_Corr_Vars_counts_.push_back(define_pt_histo("tlj_Corr_Vars_counts_"+Corr_labels_[Corr_i].first+"_", ";"+Corr_labels_[Corr_i].first+";counts",pt_bins_,pt_i, s_phi_bins_x,corr_var_x_edges_[Corr_i].first,corr_var_x_edges_[Corr_i].second));
+	   tlj_X_response_2D_.push_back(define_pt_histo( "tlj_X_response_2D_"+Corr_labels_[Corr_i].first+"_", ";"+Corr_labels_[Corr_i].first+";L2L3-Response", pt_bins_, pt_i, s_phi_bins_x,corr_var_x_edges_[Corr_i].first,corr_var_x_edges_[Corr_i].second,response_bins,response_low, response_high));
+	   tlj_X_response_prof_.push_back(define_pt_histo( "tlj_X_response_prof_"+Corr_labels_[Corr_i].first+"_", ";"+Corr_labels_[Corr_i].first+";L2L3-Response", pt_bins_, pt_i, s_phi_bins_x,corr_var_x_edges_[Corr_i].first,corr_var_x_edges_[Corr_i].second,response_low, response_high));
 	 }
-              tlj_X_response_2D_all_.push_back(tlj_X_response_2D_);
-              tlj_X_response_prof_all_.push_back(tlj_X_response_prof_);
+       tlj_Corr_Vars_counts_all_.push_back(tlj_Corr_Vars_counts_);
+       tlj_X_response_2D_all_.push_back(tlj_X_response_2D_);
+       tlj_X_response_prof_all_.push_back(tlj_X_response_prof_);
     }
 
 }
@@ -47,7 +50,7 @@ void flex_corr::Write_Histos()
       std::vector < TH1D* >  tlj_X_response_GMP_mean_;
        for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
 	 {
-	   tlj_X_response_2D_all_[Corr_i].at(pt_i)->FitSlicesY(0,tlj_X_response_2D_all_[Corr_i].at(pt_i)->GetXaxis()->FindBin(s_phi_xlow),tlj_X_response_2D_all_[Corr_i].at(pt_i)->GetXaxis()->FindBin(s_phi_xhigh));
+	   tlj_X_response_2D_all_[Corr_i].at(pt_i)->FitSlicesY(0,tlj_X_response_2D_all_[Corr_i].at(pt_i)->GetXaxis()->FindBin(corr_var_x_edges_[Corr_i].first),tlj_X_response_2D_all_[Corr_i].at(pt_i)->GetXaxis()->FindBin(corr_var_x_edges_[Corr_i].second));
 	   TString temp =  (TString) tlj_X_response_2D_all_[Corr_i].at(pt_i)->GetName() + "_1";
 	   tlj_X_response_GMP_mean_.push_back((TH1D*)gDirectory->Get(temp.Data()));
 	   tlj_X_response_GMP_mean_.back()->GetYaxis()->SetRangeUser(-0.5,2.0);
@@ -57,15 +60,27 @@ void flex_corr::Write_Histos()
     }
 
 
+    TString saveFolder = "Corr_Plots";
+    if(chdir(saveFolder) != 0){
+      mkdir(saveFolder, S_IRWXU|S_IRWXG|S_IRWXO);
+      chdir(saveFolder);
+    }
+ 
+
 
   for (Int_t Corr_i=0;Corr_i<no_Corr_labels_;Corr_i++)
     {
-      draw_TH2D_save_PS(img_choice, tlj_X_response_2D_all_[Corr_i],tlj_X_response_2D_all_[Corr_i].at(0)->GetName(),"nice","colz","z1");
-      draw_TH1D_save_PS( img_choice,tlj_X_response_GMP_mean_all_[Corr_i],tlj_X_response_GMP_mean_all_[Corr_i].at(0)->GetName() + (TString) "_MEAN_GMP", "nice");
-      draw_Colz_Prof_GMP_save_PS(img_choice,tlj_X_response_2D_all_[Corr_i], tlj_X_response_prof_all_[Corr_i], tlj_X_response_GMP_mean_all_[Corr_i], tlj_X_response_GMP_mean_all_[Corr_i].at(0)->GetName() + (TString) "_ALL_Colz_Prof_GMP", "nice", "colz", "z1");
+      draw_TH2D_save_PS("PS_Corr_Vars_vs_Response",false,img_choice, tlj_X_response_2D_all_[Corr_i], X_labels_[bin_choice] +tlj_X_response_2D_all_[Corr_i].at(0)->GetName(),"nice","colz","z1");
+      draw_TH2D_save_PS("PS_Corr_Vars_vs_Response",false,img_choice, tlj_X_response_2D_all_[Corr_i], X_labels_[bin_choice] +tlj_X_response_2D_all_[Corr_i].at(0)->GetName(),"nice","colz","z0");
+      draw_TH1D_save_PS("PS_prof_and_GMP_all_Corrs", img_choice,tlj_X_response_GMP_mean_all_[Corr_i], X_labels_[bin_choice] + tlj_X_response_GMP_mean_all_[Corr_i].at(0)->GetName() + (TString) "_MEAN_GMP", "nice");
+      draw_Colz_Prof_GMP_save_PS("PS_Corr_Vars_vs_Response",img_choice,tlj_X_response_2D_all_[Corr_i], tlj_X_response_prof_all_[Corr_i], tlj_X_response_GMP_mean_all_[Corr_i],  X_labels_[bin_choice] + tlj_X_response_GMP_mean_all_[Corr_i].at(0)->GetName() + (TString) "_ALL_Colz_Prof_GMP", "nice", "colz", "z1");
+      draw_Colz_Prof_GMP_save_PS("PS_Corr_Vars_vs_Response",img_choice,tlj_X_response_2D_all_[Corr_i], tlj_X_response_prof_all_[Corr_i], tlj_X_response_GMP_mean_all_[Corr_i],  X_labels_[bin_choice] + tlj_X_response_GMP_mean_all_[Corr_i].at(0)->GetName() + (TString) "_ALL_Colz_Prof_GMP", "nice", "colz", "z0");
 
+      draw_TH1D_save_PS("PS_Corr_Var_Counts",img_choice, tlj_Corr_Vars_counts_all_[Corr_i], X_labels_[bin_choice] +tlj_Corr_Vars_counts_all_[Corr_i].at(0)->GetName(), "nice","","y1");
+      draw_TH1D_save_PS("PS_Corr_Var_Counts",img_choice, tlj_Corr_Vars_counts_all_[Corr_i], X_labels_[bin_choice] +tlj_Corr_Vars_counts_all_[Corr_i].at(0)->GetName(), "nice","","y0 ");
       for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
 	{
+	  tlj_Corr_Vars_counts_all_[Corr_i].at(pt_i)->Write();
 	  tlj_X_response_2D_all_[Corr_i].at(pt_i)->Write();
 	  tlj_X_response_prof_all_[Corr_i].at(pt_i)->Write();
 	  tlj_X_response_GMP_mean_all_[Corr_i].at(pt_i)->Write();
@@ -74,12 +89,16 @@ void flex_corr::Write_Histos()
 
   for (Int_t X_i=0;X_i<no_X_labels_;X_i++)
     {
-      draw_TH1D_save_PS(img_choice, tlj_X_counts_all_[X_i],tlj_X_counts_all_[X_i].at(0)->GetName(), "nice");
+      draw_TH1D_save_PS("PS_X_Counts",img_choice, tlj_X_counts_all_[X_i],  X_labels_[bin_choice] +tlj_X_counts_all_[X_i].at(0)->GetName(), "nice");
        for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
 	 {
 	   tlj_X_counts_all_[X_i].at(pt_i)->Write();
 	 }
     }
+
+  chdir("..");
+
+
 
    outf->Close();
 
@@ -139,7 +158,7 @@ void flex_corr::Loop()
 
    Long64_t nentries = fChain->GetEntriesFast();
 
-   //         nentries=100000;
+   if(entries_to_run>0)nentries=entries_to_run;
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -213,6 +232,7 @@ void flex_corr::Loop()
 		       }
 		     for(Int_t Corr_i=0;Corr_i<no_Corr_labels_;Corr_i++)
 		       {
+			 tlj_Corr_Vars_counts_all_[Corr_i].at(pt_i)->Fill(Correction_Var_[Corr_i]);
 			 tlj_X_response_2D_all_[Corr_i].at(pt_i)->Fill(Correction_Var_[Corr_i],_L2L3JetResponse);
 			 tlj_X_response_prof_all_[Corr_i].at(pt_i)->Fill(Correction_Var_[Corr_i],_L2L3JetResponse);
 		       }
