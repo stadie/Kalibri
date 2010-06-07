@@ -45,7 +45,7 @@ void flex_res::Import_Histos()
 	   tlj_X_response_2D_.push_back((TH2D*)_file->Get(define_pt_histo_name( "tlj_X_response_2D_"+Corr_labels_[Corr_i].first+"_", pt_bins_, pt_i)));
 	   tlj_X_response_prof_.push_back((TProfile*)_file->Get(define_pt_histo_name( "tlj_X_response_prof_"+Corr_labels_[Corr_i].first+"_", pt_bins_, pt_i)));
 	   TString temp =  (TString) tlj_X_response_2D_.back()->GetName() + "_1";
-	   tlj_X_response_GMP_mean_.push_back((TProfile*)_file->Get(temp.Data()));
+	   tlj_X_response_GMP_mean_.push_back((TH1D*)_file->Get(temp.Data()));
 
 	 }
 
@@ -92,18 +92,70 @@ void flex_res::Book_Histos()
 
  for(unsigned int Sel_Corr_i=0;Sel_Corr_i<Corr_selected_labels_.size();Sel_Corr_i++)
    {
-  std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_;
-   for(unsigned int Sel_Corr_j=0;Sel_Corr_j<Corr_selected_labels_.size();Sel_Corr_j++)
+  std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_counts_;
+  std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_counts_helper_;
+  std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_response_;
+  std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_response2_;
+  std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_mean_response_;
+   for(unsigned int Sel_Corr_j=Sel_Corr_i+1;Sel_Corr_j<Corr_selected_labels_.size();Sel_Corr_j++)
      {
-      std::vector < TH2D* >  tlj_Sel_Correlations_2D_;
-       for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
-	 {
-	   tlj_Sel_Correlations_2D_.push_back(define_pt_histo( "tlj_Sel_Correlations_2D_"+
-	   Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+"_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first + "_", ";"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+";"+  Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first, pt_bins_, pt_i, s_phi_bins_x,s_phi_xlow,s_phi_xhigh, s_phi_bins_x,s_phi_xlow,s_phi_xhigh));
-	 }
-       tlj_Sel_Correlations_2D_one_corr_.push_back(tlj_Sel_Correlations_2D_);
+	   std::vector < TH2D* >  tlj_Sel_Correlations_2D_counts_;
+	   std::vector < TH2D* >  tlj_Sel_Correlations_2D_counts_helper_;
+	   std::vector < TH2D* >  tlj_Sel_Correlations_2D_response_;
+	   std::vector < TH2D* >  tlj_Sel_Correlations_2D_response2_;
+	   std::vector < TH2D* >  tlj_Sel_Correlations_2D_mean_response_;
+//         if(Sel_Corr_i!=Sel_Corr_j)
+//  	 {
+	   for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
+	     {
+	       tlj_Sel_Correlations_2D_counts_.push_back(define_pt_histo( "tlj_Sel_Correlations_2D_counts_"+
+	       Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+"_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first + 
+               "_", ";"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+";"+  
+               Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first, pt_bins_, pt_i, s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].second,
+                s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].second));
+	       tlj_Sel_Correlations_2D_counts_.back()->Sumw2();
+
+	       tlj_Sel_Correlations_2D_counts_helper_.push_back(define_pt_histo( "tlj_Sel_Correlations_2D_counts_helper_"+
+	       Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+"_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first + 
+               "_", ";"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+";"+  
+               Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first, pt_bins_, pt_i, s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].second,
+                s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].second));
+	       tlj_Sel_Correlations_2D_counts_helper_.back()->Sumw2();
+
+	       tlj_Sel_Correlations_2D_response_.push_back(define_pt_histo( "tlj_Sel_Correlations_2D_response_"+
+	       Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+"_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first + 
+               "_", ";"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+";"+  
+               Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first, pt_bins_, pt_i, s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].second,
+                s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].second));
+	       tlj_Sel_Correlations_2D_response_.back()->Sumw2();
+
+	       tlj_Sel_Correlations_2D_response2_.push_back(define_pt_histo( "tlj_Sel_Correlations_2D_response2_"+
+	       Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+"_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first + 
+               "_", ";"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+";"+  
+               Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first, pt_bins_, pt_i, s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].second,
+                s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].second));
+	       tlj_Sel_Correlations_2D_response2_.back()->Sumw2();
+
+	       tlj_Sel_Correlations_2D_mean_response_.push_back(define_pt_histo( "tlj_Sel_Correlations_2D_mean_response_"+
+	       Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+"_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first + 
+               "_", ";"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first+";"+  
+               Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first, pt_bins_, pt_i, s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].second,
+                s_phi_bins_x,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].first,corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].second));
+	       tlj_Sel_Correlations_2D_mean_response_.back()->Sumw2();
+
+	     }
+	   tlj_Sel_Correlations_2D_one_corr_counts_helper_.push_back(tlj_Sel_Correlations_2D_counts_helper_);
+	   tlj_Sel_Correlations_2D_one_corr_counts_.push_back(tlj_Sel_Correlations_2D_counts_);
+	   tlj_Sel_Correlations_2D_one_corr_response_.push_back(tlj_Sel_Correlations_2D_response_);
+	   tlj_Sel_Correlations_2D_one_corr_response2_.push_back(tlj_Sel_Correlations_2D_response2_);
+	   tlj_Sel_Correlations_2D_one_corr_mean_response_.push_back(tlj_Sel_Correlations_2D_mean_response_);
+	   //	 }
      }
-   tlj_Sel_Correlations_2D_all_.push_back(tlj_Sel_Correlations_2D_one_corr_);
+   tlj_Sel_Correlations_2D_counts_helper_all_.push_back(tlj_Sel_Correlations_2D_one_corr_counts_helper_);
+   tlj_Sel_Correlations_2D_counts_all_.push_back(tlj_Sel_Correlations_2D_one_corr_counts_);
+   tlj_Sel_Correlations_2D_response_all_.push_back(tlj_Sel_Correlations_2D_one_corr_response_);
+   tlj_Sel_Correlations_2D_response2_all_.push_back(tlj_Sel_Correlations_2D_one_corr_response2_);
+   tlj_Sel_Correlations_2D_mean_response_all_.push_back(tlj_Sel_Correlations_2D_one_corr_mean_response_);
    }
 
 
@@ -118,22 +170,32 @@ void flex_res::Write_Histos()
    TFile *outf = new TFile(root_resol_name_binning,"RECREATE");
 
      
+    TString saveFolder = "Resolution_Plots";
+    if(chdir(saveFolder) != 0){
+      mkdir(saveFolder, S_IRWXU|S_IRWXG|S_IRWXO);
+      chdir(saveFolder);
+    }
+
+    cout <<"created folder, writing corrected response"<< endl;
 
   for (Int_t Corr_i=0;Corr_i<no_all_Corr_labels_;Corr_i++)
     {
-      draw_TH1D_save_with_Gauss_Fit_PS( tlj_corrected_response_barrel_all_[Corr_i],tlj_corrected_response_barrel_all_[Corr_i].at(0)->GetName(),"nice");
       for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
 	{
 	  tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->Write();
+	  cout << tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetName() << endl;
 	  //	  tlj_X_response_all_ tlj_X_response_all_corrections_.back()->Draw();
 	}
+      draw_TH1D_save_with_Gauss_Fit_PS("PS_Corrected_Response",img_choice, tlj_corrected_response_barrel_all_[Corr_i], X_labels_[bin_choice] +tlj_corrected_response_barrel_all_[Corr_i].at(0)->GetName(),"nice");
       
     }
    
+    cout <<" writing correction functions"<< endl;
+
 
   for (Int_t Corr_i=0;Corr_i<no_all_Corr_labels_;Corr_i++)
     {
-      draw_TH1D_save_PS(tlj_X_response_all_corrections_all_[Corr_i],"tlj_X_response_all_corrections_all_"+Corr_labels_[Corr_i].first,"nice");  
+      draw_TH1D_save_PS("PS_Correction_Functions",img_choice,tlj_X_response_all_corrections_all_[Corr_i], X_labels_[bin_choice] +"tlj_X_response_all_corrections_all_"+Corr_labels_[Corr_i].first,"nice");  
       for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
 	{
 	  tlj_X_response_all_corrections_all_[Corr_i].at(pt_i)->Write();
@@ -146,17 +208,54 @@ void flex_res::Write_Histos()
   for(unsigned int Sel_Corr_i=0;Sel_Corr_i<Corr_selected_labels_.size();Sel_Corr_i++)
     {
       //			 std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_;
-      for(unsigned int Sel_Corr_j=0;Sel_Corr_j<Corr_selected_labels_.size();Sel_Corr_j++)
+      for(unsigned int Sel_Corr_j=Sel_Corr_i+1;Sel_Corr_j<Corr_selected_labels_.size();Sel_Corr_j++)
 	{
 	  //			     std::vector < TH2D* >  tlj_Sel_Correlations_2D_;
-	  
-	        draw_TH2D_save_PS(true,img_choice,tlj_Sel_Correlations_2D_all_[Sel_Corr_i].at(Sel_Corr_j)," tlj_Sel_Correlations_"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first + "_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first ,"nice","colz");
+
 	  for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
 	    {
-	      tlj_Sel_Correlations_2D_all_[Sel_Corr_i].at(Sel_Corr_j).at(pt_i)->Write();
+	      //	      tlj_Sel_Correlations_2D_counts_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Rebin2D();
+
+	      tlj_Sel_Correlations_2D_counts_helper_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Rebin2D(4);
+	      tlj_Sel_Correlations_2D_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Rebin2D(4);
+	      tlj_Sel_Correlations_2D_response2_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Rebin2D(4);
+	      tlj_Sel_Correlations_2D_mean_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Rebin2D(4);
+
+	      tlj_Sel_Correlations_2D_counts_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Write();
+	      tlj_Sel_Correlations_2D_counts_helper_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Write();
+	      tlj_Sel_Correlations_2D_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Write();
+	      tlj_Sel_Correlations_2D_response2_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Write();
+
+	      tlj_Sel_Correlations_2D_mean_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Divide(tlj_Sel_Correlations_2D_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i),tlj_Sel_Correlations_2D_counts_helper_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i));
+	      tlj_Sel_Correlations_2D_mean_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Write();
+
+	      TMatrixDSym cov(1, n);
+	      
+	      for(unsigned int i = 1; i <= 2; i++)
+		for(unsigned int j = 1; j <= 2; j++)
+		  cov(i, j) = tlj_Sel_Correlations_2D_counts_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->GetCovariance(i,j);
+	      std:: cout << tlj_Sel_Correlations_2D_counts_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->GetName() << std::endl;
+	      std::cout << "Covariance matrix:" << std::endl;
+	      cov.Print();
+	      TDecompSVD svd(cov);
+	      TMatrixD rotation = svd.GetU();
+	      std::cout << "Matrix to diagonalize covariance:" << std::endl;
+	      rotation.Print();
+
 	    }
+
+	      draw_TH2D_save_PS("PS_Correlation_Plots_counts",true,img_choice,tlj_Sel_Correlations_2D_counts_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1), X_labels_[bin_choice] +" tlj_Sel_Correlations_counts_"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first + "_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first ,"nice","colz");
+
+	      gStyle->SetOptStat(0);
+	      // gRoot->SetStatBox(0);
+	      draw_TH2D_save_PS("PS_Correlation_Plots_mean_response",false,img_choice,tlj_Sel_Correlations_2D_mean_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1), X_labels_[bin_choice] +" tlj_Sel_Correlations_mean_response_"+Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first + "_vs_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_j]].first ,"nice","colz","",0,-1,0,-1,0.8,1.2);
+	      gStyle->SetOptStat(1);
+	      //	      gRoot->SetStatBox(1);
+	      //void draw_TH2D_save_PS(TString SaveTo,Bool_t with_correlation_factors, TString img_exp, std::vector<TH2D*> histos_, TString PS_name ="DEFAULT_PS", TString format = "six", TString draw_options ="", TString Logxyz="x0_y0_z0", Double_t ru_xlow=0, Double_t ru_xhig=-1, Double_t ru_ylow=0, Double_t ru_yhig=-1, Double_t ru_zlow=0, Double_t ru_zhig=-1) {
 	}
     }
+
+  chdir("..");
 
 
    outf->Close();
@@ -169,12 +268,18 @@ void flex_res::Write_TGraphErrors()
 
    TFile *outf = new TFile(root_resol_name_binning,"UPDATE");
 
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_mean_all_,tlj_Response_Graphs_mean_all_.at(0)->GetName(),"nice","ALP","no","x1");
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_mean_all_,tlj_Response_Graphs_mean_all_.at(0)->GetName(),"nice");
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_rel_sigma_all_,tlj_Response_Graphs_rel_sigma_all_.at(0)->GetName(),"nice","ALP", "yes","x1",0,-1,0,0.5);
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_rel_sigma_all_,tlj_Response_Graphs_rel_sigma_all_.at(0)->GetName(),"nice","ALP", "yes","x0",0,-1,0,0.5);
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_rel_resol_all_,tlj_Response_Graphs_rel_resol_all_.at(0)->GetName(),"nice","ALP", "no","x1");
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_rel_resol_all_,tlj_Response_Graphs_rel_resol_all_.at(0)->GetName(),"nice","ALP", "no","x0");
+    TString saveFolder = "Resolution_Plots";
+    if(chdir(saveFolder) != 0){
+      mkdir(saveFolder, S_IRWXU|S_IRWXG|S_IRWXO);
+      chdir(saveFolder);
+    }
+
+      draw_TGraphErrors_save_PS("PS_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_mean_all_,X_labels_[bin_choice] +tlj_Response_Graphs_mean_all_.at(0)->GetName(),"nice","ALP","no","x1");
+      draw_TGraphErrors_save_PS("PS_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_mean_all_,X_labels_[bin_choice] +tlj_Response_Graphs_mean_all_.at(0)->GetName(),"nice");
+      draw_TGraphErrors_save_PS("PS_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_rel_sigma_all_,X_labels_[bin_choice] +tlj_Response_Graphs_rel_sigma_all_.at(0)->GetName(),"nice","ALP", "yes","x1",0,-1,0,0.5);
+      draw_TGraphErrors_save_PS("PS_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_rel_sigma_all_,X_labels_[bin_choice] +tlj_Response_Graphs_rel_sigma_all_.at(0)->GetName(),"nice","ALP", "yes","x0",0,-1,0,0.5);
+      draw_TGraphErrors_save_PS("PS_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_rel_resol_all_,X_labels_[bin_choice] +tlj_Response_Graphs_rel_resol_all_.at(0)->GetName(),"nice","ALP", "no","x1");
+      draw_TGraphErrors_save_PS("PS_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_rel_resol_all_,X_labels_[bin_choice] +tlj_Response_Graphs_rel_resol_all_.at(0)->GetName(),"nice","ALP", "no","x0");
 
   for (Int_t Corr_i=0;Corr_i<no_all_Corr_labels_;Corr_i++)
     {
@@ -186,12 +291,12 @@ void flex_res::Write_TGraphErrors()
 
   if(Corr_selected_labels_.size()>0)
 {
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_mean_selec_,tlj_Response_Graphs_mean_selec_.at(0)->GetName(),"nice","ALP","no","x1");
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_mean_selec_,tlj_Response_Graphs_mean_selec_.at(0)->GetName(),"nice","ALP","no","x0");
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_rel_sigma_selec_,tlj_Response_Graphs_rel_sigma_selec_.at(0)->GetName(),"nice","ALP","yes","x0",0,-1,0,0.5);
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_rel_sigma_selec_,tlj_Response_Graphs_rel_sigma_selec_.at(0)->GetName(),"nice","ALP","yes","x1",0,-1,0,0.5);
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_rel_resol_selec_,tlj_Response_Graphs_rel_resol_selec_.at(0)->GetName(),"nice","ALP","no","x0");
-      draw_TGraphErrors_save_PS(img_choice,tlj_Response_Graphs_rel_resol_selec_,tlj_Response_Graphs_rel_resol_selec_.at(0)->GetName(),"nice","ALP","no","x1");
+      draw_TGraphErrors_save_PS("PS_Selected_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_mean_selec_,X_labels_[bin_choice] +tlj_Response_Graphs_mean_selec_.at(0)->GetName(),"nice","ALP","no","x1");
+      draw_TGraphErrors_save_PS("PS_Selected_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_mean_selec_,X_labels_[bin_choice] +tlj_Response_Graphs_mean_selec_.at(0)->GetName(),"nice","ALP","no","x0");
+      draw_TGraphErrors_save_PS("PS_Selected_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_rel_sigma_selec_,X_labels_[bin_choice] +tlj_Response_Graphs_rel_sigma_selec_.at(0)->GetName(),"nice","ALP","yes","x0",0,-1,0,0.5);
+      draw_TGraphErrors_save_PS("PS_Selected_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_rel_sigma_selec_,X_labels_[bin_choice] +tlj_Response_Graphs_rel_sigma_selec_.at(0)->GetName(),"nice","ALP","yes","x1",0,-1,0,0.5);
+      draw_TGraphErrors_save_PS("PS_Selected_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_rel_resol_selec_,X_labels_[bin_choice] +tlj_Response_Graphs_rel_resol_selec_.at(0)->GetName(),"nice","ALP","no","x0");
+      draw_TGraphErrors_save_PS("PS_Selected_Mean_RELSIGMA_RELRES",img_choice,tlj_Response_Graphs_rel_resol_selec_,X_labels_[bin_choice] +tlj_Response_Graphs_rel_resol_selec_.at(0)->GetName(),"nice","ALP","no","x1");
 }
 
 
@@ -222,9 +327,9 @@ void flex_res::Write_TGraphErrors()
 
 
 
- draw_graphs( tlj_Response_Graphs_mean_all_, 0., 1.3, leg_all, "RESPONSE_res_All_response_graph_mean_w_mean_e");
- draw_graphs( tlj_Response_Graphs_rel_sigma_all_, -0.1, 0.5, leg_all, "RESPONSE_res_All_response_graph_rel_sigma");
- draw_graphs( tlj_Response_Graphs_rel_resol_all_, 0.6, 1.1, leg_all, "RESPONSE_res_All_response_graph_rel_sigma_relative_to_L2L3");
+ draw_graphs( tlj_Response_Graphs_mean_all_, 0., 1.3, leg_all,  X_labels_[bin_choice] +"RESPONSE_res_All_response_graph_mean_w_mean_e");
+ draw_graphs( tlj_Response_Graphs_rel_sigma_all_, -0.1, 0.5, leg_all,  X_labels_[bin_choice] +"RESPONSE_res_All_response_graph_rel_sigma");
+ draw_graphs( tlj_Response_Graphs_rel_resol_all_, 0.6, 1.1, leg_all, X_labels_[bin_choice] + "RESPONSE_res_All_response_graph_rel_sigma_relative_to_L2L3");
 
 
  TString selection;
@@ -237,76 +342,17 @@ void flex_res::Write_TGraphErrors()
 
   if(Corr_selected_labels_.size()>0)
 {
- draw_graphs( tlj_Response_Graphs_mean_selec_, 0.85, 1.15, leg_selected, "RESPONSE_res_selected_" + selection + "_response_graph_mean");
- draw_graphs( tlj_Response_Graphs_rel_sigma_selec_, -0.1, 0.5, leg_selected, "RESPONSE_res_selected_" + selection + "_response_graph_rel_sigma");
- draw_graphs( tlj_Response_Graphs_rel_resol_selec_, 0.6, 1.1, leg_selected, "RESPONSE_res_selected_" + selection + "_response_graph_rel_sigma_relative_to_L2L3");
+ draw_graphs( tlj_Response_Graphs_mean_selec_, 0.85, 1.15, leg_selected,  X_labels_[bin_choice] +"RESPONSE_res_selected_" + selection + "_response_graph_mean");
+ draw_graphs( tlj_Response_Graphs_rel_sigma_selec_, -0.1, 0.5, leg_selected,  X_labels_[bin_choice] +"RESPONSE_res_selected_" + selection + "_response_graph_rel_sigma");
+ draw_graphs( tlj_Response_Graphs_rel_resol_selec_, 0.6, 1.1, leg_selected,  X_labels_[bin_choice] +"RESPONSE_res_selected_" + selection + "_response_graph_rel_sigma_relative_to_L2L3");
 }
 
 
+  chdir("..");
 
    outf->Close();
 
 }
-
-void flex_res::draw_graphs(std::vector <TGraphErrors*> graphs_, Double_t ylow, Double_t yhigh, TLegend *legend, TString PDF_PNG_name)
-{
-
-  if(graphs_.size()>=1)
-    {
-graphs_[0]->GetYaxis()->SetRangeUser(ylow,yhigh);
-graphs_[0]->Draw("ALP");
-    }
-
- for(unsigned int a_i=0; a_i<graphs_.size();a_i++)
-   {
-      graphs_[a_i]->SetLineColor(a_i+1);
-      graphs_[a_i]->Draw("same"); 
-   }
- legend->Draw();
-
- test->Print(PDF_PNG_name+".pdf");
- test->Print(PDF_PNG_name+".png");
-
-  test->SetLogx();
-
- test->Print(PDF_PNG_name+"_logX_" +".pdf");
- test->Print(PDF_PNG_name+"_logX_" +".png");
-
-  test->SetLogx(0);
-
-
-}
-
-
-TGraphErrors* flex_res::make_graph(std::vector < std::vector < Double_t > >  Double_gauss_, Int_t y_para, TString title, Int_t X_par)
-{
-  //benoetigt: X_choice und double_gauss_labels_
-
-  Int_t size = Double_gauss_.size();
-
-  Double_t X_array[size];
-  Double_t X_e_array[size];
-  Double_t Y_array[size];
-  Double_t Y_e_array[size];
-
-  //X_choice
-  if(X_par==-1)X_par=X_choice;
-
-  for (Int_t a_i =0;a_i<size;a_i++)
-    {
-      X_array[a_i]=tlj_X_counts_all_[X_par].at(a_i)->GetMean(1);
-      X_e_array[a_i]=tlj_X_counts_all_[X_par].at(a_i)->GetMean(11);
-      Y_array[a_i]=Double_gauss_[a_i].at(y_para);
-      Y_e_array[a_i]=Double_gauss_[a_i].at(y_para+1);
-    }
-
-  TGraphErrors* temp = new TGraphErrors(size, X_array, Y_array, X_e_array, Y_e_array);
-  temp->SetTitle (title+";"+X_labels_[X_par]+";"+double_gauss_labels_[y_para]);
-  temp->SetName(title);
-
-  return temp;
-}
-
 
 void flex_res::Loop()
 {
@@ -400,7 +446,8 @@ void flex_res::Loop()
    Long64_t nentries = fChain->GetEntriesFast();
 
 
-   //          nentries=20000;
+   if(entries_to_run>0)nentries=entries_to_run;
+   //           nentries=200000;
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -421,7 +468,7 @@ void flex_res::Loop()
 
           for(Int_t genjet_i =0; genjet_i<2;genjet_i++)//über erste zwei colgenjet
 	{
-      //DeltaR ausrechnen (Gen -Jet Nummerierung und passender CaloJet)
+	  //DeltaR ausrechnen (Gen -Jet Nummerierung und passender CaloJet)
 	  genjet_jet_deltar= delta_r(GenJetColEta[genjet_i],JetEta[GenJetColJetIdx[genjet_i]],GenJetColPhi[genjet_i],JetPhi[GenJetColJetIdx[genjet_i]]); 
 
 	  Bool_t isolated=1;//Isolation ueberpruefen
@@ -492,11 +539,36 @@ void flex_res::Loop()
 		     for(unsigned int Sel_Corr_i=0;Sel_Corr_i<Corr_selected_labels_.size();Sel_Corr_i++)
 		       {
 			 //			 std::vector < std::vector < TH2D* > > tlj_Sel_Correlations_2D_one_corr_;
-			 for(unsigned int Sel_Corr_j=0;Sel_Corr_j<Corr_selected_labels_.size();Sel_Corr_j++)
+			 for(unsigned int Sel_Corr_j=Sel_Corr_i+1;Sel_Corr_j<Corr_selected_labels_.size();Sel_Corr_j++)
 			   {
 			     //			     std::vector < TH2D* >  tlj_Sel_Correlations_2D_;
+			     if(Corr_selected_labels_[Sel_Corr_i]<no_Corr_labels_&&Corr_selected_labels_[Sel_Corr_j]<no_Corr_labels_)
+			       {
+				 tlj_Sel_Correlations_2D_counts_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(Correction_Var_[Corr_selected_labels_[Sel_Corr_i]],Correction_Var_[Corr_selected_labels_[Sel_Corr_j]]);
 
-			     tlj_Sel_Correlations_2D_all_[Sel_Corr_i].at(Sel_Corr_j).at(pt_i)->Fill(Correction_Var_[Corr_selected_labels_[Sel_Corr_i]],Correction_Var_[Corr_selected_labels_[Sel_Corr_j]]);
+
+				 tlj_Sel_Correlations_2D_counts_helper_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(Correction_Var_[Corr_selected_labels_[Sel_Corr_i]],Correction_Var_[Corr_selected_labels_[Sel_Corr_j]]);
+				 tlj_Sel_Correlations_2D_counts_helper_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].first+0.01,Correction_Var_[Corr_selected_labels_[Sel_Corr_j]]);
+				 tlj_Sel_Correlations_2D_counts_helper_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(Correction_Var_[Corr_selected_labels_[Sel_Corr_i]],corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].first+0.01);
+
+
+				 tlj_Sel_Correlations_2D_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(Correction_Var_[Corr_selected_labels_[Sel_Corr_i]],Correction_Var_[Corr_selected_labels_[Sel_Corr_j]],_L2L3JetResponse);
+				 tlj_Sel_Correlations_2D_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].first+0.01,Correction_Var_[Corr_selected_labels_[Sel_Corr_j]],_L2L3JetResponse);
+				 tlj_Sel_Correlations_2D_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(Correction_Var_[Corr_selected_labels_[Sel_Corr_i]],corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].first+0.01,_L2L3JetResponse);
+
+
+
+				 tlj_Sel_Correlations_2D_response2_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(Correction_Var_[Corr_selected_labels_[Sel_Corr_i]],Correction_Var_[Corr_selected_labels_[Sel_Corr_j]],_L2L3JetResponse*_L2L3JetResponse);
+				 tlj_Sel_Correlations_2D_response2_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_i]].first+0.01,Correction_Var_[Corr_selected_labels_[Sel_Corr_j]],_L2L3JetResponse*_L2L3JetResponse);
+				 tlj_Sel_Correlations_2D_response2_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(Correction_Var_[Corr_selected_labels_[Sel_Corr_i]],corr_var_x_edges_[Corr_selected_labels_[Sel_Corr_j]].first+0.01,_L2L3JetResponse*_L2L3JetResponse);
+			       }
+			     else
+			       {
+				 tlj_Sel_Correlations_2D_counts_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(0.5,0.5);	 
+				 tlj_Sel_Correlations_2D_counts_helper_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(0.5,0.5);	 
+				 tlj_Sel_Correlations_2D_response_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(0.5,0.5);
+				 tlj_Sel_Correlations_2D_response2_all_[Sel_Corr_i].at(Sel_Corr_j-Sel_Corr_i-1).at(pt_i)->Fill(0.5,0.5);
+			       }
 			   }
 		       }
 
@@ -539,22 +611,23 @@ void flex_res::Loop()
 
        std::vector < std::vector < Double_t > > Double_gauss_;
        std::vector < std::vector < Double_t > > Rel_resol_;
-       for(Int_t pt_i=0;pt_i<no_pt_bins_;pt_i++)
+
+        for(Int_t pt_i=no_small_pt_bins_;pt_i<no_pt_bins_;pt_i++)
+ 	 {
+ 	   if(tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetEntries()>150)doublefit_gaus(tlj_corrected_response_barrel_all_[Corr_i].at(pt_i));
+ 	 }
+       for(Int_t pt_i=0;pt_i<no_small_pt_bins_;pt_i++)
 	 {
-	   cout << "Anzahl der Einträge: " << tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetEntries() << " Corr_Nummer: " << Corr_i << "  Pt_i " << pt_i << endl;
+	   cout << "Name: " << tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetName()  << " Anzahl der Einträge: " << tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetEntries() << " Corr_Nummer: " << Corr_i << "  Pt_i " << pt_i << endl;
 
 	   //	   tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->Draw();
-	   if(tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetEntries()>100)
+	   if(tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetEntries()>150)
 	     {
-	       cout << "test1" << endl;
-	   cout << "Anzahl der Einträge: " << tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetEntries() << " Corr_Nummer: " << Corr_i << "  Pt_i " << pt_i << endl;
+	   cout << "Name: " << tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetName()  << "Anzahl der Einträge: " << tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)->GetEntries() << " Corr_Nummer: " << Corr_i << "  Pt_i " << pt_i << endl;
 	       Double_gauss_.push_back(doublefit_gaus(tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)));
 	       std::vector < Double_t > rel_resol_pair_;
-	       cout << "test2" << endl;
 	       rel_resol_pair_.push_back(doublefit_gaus(tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)).at(2)/doublefit_gaus(tlj_corrected_response_barrel_all_[1].at(pt_i)).at(2));
-	       cout << "test3" << endl;
 	       rel_resol_pair_.push_back(doublefit_gaus(tlj_corrected_response_barrel_all_[Corr_i].at(pt_i)).at(3)/doublefit_gaus(tlj_corrected_response_barrel_all_[1].at(pt_i)).at(2));
-	       cout << "test4" << endl;
 
 	       Rel_resol_.push_back(rel_resol_pair_);
 	     }
@@ -574,6 +647,9 @@ void flex_res::Loop()
        tlj_Response_Graphs_rel_sigma_all_.push_back(make_graph(Double_gauss_all_[Corr_i], 2, X_labels_[X_choice] +"vs.#sigma_{Rel}_" + Corr_labels_[Corr_i].first, X_choice));
        //Rel. Sigma relative to L2L3, default X
        tlj_Response_Graphs_rel_resol_all_.push_back(make_graph(Rel_resol_all_[Corr_i], 0, X_labels_[X_choice] +"vs.#sigma_{Rel}_over_#sigma_{Rel,L2L3}_" + Corr_labels_[Corr_i].first, X_choice));
+       //       tlj_Response_Graphs_rel_resol_all_[Corr_i]->GetYaxis()->SetTitle("BLFH");
+       //       tlj_Response_Graphs_rel_resol_all_.back()->GetYaxis()->SetTitle("#frac{#sigma}{Mean} / #frac{#sigma_{L2L3}}{Mean_{L2L3}}");
+
        if(Corr_i>=no_Corr_labels_)
 	 {
 	   tlj_Response_Graphs_mean_all_.back()->SetLineStyle(2);
@@ -591,6 +667,8 @@ void flex_res::Loop()
        //Rel. Sigma relative to L2L3, default X
        tlj_Response_Graphs_rel_resol_selec_.push_back(make_graph(Rel_resol_all_[Corr_selected_labels_[Sel_Corr_i]], 0, "Selected" + X_labels_[X_choice] +"vs.#sigma_{Rel}_over_#sigma_{Rel,L2L3}_" + Corr_labels_[Corr_selected_labels_[Sel_Corr_i]].first, X_choice));
 
+       //       tlj_Response_Graphs_rel_resol_selec_[Sel_Corr_i]->GetYaxis()->SetTitle("BLAH");
+       //   gr->GetYaxis()->SetTitle("Y title");
        if(Corr_selected_labels_[Sel_Corr_i]>=no_Corr_labels_)
 	 {
 	   tlj_Response_Graphs_mean_selec_.back()->SetLineStyle(2);
