@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.37 2010/05/19 16:01:41 stadie Exp $
+//!    $Id: Jet.h,v 1.38 2010/05/27 15:27:49 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -67,6 +67,8 @@ class Jet : public Measurement
   double HadEt()  const {return HadF;}               //!< Return Et from the HCAL part of the towers
   double OutEt()  const {return OutF;}               //!< Return Et from the HOut part of the towers
   double E()      const {return Measurement::E;}    //!< Return energy
+  double emf()    const {return EMF/(EMF+HadF);}    //!< Return fraction of ECAL energy
+  double hadf()    const {return HadF/(EMF+HadF);}  //!< Return fraction of HCAL energy
   double eta()    const {return Measurement::eta;}  //!< Return pseudorapidity
   double phi()    const {return Measurement::phi;}  //!< Return azimuthal angle
   double momentPhiPhi() const {return Measurement::phiphi;}  //!< Return phi-phi moment (width of jet in phi)
