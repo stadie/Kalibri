@@ -2,7 +2,7 @@
 //    Class for jet bins
 //
 //    first version: Hartmut Stadie 2010/05/10
-//    $Id: JetBin.cc,v 1.1 2010/05/19 13:34:48 stadie Exp $
+//    $Id: JetBin.cc,v 1.2 2010/05/19 16:01:36 stadie Exp $
 //   
 
 
@@ -27,6 +27,7 @@ void JetBin::addJet(double Et, double EmEt, double HadEt ,double OutEt, double E
   sumPt2_ += Et * Et;
 
   sumGenPt_ += genPt;
+  sumGenPt2_ += genPt * genPt;
   sumdR_ += dR;
   
   sumL1_ += corFactors.getL1() * Et;
@@ -54,7 +55,7 @@ Jet* JetBin::createJet() const {
 				  sumL4_/sumL3_,sumL5_/sumL4_,sumJPT_/sumMess_.pt,
 				  sumJPTL2L3_/sumMess_.pt),
 		   f_,errf_,gf_);
-  double err = sqrt(w*sumPt2_ - j->pt() * j->pt());
+  double err = sqrt(w*sumPt2_ - j->pt() * j->pt() + w*sumGenPt2_ - j->genPt() * j->genPt());
   j->setError(err);
   //std::cout << j->pt() << ":" << j->error() << " ; " << err << '\n';
   return j;

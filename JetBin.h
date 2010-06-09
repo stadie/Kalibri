@@ -4,7 +4,7 @@
 //!
 //!    \date 2010/05/10
 //!
-//!    $Id: JetBin.h,v 1.1 2010/05/19 13:34:48 stadie Exp $
+//!    $Id: JetBin.h,v 1.2 2010/05/19 16:01:42 stadie Exp $
 #ifndef JETBIN_H
 #define JETBIN_H
 
@@ -20,9 +20,8 @@ class JetBin
   JetBin(const Function& f,
 	 double (*errfunc)(const double *x, const Measurement *xorig, double err), 
 	 const Function& gf) 
-    : sumMess_(),sumPt2_(0), sumGenPt_(0), sumdR_(0), sumL1_(0), sumL2_(0), sumL3_(0), sumL4_(0),
-    sumL5_(0), sumJPT_(0), sumJPTL2L3_(0), njets_(0), f_(f), 
-    gf_(gf), errf_(errfunc) 
+    : sumMess_(),sumPt2_(0), sumGenPt_(0), sumGenPt2_(0), sumdR_(0), sumL1_(0), sumL2_(0), sumL3_(0),
+    sumL4_(0), sumL5_(0), sumJPT_(0), sumJPTL2L3_(0), njets_(0), f_(f), gf_(gf), errf_(errfunc) 
   {}
     
   virtual ~JetBin() {}
@@ -40,7 +39,7 @@ class JetBin
 
   Measurement  sumMess_;//!< sums for Measurement
   double sumPt2_;
-  double sumGenPt_, sumdR_;        //!< sums for Jet
+  double sumGenPt_,sumGenPt2_, sumdR_;        //!< sums for Jet
   double sumL1_, sumL2_, sumL3_, sumL4_, sumL5_, sumJPT_, sumJPTL2L3_;  //!< sums for CorFactor
   int njets_;                      //!< number of jets in this bin
   Function  f_;                    //!< Jet correction function
