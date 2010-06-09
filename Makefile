@@ -85,13 +85,13 @@ Parametrization.o: Parametrization.h Parametrization.cc
 Parameters.o: Parameters.cc Parameters.h Parametrization.h Function.h SmearFunction.h ConfigFile.h
 	$(C) $(RCXX) -c Parameters.cc
 
-ControlPlots.o: ControlPlots.cc ControlPlots.h ControlPlotsConfig.h ControlPlotsProfile.h ControlPlotsFunction.h CalibData.h Function.h Jet.h JetTruthEvent.h
+ControlPlots.o: ControlPlots.cc ControlPlots.h ControlPlotsConfig.h ControlPlotsProfile.h ControlPlotsFunction.h CalibData.h Function.h Jet.h JetTruthEvent.h TwoJetsPtBalanceEvent.h
 	$(C) $(RCXX) -c ControlPlots.cc
 
 ControlPlotsProfile.o: ControlPlotsProfile.cc ControlPlotsProfile.h ControlPlotsConfig.h ControlPlotsFunction.h ConfigFile.h CalibData.h
 	$(C) $(RCXX) -c ControlPlotsProfile.cc
 
-ControlPlotsFunction.o: ControlPlotsFunction.cc ControlPlotsFunction.h ControlPlotsConfig.h Jet.h JetTruthEvent.h CorFactors.h
+ControlPlotsFunction.o: ControlPlotsFunction.cc ControlPlotsFunction.h ControlPlotsConfig.h Jet.h JetTruthEvent.h CorFactors.h TwoJetsPtBalanceEvent.h
 	$(C) $(RCXX) -c ControlPlotsFunction.cc
 
 ControlPlotsConfig.o: ControlPlotsConfig.cc ControlPlotsConfig.h ConfigFile.h

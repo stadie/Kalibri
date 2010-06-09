@@ -20,7 +20,7 @@ class Event;
 //!
 //!  \author Christian Autermann
 //!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.33 2009/11/24 16:52:59 stadie Exp $
+//!  $Id: ControlPlots.h,v 1.34 2010/01/04 17:04:51 mschrode Exp $
 // -------------------------------------------------------------
 class ControlPlots {
  public:
@@ -36,7 +36,9 @@ class ControlPlots {
   const std::vector<Event*> *data_;             //!< The plotted data
 
   void createJetTruthEventPlots() const;
+  void createTwoJetsPtBalanceEventPlots() const;
   ControlPlotsFunction::Function findJetTruthEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type = ControlPlotsConfig::Uncorrected) const;
+  ControlPlotsFunction::Function findTwoJetsPtBalanceEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type = ControlPlotsConfig::Uncorrected) const;
   void setGStyle() const;
 };
 

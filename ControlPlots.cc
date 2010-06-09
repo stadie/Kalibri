@@ -15,7 +15,7 @@
 #include "Function.h"
 #include "Jet.h"
 #include "JetTruthEvent.h"
-
+#include "TwoJetsPtBalanceEvent.h"
 
 //!  \brief Constructor
 //! 
@@ -35,6 +35,9 @@ ControlPlots::ControlPlots(const ConfigFile *configFile, const std::vector<Event
 void ControlPlots::makePlots() const {
   if( config_->read<bool>("create JetTruthEvent plots",false) )
     createJetTruthEventPlots();
+  if( config_->read<bool>("create TwoJetsPtBalanceEvent plots",false) )
+    createTwoJetsPtBalanceEventPlots();
+  
 }
 
 
@@ -99,6 +102,66 @@ void ControlPlots::createJetTruthEventPlots() const {
   }
 }
 
+//!  \brief Control plots for \p TwoJetPtBalanceEvent data
+// -------------------------------------------------------------
+void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
+  std::cout << "Creating TwoJetsPtBalanceEvent plots\n";
+    
+  // Read different control plot names
+  std::vector<std::string> names = bag_of_string(config_->read<std::string>("TwoJetsPtBalanceEvent plots names",""));
+  // Loop over names
+  std::vector<ControlPlotsConfig*> configs(names.size());
+  std::vector<ControlPlotsFunction*> functions(names.size());
+  std::vector<ControlPlotsProfile*> profiles(names.size());
+  for(size_t i = 0; i < names.size(); i++) {
+    std::cout << " Creating plots '" << names.at(i) << "'\n";
+  
+    // Create ControlPlotsConfig    
+    ControlPlotsConfig *pConfig = new ControlPlotsConfig(config_,names.at(i));
+    configs.at(i) = pConfig;
+
+    // Create functions
+    ControlPlotsFunction *func = new ControlPlotsFunction();
+    func->setBinFunction(findTwoJetsPtBalanceEventFunction(pConfig->binVariable()));
+    func->setXFunction(findTwoJetsPtBalanceEventFunction(pConfig->xVariable()));
+    ControlPlotsConfig::CorrectionTypeIt corrTypeIt = pConfig->correctionTypesBegin();
+    for(; corrTypeIt != pConfig->correctionTypesEnd(); corrTypeIt++) {
+      func->addYFunction(*corrTypeIt,findTwoJetsPtBalanceEventFunction(pConfig->yVariable(),*corrTypeIt));
+    }
+    functions.at(i) = func;
+
+    // Create profile
+    profiles.at(i) = new ControlPlotsProfile(pConfig,func);
+  } // End of loop over names
+
+  
+  // Fill histograms
+  std::cout << "  Filling plots\n";	  
+  for( DataIt evt = data_->begin(); evt != data_->end(); evt++ ) {
+    TwoJetsPtBalanceEvent *jte = dynamic_cast<TwoJetsPtBalanceEvent*>(*evt);
+    if( jte ) {
+      for(size_t i = 0; i < configs.size(); i++) {
+	profiles.at(i)->fill(jte);
+      }
+    }
+  }
+
+  // Fitting profiles and writing plots to file
+  std::cout << "  Fitting profiles and writing plots to file" << std::endl;
+	  
+  for(size_t i = 0; i < configs.size(); i++) {
+    profiles.at(i)->fitProfiles();
+    profiles.at(i)->draw();
+  }
+
+  // Cleaning up
+  for(size_t i = 0; i < configs.size(); i++) {
+    delete configs.at(i);
+    delete functions.at(i);
+    delete profiles.at(i);
+  }
+}
+
 
 
 //!  \brief Helper method for \p createJetTruthEventPlots()
@@ -133,6 +196,35 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::jetTruthEventResponseL2L3Corrected;
 
+  std::cerr << "ControlPlots: unknown variable " << varName << std::endl;
+  return 0;
+}
+
+
+//!  \brief Helper method for \p createTwoJetsPtBalanceEventPlots()
+//!
+//!  Returns the \p ControlPlotsFunction::Function for a variable
+//!  with name \p varName and a \p ControlPlotsConfig::CorrectionType
+//!  \p type.
+// -------------------------------------------------------------
+ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type) const {
+  if( varName == "Eta" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
+  if( varName == "Pt" )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt;
+  if( varName == "EMF" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEMF;
+  if( varName == "momentEtaEta" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentEtaEta;
+  if( varName == "momentPhiPhi" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi;
+  if( varName == "Asymmetry" && type == ControlPlotsConfig::Uncorrected )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetry;
+  if( varName == "Asymmetry" && type == ControlPlotsConfig::Kalibri )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryKalibriCorrected;
+  if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3 )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3Corrected;
+  
   std::cerr << "ControlPlots: unknown variable " << varName << std::endl;
   return 0;
 }

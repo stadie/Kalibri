@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.7 2010/05/04 13:50:24 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.8 2010/05/04 17:54:20 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -508,7 +508,9 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "p^{gen}_{T} [GeV]";
   else if( varName == "GenJetResponse" )
     title = "p_{T} / p^{gen}_{T}";
-
+  else if( varName == "Asymmetry") 
+    title = "(p_{T,1} - p_{T,2})/(p_{T,1} + p_{T,2})";
+  
   return title;
 }
 
