@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.46 2010/05/19 13:34:48 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.47 2010/05/26 13:08:12 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -194,10 +194,21 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     }
     if(dataClass_ == 1) {
       nReadEvts++;
-      Event* td = createTwoJetsPtBalanceEvent(); 
+      TwoJetsPtBalanceEvent* td = createTwoJetsPtBalanceEvent(); 
       if(td) {
-	nGoodEvts++;    
-	data.push_back(td ); 
+	//seconed jet should be central...
+	if(std::abs(td->getJet1()->eta()) < 1.3) {
+	  data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
+						   td->getJet3() ? td->getJet3()->clone():0,
+						   td->ptHat(),td->weight()));
+	  ++nGoodEvts;
+	}
+	if(std::abs(td->getJet2()->eta()) < 1.3) {
+	  data.push_back(td ); 
+	  ++nGoodEvts;
+	} else {
+	  delete td;
+	}
       } 
     } else if((dataClass_ == 11)  || (dataClass_ == 12) || (dataClass_ == 21)) {
       nReadEvts++;
@@ -398,10 +409,10 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       }
     }
     // Cuts on hadronic fraction 
-    if(nJet_->JetEMF[calJetIdx] < minJetHadFraction_) {
+    if(1 - nJet_->JetEMF[calJetIdx] < minJetHadFraction_) {
       nMinJetHadFraction_++;
       continue;
-    } else if(nJet_->JetEMF[calJetIdx] > maxJetHadFraction_) { 
+    } else if(1 - nJet_->JetEMF[calJetIdx] > maxJetHadFraction_) { 
       nMaxJetHadFraction_++;
       continue;
     }
@@ -618,11 +629,8 @@ Event* DiJetReader::createSmearEvent(int callIdx)
 //!  The two jets leading in uncorrected calo pt are randomly
 //!  assigned jet 1 and 2.
 // ----------------------------------------------------------------   
-Event* DiJetReader::createTwoJetsPtBalanceEvent()
+TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 {
-  std::cerr << "DiJetReader::createTwoJetsPtBalanceEvent: needs to get fixed. Construction of Jet object wrong\n";
-  exit(9);
-  /*
   // Number of jets in the event
   int nJets = nJet_->NobjJet;
 
@@ -632,9 +640,53 @@ Event* DiJetReader::createTwoJetsPtBalanceEvent()
   nDiJetCut_++;
   return 0;
   } else if( nJets >= 3 ) {
-  nJets = 3;
+    nJets = 3;
   }
-
+  if ( nJet_->GenJetPt[0] < minGenJetEt_ || nJet_->GenJetPt[1] < minGenJetEt_ ) {
+    nMinGenJetEt_++;
+    return 0;
+  }
+  if( nJet_->GenJetPt[0] > maxGenJetEt_ || nJet_->GenJetPt[1] > maxGenJetEt_ ) {
+    nMaxGenJetEt_++;
+    return 0;
+  }  
+  double dphi        = TVector2::Phi_mpi_pi( nJet_->JetPhi[0] - nJet_->GenJetPhi[0] );
+  double deta        = nJet_->JetEta[0] - nJet_->GenJetColEta[0];
+  double dR1 = sqrt( deta*deta + dphi*dphi );
+  dphi        = TVector2::Phi_mpi_pi( nJet_->JetPhi[1] - nJet_->GenJetPhi[1] );
+  deta        = nJet_->JetEta[1] - nJet_->GenJetColEta[1];
+  double dR2 = sqrt( deta*deta + dphi*dphi );
+  if( dR1 > maxDeltaR_ || dR2 > maxDeltaR_ ) {
+    nMaxDeltaR_++;
+    return 0;
+  }
+  if( nJet_->JetPt[0] < minJetEt_ || nJet_->JetPt[1] < minJetEt_ ) {
+    nMinJetEt_++;
+    return 0;
+  }
+  if( std::abs(nJet_->JetEta[0]) > maxJetEta_ || std::abs(nJet_->JetEta[1]) > maxJetEta_ ) {
+    nMaxJetEta_++;
+    return 0;
+  }
+  if(1 - nJet_->JetEMF[0] < minJetHadFraction_ || 
+	  1 - nJet_->JetEMF[1] < minJetHadFraction_ ) {
+    nMinJetHadFraction_++;
+    return 0;
+  }
+  if( 1 - nJet_->JetEMF[0] > maxJetHadFraction_ || 
+	   1 - nJet_->JetEMF[1] > maxJetHadFraction_ ) {
+    nMaxJetHadFraction_++;
+    return 0;
+  }									
+  if( nJets > 2 &&  2 * nJet_->JetPt[2]/(nJet_->JetPt[0] + nJet_->JetPt[1]) > maxRel3rdJetEt_ &&  nJet_->JetPt[2] > max3rdJetEt_ ) {
+    nCutOn3rdJet_++;
+    return 0;
+  }
+  if( std::abs(TVector2::Phi_mpi_pi(nJet_->JetPhi[0] - nJet_->JetPhi[1])) < minDeltaPhi_ ) {
+    nMinDeltaPhi_++;
+    return 0;
+  }
+    
   // Pointer to the three jets leading in pt calo
   Jet * jet1 = 0;
   Jet * jet2 = 0;
@@ -645,132 +697,49 @@ Event* DiJetReader::createTwoJetsPtBalanceEvent()
   // assigned randomly to have an unbiased balance
   // measure
   int calJetIdx[3];
-  if( rand_->Uniform(0.,1.) < 0.5 ) {
   calJetIdx[0] = 0;
   calJetIdx[1] = 1;
-  } else {
-  calJetIdx[0] = 1;
-  calJetIdx[1] = 0;
-  }
   calJetIdx[2] = 2;
   for(int i = 0; i < nJets; i++) {
-  // Jet - GenJet matching
-  double dphi         = TVector2::Phi_mpi_pi( nJet_->JetPhi[calJetIdx[i]] - nJet_->GenJetPhi[calJetIdx[i]] );
-  double deta         = nJet_->JetEta[calJetIdx[i]] - nJet_->GenJetEta[calJetIdx[i]];
-  double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
-
-  // Summing up of hadronic fractions
-  // and finding tower closest to the
-  // jet axis
-  double min_tower_dr = 10.;
-  double emf          = 0;
-  double had          = 0;
-  double out          = 0;
-  int    closestTower = 0; 
-
-  // Loop over towers
-  for(int n=0; n<nJet_->NobjTow; ++n) {
-  if(nJet_->Tow_jetidx[n] != calJetIdx[i]) continue;//look for i-jet's towers
-  emf += nJet_->TowEm[n];
-  had += nJet_->TowHad[n];
-  out += nJet_->TowOE[n];
-  dphi = TVector2::Phi_mpi_pi( nJet_->JetPhi[calJetIdx[i]] - nJet_->TowPhi[n] );
-  deta = nJet_->JetEta[calJetIdx[i]] - nJet_->TowEta[n];
-  double dr = sqrt( deta*deta + dphi*dphi );     
-  if (dr < min_tower_dr) {
-  min_tower_dr = dr;
-  closestTower = n;
-  }
-  } // End of loop over towers
-
-
-    // Projection factor E --> Et
-    // The following is not quite correct, as this factor is different for all towers
-    // These values should be in the n-tupel as well
-    double projFac   = nJet_->JetEt[calJetIdx[i]] /  nJet_->JetE[calJetIdx[i]];
-
+    // Jet - GenJet matching
+    double dphi         = TVector2::Phi_mpi_pi( nJet_->JetPhi[calJetIdx[i]] - nJet_->GenJetPhi[calJetIdx[i]] );
+    double deta         = nJet_->JetEta[calJetIdx[i]] - nJet_->GenJetEta[calJetIdx[i]];
+    double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
+    
     // Create jet
     Jet * jet = new Jet(nJet_->JetPt[calJetIdx[i]],
-    emf * projFac,
-    had * projFac,
-    out * projFac,
-    nJet_->JetE[calJetIdx[i]],
-    nJet_->JetEta[calJetIdx[i]],
-    nJet_->JetPhi[calJetIdx[i]],
-    Jet::uds,
-    nJet_->GenJetPt[calJetIdx[i]],
-    drJetGenjet,createCorFactors(calJetIdx[i]),
-    par_->jet_function(nJet_->TowId_eta[closestTower],
-    nJet_->TowId_phi[closestTower]),
-    jet_error_param,
-    par_->global_jet_function(),
-    minJetEt_ );    
+			nJet_->JetPt[calJetIdx[i]] * nJet_->JetEMF[calJetIdx[i]],
+			nJet_->JetPt[calJetIdx[i]] * (1.0 - nJet_->JetEMF[calJetIdx[i]]),
+			0.0,
+			nJet_->JetE[calJetIdx[i]],
+			nJet_->JetEta[calJetIdx[i]],
+			nJet_->JetPhi[calJetIdx[i]], 
+			nJet_->JetEtWeightedSigmaPhi[calJetIdx[i]],
+			nJet_->JetEtWeightedSigmaEta[calJetIdx[i]],
+			Jet::uds,
+			nJet_->GenJetPt[calJetIdx[i]],
+			drJetGenjet,createCorFactors(calJetIdx[i]),
+			par_->jet_function(nJet_->JetIEta[calJetIdx[i]],
+					   nJet_->JetIPhi[calJetIdx[i]]),
+			jet_error_param,
+			par_->global_jet_function(),
+			minJetEt_ );    
     
     // Store jet
     if( i == 0 ) {
-    jet1 = jet;
+      jet1 = jet;
     } else if( i == 1 ) {
-    jet2 = jet;
+      jet2 = jet;
     } else if( i == 2 ) {
-    jet3 = jet;
+      jet3 = jet;
     }
-    }  // End of loop over jets
-
-    // Create TwoJetsInvMassEvent
-    TwoJetsPtBalanceEvent * evt
+  }  // End of loop over jets
+  
+  // Create TwoJetsInvMassEvent
+  TwoJetsPtBalanceEvent * evt
     = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight) ;
-
-    // Check if event is ok and return
-    bool isGoodEvt = true;
-    Jet * j1 = static_cast<Jet*>(evt->getJet1());
-    Jet * j2 = static_cast<Jet*>(evt->getJet2());
-    Jet * j3 = static_cast<Jet*>(evt->getJet3());
-    if     ( j1->genPt < minGenJetEt_ || j2->genPt < minGenJetEt_ ) {
-    nMinGenJetEt_++;
-    isGoodEvt = false;
-    }
-    else if( j1->genPt > maxGenJetEt_ || j2->genPt > maxGenJetEt_ ) {
-    nMaxGenJetEt_++;
-    isGoodEvt = false;
-    }
-    else if( j1->dR > maxDeltaR_ || j2->dR > maxDeltaR_ ) {
-    nMaxDeltaR_++;
-    isGoodEvt = false;
-    }
-    else if( j1->pt < minJetEt_ || j2->pt < minJetEt_ ) {
-    nMinJetEt_++;
-    isGoodEvt = false;
-    }
-    else if( std::abs(j1->eta) > maxJetEta_ || std::abs(j2->eta) > maxJetEta_ ) {
-    nMaxJetEta_++;
-    isGoodEvt = false;
-    }
-    else if( j1->HadF/(j1->HadF + j1->EMF) < minJetHadFraction_ ||
-    j2->HadF/(j2->HadF + j2->EMF) < minJetHadFraction_ ) {
-    nMinJetHadFraction_++;
-    isGoodEvt = false;
-    }
-    else if( j1->HadF/(j1->HadF + j1->EMF) > maxJetHadFraction_ ||
-    j2->HadF/(j2->HadF + j2->EMF) > maxJetHadFraction_ ) {
-    nMaxJetHadFraction_++;
-    isGoodEvt = false;
-    }
-    else if( evt->relPtJet3() > maxRel3rdJetEt_ && j3->pt > max3rdJetEt_ ) {
-    nCutOn3rdJet_++;
-    isGoodEvt = false;
-    }
-    else if( std::abs(TVector2::Phi_mpi_pi(j1->phi - j2->phi)) < minDeltaPhi_ ) {
-    nMinDeltaPhi_++;
-    isGoodEvt = false;
-    }
-
-    if(! isGoodEvt) {
-    if( evt ) delete evt;
-    evt = 0;
-    }
-
-    return evt;
-  */
+  
+  return evt;
 }
 
 
