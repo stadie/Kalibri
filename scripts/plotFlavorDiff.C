@@ -147,8 +147,8 @@ void plotFlavorDiff()
   leg->AddEntry(hdiff2,"Kalibri","PL");
   leg->Draw();
   TCanvas* c2= new TCanvas("c2","",500,500);
-  TH1D* hres = (TH1D*)gDirectory->Get("MCTruthResolVsGenJetPt/MCTruthResolVsGenJetPt_GenJetResponseVsGenJetPt_Uncorrected_Eta2_GaussFitWidth");  
-  TH1D* hres2 = (TH1D*)gDirectory->Get("MCTruthResolVsGenJetPt/MCTruthResolVsGenJetPt_GenJetResponseVsGenJetPt_Kalibri_Eta2_GaussFitWidth");
+  TH1D* hres = (TH1D*)gDirectory->Get("MCTruthResponseVsGenJetPt/MCTruthResponseVsGenJetPt_GenJetResponseVsGenJetPt_Uncorrected_Eta2_GaussFitWidth"); 
+  TH1D* hres2 = (TH1D*)gDirectory->Get("MCTruthResponseVsGenJetPt/MCTruthResponseVsGenJetPt_GenJetResponseVsGenJetPt_Kalibri_Eta2_GaussFitWidth");
   hres->SetYTitle("#sigma/p_{T}");
   hres->SetXTitle("p_{T}^{gen} (GeV)");
   TF1 resol("resol","sqrt([0]*[0]/x + [1] * [1])");
