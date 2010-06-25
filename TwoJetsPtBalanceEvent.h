@@ -13,7 +13,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.8 2010/05/19 13:34:49 stadie Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.9 2010/05/19 16:01:42 stadie Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
@@ -65,15 +65,15 @@ class TwoJetsPtBalanceEvent : public Event {
     error2_ = jet2_->expectedError(ptDijetCorr());
   }
 
-  double ptDijet() const { return 0.5*(jet1_->Et()+jet2_->Et()); }
+  double ptDijet() const { return 0.5*(jet1_->pt()+jet2_->pt()); }
   double ptDijetGen() const { return 0.5*(jet1_->genPt()+jet2_->genPt()); }
   double ptDijetCorr() const { return 0.5*(parametrizedMess()+parametrizedMess2()); }
-  double ptDijetCorrL2L3() const { return 0.5*( jet1_->corFactors().getL2L3() * jet1_->Et() + jet2_->corFactors().getL2L3() * jet2_->Et() ); }
+  double ptDijetCorrL2L3() const { return 0.5*( jet1_->corFactors().getL2L3() * jet1_->pt() + jet2_->corFactors().getL2L3() * jet2_->pt() ); }
 
-  double ptBalance() const { return (jet1_->Et() - jet2_->Et()) / ptDijet(); }
+  double ptBalance() const { return (jet1_->pt() - jet2_->pt()) / ptDijet(); }
   double ptBalanceGen() const { return (jet1_->genPt()-jet2_->genPt()) / ptDijetGen(); }
   double ptBalanceCorr() const { return (parametrizedMess()-parametrizedMess2()) / ptDijetCorr(); }
-  double ptBalanceCorrL2L3() const { return ( jet1_->corFactors().getL2L3() * jet1_->Et() - jet2_->corFactors().getL2L3() * jet2_->Et() ) / ptDijetCorrL2L3(); }
+  double ptBalanceCorrL2L3() const { return ( jet1_->corFactors().getL2L3() * jet1_->pt() - jet2_->corFactors().getL2L3() * jet2_->pt() ) / ptDijetCorrL2L3(); }
 
   double ptSumAbs(double pt1, double pt2) const;
   double ptSumAbs() const;

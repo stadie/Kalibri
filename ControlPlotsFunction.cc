@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.6 2010/05/19 13:34:48 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.7 2010/06/09 22:30:53 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -193,6 +193,16 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetEta(const Event *evt) const
   return jte->getJet1()->eta();
 }
 
+//!  \brief Returns mean p_{T} of the first two jets
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMeanPt(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return jte->ptDijet();
+}
+
 
 //!  \brief Returns p_{T} of the jet
 //!
@@ -234,6 +244,16 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi(const Event *e
 double ControlPlotsFunction::twoJetsPtBalanceEventJetMomentEtaEta(const Event *evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   return jte->getJet1()->momentEtaEta();
+}
+
+//!  \brief Returns the mean of the #phi #phi and #eta #eta moments of the jet
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return 0.5 * (jte->getJet1()->momentEtaEta() + jte->getJet1()->momentPhiPhi());
 }
 
 //!  \brief Returns the jet asymmetry

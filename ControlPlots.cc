@@ -211,13 +211,17 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
   if( varName == "Eta" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
   if( varName == "Pt" )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt;
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt; 
+  if( varName == "MeanPt" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventMeanPt;
   if( varName == "EMF" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEMF;
   if( varName == "momentEtaEta" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentEtaEta;
   if( varName == "momentPhiPhi" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi;
+    return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi; 
+  if( varName == "meanMoment" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::Uncorrected )
     return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetry;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::Kalibri )

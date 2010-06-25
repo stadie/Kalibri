@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.47 2010/05/26 13:08:12 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.48 2010/06/09 22:29:26 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -250,7 +250,9 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   std::cout << "Read " << nReadEvts << " dijet events:\n";
   if( dataClass_ == 1 ) {
     std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
-    std::cout << " events with 2 or more jets\n";
+    std::cout << " events with 2 or more jets\n"; 
+    std::cout << "  " << (nReadEvts-=nMinDeltaPhi_) << std::flush;
+    std::cout << " dijet events with DeltaPhi > " << minDeltaPhi_ << '\n';;
     std::cout << "  " << (nReadEvts-=nMinGenJetEt_) << std::flush;
     std::cout << " dijet events with ptgen > " << minGenJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMaxGenJetEt_) << std::flush;
@@ -266,12 +268,10 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     std::cout << "  " << (nReadEvts-=nMinJetHadFraction_) << std::flush;
     std::cout << " dijet events with hadronic fraction > " << minJetHadFraction_ << "\n";
     std::cout << "  " << (nReadEvts-=nMaxJetHadFraction_) << std::flush;
-    std::cout << " dijet events with hadronic fraction < " << maxJetHadFraction_ << "\n";
+    std::cout << " dijet events with jet id and hadronic fraction < " << maxJetHadFraction_ << "\n";
     std::cout << "  " << (nReadEvts-=nCutOn3rdJet_) << std::flush;
     std::cout << " dijet events with pt(jet3) / pt(dijet) < " << maxRel3rdJetEt_ << " or ";
     std::cout << "pt(jet3) < " << max3rdJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=nMinDeltaPhi_) << std::flush;
-    std::cout << " dijet events with DeltaPhi > " << minDeltaPhi_ << "\n";
   } else if( dataClass_ == 11 || dataClass_ == 12 || dataClass_ == 21 ) {
     std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
     std::cout << " events with 2 or more jets\n";
@@ -642,6 +642,10 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
   } else if( nJets >= 3 ) {
     nJets = 3;
   }
+  if( std::abs(TVector2::Phi_mpi_pi(nJet_->JetPhi[0] - nJet_->JetPhi[1])) < minDeltaPhi_ ) {
+    nMinDeltaPhi_++;
+    return 0;
+  }
   if ( nJet_->GenJetPt[0] < minGenJetEt_ || nJet_->GenJetPt[1] < minGenJetEt_ ) {
     nMinGenJetEt_++;
     return 0;
@@ -660,8 +664,12 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxDeltaR_++;
     return 0;
   }
-  if( nJet_->JetPt[0] < minJetEt_ || nJet_->JetPt[1] < minJetEt_ ) {
+  if( (nJet_->JetPt[0] < minJetEt_) || (nJet_->JetPt[1] < minJetEt_) ) {
     nMinJetEt_++;
+    return 0;
+  }
+  if( nJet_->JetPt[0] > maxJetEt_ || nJet_->JetPt[1] > maxJetEt_ ) {
+    nMaxJetEt_++;
     return 0;
   }
   if( std::abs(nJet_->JetEta[0]) > maxJetEta_ || std::abs(nJet_->JetEta[1]) > maxJetEta_ ) {
@@ -677,13 +685,23 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 	   1 - nJet_->JetEMF[1] > maxJetHadFraction_ ) {
     nMaxJetHadFraction_++;
     return 0;
-  }									
-  if( nJets > 2 &&  2 * nJet_->JetPt[2]/(nJet_->JetPt[0] + nJet_->JetPt[1]) > maxRel3rdJetEt_ &&  nJet_->JetPt[2] > max3rdJetEt_ ) {
-    nCutOn3rdJet_++;
+  }
+  //loose jet id
+  if(((( nJet_->JetEMF[0] <= 0.01) && (std::abs(nJet_->JetEta[0]) < 2.6) )) ||
+     (( nJet_->JetEMF[1] <= 0.01) && (std::abs(nJet_->JetEta[1]) < 2.6) )) {
+    nMaxJetHadFraction_++;
     return 0;
   }
-  if( std::abs(TVector2::Phi_mpi_pi(nJet_->JetPhi[0] - nJet_->JetPhi[1])) < minDeltaPhi_ ) {
-    nMinDeltaPhi_++;
+  if( nJet_->JetN90Hits[0] <= 1 || nJet_->JetN90Hits[1] <= 1) {
+    nMaxJetHadFraction_++;
+    return 0;
+  }
+  if( nJet_->JetFHPD[0] >= 0.98 || nJet_->JetFHPD[1] >= 0.98) {
+    nMaxJetHadFraction_++;
+    return 0;
+  }
+  if( nJets > 2 &&  2 * nJet_->JetPt[2]/(nJet_->JetPt[0] + nJet_->JetPt[1]) > maxRel3rdJetEt_ &&  nJet_->JetPt[2] > max3rdJetEt_ ) {
+    nCutOn3rdJet_++;
     return 0;
   }
     
