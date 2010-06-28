@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.48 2010/06/09 22:29:26 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.49 2010/06/25 11:44:20 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -110,7 +110,9 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
     } else if(*i == "sumsigmaetaphi") {
       vars_[j] = &sumsigmaetaphi_;
     } else if(*i == "emf") {
-      vars_[j] = &emf_;  
+      vars_[j] = &emf_; } 
+    else if(*i == "meanMoment") {
+      vars_[j] = &meanMoment_;   
     } else {
       std::cerr << "unknown binning varible: " << *i << '\n';
       exit(3);
@@ -433,6 +435,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       sigmaeta_ = nJet_->JetEtWeightedSigmaEta[calJetIdx];
       sigmaphi_ = nJet_->JetEtWeightedSigmaPhi[calJetIdx];
       sumsigmaetaphi_ = sigmaeta_ + sigmaphi_;
+      meanMoment_ = 0.5 * sumsigmaetaphi_;
       emf_ = nJet_->JetEMF[calJetIdx];
       JetBin* bin = (*binning_)(*vars_[0],*vars_[1],*vars_[2],*vars_[3]);
       // std::cout << "adding jet to bin:" << ibin << " with pt=" << nJet_->GenJetColPt[genJetIdx] << ", eta = " << nJet_->JetEta[calJetIdx] << std::endl;
