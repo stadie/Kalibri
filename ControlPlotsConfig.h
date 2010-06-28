@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.2 2010/05/04 13:50:24 stadie Exp $
+// $Id: ControlPlotsConfig.h,v 1.3 2010/05/04 17:54:20 stadie Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -52,7 +52,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.2 2010/05/04 13:50:24 stadie Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.3 2010/05/04 17:54:20 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -85,7 +85,13 @@ class ControlPlotsConfig {
   std::string binName(int binIdx) const;
   //! Returns the title of the bin
   std::string binTitle(double min, double max) const;
-
+  //! Returns the name of the cut variable
+  std::string cutVariable() const { return cutVar_; }
+  //! Returns the minimum of the cut range
+  double cutMin() const { return cutEdges_.first; }
+  //! Returns the maximum of the cut range
+  double cutMax() const { return cutEdges_.second; }
+  
   //! Returns the bin edges of the x variable
   const std::vector<double> *xBinEdges() const { return &xBinEdges_; }
   //! Returns the number of x bins
@@ -189,6 +195,9 @@ class ControlPlotsConfig {
   std::vector<double> xBinEdges_;
   int nXBins_;
   bool logX_;
+
+  std::string cutVar_;
+  std::pair<double,double> cutEdges_;
 
   std::string yVar_;
   std::vector<double> yBinEdges_;

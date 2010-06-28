@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.7 2010/05/04 17:54:20 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.8 2010/05/19 13:34:48 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -214,6 +214,9 @@ void ControlPlotsProfile::draw() {
 //! \sa Bin::fill(), findBin()
 // ----------------------------------------------------------------   
 void ControlPlotsProfile::fill(const Event * evt) {
+  double cutv = function_->cutValue(evt);
+  if((cutv < config_->cutMin()) || (cutv > config_->cutMax())) return;
+
   double x = function_->xValue(evt);
   hXSpectrum_->Fill(x,evt->weight());
 

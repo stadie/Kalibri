@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.h,v 1.8 2010/06/25 11:44:19 stadie Exp $
+// $Id: ControlPlotsFunction.h,v 1.9 2010/06/28 11:39:15 kirschen Exp $
 
 #ifndef CONTROLPLOTS_FUNCTION_H
 #define CONTROLPLOTS_FUNCTION_H
@@ -24,7 +24,7 @@ class Event;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsFunction.h,v 1.8 2010/06/25 11:44:19 stadie Exp $
+//!  $Id: ControlPlotsFunction.h,v 1.9 2010/06/28 11:39:15 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsFunction {
  public:
@@ -33,7 +33,7 @@ class ControlPlotsFunction {
 
   //! Constructor
   ControlPlotsFunction()
-    : binFunc_(0), xFunc_(0) {};
+    : binFunc_(0), xFunc_(0), cutFunc_(0) {};
 
   //! Check if all functions are initialised
   bool isInit() const { return binFunc_ && xFunc_ && yFuncs_.size(); }
@@ -46,7 +46,9 @@ class ControlPlotsFunction {
   //! Interface to the profile: return the value of the binning quantity from \p evt
   double binValue(const Event * evt) const { return (this->*binFunc_)(evt); }
   //! Interface to the profile: return the value of the x quantity from \p evt
-  double xValue(const Event * evt) const { return (this->*xFunc_)(evt); }
+  double xValue(const Event * evt) const { return (this->*xFunc_)(evt); }  
+  //! Interface to the profile: return the value of the cut quantity from \p evt
+  double cutValue(const Event * evt) const { return cutFunc_ ? (this->*cutFunc_)(evt) : 0; }
   //! Interface to the profile: return the value of the y quantity from \p evt for the correction type \p type
   double yValue(const Event * evt, ControlPlotsConfig::CorrectionType type) const {
     return (this->*(yFuncs_.find(type)->second))(evt);
@@ -54,7 +56,9 @@ class ControlPlotsFunction {
   //! Set the function returning the binning value from an event
   void setBinFunction(Function func) { binFunc_ = func; }
   //! Set the function returning the x value from an event
-  void setXFunction(Function func) { xFunc_ = func; }
+  void setXFunction(Function func) { xFunc_ = func; } 
+  //! Set the function returning the cut value from an event
+  void setCutFunction(Function func) { cutFunc_ = func; }
   //! Set the functions returning the y value for different corrections from an event
   void addYFunction(ControlPlotsConfig::CorrectionType type, Function func);
 
@@ -88,7 +92,9 @@ class ControlPlotsFunction {
   //! The binning function
   Function binFunc_;
   //! The x value function
-  Function xFunc_;
+  Function xFunc_; 
+  //! The cut value function
+  Function cutFunc_;
   //! The y value functions for the different correction types
   std::map<ControlPlotsConfig::CorrectionType,Function> yFuncs_;    
 };

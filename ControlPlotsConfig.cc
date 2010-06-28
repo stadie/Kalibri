@@ -1,10 +1,11 @@
-// $Id: ControlPlotsConfig.cc,v 1.10 2010/06/25 11:44:20 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.11 2010/06/28 11:39:15 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
 #include <cmath>
 #include <iostream>
 #include <sstream>
+#include <utility>
 
 #include "TFile.h"
 #include "TSystem.h"
@@ -52,6 +53,19 @@ std::string ControlPlotsConfig::binTitle(double min, double max) const {
     title += " " + unit;
   }
 
+  if(cutVariable() != "") {
+    title += "  and  ";
+    title += toString(cutMin());
+    title += " < ";
+    title += varTitle(cutVariable());
+    title += " < ";
+    title += toString(cutMax());
+    std::string unit = unitTitle(cutVariable());
+    if( unit != "" ) {
+      title += " " + unit;
+    }
+  }
+  
   return title;
 }
 
@@ -347,6 +361,15 @@ void ControlPlotsConfig::init() {
     assert( xBinEdges_.at(i) < xBinEdges_.at(i+1) );
   }
 
+  cutVar_ = config_->read<std::string>(name_+" cut variable","");
+  var = bag_of<double>(config_->read<std::string>(name_+" cut edges","0 0"));
+  if( var.size() == 2 ) {
+    cutEdges_ = std::make_pair(var[0],var[1]);
+  } else {
+     std::cerr << "WARNING: Wrong number of arguments in config line '" << name_ << " cut edges'\n";
+     cutEdges_ = std::make_pair(0.0,0.0);
+  }
+  
   // Store which profile types are to be drawn
   std::vector<std::string> profTypesStr = bag_of_string(config_->read<std::string>(name_+" profile types","Uncorrected"));
   for(std::vector<std::string>::const_iterator profTypesIt = profTypesStr.begin();

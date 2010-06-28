@@ -64,6 +64,7 @@ void ControlPlots::createJetTruthEventPlots() const {
     ControlPlotsFunction *func = new ControlPlotsFunction();
     func->setBinFunction(findJetTruthEventFunction(pConfig->binVariable()));
     func->setXFunction(findJetTruthEventFunction(pConfig->xVariable()));
+    func->setCutFunction(findJetTruthEventFunction(pConfig->cutVariable()));
     ControlPlotsConfig::CorrectionTypeIt corrTypeIt = pConfig->correctionTypesBegin();
     for(; corrTypeIt != pConfig->correctionTypesEnd(); corrTypeIt++) {
       func->addYFunction(*corrTypeIt,findJetTruthEventFunction(pConfig->yVariable(),*corrTypeIt));
@@ -124,6 +125,7 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
     ControlPlotsFunction *func = new ControlPlotsFunction();
     func->setBinFunction(findTwoJetsPtBalanceEventFunction(pConfig->binVariable()));
     func->setXFunction(findTwoJetsPtBalanceEventFunction(pConfig->xVariable()));
+    func->setCutFunction(findTwoJetsPtBalanceEventFunction(pConfig->cutVariable()));
     ControlPlotsConfig::CorrectionTypeIt corrTypeIt = pConfig->correctionTypesBegin();
     for(; corrTypeIt != pConfig->correctionTypesEnd(); corrTypeIt++) {
       func->addYFunction(*corrTypeIt,findTwoJetsPtBalanceEventFunction(pConfig->yVariable(),*corrTypeIt));
@@ -197,7 +199,9 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
     return &ControlPlotsFunction::jetTruthEventResponseKalibriCorrected;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::jetTruthEventResponseL2L3Corrected;
-
+  if( varName == "") {
+    return 0;
+  }
   std::cerr << "ControlPlots: unknown variable " << varName << std::endl;
   return 0;
 }
@@ -230,6 +234,9 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryKalibriCorrected;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3Corrected;
+  if( varName == "") {
+    return 0;
+  }
   
   std::cerr << "ControlPlots: unknown variable " << varName << std::endl;
   return 0;
