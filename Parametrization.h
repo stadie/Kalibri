@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.63 2010/05/20 15:15:47 stadie Exp $
+//  $Id: Parametrization.h,v 1.64 2010/05/26 13:10:16 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.63 2010/05/20 15:15:47 stadie Exp $
+//!  $Id: Parametrization.h,v 1.64 2010/05/26 13:10:16 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1720,6 +1720,72 @@ public:
     assert(c > 0);
     return x->pt / c;
   }  
+};
+
+
+//!  \brief Parametrization of jet response based on the mean jet widths
+//!
+//!  This parametrization has 12 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class MeanWidthParametrization: public Parametrization {
+public:
+  MeanWidthParametrization() : Parametrization(0,10,0,0) {}
+  const char* name() const { return "MeanWidthParametrization";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+
+
+    const static double meanpar[][5] ={
+      {2.22197,-2.43273,0.161247,-1.8384,-1.12056},
+      {2.211,-2.34235,0.196643,-1.71561,-1.20111},
+      {2.09358,-2.15426,0.409124,-2.36072,-2.00319},
+      {-1.83367,7.87148,-7.93116,2.17698,-0.351629}
+      //      {0.000000,0.00000,0.000000,0.00000,0.0000000}
+    };
+      
+      const static double sigmapar[][5] = {
+	{3.76558,-1.28309,-1.21227,4.97975,-1.06063},
+	{4.04847,-2.31725,0.363659,4.69276,-1.1739},
+	{15.1794,-29.3188,141.953,-5.74235,-0.27755},
+	{4.34203,-3.78074,24.1966,4477.12,-8.18597}
+	//	{0.000000,0.00000,0.000000,0.00000,0.0000000}
+      };
+
+      int eta_choice;    
+      double abs_eta = std::abs(x->eta);
+
+      if(abs_eta>0.000&&abs_eta<1.305) eta_choice=0;
+      else if(abs_eta>1.305&&abs_eta<2.65) eta_choice=1;
+      else if(abs_eta>2.65&&abs_eta<2.964) eta_choice=2;
+      else if(abs_eta>2.964&&abs_eta<5.191) eta_choice=3;
+      else {std::cout << "Warning: not in valid eta-range, return uncorrected jetet"<<std::endl;return x->pt;}
+
+
+      //-5.191 -2.964 -2.65 -1.392  1.392 2.65 2.964 5.191
+    double pt = (x->pt < 10.0) ? 10.0 : (x->pt > 800.0) ? 800.0 : x->pt; 
+    //    double logpt = log10(pt); is log10 in other parametrizations...
+    double logpt = log(pt);
+    
+    double mean = ((meanpar[eta_choice][0]/10.)+(meanpar[eta_choice][1]/100.)*logpt+(meanpar[eta_choice][2]/10000)*pt) + ((meanpar[eta_choice][3]/10.))*exp( (meanpar[eta_choice][4]/10.)*pt);
+    double sigma =  ((sigmapar[eta_choice][0]/100.)+(sigmapar[eta_choice][1]/1000.)*logpt+(sigmapar[eta_choice][2]/1000000.)*pt) + ((sigmapar[eta_choice][3]/100.))*exp( (sigmapar[eta_choice][4]/10.)*pt);
+    
+    double y =  0.5*(x->phiphi+x->etaeta);
+   
+    double b = (par[0]+(par[1]/10.)*logpt+(par[2]/10000.)*pt) + ((par[3]*10.))*exp( (par[4]/100.)*pt);
+    double c =  ((par[5]*10.)+par[6]*logpt+(par[7]/100.)*pt) + ((par[8]*10.))*exp( (par[9]/100.)*pt);
+    
+    double cf = (1- sigma*sigma * c) +b * (y-mean) + c*(y-mean)*(y-mean);  
+    if(cf < 0.3) cf = 0.3;
+    if(cf > 3.0) cf = 3.0;
+    if(cf==0.3||cf==3.0) std::cout << "strange correction factor " << cf << " really " << (1- sigma*sigma * c) +b * (y-mean) + c*(y-mean)*(y-mean) << " pt of jet: " << x->pt << " mean Moment y: "  << y <<  " jet-eta: " << abs_eta <<std::endl;
+    return 1/cf * x->pt;  
+  }
 };
 
 #endif

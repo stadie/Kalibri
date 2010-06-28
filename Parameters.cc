@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.52 2010/05/26 13:09:26 stadie Exp $
+// $Id: Parameters.cc,v 1.53 2010/05/27 08:36:22 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -97,6 +97,8 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     return new BinnedScaledEtaEtaParametrization();
   } else if(name == "SimplePhiPhiParametrization") {
     return new SimplePhiPhiParametrization();
+  } else if(name == "MeanWidthParametrization") {
+    return new MeanWidthParametrization();
   }
   return 0;
 }
@@ -184,9 +186,9 @@ void TParameters::Init(const ConfigFile& config)
     exit(1);
   }
       
-  if (eta_symmetry && (eta_granularity!=1 && eta_granularity!=3 &&eta_granularity!=5&&eta_granularity!=11&&
+  if (eta_symmetry && (eta_granularity!=1 && eta_granularity!=3 &&eta_granularity!=4 &&eta_granularity!=5&&eta_granularity!=11&&
       eta_granularity!=21 && eta_granularity!=41 )){
-    cerr << "WARNING: Check eta granularity! Should be 1, 3, 5, 11, 21, or 41: Forced exit."<< endl;
+    cerr << "WARNING: Check eta granularity! Should be 1, 3, 4, 5, 11, 21, or 41: Forced exit."<< endl;
     exit(1);
   }
 
@@ -919,6 +921,8 @@ int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) 
   static const unsigned ts_21[41]={ 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12,12,13,13,14,14,15,15,16,16,17,17,18,18,19,20,20};
   static const unsigned ts_11[41]={ 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9,10,10};
   static const unsigned ts_5[41]= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4};
+  static const unsigned ts_4[41]= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+  //                                                                         15(eta 1.305)                       27    29(2.964)                           41(5.191)
   static const unsigned ts_3[41]= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
   if (!etasym){
     if (etagranu==82) return index;
@@ -931,6 +935,7 @@ int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) 
     else if (etagranu==21) return ts_21[std::abs(eta_id)-1];
     else if (etagranu==11) return ts_11[abs(eta_id)-1];
     else if (etagranu== 5) return ts_5[ abs(eta_id)-1];
+    else if (etagranu== 4) return ts_4[ abs(eta_id)-1];
     else if (etagranu== 3) return ts_3[ abs(eta_id)-1];
   }
   
