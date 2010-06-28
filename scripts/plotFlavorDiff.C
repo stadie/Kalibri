@@ -168,4 +168,32 @@ void plotFlavorDiff()
   hres2->Draw("PE0 X0 SAME");
   p1->DrawClone();
   leg->DrawClone();
+
+
+  TCanvas* c3= new TCanvas("c3","",500,500);
+
+  TH1D* rel_hres = hres->Clone();
+  TH1D* rel_hres2 = hres2->Clone();
+  rel_hres->Divide(hres,hres);
+  rel_hres2->Divide(hres2,hres);
+  //void Divide(const TH1* h1, const TH1* h2, Double_t  c1 = 1, Double_t  c2 = 1, Option_t* option = "")
+
+  rel_hres->SetYTitle("(#sigma/p_{T})/(#sigma_{Uncorrected}/p_{T})");
+  rel_hres->SetXTitle("p_{T}^{gen} (GeV)");
+
+  c3->SetGridy(); 
+  c3->SetGridx();  
+  c3->SetRightMargin(0.02);
+  c3->SetTopMargin(0.13);
+  rel_hres->SetFillColor(rel_hres->GetMarkerColor());
+  rel_hres->Draw("PE0 X0");
+  rel_hres->GetYaxis()->SetRangeUser(0.6,1.2);
+  rel_hres->SetMaximum(1.2);
+  rel_hres2->SetMaximum(1.1);
+  rel_hres->GetXaxis()->SetRange(-1,25);
+  rel_hres2->SetFillColor(rel_hres2->GetMarkerColor());
+  rel_hres2->Draw("PE0 X0 SAME");
+  p1->DrawClone();
+  leg->DrawClone();
+
 }
