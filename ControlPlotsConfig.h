@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.3 2010/05/04 17:54:20 stadie Exp $
+// $Id: ControlPlotsConfig.h,v 1.4 2010/06/28 13:08:31 stadie Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -52,7 +52,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.3 2010/05/04 17:54:20 stadie Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.4 2010/06/28 13:08:31 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -61,9 +61,9 @@ class ControlPlotsConfig {
   typedef std::vector<CorrectionType>::const_iterator CorrectionTypeIt;  
 
   //! Number of defined profile types
-  static const int nProfileTypes = 8;
+  static const int nProfileTypes = 10;
   //! Different types of profile histograms
-  enum ProfileType { Mean=0, StandardDeviation, GaussFitMean, GaussFitWidth, Median, Chi2, Probability,  Quantiles };
+  enum ProfileType { Mean=0, StandardDeviation, GaussFitMean, GaussFitWidth, Median, Chi2, Probability, Quantiles, RatioOfMeans, RatioOfGaussFitMeans};
   typedef std::vector<ProfileType>::const_iterator ProfileTypeIt;
 
   ControlPlotsConfig(const ConfigFile *configFile, const std::string &name);

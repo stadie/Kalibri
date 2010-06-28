@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.8 2010/05/19 13:34:48 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.9 2010/06/28 13:08:31 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -381,6 +381,8 @@ int ControlPlotsProfile::Bin::fill(double x, double y, double w, ControlPlotsCon
 //!  - Chi2
 //!  - Probability
 //!  - Quantiles
+//!  - RatioOfMeans
+//!  - RatioOfGaussFitMeans
 //---------------------------------------------------------------
 int ControlPlotsProfile::Bin::fitProfiles() {
   nCallsFitProfiles_++;
@@ -489,6 +491,8 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	  hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->SetBinError(xBin,meanerror);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinContent(xBin,width/mean);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinError(xBin,f->GetParError(2)/mean);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
+	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
 	}
 
 	hXProfile_[corrIt->first][ControlPlotsConfig::Chi2]->SetBinContent(xBin, f->GetChisquare() / f->GetNumberFreeParameters());
@@ -498,10 +502,13 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	mean = htemp->GetMean();
 	meanerror = htemp->GetMeanError();
 	width = htemp->GetRMS();
+
 	hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinContent(xBin,mean);
 	hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinError(xBin,meanerror);
 	hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinContent(xBin,width/mean); 
-	hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinError(xBin,htemp->GetRMSError()/mean);
+	hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinError(xBin,htemp->GetRMSError()/mean); 
+	hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
+	hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
 	htemp->GetQuantiles(nq,yq,xq);
 	hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetBinContent(xBin,yq[0]);
 	hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetBinError(xBin,0.0001);

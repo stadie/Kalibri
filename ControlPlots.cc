@@ -234,6 +234,12 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryKalibriCorrected;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3Corrected;
+  if( varName == "B" && type == ControlPlotsConfig::Uncorrected )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventB;
+  if( varName == "B" && type == ControlPlotsConfig::Kalibri )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventBKalibriCorrected;
+  if( varName == "B" && type == ControlPlotsConfig::L2L3 )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3Corrected;
   if( varName == "") {
     return 0;
   }

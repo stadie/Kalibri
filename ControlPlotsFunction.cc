@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.8 2010/06/25 11:44:20 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.9 2010/06/28 11:39:15 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -317,3 +317,53 @@ double ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3Corrected(const E
 }
 
 
+//!  \brief Returns the jet B
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The B is defined as
+//!  \f[  p^{jet}_{T} / p^{true}_{T}\f].
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventB(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  return (jet1->pt()-jet2->pt())/(jet1->pt()+jet2->pt())*2;
+}
+
+
+
+//!  \brief Returns the corrected jet B
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The B is defined as
+//!  \f[  p^{jet'}_{T} / p^{true}_{T}\f],
+//!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
+//!  the Kalibri JEC.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventBKalibriCorrected(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  return (jet1->correctedEt()-jet2->correctedEt())/(jet1->correctedEt()+jet2->correctedEt())*2;
+}
+
+
+
+//!  \brief Returns the corrected jet B
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The B is defined as
+//!  \f[  p^{jet'}_{T} / p^{true}_{T}\f],
+//!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
+//!  the JetMET L2L3 JEC.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventBL2L3Corrected(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  return (jet1->corFactors().getL2L3() * jet1->pt() - jet2->corFactors().getL2L3() * jet2->pt())/(jet1->corFactors().getL2L3() * jet1->pt()+jet2->corFactors().getL2L3() * jet2->pt())*2;
+}

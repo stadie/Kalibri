@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.h,v 1.9 2010/06/28 11:39:15 kirschen Exp $
+// $Id: ControlPlotsFunction.h,v 1.10 2010/06/28 13:08:31 stadie Exp $
 
 #ifndef CONTROLPLOTS_FUNCTION_H
 #define CONTROLPLOTS_FUNCTION_H
@@ -24,7 +24,7 @@ class Event;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsFunction.h,v 1.9 2010/06/28 11:39:15 kirschen Exp $
+//!  $Id: ControlPlotsFunction.h,v 1.10 2010/06/28 13:08:31 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsFunction {
  public:
@@ -86,6 +86,9 @@ class ControlPlotsFunction {
   double twoJetsPtBalanceEventAsymmetry(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetryKalibriCorrected(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetryL2L3Corrected(const Event * evt) const;
+  double twoJetsPtBalanceEventB(const Event * evt) const;
+  double twoJetsPtBalanceEventBKalibriCorrected(const Event * evt) const;
+  double twoJetsPtBalanceEventBL2L3Corrected(const Event * evt) const;
  private:
   //! The different correction types of the y quantity
   std::vector<ControlPlotsConfig::CorrectionType> types_;

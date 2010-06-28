@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.11 2010/06/28 11:39:15 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.12 2010/06/28 13:08:31 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -112,7 +112,7 @@ std::string ControlPlotsConfig::yProfileTitle(ProfileType type) const {
   std::string title = "";
 
   if( type == Mean )
-    title = "< " + yTitle() + ">";
+    title = "<" + yTitle() + ">";
   else if( type == StandardDeviation )
     title = "#sigma( " + yTitle() + ") / <" + yTitle() + ">";
   else if( type == GaussFitMean )
@@ -127,6 +127,14 @@ std::string ControlPlotsConfig::yProfileTitle(ProfileType type) const {
     title = "Probability " + yTitle();
   else if( type == Quantiles )
     title = "Quantiles " + yTitle();
+  else if( type == RatioOfMeans ) {
+    //title = "(1 + <" + yTitle() + ">)/(1 - <" + yTitle() + ">)";
+    title = "Relative Response";
+  } 
+  else if( type == RatioOfGaussFitMeans ) {
+    //title = "GaussFit (1 + <" + yTitle() + ">)/(1 - <" + yTitle() + ">)";
+    title = "GaussFit Relative Response";
+  }  
   else
     std::cerr << "WARNING: Undefined ProfileType '" << type << "'\n";    
 
@@ -240,7 +248,11 @@ ControlPlotsConfig::ProfileType ControlPlotsConfig::profileType(const std::strin
   else if( typeName == "Probability" )
     type = Probability;
   else if( typeName == "Quantiles" )
-    type = Quantiles;
+    type = Quantiles;  
+  else if( typeName == "RatioOfMeans" )
+    type = RatioOfMeans;
+  else if( typeName == "RatioOfGaussFitMeans" )
+    type = RatioOfGaussFitMeans;
   else
     std::cerr << "WARNING: Undefined ProfileType '" << typeName << "'\n";
 
@@ -258,6 +270,8 @@ ControlPlotsConfig::ProfileType ControlPlotsConfig::profileType(const std::strin
 //! - \p ProfileType::Chi2: "Chi2" 
 //! - \p ProfileType::Probability: "Probability" 
 //! - \p ProfileType::Quantiles: "Quantiles" 
+//! - \p ProfileType::RatioOfMeans: "RatioOfMeans" 
+//! - \p ProfileType::RatioOfGaussFitMeans: "RatioOfGaussFitMeans" 
 // --------------------------------------------------
 std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
   std::string name = "ProfileTypeName";
@@ -277,7 +291,11 @@ std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
   else if( profType == Probability )
     name = "Probability";
   else if( profType == Quantiles )
-    name = "Quantiles";
+    name = "Quantiles";  
+  else if( profType == RatioOfMeans )
+    name = "RatioOfMeans";
+  else if( profType == RatioOfGaussFitMeans )
+    name = "RatioOfGaussFitMeans";
   else
     std::cerr << "WARNING: Undefined ProfileType '" << profType << "'\n";    
 
@@ -380,6 +398,7 @@ void ControlPlotsConfig::init() {
   // Read y axis
   strVar = bag_of_string(config_->read<std::string>(name_+" y variable","GenJetResponse"));
   yVar_ = strVar[0];
+
   min = 0.;
   max = 2.;
   var = bag_of<double>(config_->read<std::string>(name_+" y edges","51 0 2 0.5 1.5"));
