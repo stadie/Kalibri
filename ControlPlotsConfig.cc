@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.9 2010/06/09 22:30:53 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.10 2010/06/25 11:44:20 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -503,8 +503,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
   else if( varName == "scaledEtaEta" ) 
     title = "#sigma_{#eta#eta} ln(p_{T}/GeV)";
   else if( varName == "momentEtaEta" ) 
-    title = "#sigma_{#eta#eta}"; 
-  else if( varName == "MeanMoment" ) 
+    title = "#sigma_{#eta#eta}";
+  else if( varName == "meanMoment" )  
     title = "(#sigma_{#phi#phi} + #sigma_{#eta#eta})/2";
   else if( varName == "Flavor" )
     title = "Flavor gluon = 0, uds = 1";

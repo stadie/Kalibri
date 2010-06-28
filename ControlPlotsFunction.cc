@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.7 2010/06/09 22:30:53 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.8 2010/06/25 11:44:20 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -88,6 +88,15 @@ double ControlPlotsFunction::jetTruthEventJetMomentEtaEta(const Event *evt) cons
   return jte->jet()->momentEtaEta();
 }
 
+//!  \brief Returns the #eta #eta moment of the jet
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventJetMeanMoment(const Event *evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  return 0.5 * (jte->jet()->momentEtaEta()+jte->jet()->momentPhiPhi());
+}
 
 //!  \brief Returns the scaled #eta #eta moment of the jet
 //!

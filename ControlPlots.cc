@@ -186,7 +186,9 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
   if( varName == "GenJetPt" )
     return  &ControlPlotsFunction::jetTruthEventTruthPt;
   if( varName == "momentPhiPhi" )
-    return &ControlPlotsFunction::jetTruthEventJetMomentPhiPhi;
+    return &ControlPlotsFunction::jetTruthEventJetMomentPhiPhi; 
+  if( varName == "meanMoment" )
+    return &ControlPlotsFunction::jetTruthEventJetMeanMoment;
   if( varName == "Flavor" )
     return &ControlPlotsFunction::jetTruthEventJetFlavor;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::Uncorrected )
