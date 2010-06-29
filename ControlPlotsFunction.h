@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.h,v 1.10 2010/06/28 13:08:31 stadie Exp $
+// $Id: ControlPlotsFunction.h,v 1.11 2010/06/28 16:27:43 stadie Exp $
 
 #ifndef CONTROLPLOTS_FUNCTION_H
 #define CONTROLPLOTS_FUNCTION_H
@@ -24,7 +24,7 @@ class Event;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsFunction.h,v 1.10 2010/06/28 13:08:31 stadie Exp $
+//!  $Id: ControlPlotsFunction.h,v 1.11 2010/06/28 16:27:43 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsFunction {
  public:
@@ -63,6 +63,7 @@ class ControlPlotsFunction {
   void addYFunction(ControlPlotsConfig::CorrectionType type, Function func);
 
   double jetTruthEventJetEta(const Event *evt) const;
+  double jetTruthEventJetAbsEta(const Event *evt) const;
   double jetTruthEventJetPt(const Event *evt) const;
   double jetTruthEventJetEMF(const Event *evt) const;
   double jetTruthEventJetMomentPhiPhi(const Event *evt) const;
@@ -76,7 +77,8 @@ class ControlPlotsFunction {
   double jetTruthEventResponseKalibriCorrected(const Event * evt) const;
   double jetTruthEventResponseL2L3Corrected(const Event * evt) const;
     
-  double twoJetsPtBalanceEventJetEta(const Event *evt) const;
+  double twoJetsPtBalanceEventJetEta(const Event *evt) const; 
+  double twoJetsPtBalanceEventJetAbsEta(const Event *evt) const;
   double twoJetsPtBalanceEventJetPt(const Event *evt) const;
   double twoJetsPtBalanceEventMeanPt(const Event *evt) const;
   double twoJetsPtBalanceEventJetEMF(const Event *evt) const;

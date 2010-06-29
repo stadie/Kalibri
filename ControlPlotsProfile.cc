@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.9 2010/06/28 13:08:31 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.10 2010/06/28 16:27:43 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -102,7 +102,7 @@ void ControlPlotsProfile::draw() {
   // Draw profile histograms
   TLegend *leg = bins_.front()->createLegend();
   TLine *hLine = bins_.front()->createHorizontalLine();
-  c1->SetRightMargin(0.02);
+  c1->SetRightMargin(0.04);
   c1->SetTopMargin(0.13);
   for(std::vector<Bin*>::iterator binIt = bins_.begin();
       binIt != bins_.end(); binIt++) {

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.9 2010/06/28 11:39:15 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.10 2010/06/28 16:27:43 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -45,6 +45,15 @@ double ControlPlotsFunction::jetTruthEventJetEta(const Event *evt) const {
   return jte->jet()->eta();
 }
 
+//!  \brief Returns |#eta| of the jet
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventJetAbsEta(const Event *evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  return std::abs(jte->jet()->eta());
+}
 
 //!  \brief Returns p_{T} of the jet
 //!
@@ -200,6 +209,16 @@ double ControlPlotsFunction::jetTruthEventResponseL2L3Corrected(const Event * ev
 double ControlPlotsFunction::twoJetsPtBalanceEventJetEta(const Event *evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   return jte->getJet1()->eta();
+}
+
+//!  \brief Returns |#eta| of the jet
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return std::abs(jte->getJet1()->eta());
 }
 
 //!  \brief Returns mean p_{T} of the first two jets

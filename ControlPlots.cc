@@ -175,6 +175,8 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
 ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type) const {
   if( varName == "Eta" )
     return  &ControlPlotsFunction::jetTruthEventJetEta;
+  if( varName == "AbsEta" )
+    return  &ControlPlotsFunction::jetTruthEventJetAbsEta;
   if( varName == "Pt" )
    return  &ControlPlotsFunction::jetTruthEventJetPt;
   if( varName == "EMF" )
@@ -216,6 +218,8 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
 ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type) const {
   if( varName == "Eta" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
+  if( varName == "AbsEta" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta;
   if( varName == "Pt" )
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt; 
   if( varName == "MeanPt" )
