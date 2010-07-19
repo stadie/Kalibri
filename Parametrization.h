@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.64 2010/05/26 13:10:16 stadie Exp $
+//  $Id: Parametrization.h,v 1.65 2010/06/28 11:33:47 kirschen Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -24,7 +24,7 @@ class TH1;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.64 2010/05/26 13:10:16 stadie Exp $
+//!  $Id: Parametrization.h,v 1.65 2010/06/28 11:33:47 kirschen Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1757,18 +1757,21 @@ public:
 	//	{0.000000,0.00000,0.000000,0.00000,0.0000000}
       };
 
-      int eta_choice;    
+      int eta_choice;
+      double pt_min;
+      double pt_max;
+    
       double abs_eta = std::abs(x->eta);
 
-      if(abs_eta>0.000&&abs_eta<1.305) eta_choice=0;
-      else if(abs_eta>1.305&&abs_eta<2.65) eta_choice=1;
-      else if(abs_eta>2.65&&abs_eta<2.964) eta_choice=2;
-      else if(abs_eta>2.964&&abs_eta<5.191) eta_choice=3;
+      if(abs_eta>0.000&&abs_eta<1.305) {eta_choice=0; pt_min=15; pt_max=1000;}
+      else if(abs_eta>1.305&&abs_eta<2.65) {eta_choice=1; pt_min=10; pt_max=600;}
+      else if(abs_eta>2.65&&abs_eta<2.964) {eta_choice=2; pt_min=10; pt_max=180;}
+      else if(abs_eta>2.964&&abs_eta<5.191) {eta_choice=3; pt_min=15; pt_max=100;}
       else {std::cout << "Warning: not in valid eta-range, return uncorrected jetet"<<std::endl;return x->pt;}
 
 
       //-5.191 -2.964 -2.65 -1.392  1.392 2.65 2.964 5.191
-    double pt = (x->pt < 10.0) ? 10.0 : (x->pt > 800.0) ? 800.0 : x->pt; 
+    double pt = (x->pt < pt_min) ? pt_min : (x->pt > pt_max) ? pt_max : x->pt; 
     //    double logpt = log10(pt); is log10 in other parametrizations...
     double logpt = log(pt);
     
