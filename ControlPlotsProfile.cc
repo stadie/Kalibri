@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.11 2010/06/29 13:52:00 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.12 2010/07/22 14:00:32 mschrode Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -103,8 +103,12 @@ void ControlPlotsProfile::draw() {
 
   // Draw profile histograms
   TLegend *leg = bins_.front()->createLegend();
-  TLine *hLine = bins_.front()->createHorizontalLine();
-  c1->SetRightMargin(0.04);
+  TLine *hLine = bins_.front()->createHorizontalLine(); 
+  TLine *hLine2 = new TLine(config_->xMin(),1.0,config_->xMax(),1.0);
+  hLine2->SetLineStyle(2);
+  hLine2->SetLineColor(1);
+  
+  c1->SetRightMargin(0.05);
   c1->SetTopMargin(0.13);
   for(std::vector<Bin*>::iterator binIt = bins_.begin();
       binIt != bins_.end(); binIt++) {
@@ -122,11 +126,13 @@ void ControlPlotsProfile::draw() {
 	  h->Draw("PE1X0same");
 	}
 	config_->toRootFile(h);
-      }
-      if( *profTypeIt == ControlPlotsConfig::Mean
-	  || *profTypeIt == ControlPlotsConfig::GaussFitMean ) hLine->Draw("same");
+      } 
+      if( *profTypeIt == ControlPlotsConfig::RatioOfMeans 
+	  || *profTypeIt == ControlPlotsConfig::RatioOfGaussFitMeans ) hLine2->Draw("same");
+      else if( *profTypeIt == ControlPlotsConfig::Mean
+	  || *profTypeIt == ControlPlotsConfig::GaussFitMean  ) hLine->Draw("same");
       leg->Draw("same");
-
+      
       if( config_->logX() ) c1->SetLogx(1);
       c1->RedrawAxis();
       p2->DrawClone();
@@ -153,9 +159,11 @@ void ControlPlotsProfile::draw() {
 	} else {
 	  h->Draw("PE1X0same");
 	}
-      }
-      if( *profTypeIt == ControlPlotsConfig::Mean
-	  || *profTypeIt == ControlPlotsConfig::GaussFitMean ) hLine->Draw("same");
+      }  
+      if( *profTypeIt == ControlPlotsConfig::RatioOfMeans 
+	  || *profTypeIt == ControlPlotsConfig::RatioOfGaussFitMeans ) hLine2->Draw("same"); 
+      else if( *profTypeIt == ControlPlotsConfig::Mean
+	       || *profTypeIt == ControlPlotsConfig::GaussFitMean  ) hLine->Draw("same");
       leg->Draw("same");
 
       if( config_->logX() ) c1->SetLogx(1);
@@ -204,6 +212,7 @@ void ControlPlotsProfile::draw() {
   delete c1;
   delete leg;
   delete hLine;
+  delete hLine2;
 }
 
 
@@ -409,6 +418,7 @@ int ControlPlotsProfile::Bin::fitProfiles() {
   }
   int status = 0; // No error handling implement yet
 
+  bool isResponse = ((config_->yVariable()).find("Response") != std::string::npos); 
   // Create profile histograms
   // Loop over CorrectionTypes
   for(std::map<ControlPlotsConfig::CorrectionType,TH2D*>::iterator corrIt = hYvxX_.begin();
@@ -492,8 +502,13 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	  
 	  hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->SetBinContent(xBin,mean);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->SetBinError(xBin,meanerror);
-	  hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinContent(xBin,width/mean);
-	  hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinError(xBin,f->GetParError(2)/mean);
+	  if( isResponse) {
+	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinContent(xBin,width/mean);
+	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinError(xBin,f->GetParError(2)/mean);
+	  } else {
+	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinContent(xBin,width);
+	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinError(xBin,f->GetParError(2));
+	  }
 	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
 	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
 	}
@@ -508,8 +523,13 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 
 	hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinContent(xBin,mean);
 	hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinError(xBin,meanerror);
-	hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinContent(xBin,width/mean); 
-	hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinError(xBin,htemp->GetRMSError()/mean); 
+	if( isResponse) {
+	  hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinContent(xBin,width/mean); 
+	hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinError(xBin,htemp->GetRMSError()/mean);
+	} else {
+	  hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinContent(xBin,width); 
+	  hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinError(xBin,htemp->GetRMSError());
+	} 
 	hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
 	hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
 	htemp->GetQuantiles(nq,yq,xq);
@@ -567,7 +587,6 @@ TLine *ControlPlotsProfile::Bin::createHorizontalLine() const {
   double y = 0.;
   if( (config_->yVariable()).find("Response") != std::string::npos )
     y = 1.;
-
   TLine *line = new TLine(config_->xMin(),y,config_->xMax(),y);
   line->SetLineStyle(2);
   line->SetLineColor(1);
