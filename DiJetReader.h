@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.21 2010/06/28 11:34:45 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.22 2010/07/22 13:58:30 mschrode Exp $
 // ----------------------------------------------------------------   
 
 
@@ -38,8 +38,10 @@
 #include <string>
 #include <memory>
 #include <iterator>
+#include <vector>
 
-class Jet;
+#include "Jet.h"
+
 class NJetSel;
 class TRandom;
 class JetBin;
@@ -107,6 +109,8 @@ class DiJetReader : public EventReader{
   double genjetpt_,jeteta_,sigmaphi_,sigmaeta_,sumsigmaetaphi_,emf_,meanMoment_; //!< possible binning variables
   const double* vars_[4];             //!< Jet binning variables
   const double zero_;           //!< just null
+
+  std::vector<Jet::JetIndex*> jetIndices_;
 };
 
 
