@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.51 2010/06/29 13:52:43 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.52 2010/07/22 13:58:30 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -879,7 +879,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetHadFraction_++;
     return 0;
   }
-  if( nJets > 2 &&  2 * nJet_->JetPt[2]/(nJet_->JetPt[0] + nJet_->JetPt[1]) > maxRel3rdJetEt_ &&  nJet_->JetPt[2] > max3rdJetEt_ ) {
+  if( nJets > 2 &&(  2 * nJet_->JetPt[2]/(nJet_->JetPt[0] + nJet_->JetPt[1]) > maxRel3rdJetEt_ ||  nJet_->JetPt[2] > max3rdJetEt_) ) {
     nCutOn3rdJet_++;
     return 0;
   }
