@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.13 2010/06/28 16:27:43 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.14 2010/06/29 13:52:00 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -113,12 +113,21 @@ std::string ControlPlotsConfig::yProfileTitle(ProfileType type) const {
 
   if( type == Mean )
     title = "<" + yTitle() + ">";
-  else if( type == StandardDeviation )
-    title = "#sigma( " + yTitle() + ") / <" + yTitle() + ">";
+  else if( type == StandardDeviation ) {
+    if((yVariable()).find("Response") != std::string::npos)
+      title = "#sigma( " + yTitle() + ") / <" + yTitle() + ">";
+    else {
+      title = "#sigma( " + yTitle() + ")";
+    }
+  }
   else if( type == GaussFitMean )
     title = "GaussFit < " + yTitle() + ">";
-  else if( type == GaussFitWidth )
-    title = "GaussFit #sigma( " + yTitle() + ") / <" + yTitle() + ">";
+  else if( type == GaussFitWidth ) {
+    if((yVariable()).find("Response") != std::string::npos)
+      title = "GaussFit #sigma( " + yTitle() + ") / <" + yTitle() + ">";
+    else 
+      title = "GaussFit #sigma( " + yTitle() + ")";
+  }
   else if( type == Median )
     title = "Median " + yTitle();
   else if( type == Chi2 )
@@ -236,6 +245,8 @@ ControlPlotsConfig::ProfileType ControlPlotsConfig::profileType(const std::strin
   if( typeName == "Mean" )
     type = Mean;
   else if( typeName == "StandardDeviation" )
+    type = StandardDeviation;
+  else if( typeName == "RMS" )
     type = StandardDeviation;
   else if( typeName == "GaussFitMean" )
     type = GaussFitMean;
