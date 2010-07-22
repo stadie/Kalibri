@@ -257,6 +257,7 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
 //!  Set style option for the output.
 //---------------------------------------------------------------
 void ControlPlots::setGStyle() const {
+  gStyle->SetErrorX(0);
   gStyle->SetPalette(1);
 
   // For the canvas:

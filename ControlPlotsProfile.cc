@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.10 2010/06/28 16:27:43 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.11 2010/06/29 13:52:00 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -43,6 +43,7 @@ ControlPlotsProfile::ControlPlotsProfile(const ControlPlotsConfig *config, const
 			 config_->nXBins(),
 			 config_->xMin(),
 			 config_->xMax());
+  hXSpectrum_->SetMarkerStyle(20);
   hXSpectrum_->SetXTitle((config_->xTitle()).c_str());
   hXSpectrum_->SetYTitle("Number of events");
   hXSpectrum_->GetXaxis()->SetNdivisions(505);
@@ -93,6 +94,7 @@ void ControlPlotsProfile::draw() {
       if( config_->logX() ) c1->SetLogx(1);
       c1->RedrawAxis();      
       p1->DrawClone();
+      config_->toRootFile(h);
       fileName = config_->outDirName() + "/";
       fileName += (*binIt)->hist2DFileName(*corrTypeIt) + "." + config_->outFileType();
       c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
@@ -177,6 +179,7 @@ void ControlPlotsProfile::draw() {
 	c1->SetLogx(0);
 	c1->RedrawAxis();
 	p2->DrawClone();
+	config_->toRootFile(h);
 	fileName = config_->outDirName() + "/";
 	fileName += (*binIt)->distributionFileName(n,*corrTypeIt) + "." + config_->outFileType();
 	c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
@@ -187,7 +190,7 @@ void ControlPlotsProfile::draw() {
   // Draw x spectrum
   c1->Clear();
   c1->cd();
-  hXSpectrum_->Draw();
+  hXSpectrum_->Draw("PE1");
   c1->SetLogx(0);
   c1->SetLogy(1);
   p2->DrawClone();
@@ -465,7 +468,7 @@ int ControlPlotsProfile::Bin::fitProfiles() {
       TH1D *h = static_cast<TH1D*>(htemp->Clone(name));
       h->SetTitle((config_->xBinTitle(xBin-1,min(),max())).c_str());
       h->SetXTitle((config_->yTitle()).c_str());
-      h->SetYTitle("N");
+      h->SetYTitle("Number of jets");
       h->SetLineColor(config_->color(corrIt->first));	   
       hYDistributions_[corrIt->first].at(xBin-1) = h;
         
