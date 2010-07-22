@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.16 2010/05/19 13:34:48 stadie Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.17 2010/07/22 13:58:30 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -52,9 +52,9 @@ ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, 
   : data_(data),
     config_(new ConfigFile(configfile.c_str())),
     param_(param),
-    respNBins_(80),
+    respNBins_(60),
     respMin_(0.),
-    respMax_(3.),
+    respMax_(2.),
     dir_(outDir)
 {
   // Do not print ROOT message if eps file has been created
@@ -318,7 +318,7 @@ void ControlPlotsJetSmearing::plotResponse() const
   hRespRatioFrameJet2->SetXTitle("R_{2} = p^{jet}_{T,2} / p^{true}_{T,2}");
 
   hPtGenAbs = new TH1D("hPtGenAbs",";p^{gen}_{T} (GeV);dN / dp^{gen}_{T}  1 / (GeV)",
-		       80,0.8*ptBinEdges_.front(),1.1*ptBinEdges_.back());
+		       60,0.8*ptBinEdges_.front(),1.1*ptBinEdges_.back());
   hPtGenAbs->SetMarkerStyle(20);
   hPtGenAbs->GetXaxis()->SetNdivisions(505);
   hPtGenAbs->SetLineWidth(2);
