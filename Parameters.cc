@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.53 2010/05/27 08:36:22 stadie Exp $
+// $Id: Parameters.cc,v 1.54 2010/06/28 11:33:47 kirschen Exp $
 
 #include <fstream>
 #include <cassert>
@@ -62,7 +62,9 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     double xMin = config.read<double>("Et min cut on jet",0.);
     double xMax = config.read<double>("Et max cut on jet",1.);
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    return new SmearGauss(tMin,tMax,xMin,xMax,scale);
+    std::vector<double> startPar = bag_of<double>(config.read<string>("jet start values",""));
+    std::string spectrum = config.read<string>("jet parameters spectrum","default.root");
+    return new SmearGauss(tMin,tMax,xMin,xMax,scale,startPar,spectrum);
   } else if(name == "SmearGaussPtBin") {
     double tMin = config.read<double>("DiJet integration min",0.);
     double tMax = config.read<double>("DiJet integration max",1.);
@@ -70,15 +72,19 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     double xMax = config.read<double>("Et max cut on jet",1.);
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
     std::vector<double> startPar = bag_of<double>(config.read<string>("jet start values",""));
-    return new SmearGaussPtBin(tMin,tMax,xMin,xMax,scale,startPar);
-  } else if(name == "SmearGaussExtrapolation") {
+    std::string spectrum = config.read<string>("jet parameters spectrum","default.root");
+    return new SmearGaussPtBin(tMin,tMax,xMin,xMax,scale,startPar,spectrum);
+  } else if(name == "SmearCrystalBallPtBin") {
     double tMin = config.read<double>("DiJet integration min",0.);
     double tMax = config.read<double>("DiJet integration max",1.);
     double xMin = config.read<double>("Et min cut on jet",0.);
     double xMax = config.read<double>("Et max cut on jet",1.);
+    double rMin = config.read<double>("Response pdf min",0.);
+    double rMax = config.read<double>("Response pdf max",2.);
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    //return new SmearGaussExtrapolation(tMin,tMax,xMin,xMax,scale);
-    return 0;
+    std::vector<double> startPar = bag_of<double>(config.read<string>("jet start values",""));
+    std::string spectrum = config.read<string>("jet parameters spectrum","default.root");
+    return new SmearCrystalBallPtBin(tMin,tMax,xMin,xMax,rMin,rMax,scale,startPar,spectrum);
   } else if(name == "GroomParametrization") {
     return new GroomParametrization();
   } else if(name == "EtaEtaParametrization") {
@@ -103,7 +109,7 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
   return 0;
 }
 
-TParameters* TParameters::CreateParameters(const std::string& configfile) 
+TParameters* TParameters::CreateParameters(const ConfigFile& config) 
 {
   static Cleaner cleanup;
   if(  instance != 0  )
@@ -111,8 +117,6 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     delete instance; 
     instance = 0; 
   }  
- 
-  ConfigFile config( configfile.c_str() );
   
   string parclass = config.read<string>("Parametrization Class","");
   //create Parameters
@@ -148,6 +152,10 @@ TParameters* TParameters::CreateParameters(const std::string& configfile)
     parclass = "SmearGaussPtBin";
   } else if(parclass == "SmearParametrizationGaussExtrapolation") {
     parclass = "SmearGaussExtrapolation";
+  } else if(parclass == "SmearParametrizationGaussImbalance") {
+    parclass = "SmearGaussImbalance";
+  } else if(parclass == "SmearParametrizationCrystalBallPtBin") {
+    parclass = "SmearCrystalBallPtBin";
   }
 
   Parametrization *param = CreateParametrization(parclass,config);

@@ -1,5 +1,5 @@
 //
-// $Id: ControlPlotsJetSmearing.h,v 1.9 2010/04/13 13:38:24 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.h,v 1.10 2010/04/18 14:40:38 mschrode Exp $
 //
 #ifndef JS_CONTROLPLOTS_JETSMEARING_H
 #define JS_CONTROLPLOTS_JETSMEARING_H
@@ -24,7 +24,7 @@ class TRandom3;
 //!  \brief Generates validation plots for jet-smearing method
 //!  \author Matthias Schroeder
 //!  \date Thu May  7 11:30:28 CEST 2009 
-//!  $Id: ControlPlotsJetSmearing.h,v 1.9 2010/04/13 13:38:24 mschrode Exp $
+//!  $Id: ControlPlotsJetSmearing.h,v 1.10 2010/04/18 14:40:38 mschrode Exp $
 // --------------------------------------------------
 class ControlPlotsJetSmearing {
  public:
@@ -36,12 +36,16 @@ class ControlPlotsJetSmearing {
 
 
  private:
+  static double spectrum(double *x, double *par);
+
   typedef std::vector<Event*>::const_iterator DataIt;
 
   const std::vector<Event*> * data_;   //!< The data which is plotted
   const ConfigFile          * config_; //!< The configuration file
   mutable TParameters       * param_;  //!< The parametrization
   
+  bool saveAsEps_;
+  std::string outNamePrefix_;
   int          respNBins_;             //!< Number of bins in response control plots \p plotResponse()
   double       respMin_;               //!< Minimum of response control plots \p plotResponse()
   double       respMax_;               //!< Maximum of response control plots \p plotResponse()
@@ -54,6 +58,8 @@ class ControlPlotsJetSmearing {
   std::string ptBinningVar_;
   std::vector<double> ptBinEdges_;
   std::vector<double> ptBinCenters_;
+  double minJetPt_;
+  double maxJetPt_;
 
   void plotDijets() const;
   void plotResponse() const;
@@ -65,6 +71,7 @@ class ControlPlotsJetSmearing {
   void plotLogP() const;
   void plotMeanResponseAndResolution() const;
   void plot3rdJet() const;
+  void plotAsymmetrySimulation() const;
 
   double gaussianWidth(double pt) const;
   double gaussianWidthError(double pt) const;
@@ -76,6 +83,7 @@ class ControlPlotsJetSmearing {
   int findPtBin(const Jet *jet) const;
   int findPtBin(double pt) const;
   int findBin(double x, const std::vector<double> &binEdges) const;
+  bool equidistLogBins(std::vector<double>& bins, int nBins, double first, double last) const;
 
   TLegend *createLegend(int nEntries, double width = 1., double lineHgt = -1., double yOffset = 0.) const;
   TPaveText *createPaveText(int nEntries, double width = 1., double lineHgt = -1.) const;
@@ -88,5 +96,6 @@ class ControlPlotsJetSmearing {
   void setGStyle() const;
   void setYRange(TH1 * h, double c1 = 0.9, double c2 = 1.1, double minLimit = 0.) const;
   template <class T> std::string toString(const T& t) const;
+  int color(int i) const;
 };
 #endif

@@ -1,8 +1,13 @@
-// $Id: SmearDiJet.cc,v 1.9 2010/04/13 13:38:24 mschrode Exp $
+// $Id: SmearDiJet.cc,v 1.10 2010/05/19 13:34:48 stadie Exp $
 
 #include "SmearDiJet.h"
 
+#include <cassert>
+#include <cmath>
 #include <iomanip>
+
+//#include "TVector3.h"
+
 
 //!  \brief Constructor
 //!  \param jet1 First jet
@@ -32,7 +37,40 @@ SmearDiJet::SmearDiJet(Jet * jet1,
     kMin_(min),
     kMax_(max),
     jet2_(jet2),
-    jet3_(jet3) {};
+    jet3_(jet3) {
+
+  scalePt2_ = 0.;
+  scalePt3_ = 0.;
+//   std::vector<double> s(3);
+//   std::vector<double> c(3);
+//   for(int i = 0; i < 3; ++i) {
+//     s[i] = sin(jet(i)->phi());
+//     c[i] = cos(jet(i)->phi());
+//   }
+//   double d = s[2]*c[1] - s[1]*c[2];
+//   if( d ) {
+//     scalePt2_ = (s[0]*c[2] - s[2]*c[0])/d;
+//     scalePt3_ = (s[1]*c[0] - s[0]*c[1])/d;
+//   }
+//   if( !( scalePt2_ > 0. && scalePt3_ > 0. ) ) {
+//     scalePt2_ = 0.;
+//     scalePt3_ = 0.;
+//   }
+
+
+//   TVector3 mht;
+//   mht.SetPtEtaPhi(jet(0)->genPt(),jet(0)->eta(),jet(0)->phi());
+//   double ht = jet(0)->genPt();
+
+//   TVector3 jt;
+//   for(int i = 1; i < 2; ++i) {
+//     jt.SetPtEtaPhi(jet(i)->genPt(),jet(i)->eta(),jet(i)->phi());
+//     mht += jt;
+//     ht += jet(i)->genPt();
+//   }
+
+//   relGenMet_ = mht.Pt()/ht;
+}
 
 
 // --------------------------------------------------
@@ -70,7 +108,7 @@ double SmearDiJet::chi2() const
   std::vector<double> pp_old;     // Product of function values of response pdfs from previous iteration
 
   // Iterate until precision or max. number iterations reached
-  while(fabs((pint - pint_old) / pint_old) > kEps_ && nIter < kMaxNIter_) {
+  while(std::abs((pint - pint_old) / pint_old) > kEps_ && nIter < kMaxNIter_) {
     pint_old = pint;
     pint     = 0;
     pp_old   = pp;
@@ -83,9 +121,9 @@ double SmearDiJet::chi2() const
       
       // Calculate probability only at new nodes
       if(nIter == 0 || i % 3 != 0) {
-	double p0 = pdfPtMeasJet1(jet1()->pt(),t);
-	double p1 = pdfPtMeasJet2(jet2()->pt(),t);
-	pp.push_back(p0 * p1 * pdfPtTrue(t)); // Store product of pdfs and normalization
+	double p0 = pdfPtMeasJet1(jet1()->pt(),t,0.);
+	double p1 = pdfPtMeasJet2(jet2()->pt(),t,0.);
+	pp.push_back(p0*p1*pdfPtTrue(t)); // Store product of pdfs and normalization
       } else {
 	pp.push_back(pp_old.at(i/3));       // Store product of pdfs previously calcluated
       }
@@ -105,6 +143,14 @@ double SmearDiJet::chi2() const
     }
     pint *= (3. * h / 8.);                 // Apply overall normalization
     nIter++;
+
+    /////////////////////////////////////////////////////////////
+    //
+    // ---> Needed?
+    //
+    //    if( pint_old ) eps = std::abs((pint - pint_old) / pint_old);
+    //
+    ////////////////////////////////////////////////////////////
   }
 
   if( pint <= 0 ) return 0.;
@@ -155,21 +201,30 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
       pdf_.par()[i] += epsilon[pdf_.parIdx()+i];
       temp1 = chi2();
       
-      //     std::cout << std::setprecision(10) << i << ": " << oldpar << " -- > " << f << std::endl;
-      //     std::cout << "   " << pdf_.respPar()[i] << " -- > " << temp1 << std::endl;
+//       std::cout << std::endl;
+//       std::cout << std::setprecision(10) << i << ": " << oldpar << " -- > " << f << std::endl;
+//       std::cout << "   " << pdf_.par()[i] << " -- > " << temp1 << std::endl;
       
       pdf_.par()[i] -= 2.*epsilon[pdf_.parIdx()+i];
       temp2 = chi2();
       
-      //     std::cout << "   " << pdf_.respPar()[i] << " -- > " << temp1 << std::endl;
+      //      std::cout << "   " << pdf_.par()[i] << " -- > " << temp1 << std::endl;
       
       
       pdf_.par()[i] = oldpar;
       
-      //     std::cout << i << ": " << pdf_.respParIdx()+i << " += " << temp1 - temp2 << std::endl;
+      //      std::cout << i << ": " << pdf_.parIdx()+i << " += " << temp1 - temp2 << std::endl;
       
       temp_derivative1[pdf_.parIdx()+i] += temp1 - temp2;
       temp_derivative2[pdf_.parIdx()+i] += temp1 + temp2 - 2*f;
+
+
+//       if( !(f == f) ) {
+// 	std::cout << "NAN error\n";
+// 	std::cout << "  " << jet1()->genPt() << ",  " << jet1()->pt() << std::endl;
+// 	std::cout << "  " << jet2()->genPt() << ",  " << jet2()->pt() << std::endl;
+//       }
+
     }
   }
 

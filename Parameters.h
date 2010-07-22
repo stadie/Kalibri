@@ -1,7 +1,7 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.59 2010/02/15 12:34:47 stadie Exp $
+// $Id: Parameters.h,v 1.60 2010/04/13 13:53:21 mschrode Exp $
 //
 #ifndef TParameters_h
 #define TParameters_h
@@ -26,12 +26,12 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.59 2010/02/15 12:34:47 stadie Exp $
+//!  $Id: Parameters.h,v 1.60 2010/04/13 13:53:21 mschrode Exp $
 // -----------------------------------------------------------------
 class TParameters {  
 public :
   
-  static TParameters* CreateParameters(const std::string& configfile);
+  static TParameters* CreateParameters(const ConfigFile& config);
 
   std::string GetName() const;
 
@@ -356,7 +356,7 @@ public :
 
 protected:
   TParameters(Parametrization* p) 
-    : p(p),k(0),parErrors_(0),parGCorr_(0),trackEff(0),fitchi2(0) {
+    : p(p),k(0),parErrors_(0),parGCorr_(0),parCov_(0),trackEff(0),fitchi2(0) {
   };
   virtual ~TParameters();
 

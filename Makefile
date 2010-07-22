@@ -161,7 +161,7 @@ lib/libKalibri.so: $(SRC:.cc=.o) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
 
-Kalibri.o: Kalibri.cc Kalibri.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h  EventProcessor.h  EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h TwoJetsPtBalanceEvent.h 
+Kalibri.o: Kalibri.cc Kalibri.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h ControlPlotsJetSmearing.h EventReader.h DiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h  EventProcessor.h  EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h TwoJetsPtBalanceEvent.h 
 	$(C) $(CFLAGS) $(RCXX) $(BOOSTFLAGS) -c Kalibri.cc 
 
 caliber.o: caliber.cc Kalibri.h JetTruthEvent.h Jet.h

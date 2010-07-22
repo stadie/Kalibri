@@ -1,7 +1,9 @@
-// $Id: SmearDiJet.h,v 1.8 2010/04/27 14:57:57 mschrode Exp $
+// $Id: SmearDiJet.h,v 1.9 2010/05/19 13:34:49 stadie Exp $
 
 #ifndef SmearDiJet_h
 #define SmearDiJet_h
+
+#include <vector>
 
 #include "SmearData.h"
 #include "SmearFunction.h"
@@ -11,7 +13,7 @@
 //!  \brief Dijet data for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 18:23:44 CEST 2009
-//!  $Id: SmearDiJet.h,v 1.8 2010/04/27 14:57:57 mschrode Exp $
+//!  $Id: SmearDiJet.h,v 1.9 2010/05/19 13:34:49 stadie Exp $
 // --------------------------------------------------
 class SmearDiJet : public SmearData {
  public:
@@ -35,13 +37,29 @@ class SmearDiJet : public SmearData {
   const Jet * jet1() const { return static_cast<Jet*>(mess_); }
   const Jet * jet2() const { return jet2_; }
   const Jet * jet3() const { return jet3_; }
-
-  double pdfPtMeasJet1(double ptMeas, double ptTrue) const { return pdf_.pdfPtMeasJet1(ptMeas,ptTrue); }
-  double pdfPtMeasJet2(double ptMeas, double ptTrue) const { return pdf_.pdfPtMeasJet2(ptMeas,ptTrue); }
+  const Jet * jet(int i) const { 
+    const Jet *jet = 0;
+    if( i == 0 ) jet = jet1();
+    else if( i == 1 ) jet = jet2();
+    else if( i == 2 ) jet = jet3();
+    return jet;
+  }
+  double pdfPtMeasJet1(double ptMeas, double ptTrue, double pt3Rel) const {
+    return pdf_.pdfPtMeasJet1(ptMeas,ptTrue,pt3Rel);
+  }
+  double pdfPtMeasJet2(double ptMeas, double ptTrue, double pt3Rel) const {
+    return pdf_.pdfPtMeasJet2(ptMeas,ptTrue,pt3Rel);
+  }
 
   //! Get dijet pt \f$ \frac{1}{2} (p^{1}_{T} + p^{2}_{T}) \f$
   double dijetPt() const { return 0.5 * (jet1()->pt() + jet2()->pt()); } 
+  double avePt() const { return 0.5 * (jet1()->pt() + jet2()->pt()); } 
+  double avePtGen() const { return 0.5 * (jet1()->genPt() + jet2()->genPt()); } 
   double relJet3Pt() const { return jet3()->pt() / dijetPt(); }
+  
+  double scalePt2() const { return scalePt2_; }
+  double scalePt3() const { return scalePt3_; }
+  double relGenMet() const { return relGenMet_; }
 
 
  private:
@@ -52,5 +70,9 @@ class SmearDiJet : public SmearData {
 
   Jet * jet2_; //!< Second jet
   Jet * jet3_; //!< Third jet
+  
+  double scalePt2_;
+  double scalePt3_;
+  double relGenMet_;
 };
 #endif

@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.38 2010/05/27 15:27:49 stadie Exp $
+//!    $Id: Jet.h,v 1.39 2010/06/09 22:27:39 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -20,6 +20,24 @@ class CorFactors;
 class Jet : public Measurement
 {
  public:
+  class JetIndex {
+  public:
+    JetIndex(unsigned int idx, double pt) : idx_(idx), pt_(pt) {};
+    const unsigned int idx_;
+    const double pt_;
+    // For sorting jets in pt
+    static bool ptGreaterThan(const JetIndex *idx1, const JetIndex *idx2) {
+      // check for 0
+      if(idx1 == 0) {
+	return idx2 != 0;
+      } else if (idx2 == 0) {
+	return false;
+      } else {
+	return idx1->pt_ > idx2->pt_;
+      }
+    }
+  };
+
   //! For sorting jets in calo pt
   static bool caloPtGreaterThan(const Jet *j1, const Jet *j2) {
     // check for 0
