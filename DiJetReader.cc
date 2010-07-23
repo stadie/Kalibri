@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.53 2010/07/22 14:45:03 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.54 2010/07/22 17:38:32 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -930,7 +930,12 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     } else if( i == 2 ) {
       jet3 = jet;
     }
-  }  // End of loop over jets
+  }  // End of loop over jets 
+  if(corFactorsFactory_) {
+    jet1->updateCorFactors(corFactorsFactory_->create(jet1));
+    jet2->updateCorFactors(corFactorsFactory_->create(jet2));
+    if(jet3) jet3->updateCorFactors(corFactorsFactory_->create(jet3));    
+  }
   // Correct measurement to L3 (L1*L2*L3)
   if(correctToL3_) {
     jet1->correctToL3();
