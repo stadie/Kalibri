@@ -86,10 +86,10 @@ DeltaR cut on jet matching = 9999
 #   Input / Output
 #---------------------------------------------------------------------------------
 
-#jet correction source = JetMETCor
-#jet correction name   = Spring10_AK5TRK
 jet correction source = JetMETCor
 jet correction name   = Spring10_AK5CaloData
+#jet correction source = JetMETCor
+#jet correction name   = Spring10_AK5CaloJW
 Default Tree Name      = CalibTree
 
 # List of input files:
@@ -121,7 +121,7 @@ Z-Jet data class     = 3
 #Di-Jet data class    = 21
 Top data class       = 1
 
-correct jets L2L3 = false
+correct jets L2L3 = true
 #Di-Jet prescale = 1000
 #-----------------------------------------------------------------
 #  Control plots
@@ -135,84 +135,82 @@ plots output directory           = plots
 create JetTruthEvent plots    =  false
 create TwoJetsPtBalanceEvent plots = true
 
-TwoJetsPtBalanceEvent plots names =  AsymmetryVsEta;AsymmetryVsPt;AsymmetryVsEmf;AsymmetryVsMeanMoment;AsymmetryVsMeanMomentMeanPt;AsymmetryVsMeanMomentMeanPt2
+TwoJetsPtBalanceEvent plots names =  AsymmetryVsEta;AsymmetryVsPt;AsymmetryVsMeanMoment;AsymmetryVsMeanMomentMeanPt;AsymmetryVsMeanMomentMeanPt2
 AsymmetryVsEta x variable        =  Eta
 AsymmetryVsEta x edges           =  26 -5.2 5.2
 AsymmetryVsEta y variable        =  Asymmetry
-AsymmetryVsEta y edges           =  51 -1 1 -0.5 0.8 -0.5 0.8 0.0 0.3 0.0 0.3 0.5 2.5 0.5 2.5
+AsymmetryVsEta y edges           =  51 -1 1 -0.5 0.8 -0.5 0.8 0.0 0.3 0.0 0.3 0.7 1.8 0.7 1.8
 AsymmetryVsEta bin variable      =  MeanPt
 AsymmetryVsEta bin edges         =  5 10 20 30 50 80 120 200 360 7000
-AsymmetryVsEta correction types  =  Uncorrected; L2L3
+AsymmetryVsEta correction types  =  Uncorrected; Kalibri
 AsymmetryVsEta profile types     =  Mean; GaussFitMean; RMS; GaussFitWidth; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsEta legend label      =  Uncorrected:CMS default
+AsymmetryVsEta legend label      =  Uncorrected:CMS default
 
 AsymmetryVsPt x variable        =  MeanPt; log
 AsymmetryVsPt x edges           =  30 30 2000
 AsymmetryVsPt y variable        =  Asymmetry
-AsymmetryVsPt y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.0 0.3 0.0 0.3 0.5 2.5 0.5 2.5
+AsymmetryVsPt y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.0 0.3 0.0 0.3 0.7 1.8 0.7 1.8
 AsymmetryVsPt bin variable      =  AbsEta
-AsymmetryVsPt bin edges         =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsPt correction types  =  Uncorrected; L2L3
+AsymmetryVsPt bin edges         =  0 1.3 2.6 3.0 5.2
+AsymmetryVsPt correction types  =  Uncorrected; Kalibri
 AsymmetryVsPt profile types     =  Mean; GaussFitMean; RMS; GaussFitWidth; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsPt legend label      =  L2L3:CMS default
+AsymmetryVsPt legend label      =  Uncorrected:CMS default
 
 AsymmetryVsEtaEta x variable       =  momentEtaEta
 AsymmetryVsEtaEta x edges          =  30 0 0.3
 AsymmetryVsEtaEta y variable        =  Asymmetry
 AsymmetryVsEtaEta y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.5 2.0 0.5 2.5
-AsymmetryVsEtaEta bin variable      =  AbsEta
-AsymmetryVsEtaEta bin edges         =  0.0 1.3 2.6 3.0 5.2
-
-AsymmetryVsEtaEta correction types  =  Uncorrected; L2L3
+AsymmetryVsEtaEta bin variable      =  Eta
+AsymmetryVsEtaEta bin edges         =  -5.2 -3.0 -1.3 1.3 3.0 5.2
+AsymmetryVsEtaEta correction types  =  Uncorrected; Kalibri 
 AsymmetryVsEtaEta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsEtaEta legend label      =  L2L3:CMS default
+AsymmetryVsEtaEta legend label      =  Uncorrected:CMS default
 
 AsymmetryVsEmf x variable       =  EMF
 AsymmetryVsEmf x edges          =  20 0 1.0
 AsymmetryVsEmf y variable        =  Asymmetry
-AsymmetryVsEmf y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.0 2.5 0.0 2.5
+AsymmetryVsEmf y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.7 1.8 0.7 1.8
 AsymmetryVsEmf bin variable      =  AbsEta
 AsymmetryVsEmf bin edges         =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsEmf correction types  =  Uncorrected; L2L3
+AsymmetryVsEmf correction types  =  Uncorrected; Kalibri
 AsymmetryVsEmf profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsEmf legend label      =  L2L3:CMS default
+AsymmetryVsEmf legend label      =  Uncorrected:CMS default
 
 AsymmetryVsMeanMoment x variable       =  meanMoment
 AsymmetryVsMeanMoment x edges          =  30 0 0.3
 AsymmetryVsMeanMoment y variable        =  Asymmetry
-AsymmetryVsMeanMoment y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.0 2.5 0.0 2.5
+AsymmetryVsMeanMoment y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.7 1.8 0.7 1.8
 AsymmetryVsMeanMoment bin variable      =  AbsEta
 AsymmetryVsMeanMoment bin edges         =  0 1.3 2.6 3.0 5.2
 AsymmetryVsMeanMoment cut variable      =  MeanPt
 AsymmetryVsMeanMoment cut edges         =  20 7000
-AsymmetryVsMeanMoment correction types  =  Uncorrected; L2L3
+AsymmetryVsMeanMoment correction types  =  Uncorrected; Kalibri
 AsymmetryVsMeanMoment profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsMeanMoment legend label      =  L2L3:CMS default
+AsymmetryVsMeanMoment legend label      =  Uncorrected:CMS default
 
 AsymmetryVsMeanMomentMeanPt x variable       =  meanMoment
 AsymmetryVsMeanMomentMeanPt x edges          =  30 0 0.3
 AsymmetryVsMeanMomentMeanPt y variable        =  Asymmetry
-AsymmetryVsMeanMomentMeanPt y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.0 2.5 0.0 2.5
+AsymmetryVsMeanMomentMeanPt y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.7 1.8 0.7 1.8
 AsymmetryVsMeanMomentMeanPt bin variable      =  MeanPt
 AsymmetryVsMeanMomentMeanPt bin edges         =  5 10 20 30 50 80 120 200 360 7000
 AsymmetryVsMeanMomentMeanPt cut variable      =  Eta
 AsymmetryVsMeanMomentMeanPt cut edges         =  -1.3 1.3
-AsymmetryVsMeanMomentMeanPt correction types  =  Uncorrected; L2L3
+AsymmetryVsMeanMomentMeanPt correction types  =  Uncorrected; Kalibri
 AsymmetryVsMeanMomentMeanPt profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsMeanMomentMeanPt legend label      =  L2L3:CMS default
+AsymmetryVsMeanMomentMeanPt legend label      =  Uncorrected:CMS default
 
 AsymmetryVsMeanMomentMeanPt2 x variable       =  meanMoment
 AsymmetryVsMeanMomentMeanPt2 x edges          =  30 0 0.3
 AsymmetryVsMeanMomentMeanPt2 y variable        =  Asymmetry
-AsymmetryVsMeanMomentMeanPt2 y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5  0.0 2.5 0.0 2.5
+AsymmetryVsMeanMomentMeanPt2 y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5  0.7 1.8 0.7 1.8
 AsymmetryVsMeanMomentMeanPt2 bin variable      =  MeanPt
 AsymmetryVsMeanMomentMeanPt2 bin edges         =  5 10 20 30 50 80 120 200 360 7000
 AsymmetryVsMeanMomentMeanPt2 cut variable      =  AbsEta
 AsymmetryVsMeanMomentMeanPt2 cut edges         =  1.3 2.6
-AsymmetryVsMeanMomentMeanPt2 correction types  =  Uncorrected; L2L3
+AsymmetryVsMeanMomentMeanPt2 correction types  =  Uncorrected; Kalibri
 AsymmetryVsMeanMomentMeanPt2 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsMeanMomentMeanPt2 legend label      =  L2L3:CMS default
-
+AsymmetryVsMeanMomentMeanPt2 legend label      =  Uncorrected:CMS default
 """
     fcfg = open(filename, "w")
     fcfg.write(config)
@@ -244,12 +242,14 @@ AsymmetryVsMeanMomentMeanPt2 profile types     =  Mean; GaussFitMean; RatioOfMea
 #change these variables to steer the fit
 jettype = "Calo"
 #datadir = "/scratch/hh/current/cms/user/stadie/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C"
+#datadir = "/scratch/hh/current/cms/user/stadie/SD_JetMETTau-v9A"
+#datadir = "/scratch/hh/current/cms/user/stadie/JetMETTau_Run2010A-Jul15thReRec-v1A"
 #datadir = "/scratch/hh/current/cms/user/stadie/JetMET_Run2010A-PromptReco-v4_DCSONLY"
 datadir = "/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt*"
 nthreads = 3
 nevents =  -1
-dirname = "/afs/naf.desy.de/group/cms/scratch/stadie/dijetsMCSpring10"
-#dirname = "/afs/naf.desy.de/group/cms/scratch/stadie/dijetsRun2010A-DCS-RES"
+dirname = "/afs/naf.desy.de/group/cms/scratch/stadie/dijetsMCSpring10-CorTest"
+#dirname = "/afs/naf.desy.de/group/cms/scratch/stadie/dijetsRun2010A-DCS-CorRes"
 useconstraint = False
 batch = False
 doBinnedFit = False
@@ -272,11 +272,11 @@ os.system("ln -s $PWD/JetMETObjects "+dirname+"/")
 os.system("ls "+datadir+"/*"+jettype+"*.root > "+dirname+"/dijetlist");
 binned= True
 output="Kalibri.txt"
-input ="Kalibri.txt"
+input ="L4JWfit.txt"
 writeCfg(dirname+"/L2L3.cfg")
 binned = False
 output="Kalibri2.txt"
-input ="Kalibri.txt"
+input ="L4JWfit.txt"
 writeCfg(dirname+"/L2L3b.cfg")
 
 if batch:

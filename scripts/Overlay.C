@@ -194,15 +194,15 @@ void Overlay()
   setStyle();
   /*
   const char* f1 = "/afs/naf.desy.de/user/s/stadie/scratch/dijetsMCSpring10/plots/KalibriPlots.root";
-  const char* f2 = "/afs/naf.desy.de/user/s/stadie/scratch/dijetsRun2010A/plots/KalibriPlots.root";
+  const char* f2 = "/afs/naf.desy.de/user/s/stadie/scratch/dijetsRun2010A-DCS-RES/plots/KalibriPlots.root";
 
   const char* cor1 = "Uncorrected";
   const char* cor2 = "L2L3";
   const char* lab1 = "raw";
   const char* lab2 = "L2L3";
   */
-  const char* f1 = "/afs/naf.desy.de/user/s/stadie/scratch/dijetsMCSprin10-Cor/plots/KalibriPlots.root";
-  const char* f2 = "/afs/naf.desy.de/user/s/stadie/scratch/dijetsRun2010A-Cor/plots/KalibriPlots.root";
+  const char* f1 = "/afs/naf.desy.de/user/s/stadie/scratch/dijetsMCSpring10-CorTest/plots/KalibriPlots.root";
+  const char* f2 = "/afs/naf.desy.de/user/s/stadie/scratch/dijetsRun2010A-DCS-CorRes/plots/KalibriPlots.root";
 
   const char* cor1 = "Uncorrected";
   const char* cor2 = "Kalibri";
@@ -219,6 +219,8 @@ void Overlay()
   OverlayPlots(f1,f2,"AsymmetryVsEta/AsymmetryVsEta_AsymmetryVsEta","MeanPt4_RatioOfMeans",cor1,cor2,0.5,2.2,lab1,lab2);  
   OverlayPlots(f1,f2,"AsymmetryVsEta/AsymmetryVsEta_AsymmetryVsEta","MeanPt5_RatioOfMeans",cor1,cor2,0.5,2.2,lab1,lab2);  
   OverlayPlots(f1,f2,"AsymmetryVsEta/AsymmetryVsEta_AsymmetryVsEta","MeanPt6_RatioOfMeans",cor1,cor2,0.5,2.2,lab1,lab2);   
+  OverlayPlots(f1,f2,"AsymmetryVsEta/AsymmetryVsEta_AsymmetryVsEta","MeanPt7_RatioOfMeans",cor1,cor2,0.5,2.2,lab1,lab2);   
+  OverlayPlots(f1,f2,"AsymmetryVsEta/AsymmetryVsEta_AsymmetryVsEta","MeanPt8_RatioOfMeans",cor1,cor2,0.5,2.2,lab1,lab2);   
 
   OverlayPlots(f1,f2,"AsymmetryVsPt/AsymmetryVsPt_AsymmetryVsMeanPt","AbsEta0_StandardDeviation",cor1,cor2,0,0.3,lab1,lab2);
   OverlayPlots(f1,f2,"AsymmetryVsPt/AsymmetryVsPt_AsymmetryVsMeanPt","AbsEta1_StandardDeviation",cor1,cor2,0,0.3,lab1,lab2);
@@ -235,10 +237,14 @@ void Overlay()
   OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt/AsymmetryVsMeanMomentMeanPt_AsymmetryVsmeanMoment","MeanPt4_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2);
   OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt/AsymmetryVsMeanMomentMeanPt_AsymmetryVsmeanMoment","MeanPt5_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2);
   OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt/AsymmetryVsMeanMomentMeanPt_AsymmetryVsmeanMoment","MeanPt6_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2); 
+  OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt/AsymmetryVsMeanMomentMeanPt_AsymmetryVsmeanMoment","MeanPt7_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2); 
+  OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt/AsymmetryVsMeanMomentMeanPt_AsymmetryVsmeanMoment","MeanPt8_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2); 
 
   OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt2/AsymmetryVsMeanMomentMeanPt2_AsymmetryVsmeanMoment","MeanPt2_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2);
   OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt2/AsymmetryVsMeanMomentMeanPt2_AsymmetryVsmeanMoment","MeanPt3_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2);
   OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt2/AsymmetryVsMeanMomentMeanPt2_AsymmetryVsmeanMoment","MeanPt4_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2);
   OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt2/AsymmetryVsMeanMomentMeanPt2_AsymmetryVsmeanMoment","MeanPt5_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2);
   OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt2/AsymmetryVsMeanMomentMeanPt2_AsymmetryVsmeanMoment","MeanPt6_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2);
+  OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt2/AsymmetryVsMeanMomentMeanPt2_AsymmetryVsmeanMoment","MeanPt7_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2);
+  OverlayPlots(f1,f2,"AsymmetryVsMeanMomentMeanPt2/AsymmetryVsMeanMomentMeanPt2_AsymmetryVsmeanMoment","MeanPt8_RatioOfMeans",cor1,cor2,0.5,2.5,lab1,lab2);
 }
