@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.cc,v 1.5 2010/04/13 13:38:24 mschrode Exp $
+//  $Id: Parametrization.cc,v 1.6 2010/07/22 13:58:30 mschrode Exp $
 //
 #include "Parametrization.h"
 
@@ -16,180 +16,59 @@
 
 
 // ------------------------------------------------------------------------
-SmearGauss::SmearGauss(double tMin, double tMax, double xMin, double xMax, const std::vector<double>& parScales, const std::vector<double> &startPar, const std::string &spectrum)
-  : Parametrization(0,3,0,0),
-    tMin_(tMin),
-    tMax_(tMax),
-    xMin_(xMin),
-    xMax_(xMax),
-    scale_(parScales),
-    hPdfPtTrue_(0) {
-  assert( 0.0 <= tMin_ && tMin_ < tMax_ );
-  assert( 0.0 <= xMin_ && xMin_ < xMax_ );
-  assert( scale_.size() >= nJetPars() );
-  assert( startPar.size() >= nJetPars() );
-
+SmearGaussAvePt::SmearGaussAvePt(double ptAveMin, double ptAveMax)
+  : Parametrization(0,1,0,0),
+    ptAveMin_(ptAveMin),
+    ptAveMax_(ptAveMax) {
+  assert( 0.0 <= ptAveMin_ && ptAveMin_ < ptAveMax_ );
+  dMeasMax_ = 100.;
   print();
-
-  TFile file(spectrum.c_str(),"READ");
-  file.GetObject("hPtGen",hPdfPtTrue_);
-  if( !hPdfPtTrue_ ) {
-    std::cerr << "ERROR: No histogram found in file '" << file.GetName() << "'\n";
-    exit(1);
-  } else {
-    std::cout << "Getting truth pdf from file '" << spectrum << "'\n";
-    hPdfPtTrue_->SetDirectory(0);
-    hPdfPtTrue_->SetName("hPdfPtTrue");
-    int binMin = hPdfPtTrue_->FindBin(tMin_);
-    int binMax = hPdfPtTrue_->FindBin(tMax_);
-    if( hPdfPtTrue_->Integral(binMin,binMax,"width") )
-      hPdfPtTrue_->Scale(1./hPdfPtTrue_->Integral(binMin,binMax,"width"));
-  }
-  file.Close();
-  
-  hashTablePdfPtTrue_ = new TH1D("hashTablePdfPtTrue_","",10000,tMin_,tMax_);
-  hashPdfPtTrue(&(startPar.front()));
-
 }
 
 
-SmearGauss::~SmearGauss() { 
-  delete hPdfPtTrue_;
-  delete hashTablePdfPtTrue_;
- }
-
+// ------------------------------------------------------------------------
+void SmearGaussAvePt::update(const double * par) {
+  std::cout << "Updating maximum dMeas to " << std::flush;
+  dMeasMax_ = 2.*par[0]/sqrt(2.); // Two sigma in dMeas
+  std::cout << dMeasMax_ << std::endl;
+}
 
 // ------------------------------------------------------------------------
-double SmearGauss::pdfPtMeasJet1(double ptMeas, double ptTrue, double pt3Rel, const double *par) const {
+double SmearGaussAvePt::pdfPtMeas(double ptMeas1, double ptMeas2, double ptTrue, const double *par) const {
   double pdf = 0.;
-  if( xMin_ < ptMeas && ptMeas < xMax_ ) {
-    double s = sigma(ptTrue,par);
-    double u = (ptMeas - ptTrue)/s;
-    double norm = sqrt(M_PI/2.)*s*( erf((xMax_-ptTrue)/sqrt(2.)/s) - erf((xMin_-ptTrue)/sqrt(2.)/s) );
-    // This should be caught more cleverly
-    if( norm < 1E-10 ) norm = 1E-10;
-    pdf = exp(-0.5*u*u)/norm; 
+  double dMeas = 0.5*(ptMeas1 - ptMeas2);
+  if( std::abs(dMeas) < dMeasMax_ ) {
+    double s = sigma(par)/sqrt(2.);
+    double u = dMeas/s;
+    double norm = s*sqrt(M_PI*2.)*erf(dMeasMax_/sqrt(2.)/s);
+    pdf = exp(-0.5*u*u)/norm;
   }
   return pdf;
 }
 
-// ------------------------------------------------------------------------
-double SmearGauss::pdfPtMeasJet2(double ptMeas, double ptTrue, double pt3Rel, const double *par) const {
-  double s = sigma(ptTrue,par);
-  double u = (ptMeas - ptTrue)/s;
-  double norm = sqrt(M_PI/2.)*s*( 1. + erf(ptTrue/sqrt(2.)/s) );
-  // This should be caught more cleverly
-  if( norm < 1E-10 ) norm = 1E-10;
-
-  return exp(-0.5*u*u)/norm;
-}
-
 
 // ------------------------------------------------------------------------
-double SmearGauss::pdfPtTrue(double ptTrue, const double *par) const {
-  return hashTablePdfPtTrue_->GetBinContent(hashTablePdfPtTrue_->FindBin(ptTrue));
-}
-
-
-// ------------------------------------------------------------------------
-double SmearGauss::pdfResponse(double r, double ptTrue, const double *par) const {
-  double s = sigma(ptTrue,par)/ptTrue;
+double SmearGaussAvePt::pdfResponse(double r, double ptTrue, const double *par) const {
+  double s = sigma(par)/ptTrue;
   double u = (r - 1.)/s;
   return exp(-0.5*u*u)/sqrt(2.*M_PI)/s;
 }
 
 
+
 // ------------------------------------------------------------------------
-double SmearGauss::pdfDijetAsym(double a, double ptTrue, const double *par) const {
-  double s = sigma(ptTrue,par)/ptTrue/sqrt(2.);
+double SmearGaussAvePt::pdfDijetAsym(double a, double ptTrue, const double *par) const {
+  double s = sigma(par)/ptTrue/sqrt(2.);
   double u = a/s;
   return exp(-0.5*u*u)/sqrt(2.*M_PI)/s;
 }
 
 
-// ------------------------------------------------------------------------
-double SmearGauss::pdfResponseError(double r, double ptTrue, const double *par, const double *cov, const std::vector<int> &covIdx) const {
-  // Store derivatives
-  std::vector<double> df(nJetPars());
-  for(size_t i = 0; i < nJetPars(); i++) {
-    df[i] = pdfResponseDeriv(r,ptTrue,par,i);
-  }
-
-  // Calculate variance
-  double var = 0.;
-  for(int i = 0; i < static_cast<int>(nJetPars()); i++) { // Outer loop over parameters
-    for(int j = 0; j < i+1; j++) { // Inner loop over parameters
-      int idx = (i*i + i)/2 + j; // Index of (i,j) in covariance vector
-      if( cov[idx] ) {
-	if( i == j ) { // Diagonal terms
-	  var += df[i]*df[i]*scale_[i]*scale_[i]*cov[idx];
-	} else { // Off-diagonal terms
-	  var += 2*df[i]*df[j]*scale_[i]*scale_[j]*cov[idx];
-	}
-      }
-    } // End of inner loop over parameters
-  } // End of outer loop over parameters
-  // Return standard deviation
-  return sqrt(var);
-}
-
 
 // ------------------------------------------------------------------------
-double SmearGauss::pdfResponseDeriv(double r, double ptTrue, const double *par, int i) const {
-  double df = 0.;
-  if( i < 3 ) {
-    double s = sigma(ptTrue,par);
-    double u = ptTrue*(r-1.)/s;
-    df = pdfResponse(r,ptTrue,par) * scale_[i]*par[i]/s/s * (u*u - 1.);
-    if( i == 1 ) df *= ptTrue;
-    if( i == 2 ) df *= ptTrue*ptTrue;
-  }
-
-  return df;
-}
-
-
-// ------------------------------------------------------------------------
-void SmearGauss::hashPdfPtTrue(const double *par) const {
-  std::cout << "  Hashing truth pdf... " << std::flush;
-
-  // Loop over tMin_ < ptTrue < tMax_ values
-  for(int bin = 1; bin <= hashTablePdfPtTrue_->GetNbinsX(); bin++) {
-    double ptTrue = hashTablePdfPtTrue_->GetBinCenter(bin);
-    // Store (un-normalized) truth pdf for
-    // this value of ptTrue in hash table
-    hashTablePdfPtTrue_->SetBinContent(bin,pdfPtTrueNotNorm(ptTrue,par));
-  }
-  // Normalise values of truth pdf
-  hashTablePdfPtTrue_->Scale(1./hashTablePdfPtTrue_->Integral("width"));
-
-  std::cout << "ok" << std::endl;
-}
-
-
-// ------------------------------------------------------------------------
-double SmearGauss::pdfPtTrueNotNorm(double ptTrue, const double *par) const {
-  double pdf = underlyingPdfPtTrue(ptTrue,par);
-  // Add description of cuts here
-
-  return pdf;
-}
-
-
-// ------------------------------------------------------------------------
-double SmearGauss::underlyingPdfPtTrue(double ptTrue, const double *par) const {
-  return hPdfPtTrue_->Interpolate(ptTrue);
-}
-
-
-
-
-// ------------------------------------------------------------------------
-void SmearGauss::print() const {
+void SmearGaussAvePt::print() const {
   std::cout << "Parametrization class '" << name() << "'\n";
-  std::cout << "  Probability density of ptTrue spectrum:\n";
-  std::cout << "    " << tMin_ << " < ptTrue < " << tMax_ << " GeV\n";
-  std::cout << "    " << xMin_ << " < pt < " << xMax_ << " GeV\n";
+  std::cout << "  " << ptAveMin_ << " < ptAve < " << ptAveMax_ << " GeV\n";
   std::cout << std::endl;
 }
 
@@ -197,7 +76,7 @@ void SmearGauss::print() const {
 
 // ------------------------------------------------------------------------
 SmearGaussPtBin::SmearGaussPtBin(double tMin, double tMax, double xMin, double xMax, const std::vector<double> &parScales, const std::vector<double> &startPar, const std::string &spectrum)
-  : Parametrization(0,4,0,0),
+  : Parametrization(0,1,0,0),
     tMin_(tMin),
     tMax_(tMax),
     xMin_(xMin),
@@ -207,7 +86,7 @@ SmearGaussPtBin::SmearGaussPtBin(double tMin, double tMax, double xMin, double x
   assert( 0.0 <= xMin_ && xMin_ < xMax_ );
   assert( scale_.size() >= nJetPars() );
   assert( startPar.size() >= nJetPars() );
-
+  dMeasMax_ = 1000.;
   print();
 
   TFile file(spectrum.c_str(),"READ");
@@ -226,8 +105,7 @@ SmearGaussPtBin::SmearGaussPtBin(double tMin, double tMax, double xMin, double x
   }
   file.Close();
   
-  hashTablePdfPtTrue_ = new TH1D("hashTablePdfPtTrue_","",5000,tMin_,tMax_);
-  hashPdfPtTrue(&(startPar.front()));
+  hashTablePdfPtTrue_ = new TH1D("hashTablePdfPtTrue_","",5000,tMin_-0.01,tMax_+0.01);
 }
 
 SmearGaussPtBin::~SmearGaussPtBin() { 
@@ -236,34 +114,33 @@ SmearGaussPtBin::~SmearGaussPtBin() {
 }
 
 
+// ------------------------------------------------------------------------
+void SmearGaussPtBin::update(const double * par) {
+   std::cout << name() << ": Updating hashed parameters" << std::endl;
+   std::cout << "  Updating maximum dMeas to " << std::flush;
+   dMeasMax_ = 2.*scale_[0]*par[0]/sqrt(2.); // Two sigma in dMeas
+   std::cout << dMeasMax_ << std::endl;
+   hashPdfPtTrue(par);
+}
+
 
 // ------------------------------------------------------------------------
-double SmearGaussPtBin::pdfPtMeasJet1(double ptMeas, double ptTrue, double pt3Rel, const double *par) const {
+double SmearGaussPtBin::pdfPtMeas(double ptMeas1, double ptMeas2, double ptTrue, const double *par) const {
   double pdf = 0.;
-  if( xMin_ < ptMeas && ptMeas < xMax_ ) {
-    double s = sigma(par);
-    double u = (ptMeas - ptTrue)/s;
-    double norm = sqrt(M_PI/2.)*s*( erf((xMax_-ptTrue)/sqrt(2.)/s) - erf((xMin_-ptTrue)/sqrt(2.)/s) );
-    // This should be caught more cleverly
-    if( norm < 1E-10 ) norm = 1E-10;
-   
-    pdf = exp(-0.5*u*u)/norm; 
-  }
+   double dMeas = 0.5*(ptMeas1 - ptMeas2);
+   if( std::abs(dMeas) < dMeasMax_ ) {
+     double s = sigma(par)/sqrt(2.);
+     double u1 = dMeas/s;
+     double u2 = (0.5*(ptMeas1 + ptMeas2)-ptTrue)/s;
+     double norm = M_PI*s*s*erf(dMeasMax_/sqrt(2.)/s)*( erf((xMax_-ptTrue)/sqrt(2.)/s) - erf((xMin_-ptTrue)/sqrt(2.)/s) );
+     if( norm < 1E-3 ) {
+       pdf = 0.;
+     } else {
+       pdf = exp(-0.5*u1*u1-0.5*u2*u2)/norm;
+     }
+   }
   return pdf;
 }
-
-
-
-// ------------------------------------------------------------------------
-double SmearGaussPtBin::pdfPtMeasJet2(double ptMeas, double ptTrue, double pt3Rel, const double *par) const {
-  double s = sigma(par);
-  double u = (ptMeas - ptTrue)/s;
-  double norm = sqrt(M_PI/2.)*s*( 1. + erf(ptTrue/sqrt(2.)/s) );
-  // This should be caught more cleverly
-  if( norm < 1E-10 ) norm = 1E-10;
-  return exp(-0.5*u*u)/norm;
-}
-
 
 
 // ------------------------------------------------------------------------
@@ -306,7 +183,7 @@ double SmearGaussPtBin::pdfDijetAsym(double a, double ptTrue, const double *par)
 
 // ------------------------------------------------------------------------
 void SmearGaussPtBin::hashPdfPtTrue(const double *par) const {
-  std::cout << "  Hashing truth pdf... " << std::flush;
+  std::cout << "  Hashing truth pdf with sigma = " << par[0] << std::endl;
 
   // Loop over tMin_ < ptTrue < tMax_ values
   for(int bin = 1; bin <= hashTablePdfPtTrue_->GetNbinsX(); bin++) {
@@ -315,10 +192,9 @@ void SmearGaussPtBin::hashPdfPtTrue(const double *par) const {
     // this value of ptTrue in hash table
     hashTablePdfPtTrue_->SetBinContent(bin,pdfPtTrueNotNorm(ptTrue,par));
   }
+
   // Normalise values of truth pdf
   hashTablePdfPtTrue_->Scale(1./hashTablePdfPtTrue_->Integral("width"));
-
-  std::cout << "ok" << std::endl;
 }
 
 
@@ -326,11 +202,11 @@ void SmearGaussPtBin::hashPdfPtTrue(const double *par) const {
 // ------------------------------------------------------------------------
 double SmearGaussPtBin::pdfPtTrueNotNorm(double ptTrue, const double *par) const {
   double pdf = underlyingPdfPtTrue(ptTrue,par);
-  // Convolution with cuts on 1. jet
-  double s = sqrt( specSigmaPar(par,0)*specSigmaPar(par,0) +
-		   specSigmaPar(par,1)*specSigmaPar(par,1)*ptTrue +
-		   specSigmaPar(par,2)*specSigmaPar(par,2)*ptTrue*ptTrue );
-  double c = 0.5*( erf((xMax_-ptTrue)/s/sqrt(2.)) - erf((xMin_-ptTrue)/s/sqrt(2.)) );
+
+  // Convolution with cuts on ptAve
+  double s = scale_[0]*par[0];
+  s /= sqrt(2.);
+  double c = sqrt(M_PI/2.)*s*( erf((xMax_-ptTrue)/s/sqrt(2.)) - erf((xMin_-ptTrue)/s/sqrt(2.)) );
 
   return c*pdf;
 }
@@ -397,21 +273,21 @@ SmearCrystalBallPtBin::~SmearCrystalBallPtBin() {
 
 
 // ------------------------------------------------------------------------
-double SmearCrystalBallPtBin::pdfPtMeasJet1(double ptMeas, double ptTrue, double pt3Rel, const double *par) const {
+double SmearCrystalBallPtBin::pdfPtMeas(double ptMeas1, double ptMeas2, double ptTrue, const double *par) const {
   double pdf = 0.;
-  if( xMin_ < ptMeas && ptMeas < xMax_ ) {
-    double norm = cb_->integral(ptTrue,sigma(par),alpha(par),n(par),xMin_,xMax_);
-    if( norm < 1E-10 ) norm = 1E-10;
-    pdf = cb_->value(ptMeas,ptTrue,sigma(par),alpha(par),n(par)) / norm;
-  }
+//   if( xMin_ < ptMeas && ptMeas < xMax_ ) {
+//     double norm = cb_->integral(ptTrue,sigma(par),alpha(par),n(par),xMin_,xMax_);
+//     if( norm < 1E-10 ) norm = 1E-10;
+//     pdf = cb_->value(ptMeas,ptTrue,sigma(par),alpha(par),n(par)) / norm;
+//   }
   return pdf;
 }
 
 
-// ------------------------------------------------------------------------
-double SmearCrystalBallPtBin::pdfPtMeasJet2(double ptMeas, double ptTrue, double pt3Rel, const double *par) const {
-  return cb_->pdf(ptMeas,ptTrue,sigma(par),alpha(par),n(par));
-}
+// // ------------------------------------------------------------------------
+// double SmearCrystalBallPtBin::pdfPtMeasJet2(double ptMeas, double ptTrue, double pt3Rel, const double *par) const {
+//   return cb_->pdf(ptMeas,ptTrue,sigma(par),alpha(par),n(par));
+// }
 
 
 // ------------------------------------------------------------------------

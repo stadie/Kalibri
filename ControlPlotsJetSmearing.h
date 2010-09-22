@@ -1,5 +1,5 @@
 //
-// $Id: ControlPlotsJetSmearing.h,v 1.10 2010/04/18 14:40:38 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.h,v 1.11 2010/07/22 13:58:30 mschrode Exp $
 //
 #ifndef JS_CONTROLPLOTS_JETSMEARING_H
 #define JS_CONTROLPLOTS_JETSMEARING_H
@@ -10,6 +10,8 @@
 #include "CalibData.h"
 #include "ConfigFile.h"
 #include "Parameters.h"
+
+#include "TString.h"
 
 class Jet;
 class TCanvas;
@@ -24,7 +26,7 @@ class TRandom3;
 //!  \brief Generates validation plots for jet-smearing method
 //!  \author Matthias Schroeder
 //!  \date Thu May  7 11:30:28 CEST 2009 
-//!  $Id: ControlPlotsJetSmearing.h,v 1.10 2010/04/18 14:40:38 mschrode Exp $
+//!  $Id: ControlPlotsJetSmearing.h,v 1.11 2010/07/22 13:58:30 mschrode Exp $
 // --------------------------------------------------
 class ControlPlotsJetSmearing {
  public:
@@ -37,6 +39,7 @@ class ControlPlotsJetSmearing {
 
  private:
   static double spectrum(double *x, double *par);
+  static double gaussian(double *x, double *par);
 
   typedef std::vector<Event*>::const_iterator DataIt;
 
@@ -70,13 +73,16 @@ class ControlPlotsJetSmearing {
   //! each event before and after the fit
   void plotLogP() const;
   void plotMeanResponseAndResolution() const;
-  void plot3rdJet() const;
   void plotAsymmetrySimulation() const;
+  void plotParallelComponents() const;
 
   double gaussianWidth(double pt) const;
   double gaussianWidthError(double pt) const;
   double gaussianWidthTruth(double pt) const;
 
+  double scale(unsigned int i) const {
+    return i < scale_.size() ? scale_[i] : 1.;
+  }
   int nPtBins() const { return static_cast<int>(ptBinEdges_.size()-1); }
   double ptBinsMin() const { return ptBinEdges_.front(); }
   double ptBinsMax() const { return ptBinEdges_.back(); }
@@ -96,6 +102,9 @@ class ControlPlotsJetSmearing {
   void setGStyle() const;
   void setYRange(TH1 * h, double c1 = 0.9, double c2 = 1.1, double minLimit = 0.) const;
   template <class T> std::string toString(const T& t) const;
+  template <class T> TString toTString(const T& t) const { return toString(t).c_str(); }
   int color(int i) const;
+  void setAxisTitles(TH1 *h, const std::string &xTitle, const std::string &xUnit, const std::string &yTitle, bool norm = false) const;
+  void setColor(TH1 *h, int color) const;
 };
 #endif

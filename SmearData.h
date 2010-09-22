@@ -1,4 +1,4 @@
-// $Id: SmearData.h,v 1.10 2010/05/19 13:34:49 stadie Exp $
+// $Id: SmearData.h,v 1.11 2010/07/22 13:58:30 mschrode Exp $
 
 #ifndef SmearData_h
 #define SmearData_h
@@ -10,7 +10,7 @@
 //!  \brief Abstract base class for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 15:24:49 CEST 2009
-//!  $Id: SmearData.h,v 1.10 2010/05/19 13:34:49 stadie Exp $
+//!  $Id: SmearData.h,v 1.11 2010/07/22 13:58:30 mschrode Exp $
 // --------------------------------------------------
 class SmearData : public Event {
  public:
@@ -29,7 +29,7 @@ class SmearData : public Event {
   virtual double truth() const { return kTruth_; }
   virtual DataType type() const { return kType_; }
   double par(int i) { return pdf_.par(i); }
-  double pdfPtMeas(double ptMeas, double ptTrue, double pt3Rel) const { return pdf_.pdfPtMeasJet1(ptMeas,ptTrue,pt3Rel); }
+  double pdfPtMeas(double ptMeas1, double ptMeas2, double ptTrue) const { return pdf_.pdfPtMeas(ptMeas1,ptMeas2,ptTrue); }
   double pdfPtTrue(double ptTrue) const { return pdf_.pdfPtTrue(ptTrue); }
   double pdfPtTrueError(double ptTrue) const { return pdf_.pdfPtTrueError(ptTrue); }
   double pdfResp(double r, double ptTrue) const { return pdf_.pdfResp(r,ptTrue); }

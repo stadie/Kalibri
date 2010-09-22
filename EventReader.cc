@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.12 2010/04/29 13:29:41 stadie Exp $
+// $Id: EventReader.cc,v 1.13 2010/05/26 13:08:12 stadie Exp $
 //
 #include "EventReader.h"
 
@@ -28,6 +28,7 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
   
   useTracks_ = config_->read<bool>("use Tracks",true);
   if(par_->GetNumberOfTrackParameters() < 1) useTracks_ = false;
+  weightRelToNtuple_ = 1.;
 
   //Error Parametrization...
   //...for tracks:

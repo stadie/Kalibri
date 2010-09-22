@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.55 2010/07/23 13:06:02 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.56 2010/07/27 13:53:11 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -50,14 +50,18 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   nDijetEvents_ = config_->read<int>("use Di-Jet events",-1);
   if(nDijetEvents_ == 0) return;
   prescale_ = config_->read<int>("Di-Jet prescale",1);
+  weightRelToNtuple_ = config_->read<double>("Di-Jet weight relative to ntuple weight",1.);
 
   // Cuts
+  ptRef_             = config_->read<double>("Reference pt",1.);
   minJetEt_          = config_->read<double>("Et min cut on jet",0.0);
   maxJetEt_          = config_->read<double>("Et max cut on jet",10000.0);
   minDijetEt_        = config_->read<double>("Et min cut on dijet",0.0); 
   maxDijetEt_        = config_->read<double>("Et max cut on dijet",10000.0); 
-  max3rdJetEt_       = config_->read<double>("Et cut on n+1 Jet",10.0);
-  maxRel3rdJetEt_    = config_->read<double>("Relative n+1 Jet Et Cut",0.2);
+  max3rdJetEt_       = config_->read<double>("Et cut on n+1 Jet",10000.0);
+  minRel3rdJetEt_    = config_->read<double>("Min cut on relative n+1 Jet Et",0.);
+  maxRel3rdJetEt_    = config_->read<double>("Max cut on relative n+1 Jet Et",1.);
+  maxRelSoftJetEt_   = config_->read<double>("Max cut on relative Soft Jet Et",1.);
   minJetEta_         = config_->read<double>("Eta min cut on jet",0.0);
   maxJetEta_         = config_->read<double>("Eta max cut on jet",5.0);
   minJetHadFraction_ = config_->read<double>("Min had fraction",0.07);
@@ -66,6 +70,13 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   minGenJetEt_       = config_->read<double>("Et genJet min",0.0);
   maxGenJetEt_       = config_->read<double>("Et genJet max",10000.0);
   maxDeltaR_         = config_->read<double>("DeltaR cut on jet matching",0.25);
+
+  // Loose JetID for barrel
+  // Replace by ntuple variabel in newer Kalibri-trees
+  minJetN90Hits_ = 2;
+  maxJetFHPD_ = 0.98;
+  maxJetFRBX_ = 0.98;
+
   // Counter for cutflow
   nDiJetCut_          = 0;
   nMinJetEt_          = 0;
@@ -73,6 +84,7 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   nMinDijetEt_        = 0;
   nMaxDijetEt_        = 0;
   nCutOn3rdJet_       = 0;
+  nCutOnSoftJets_     = 0;
   nMinJetEta_         = 0;  
   nMaxJetEta_         = 0;  
   nMinDeltaPhi_       = 0;
@@ -82,10 +94,10 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   nMaxGenJetEt_       = 0;     
   nMaxDeltaR_         = 0;
   // Integration parameter for SmearData
-  maxNIter_          = config_->read<int>("DiJet integration number of iterations",5);
-  eps_               = config_->read<double>("DiJet integration epsilon",1.E-5);
-  min_               = config_->read<double>("DiJet integration min",0.);
-  max_               = config_->read<double>("DiJet integration max",1.);
+  maxNIter_  = config_->read<int>("DiJet integration number of iterations",5);
+  eps_       = config_->read<double>("DiJet integration epsilon",1.E-5);
+  min_       = config_->read<double>("DiJet integration min",0.);
+  max_       = config_->read<double>("DiJet integration max",1.);
   // Data class
   dataClass_ = config_->read<int>("Di-Jet data class", 0);
   if((dataClass_ != 1)&&(dataClass_ != 11)&&(dataClass_ != 12)&&(dataClass_ != 21)&&(dataClass_ != 5)) {
@@ -147,6 +159,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   nMinDijetEt_        = 0;
   nMaxDijetEt_        = 0;
   nCutOn3rdJet_       = 0;
+  nCutOnSoftJets_     = 0;
   nMinGenJetEt_       = 0;    
   nMaxGenJetEt_       = 0;     
   nMaxDeltaR_         = 0;
@@ -235,7 +248,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
       int nAddedJets = createJetTruthEvents(data);
       if( nAddedJets ) nGoodEvts += nAddedJets;    
     } else if(dataClass_ == 5) {
-      for(int calls = 0; calls < 2; calls++) {
+      for(int calls = 0; calls < 1; calls++) {
 	nReadEvts++;
 	Event* td = createSmearEvent(calls); 
 	if(td) {
@@ -314,19 +327,27 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     std::cout << " jet-truth events with hadronic fraction < " << maxJetHadFraction_ << "\n";
   } else if( dataClass_ == 5 ) {
     std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
-    std::cout << " events with more than 3 jets\n";
+    std::cout << " events with 2 or more jets\n";
     std::cout << "  " << (nReadEvts-=nMinGenJetEt_) << std::flush;
     std::cout << " dijet events with ptgen > " << minGenJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMaxGenJetEt_) << std::flush;
     std::cout << " dijet events with ptgen < " << maxGenJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMinJetEt_) << std::flush;
-    std::cout << " dijet events Et > " << minJetEt_ << " GeV\n";
+    std::cout << " dijet events pt(1) > " << minJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=nMaxJetEt_) << std::flush;
-    std::cout << " dijet events Et < " << maxJetEt_ << " GeV\n";
+    std::cout << " dijet events pt(1) < " << maxJetEt_ << " GeV\n";
+    std::cout << "  " << (nReadEvts-=nMinDijetEt_) << std::flush;
+    std::cout << " dijet events pt(ave) > " << minDijetEt_ << " GeV\n";
+    std::cout << "  " << (nReadEvts-=nMaxDijetEt_) << std::flush;
+    std::cout << " dijet events pt(ave) < " << maxDijetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts-=(nMinJetEta_+nMaxJetEta_)) << std::flush;
     std::cout << " dijet events with " << minJetEta_ << " < |eta| < " << maxJetEta_ << "\n";
+    std::cout << "  " << (nReadEvts-=nMinDeltaPhi_) << std::flush;
+    std::cout << " dijet events with DeltaPhi > " << minDeltaPhi_ << '\n';;
     std::cout << "  " << (nReadEvts-=nCutOn3rdJet_) << std::flush;
-    std::cout << " dijet events with pt(jet3) / pt(dijet) < " << maxRel3rdJetEt_ << "\n";
+    std::cout << " dijet events with " << minRel3rdJetEt_ << " < pt(jet3) / (" << ptRef_ << "GeV) < " << maxRel3rdJetEt_ << "\n";
+    std::cout << "  " << (nReadEvts-=nCutOnSoftJets_) << std::flush;
+    std::cout << " dijet events with pt(jet>3) / (" << ptRef_ << " GeV) < " << maxRelSoftJetEt_ << "\n";
     std::cout << "  " << (nReadEvts-=nMinJetHadFraction_) << std::flush;
     std::cout << " dijet events with hadronic fraction > " << minJetHadFraction_ << "\n";
     std::cout << "  " << (nReadEvts-=nMaxJetHadFraction_) << std::flush;
@@ -533,28 +554,50 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 //!          else 0
 // ----------------------------------------------------------------   
 Event* DiJetReader::createSmearEvent(int callIdx) {
-  //return createSmearEventGenOrdered(callIdx);
-  return createSmearEventCaloOrdered(callIdx);
+  //return createSmearEventGenOrdered();
+  return createSmearEventCaloOrdered();
 }
 
 
 // ----------------------------------------------------------------   
-Event* DiJetReader::createSmearEventCaloOrdered(int callIdx)
+Event* DiJetReader::createSmearEventCaloOrdered()
 {
   SmearDiJet *dijet = 0;
+  if( jetIndices_.size() != 8 ) std::cerr << "%%%%%%%%%%%% WARNING %%%%%%%%%%%%%%%%%\n";
 
-  // There should be at least three calo jets in the event
-  if( nJet_->NobjJet < 3 ) {
+  // There should be at least two calo jets in the event
+  if( nJet_->NobjJet < 2 ) {
     nDiJetCut_++;
   } else {
-    // Find indices of 3 leading L2L3 corrected calo jets
-    for(size_t i = 0; i < jetIndices_.size(); ++i) {
-      jetIndices_[i] = new Jet::JetIndex(i,nJet_->JetPt[i]*nJet_->JetCorrL2[i]*nJet_->JetCorrL3[i]);
+    // Find indices of 2(3) leading L2L3 corrected calo jets
+    size_t nJets = nJet_->NobjJet;
+    if( jetIndices_.size() < nJets ) nJets = jetIndices_.size();
+    for(size_t i = 0; i < nJets; ++i) {
+      // jetIndices_[i] = new Jet::JetIndex(i,nJet_->JetPt[i]*nJet_->JetCorrL2L3[i]);
+      if( i < 2 ) jetIndices_[i] = new Jet::JetIndex(i,nJet_->JetPt[i]*nJet_->JetCorrL2L3[i]);
+      else jetIndices_[i] = new Jet::JetIndex(i,nJet_->JetPt[i]);
     }
-    std::sort(jetIndices_.begin(),jetIndices_.end(),Jet::JetIndex::ptGreaterThan);
-    if( callIdx == 1 ) std::swap(jetIndices_[0],jetIndices_[1]);
-    jetIndices_.erase(jetIndices_.begin()+3,jetIndices_.end());
-    
+    //std::sort(jetIndices_.begin(),jetIndices_.begin()+nJets,Jet::JetIndex::ptGreaterThan);
+
+    double deltaPhi12 = TVector2::Phi_mpi_pi(nJet_->JetPhi[jetIndices_[0]->idx_]-nJet_->JetPhi[jetIndices_[1]->idx_]);
+
+    // Phi of dijet axis
+    double pPhi = TVector2::Phi_mpi_pi(nJet_->JetPhi[jetIndices_[0]->idx_]-0.5*deltaPhi12+M_PI/2.);
+    double pJ3 = 0.;
+    double ptJet3 = 0.;
+    if( nJet_->NobjJet > 2 ) {
+      pJ3 = jetIndices_[2]->pt_*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[jetIndices_[2]->idx_]));
+      ptJet3 = jetIndices_[2]->pt_;
+    }
+    double pSJ = 0.;
+    for(int i = 3; i < nJet_->NobjJet; ++i) {
+      int idx = i;
+      if( i < static_cast<int>(nJets) ) idx = jetIndices_[i]->idx_;
+      pSJ += nJet_->JetPt[idx]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[idx]));
+    }
+    double ptJet4 = nJets < 4 ? 0. : jetIndices_[3]->pt_;
+    double pUCE = 0.;
+
     // Check if event is selected
     bool isGoodEvt = true;
     if( nJet_->GenJetPt[jetIndices_[0]->idx_] < minGenJetEt_ || 
@@ -567,12 +610,12 @@ Event* DiJetReader::createSmearEventCaloOrdered(int callIdx)
       nMaxGenJetEt_++;
       isGoodEvt = false;
     }
-    else if( jetIndices_[0]->pt_ < minJetEt_ ) {
-      nMinJetEt_++;
+    else if( jetIndices_[0]->pt_+jetIndices_[1]->pt_ < 2.*minDijetEt_ ) {
+      nMinDijetEt_++;
       isGoodEvt = false;
     }
-    else if( jetIndices_[0]->pt_ > maxJetEt_ ) {
-      nMaxJetEt_++;
+    else if( jetIndices_[0]->pt_+jetIndices_[1]->pt_ > 2.*maxDijetEt_ ) {
+      nMaxDijetEt_++;
       isGoodEvt = false;
     }
     else if( std::abs(nJet_->JetEta[jetIndices_[0]->idx_]) < minJetEta_  ||
@@ -585,78 +628,81 @@ Event* DiJetReader::createSmearEventCaloOrdered(int callIdx)
       nMaxJetEta_++;
       isGoodEvt = false;
     }
-    else if( 2.*jetIndices_[2]->pt_ / (jetIndices_[0]->pt_+jetIndices_[1]->pt_ ) > maxRel3rdJetEt_ ) {
+    else if( std::abs(deltaPhi12) < minDeltaPhi_ ) {
+      nMinDeltaPhi_++;
+      isGoodEvt = false;
+    }
+    else if( std::abs(pJ3) > maxRel3rdJetEt_*ptRef_ ) {
       nCutOn3rdJet_++;
       isGoodEvt = false;
     }
-    else if( 1. - nJet_->JetEMF[jetIndices_[0]->idx_] < minJetHadFraction_ ||
-	     1. - nJet_->JetEMF[jetIndices_[1]->idx_] < minJetHadFraction_ ) {
-      nMinJetHadFraction_++;
+    else if( std::abs(pSJ) > 0.75*maxRelSoftJetEt_*ptRef_ ) {
+      nCutOnSoftJets_++;
       isGoodEvt = false;
     }
-    else if( 1. - nJet_->JetEMF[jetIndices_[0]->idx_] > maxJetHadFraction_ ||
-	     1. - nJet_->JetEMF[jetIndices_[1]->idx_] > maxJetHadFraction_ ) {
+    else if( !passesJetId(jetIndices_[0]->idx_) || !passesJetId(jetIndices_[1]->idx_) ) {
       nMaxJetHadFraction_++;
       isGoodEvt = false;
     }
-  
+    
     if( isGoodEvt ) {
       // Create Jets
       std::vector<Jet*> jets(3);
       for(size_t i = 0; i < jets.size(); ++i) {
-	double dphi = TVector2::Phi_mpi_pi(nJet_->JetPhi[jetIndices_[i]->idx_] - nJet_->GenJetPhi[jetIndices_[i]->idx_]);
-	double deta         = nJet_->JetEta[jetIndices_[i]->idx_] - nJet_->GenJetEta[jetIndices_[i]->idx_];
-	double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
-    
-	jets[i] = new Jet(nJet_->JetPt[jetIndices_[i]->idx_],
-			  nJet_->JetEMF[jetIndices_[i]->idx_]*nJet_->JetEt[jetIndices_[i]->idx_],
-			  (1.-nJet_->JetEMF[jetIndices_[i]->idx_])*nJet_->JetEt[jetIndices_[i]->idx_],
-			  0,
-			  nJet_->JetE[jetIndices_[i]->idx_],
-			  nJet_->JetEta[jetIndices_[i]->idx_],
-			  nJet_->JetPhi[jetIndices_[i]->idx_],
-			  nJet_->JetEtWeightedSigmaPhi[jetIndices_[i]->idx_],
-			  nJet_->JetEtWeightedSigmaEta[jetIndices_[i]->idx_],
-			  Jet::uds,
-			  nJet_->GenJetPt[jetIndices_[i]->idx_],
-			  drJetGenjet,
-			  createCorFactors(jetIndices_[i]->idx_),
- 			  par_->jet_function(nJet_->JetIEta[jetIndices_[i]->idx_],
- 					     nJet_->JetIPhi[jetIndices_[i]->idx_]),
-			  jet_error_param,
-			  par_->global_jet_function());
-	// Read external correction factors
-	if(corFactorsFactory_) {
-	  jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i]));
-	}
-	// Correct measurement to L3 (L1*L2*L3)
-	if(correctToL3_) {
-	  jets[i]->correctToL3();
-	}
-	// Correct measurement with L2*L3
-	else if(correctL2L3_) {
-	  jets[i]->correctL2L3();
+	if( i < nJets ) {
+	  double dphi = TVector2::Phi_mpi_pi(nJet_->JetPhi[jetIndices_[i]->idx_] - nJet_->GenJetPhi[jetIndices_[i]->idx_]);
+	  double deta         = nJet_->JetEta[jetIndices_[i]->idx_] - nJet_->GenJetEta[jetIndices_[i]->idx_];
+	  double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
+	  
+	  jets[i] = new Jet(nJet_->JetPt[jetIndices_[i]->idx_],
+			    nJet_->JetEMF[jetIndices_[i]->idx_]*nJet_->JetEt[jetIndices_[i]->idx_],
+			    (1.-nJet_->JetEMF[jetIndices_[i]->idx_])*nJet_->JetEt[jetIndices_[i]->idx_],
+			    0,
+			    nJet_->JetE[jetIndices_[i]->idx_],
+			    nJet_->JetEta[jetIndices_[i]->idx_],
+			    nJet_->JetPhi[jetIndices_[i]->idx_],
+			    nJet_->JetEtWeightedSigmaPhi[jetIndices_[i]->idx_],
+			    nJet_->JetEtWeightedSigmaEta[jetIndices_[i]->idx_],
+			    Jet::uds,
+			    nJet_->GenJetPt[jetIndices_[i]->idx_],
+			    drJetGenjet,
+			    createCorFactors(jetIndices_[i]->idx_),
+			    par_->jet_function(nJet_->JetIEta[jetIndices_[i]->idx_],
+					       nJet_->JetIPhi[jetIndices_[i]->idx_]),
+			    jet_error_param,
+			    par_->global_jet_function());
+	  // Read external correction factors
+	  if(corFactorsFactory_) {
+	    jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i]));
+	  }
+	  // Correct measurement to L3 (L1*L2*L3)
+	  if(correctToL3_) {
+	    jets[i]->correctToL3();
+	  }
+	  // Correct measurement with L2*L3
+	  else if(correctL2L3_) {
+	    jets[i]->correctL2L3();
+	  }
+	} else {
+	  jets[i] = 0;
 	}
       }
-    
-      if( jets[0]->dR() > maxDeltaR_ || jets[1]->dR() > maxDeltaR_ ) {
-	nMaxDeltaR_++;
-	isGoodEvt = false;
-      } else {
-	// Create SmearDiJet event from three jets
-	dijet = new SmearDiJet(jets[0],                    // First jet
-			       jets[1],                    // Second jet
-			       jets[2],                    // Third jet
-			       nJet_->GenEvtScale,
-			       nJet_->Weight,
-			       par_->resolutionFitPDF(1,1),
-			       min_,                       // Integration minimum
-			       max_,                       // Integration maximum
-			       eps_,                       // Integration step length
-			       maxNIter_);                 // Integration n iterations
-      }
+      // Create SmearDiJet event from three jets
+      dijet = new SmearDiJet(jets[0],                    // First jet
+			     jets[1],                    // Second jet
+			     jets[2],                    // Third jet
+			     std::abs(deltaPhi12),pPhi,
+			     ptJet3,ptJet4,
+			     pJ3,pSJ,pUCE,ptRef_,
+			     nJet_->GenEvtScale,
+			     weightRelToNtuple_*nJet_->Weight,
+			     par_->resolutionFitPDF(1,1),
+			     min_,                       // Integration minimum
+			     max_,                       // Integration maximum
+			     eps_,                       // Integration step length
+			     maxNIter_);                 // Integration n iterations
     }
-    for(size_t i = 0; i < jetIndices_.size(); ++i) {
+    for(size_t i = 0; i < nJets; ++i) {
       delete jetIndices_[i];
     }
   }
@@ -666,119 +712,142 @@ Event* DiJetReader::createSmearEventCaloOrdered(int callIdx)
 
 
 // ----------------------------------------------------------------   
-Event* DiJetReader::createSmearEventGenOrdered(int callIdx) {
+Event* DiJetReader::createSmearEventGenOrdered() {
   SmearDiJet *dijet = 0;
 
-  // There should be at least three gen jets in the event
-  if( nJet_->NobjGenJet < 3 ) {
+  // There should be at least two gen jets in the event
+  if( nJet_->NobjGenJet < 2 ) {
     nDiJetCut_++;
   } else {
-    std::vector<int> calJetIdx(3);
-    calJetIdx[0] = nJet_->GenJetColJetIdx[callIdx==0 ? 0 : 1];
-    calJetIdx[1] = nJet_->GenJetColJetIdx[callIdx==0 ? 0 : 1];
-    calJetIdx[2] = nJet_->GenJetColJetIdx[2];
     // Check if event is selected
     bool isGoodEvt = true;
+
+    double deltaPhi12 = TVector2::Phi_mpi_pi(nJet_->JetPhi[nJet_->GenJetColJetIdx[0]]-nJet_->JetPhi[nJet_->GenJetColJetIdx[1]]);
+    double pt0 = nJet_->JetCorrL2L3[nJet_->GenJetColJetIdx[0]]*nJet_->JetPt[nJet_->GenJetColJetIdx[0]];
+    double pt1 = nJet_->JetCorrL2L3[nJet_->GenJetColJetIdx[1]]*nJet_->JetPt[nJet_->GenJetColJetIdx[1]];
+    double ptAve = 0.5*(pt0+pt1);
+
+    // Phi of dijet axis
+    double pPhi = TVector2::Phi_mpi_pi(nJet_->GenJetColPhi[0]-0.5*deltaPhi12+M_PI/2.);
+    double pJ3 = 0.;
+    if( nJet_->NobjGenJet > 2 ) {
+      pJ3 = nJet_->GenJetColPt[2]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->GenJetColPhi[2]));
+    }
+    double pSJ = 0.;
+    for(int i = 3; i < nJet_->NobjGenJet; ++i) {
+      pSJ += nJet_->GenJetColPt[i]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->GenJetColPhi[i]));
+    }
+    double pUCE = 0.;
+
+
     if( nJet_->GenJetColPt[0] < minGenJetEt_ || 
-	nJet_->GenJetColPt[1] < minGenJetEt_ ) {
+  	nJet_->GenJetColPt[1] < minGenJetEt_ ) {
       nMinGenJetEt_++;
       isGoodEvt = false;
     }
-    else if( nJet_->GenJetColPt[1] > maxGenJetEt_ || 
+    else if( nJet_->GenJetColPt[0] > maxGenJetEt_ || 
 	     nJet_->GenJetColPt[1] > maxGenJetEt_ ) {
       nMaxGenJetEt_++;
       isGoodEvt = false;
     }
-    else if( nJet_->JetCorrL2[calJetIdx[0]]*nJet_->JetCorrL3[calJetIdx[0]]*nJet_->JetPt[calJetIdx[0]] < minJetEt_ ) {
-      nMinJetEt_++;
+    else if( ptAve < minDijetEt_ ) {
+      nMinDijetEt_++;
       isGoodEvt = false;
     }
-    else if( nJet_->JetCorrL2[calJetIdx[0]]*nJet_->JetCorrL3[calJetIdx[0]]*nJet_->JetPt[calJetIdx[0]] > maxJetEt_ ) {
-      nMaxJetEt_++;
-      isGoodEvt = false;
+    else if( ptAve > maxDijetEt_ ) {
+       nMaxDijetEt_++;
+       isGoodEvt = false;
     }
-    else if( std::abs(nJet_->JetEta[calJetIdx[0]]) < minJetEta_  ||
-	     std::abs(nJet_->JetEta[calJetIdx[1]]) < minJetEta_ ) {
+    else if( std::abs(nJet_->JetEta[nJet_->GenJetColJetIdx[0]]) < minJetEta_  ||
+	     std::abs(nJet_->JetEta[nJet_->GenJetColJetIdx[1]]) < minJetEta_ ) {
       nMinJetEta_++;
       isGoodEvt = false;
     }
-    else if( std::abs(nJet_->JetEta[calJetIdx[1]]) > maxJetEta_  ||
-	     std::abs(nJet_->JetEta[calJetIdx[1]]) > maxJetEta_ ) {
+    else if( std::abs(nJet_->JetEta[nJet_->GenJetColJetIdx[0]]) > maxJetEta_  ||
+	     std::abs(nJet_->JetEta[nJet_->GenJetColJetIdx[1]]) > maxJetEta_ ) {
       nMaxJetEta_++;
       isGoodEvt = false;
     }
-    else if( 2.*nJet_->JetCorrL2[calJetIdx[2]]*nJet_->JetCorrL3[calJetIdx[2]]*nJet_->JetPt[calJetIdx[2]] /
-	     (nJet_->JetCorrL2[calJetIdx[0]]*nJet_->JetCorrL3[calJetIdx[0]]*nJet_->JetPt[calJetIdx[0]]+
-	      nJet_->JetCorrL2[calJetIdx[1]]*nJet_->JetCorrL3[calJetIdx[1]]*nJet_->JetPt[calJetIdx[1]])
-	     > maxRel3rdJetEt_ ) {
-      nCutOn3rdJet_++;
-      isGoodEvt = false;
-    }
-    else if( 1. - nJet_->JetEMF[calJetIdx[0]] < minJetHadFraction_ ||
-	     1. - nJet_->JetEMF[calJetIdx[1]] < minJetHadFraction_ ) {
-      nMinJetHadFraction_++;
-      isGoodEvt = false;
-    }
-    else if( 1. - nJet_->JetEMF[calJetIdx[0]] > maxJetHadFraction_ ||
-	     1. - nJet_->JetEMF[calJetIdx[1]] > maxJetHadFraction_ ) {
-      nMaxJetHadFraction_++;
-      isGoodEvt = false;
-    }
-  
+     else if( std::abs(deltaPhi12) < minDeltaPhi_ ) {
+       nMinDeltaPhi_++;
+       isGoodEvt = false;
+     }
+     else if( std::abs(pJ3) > maxRel3rdJetEt_*ptRef_ ) {
+       nCutOn3rdJet_++;
+       isGoodEvt = false;
+     }
+     else if( std::abs(pSJ) > 0.75*maxRelSoftJetEt_*ptRef_ ) {
+       nCutOnSoftJets_++;
+       isGoodEvt = false;
+     }
+     else if( 1. - nJet_->JetEMF[nJet_->GenJetColJetIdx[0]] < minJetHadFraction_ ||
+	      1. - nJet_->JetEMF[nJet_->GenJetColJetIdx[1]] < minJetHadFraction_ ) {
+       nMinJetHadFraction_++;
+       isGoodEvt = false;
+     }
+     else if( 1. - nJet_->JetEMF[nJet_->GenJetColJetIdx[0]] > maxJetHadFraction_ ||
+	      1. - nJet_->JetEMF[nJet_->GenJetColJetIdx[1]] > maxJetHadFraction_ ) {
+       nMaxJetHadFraction_++;
+       isGoodEvt = false;
+     }
+    
     if( isGoodEvt ) {
       // Create Jets
       std::vector<Jet*> jets(3);
-      std::vector<int> genJetIdx(3);
-      genJetIdx[0] = callIdx==0 ? 0 : 1;
-      genJetIdx[1] = callIdx==0 ? 0 : 1;
-      genJetIdx[2] = 2;
-
+      
       for(size_t i = 0; i < jets.size(); ++i) {
-	double dphi = TVector2::Phi_mpi_pi(nJet_->JetPhi[calJetIdx[i]] - nJet_->GenJetColPhi[genJetIdx[i]]);
-	double deta         = nJet_->JetEta[calJetIdx[i]] - nJet_->GenJetColEta[genJetIdx[i]];
-	double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
-    
-	jets[i] = new Jet(nJet_->JetPt[calJetIdx[i]],
-			  nJet_->JetEMF[calJetIdx[i]]*nJet_->JetEt[calJetIdx[i]],
-			  (1.-nJet_->JetEMF[calJetIdx[i]])*nJet_->JetEt[calJetIdx[i]],
-			  0,
-			  nJet_->JetE[calJetIdx[i]],
-			  nJet_->JetEta[calJetIdx[i]],
-			  nJet_->JetPhi[calJetIdx[i]],
-			  nJet_->JetEtWeightedSigmaPhi[calJetIdx[i]],
-			  nJet_->JetEtWeightedSigmaEta[calJetIdx[i]],
-			  Jet::uds,
-			  nJet_->GenJetColPt[genJetIdx[i]],
-			  drJetGenjet,
-			  createCorFactors(calJetIdx[i]),
- 			  par_->jet_function(nJet_->JetIEta[calJetIdx[i]],
- 					     nJet_->JetIPhi[calJetIdx[i]]),
-			  jet_error_param,
-			  par_->global_jet_function());
-	// Read external correction factors
-	if(corFactorsFactory_) {
-	  jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i]));
-	}
-	// Correct measurement to L3 (L1*L2*L3)
-	if(correctToL3_) {
-	  jets[i]->correctToL3();
-	}
-	// Correct measurement with L2*L3
-	else if(correctL2L3_) {
-	  jets[i]->correctL2L3();
+	if( i < static_cast<size_t>(nJet_->NobjGenJet) ) {
+	  double dphi = TVector2::Phi_mpi_pi(nJet_->JetPhi[nJet_->GenJetColJetIdx[i]]-nJet_->GenJetColPhi[i]);
+	  double deta         = nJet_->JetEta[nJet_->GenJetColJetIdx[i]] - nJet_->GenJetColEta[i];
+	  double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
+	  
+	  jets[i] = new Jet(nJet_->JetPt[nJet_->GenJetColJetIdx[i]],
+			    nJet_->JetEMF[nJet_->GenJetColJetIdx[i]]*nJet_->JetEt[nJet_->GenJetColJetIdx[i]],
+			    (1.-nJet_->JetEMF[nJet_->GenJetColJetIdx[i]])*nJet_->JetEt[nJet_->GenJetColJetIdx[i]],
+			    0,
+			    nJet_->JetE[nJet_->GenJetColJetIdx[i]],
+			    nJet_->JetEta[nJet_->GenJetColJetIdx[i]],
+			    nJet_->JetPhi[nJet_->GenJetColJetIdx[i]],
+			    nJet_->JetEtWeightedSigmaPhi[nJet_->GenJetColJetIdx[i]],
+			    nJet_->JetEtWeightedSigmaEta[nJet_->GenJetColJetIdx[i]],
+			    Jet::uds,
+			    nJet_->GenJetColPt[i],
+			    drJetGenjet,
+			    createCorFactors(nJet_->GenJetColJetIdx[i]),
+			    par_->jet_function(nJet_->JetIEta[nJet_->GenJetColJetIdx[i]],
+					       nJet_->JetIPhi[nJet_->GenJetColJetIdx[i]]),
+			    jet_error_param,
+			    par_->global_jet_function());
+	  // Read external correction factors
+	  if(corFactorsFactory_) {
+	    jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i]));
+	  }
+	  // Correct measurement to L3 (L1*L2*L3)
+	  if(correctToL3_) {
+	    jets[i]->correctToL3();
+	  }
+	  // Correct measurement with L2*L3
+	  else if(correctL2L3_) {
+	    jets[i]->correctL2L3();
+	  }
+	} else {
+	  jets[i] = 0;
 	}
       }
-    
       if( jets[0]->dR() > maxDeltaR_ || jets[1]->dR() > maxDeltaR_ ) {
 	nMaxDeltaR_++;
 	isGoodEvt = false;
       } else {
-	// Create SmearDiJet event from three jets
+ 	// Create SmearDiJet event
 	dijet = new SmearDiJet(jets[0],                    // First jet
 			       jets[1],                    // Second jet
 			       jets[2],                    // Third jet
+			       std::abs(deltaPhi12),pPhi,
+			       (nJet_->NobjGenJet<2 ? 0. : nJet_->GenJetColPt[2]),
+			       (nJet_->NobjGenJet<3 ? 0. : nJet_->GenJetColPt[3]),
+			       pJ3,pSJ,pUCE,ptRef_,
 			       nJet_->GenEvtScale,
-			       nJet_->Weight,
+			       weightRelToNtuple_*nJet_->Weight,
 			       par_->resolutionFitPDF(1,1),
 			       min_,                       // Integration minimum
 			       max_,                       // Integration maximum
@@ -956,4 +1025,22 @@ CorFactors* DiJetReader::createCorFactors(int jetid) const
 			1.,                         // L5
 			nJet_->JetCorrJPT[jetid],
 			nJet_->JetCorrL2L3JPT[jetid]); //JPTL2L3
+}
+
+
+
+// ----------------------------------------------------------------   
+bool DiJetReader::passesJetId(int idx) const {
+  bool ok = true;
+  if( nJet_->JetN90Hits[idx] < minJetN90Hits_ )
+    ok = false;
+  else if( nJet_->JetFHPD[idx] > maxJetFHPD_ )
+    ok = false;
+  else if( (std::abs(nJet_->JetEta[idx]) < 2.55 && nJet_->JetEMF[idx] < 0.01) )
+    ok = false;
+  else if( (std::abs(nJet_->JetEta[idx]) > 2.55 && nJet_->JetEMF[idx] < -0.9) ||
+	   (std::abs(nJet_->JetEta[idx]) > 2.55 && nJet_->JetPt[idx] > 80. && nJet_->JetEMF[idx] < -0.9) )
+    ok = false;
+
+  return ok;
 }

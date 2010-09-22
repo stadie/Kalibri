@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.17 2010/07/22 13:58:30 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.18 2010/07/22 17:38:44 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -60,9 +60,6 @@ ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, 
   // Do not print ROOT message if eps file has been created
   gErrorIgnoreLevel = 1001;
 
-  // Override possible existing root file
-  TFile rootfile((dir_+"/jsResponse.root").c_str(),"RECREATE");
-  rootfile.Close();
   setGStyle();
   rand_ = new TRandom3(0);
 
@@ -99,12 +96,16 @@ ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, 
   for(int i = 0; i < nPtBins(); i++) {
     ptBinCenters_[i] = 0.5 * ( ptBinEdges_[i] + ptBinEdges_[i+1] );
   }
+  std::cout << "PtBinning variable: " << ptBinningVar_ << std::endl;
 
   minJetPt_ = config_->read<double>("Et min cut on jet",0.);
   maxJetPt_ = config_->read<double>("Et max cut on jet",1.);
 
-  outNamePrefix_ = dir_+"/"+config_->read<std::string>("plots name prefix","JS");
+  // Override possible existing root file
+  TFile rootfile((dir_+"/jsResponse.root").c_str(),"RECREATE");
+  rootfile.Close();
 
+  outNamePrefix_ = dir_+"/"+config_->read<std::string>("plots name prefix","JS")+"_";
   saveAsEps_ = config_->read<bool>("plots save as eps",false);
 }
 
@@ -118,8 +119,6 @@ ControlPlotsJetSmearing::~ControlPlotsJetSmearing() {
 
 // --------------------------------------------------
 void ControlPlotsJetSmearing::makePlots() const {
-  if( config_->read<bool>("create 3rd jet plots",false) )
-    plot3rdJet();
   if( config_->read<bool>("create dijet plots",false) )
     plotDijets();
   if( config_->read<bool>("create logP plots",false) )
@@ -134,6 +133,8 @@ void ControlPlotsJetSmearing::makePlots() const {
     plotResponse();
   if( config_->read<bool>("create simulated asymmetry plots",false) )
     plotAsymmetrySimulation();
+  if( config_->read<bool>("create parallel components plots",false) )
+    plotParallelComponents();
 }
 
 
@@ -173,6 +174,14 @@ void ControlPlotsJetSmearing::plotResponse() const
   std::vector<TH1*> hPtAsymBiased(nPtBins());
   std::vector<TH1*> hFitPtAsym(nPtBins());
 
+  TH1 * hDeltaPtJet12;
+  TH1 * hDeltaPtJet12Fit;
+  TH1 * hPJet3;
+  TH1 * hPJet3Rel;
+  TH1 * hPJet3GenRel;
+  TH1 * hPSJ;
+  TH1 * hPSJRel;
+  TH1 * hPSJGenRel;
   TH1 * hRespRatioFrame = 0;
   TH1 * hRespRatioFrameJet1 = 0;
   TH1 * hRespRatioFrameJet2 = 0;
@@ -184,6 +193,14 @@ void ControlPlotsJetSmearing::plotResponse() const
   TH1 * hPtGenJet2 = 0;         // PtGen spectrum
   TH1 * hPtHat = 0;         // PtHat spectrum
   TH1 * hPtDijet = 0;       // Dijet spectrum
+  TH1 * hPtJet1 = 0;
+  TH1 * hPtJet2 = 0;
+  TH1 * hPtJet3 = 0;
+  TH1 * hPtJet4 = 0;
+  TH2 * hPSJvsPtJet4 = 0;
+  TH2 * hPtJet1vs2 = 0;
+  TH1 * hEta = 0;
+  TH1 * hDeltaPhi12 = 0;
   TH1 * hGaussWidth = 0;
   TH1 * hGaussWidthErr = 0;
   TH1 * hGaussWidthTruth = 0;
@@ -278,14 +295,12 @@ void ControlPlotsJetSmearing::plotResponse() const
     hPtGenAbsBins[ptBin]->SetLineWidth(2);
 
     name = "hPtGenAsym_" + toString(ptBin);
-    hPtGenAsym[ptBin] = new TH1D(name.c_str(),
-				 ";p^{gen}_{T} asymmetry;",
-				 30,-0.3,0.3);
+    hPtGenAsym[ptBin] = new TH1D(name.c_str(),";p^{gen}_{T} asymmetry;",45,-0.2,0.2);
     hPtGenAsym[ptBin]->Sumw2();
     hPtGenAsym[ptBin]->SetLineWidth(2);
 
     name = "hPtAsym_" + toString(ptBin);
-    hPtAsym[ptBin] = new TH1D(name.c_str(),";p_{T} asymmetry;",75,-1.,1.);
+    hPtAsym[ptBin] = new TH1D(name.c_str(),";p_{T} asymmetry;",175,-1.,1.);
     hPtAsym[ptBin]->Sumw2();
     hPtAsym[ptBin]->SetMarkerStyle(20);
     hPtAsym[ptBin]->SetLineWidth(2);
@@ -305,6 +320,41 @@ void ControlPlotsJetSmearing::plotResponse() const
     hFitPtAsym[ptBin]->SetLineColor(2);
   }
 
+  hDeltaPtJet12 = new TH1D("hDeltaPtJet12",";0.5#upoint|p_{T,1} - p_{T,2}| (GeV);",
+			   50,0.,0.3*ptBinEdges_.back());
+  hDeltaPtJet12->SetMarkerStyle(20);
+  hDeltaPtJet12->SetNdivisions(505);
+  hDeltaPtJet12->Sumw2();
+
+  hDeltaPtJet12Fit = new TH1D("hDeltaPtJet12Fit",";0.5#upoint|p_{T,1} - p_{T,2}| (GeV);",
+			      500,0.,0.5*ptBinEdges_.back());
+
+  hPJet3 = new TH1D("hPJet3",";p_{||,3} (GeV);Events",
+		    50,-0.3*ptBinEdges_.front(),0.3*ptBinEdges_.back());
+  hPJet3->SetMarkerStyle(20);
+  
+  hPJet3Rel = new TH1D("hPJet3Rel",";p_{||,3} / p^{ref}_{T};Events",50,-0.25,0.25);
+  hPJet3Rel->SetMarkerStyle(20);
+
+  hPJet3GenRel = static_cast<TH1D*>(hPJet3Rel->Clone("hPJet3GenRel"));
+  hPJet3GenRel->SetXTitle(";p_{||,3} / p^{gen,ave}_{T}");
+
+  
+  hPSJ = new TH1D("hPSJ",";p_{||,>3} (GeV);Events",
+		  50,-0.3*ptBinEdges_.front(),0.3*ptBinEdges_.back());
+  hPSJ->SetMarkerStyle(20);
+  
+  hPSJRel = new TH1D("hPSJRel",";p_{||,>3} / p^{ref}_{T};Events",50,-0.1,0.1);
+  hPSJRel->SetMarkerStyle(20);
+
+  hPSJGenRel = static_cast<TH1D*>(hPJet3Rel->Clone("hPSJGenRel"));
+  hPSJGenRel->SetXTitle(";p_{||,>3} / p^{gen,ave}_{T}");
+
+  hPSJvsPtJet4 = new TH2D("hPSJvsPtJet4",";p_{t,4};p_{||,>3} (GeV) (GeV)",
+			  50,0.,0.3*ptBinEdges_.back(),
+			  50,-0.1*ptBinEdges_.front(),0.1*ptBinEdges_.back());
+
+
   hRespRatioFrame = static_cast<TH1D*>(hRespRatio[0]->Clone("hRespRatioFrame"));
   for(int bin = 1; bin <= hRespRatioFrame->GetNbinsX(); ++bin) {
     hRespRatioFrame->SetBinContent(bin,1.);
@@ -318,7 +368,7 @@ void ControlPlotsJetSmearing::plotResponse() const
   hRespRatioFrameJet2->SetXTitle("R_{2} = p^{jet}_{T,2} / p^{true}_{T,2}");
 
   hPtGenAbs = new TH1D("hPtGenAbs",";p^{gen}_{T} (GeV);dN / dp^{gen}_{T}  1 / (GeV)",
-		       60,0.8*ptBinEdges_.front(),1.1*ptBinEdges_.back());
+		       120,0.8*ptBinEdges_.front(),1.1*ptBinEdges_.back());
   hPtGenAbs->SetMarkerStyle(20);
   hPtGenAbs->GetXaxis()->SetNdivisions(505);
   hPtGenAbs->SetLineWidth(2);
@@ -337,7 +387,29 @@ void ControlPlotsJetSmearing::plotResponse() const
   hPtHat->SetTitle(";#hat{p}_{T} (GeV);1 / N  dN / d#hat{p}_{T}  1 / (GeV)");
 
   hPtDijet = static_cast<TH1D*>(hPtGen->Clone("hPtDijet"));
-  hPtDijet->SetTitle(";p^{dijet}_{T} (GeV);1 / N  dN / dp^{dijet}_{T}  1 / (GeV)");
+  hPtDijet->SetTitle(";p^{dijet}_{T} (GeV);Events");
+
+  hPtJet1 = new TH1D("hPtJet1",";p_{T,1} (GeV);Jets",70,0.5*ptBinEdges_.front(),1.3*ptBinEdges_.back());
+  hPtJet1->SetMarkerStyle(20);
+  hPtJet1->GetXaxis()->SetNdivisions(505);
+  hPtJet1->SetLineWidth(2);
+  setColor(hPtJet1,2);
+
+  hPtJet2 = static_cast<TH1D*>(hPtJet1->Clone("hPtJet2"));
+  hPtJet2->SetXTitle("p_{T,2} (GeV)");
+  setColor(hPtJet2,4);
+
+  hPtJet3 = new TH1D("hPtJet3",";p_{T,3} (GeV);Events",50,0.,0.2*ptBinEdges_.back());
+
+  hPtJet4 = static_cast<TH1D*>(hPtJet3->Clone("hPtJet4"));
+  hPtJet4->SetXTitle("p_{T,4} (GeV)");
+
+  hEta = new TH1D("hEta",";#eta;Jets",101,-5.1,5.1);
+  hDeltaPhi12 = new TH1D("hDeltaPhi12",";|#Delta#phi_{12}|;Events",100,0.,3.2);
+
+  hPtJet1vs2 = new TH2D("hPtJet1vs2",";p_{T,1} (GeV);p_{T,2} (GeV);",70,0.5*ptBinEdges_.front(),1.3*ptBinEdges_.back(),70,0.5*ptBinEdges_.front(),1.3*ptBinEdges_.back());
+  hPtJet1vs2->GetXaxis()->SetNdivisions(505);
+  hPtJet1vs2->GetYaxis()->SetNdivisions(505);
 
   hTruthPDF = new TH1D("hTruthPDF",";p^{true}_{T} (GeV);1 / N  dN / dp^{true}_{T}  1 /  (GeV)",
 		       5*hPtGen->GetNbinsX(),tMin,tMax);
@@ -411,77 +483,97 @@ void ControlPlotsJetSmearing::plotResponse() const
   // --- Fill histograms of measured response --------------
   for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
     // Select DiJet events
-    if( (*datait)->type() == TypeSmearDiJet )  {
+    if( (*datait)->type() == TypeSmearDiJet ) {
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
-
-      hPtHat->Fill( dijet->ptHat(), dijet->weight() );
-
+      double weight = dijet->weight();
+      double ptAve = dijet->avePt();
+      double ptHat = dijet->ptHat();
+            
+      // Event wise spectra
+      hPtHat->Fill(ptHat,weight);
+      hPtDijet->Fill(ptAve,weight);
+      hPJet3->Fill(dijet->pJ3(),weight);
+      hPJet3Rel->Fill(dijet->pJ3()/dijet->ptRef(),weight);
+      hPSJ->Fill(dijet->pSJ()/weight);
+      hPSJRel->Fill(dijet->pSJ()/dijet->ptRef(),weight);
+      hPSJvsPtJet4->Fill(dijet->ptJet4(),dijet->pSJ(),weight);
+      double ptGenAve = 0.5*(dijet->jet1()->genPt()+dijet->jet2()->genPt());
+      if( ptGenAve > 0 ) {
+	hPJet3GenRel->Fill(dijet->pJ3()/ptGenAve,weight);
+	hPSJGenRel->Fill(dijet->pSJ()/ptGenAve,weight);
+      }
+      hPtGenJet1->Fill(dijet->jet1()->genPt(),weight);
+      hPtJet1->Fill(dijet->jet1()->pt(),weight);
+      hPtGenJet2->Fill(dijet->jet2()->genPt(),weight);
+      hPtJet2->Fill(dijet->jet2()->pt(),weight);
+      hPtJet3->Fill(dijet->ptJet3(),weight);
+      hPtJet4->Fill(dijet->ptJet4(),weight);
+      hDeltaPhi12->Fill(dijet->deltaPhi12(),weight);
+      hDeltaPtJet12->Fill(0.5*std::abs(dijet->jet1()->pt()-dijet->jet2()->pt()),weight);
+      
+      // Pt asymmetry variables
       const Jet *j1 = dijet->jet1();
       const Jet *j2 = dijet->jet2();
-      if( rand_->Uniform() > 0.5 ) {
-	j1 = dijet->jet2();
-	j2 = dijet->jet1();
+      hPtJet1vs2->Fill(j1->pt(),j2->pt(),weight);
+      double ht = j1->pt() + j2->pt();
+      if( ht > 0 ) {
+	double ptAsym = (j1->pt() - j2->pt())/ht;
+	hPtAsymBiased[0]->Fill(ptAsym,weight);
+	if( rand_->Uniform() > 0.5 ) ptAsym *= -1.;
+	hPtAsym[0]->Fill(ptAsym,weight);
       }
       double ptGenAsym = j1->genPt() - j2->genPt();
-      ptGenAsym /= j1->genPt() + j2->genPt();
-      double ptAsym = j1->pt() - j2->pt();
-      ptAsym /= j1->pt() + j2->pt();
-      double ptAsymBiased = j1->pt() - j2->pt();
-      if( j2->pt() > j1->pt() ) ptAsymBiased = j2->pt() - j1->pt();
-      ptAsymBiased /= j1->pt() + j2->pt();
-
+      ht = j1->genPt() + j2->genPt();
+      if( ht > 0 ) {
+	ptGenAsym /= ht;
+	if( rand_->Uniform() > 0.5 ) ptGenAsym *= -1.;
+      }
+      
       for(int i = 0; i < 2; i++) {        // Loop over both jets
-	const Jet * jet = dijet->jet1();
-	if( i == 1 ) jet = dijet->jet2();
-
-	hPtGenAbs->Fill( jet->genPt(), dijet->weight() );
-	hPtGen->Fill( jet->genPt(), dijet->weight() );
-	if( i == 0 ) hPtGenJet1->Fill( jet->genPt(), dijet->weight() );
-	if( i == 1 ) hPtGenJet2->Fill( jet->genPt(), dijet->weight() );
-
-	for(int bin = 0; bin < nPtBins(); bin++) {
-	  double var = 0.;
-	  if( ptBinningVar_ == "ptGen" ) var = jet->genPt();
-	  else if( ptBinningVar_ == "pt" ) var = jet->pt();
-	  else if( ptBinningVar_ == "ptDijet" ) var = dijet->dijetPt();
-	  if( ptBinEdges_[bin] <= var && var < ptBinEdges_[bin+1] ) {
-	    hRespMeasAbs[bin]->Fill( jet->pt() / jet->genPt(), dijet->weight() );
-	    hRespMeas[bin]->Fill( jet->pt() / jet->genPt(), dijet->weight() );
+	const Jet * jet = dijet->jet(i);
+	
+	// Jet wise spectra
+	hPtGenAbs->Fill(jet->genPt(),weight);
+	hPtGen->Fill(jet->genPt(),weight);
+	hEta->Fill(jet->eta(),weight);
+	
+	// Response distributions
+	double var = 0.;
+	if( ptBinningVar_ == "ptGen" )        var = jet->genPt();
+	else if( ptBinningVar_ == "pt" )      var = jet->pt();
+	else if( ptBinningVar_ == "ptDijet" ) var = ptAve;
+	int bin = findPtBin(var);
+	if( bin >= 0 && bin < nPtBins() ) {
+	  if( jet->genPt() > 0 ) {
+	    hRespMeasAbs[bin]->Fill( jet->pt() / jet->genPt(),weight);
+	    hRespMeas[bin]->Fill( jet->pt() / jet->genPt(),weight);
 	    if( i == 0 ) {
-	      hRespMeasJet1[bin]->Fill( jet->pt() / jet->genPt(), dijet->weight() );
-	      hRespRatioJet1[bin]->Fill( jet->pt() / jet->genPt(), dijet->weight() );
+	      hRespMeasJet1[bin]->Fill( jet->pt() / jet->genPt(),weight);
 	    } else if ( i == 1 ) {
-	      hRespMeasJet2[bin]->Fill( jet->pt() / jet->genPt(), dijet->weight() );
-	      hRespRatioJet2[bin]->Fill( jet->pt() / jet->genPt(), dijet->weight() );
+	      hRespMeasJet2[bin]->Fill( jet->pt() / jet->genPt(),weight);
 	    }
-	    hPtGenAbsBins[bin]->Fill( jet->genPt(), dijet->weight() );
-	    hPtGenAsym[bin]->Fill( ptGenAsym, dijet->weight() );
-	    hPtAsym[bin]->Fill( ptAsym, dijet->weight() );
-	    hPtAsymBiased[bin]->Fill( ptAsymBiased, dijet->weight() );
-	    hRespMCPtHat[bin]->Fill( jet->pt()/dijet->ptHat(), dijet->weight() );
-	    continue;
 	  }
+	  hPtGenAbsBins[bin]->Fill(jet->genPt(),weight);
+	  hRespMCPtHat[bin]->Fill(jet->pt()/ptHat,weight);
+	  hPtGenAsym[bin]->Fill(ptGenAsym,weight);
 	}
       }
-      hPtDijet->Fill( dijet->dijetPt(), dijet->weight() );
     }
   } // End of loop over data
   for(int ptBin = 0; ptBin < nPtBins(); ptBin++) {
     normHist(hRespMeas[ptBin],"width");
     normHist(hRespMeasJet1[ptBin],"width");
     normHist(hRespMeasJet2[ptBin],"width");
-    normHist(hRespRatioJet1[ptBin],"width");
-    normHist(hRespRatioJet2[ptBin],"width");
     normHist(hRespMCPtHat[ptBin],"width");
-    normHist(hPtGenAsym[ptBin],"width");
     normHist(hPtAsym[ptBin],"width");
     normHist(hPtAsymBiased[ptBin],"width");
   }
+  normHist(hDeltaPtJet12,"width");
+  hDeltaPtJet12->Scale(0.5);
   normHist(hPtGen,tMin,tMax,"width");
   normHist(hPtGenJet1,tMin,tMax,"width");
   normHist(hPtGenJet2,tMin,tMax,"width");
   normHist(hPtHat,tMin,tMax,"width");
-  normHist(hPtDijet,tMin,tMax,"width");
 
 
   // --- Fill histograms of fitted response ----------------
@@ -494,16 +586,33 @@ void ControlPlotsJetSmearing::plotResponse() const
   std::vector<double> auxPar = bag_of<double>(config_->read<string>("mean response parameters","1 0"));
   SmearData * smearData = dynamic_cast<SmearData*>(data_->front());
   if( smearData ) {
+    for(int bin = 1; bin <= hDeltaPtJet12Fit->GetNbinsX(); bin++) {
+        double s = param_->GetPars()[0]/sqrt(2.);
+        double d = hDeltaPtJet12Fit->GetBinCenter(bin);
+        if( d < 2.*s ) {
+	  double u = d/s;
+	  double norm = s*sqrt(M_PI*2.);//*erf(1./sqrt(2.));
+	  hDeltaPtJet12Fit->SetBinContent(bin,exp(-0.5*u*u)/norm);
+ 	}
+//       SmearDiJet *dijet = dynamic_cast<SmearDiJet*>(smearData);
+//       if( dijet ) {
+//  	double pdf = dijet->pdfPtMeas(hDeltaPtJet12Fit->GetBinCenter(bin),0.,dijet->ptRef());
+//    	hDeltaPtJet12Fit->SetBinContent(bin,pdf);
+//       }
+    }
+
     // Loop over ptBins
     for(int ptBin = 0; ptBin < nPtBins(); ptBin++) {
       // Interpolated response function
+      double ptMean = 1.;
+      if( ptBinningVar_ == "ptGen" ) ptMean = hPtGenAbsBins[ptBin]->GetMean();
+      else if( ptBinningVar_ == "ptDijet" ) ptMean = hPtDijet->GetMean();
       for(int bin = 1; bin <= hRespFit[ptBin]->GetNbinsX(); bin++) {
 	double r = hRespFit[ptBin]->GetBinCenter(bin);
-	double pt = hPtGenAbsBins[ptBin]->GetMean();
-	double val = smearData->pdfResp(r,pt);
+	double val = smearData->pdfResp(r,ptMean);
 	hRespFit[ptBin]->SetBinContent(bin,val);
 	hRespFitErrStat[ptBin]->SetBinContent(bin,val);
-	hRespFitErrStat[ptBin]->SetBinError(bin,smearData->pdfRespError(r,pt));
+	hRespFitErrStat[ptBin]->SetBinError(bin,smearData->pdfRespError(r,ptMean));
 
 	hRespFitBins[ptBin]->Fill(r,val);
 	hRespRatio[ptBin]->Fill(r,val);
@@ -523,8 +632,7 @@ void ControlPlotsJetSmearing::plotResponse() const
       // Pt asymmetry
       for(int bin = 1; bin <= hFitPtAsym[ptBin]->GetNbinsX(); bin++) {
 	double a = hFitPtAsym[ptBin]->GetBinCenter(bin);
-	double pt = hPtGenAbsBins[ptBin]->GetMean();
-	hFitPtAsym[ptBin]->SetBinContent(bin,smearData->pdfDijetAsym(a,pt));
+	hFitPtAsym[ptBin]->SetBinContent(bin,smearData->pdfDijetAsym(a,ptMean));
       }
 
       // Interpolated fit function with start values
@@ -534,9 +642,8 @@ void ControlPlotsJetSmearing::plotResponse() const
       }
       // Plot response function
       for(int bin = 1; bin <= hRespFitStart[ptBin]->GetNbinsX(); bin++) {
-	double pt = hPtGenAbsBins[ptBin]->GetMean();
 	double r = hRespFitStart[ptBin]->GetBinCenter(bin);
-	hRespFitStart[ptBin]->SetBinContent(bin,smearData->pdfResp(r,pt));
+	hRespFitStart[ptBin]->SetBinContent(bin,smearData->pdfResp(r,ptMean));
       }
       // Copy back fitted values into parameter array
       for(int i = 0; i < param_->GetNumberOfParameters(); i++) {
@@ -544,86 +651,6 @@ void ControlPlotsJetSmearing::plotResponse() const
       }
     } // End of loop over ptBins
   } // End if( smearData )
-
-
-  // --- Fill histograms of fitted Gaussian width -----------
-  if( param == "SmearParametrizationGauss" 
-      || param == "SmearParametrizationGaussExtrapolation"
-      || param == "SmearParametrizationGaussImbalance" ) {
-    std::vector<double> truthPar = bag_of<double>(config_->read<string>("plots true resolution parameters",""));
-    for(int bin = 1; bin <= hGaussWidth->GetNbinsX(); ++bin) {
-      double pt = hGaussWidth->GetBinCenter(bin);
-      double sigma = gaussianWidth(pt) / pt;
-      double err = gaussianWidthError(pt) / pt;
-      hGaussWidth->SetBinContent(bin,sigma);
-      hGaussWidthErr->SetBinContent(bin,sigma);
-      hGaussWidthErr->SetBinError(bin,err);
-      double sigmaTrue = gaussianWidthTruth(pt) / pt;
-      hGaussWidthTruth->SetBinContent(bin,sigmaTrue);
-      hGaussWidthRatio->SetBinContent(bin,sigma/sigmaTrue);
-      hGaussWidthRatioErr->SetBinContent(bin,hGaussWidthRatio->GetBinContent(bin));
-      hGaussWidthRatioErr->SetBinError(bin,err/sigmaTrue);
-    }
-
-    for(int bin = 1; bin <= hJESFrame->GetNbinsX(); ++bin) {
-      for(int i = 0; i < 3; ++i) {
-	TH1 *hScale = 0;
-	TH1 *hReso = 0;
-	TH1 *hMC = 0;
-	if( i == 0 ) {
-	  hScale = hJES;
-	  hMC = hRespMeas[bin-1];
-	  hReso = hGaussWidthMC;
-	} else if( i == 1 ) {
-	  hScale = hJESJet1;
-	  hMC = hRespMeasJet1[bin-1];
-	} else if( i == 2 ) {
-	  hScale = hJESJet2;
-	  hMC = hRespMeasJet2[bin-1];
-	}
-
-	// Fit central Gaussian
-	double scale = hMC->GetMean();
-	double scaleErr = hMC->GetMeanError();
-	double sigma = hMC->GetRMS();
-	double sigmaErr = hMC->GetRMSError();
-	if( scale ) {
-	  hMC->Fit("gaus","0QIR","",scale-1.5*sigma,scale+1.5*sigma);
-	  TF1 *fit = hMC->GetFunction("gaus");
-	  scale = fit->GetParameter(1);
-	  scaleErr = fit->GetParError(1);
-	  sigma = fit->GetParameter(2);
-	  sigmaErr = fit->GetParError(2);
-	}
-	hScale->SetBinContent(bin,scale);
-	hScale->SetBinError(bin,scaleErr);
-	if( hReso ) {
-	  hReso->SetBinContent(bin,sigma);
-	  hReso->SetBinError(bin,sigmaErr);
-	}
-	// Perform pseudo fit (scale influence)
-	if( i == 0 && scale ) {						    
-	  TF1 *fit = new TF1("PseudoFit","gaus",0.,2.);
-	  fit->SetParameter(0,1./sqrt(2.*M_PI)/sigma);
-	  fit->FixParameter(1,1.);
-	  fit->SetParameter(2,sigma);
-	  hMC->Fit(fit,"0QIRB");
-
-	  hGaussWidthPseudo->SetBinContent(bin,fit->GetParameter(2));
-	  hGaussWidthPseudo->SetBinError(bin,fit->GetParError(2));
-
-	  delete fit;
-	}
-      }
-
-      double pt = hPtGenAbsBins[bin-1]->GetMean();
-      double sigmaTrue = gaussianWidthTruth(pt) / pt;
-      hGaussWidthRatioMC->SetBinContent(bin,hGaussWidthMC->GetBinContent(bin)/sigmaTrue);
-      hGaussWidthRatioMC->SetBinError(bin,hGaussWidthMC->GetBinError(bin)/sigmaTrue);
-      hGaussWidthRatioPseudo->SetBinContent(bin,hGaussWidthPseudo->GetBinContent(bin)/sigmaTrue);
-      hGaussWidthRatioPseudo->SetBinError(bin,hGaussWidthPseudo->GetBinError(bin)/sigmaTrue);
-    }
-  }
 
 
   // --- Fill histograms of fitted truth spectrum -----------
@@ -662,6 +689,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     hRespFitSum[ptBin]->GetXaxis()->SetRangeUser(rMin,rMax);    
   }
 
+
   // --- Set y-axis ranges ----------------------------------
   for(int ptBin = 0; ptBin < nPtBins(); ptBin++) {
     double minFac = 0.;
@@ -691,14 +719,8 @@ void ControlPlotsJetSmearing::plotResponse() const
     max *= maxFac;
     hPtAsymBiased[ptBin]->GetYaxis()->SetRangeUser(min,max);
 
-    findYRange(hPtGenAsym[ptBin],min,max);
-    min *= minFac;
-    max *= maxFac;
-    hPtGenAsym[ptBin]->GetYaxis()->SetRangeUser(min,max);
-
     setYRange(hRespMeasAbs[ptBin],0.5,50.);
   }
-  setYRange(hPtDijet, 0.5, 100.);
   setYRange(hPtGen, 0.5, 100.);
   setYRange(hPtGenJet1, 0.5, 100.);
   setYRange(hPtGenJet2, 0.5, 100.);
@@ -721,7 +743,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     legPtRangeAndCenters[ptBin]->SetTextFont(42);
 
     std::string binVar;
-    if( ptBinningVar_ == "ptDijet" ) binVar = "p^{dijet}_{T}";
+    if( ptBinningVar_ == "ptDijet" ) binVar = "p^{ave}_{T}";
     else if( ptBinningVar_ == "pt" ) binVar = "p_{T}";
     else if( ptBinningVar_ == "ptGen" ) binVar = "p^{gen}_{T}";
 
@@ -776,6 +798,48 @@ void ControlPlotsJetSmearing::plotResponse() const
 
     ps->NewPage();
     c1->cd();
+    hDeltaPtJet12->Draw("PE1");
+    hDeltaPtJet12Fit->Draw("Lsame");
+    TF1 *func = new TF1("func","gaus",0.,2.*hDeltaPtJet12->GetRMS());
+    func->SetParameter(0,1./sqrt(2.*M_PI)/hDeltaPtJet12->GetRMS());
+    func->FixParameter(1,0.);
+    func->SetParameter(2,hDeltaPtJet12->GetRMS());
+    hDeltaPtJet12->Fit(func,"I0BR");
+    std::cout << "\nHistogram Fit 0.5|x1 - x2|: " << std::abs(func->GetParameter(2))*sqrt(2.) << " +/- " << func->GetParError(2)*sqrt(2.) << std::endl;
+    func->SetLineColor(2);
+    func->SetLineWidth(1);
+    func->SetLineStyle(2);
+    func->Draw("same");
+    gPad->RedrawAxis();
+    c1->Draw();
+
+    ps->NewPage();
+    c1->cd();
+    hDeltaPtJet12->Draw("PE1");
+    hDeltaPtJet12Fit->Draw("Lsame");
+    func->SetRange(0,hDeltaPtJet12->GetXaxis()->GetBinUpEdge(hDeltaPtJet12->GetNbinsX()));
+    func->Draw("same");
+    std::vector<TLine*> lines;
+    for(int k = 0; k < 6; ++k) {
+      double x = (2.+k)*std::abs(func->GetParameter(2));//*sqrt(2.);
+      if( x > hDeltaPtJet12->GetXaxis()->GetBinUpEdge(hDeltaPtJet12->GetNbinsX()) ) break;
+      TLine *line = new TLine(x,3E-5,x,hDeltaPtJet12->GetMaximum());
+      line->SetLineStyle(2);
+      line->SetLineWidth(1);
+      line->SetLineColor(4);
+      line->Draw("same");
+      lines.push_back(line);
+    }
+    gPad->RedrawAxis();
+    c1->SetLogy();
+    c1->Draw();
+
+    for(size_t k = 0; k < lines.size(); ++k) {
+      delete lines[k];
+    }      
+
+    ps->NewPage();
+    c1->cd();
     hRespMeas[ptBin]->Draw("PE1");
     hRespFit[ptBin]->Draw("Lsame");
     hRespFitStart[ptBin]->Draw("Lsame");
@@ -802,7 +866,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     ps->NewPage();
     c1->cd();
     hRespMeas[ptBin]->Draw("PE1");
-    hRespFitBins[ptBin]->Draw("Hsame");
+    hRespFitBins[ptBin]->Draw("HISTsame");
     gPad->RedrawAxis();
     legPtRangeAndCenters[ptBin]->Draw("same");
     c1->SetLogy(0);
@@ -838,7 +902,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     ps->NewPage();
     c1->cd();
     hRespMeasJet1[ptBin]->Draw("PE1");
-    hRespFitBins[ptBin]->Draw("Hsame");
+    hRespFitBins[ptBin]->Draw("HISTsame");
     gPad->RedrawAxis();
     legPtRangeAndCenters[ptBin]->Draw("same");
     c1->SetLogy(0);
@@ -862,7 +926,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     ps->NewPage();
     c1->cd();
     hRespMeasJet2[ptBin]->Draw("PE1");
-    hRespFitBins[ptBin]->Draw("Hsame");
+    hRespFitBins[ptBin]->Draw("HISTsame");
     gPad->RedrawAxis();
     legPtRangeAndCenters[ptBin]->Draw("same");
     c1->SetLogy(0);
@@ -874,6 +938,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     hRespRatioJet2[ptBin]->Draw("PE1same");
     c1->SetLogy(0);
     c1->Draw();
+
 
     ps->NewPage();
     c1->cd();
@@ -894,8 +959,8 @@ void ControlPlotsJetSmearing::plotResponse() const
       }
       TString fitName = "fitResp";
       fitName += jetIdx;
-      fitResp[jetIdx] = new TF1(fitName,"gaus",0.3,1.7);
-      hMC->Fit(fitResp[jetIdx],"0QIR");
+      fitResp[jetIdx] = new TF1(fitName,"gaus",0.,2.);
+      hMC->Fit(fitResp[jetIdx],"Q0IR");
       fitResp[jetIdx]->SetLineStyle(2);
       fitResp[jetIdx]->SetLineWidth(2);
       fitResp[jetIdx]->SetLineColor(2*(jetIdx+1));
@@ -912,10 +977,6 @@ void ControlPlotsJetSmearing::plotResponse() const
     gPad->RedrawAxis();
     legPtRangeAndCenters[ptBin]->Draw("same");
     c1->Draw();
-    for(int jetIdx = 0; jetIdx < 2; ++jetIdx) {
-      delete fitResp[jetIdx];
-      delete fitRespLine[jetIdx];
-    }
 
     //     ps->NewPage();
     //     c1->cd();
@@ -925,30 +986,55 @@ void ControlPlotsJetSmearing::plotResponse() const
     //     legPtRangeAndCenters[ptBin]->Draw("same");
     //     c1->SetLogy(logy);
     //     c1->Draw();
-//     ps->NewPage();
-//     c1->cd();
-//     hPtGenAsym[ptBin]->Draw("PE1");
-//     legPtRange[ptBin]->Draw("same");
-//     c1->SetLogy(logy);
-//     c1->Draw();
+    ps->NewPage();
+    c1->cd();
+    hPtGenAsym[ptBin]->Draw("PE1");
+    legPtRange[ptBin]->Draw("same");
+    c1->SetLogy(logy);
+    c1->Draw();
 
 
     ps->NewPage();
     c1->cd();
-    hPtAsym[ptBin]->Draw("PE1");
-    TF1 *fitAsym = new TF1("fitAsym","gaus",-0.5,0.5);
+    //TF1 *fitAsym = new TF1("fitAsym","gaus",-0.5,0.5);
+    TF1 *fitAsym = new TF1("fitAsym","gaus",hPtAsym[ptBin]->GetMean()-1.8*hPtAsym[ptBin]->GetRMS(),hPtAsym[ptBin]->GetMean()+1.8*hPtAsym[ptBin]->GetRMS());
     fitAsym->SetParameter(0,1./sqrt(2.*M_PI)/0.1);
-    fitAsym->FixParameter(1,0.);
+    fitAsym->SetParameter(1,0.);
     fitAsym->SetParameter(2,0.1);
-    hPtAsym[ptBin]->Fit(fitAsym,"Q0IRB");
+    hPtAsym[ptBin]->Fit(fitAsym,"0QIRB");
     fitAsym->SetLineStyle(2);
     fitAsym->SetLineWidth(2);
+    hPtAsym[ptBin]->GetXaxis()->SetRangeUser(-0.2,0.2);
+    hPtAsym[ptBin]->Draw("PE1");
     fitAsym->Draw("same");
     hFitPtAsym[ptBin]->Draw("Lsame");
     legPtRangeAndCenters[ptBin]->Draw("same");
     gPad->RedrawAxis();
     c1->SetLogy(logy);
     c1->Draw();
+
+    double ptMean = 1.;
+    if( ptBinningVar_ == "ptGen" ) ptMean = hPtGenAbsBins[ptBin]->GetMean();
+    else if( ptBinningVar_ == "ptDijet" ) ptMean = hPtDijet->GetMean();
+    double par = scale(0)*param_->GetPars()[0]/ptMean;
+    double parErr = scale(0)*param_->GetErrors()[0]/ptMean;
+    double parMCTruth = 0.5*(fitResp[0]->GetParameter(2)+fitResp[1]->GetParameter(2));
+    double parMCTruthErr = 0.5*(fitResp[0]->GetParError(2)+fitResp[1]->GetParError(2));
+
+    std::cout << std::endl;
+    std::cout << "Pt          = " << ptMean << std::endl;
+    std::cout << "Resp        = " << parMCTruth << " +/- " << parMCTruthErr << std::endl;
+    std::cout << "Fit (Resp)  = " << par << " +/- " << parErr << std::endl;
+    std::cout << "Dev         = " << par / parMCTruth - 1. << std::endl;
+    std::cout << "Asym        = " << std::abs(fitAsym->GetParameter(2)) << " +/- " << fitAsym->GetParError(2) << std::endl;
+    std::cout << "Fit (Asym)  = " << par/sqrt(2.) << " +/- " << parErr/sqrt(2.) << std::endl;
+    std::cout << "Dev         = " << par/sqrt(2.)/std::abs(fitAsym->GetParameter(2)) - 1. << std::endl;
+
+    for(int jetIdx = 0; jetIdx < 2; ++jetIdx) {
+      delete fitResp[jetIdx];
+      delete fitRespLine[jetIdx];
+    }
+    
 
     ps->NewPage();
     c1->cd();
@@ -1042,6 +1128,12 @@ void ControlPlotsJetSmearing::plotResponse() const
   objs.push_back(hTruthPDF);
   drawPSPage(ps,c1,objs,"",true);
 
+  ps->NewPage();
+  c1->cd();
+  hPtJet1->Draw("PE1");
+  hPtJet2->Draw("PE1same");
+  c1->Draw();
+ 
   // Gaussian width
   if( param == "SmearParametrizationGauss"
       || param == "SmearParametrizationGaussExtrapolation"
@@ -1108,6 +1200,7 @@ void ControlPlotsJetSmearing::plotResponse() const
     c1->Draw();
   }
 
+
   TLegend *legJES = createLegend(3,0.5);
   legJES->AddEntry(hJESJet1,"Jet 1","P");
   legJES->AddEntry(hJESJet2,"Jet 2","P");
@@ -1123,7 +1216,6 @@ void ControlPlotsJetSmearing::plotResponse() const
   c1->SetLogx(1);
   c1->SetLogy(0);
   c1->Draw();
-
 
 
   // Write histos to root file
@@ -1149,12 +1241,28 @@ void ControlPlotsJetSmearing::plotResponse() const
     rootfile.WriteTObject(hPtAsymBiased[ptBin]);
     rootfile.WriteTObject(hFitPtAsym[ptBin]);
   }
+  rootfile.WriteTObject(hDeltaPtJet12Fit);
+  rootfile.WriteTObject(hDeltaPtJet12);
+  rootfile.WriteTObject(hPJet3);
+  rootfile.WriteTObject(hPJet3Rel);
+  rootfile.WriteTObject(hPJet3GenRel);
+  rootfile.WriteTObject(hPSJ);
+  rootfile.WriteTObject(hPSJRel);
+  rootfile.WriteTObject(hPSJGenRel);
   rootfile.WriteTObject(hPtGenAbs);
   rootfile.WriteTObject(hPtGen);
   rootfile.WriteTObject(hPtGenJet1);
   rootfile.WriteTObject(hPtGenJet2);
   rootfile.WriteTObject(hPtHat);
   rootfile.WriteTObject(hPtDijet);
+  rootfile.WriteTObject(hPtJet1);
+  rootfile.WriteTObject(hPtJet2);
+  rootfile.WriteTObject(hPtJet3);
+  rootfile.WriteTObject(hPtJet4);
+  rootfile.WriteTObject(hPSJvsPtJet4);
+  rootfile.WriteTObject(hPtJet1vs2);
+  rootfile.WriteTObject(hEta);
+  rootfile.WriteTObject(hDeltaPhi12);
   rootfile.WriteTObject(hTruthPDF);
   rootfile.WriteTObject(hTruthPDFErrStat);
   rootfile.WriteTObject(hGaussWidth);
@@ -1194,6 +1302,14 @@ void ControlPlotsJetSmearing::plotResponse() const
     delete hPtAsymBiased[ptBin];
     delete hFitPtAsym[ptBin];
   }
+  delete hDeltaPtJet12;
+  delete hDeltaPtJet12Fit;
+  delete hPJet3;
+  delete hPJet3Rel;
+  delete hPJet3GenRel;
+  delete hPSJ;
+  delete hPSJRel;
+  delete hPSJGenRel;
   delete legFitStart;
   delete hPtGenAbs;
   delete hPtGen;
@@ -1201,6 +1317,14 @@ void ControlPlotsJetSmearing::plotResponse() const
   delete hPtGenJet2;
   delete hPtHat;
   delete hPtDijet;
+  delete hPtJet1;
+  delete hPtJet2;
+  delete hPtJet3;
+  delete hPtJet4;
+  delete hPSJvsPtJet4;
+  delete hPtJet1vs2;
+  delete hEta;
+  delete hDeltaPhi12;
   delete hTruthPDF;
   delete hTruthPDFErrStat;
   delete hGaussWidth;
@@ -1216,6 +1340,570 @@ void ControlPlotsJetSmearing::plotResponse() const
   delete c1;
   delete ps;
 }
+
+
+
+
+// --------------------------------------------------
+void ControlPlotsJetSmearing::plotParallelComponents() const {
+  std::cout << "Plotting parallel components" << std::endl;
+
+  std::cout << "  Creating histograms" << std::endl;
+  std::vector<TH1*> hPtGenAve(nPtBins());
+  std::vector< std::vector<TH1*> > hPtGen(nPtBins());
+  std::vector< std::vector<TH2*> > hPpOverPtGenVsDeltaPhi12(nPtBins());
+  std::vector<TH1*> hDeltaPhi(nPtBins());
+  std::vector<TH1*> hPPhi(nPtBins());
+
+  std::vector<TH1*> hResp(nPtBins());
+  std::vector<TH1*> hPtAsym(nPtBins());
+  std::vector<TH1*> hPtGenAsym(nPtBins());
+  std::vector<TH1*> hPJet3(nPtBins());
+  std::vector<TH1*> hPSJ(nPtBins());
+  std::vector<TH1*> hPUCE(nPtBins());
+  std::vector<TH1*> hPJet3Rel(nPtBins());
+  std::vector<TH1*> hPSJRel(nPtBins());
+  std::vector<TH1*> hPUCERel(nPtBins());
+
+  std::vector<double> pt3Limits;
+  pt3Limits.push_back(0.06);
+  pt3Limits.push_back(0.1);
+  pt3Limits.push_back(0.15);
+  std::vector< std::vector<TH1*> > hPtAsymPt3Cuts(nPtBins());
+  std::vector< std::vector<TH1*> > hPtAsymPp3Cuts(nPtBins());
+
+  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
+    TString binLabelGen = toString(ptBinEdges_[ptBin])+" < p^{gen,ave}_{T} < "+toString(ptBinEdges_[ptBin+1])+" GeV";
+
+    TString name = "ParallelComponents:hPtAveGen"+toTString(ptBin);
+    TH1 *h1 = new TH1D(name,binLabelGen+";p^{gen,ave}_{T} (GeV);Events",50,0.9*ptBinEdges_[ptBin],1.1*ptBinEdges_[ptBin+1]);
+    h1->SetMarkerStyle(20);
+    hPtGenAve[ptBin] = h1;
+
+    for(int j = 0; j < 3; ++j) {
+      name = "ParallelComponents:hPtGenJet"+toTString(j)+"_"+toTString(ptBin);
+      h1 = new TH1D(name,binLabelGen+";p^{gen}_{T,"+toString(1+j)+"} (GeV);Events",
+		    50,j<2 ? 0.8*ptBinEdges_[ptBin] : 0.,1.2*ptBinEdges_[ptBin+1]);
+      h1->SetMarkerStyle(20);
+      hPtGen[ptBin].push_back(h1);
+
+      name = "ParallelComponents:hPpOverPtGenVsDeltaPhi12";
+      name += ptBin;
+      name += "_Jet";
+      name += j;
+      TH2 *h2 = new TH2D(name,binLabelGen+";#Delta#Phi_{12};p^{gen}_{||,"+toString(1+j)+"} / p^{gen}_{T,"+toString(1+j)+"};Events",
+			100,0.,3.5,100,0.6,1.05);
+      hPpOverPtGenVsDeltaPhi12[ptBin].push_back(h2);
+    }
+
+    name = "ParallelComponents:hDeltaPhi"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";#Delta#Phi_{12};Events",50,0.,M_PI);
+    h1->SetMarkerStyle(20);
+    hDeltaPhi[ptBin] = h1;
+
+    name = "ParallelComponents:hPPhi"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";#Phi_{||};Events",50,-6.,6.);
+    h1->SetMarkerStyle(20);
+    hPPhi[ptBin] = h1;
+
+    name = "ParallelComponents:hPJet3"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";p^{gen}_{||,3} (GeV);Events",50,0.,0.8*ptBinEdges_[ptBin]);
+    h1->SetMarkerStyle(20);
+    hPJet3[ptBin] = h1;
+
+    name = "ParallelComponents:hPSJ"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";p^{gen}_{||,SJ} (GeV);Events",50,0.,0.8*ptBinEdges_[ptBin]);
+    h1->SetMarkerStyle(20);
+    hPSJ[ptBin] = h1;
+
+    name = "ParallelComponents:hPUCE"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";p^{gen}_{||,UCE} (GeV);Events",50,0.,0.8*ptBinEdges_[ptBin]);
+    h1->SetMarkerStyle(20);
+    hPUCE[ptBin] = h1;
+
+    name = "ParallelComponents:hPJet3Rel"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";p^{gen}_{||,3} / <p^{gen,ave}_{T}>;Events",50,0.,0.8);
+    h1->SetMarkerStyle(20);
+    hPJet3Rel[ptBin] = h1;
+
+    name = "ParallelComponents:hPSJRel"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";p^{gen}_{||,SJ} / <p^{gen,ave}_{T}>;Events",50,0.,0.8);
+    h1->SetMarkerStyle(20);
+    hPSJRel[ptBin] = h1;
+
+    name = "ParallelComponents:hPUCERel"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";p^{gen}_{||,UCE} / <p^{gen,ave}_{T}>;Events",50,0.,0.8);
+    h1->SetMarkerStyle(20);
+    hPUCERel[ptBin] = h1;
+
+    name = "ParallelComponents:hResp"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";Response;Events",51,0.,2.);
+    h1->SetMarkerStyle(20);
+    hResp[ptBin] = h1;
+
+    name = "ParallelComponents:hPtAsym"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";Asymmetry;Events",51,-1.,1.);
+    h1->SetMarkerStyle(20);
+    hPtAsym[ptBin] = h1;
+
+    name = "ParallelComponents:hPtGenAsym"+toTString(ptBin);
+    h1 = new TH1D(name,binLabelGen+";p^{gen}_{T} Asymmetry;Events",51,-1.,1.);
+    h1->SetMarkerStyle(20);
+    hPtGenAsym[ptBin] = h1;
+
+    for(size_t c = 0; c < pt3Limits.size(); ++c) {
+      name = "ParallelComponents:hPtAsymPt3Cut"+toTString(pt3Limits[c])+"_"+toTString(ptBin);
+      h1 = new TH1D(name,binLabelGen+";Asymmetry",51,-1.,1.);
+      h1->SetYTitle("1 / N  Events / "+toTString(h1->GetBinWidth(1)));
+      h1->Sumw2();
+      h1->SetMarkerStyle(20);
+      setColor(h1,color(c));
+      hPtAsymPt3Cuts[ptBin].push_back(h1);
+
+      name = "ParallelComponents:hPtAsymPp3Cut"+toTString(pt3Limits[c])+"_"+toTString(ptBin);
+      h1 = new TH1D(name,binLabelGen+";Asymmetry",51,-1.,1.);
+      h1->SetYTitle("1 / N  Events / "+toTString(h1->GetBinWidth(1)));
+      h1->Sumw2();
+      h1->SetMarkerStyle(20);
+      setColor(h1,color(c));
+      hPtAsymPp3Cuts[ptBin].push_back(h1);
+    }
+  }
+
+
+
+  // Fill histograms
+  std::cout << "  Filling histograms" << std::endl;
+
+  // 1. loop over data
+  for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
+    // Select DiJet events
+    if( (*datait)->type() == TypeSmearDiJet )  {
+      SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
+      double ptGenAve = 0.5*(dijet->jet1()->genPt()+dijet->jet2()->genPt());
+      int ptGenAveBin = findPtBin(ptGenAve);
+      if( ptGenAveBin >= 0 ) {
+	hPtGenAve[ptGenAveBin]->Fill(ptGenAve,dijet->weight());
+	for(int i = 0; i < (dijet->jet3() ? 3 : 2); ++i) {
+	  hPtGen[ptGenAveBin][i]->Fill(dijet->jet(i)->genPt(),dijet->weight());
+	  hPpOverPtGenVsDeltaPhi12[ptGenAveBin][i]->Fill(dijet->deltaPhi12(),cos(TVector2::Phi_mpi_pi(dijet->jet(i)->phi()-dijet->pPhi())),dijet->weight());
+	}
+	hDeltaPhi[ptGenAveBin]->Fill(dijet->deltaPhi12(),dijet->weight());
+	hPPhi[ptGenAveBin]->Fill(dijet->pPhi(),dijet->weight());
+	
+	hResp[ptGenAveBin]->Fill(dijet->jet1()->pt()/dijet->jet1()->genPt(),dijet->weight());
+	hResp[ptGenAveBin]->Fill(dijet->jet2()->pt()/dijet->jet2()->genPt(),dijet->weight());
+
+	// Pt asymmetry
+	double ptAsym = dijet->jet1()->pt() + dijet->jet2()->pt();
+	if( ptAsym > 0. ) {
+	  ptAsym = (dijet->jet1()->pt() - dijet->jet2()->pt()) / ptAsym;
+	  if( rand_->Uniform(0.,1.) > 0.5 ) ptAsym *= -1.;
+	} else {
+	  std::cerr << "WARNING: pt1 + pt2 <= 0" << std::endl;
+	  ptAsym = -2.;
+	}
+	hPtAsym[ptGenAveBin]->Fill(ptAsym,dijet->weight());
+	double pt3 = dijet->jet3() ? dijet->jet3()->genPt() : 0.;
+	for(size_t c = 0; c < pt3Limits.size(); ++c) {
+	  double maxPt3 = pt3Limits[c]*ptGenAve;
+	  if( pt3 < maxPt3 ) hPtAsymPt3Cuts[ptGenAveBin][c]->Fill(ptAsym,dijet->weight());
+	  if( dijet->pJ3() < maxPt3 ) hPtAsymPp3Cuts[ptGenAveBin][c]->Fill(ptAsym,dijet->weight());
+	}
+
+	// PtGen asymmetry
+	double ptGenAsym = dijet->jet1()->genPt() + dijet->jet2()->genPt();
+	if( ptGenAsym > 0. ) {
+	  ptGenAsym = (dijet->jet1()->genPt() - dijet->jet2()->genPt()) / ptGenAsym;
+	  if( rand_->Uniform(0.,1.) > 0.5 ) ptGenAsym *= -1.;
+	} else {
+	  std::cerr << "WARNING: pt1Gen + pt2Gen <= 0" << std::endl;
+	  ptGenAsym = -2.;
+	}
+	hPtGenAsym[ptGenAveBin]->Fill(ptGenAsym,dijet->weight());
+
+      }
+    }
+  }
+  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
+    for(size_t c = 0; c < pt3Limits.size(); ++c) {
+      normHist(hPtAsymPt3Cuts[ptBin][c],"width");
+      normHist(hPtAsymPp3Cuts[ptBin][c],"width");
+    }
+  }  
+
+  std::vector<double> meanPtGenAve(nPtBins(),1.);
+  for(size_t ptBin = 0; ptBin < meanPtGenAve.size(); ++ptBin) {
+    meanPtGenAve[ptBin] = hPtGenAve[ptBin]->GetMean();
+  }
+  // 2. loop over data
+  for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
+    // Select DiJet events
+    if( (*datait)->type() == TypeSmearDiJet )  {
+      SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
+      double ptGenAve = 0.5*(dijet->jet1()->genPt()+dijet->jet2()->genPt());
+      int ptGenAveBin = findPtBin(ptGenAve);
+      if( ptGenAveBin >= 0 ) {
+	hPJet3[ptGenAveBin]->Fill(dijet->pJ3(),dijet->weight());
+	hPSJ[ptGenAveBin]->Fill(dijet->pSJ(),dijet->weight());
+	hPUCE[ptGenAveBin]->Fill(dijet->pUCE(),dijet->weight());
+
+	hPJet3Rel[ptGenAveBin]->Fill(std::abs(dijet->pJ3())/meanPtGenAve[ptGenAveBin],dijet->weight());
+	hPSJRel[ptGenAveBin]->Fill(std::abs(dijet->pSJ())/meanPtGenAve[ptGenAveBin],dijet->weight());
+	hPUCERel[ptGenAveBin]->Fill(std::abs(dijet->pUCE())/meanPtGenAve[ptGenAveBin],dijet->weight());
+      }
+    }
+  }
+
+
+
+  // Contributions to asymmetry
+  std::vector<double> meanPtGenAveErr(meanPtGenAve.size());
+  std::vector<double> stdDevPtAsym(meanPtGenAve.size());
+  std::vector<double> stdDevPtAsymErr(meanPtGenAve.size());
+  std::vector<double> stdDevPtGenAsym(meanPtGenAve.size());
+  std::vector<double> stdDevPtGenAsymErr(meanPtGenAve.size());
+  std::vector<double> stdDevResp(meanPtGenAve.size());
+  std::vector<double> stdDevRespErr(meanPtGenAve.size());
+  std::vector<double> stdDevPJet3(meanPtGenAve.size());
+  std::vector<double> stdDevPJet3Err(meanPtGenAve.size());
+  std::vector<double> stdDevPSJ(meanPtGenAve.size());
+  std::vector<double> stdDevPSJErr(meanPtGenAve.size());
+  std::vector<double> stdDevPUCE(meanPtGenAve.size());
+  std::vector<double> stdDevPUCEErr(meanPtGenAve.size());
+  for(size_t i = 0; i < meanPtGenAve.size(); ++i) {
+    meanPtGenAveErr[i] = hPtGenAve[i]->GetMeanError();
+
+    // Standard deviation
+    stdDevPtAsym[i] = sqrt(2.)*hPtAsym[i]->GetRMS();
+    stdDevPtAsymErr[i] = sqrt(2.)*hPtAsym[i]->GetRMSError();
+
+    stdDevPtGenAsym[i] = sqrt(2.)*hPtGenAsym[i]->GetRMS();
+    stdDevPtGenAsymErr[i] = sqrt(2.)*hPtGenAsym[i]->GetRMSError();
+    
+    stdDevResp[i] = hResp[i]->GetRMS();
+    stdDevRespErr[i] = hResp[i]->GetRMSError();
+    
+    stdDevPJet3[i] = hPJet3Rel[i]->GetRMS();
+    stdDevPJet3Err[i] = hPJet3Rel[i]->GetRMSError();
+    stdDevPSJ[i] = hPSJRel[i]->GetRMS();
+    stdDevPSJErr[i] = hPSJRel[i]->GetRMSError();
+    stdDevPUCE[i] = hPUCERel[i]->GetRMS();
+    stdDevPUCEErr[i] = hPUCERel[i]->GetRMSError();
+  }
+
+  TGraphErrors *gStdDevPtAsym
+    = new TGraphErrors(meanPtGenAve.size(),&(meanPtGenAve.front()),&(stdDevPtAsym.front()),
+		       &(meanPtGenAveErr.front()),&(stdDevPtAsymErr.front()));
+  gStdDevPtAsym->SetMarkerStyle(20);
+  gStdDevPtAsym->SetMarkerColor(color(0));
+  gStdDevPtAsym->SetLineColor(color(0));
+
+  TGraphErrors *gStdDevPtGenAsym
+    = new TGraphErrors(meanPtGenAve.size(),&(meanPtGenAve.front()),&(stdDevPtGenAsym.front()),
+		       &(meanPtGenAveErr.front()),&(stdDevPtGenAsymErr.front()));
+  gStdDevPtGenAsym->SetMarkerStyle(24);
+  gStdDevPtGenAsym->SetMarkerColor(color(4));
+  gStdDevPtGenAsym->SetLineColor(color(4));
+
+  TGraphErrors *gStdDevResp
+    = new TGraphErrors(meanPtGenAve.size(),&(meanPtGenAve.front()),&(stdDevResp.front()),
+		       &(meanPtGenAveErr.front()),&(stdDevRespErr.front()));
+  gStdDevResp->SetMarkerStyle(21);
+  gStdDevResp->SetMarkerColor(color(1));
+  gStdDevResp->SetLineColor(color(1));
+
+  TGraphErrors *gStdDevPJet3
+    = new TGraphErrors(meanPtGenAve.size(),&(meanPtGenAve.front()),&(stdDevPJet3.front()),
+		       &(meanPtGenAveErr.front()),&(stdDevPJet3Err.front()));
+  gStdDevPJet3->SetMarkerStyle(22);
+  gStdDevPJet3->SetMarkerColor(color(2));
+  gStdDevPJet3->SetLineColor(color(2));
+
+  TGraphErrors *gStdDevPSJ
+    = new TGraphErrors(meanPtGenAve.size(),&(meanPtGenAve.front()),&(stdDevPSJ.front()),
+		       &(meanPtGenAveErr.front()),&(stdDevPSJErr.front()));
+  gStdDevPSJ->SetMarkerStyle(23);
+  gStdDevPSJ->SetMarkerColor(color(3));
+  gStdDevPSJ->SetLineColor(color(3));
+
+  TGraphErrors *gStdDevPUCE
+    = new TGraphErrors(meanPtGenAve.size(),&(meanPtGenAve.front()),&(stdDevPUCE.front()),
+		       &(meanPtGenAveErr.front()),&(stdDevPUCEErr.front()));
+  gStdDevPUCE->SetMarkerStyle(24);
+  gStdDevPUCE->SetMarkerColor(color(4));
+  gStdDevPUCE->SetLineColor(color(4));
+
+
+
+  // Dependence of asymmetry on pt3
+  std::vector<TGraphErrors*> gResPtAsymPt3Cuts(pt3Limits.size());
+  std::vector<TGraphErrors*> gResPtAsymPp3Cuts(pt3Limits.size());
+  for(size_t c = 0; c < pt3Limits.size(); ++c) {
+    std::vector<double> resPtAsymPt3Cuts(meanPtGenAve.size());
+    std::vector<double> resPtAsymPt3CutsErr(meanPtGenAve.size());
+    std::vector<double> resPtAsymPp3Cuts(meanPtGenAve.size());
+    std::vector<double> resPtAsymPp3CutsErr(meanPtGenAve.size());
+    for(size_t i = 0; i < meanPtGenAve.size(); ++i) {
+      resPtAsymPt3Cuts[i] = sqrt(2.)*hPtAsymPt3Cuts[i][c]->GetRMS();
+      resPtAsymPt3CutsErr[i] = sqrt(2.)*hPtAsymPt3Cuts[i][c]->GetRMSError();
+      resPtAsymPp3Cuts[i] = sqrt(2.)*hPtAsymPp3Cuts[i][c]->GetRMS();
+      resPtAsymPp3CutsErr[i] = sqrt(2.)*hPtAsymPp3Cuts[i][c]->GetRMSError();
+
+    }
+    gResPtAsymPt3Cuts[c] = new TGraphErrors(meanPtGenAve.size(),&(meanPtGenAve.front()),&(resPtAsymPt3Cuts.front()),&(meanPtGenAveErr.front()),&(resPtAsymPt3CutsErr.front()));
+    gResPtAsymPt3Cuts[c]->SetMarkerStyle(24+c);
+    gResPtAsymPt3Cuts[c]->SetLineColor(color(c));
+    gResPtAsymPt3Cuts[c]->SetMarkerColor(color(c));
+
+    gResPtAsymPp3Cuts[c] = new TGraphErrors(meanPtGenAve.size(),&(meanPtGenAve.front()),&(resPtAsymPp3Cuts.front()),&(meanPtGenAveErr.front()),&(resPtAsymPp3CutsErr.front()));
+    gResPtAsymPp3Cuts[c]->SetMarkerStyle(20+c);
+    gResPtAsymPp3Cuts[c]->SetLineColor(color(c));
+    gResPtAsymPp3Cuts[c]->SetMarkerColor(color(c));
+  }
+
+
+
+  // Plot
+  std::cout << "  Plotting histograms" << std::endl;
+  TString outName = outNamePrefix_+"ParallelComponent_";
+  TPostScript *ps = 0;
+  if( !saveAsEps_ ) ps = new TPostScript((dir_+"/jsParallelComponent.ps").c_str(),111);
+  TCanvas *c1 = new TCanvas("c1","Parallel Component",0,0,600,600);
+
+  for(int ptBin = 0; ptBin < nPtBins(); ptBin++) {
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPtGenAve[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPtGenAve_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hDeltaPhi[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hDeltaPhi_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPPhi[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPPhi_PtBin"+toString(ptBin)+".eps","eps");
+
+    for(size_t j = 0; j < hPpOverPtGenVsDeltaPhi12[ptBin].size(); ++j) {
+      if( !saveAsEps_ ) ps->NewPage();
+      c1->cd();
+      hPtGen[ptBin][j]->Draw("PE1");
+      if( !saveAsEps_ ) c1->Draw();
+      else c1->SaveAs(outName+"hPtGenJet"+toTString(1+j)+"_PtBin"+toString(ptBin)+".eps","eps");
+
+      if( !saveAsEps_ ) ps->NewPage();
+      c1->cd();
+      hPpOverPtGenVsDeltaPhi12[ptBin][j]->Draw("COLZ");
+      if( !saveAsEps_ ) c1->Draw();
+      else c1->SaveAs(outName+"hPpOverPtGenJet"+toTString(1+j)+"VsDeltaPhi12_PtBin"+toTString(ptBin)+".eps","eps");
+    }
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hResp[ptBin]->GetXaxis()->SetRangeUser(0.3,1.7);
+    hResp[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hResp_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPtAsym[ptBin]->GetXaxis()->SetRangeUser(-0.7,0.7);
+    hPtAsym[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPtAsym_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPtGenAsym[ptBin]->GetXaxis()->SetRangeUser(-0.7,0.7);
+    hPtGenAsym[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPtGenAsym_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPtAsymPt3Cuts[ptBin][0]->GetXaxis()->SetRangeUser(-0.7,0.7);
+    hPtAsymPt3Cuts[ptBin][0]->Draw("PE1");
+    for(size_t c = 1; c < pt3Limits.size(); ++c) {
+      hPtAsymPt3Cuts[ptBin][c]->Draw("PE1same");
+    }
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPtAsymPt3Cuts_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPtAsymPp3Cuts[ptBin][0]->GetXaxis()->SetRangeUser(-0.7,0.7);
+    hPtAsymPp3Cuts[ptBin][0]->Draw("PE1");
+    for(size_t c = 1; c < pt3Limits.size(); ++c) {
+      hPtAsymPp3Cuts[ptBin][c]->Draw("PE1same");
+    }
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPpAsymPt3Cuts_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPJet3[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPJet3_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPSJ[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPSJ_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPUCE[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPUCE_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPJet3Rel[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPJet3Rel_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPSJRel[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPSJRel_PtBin"+toString(ptBin)+".eps","eps");
+
+    if( !saveAsEps_ ) ps->NewPage();
+    c1->cd();
+    hPUCERel[ptBin]->Draw("PE1");
+    if( !saveAsEps_ ) c1->Draw();
+    else c1->SaveAs(outName+"hPUCERel_PtBin"+toString(ptBin)+".eps","eps");
+  }
+
+  if( !saveAsEps_ ) ps->NewPage();
+  c1->cd();
+
+  TF1 *fPtGenAsym = new TF1("fPtGenAsym","sqrt([0]*[0]/x[0]/x[0]+[1]*[1]/x[0]+[2]*[2])",
+			      ptBinEdges_[0],ptBinEdges_[nPtBins()]);
+  fPtGenAsym->SetParameter(0,2.54877);
+  fPtGenAsym->SetParameter(1,0.149045);
+  fPtGenAsym->SetParameter(0,0.0109168);
+  fPtGenAsym->SetLineWidth(1);
+  fPtGenAsym->SetLineStyle(2);
+  fPtGenAsym->SetLineColor(color(4));
+
+
+  TH1 *hSumContributions = new TH1D("hSumContributions",";p^{gen}_{T} (GeV);Standard Deviation",
+				    nPtBins(),&(ptBinEdges_.front()));
+  for(int i = 0; i < nPtBins(); ++i) {
+    double resp = gStdDevResp->GetY()[i];
+    double pJ3 = gStdDevPJet3->GetY()[i];
+    double pSJ = gStdDevPSJ->GetY()[i];
+    double ptGenAsym = fPtGenAsym->Eval(meanPtGenAve[i]);
+    //double pUCE = gStdDevPUCE->GetY()[i];
+    hSumContributions->SetBinContent(1+i,sqrt( resp*resp + pJ3*pJ3 + pSJ*pSJ + ptGenAsym*ptGenAsym ));
+  }
+  hSumContributions->GetYaxis()->SetRangeUser(0,0.8);
+  hSumContributions->GetXaxis()->SetMoreLogLabels();
+  hSumContributions->Draw();
+
+  TLegend *leg = createLegend(5,0.78);
+  TF1 *fMCTruthResp = new TF1("fMCTruthResp","sqrt([0]*[0]/x[0]/x[0]+[1]*[1]/x[0]+[2]*[2])",
+			      ptBinEdges_[0],ptBinEdges_[nPtBins()]);
+  for(int i = 0; i < 3; ++i) {
+    fMCTruthResp->SetParameter(i,truthPar_[i]);
+  }
+  fMCTruthResp->SetLineWidth(1);
+  fMCTruthResp->SetLineStyle(2);
+  fMCTruthResp->SetLineColor(color(4));
+  //  fMCTruthResp->Draw("same");
+
+  fPtGenAsym->Draw("same");
+  gStdDevResp->Draw("PE1same");
+
+  gStdDevPtAsym->Draw("PE1same");
+  gStdDevPJet3->Draw("PE1same");
+  gStdDevPSJ->Draw("PE1same");
+  //  gStdDevPtGenAsym->Draw("PE1same");
+
+  leg->AddEntry(gStdDevPtAsym,"#sqrt{2} #sigma(Asymmetry)","P");
+  leg->AddEntry(hSumContributions,"Total","L");
+  leg->AddEntry(gStdDevResp,"MC Truth #sigma(R_{MC})","P");
+  leg->AddEntry(gStdDevPJet3,"#sigma(p_{||,3})","P");
+  leg->AddEntry(gStdDevPSJ,"#sigma(p_{||,Soft})","P");
+  leg->AddEntry(fPtGenAsym,"#sqrt{2} #sigma(gen-Asymmetry)","L");
+
+  leg->Draw("same");
+  c1->SetLogx();
+  if( !saveAsEps_ ) c1->Draw();
+  else c1->SaveAs(outName+"hParallelContributions.eps","eps");
+
+
+  if( !saveAsEps_ ) ps->NewPage();
+  c1->cd();
+  TH1 *hFramePtAsym = new TH1D("hFramePtAsym",";<p^{gen,ave}> (GeV);Resolution",
+			       1000,ptBinEdges_[0],ptBinEdges_[nPtBins()]);
+  hFramePtAsym->GetYaxis()->SetRangeUser(0,0.6);
+  hFramePtAsym->Draw();
+  fMCTruthResp->Draw("same");
+  TLegend *legPtAsym = createLegend(5,0.5);
+  for(size_t c = 0; c < pt3Limits.size(); ++c) {
+    gResPtAsymPt3Cuts[c]->Draw("PE1same");
+    legPtAsym->AddEntry(gResPtAsymPt3Cuts[c],"p_{T,3} < "+toTString(pt3Limits[c])+" p^{gen,ave}","P");
+    gResPtAsymPp3Cuts[c]->Draw("PE1same");
+    legPtAsym->AddEntry(gResPtAsymPp3Cuts[c],"p_{||,3} < "+toTString(pt3Limits[c])+" p^{gen,ave}","P");    
+  }
+  legPtAsym->Draw("same");
+  c1->SetLogx();
+  if( !saveAsEps_ ) c1->Draw();
+  else c1->SaveAs(outName+"hPtAsymmetryResolutions.eps","eps");
+
+
+
+  if( !saveAsEps_ ) ps->Close();
+
+
+  // Delete
+  std::cout << "  Cleaning up" << std::endl;
+  for(size_t i = 0; i < hPPhi.size(); ++i) {
+    delete hPtGenAve[i];
+    delete hPPhi[i];
+    delete hPtAsym[i];
+    delete hPJet3[i];
+    delete hPSJ[i];
+    delete hPUCE[i];
+    delete hPJet3Rel[i];
+    delete hPSJRel[i];
+    delete hPUCERel[i];
+    delete hResp[i];
+    for(size_t j = 0; j < hPpOverPtGenVsDeltaPhi12[i].size(); ++j) {
+      delete hPtGen[i][j];
+      delete hPpOverPtGenVsDeltaPhi12[i][j];
+    }
+    for(size_t c = 0; c < pt3Limits.size(); ++c) {
+      delete hPtAsymPt3Cuts[i][c];
+      delete hPtAsymPp3Cuts[i][c];
+    }
+  }
+  for(size_t c = 0; c < pt3Limits.size(); ++c) {
+    delete gResPtAsymPt3Cuts[c];
+    delete gResPtAsymPp3Cuts[c];
+  }
+  delete hSumContributions;
+  delete fMCTruthResp;
+  delete legPtAsym;
+  delete leg;
+  delete gStdDevPtAsym;
+  delete gStdDevResp;
+  delete gStdDevPJet3;
+  delete gStdDevPSJ;
+  delete gStdDevPUCE;
+  delete c1;
+  if( ps ) delete ps;
+}
+
 
 
 
@@ -1455,8 +2143,8 @@ void ControlPlotsJetSmearing::plotAsymmetrySimulation() const {
 
   // Write histos to ps file
   TString outName = outNamePrefix_+"SimAsym_";
-  TPostScript * const ps = 0;
-  if( !saveAsEps_ ) new TPostScript((dir_+"/jsSimulatedAsymmetry.ps").c_str(),111);
+  TPostScript *ps = 0;
+  if( !saveAsEps_ ) ps = new TPostScript((dir_+"/jsSimulatedAsymmetry.ps").c_str(),111);
   TCanvas *c1 = new TCanvas("c1","Simulated Asymmetry",0,0,600,600);
   c1->SetLogy();
 
@@ -1943,7 +2631,6 @@ void ControlPlotsJetSmearing::plotParameters() const {
   std::cout << "Creating parameter control plots\n";
 
   // ----- Quantities defining the parametrization -----
-  std::vector<double> scale = bag_of<double>(config_->read<string>("jet parameter scales",""));
   int nPar = param_->GetNumberOfParameters();
 
 
@@ -1974,8 +2661,8 @@ void ControlPlotsJetSmearing::plotParameters() const {
     hPars->SetBinContent(bin,param_->GetPars()[i]);
     hPars->SetBinError(bin,param_->GetErrors()[i]);
 
-    hAbsPars->SetBinContent(bin,scale_[i]*param_->GetPars()[i]);
-    hAbsPars->SetBinError(bin,scale_[i]*param_->GetErrors()[i]);
+    hAbsPars->SetBinContent(bin,scale(i)*param_->GetPars()[i]);
+    hAbsPars->SetBinError(bin,scale(i)*param_->GetErrors()[i]);
   
     hRelParErrors->SetBinContent(bin,param_->GetErrors()[i]/param_->GetPars()[i]);
 
@@ -2359,26 +3046,13 @@ void ControlPlotsJetSmearing::plotMeanResponseAndResolution() const {
   // ----- Create histograms -----
 
   // Response vs ptgen
+  std::vector<double> bins(35+1);
+  equidistLogBins(bins,35,ptBinsMin(),ptBinsMax());
   TH2* hRespVsPtGen = new TH2D("MeanResp_hRespVsPtGen",
 			       ";p^{gen}_{T} (GeV);p^{jet}_{T} / p^{gen}_{T}",
-			       nPtBins(),&(ptBinEdges_.front()),51,0.,2.);
+			       bins.size()-1,&(bins.front()),51,0.,2.);
   hRespVsPtGen->SetNdivisions(505);
   hRespVsPtGen->Sumw2();
-
-  std::vector<double> bins(nPtBins()+1);
-  equidistLogBins(bins,bins.size()-1,ptBinsMin(),ptBinsMax());
-  TH2* hRespVsPtGenLog = new TH2D("MeanResp_hRespVsPtGenLog",
-				  ";p^{gen}_{T} (GeV);p^{jet}_{T} / p^{gen}_{T}",
-				  bins.size()-1,&(bins.front()),51,0.,2.);
-  hRespVsPtGenLog->SetNdivisions(505);
-  hRespVsPtGenLog->Sumw2();
-
-  TH1* hPtGen = new TH1D("MeanResp_hPtGen",";p^{gen}_{T} (GeV);dN / dp^{gen}_{T}  1 / (GeV)",
-			 60,ptBinsMin(),ptBinsMax());
-  hPtGen->SetNdivisions(505);
-  hPtGen->Sumw2();
-
-  TH1* hPtGenNorm = 0;
   
 
   // ----- Fill histograms -----
@@ -2386,101 +3060,111 @@ void ControlPlotsJetSmearing::plotMeanResponseAndResolution() const {
     // Select DiJet events
     if( (*datait)->type() == TypeSmearDiJet )  {
       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait); 
-
-      hPtGen->Fill(dijet->jet1()->genPt(),dijet->weight());
-      hPtGen->Fill(dijet->jet2()->genPt(),dijet->weight());
-
       hRespVsPtGen->Fill(dijet->jet1()->genPt(),dijet->jet1()->pt()/dijet->jet1()->genPt(),dijet->weight());
       hRespVsPtGen->Fill(dijet->jet2()->genPt(),dijet->jet2()->pt()/dijet->jet2()->genPt(),dijet->weight());
-
-      hRespVsPtGenLog->Fill(dijet->jet1()->genPt(),dijet->jet1()->pt()/dijet->jet1()->genPt(),dijet->weight());
-      hRespVsPtGenLog->Fill(dijet->jet2()->genPt(),dijet->jet2()->pt()/dijet->jet2()->genPt(),dijet->weight());
     }
   }
-  hPtGenNorm = static_cast<TH1D*>(hPtGen->Clone("MeanResp_hPtGenNorm"));
-  hPtGenNorm->SetYTitle("1 / N  dN / dp^{gen}_{T}  1 / (GeV)");
-  normHist(hPtGenNorm,"width");
+
 
   // ----- Fit profiles -----
   std::vector<TH1*> hResp(2);
-  hResp[0] = new TH1D("MeanResp_hResp",";p^{gen}_{T} (GeV);< p^{jet}_{T} / p^{gen}_{T} >",
-		      hRespVsPtGen->GetNbinsX(),
-		      hRespVsPtGen->GetXaxis()->GetXbins()->GetArray());
-  hResp[1] = new TH1D("MeanResp_hRespLog",";p^{gen}_{T} (GeV);< p^{jet}_{T} / p^{gen}_{T} >",
-		      hRespVsPtGenLog->GetNbinsX(),
-		      hRespVsPtGenLog->GetXaxis()->GetXbins()->GetArray());
+  hResp[0] = new TH1D("MeanResp_hRespMean",";p^{gen}_{T} (GeV);< p^{jet}_{T} / p^{gen}_{T} >",
+		      hRespVsPtGen->GetNbinsX(),hRespVsPtGen->GetXaxis()->GetXbins()->GetArray());
+  hResp[0]->SetNdivisions(505);
+  hResp[0]->SetMarkerStyle(20);
+  hResp[0]->SetMarkerColor(4);
+  hResp[0]->SetLineColor(hResp[0]->GetMarkerColor());
+  hResp[1] = static_cast<TH1D*>(hResp[0]->Clone("MeanResp_hRespGauss"));
+  hResp[1]->SetMarkerColor(2);
+  hResp[1]->SetLineColor(hResp[1]->GetMarkerColor());
+
 
   std::vector<TH1*> hReso(2);
-  hReso[0] = new TH1D("MeanResp_hReso",
-		      ";p^{gen}_{T} (GeV);#sigma(p^{jet}_{T} / p^{gen}_{T}) / < p^{jet}_{T} / p^{gen}_{T} >",
-		      hRespVsPtGen->GetNbinsX(),
-		      hRespVsPtGen->GetXaxis()->GetXbins()->GetArray());
-  hReso[1] = new TH1D("MeanResp_hResoLog",
-		      ";p^{gen}_{T} (GeV);#sigma(p^{jet}_{T} / p^{gen}_{T}) / < p^{jet}_{T} / p^{gen}_{T} >",
-		      hRespVsPtGenLog->GetNbinsX(),
-		      hRespVsPtGenLog->GetXaxis()->GetXbins()->GetArray());
+  hReso[0] = static_cast<TH1D*>(hResp[0]->Clone("MeanResp_hResoStd"));
+  hReso[0]->SetMarkerColor(1);
+  hReso[0]->SetYTitle("Standard Deviation");
+  hReso[0]->SetLineColor(hReso[0]->GetMarkerColor());
+  hReso[1] = static_cast<TH1D*>(hReso[0]->Clone("MeanResp_hResoGauss"));
+  hReso[1]->SetYTitle("Gauss Fit #sigma / #mu");
 
   // Get 1D slices and get mean, sigma
-  for(size_t i = 0; i < 2; ++i) {
-    hResp[i]->SetMarkerStyle(20);
-    hResp[i]->SetLineWidth(2);
-    hResp[i]->SetNdivisions(505);
-    hResp[i]->Sumw2();
-    
-    hReso[i]->SetMarkerStyle(20);
-    hReso[i]->SetLineWidth(2);
-    hReso[i]->SetNdivisions(505);
-    hReso[i]->Sumw2();
+  TH1* hSlice = new TH1D("hSlice","",hRespVsPtGen->GetNbinsY(),hRespVsPtGen->GetYaxis()->GetXmin(),
+			 hRespVsPtGen->GetYaxis()->GetXmax());
+  hSlice->Sumw2();
+  for(int xBin = 1; xBin <= hRespVsPtGen->GetNbinsX(); xBin++) {
+    hSlice->Reset();
+    for(int yBin = 1; yBin <= hRespVsPtGen->GetNbinsY(); yBin++) {
+      hSlice->SetBinContent(yBin,hRespVsPtGen->GetBinContent(hRespVsPtGen->GetBin(xBin,yBin)));
+      hSlice->SetBinError(yBin,hRespVsPtGen->GetBinError(hRespVsPtGen->GetBin(xBin,yBin)));
+    }  
 
-    TH2* h = hRespVsPtGen;
-    if( i == 1 ) h = hRespVsPtGenLog;
-    TH1* hSlice = new TH1D("hSlice","",h->GetNbinsY(),h->GetYaxis()->GetXmin(),
-			   h->GetYaxis()->GetXmax());
-    hSlice->Sumw2();
-    for(int xBin = 1; xBin <= h->GetNbinsX(); xBin++) {
-      hSlice->Reset();
-      for(int yBin = 1; yBin <= h->GetNbinsY(); yBin++) {
-	hSlice->SetBinContent(yBin,h->GetBinContent(h->GetBin(xBin,yBin)));
-	hSlice->SetBinError(yBin,h->GetBinError(h->GetBin(xBin,yBin)));
-      }  
+    double mean = hSlice->GetMean();
+    double width = hSlice->GetRMS();
 
-      double mean       = hSlice->GetMean();
-      double width      = hSlice->GetRMS();
-      //      if( width < 0.1 ) width = 0.1;
-      hSlice->Fit("gaus","QNLI0","",mean-1.5*width,mean+1.5*width);
-      TF1 *f = static_cast<TF1*>(gROOT->GetFunction("gaus"));
+    if( width < 0.1 ) width = 0.1;
+    if( hSlice->GetSumOfWeights() <= 0 ) continue;
+    hSlice->Fit("gaus","QNO","",mean-3.*width,mean+3.*width);
+    TF1 *f = static_cast<TF1*>(gROOT->GetFunction("gaus")->Clone());
+    mean = f->GetParameter(1);
+    double meanErr = f->GetParError(1);
+    width = f->GetParameter(2);
+    if( width < 0.05 ) width = 0.05;
+    if( (hSlice->Fit(f,"LLQNO","goff",mean-1.5*width,mean+1.5*width) == 0) ) {
       mean = f->GetParameter(1);
-      double meanError = f->GetParError(1);
+      meanErr = f->GetParError(1);
       width = f->GetParameter(2);
-      double widthError = f->GetParError(2);
-      
-      hResp[i]->SetBinContent(xBin,mean);
-      hResp[i]->SetBinError(xBin,meanError);
-      if( mean ) {
-	hReso[i]->SetBinContent(xBin,width/mean);
-	hReso[i]->SetBinError(xBin,widthError/mean);
-      }
+      hResp[1]->SetBinContent(xBin,mean);
+      hResp[1]->SetBinError(xBin,meanErr);
+      hReso[1]->SetBinContent(xBin,width);///mean);
+      hReso[1]->SetBinError(xBin,f->GetParError(2));///mean);
     }
-    delete hSlice;
-    hResp[i]->GetYaxis()->SetRangeUser(0.9,1.2);
-    hReso[i]->GetYaxis()->SetRangeUser(0.,0.4);
+    delete f;
+
+//     if( width < 0.1 ) width = 0.1;
+//     if( hSlice->GetSumOfWeights() <= 0 ) continue;
+//     TF1 *f = new TF1("fit",gaussian,mean-3.*width,mean+3.*width,2);
+//     f->SetParameter(0,hSlice->Integral());
+//     f->SetParameter(1,0.1);
+//     for(int bin = 1; bin <= hSlice->GetNbinsX(); ++bin) {
+//       std::cout << f->Eval(hSlice->GetBinCenter(bin)) << std::endl;
+//     }
+//     hSlice->Fit(f,"0R");
+//     width = f->GetParameter(1);
+//     if( width < 0.05 ) width = 0.05;
+//     if( (hSlice->Fit(f,"LLQNO","goff",mean-2.5*width,mean+2.5*width) == 0) ) {
+//       width = f->GetParameter(1);
+//       hResp[1]->SetBinContent(xBin,mean);
+//       hResp[1]->SetBinError(xBin,0.);
+//       hReso[1]->SetBinContent(xBin,width);
+//       hReso[1]->SetBinError(xBin,f->GetParError(1));
+//     }
+//     delete f;
+
+    mean = hSlice->GetMean();
+    meanErr = hSlice->GetMeanError();
+    width = hSlice->GetRMS();
+    hResp[0]->SetBinContent(xBin,mean);
+    hResp[0]->SetBinError(xBin,meanErr);
+    hReso[0]->SetBinContent(xBin,width);///mean);
+    hReso[0]->SetBinError(xBin,hSlice->GetRMSError());///mean);
   }
+  delete hSlice;
 
 
   // ----- Fit resolution -----
   std::vector<TF1*> fReso(2);
-  fReso[0] = new TF1("MeanResp_fitReso","sqrt([0]*[0]/x/x + [1]*[1]/x + [2]*[2])",
+  fReso[0] = new TF1("MeanResp_fitResoStd","sqrt([0]*[0]/x/x + [1]*[1]/x + [2]*[2])",
 		     ptBinEdges_.front(),ptBinEdges_.back());
-  fReso[1] = static_cast<TF1*>(fReso[0]->Clone("MeanResp_fitResoLog"));
+  fReso[1] = static_cast<TF1*>(fReso[0]->Clone("MeanResp_fitResoGauss"));
   std::vector<TPaveText*> fitLabel(2);
 
   for(size_t i = 0; i < 2; ++i) {
-    fReso[i]->SetLineWidth(2);
+    fReso[i]->SetLineWidth(1);
     fReso[i]->SetLineColor(2);
-    fReso[i]->FixParameter(0,0.);
+    fReso[i]->SetParameter(0,2.);
     fReso[i]->SetParameter(1,1.3);
     fReso[i]->SetParameter(2,0.04);
-    hReso[i]->Fit(fReso[i],"ILQ0R");
+    hReso[i]->Fit(fReso[i],"INQR");
 
     fitLabel[i] = createPaveText(2);
     char txt[50];
@@ -2493,69 +3177,38 @@ void ControlPlotsJetSmearing::plotMeanResponseAndResolution() const {
   }
 
 
-  // ----- Fitting spectrum -----
-  TF1 *fitSpectrum = new TF1("fitSpectrum",spectrum,ptBinsMin(),ptBinsMax(),8);
-  fitSpectrum->FixParameter(0,ptBinsMin());
-  fitSpectrum->FixParameter(1,ptBinsMax());
-  fitSpectrum->SetParameter(2,3.85);
-  fitSpectrum->SetParameter(3,0.03);
-  fitSpectrum->SetParameter(4,6.73);
-  fitSpectrum->SetParameter(5,0.02);
-  fitSpectrum->SetParameter(6,9.31);
-  fitSpectrum->SetParameter(7,0.009);
-  fitSpectrum->SetLineColor(2);
-  hPtGenNorm->Fit(fitSpectrum,"0ILR");
-
-  std::cout << "Int(" << ptBinsMin() << "," << ptBinsMax() << ") = ";
-  std::cout << fitSpectrum->Integral(ptBinsMin(),ptBinsMax()) << std::endl;
-  std::cout << std::endl;
-  for(int i = 0; i < fitSpectrum->GetNpar(); i++) {
-    std::cout << "$" << i-2 << "$ & $" << std::flush;
-    std::cout << fitSpectrum->GetParameter(i) << " \\pm " << std::flush;
-    std::cout << fitSpectrum->GetParError(i) << "$ \\\\" << std::endl;
-  }
-
-  TPaveText *sampleLabel = createPaveText(3,0.7);
-  sampleLabel->AddText("CMS QCD simulation");
-  sampleLabel->AddText("#sqrt{s} = 7 TeV,  L = 10 pb^{-1}");
-  sampleLabel->AddText("Anti-k_{T} R = 0.5 dijets");
-
-  TLegend *fitLeg = createLegend(1,0.7,lineHeight(),3.5*lineHeight());
-  fitLeg->AddEntry(fitSpectrum,"Fit: N #sum^{2}_{i=0} e^{(-a_{2i}-a_{2i+1}#upoint p_{T})}","L");
-  
-
   // ----- Plot histograms -----
   TPostScript * const ps = new TPostScript((dir_+"/jsMeanRespAndReso.ps").c_str(),111);
   TCanvas * c1 = new TCanvas("c1","MeanRespAndReso",0,0,600,600);
 
-  drawPSPage(ps,c1,hPtGen,"PE1");
-
-  std::vector<TObject*> objs;
-  objs.push_back(hPtGenNorm);
-  objs.push_back(fitSpectrum);
-  objs.push_back(sampleLabel);
-  objs.push_back(fitLeg);
-  drawPSPage(ps,c1,objs,"PE1",true);
+  ps->NewPage();
+  c1->cd();
+  hResp[0]->GetYaxis()->SetRangeUser(0.9,1.2);
+  hResp[0]->Draw("PE1");
+  hResp[1]->Draw("PE1same");
+  TLegend *leg  = createLegend(2);
+  leg->AddEntry(hResp[0],"Mean","P");
+  leg->AddEntry(hResp[1],"Gauss Fit Mean","P");
+  leg->Draw("same");
+  c1->SetLogx();
+  c1->Draw();
 
   for(size_t i = 0; i < 2; ++i) {
-    drawPSPage(ps,c1,hResp[i],"PE1");
-    
     ps->NewPage();
     c1->cd();
-    if( i == 1 ) gPad->SetLogx();
+    hReso[i]->GetYaxis()->SetRangeUser(0.,0.2);
     hReso[i]->Draw("PE1");
     fReso[i]->Draw("same");
     fitLabel[i]->Draw("same");
-    gPad->RedrawAxis();
+    c1->SetLogx();
     c1->Draw();
-  }
+  }    
   
   TFile rootfile((dir_+"/jsResponse.root").c_str(),"UPDATE");
   rootfile.WriteTObject(hResp[0]);
   rootfile.WriteTObject(hResp[1]);
   rootfile.WriteTObject(hReso[0]);
   rootfile.WriteTObject(hReso[1]);
-  rootfile.WriteTObject(hPtGen);
 
 
   // ----- Clean up -----
@@ -2565,14 +3218,217 @@ void ControlPlotsJetSmearing::plotMeanResponseAndResolution() const {
     delete fReso[i];
     delete fitLabel[i];
   }
-  delete hPtGen;
-  delete hPtGenNorm;
-  delete fitSpectrum;
-  delete sampleLabel;
-  delete fitLeg;
+  delete leg;
   delete c1;
   delete ps;
 }
+
+
+
+// // --------------------------------------------------
+// void ControlPlotsJetSmearing::plotFlavors() const {
+//   std::cout << "Creating flavor control plots\n";
+
+
+//   // ----- Create histograms -----
+
+//   std::vector<double> bins(35);
+//   equidistLogBins(bins,bins.size()-1,ptBinsMin(),ptBinsMax());
+
+//   // 0: Unknown
+//   // 1: g
+//   // 2: uds
+//   // 3: c
+//   // 4: b
+//   std::vector<TH2*> hRespVsPtGen(5);
+//   for(size_t f = 0; f < hRespVsPtGen.size(); ++f) {
+//     hRespVsPtGen[f] = new TH2D("Flavor"+toTString(f)+"_hRespVsPtGen",
+// 			       ";p^{gen}_{T} (GeV);p^{calo}_{T} / p^{gen}_{T}",
+// 			       bins.size()-1,&(bins.front()),51,0.,2.);
+//     hRespVsPtGen[f]->SetNdivisions(505);
+//     hRespVsPtGen[f]->Sumw2();
+//   }
+//   // 0: Everything else
+//   // 1: One b + anything else
+//   // 2: Two b
+//   for(size_t f = 0; f < hAsymVsPtGen.size(); ++f) {
+//     std::vector<TH2*> hAsymVsPtGen(3);
+//     hAsymVsPtGen[f] = new TH2D("Flavor"+toTString(f)+"_hAsymVsPtGen",
+// 			       ";p^{gen,ave}_{T} (GeV);Asymmetry",
+// 			       bins.size()-1,&(bins.front()),51,-1.,1.);
+//     hAsymVsPtGen[f]->SetNdivisions(505);
+//     hAsymVsPtGen[f]->Sumw2();
+//   }
+
+  
+
+//   // ----- Fill histograms -----
+//   for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
+//     // Select DiJet events
+//     if( (*datait)->type() == TypeSmearDiJet )  {
+//       SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);
+
+//       int bIdx = 0;
+//       for(int i = 0; i < 2; ++i) {
+// 	int fIdx = 0;
+// 	if( dijet->jet(i)->flavor() == Jet::gluon ) fIdx = 1;
+// 	else if( dijet->jet(i)->flavor() == Jet::uds ) fIdx = 2;
+// 	else if( dijet->jet(i)->flavor() == Jet::c ) fIdx = 3;
+// 	else if( dijet->jet(i)->flavor() == Jet::b ) {
+// 	  fIdx = 4;
+// 	  ++bIdx;
+// 	}
+// 	hRespVsPtGen[fIdx]->Fill(dijet->jet(i)->genPt(),dijet->jet(i)->pt()/dijet->jet(i)->genPt(),dijet->weight());
+//       }
+//       double ptAsym = dijet->jet1()->pt() + dijet->jet2()->pt();
+//       if( ptAsym > 0 ) {
+// 	ptAsym = (dijet->jet1()->pt() - dijet->jet2()->pt())/ptAsym;
+// 	if( rand_->Uniform(0,1) > 0.5 ) ptAsym *= -1.;
+// 	hAsymVsPtGen[bIdx]->Fill(0.5*(dijet->jet1()->genPt()+dijet->jet2()->genPt()),ptAsym,dijet->weight());
+//       }
+//     }
+//   }
+
+
+
+//   // ----- Store and fit profiles -----
+
+//   std::vector<TH1*> hScale(hRespVsPtGen.size());
+//   std::vector<TH1*> hReso(hRespVsPtGen.size());
+//   std::vector< std::vector<TH1*> > hRespBins(hRespVsPtGen[0]->GetNbinsX());
+//   for(size_t ptBin = 0; ptBin < hRespBins.size(); ++ptBin) {
+//     hRespBins[ptBin] = std::vector<TH1*>(hRespVsPtGen.size());
+//     for(size_t f = 0; f < hRespVsPtGen.size(); ++f) {
+//       TH1 *h = new TH1D("hResp_PtBin"+toTString(ptBin)+"_Flavor"+toTString(f),"",
+// 			hRespVsPtGen->GetNbinsY(),hRespVsPtGen->GetYaxis()->GetXmin(),
+// 			hRespVsPtGen->GetYaxis()->GetXmax());
+//       h->Sumw2();
+//       h->SetLineColor(color(f));
+//       for(int yBin = 1; yBin <= hRespVsPtGen->GetNbinsY(); yBin++) {
+// 	h->SetBinContent(yBin,hRespVsPtGen->GetBinContent(hRespVsPtGen->GetBin(ptBin,yBin)));
+// 	h->SetBinError(yBin,hRespVsPtGen->GetBinError(hRespVsPtGen->GetBin(ptBin,yBin)));
+//       }  
+//       hRespBins[ptBin][f] = h;
+
+//       if( ptBin == 0 ) {
+// 	hScale[f] = new TH1D("hScale_Flavor"+toTString(f),";p^{gen}_{T} (GeV);Scale",
+// 			     hRespVsPtGen->GetNbinsX(),hRespVsPtGen->GetXaxis()->GetXbins()->GetArray());
+// 	hScale[f]->SetNdivisions(505);
+// 	hScale[f]->SetMarkerStyle(20+f);
+// 	hScale[f]->SetMarkerColor(color(f));
+// 	hScale[f]->SetLineColor(hScale[f]->GetMarkerColor());
+
+// 	hReso[f] = new TH1D("hReso_Flavor"+toTString(f),";p^{gen}_{T} (GeV);Resolution",
+// 			     hRespVsPtGen->GetNbinsX(),hRespVsPtGen->GetXaxis()->GetXbins()->GetArray());
+// 	hReso[f]->SetNdivisions(505);
+// 	hReso[f]->SetMarkerStyle(20+f);
+// 	hReso[f]->SetMarkerColor(color(f));
+// 	hReso[f]->SetLineColor(hReso[f]->GetMarkerColor());
+//       }
+//       double mean = h->GetMean();
+//       double width = h->GetRMS();
+//       if( width < 0.1 ) width = 0.1;
+//       if( h->GetSumOfWeights() <= 0 ) continue;
+//       h->Fit("gaus","QNO","",mean-3.*width,mean+3.*width);
+//       TF1 *fit = static_cast<TF1*>(gROOT->GetFunction("gaus")->Clone());
+//       mean = fit->GetParameter(1);
+//       double meanErr = fit->GetParError(1);
+//       width = fit->GetParameter(2);
+//       if( width < 0.05 ) width = 0.05;
+//       if( (h->Fit(fit,"LLQNO","goff",mean-1.5*width,mean+1.5*width) == 0) ) {
+// 	mean = fit->GetParameter(1);
+// 	meanErr = fit->GetParError(1);
+// 	width = fit->GetParameter(2);
+// 	hScale[f]->SetBinContent(ptBin,mean);
+// 	hScale[f]->SetBinError(ptBin,meanErr);
+// 	hReso[f]->SetBinContent(ptBin,width);
+// 	hReso[f]->SetBinError(ptBin,fit->GetParError(2));
+//       }
+//     } // End of loop over flavors
+//   } // End of loop over pt bins
+
+
+//   std::vector< std::vector<TH1*> > hAsymBins(hAsymVsPtGen[0]->GetNbinsX());
+//   for(size_t ptBin = 0; ptBin < hAsymBins.size(); ++ptBin) {
+//     hAsymBins[ptBin] = std::vector<TH1*>(hAsymVsPtGen.size());
+//     for(size_t f = 0; f < hAsymVsPtGen.size(); ++f) {
+//       TH1 *h = new TH1D("hAsym_PtBin"+toTString(ptBin)+"_Flavor"+toTString(f),"",
+// 			hAsymVsPtGen->GetNbinsY(),hAsymVsPtGen->GetYaxis()->GetXmin(),
+// 			hAsymVsPtGen->GetYaxis()->GetXmax());
+//       h->Sumw2();
+//       h->SetLineColor(color(f));
+//       for(int yBin = 1; yBin <= hAsymVsPtGen->GetNbinsY(); yBin++) {
+// 	h->SetBinContent(yBin,hAsymVsPtGen->GetBinContent(hAsymVsPtGen->GetBin(ptBin,yBin)));
+// 	h->SetBinError(yBin,hAsymVsPtGen->GetBinError(hAsymVsPtGen->GetBin(ptBin,yBin)));
+//       }  
+//       hAsymBins[ptBin][f] = h;
+//     }
+//   }
+
+
+
+//   // ----- Plot histograms -----
+//   TPostScript * const ps = new TPostScript((dir_+"/jsFlavors.ps").c_str(),111);
+//   TCanvas * c1 = new TCanvas("c1","Flavors",0,0,600,600);
+
+//   ps->NewPage();
+//   c1->cd();
+//   hResp[0]->GetYaxis()->SetRangeUser(0.9,1.2);
+//   hResp[0]->Draw("PE1");
+//   hResp[1]->Draw("PE1same");
+//   TLegend *leg  = createLegend(2);
+//   leg->AddEntry(hResp[0],"Mean","P");
+//   leg->AddEntry(hResp[1],"Gauss Fit Mean","P");
+//   leg->Draw("same");
+//   c1->SetLogx();
+//   c1->Draw();
+
+//   for(size_t i = 0; i < 2; ++i) {
+//     ps->NewPage();
+//     c1->cd();
+//     hReso[i]->GetYaxis()->SetRangeUser(0.,0.2);
+//     hReso[i]->Draw("PE1");
+//     fReso[i]->Draw("same");
+//     fitLabel[i]->Draw("same");
+//     c1->SetLogx();
+//     c1->Draw();
+//   }    
+  
+
+
+//   // ----- Clean up -----
+//   TFile rootfile((dir_+"/jsResponse.root").c_str(),"UPDATE");
+
+//   for(size_t i = 0; i < hRespVsPtGen.size(); ++i) {
+//     rootfile.WriteTObject(hScale[i]);
+//     rootfile.WriteTObject(hReso[i]);
+
+//     delete hScale[i];
+//     delete hReso[i];
+//     delete hRespVsPtGen[i];
+//   }
+//   for(size_t i = 0; i < hRespBins.size(); ++i) {
+//     for(size_t j = 0; j < hRespBins[i].size(); ++j) {
+//       rootfile.WriteTObject(hRespBins[i][j]);
+
+//       delete hRespBins[i][j];
+//     }
+//   }
+//   for(size_t i = 0; i < hAsymVsPtGen.size(); ++i) {
+//     delete hAsymVsPtGen[i];
+//   }
+//   for(size_t i = 0; i < hAsymBins.size(); ++i) {
+//     for(size_t j = 0; j < hAsymBins[i].size(); ++j) {
+//       rootfile.WriteTObject(hAsymBins[i][j]);
+
+//       delete hAsymBins[i][j];
+//     }
+//   }
+//   delete leg;
+//   delete c1;
+//   delete ps;
+// }
+
 
 
 // --------------------------------------------------
@@ -2590,794 +3446,19 @@ double ControlPlotsJetSmearing::spectrum(double *x, double *par) {
 }
 
 
-
-// --------------------------------------------------
-void ControlPlotsJetSmearing::plot3rdJet() const {
-  std::cout << "Creating 3rd jet control plots\n";
-
-  // Binning in pt3rel
-  std::vector<double> pt3BinEdges;
-  pt3BinEdges.push_back(0.);
-  pt3BinEdges.push_back(0.06);
-  pt3BinEdges.push_back(0.08);
-  pt3BinEdges.push_back(0.10);
-  pt3BinEdges.push_back(0.12);
-  pt3BinEdges.push_back(0.15);
-  pt3BinEdges.push_back(0.20);
-  int nPt3Bins = static_cast<int>(pt3BinEdges.size()-1);
-
-  // ----- Create histograms -----
-
-  // -- Relative pt of 2nd and 3rd jet --
-  // Pt of (i+1)th jet relative to ith jet
-  TH1 *hPtGen21 = new TH1D("hPtGen21",
-			   ";p^{gen}_{T,2} / p^{gen}_{T,1};Number of events",
-			   50,0.,1.5);
-  TH1 *hPtGen31 = new TH1D("hPtGen31",
-			   ";p^{gen}_{T,3} / p^{gen}_{T,1};Number of events",
-			   25,0.,0.3);
-  TH1 *hRelJet3Pt = new TH1D("hRelJet3Pt",
-			     ";p^{rel}_{T,3};Number of events",
-			     25,0.,0.3);
-  TH2 *hRelJet3PtVsPtGen31 = new TH2D("hRelJet3PtVsPtGen31",
-				      ";p^{rel}_{T,3};p^{gen}_{T,3} / p^{gen}_{T,1}",
-				      50,0.,0.2,50,0,0.2);
-  hRelJet3PtVsPtGen31->SetNdivisions(505,"XY");
-  TGraphErrors *gDeltaPtGen21Width = 0;
-  TH1 *hDeltaPtGen21WidthFrame = new TH1D("hDeltaPtGen21WidthFrame",
-					  ";p^{gen}_{T,1} (GeV);#sigma / p^{gen}_{T,1}",
-					  100,ptBinsMin(),ptBinsMax());
-  TF1 *fDeltaPtGen21Width = new TF1("fDeltaPtGen21Width","[0]/sqrt(x)",ptBinsMin(),ptBinsMax());
-  fDeltaPtGen21Width->SetParameter(0,1.);
-  fDeltaPtGen21Width->SetLineWidth(2);
-  fDeltaPtGen21Width->SetLineColor(2);
-
-  TH1 *hAngularScale2 = new TH1D("hAngularScale2",";(Scale2)  /  (p^{gen}_{T,2} / p^{gen}_{T,1})",50,0,2);
-  TH1 *hAngularScale3 = static_cast<TH1D*>(hAngularScale2->Clone("hAngularScale3"));
-  hAngularScale3->SetXTitle("(Scale3)  /  (p^{gen}_{T,3} / p^{gen}_{T,1})");
-
-  TH2 *hAngularScale2vsGenMHT = new TH2D("hAngularScale2vsGenMHT",
-					 ";GenJet MHT / HT;(Scale2)  /  (p^{gen}_{T,2} / p^{gen}_{T,1})",
-					 500,0,0.25,500,0,2);
-  hAngularScale2vsGenMHT->SetNdivisions(505,"X");
-  TH2 *hAngularScale3vsGenMHT = static_cast<TH2D*>(hAngularScale2vsGenMHT->Clone("hAngularScale3vsGenMHT"));
-  hAngularScale3vsGenMHT->SetYTitle("(Scale3)  /  (p^{gen}_{T,3} / p^{gen}_{T,1})");
-
-  TH1 *hNAllVsPtRec = new TH1D("hNAllVsPtRec",";p^{reco,ave}_{T} (GeV);N(all)",
-			       nPtBins(),&(ptBinEdges_.front()));
-  TH1 *hNMisorderedVsPtRec = static_cast<TH1D*>(hNAllVsPtRec->Clone("hNMisorderedVsPtRec"));
-  hNMisorderedVsPtRec->SetYTitle("N(incorrect)");
-  TH1 *hOrderingVsPtRec = static_cast<TH1D*>(hNAllVsPtRec->Clone("hOrderingVsPtRec"));
-  hOrderingVsPtRec->SetYTitle("N(incorrect) / N(all)");
-  hOrderingVsPtRec->GetYaxis()->SetRangeUser(0.,1.);
-  TGraphAsymmErrors *gOrderingVsPtRec = new TGraphAsymmErrors();
-  gOrderingVsPtRec->SetMarkerStyle(20);
-  TH1 *hSameGenJetVsPtRec = static_cast<TH1D*>(hOrderingVsPtRec->Clone("hSameGenJetVsPtRec"));
-  hSameGenJetVsPtRec->SetYTitle("N(same GenJet) / N(all)");
-  std::vector<TH1*> hNSameGenJetVsPtRec;
-  std::vector<TGraphAsymmErrors*> gSameGenJetVsPtRec;
-  for(int i = 0; i < 3; ++i) {
-    int color = i>0 ? 2*i : 1;
-    TString name = "hNSameGenJetVsPtRec";
-    name += i;
-    hNSameGenJetVsPtRec.push_back(static_cast<TH1D*>(hNMisorderedVsPtRec->Clone(name)));
-    hNSameGenJetVsPtRec.back()->SetYTitle("N(same GenJet)");
-    hNSameGenJetVsPtRec.back()->SetMarkerStyle(20+i);
-    hNSameGenJetVsPtRec.back()->SetMarkerColor(color);
-    hNSameGenJetVsPtRec.back()->SetLineColor(color);
-    gSameGenJetVsPtRec.push_back(new TGraphAsymmErrors());
-    gSameGenJetVsPtRec.back()->SetMarkerStyle(20+i);
-    gSameGenJetVsPtRec.back()->SetMarkerColor(color);
-    gSameGenJetVsPtRec.back()->SetLineColor(color);
-  }
-
-  TH1 *hNAllVsPtGen = static_cast<TH1D*>(hNAllVsPtRec->Clone("hNAllVsPtGen"));
-  hNAllVsPtGen->SetXTitle("p^{gen,ave}_{T} (GeV)");
-  TH1 *hNMisorderedVsPtGen = static_cast<TH1D*>(hNAllVsPtGen->Clone("hNMisorderedVsPtGen"));
-  hNMisorderedVsPtGen->SetYTitle("N(incorrect)");
-  TH1 *hOrderingVsPtGen = static_cast<TH1D*>(hOrderingVsPtRec->Clone("hOrderingVsPtGen"));
-  hOrderingVsPtGen->SetXTitle("p^{gen,ave}_{T} (GeV)");
-  TGraphAsymmErrors *gOrderingVsPtGen = static_cast<TGraphAsymmErrors*>(gOrderingVsPtRec->Clone());
-  TH1 *hSameGenJetVsPtGen = static_cast<TH1D*>(hOrderingVsPtGen->Clone("hSameGenJetVsPtGen"));
-  hSameGenJetVsPtGen->SetYTitle("N(same GenJet) / N(all)");
-  std::vector<TH1*> hNSameGenJetVsPtGen;
-  std::vector<TGraphAsymmErrors*> gSameGenJetVsPtGen;
-  for(int i = 0; i < 3; ++i) {
-    int color = i>0 ? 2*i : 1;
-    TString name = "hNSameGenJetVsPtGen";
-    name += i;
-    hNSameGenJetVsPtGen.push_back(static_cast<TH1D*>(hNMisorderedVsPtGen->Clone(name)));
-    hNSameGenJetVsPtGen.back()->SetYTitle("N(same GenJet) / N(all)");
-    hNSameGenJetVsPtGen.back()->SetMarkerStyle(20+i);
-    hNSameGenJetVsPtGen.back()->SetMarkerColor(color);
-    hNSameGenJetVsPtGen.back()->SetLineColor(color);
-    gSameGenJetVsPtGen.push_back(new TGraphAsymmErrors());
-    gSameGenJetVsPtGen.back()->SetMarkerStyle(20);
-    gSameGenJetVsPtGen.back()->SetMarkerColor(color);
-    gSameGenJetVsPtGen.back()->SetLineColor(color);
-  }
-
-  // Pt of (i+1)th jet relative to ith jet
-  // in different pt bins
-  std::vector<TH1*> hPtGen21Bins(nPtBins());
-  std::vector<TH1*> hDeltaPtGen21(nPtBins());
-  std::vector<TF1*> fDeltaPtGen21(nPtBins());
-  std::vector<TH1*> hPtGen31Bins(nPtBins());
-  std::vector<TH1*> hRelJet3PtBins(nPtBins());
-  std::vector<TH2*> hRelJet3PtVsPtGen31Bins(nPtBins());
-  std::vector<TH2*> hDeltaPtGenVsRelJet3Pt(nPtBins());
-  std::vector< std::vector<TH1*> > hRelJet3Bins(nPtBins());
-  std::vector<TH1*> hMeanRelJet3Pt(nPt3Bins);
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    TString name = "hPtGen21Bin";
-    name += ptBin;
-    hPtGen21Bins[ptBin] = static_cast<TH1D*>(hPtGen21->Clone(name));
-    hPtGen21Bins[ptBin]->SetYTitle("Relative number of events");
-    hPtGen21Bins[ptBin]->Sumw2();
-
-    name = "hDeltaPtGen21";
-    name += ptBin;
-    hDeltaPtGen21[ptBin] = new TH1D(name,";p^{gen}_{T,2} - p^{gen}_{T,1} (GeV);Number of events;",
-				    25,-0.4*ptBinEdges_[ptBin],0.4*ptBinEdges_[ptBin+1]);
-
-    name = "fDeltaPtGen21";
-    name += ptBin;
-    fDeltaPtGen21[ptBin] = new TF1(name,"gaus",-0.3*ptBinEdges_[ptBin],0.3*ptBinEdges_[ptBin+1]);
-    fDeltaPtGen21[ptBin]->SetLineWidth(2);
-    fDeltaPtGen21[ptBin]->SetLineColor(2);
-
-    name = "hPtGen31Bin";
-    name += ptBin;
-    hPtGen31Bins[ptBin] = static_cast<TH1D*>(hPtGen31->Clone(name));
-    hPtGen31Bins[ptBin]->SetYTitle("Relative number of events");
-    hPtGen31Bins[ptBin]->Sumw2();
-    
-    name = "hRelJet3PtBin";
-    name += ptBin;
-    hRelJet3PtBins[ptBin] = static_cast<TH1D*>(hRelJet3Pt->Clone(name));
-    hRelJet3PtBins[ptBin]->SetYTitle("Relative number of events");
-    hRelJet3PtBins[ptBin]->Sumw2();
-
-    name = "hRelJet3PtVsPtGen31Bins";
-    name += ptBin;
-    hRelJet3PtVsPtGen31Bins[ptBin] = static_cast<TH2D*>(hRelJet3PtVsPtGen31->Clone(name));
-
-    name = "hDeltaPtGenVsRelJet3Pt";
-    name += ptBin;
-    hDeltaPtGenVsRelJet3Pt[ptBin] = new TH2D(name,";p^{rel}_{T};p^{gen}_{T,1} - p^{gen}_{T,2} (GeV)",
-					     60,0.,0.4,50,-0.4*ptBinEdges_.at(ptBin),
-					     0.4*ptBinEdges_.at(ptBin+1));
-
-    hRelJet3Bins[ptBin] = std::vector<TH1*>(nPt3Bins);
-    for(int pt3Bin = 0; pt3Bin < nPt3Bins; ++pt3Bin) {
-      name = "hRelJet3Bins_";
-      name += "Pt";
-      name += ptBin;
-      name += "_Pt3";
-      name += pt3Bin;
-      hRelJet3Bins[ptBin][pt3Bin] = new TH1D(name,";p^{rel}_{T,3};Number of events",
-					     50,pt3BinEdges.front(),pt3BinEdges.back());
-      hRelJet3Bins[ptBin][pt3Bin]->SetMarkerStyle(20);
-      hRelJet3Bins[ptBin][pt3Bin]->SetMarkerColor(color(pt3Bin));
-      hRelJet3Bins[ptBin][pt3Bin]->SetLineColor(color(pt3Bin));
-      hRelJet3Bins[ptBin][pt3Bin]->SetNdivisions(505);
-    }
-  }
-  for(int pt3Bin = 0; pt3Bin < nPt3Bins; ++pt3Bin) {
-    TString name = "hMeanRelJet3PtBin";
-    name += pt3Bin;
-    hMeanRelJet3Pt[pt3Bin] = new TH1D(name,";p_{T} (GeV);< p^{rel}_{T,3} >",
-				      nPtBins(),&(ptBinEdges_.front()));
-    hMeanRelJet3Pt[pt3Bin]->SetMarkerStyle(20);
-    double deltaPt3 = pt3BinEdges[pt3Bin+1] - pt3BinEdges[pt3Bin];
-    hMeanRelJet3Pt[pt3Bin]->GetYaxis()->SetRangeUser(pt3BinEdges[pt3Bin]-0.2*deltaPt3,
-						     pt3BinEdges[pt3Bin+1]+0.5*deltaPt3);
-  }
-
-
-  // -- Sigma depending on 3rd jet pt --
-
-  // Response and mean sigma histograms in bins of pt
-  std::vector<TH1*> hResMC(nPtBins());		// MC truth response from ptgen
-  std::vector< std::vector<TH1*> > hResMean(nPt3Bins); // Response from mean pttrue
-
-  TH1 *hSigmaMC = new TH1D("hSigmaMC",
-			   ";p_{T} (GeV);#sigma(p_{T}) / p_{T}",
-			   nPtBins(),&(ptBinEdges_.front()));
-  hSigmaMC->SetNdivisions(505);
-  hSigmaMC->SetMarkerStyle(20);
-  std::vector<TH1*> hSigmaMean(nPt3Bins);
-
-  TH1 *hSigmaVsPt3Frame	= new TH1D("hSigmaVsPt3Frame",
-				   ";p^{rel}_{T,3};#sigma(p_{T}) / p_{T}",
-				   500,0.,1.5*pt3BinEdges.back());
-  hSigmaVsPt3Frame->SetNdivisions(505);
-  hSigmaVsPt3Frame->GetYaxis()->SetRangeUser(0.,0.3);
-  std::vector<TH1*> hSigmaMCVsPt3(nPtBins());
-  std::vector<TGraphErrors*> gSigmaVsPt3(nPtBins());
-  std::vector<TF1*> fSigmaVsPt3(nPtBins());
-
-  for(int pt3Bin = 0; pt3Bin < nPt3Bins; ++pt3Bin) { // Loop over rel pt3 bins
-    hResMean[pt3Bin] = std::vector<TH1*>(nPtBins());
-
-    TString name = "hSigmaMean";
-    name += pt3Bin;
-    hSigmaMean[pt3Bin] = static_cast<TH1D*>(hSigmaMC->Clone(name));
-    hSigmaMean[pt3Bin]->SetMarkerColor(color(pt3Bin));
-    hSigmaMean[pt3Bin]->SetLineColor(color(pt3Bin));
-
-    for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) { // Loop over ptBins
-      if( pt3Bin == 0 ) {
-	name = "hResMC";
-	name += ptBin;
-	hResMC[ptBin] = new TH1D(name,"",51,0.,2.);
-
-	name = "hSigmaMCVsPt3";
-	name += ptBin;
-	hSigmaMCVsPt3[ptBin] = static_cast<TH1D*>(hSigmaVsPt3Frame->Clone(name));
-	hSigmaMCVsPt3[ptBin]->SetLineColor(4);
-	hSigmaMCVsPt3[ptBin]->SetLineStyle(2);
-
-	name = "fSigmaVsPt3";
-	name += ptBin;
-	fSigmaVsPt3[ptBin] = new TF1(name,"pol1",0.,1.5*pt3BinEdges.back());
-	fSigmaVsPt3[ptBin]->SetLineColor(2);
-	fSigmaVsPt3[ptBin]->SetLineWidth(2);
-      }
-      name = "hResMean";
-      name += pt3Bin;
-      name += "_";
-      name += ptBin;
-      hResMean[pt3Bin][ptBin] = static_cast<TH1D*>(hResMC[ptBin]->Clone(name));
-    } //End of loop over ptBins
-  } // End of loop over pt3Bins
-
-  TH1 *hGaussWidth = new TH1D("hGaussWidth3rdJet",";p_{T} (GeV);#sigma(p_{T}) / p_{T}",
-			      500,ptBinsMin(),ptBinsMax());
-  hGaussWidth->SetMarkerStyle(1);
-  hGaussWidth->SetLineWidth(2);
-  hGaussWidth->SetLineStyle(2);
-  TH1 *hGaussWidthTruth = static_cast<TH1D*>(hGaussWidth->Clone("hGaussWidthTruth3rdJet"));
-  hGaussWidthTruth->SetLineStyle(1);
-
-
-  // ----- Fill histograms -----
-  for(DataIt datait = data_->begin(); datait != data_->end(); datait++) {
-    // Select DiJet events
-    if( (*datait)->type() == TypeSmearDiJet )  {
-      SmearDiJet * dijet = static_cast<SmearDiJet*>(*datait);  
-
-      const Jet *j1 = dijet->jet1();
-      const Jet *j2 = dijet->jet2();
-      const Jet *j3 = dijet->jet3();
-
-      hAngularScale2->Fill(j1->genPt()*dijet->scalePt2()/j2->genPt());
-      hAngularScale3->Fill(j1->genPt()*dijet->scalePt3()/j3->genPt());
-      hAngularScale2vsGenMHT->Fill(dijet->relGenMet(),j1->genPt()*dijet->scalePt2()/j2->genPt());
-      hAngularScale3vsGenMHT->Fill(dijet->relGenMet(),j1->genPt()*dijet->scalePt3()/j3->genPt());
-
-      hNAllVsPtRec->Fill(dijet->avePt());
-      hNAllVsPtGen->Fill(dijet->avePtGen());
-      double eps = 1E-5;
-      if( j3->genPt() > j1->genPt()+eps || j3->genPt() > j2->genPt()+eps ) {
-	hNMisorderedVsPtRec->Fill(dijet->avePt());
-	hNMisorderedVsPtGen->Fill(dijet->avePtGen());
-      }
-      if( j2->genPt() > j1->genPt()-eps && j2->genPt() < j1->genPt()+eps ) {
-	hNSameGenJetVsPtRec[0]->Fill(dijet->avePt());
-	hNSameGenJetVsPtGen[0]->Fill(dijet->avePtGen());
-      }
-      if( j3->genPt() > j1->genPt()-eps && j3->genPt() < j1->genPt()+eps ) {
-	hNSameGenJetVsPtRec[1]->Fill(dijet->avePt());
-	hNSameGenJetVsPtGen[1]->Fill(dijet->avePtGen());
-      }
-      if( j3->genPt() > j2->genPt()-eps && j3->genPt() < j2->genPt()+eps ) {
-	hNSameGenJetVsPtRec[2]->Fill(dijet->avePt());
-	hNSameGenJetVsPtGen[2]->Fill(dijet->avePtGen());
-      }
-
-
-//       if( rand_->Uniform() > 0.5 ) {
-// 	j1 = dijet->jet2();
-// 	j2 = dijet->jet1();
-//       }
-
-      hPtGen21->Fill(j2->genPt()/j1->genPt(),dijet->weight());
-      hPtGen31->Fill(j3->genPt()/j1->genPt(),dijet->weight());
-      hRelJet3Pt->Fill(dijet->relJet3Pt(),dijet->weight());
-      hRelJet3PtVsPtGen31->Fill(j3->genPt()/j1->genPt(),dijet->relJet3Pt(),dijet->weight());
-
-      int ptBin = findPtBin(j1->genPt());
-      if( ptBin >= 0 ) {
-	hPtGen21Bins[ptBin]->Fill(j2->genPt()/j1->genPt(),dijet->weight());
-	hDeltaPtGen21[ptBin]->Fill(j2->genPt() - j1->genPt(),dijet->weight());
-	hPtGen31Bins[ptBin]->Fill(j3->genPt()/j1->genPt(),dijet->weight());
-	hResMC[ptBin]->Fill(j1->pt()/j1->genPt(),dijet->weight());
-	hResMC[ptBin]->Fill(j2->pt()/j2->genPt(),dijet->weight());
-	hRelJet3PtBins[ptBin]->Fill(dijet->relJet3Pt(),dijet->weight());
-	hRelJet3PtVsPtGen31Bins[ptBin]->Fill(j3->genPt()/j1->genPt(),dijet->relJet3Pt(),dijet->weight());
-	hDeltaPtGenVsRelJet3Pt[ptBin]->Fill(dijet->relJet3Pt(),
-					    dijet->jet1()->genPt() - dijet->jet2()->genPt(),
-					    dijet->weight());
-
-	int pt3Bin = findBin(dijet->relJet3Pt(),pt3BinEdges);
-	if( pt3Bin >= 0 && pt3Bin < nPt3Bins ) {
-	  hRelJet3Bins[ptBin][pt3Bin]->Fill(dijet->relJet3Pt(),dijet->weight());
-	}
-      }
-      double meanPtGen = 0.5*(j1->genPt()+j2->genPt());
-      ptBin = findPtBin(meanPtGen);
-      if( ptBin >=0 ) {
-	int pt3bin = findBin(dijet->relJet3Pt(),pt3BinEdges);
-	if( pt3bin >= 0 ) {
-	  hResMean[pt3bin][ptBin]->Fill(j1->pt()/meanPtGen,dijet->weight());
-	  hResMean[pt3bin][ptBin]->Fill(j2->pt()/meanPtGen,dijet->weight());
-	}
-      }
-    }
-  } // End of loop over data
-  gOrderingVsPtRec->BayesDivide(hNMisorderedVsPtRec,hNAllVsPtRec);
-  for(int i = 0; i < gOrderingVsPtRec->GetN(); ++i) {
-    gOrderingVsPtRec->SetPointEXlow(i,0.);
-    gOrderingVsPtRec->SetPointEXhigh(i,0.);
-  }
-  gOrderingVsPtGen->BayesDivide(hNMisorderedVsPtGen,hNAllVsPtGen);
-  for(int i = 0; i < gOrderingVsPtGen->GetN(); ++i) {
-    gOrderingVsPtGen->SetPointEXlow(i,0.);
-    gOrderingVsPtGen->SetPointEXhigh(i,0.);
-  }
-  for(size_t k = 0; k < gSameGenJetVsPtRec.size(); ++k) {
-    gSameGenJetVsPtRec[k]->BayesDivide(hNSameGenJetVsPtRec[k],hNAllVsPtRec);
-    gSameGenJetVsPtGen[k]->BayesDivide(hNSameGenJetVsPtGen[k],hNAllVsPtGen);
-    for(int i = 0; i < gSameGenJetVsPtGen[k]->GetN(); ++i) {
-      gSameGenJetVsPtRec[k]->SetPointEXlow(i,0.);
-      gSameGenJetVsPtRec[k]->SetPointEXhigh(i,0.);
-      gSameGenJetVsPtGen[k]->SetPointEXlow(i,0.);
-      gSameGenJetVsPtGen[k]->SetPointEXhigh(i,0.);
-    }
-  }
-
-  // Fit Gaussian width per bin
-  for(int pt3bin = 0; pt3bin < nPt3Bins; ++pt3bin) {
-    for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-      if( pt3bin == 0 ) {
-	hResMC[ptBin]->Fit("gaus","IL0Q");
-	TF1 *fit = hResMC[ptBin]->GetFunction("gaus");
-	hSigmaMC->SetBinContent(1+ptBin,fit->GetParameter(2));
-	hSigmaMC->SetBinError(1+ptBin,fit->GetParError(2));
-      }
-      hResMean[pt3bin][ptBin]->Fit("gaus","IL0Q");
-      TF1 *fit = hResMean[pt3bin][ptBin]->GetFunction("gaus");
-      hSigmaMean[pt3bin]->SetBinContent(1+ptBin,fit->GetParameter(2));
-      hSigmaMean[pt3bin]->SetBinError(1+ptBin,fit->GetParError(2));
-    }
-  }
-
-  // Fill histogram of true and fitted Gaussian width
-  if( parClass_ == "SmearParametrizationGauss" ) {
-    for(int bin = 1; bin <= hGaussWidth->GetNbinsX(); ++bin) {
-      double pt = hGaussWidth->GetBinCenter(bin);
-
-      double sigma = gaussianWidth(pt) / pt;
-      hGaussWidth->SetBinContent(bin,sigma);
-      hGaussWidth->SetBinError(bin,0.);
-      
-      sigma = gaussianWidthTruth(pt) / pt;
-      hGaussWidthTruth->SetBinContent(bin,sigma);
-      hGaussWidthTruth->SetBinError(bin,0.);
-    }
-  }
-
-  // Create graph of sigma vs pt3rel and fit with linear function
-  std::vector<double> xVal(nPt3Bins);
-  std::vector<double> yVal(nPt3Bins);
-  std::vector<double> xErr(nPt3Bins,0.);
-  std::vector<double> yErr(nPt3Bins);
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    for(int pt3bin = 0; pt3bin < nPt3Bins; ++pt3bin) {
-      xVal[pt3bin] = 0.5*(pt3BinEdges[pt3bin]+pt3BinEdges[pt3bin+1]);
-      yVal[pt3bin] = hSigmaMean[pt3bin]->GetBinContent(ptBin+1);
-      yErr[pt3bin] = hSigmaMean[pt3bin]->GetBinError(ptBin+1);
-    }
-    gSigmaVsPt3[ptBin] = new TGraphErrors(xVal.size(),&(xVal.front()),&(yVal.front()),
-					  &(xErr.front()),&(yErr.front()));
-    gSigmaVsPt3[ptBin]->Fit(fSigmaVsPt3[ptBin],"0QR");
-
-    for(int bin = 1; bin <= hSigmaMCVsPt3[ptBin]->GetNbinsX(); ++bin) {
-      hSigmaMCVsPt3[ptBin]->SetBinContent(bin,hSigmaMC->GetBinContent(ptBin+1));
-    }
-  }
-
-  // Fit ptGen2-ptGen1 distributions
-  xVal.clear();
-  yVal.clear();
-  xErr.clear();
-  yErr.clear();
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    hDeltaPtGen21[ptBin]->Fit(fDeltaPtGen21[ptBin],"IR0Q");
-
-    xVal.push_back(0.5*(ptBinEdges_[ptBin]+ptBinEdges_[ptBin+1]));
-    yVal.push_back(fDeltaPtGen21[ptBin]->GetParameter(2)/xVal[ptBin]);
-    xErr.push_back(0.);
-    yErr.push_back(fDeltaPtGen21[ptBin]->GetParError(2)/xVal[ptBin]);
-  }
-  gDeltaPtGen21Width = new TGraphErrors(xVal.size(),&(xVal.front()),&(yVal.front()),
-					&(xErr.front()),&(yErr.front()));
-  gDeltaPtGen21Width->Fit(fDeltaPtGen21Width,"R0Q");
-  double maxWidthDeltaPtGen21 = *(std::max_element(yVal.begin(),yVal.end()));
-
-  // Mean rel 3rd jet pt
-  for(int pt3Bin = 0; pt3Bin < nPt3Bins; ++pt3Bin) {
-    for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-      hMeanRelJet3Pt[pt3Bin]->SetBinContent(ptBin+1,hRelJet3Bins[ptBin][pt3Bin]->GetMean());
-      hMeanRelJet3Pt[pt3Bin]->SetBinError(ptBin+1,hRelJet3Bins[ptBin][pt3Bin]->GetMeanError());
-    }
-  }
-
-
-  // ----- Edit histograms -----
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    normHist(hPtGen21Bins[ptBin]);
-    normHist(hPtGen31Bins[ptBin]);
-    normHist(hRelJet3PtBins[ptBin]);
-
-    setYRange(hPtGen21Bins[ptBin],0.,1.4);
-    setYRange(hDeltaPtGen21[ptBin],0.,1.4);
-    setYRange(hPtGen31Bins[ptBin],0.,1.4);
-    setYRange(hRelJet3PtBins[ptBin],0.,1.4);
-    setYRange(hSigmaMC,0.5,2.);
-    double max = hRelJet3Bins[ptBin][0]->GetMaximum();
-    for(int pt3Bin = 1; pt3Bin < nPt3Bins; ++pt3Bin) {
-      if( hRelJet3Bins[ptBin][pt3Bin]->GetMaximum() > max ) {
-	max = hRelJet3Bins[ptBin][pt3Bin]->GetMaximum();
-      }      
-    }
-    for(int pt3Bin = 0; pt3Bin < nPt3Bins; ++pt3Bin) {
-      hRelJet3Bins[ptBin][pt3Bin]->GetYaxis()->SetRangeUser(0.,1.5*max);
-    }
-    
-  }
-  hDeltaPtGen21WidthFrame->GetYaxis()->SetRangeUser(0.,1.5*maxWidthDeltaPtGen21);
-  
-
-
-  // ----- Plot histograms -----
-  TPostScript * const ps = new TPostScript((dir_+"/js3rdJet.ps").c_str(),111);
-  TCanvas * c1 = new TCanvas("c1","3rd Jet",0,0,600,600);
-  std::vector<TObject*> objs;
-
-  ps->NewPage();
-  c1->cd();
-  hNMisorderedVsPtGen->Draw("PE1");
-  gPad->SetLogx(1);
-  gPad->SetLogy(1);
-  c1->Draw();
-  if( saveAsEps_ ) c1->SaveAs((outNamePrefix_+"_NMisorderedVsPtGen.eps").c_str(),"eps");
-
-  ps->NewPage();
-  c1->cd();
-  hNMisorderedVsPtRec->Draw("PE1");
-  gPad->SetLogx(1);
-  gPad->SetLogy(1);
-  if( saveAsEps_ ) c1->SaveAs((outNamePrefix_+"_NMisorderedVsPtRec.eps").c_str(),"eps");
-  c1->Draw();
-
-  ps->NewPage();
-  c1->cd();
-  gPad->SetLogx(1);
-  gPad->SetLogy(0);
-  hOrderingVsPtGen->Draw("H");
-  gOrderingVsPtGen->Draw("PE1same");
-  if( saveAsEps_ ) c1->SaveAs((outNamePrefix_+"_OrderingVsPtGen.eps").c_str(),"eps");
-  c1->Draw();
-
-  ps->NewPage();
-  c1->cd();
-  gPad->SetLogx(1);
-  gPad->SetLogy(0);
-  hOrderingVsPtRec->Draw("H");
-  gOrderingVsPtRec->Draw("PE1same");
-  if( saveAsEps_ ) c1->SaveAs((outNamePrefix_+"_OrderingVsPtRec.eps").c_str(),"eps");
-  c1->Draw();
-
-  int maxIdx = 0;
-  if( hNSameGenJetVsPtGen[1]->GetMaximum() > hNSameGenJetVsPtGen[maxIdx]->GetMaximum() ) maxIdx = 1;
-  if( hNSameGenJetVsPtGen[2]->GetMaximum() > hNSameGenJetVsPtGen[maxIdx]->GetMaximum() ) maxIdx = 2;
-  TLegend *leg = createLegend(3);
-  leg->AddEntry(hNSameGenJetVsPtGen[0],"GenJet2 = GenJet1","P");
-  leg->AddEntry(hNSameGenJetVsPtGen[1],"GenJet3 = GenJet1","P");
-  leg->AddEntry(hNSameGenJetVsPtGen[2],"GenJet3 = GenJet2","P");
-  ps->NewPage();
-  c1->cd();
-  gPad->SetLogx(1);
-  gPad->SetLogy(1);
-  hNSameGenJetVsPtGen[maxIdx]->GetYaxis()->SetRangeUser(0.5,100.*hNSameGenJetVsPtGen[maxIdx]->GetMaximum());
-  hNSameGenJetVsPtGen[maxIdx]->Draw("PE1");
-  for(size_t k = 0; k < hNSameGenJetVsPtGen.size(); ++k) {
-    hNSameGenJetVsPtGen[k]->Draw("PE1same");
-  }
-  leg->Draw("same");
-  if( saveAsEps_ ) c1->SaveAs((outNamePrefix_+"_NSameGenJetVsPtGen.eps").c_str(),"eps");
-  c1->Draw();
-
-  maxIdx = 0;
-  if( hNSameGenJetVsPtRec[1]->GetMaximum() > hNSameGenJetVsPtRec[maxIdx]->GetMaximum() ) maxIdx = 1;
-  if( hNSameGenJetVsPtRec[2]->GetMaximum() > hNSameGenJetVsPtRec[maxIdx]->GetMaximum() ) maxIdx = 2;
-  ps->NewPage();
-  c1->cd();
-  gPad->SetLogx(1);
-  gPad->SetLogy(1);
-  hNSameGenJetVsPtRec[maxIdx]->GetYaxis()->SetRangeUser(0.5,100.*hNSameGenJetVsPtRec[maxIdx]->GetMaximum());
-  hNSameGenJetVsPtRec[maxIdx]->Draw("PE1");
-  for(size_t k = 0; k < hNSameGenJetVsPtRec.size(); ++k) {
-    hNSameGenJetVsPtRec[k]->Draw("PE1same");
-  }
-  leg->Draw("same");
-  if( saveAsEps_ ) c1->SaveAs((outNamePrefix_+"_NSameGenJetVsPtRec.eps").c_str(),"eps");
-  c1->Draw();
-
-  ps->NewPage();
-  c1->cd();
-  gPad->SetLogx(1);
-  gPad->SetLogy(0);
-  hSameGenJetVsPtGen->Draw();
-  for(size_t k = 0; k < gSameGenJetVsPtGen.size(); ++k) {
-    gSameGenJetVsPtGen[k]->Draw("PE1same");
-  }
-  leg->Draw("same");
-  if( saveAsEps_ ) c1->SaveAs((outNamePrefix_+"_SameGenJetVsPtGen.eps").c_str(),"eps");
-  c1->Draw();
-
-  ps->NewPage();
-  c1->cd();
-  gPad->SetLogx(1);
-  hSameGenJetVsPtRec->Draw();
-  for(size_t k = 0; k < gSameGenJetVsPtRec.size(); ++k) {
-    gSameGenJetVsPtRec[k]->Draw("PE1same");
-  }
-  leg->Draw("same");
-  if( saveAsEps_ ) c1->SaveAs((outNamePrefix_+"_SameGenJetVsPtRec.eps").c_str(),"eps");
-  c1->Draw();
-
-  gPad->SetLogx(0);
-  gPad->SetLogy(0);
-
-  drawPSPage(ps,c1,hAngularScale2);
-  drawPSPage(ps,c1,hAngularScale3);
-  drawPSPage(ps,c1,hAngularScale2vsGenMHT,"COLZ");
-  drawPSPage(ps,c1,hAngularScale3vsGenMHT,"COLZ");
-
-  std::vector<TPaveText*> ptBinLabels(nPtBins());
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    ptBinLabels[ptBin] = createPaveText(1,0.8);
-    char txt[50];
-    sprintf(txt,"%.0f < p^{gen}_{T,1} < %.0f GeV",ptBinEdges_[ptBin],ptBinEdges_[ptBin+1]);
-    ptBinLabels[ptBin]->AddText(txt);
-  }
-
-  // Mean 3rd jet pt per pt3rel bin
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    objs.clear();
-    for(int pt3Bin = 0; pt3Bin < nPt3Bins; ++pt3Bin) {
-      objs.push_back(hRelJet3Bins[ptBin][pt3Bin]);
-    }
-    objs.push_back(ptBinLabels[ptBin]);
-    drawPSPage(ps,c1,objs,"PE1");
-    TString name = outNamePrefix_;
-    name += "_Rel3rdJetPt_PtBin";
-    name += ptBin;
-    name += ".eps";
-    if( saveAsEps_ ) c1->SaveAs(name,"eps");
-  }
-  for(int pt3Bin = 0; pt3Bin < nPt3Bins; ++pt3Bin) {
-    hMeanRelJet3Pt[pt3Bin]->Fit("pol0","0Q");
-    TF1 *fitMean = hMeanRelJet3Pt[pt3Bin]->GetFunction("pol0");
-    fitMean->SetLineColor(2);
-    fitMean->SetLineWidth(2);
-    
-    std::cout << "  " << pt3BinEdges[pt3Bin] << " < pt3rel < " << pt3BinEdges[pt3Bin+1] << ":  " << std::flush;
-    std::cout << fitMean->GetParameter(0) << " +/- " << fitMean->GetParError(0) << std::endl;
-
-    TPaveText *txt = createPaveText(2);
-    char entry[50];
-    sprintf(entry,"%.2f < p^{rel}_{T,3} < %.2f GeV",pt3BinEdges[pt3Bin],pt3BinEdges[pt3Bin+1]);
-    txt->AddText(entry);
-    sprintf(entry,"Fit: < p^{rel}_{T,3} > = %.4f #pm %.4f",fitMean->GetParameter(0),fitMean->GetParError(0));
-    txt->AddText(entry);
-
-    objs.clear();
-    objs.push_back(hMeanRelJet3Pt[pt3Bin]);
-    objs.push_back(fitMean);
-    objs.push_back(txt);
-    drawPSPage(ps,c1,objs,"PE1");
-    TString name = outNamePrefix_;
-    name += "_MeanRel3rdJetPt_Pt3Bin";
-    name += pt3Bin;
-    name += ".eps";
-    if( saveAsEps_ ) c1->SaveAs(name,"eps");
-    delete fitMean;
-  }
-
-  drawPSPage(ps,c1,hPtGen21,"PE1");
-  drawPSPage(ps,c1,hPtGen31,"PE1");
-  //  drawPSPage(ps,c1,hPtGen21,"PE1",true);
-  //  drawPSPage(ps,c1,hPtGen31,"PE1",true);
-  drawPSPage(ps,c1,hRelJet3Pt,"PE1");
-  drawPSPage(ps,c1,hRelJet3PtVsPtGen31,"COLZ",true);
-
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    objs.clear();
-    objs.push_back(hDeltaPtGenVsRelJet3Pt[ptBin]);
-    objs.push_back(ptBinLabels[ptBin]);
-    drawPSPage(ps,c1,objs,"COLZ",true);
-    TString name = outNamePrefix_;
-    name += "_DeltaPtGenVsJet3Pt_PtBin";
-    name += ptBin;
-    name += ".eps";
-    //if( saveAsEps_ ) c1->SaveAs(name,"eps");
-  }
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    objs.clear();
-    objs.push_back(hPtGen21Bins[ptBin]);
-    objs.push_back(ptBinLabels[ptBin]);
-    drawPSPage(ps,c1,objs,"PE1");
-  }
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    objs.clear();
-    objs.push_back(hPtGen31Bins[ptBin]);
-    objs.push_back(ptBinLabels[ptBin]);
-    drawPSPage(ps,c1,objs,"PE1");
-  }
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    objs.clear();
-    objs.push_back(hDeltaPtGen21[ptBin]);
-    objs.push_back(fDeltaPtGen21[ptBin]);
-    objs.push_back(ptBinLabels[ptBin]);
-    drawPSPage(ps,c1,objs,"PE1");
-  }
-
-  TLegend *legDeltaPtGen21Width = createLegend(1);
-  char txt[50];
-  sprintf(txt,"Fit: (%.3f #pm %0.3f) #sqrt{GeV} / #sqrt{p^{gen}_{T,1}}",
-	  fDeltaPtGen21Width->GetParameter(0),fDeltaPtGen21Width->GetParError(0));
-  legDeltaPtGen21Width->AddEntry(fDeltaPtGen21Width,txt,"L");
-  objs.clear();
-  objs.push_back(hDeltaPtGen21WidthFrame);
-  objs.push_back(gDeltaPtGen21Width);
-  objs.push_back(fDeltaPtGen21Width);
-  objs.push_back(legDeltaPtGen21Width);
-  drawPSPage(ps,c1,objs,"PE1");
-
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    objs.clear();
-    objs.push_back(hRelJet3PtBins[ptBin]);
-    objs.push_back(ptBinLabels[ptBin]);
-    drawPSPage(ps,c1,objs,"PE1");
-  }
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    objs.clear();
-    objs.push_back(hRelJet3PtVsPtGen31Bins[ptBin]);
-    objs.push_back(ptBinLabels[ptBin]);
-    drawPSPage(ps,c1,objs,"COLZ",true);
-  }
-
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    ps->NewPage();
-    c1->cd();
-    hSigmaVsPt3Frame->Draw();
-    hSigmaMCVsPt3[ptBin]->Draw("Hsame");
-    fSigmaVsPt3[ptBin]->Draw("same");
-    gSigmaVsPt3[ptBin]->Draw("PE1same");
-    ptBinLabels[ptBin]->Draw("same");
-    gPad->RedrawAxis();
-    c1->Draw();
-  }
-
-  ps->NewPage();
-  c1->cd();
-  delete leg;
-  leg = createLegend(nPt3Bins+1,0.6);
-  leg->AddEntry(hSigmaMC,"MC truth","P");
-  hSigmaMC->Draw("PE1");
-  hGaussWidthTruth->Draw("Hsame");
-  hGaussWidth->Draw("Hsame");
-  for(int pt3bin = 0; pt3bin < nPt3Bins; ++pt3bin) {
-    char txt[50];
-    sprintf(txt,"%.2f < p^{rel}_{T,3} < %.2f",pt3BinEdges[pt3bin],pt3BinEdges[pt3bin+1]);
-    leg->AddEntry(hSigmaMean[pt3bin],txt,"P");
-    hSigmaMean[pt3bin]->Draw("PE1same");
-  }
-  leg->Draw("same");
-  gPad->RedrawAxis();
-  c1->Draw();
-
-  // ----- Write histos to file -----
-  TFile rootfile((dir_+"/jsResponse.root").c_str(),"UPDATE");
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    rootfile.WriteTObject(hPtGen21Bins[ptBin]);
-    rootfile.WriteTObject(hDeltaPtGen21[ptBin]);
-    rootfile.WriteTObject(fDeltaPtGen21[ptBin]);
-    rootfile.WriteTObject(hPtGen31Bins[ptBin]);
-    rootfile.WriteTObject(hRelJet3PtBins[ptBin]);
-    rootfile.WriteTObject(hRelJet3PtVsPtGen31Bins[ptBin]);
-    rootfile.WriteTObject(gSigmaVsPt3[ptBin]);
-    rootfile.WriteTObject(fSigmaVsPt3[ptBin]);
-    rootfile.WriteTObject(hDeltaPtGenVsRelJet3Pt[ptBin]);
-  }
-  rootfile.WriteTObject(hPtGen21);
-  rootfile.WriteTObject(hPtGen31);
-  rootfile.WriteTObject(hRelJet3PtVsPtGen31);
-  rootfile.WriteTObject(gDeltaPtGen21Width);
-  rootfile.WriteTObject(fDeltaPtGen21Width);
-
-
-  // ----- Clean up -----
-  delete hPtGen21;
-  delete hPtGen31;
-  delete hRelJet3PtVsPtGen31;
-  delete hAngularScale2;
-  delete hAngularScale3;
-  delete hAngularScale2vsGenMHT;
-  delete hAngularScale3vsGenMHT;
-  for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-    delete hPtGen21Bins[ptBin];
-    delete hDeltaPtGen21[ptBin];
-    delete fDeltaPtGen21[ptBin];
-    delete hPtGen31Bins[ptBin];
-    delete hRelJet3PtVsPtGen31Bins[ptBin];
-    delete hResMC[ptBin];
-    delete ptBinLabels[ptBin];
-    delete hSigmaMCVsPt3[ptBin];
-    delete gSigmaVsPt3[ptBin];
-    delete fSigmaVsPt3[ptBin];
-    delete hDeltaPtGenVsRelJet3Pt[ptBin];
-    for(int pt3Bin = 0; pt3Bin < nPt3Bins; ++pt3Bin) {
-      delete hRelJet3Bins[ptBin][pt3Bin];
-    }
-  }
-  delete hSigmaVsPt3Frame;
-  delete hSigmaMC;
-  for(int pt3Bin = 0; pt3Bin < nPt3Bins; ++pt3Bin) {
-    delete hSigmaMean[pt3Bin];
-    delete hMeanRelJet3Pt[pt3Bin];
-    for(int ptBin = 0; ptBin < nPtBins(); ++ptBin) {
-      delete hResMean[pt3Bin][ptBin];
-    }
-  }
-  delete hGaussWidth;
-  delete hGaussWidthTruth;
-  delete hDeltaPtGen21WidthFrame;
-  delete gDeltaPtGen21Width;
-  delete fDeltaPtGen21Width;
-  delete legDeltaPtGen21Width;
-
-  delete hNAllVsPtRec;
-  delete hNAllVsPtGen;
-  delete hNMisorderedVsPtRec;
-  delete hNMisorderedVsPtGen;
-  delete hOrderingVsPtRec;
-  delete hOrderingVsPtGen;
-  delete gOrderingVsPtRec;
-  delete gOrderingVsPtGen;
-  delete hSameGenJetVsPtRec;
-  delete hSameGenJetVsPtGen;
-  for(int k = 0; k < 3; ++k) {
-    delete hNSameGenJetVsPtRec[k];
-    delete hNSameGenJetVsPtGen[k];
-    delete gSameGenJetVsPtRec[k];
-    delete gSameGenJetVsPtGen[k];
-  }
-
-  delete c1;
-  delete ps;
+// -------------------------------------------------------------------------------------
+double ControlPlotsJetSmearing::gaussian(double *x, double *par) {
+  double u = (x[0]-1.)/par[1];
+  return par[0]*exp(-0.5*u*u);
 }
+
 
 
 // --------------------------------------------------
 double ControlPlotsJetSmearing::gaussianWidth(double pt) const {
   double a[3];
   for(int i = 0; i < 3; i++) {
-    a[i] = scale_[i]*param_->GetPars()[i];
+    a[i] = scale(i)*param_->GetPars()[i];
   }
   return sqrt( a[0]*a[0] + a[1]*a[1]*pt + a[2]*a[2]*pt*pt );
 }
@@ -3389,7 +3470,7 @@ double ControlPlotsJetSmearing::gaussianWidthError(double pt) const {
   std::vector<double> ds(3);
   double s = gaussianWidth(pt);
   for(int i = 0; i < 3; i++) {
-    ds[i] = scale_[i]*param_->GetPars()[i]/s;
+    ds[i] = scale(i)*param_->GetPars()[i]/s;
     if( i == 1 ) ds[i] *= pt;
     if( i == 2 ) ds[i] *= pt*pt;
   }
@@ -3400,9 +3481,9 @@ double ControlPlotsJetSmearing::gaussianWidthError(double pt) const {
     for(int j = 0; j < i+1; j++) { // Inner loop over parameters
       int idx = (i*i + i)/2 + j; // Index of (i,j) in covariance vector
       if( i == j ) { // Diagonal terms
-	var += ds[i]*ds[i]*scale_[i]*scale_[i]*param_->GetCovCoeff()[idx];
+	var += ds[i]*ds[i]*scale(i)*scale(i)*param_->GetCovCoeff()[idx];
       } else { // Off-diagonal terms
-	var += 2*ds[i]*ds[j]*scale_[i]*scale_[j]*param_->GetCovCoeff()[idx];
+	var += 2*ds[i]*ds[j]*scale(i)*scale(j)*param_->GetCovCoeff()[idx];
       }
     } // End of inner loop over parameters
   } // End of outer loop over parameters
@@ -3508,18 +3589,21 @@ void ControlPlotsJetSmearing::findYRange(const TH1 * h, double& min, double& max
 // --------------------------------------------------
 void ControlPlotsJetSmearing::setGStyle() const
 {
+  // Zero horizontal error bars
   gStyle->SetErrorX(0);
+  
+  //  For 'colz' TH2
   gStyle->SetPalette(1);
-
-  // For the canvas:
+  
+  //  For the canvas
   gStyle->SetCanvasBorderMode(0);
   gStyle->SetCanvasColor(kWhite);
   gStyle->SetCanvasDefH(800); //Height of canvas
   gStyle->SetCanvasDefW(800); //Width of canvas
   gStyle->SetCanvasDefX(0);   //Position on screen
   gStyle->SetCanvasDefY(0);
-
-  // For the frame
+  
+  //  For the frame
   gStyle->SetFrameBorderMode(0);
   gStyle->SetFrameBorderSize(1);
   gStyle->SetFrameFillColor(kBlack);
@@ -3527,8 +3611,8 @@ void ControlPlotsJetSmearing::setGStyle() const
   gStyle->SetFrameLineColor(kBlack);
   gStyle->SetFrameLineStyle(0);
   gStyle->SetFrameLineWidth(1);
-
-  // For the Pad:
+  
+  //  For the Pad
   gStyle->SetPadBorderMode(0);
   gStyle->SetPadColor(kWhite);
   gStyle->SetPadGridX(false);
@@ -3536,54 +3620,42 @@ void ControlPlotsJetSmearing::setGStyle() const
   gStyle->SetGridColor(0);
   gStyle->SetGridStyle(3);
   gStyle->SetGridWidth(1);
+      
+  //  Margins
+  gStyle->SetPadTopMargin(0.05);
+  gStyle->SetPadBottomMargin(0.18);
+  gStyle->SetPadLeftMargin(0.19);
+  gStyle->SetPadRightMargin(0.04);
 
-  // For the histo:
+  //  For the histo:
   gStyle->SetHistLineColor(kBlack);
   gStyle->SetHistLineStyle(0);
   gStyle->SetHistLineWidth(1);
-  //  gStyle->SetMarkerStyle(20);
-
-  // For the statistics box:
+  
+  //  For the statistics box:
   gStyle->SetOptStat(0);
-  //  gStyle->SetOptStat("neMR");
-  gStyle->SetStatColor(kWhite);
-  gStyle->SetStatFont(42);
-  gStyle->SetStatFontSize(0.03);
-  gStyle->SetStatTextColor(1);
-  gStyle->SetStatFormat("6.4g");
-  gStyle->SetStatBorderSize(1);
-  gStyle->SetStatX(0.92);              
-  gStyle->SetStatY(0.86);              
-  gStyle->SetStatH(0.16);
-  gStyle->SetStatW(0.22);
-
-  // For the legend
-  gStyle->SetLegendBorderSize(1);
-
-  //  Margins
-  // -------------------------------------------
-  gStyle->SetPadTopMargin(0.16);
-  gStyle->SetPadBottomMargin(0.18);
-  gStyle->SetPadLeftMargin(0.18);
-  gStyle->SetPadRightMargin(0.16);
-
-  // For the Global title:
+    
+  //  For the Global title:
   gStyle->SetOptTitle(1);
   gStyle->SetTitleFont(42,"");
   gStyle->SetTitleColor(1);
   gStyle->SetTitleTextColor(1);
   gStyle->SetTitleFillColor(0);
-  gStyle->SetTitleFontSize(0.12);
+  gStyle->SetTitleFontSize(0.1);
   gStyle->SetTitleAlign(23);
-  gStyle->SetTitleX(0.515);
-  gStyle->SetTitleH(0.06);
-  gStyle->SetTitleXOffset(0);
-  gStyle->SetTitleYOffset(0);
+  gStyle->SetTitleX(0.6);
+  gStyle->SetTitleH(0.05);
   gStyle->SetTitleBorderSize(0);
-
-  // For the axis labels:
+  
+  //  For the axis
+  gStyle->SetAxisColor(1,"XYZ");
+  gStyle->SetTickLength(0.03,"XYZ");
+  gStyle->SetNdivisions(510,"XYZ");
+  gStyle->SetPadTickX(1);
+  gStyle->SetPadTickY(1);
+  gStyle->SetStripDecimals(kFALSE);
+    
   //  For the axis labels and titles
-  // -------------------------------------------
   gStyle->SetTitleColor(1,"XYZ");
   gStyle->SetLabelColor(1,"XYZ");
   // For the axis labels:
@@ -3597,8 +3669,100 @@ void ControlPlotsJetSmearing::setGStyle() const
   gStyle->SetTitleXOffset(1.2);
   gStyle->SetTitleYOffset(1.5);
 
-  gStyle->SetPadTickX(1);
-  gStyle->SetPadTickY(1);
+
+
+
+//   gStyle->SetErrorX(0);
+//   gStyle->SetPalette(1);
+
+//   // For the canvas:
+//   gStyle->SetCanvasBorderMode(0);
+//   gStyle->SetCanvasColor(kWhite);
+//   gStyle->SetCanvasDefH(800); //Height of canvas
+//   gStyle->SetCanvasDefW(800); //Width of canvas
+//   gStyle->SetCanvasDefX(0);   //Position on screen
+//   gStyle->SetCanvasDefY(0);
+
+//   // For the frame
+//   gStyle->SetFrameBorderMode(0);
+//   gStyle->SetFrameBorderSize(1);
+//   gStyle->SetFrameFillColor(kBlack);
+//   gStyle->SetFrameFillStyle(0);
+//   gStyle->SetFrameLineColor(kBlack);
+//   gStyle->SetFrameLineStyle(0);
+//   gStyle->SetFrameLineWidth(1);
+
+//   // For the Pad:
+//   gStyle->SetPadBorderMode(0);
+//   gStyle->SetPadColor(kWhite);
+//   gStyle->SetPadGridX(false);
+//   gStyle->SetPadGridY(false);
+//   gStyle->SetGridColor(0);
+//   gStyle->SetGridStyle(3);
+//   gStyle->SetGridWidth(1);
+
+//   // For the histo:
+//   gStyle->SetHistLineColor(kBlack);
+//   gStyle->SetHistLineStyle(0);
+//   gStyle->SetHistLineWidth(1);
+//   //  gStyle->SetMarkerStyle(20);
+
+//   // For the statistics box:
+//   gStyle->SetOptStat(0);
+//   //  gStyle->SetOptStat("neMR");
+//   gStyle->SetStatColor(kWhite);
+//   gStyle->SetStatFont(42);
+//   gStyle->SetStatFontSize(0.03);
+//   gStyle->SetStatTextColor(1);
+//   gStyle->SetStatFormat("6.4g");
+//   gStyle->SetStatBorderSize(1);
+//   gStyle->SetStatX(0.92);              
+//   gStyle->SetStatY(0.86);              
+//   gStyle->SetStatH(0.16);
+//   gStyle->SetStatW(0.22);
+
+//   // For the legend
+//   gStyle->SetLegendBorderSize(1);
+
+//   //  Margins
+//   // -------------------------------------------
+//   gStyle->SetPadTopMargin(0.16);
+//   gStyle->SetPadBottomMargin(0.18);
+//   gStyle->SetPadLeftMargin(0.18);
+//   gStyle->SetPadRightMargin(0.16);
+
+//   // For the Global title:
+//   gStyle->SetOptTitle(1);
+//   gStyle->SetTitleFont(42,"");
+//   gStyle->SetTitleColor(1);
+//   gStyle->SetTitleTextColor(1);
+//   gStyle->SetTitleFillColor(0);
+//   gStyle->SetTitleFontSize(0.12);
+//   gStyle->SetTitleAlign(23);
+//   gStyle->SetTitleX(0.515);
+//   gStyle->SetTitleH(0.06);
+//   gStyle->SetTitleXOffset(0);
+//   gStyle->SetTitleYOffset(0);
+//   gStyle->SetTitleBorderSize(0);
+
+//   // For the axis labels:
+//   //  For the axis labels and titles
+//   // -------------------------------------------
+//   gStyle->SetTitleColor(1,"XYZ");
+//   gStyle->SetLabelColor(1,"XYZ");
+//   // For the axis labels:
+//   gStyle->SetLabelFont(42,"XYZ");
+//   gStyle->SetLabelOffset(0.007,"XYZ");
+//   gStyle->SetLabelSize(0.045,"XYZ");
+  
+//   // For the axis titles:
+//   gStyle->SetTitleFont(42,"XYZ");
+//   gStyle->SetTitleSize(0.06,"XYZ");
+//   gStyle->SetTitleXOffset(1.2);
+//   gStyle->SetTitleYOffset(1.5);
+
+//   gStyle->SetPadTickX(1);
+//   gStyle->SetPadTickY(1);
 }
 
 
@@ -3744,4 +3908,31 @@ int ControlPlotsJetSmearing::color(int i) const {
   else if( i == 5 ) col = 9;
 
   return col;
+}
+
+
+// -------------------------------------------------------------------------------------
+void ControlPlotsJetSmearing::setAxisTitles(TH1 *h, const std::string &xTitle, const std::string &xUnit, const std::string &yTitle, bool norm) const {
+  // x axis label
+  h->SetXTitle(xUnit.length()==0 ? xTitle.c_str() : (xTitle+" ("+xUnit+")").c_str());
+
+  // y axis label
+  std::string yAxisTitle;
+  if( norm ) yAxisTitle += "1 / N  ";
+  if( yTitle == "jets" || yTitle == "events" ) {
+    if( yTitle == "jets" )        yAxisTitle += "Jets / ";
+    else if( yTitle == "events" ) yAxisTitle += "Events / ";
+    yAxisTitle += toString(h->GetBinWidth(1));
+    if( xUnit.length() ) yAxisTitle += " "+xUnit;
+  } else {
+    yAxisTitle = yTitle;
+  }
+  h->SetYTitle(yAxisTitle.c_str());
+}
+
+
+// -------------------------------------------------------------------------------------
+void ControlPlotsJetSmearing::setColor(TH1 *h, int color) const {
+  h->SetMarkerColor(color);
+  h->SetLineColor(color);
 }

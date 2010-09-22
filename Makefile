@@ -106,7 +106,7 @@ EventReader.o: EventReader.h EventReader.cc Parameters.h Parametrization.h Confi
 PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h Function.h CorFactors.h CorFactorsFactory.h
 	$(C) $(RCXX) -c PhotonJetReader.cc
 
-DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h TwoJetsPtBalanceEvent.h JetWithTowers.h Function.h SmearFunction.h CorFactors.h CorFactorsFactory.h JetConstraintEvent.h JetBin.h
+DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h TwoJetsPtBalanceEvent.h JetWithTowers.h Function.h SmearFunction.h CorFactors.h CorFactorsFactory.h JetConstraintEvent.h JetBin.h SmearData.h SmearDiJet.h
 	$(C) $(RCXX) -c DiJetReader.cc
 
 TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameters.h ConfigFile.h CorFactors.h CorFactorsFactory.h

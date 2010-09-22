@@ -1,4 +1,4 @@
-// $Id: SmearDiJet.cc,v 1.10 2010/05/19 13:34:48 stadie Exp $
+// $Id: SmearDiJet.cc,v 1.11 2010/07/22 13:58:30 mschrode Exp $
 
 #include "SmearDiJet.h"
 
@@ -21,141 +21,23 @@
 //!  \param eps Integration precision for convergence
 //!  \param niter Maximum number of iterations in integration
 // --------------------------------------------------
-SmearDiJet::SmearDiJet(Jet * jet1,
-		       Jet * jet2,
-		       Jet * jet3,
-		       double ptHat,
-		       double weight,
+SmearDiJet::SmearDiJet(Jet * jet1, const Jet * jet2, const Jet * jet3,
+		       double deltaPhi12, double pPhi, double ptJet3, double ptJet4,
+		       double pJ3, double pSJ, double pUCE, double ptRef,
+		       double ptHat, double weight,
 		       const SmearFunction& pdf,
-		       double min,
-		       double max,
-		       double eps,
-		       int niter)
+		       double min, double max, double eps, int niter)
   : SmearData(TypeSmearDiJet,jet1,0,ptHat,weight,pdf),
-    kMaxNIter_(niter),
-    kEps_(eps),
-    kMin_(min),
-    kMax_(max),
-    jet2_(jet2),
-    jet3_(jet3) {
-
-  scalePt2_ = 0.;
-  scalePt3_ = 0.;
-//   std::vector<double> s(3);
-//   std::vector<double> c(3);
-//   for(int i = 0; i < 3; ++i) {
-//     s[i] = sin(jet(i)->phi());
-//     c[i] = cos(jet(i)->phi());
-//   }
-//   double d = s[2]*c[1] - s[1]*c[2];
-//   if( d ) {
-//     scalePt2_ = (s[0]*c[2] - s[2]*c[0])/d;
-//     scalePt3_ = (s[1]*c[0] - s[0]*c[1])/d;
-//   }
-//   if( !( scalePt2_ > 0. && scalePt3_ > 0. ) ) {
-//     scalePt2_ = 0.;
-//     scalePt3_ = 0.;
-//   }
-
-
-//   TVector3 mht;
-//   mht.SetPtEtaPhi(jet(0)->genPt(),jet(0)->eta(),jet(0)->phi());
-//   double ht = jet(0)->genPt();
-
-//   TVector3 jt;
-//   for(int i = 1; i < 2; ++i) {
-//     jt.SetPtEtaPhi(jet(i)->genPt(),jet(i)->eta(),jet(i)->phi());
-//     mht += jt;
-//     ht += jet(i)->genPt();
-//   }
-
-//   relGenMet_ = mht.Pt()/ht;
-}
+    kMaxNIter_(niter),kEps_(eps),kMin_(min),kMax_(max),
+    jet2_(jet2),jet3_(jet3),
+    deltaPhi12_(deltaPhi12), pPhi_(pPhi), pJ3_(pJ3), pSJ_(pSJ),
+    pUCE_(pUCE), ptRef_(ptRef), ptJet3_(ptJet3), ptJet4_(ptJet4) {}
 
 
 // --------------------------------------------------
 SmearDiJet::~SmearDiJet() { 
   delete jet2_;
   delete jet3_;
-}
-
-
-
-//!  \brief Get the negative log-likelihood of this event
-//!
-//!  Calculates the probability of this event configuration
-//!  \f[
-//!   P(m_{1},m_{2}) = \int\;dt\;f(t)r(m_{1}/t)r(m_{2}/t),
-//!  \f]
-//!  where \f$ f \f$ is the truth pdf and \f$ r \f$ is the
-//!  response pdf. \f$ r \f$ is normalized to unity,
-//!  \f$ f \f$ is normalized such that \f$ P \f$ is 
-//!  normalized to unity (see truthPDF(t)). The method
-//!  returns \f$ -\ln(P) \f$.
-//!
-//!  The integral is calculated numerically using the
-//!  Simpson's 3/8 rule.
-//!
-//!  \return The negative log-likelihood of this event
-// --------------------------------------------------
-double SmearDiJet::chi2() const
-{
-  double         h         = kMax_ - kMin_;     // Integration interval
-  double         pint      = 0.;              // Current value of integral over response pdfs
-  double         pint_old  = 1.;              // Value of integral over response pdfs from previous iteration
-  int            nIter     = 0;               // Current iteration in interval splitting
-  std::vector<double> pp;         // Product of current function values of response pdfs
-  std::vector<double> pp_old;     // Product of function values of response pdfs from previous iteration
-
-  // Iterate until precision or max. number iterations reached
-  while(std::abs((pint - pint_old) / pint_old) > kEps_ && nIter < kMaxNIter_) {
-    pint_old = pint;
-    pint     = 0;
-    pp_old   = pp;
-    pp.clear();
-    h       /= 3.;    // In each iteration, split h into 3 new intervals
-    
-    // Loop over nodes xi i.e. interval borders
-    for(int i = 0; i <= pow(3.0,nIter+1); ++i){
-      double t = kMin_ + i * h;  // Pt at node
-      
-      // Calculate probability only at new nodes
-      if(nIter == 0 || i % 3 != 0) {
-	double p0 = pdfPtMeasJet1(jet1()->pt(),t,0.);
-	double p1 = pdfPtMeasJet2(jet2()->pt(),t,0.);
-	pp.push_back(p0*p1*pdfPtTrue(t)); // Store product of pdfs and normalization
-      } else {
-	pp.push_back(pp_old.at(i/3));       // Store product of pdfs previously calcluated
-      }
-    }
-
-    // Sum up weighted function values
-    for(unsigned int i = 0; i < pp.size(); i++)	{
-      double w = 1.;                       // Weight w from Simpson's rule
-      if( i > 0 && i < (pp.size() - 1) ) { // w = 1 for x0 and last node
-	if( i % 3 == 0 ) {                 // w = 2 for x3, x6, ...
-	  w = 2.;
-	} else {
-	  w = 3.;
-	}
-      }
-      pint += w * (pp.at(i));              // Sum up weighted function values
-    }
-    pint *= (3. * h / 8.);                 // Apply overall normalization
-    nIter++;
-
-    /////////////////////////////////////////////////////////////
-    //
-    // ---> Needed?
-    //
-    //    if( pint_old ) eps = std::abs((pint - pint_old) / pint_old);
-    //
-    ////////////////////////////////////////////////////////////
-  }
-
-  if( pint <= 0 ) return 0.;
-
-  return  -1. * weight() * log(pint);
 }
 
 
@@ -201,9 +83,9 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
       pdf_.par()[i] += epsilon[pdf_.parIdx()+i];
       temp1 = chi2();
       
-//       std::cout << std::endl;
-//       std::cout << std::setprecision(10) << i << ": " << oldpar << " -- > " << f << std::endl;
-//       std::cout << "   " << pdf_.par()[i] << " -- > " << temp1 << std::endl;
+//        std::cout << std::endl;
+//        std::cout << std::setprecision(10) << i << ": " << oldpar << " -- > " << f << std::endl;
+//        std::cout << "   " << pdf_.par()[i] << " -- > " << temp1 << std::endl;
       
       pdf_.par()[i] -= 2.*epsilon[pdf_.parIdx()+i];
       temp2 = chi2();
@@ -219,17 +101,110 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
       temp_derivative2[pdf_.parIdx()+i] += temp1 + temp2 - 2*f;
 
 
-//       if( !(f == f) ) {
-// 	std::cout << "NAN error\n";
-// 	std::cout << "  " << jet1()->genPt() << ",  " << jet1()->pt() << std::endl;
-// 	std::cout << "  " << jet2()->genPt() << ",  " << jet2()->pt() << std::endl;
-//       }
+//        if( !(f == f) ) {
+//  	std::cout << "NAN error\n";
+//  	std::cout << "  " << jet1()->genPt() << ",  " << jet1()->pt() << std::endl;
+//  	std::cout << "  " << jet2()->genPt() << ",  " << jet2()->pt() << std::endl;
+//        }
 
     }
   }
 
   return f;
 }
+
+
+
+// --------------------------------------------------
+double SmearDiJet::chi2Simple() const {
+   double pdf = pdfPtMeas(jet1()->pt(),jet2()->pt(),0.);
+   if( pdf != pdf ) {
+     pdf = 0.;
+     std::cerr << "WARINGING: pdf = " << pdf << std::endl;
+   } else if( pdf < 0. ) {
+     pdf = 0.;
+     std::cerr << "WARINGING: pdf = " << pdf << std::endl;
+   } else if( pdf > 0. ) {    
+     pdf = -2.*log(pdf);
+     if( pdf <= 0. ) std::cerr << "WARNING: pdf = " << pdf << std::endl;
+     if( pdf != pdf) std::cout << ">> pdf = " << pdf << std::endl;
+   } else {
+     pdf = 0.;
+   }
+ return weight()*pdf;
+}
+
+
+
+//!  \brief Get the negative log-likelihood of this event
+//!
+//!  Calculates the probability of this event configuration
+//!  \f[
+//!   P(m_{1},m_{2}) = \int\;dt\;f(t)r(m_{1}/t)r(m_{2}/t),
+//!  \f]
+//!  where \f$ f \f$ is the truth pdf and \f$ r \f$ is the
+//!  response pdf. \f$ r \f$ is normalized to unity,
+//!  \f$ f \f$ is normalized such that \f$ P \f$ is 
+//!  normalized to unity (see truthPDF(t)). The method
+//!  returns \f$ -\ln(P) \f$.
+//!
+//!  The integral is calculated numerically using the
+//!  Simpson's 3/8 rule.
+//!
+//!  \return The negative log-likelihood of this event
+// --------------------------------------------------
+double SmearDiJet::chi2Spectrum() const {
+
+  double h = kMax_ - kMin_;     // Integration interval
+  double pint = 0.;              // Current value of integral over response pdfs
+  double pint_old  = 1.;              // Value of integral over response pdfs from previous iteration
+  double eps = 1.;
+  int nIter = 0;               // Current iteration in interval splitting
+  std::vector<double> pp;         // Product of current function values of response pdfs
+  std::vector<double> pp_old;     // Product of function values of response pdfs from previous iteration
+
+  // Iterate until precision or max. number iterations reached
+  while( eps > kEps_ && nIter < kMaxNIter_ ) {
+    pint_old = pint;
+    pint     = 0;
+    pp_old   = pp;
+    pp.clear();
+    h       /= 3.;    // In each iteration, split h into 3 new intervals
+    
+    // Loop over nodes xi i.e. interval borders
+    for(int i = 0; i <= pow(3.0,nIter+1); ++i){
+      double t = kMin_ + i * h;  // Pt at node
+      
+      // Calculate probability only at new nodes
+      if(nIter == 0 || i % 3 != 0) {
+	pp.push_back(pdfPtMeas(jet1()->pt(),jet2()->pt(),t)*pdfPtTrue(t));
+      } else {
+	pp.push_back(pp_old.at(i/3));       // Store product of pdfs previously calcluated
+      }
+    }
+
+    // Sum up weighted function values
+    for(unsigned int i = 0; i < pp.size(); i++)	{
+      double w = 1.;                       // Weight w from Simpson's rule
+      if( i > 0 && i < (pp.size() - 1) ) { // w = 1 for x0 and last node
+	if( i % 3 == 0 ) {                 // w = 2 for x3, x6, ...
+	  w = 2.;
+	} else {
+	  w = 3.;
+	}
+      }
+      pint += w * (pp.at(i));              // Sum up weighted function values
+    }
+    pint *= (3. * h / 8.);                 // Apply overall normalization
+    nIter++;
+
+    if( pint_old ) eps = std::abs((pint - pint_old) / pint_old);
+  }
+  if( pint <= 0 ) return 0.;
+  
+  return  weight()*(-2.*log(pint));
+}
+
 
 
 //!  \brief Print event parameters

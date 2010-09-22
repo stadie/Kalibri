@@ -7,7 +7,7 @@ class Parametrization;
 
 
 class SmearFunction {
-  typedef double (Parametrization::*PdfPtMeas)(double ptMeas, double ptTrue, double pt3Rel, const double*) const;
+  typedef double (Parametrization::*PdfPtMeas)(double ptMeas1, double ptMeas2, double ptTrue, const double*) const;
   typedef double (Parametrization::*PdfPtTrue)(double ptTrue, const double*) const;
   typedef double (Parametrization::*PdfPtTrueError)(double ptTrue, const double*, const double*, const std::vector<int>&) const;
   typedef double (Parametrization::*PdfResp)(double r, double ptTrue, const double*) const;
@@ -15,14 +15,13 @@ class SmearFunction {
   typedef double (Parametrization::*PdfDijetAsym)(double a, double ptTrue, const double*) const;
 
  public:
-  SmearFunction(PdfPtMeas pdfPtMeasJet1, PdfPtMeas pdfPtMeasJet2,
+  SmearFunction(PdfPtMeas pdfPtMeas,
 		PdfPtTrue pdfPtTrue, PdfPtTrueError pdfPtTrueError,
 		PdfResp pdfResp, PdfRespError pdfRespError,
 		PdfDijetAsym pdfDijetAsym,
 		int parIdx, int nPars, double *firstPar, const std::vector<bool>& isFixedPar,
 		const std::vector<int>& covIdx, double *firstCov, const Parametrization *p)
-    : pdfPtMeasJet1_(pdfPtMeasJet1),
-    pdfPtMeasJet2_(pdfPtMeasJet2),
+    : pdfPtMeas_(pdfPtMeas),
     pdfPtTrue_(pdfPtTrue),
     pdfPtTrueError_(pdfPtTrueError),
     pdfResp_(pdfResp),
@@ -42,11 +41,8 @@ class SmearFunction {
     double par(int i) const { assert( i >= 0 && i < nPars() ); return firstPar_[i]; }
     bool isFixedPar(int i) const { assert( i >= 0 && i < nPars() ); return isFixedPar_[i]; }
 
-    double pdfPtMeasJet1(double ptMeas, double ptTrue, double pt3Rel) const {
-      return (param_->*pdfPtMeasJet1_)(ptMeas,ptTrue,pt3Rel,firstPar_);
-    }
-    double pdfPtMeasJet2(double ptMeas, double ptTrue, double pt3Rel) const {
-      return (param_->*pdfPtMeasJet2_)(ptMeas,ptTrue,pt3Rel,firstPar_);
+    double pdfPtMeas(double ptMeas1, double ptMeas2, double ptTrue) const {
+      return (param_->*pdfPtMeas_)(ptMeas1,ptMeas2,ptTrue,firstPar_);
     }
     double pdfPtTrue(double ptTrue) const {
       return (param_->*pdfPtTrue_)(ptTrue,firstPar_);
@@ -72,8 +68,7 @@ class SmearFunction {
 
 
  private:
-    const PdfPtMeas pdfPtMeasJet1_;
-    const PdfPtMeas pdfPtMeasJet2_;
+    const PdfPtMeas pdfPtMeas_;
     const PdfPtTrue pdfPtTrue_;
     const PdfPtTrueError pdfPtTrueError_;
     const PdfResp pdfResp_;

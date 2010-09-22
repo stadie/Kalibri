@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.54 2010/06/28 11:33:47 kirschen Exp $
+// $Id: Parameters.cc,v 1.55 2010/07/22 13:58:30 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -56,20 +56,13 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
     return new ToySimpleInverseParametrization();
   } else if(name == "SmearFermiTail") {
     return new SmearFermiTail();
-  } else if(name == "SmearGauss") {
-    double tMin = config.read<double>("DiJet integration min",0.);
-    double tMax = config.read<double>("DiJet integration max",1.);
-    double xMin = config.read<double>("Et min cut on jet",0.);
-    double xMax = config.read<double>("Et max cut on jet",1.);
-    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    std::vector<double> startPar = bag_of<double>(config.read<string>("jet start values",""));
-    std::string spectrum = config.read<string>("jet parameters spectrum","default.root");
-    return new SmearGauss(tMin,tMax,xMin,xMax,scale,startPar,spectrum);
+  } else if(name == "SmearGaussAvePt") {
+    return new SmearGaussAvePt(0.,10000.);
   } else if(name == "SmearGaussPtBin") {
     double tMin = config.read<double>("DiJet integration min",0.);
     double tMax = config.read<double>("DiJet integration max",1.);
-    double xMin = config.read<double>("Et min cut on jet",0.);
-    double xMax = config.read<double>("Et max cut on jet",1.);
+    double xMin = config.read<double>("Et min cut on dijet",0.);
+    double xMax = config.read<double>("Et max cut on dijet",1.);
     std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
     std::vector<double> startPar = bag_of<double>(config.read<string>("jet start values",""));
     std::string spectrum = config.read<string>("jet parameters spectrum","default.root");
@@ -146,8 +139,8 @@ TParameters* TParameters::CreateParameters(const ConfigFile& config)
     parclass = "TrackParametrization";
   } else if(parclass == "SmearParametrizationFermiTail") {
     parclass = "SmearFermiTail";
-  } else if(parclass == "SmearParametrizationGauss") {
-    parclass = "SmearGauss";
+  } else if(parclass == "SmearParametrizationGaussAvePt") {
+    parclass = "SmearGaussAvePt";
   } else if(parclass == "SmearParametrizationGaussPtBin") {
     parclass = "SmearGaussPtBin";
   } else if(parclass == "SmearParametrizationGaussExtrapolation") {
@@ -1519,17 +1512,17 @@ void TParameters::writeCalibrationTex(const char* name, const ConfigFile& config
     outfile << "\\begin{tabular}{ccccc}\n";
     outfile << "\\hline\n\\hline\n";
     outfile << "Index & Scale & Start value & Fitted value & Global correlation \\\\ \n\\hline \n";
-    for(unsigned int i = 0; i < pJetScale.size() && i < jet_start_values.size() && i < pJetFit.size(); i++) {
+    for(unsigned int i = 0; i < jet_start_values.size() && i < pJetFit.size(); i++) {
       if( isFixedPar(i) ) {
 	outfile << "\\textcolor{gray}{$" << i << "$} & \\textcolor{gray}{$ ";
-	outfile << pJetScale.at(i) << " $} & \\textcolor{gray}{$ ";
+	outfile << (i < pJetScale.size() ? pJetScale[i] : 1.0) << " $} & \\textcolor{gray}{$ ";
  	outfile << jet_start_values.at(i) << "$ } & \\textcolor{gray}{$ ";
  	outfile << pJetFit[i] << " \\pm ";
  	outfile << pJetError[i] << " $} & \\textcolor{gray}{$ ";
 	outfile << pJetGCorr[i] << " $} \\\\ \n";
       } else {
 	outfile << "$" << i << "$ & $";
-	outfile << pJetScale.at(i) << "$ & $";
+	outfile << (i < pJetScale.size() ? pJetScale[i] : 1.0) << "$ & $";
 	outfile << jet_start_values.at(i) << "$ & $";
 	outfile << pJetFit[i] << " \\pm ";
 	outfile << pJetError[i] << "$ & $";
@@ -1626,8 +1619,7 @@ SmearFunction TParameters::resolutionFitPDF(int etaid, int phiid) {
     exit(-2);  
   }
   int jetIdx = id * GetNumberOfJetParametersPerBin() + GetNumberOfTowerParameters();
-  return SmearFunction(&Parametrization::pdfPtMeasJet1,
-		       &Parametrization::pdfPtMeasJet2,
+  return SmearFunction(&Parametrization::pdfPtMeas,
 		       &Parametrization::pdfPtTrue,
 		       &Parametrization::pdfPtTrueError,
 		       &Parametrization::pdfResponse,

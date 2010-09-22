@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.22 2010/07/22 13:58:30 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.23 2010/07/22 17:38:32 mschrode Exp $
 // ----------------------------------------------------------------   
 
 
@@ -57,12 +57,11 @@ class DiJetReader : public EventReader{
  private:
   TwoJetsPtBalanceEvent* createTwoJetsPtBalanceEvent();
   Event* createSmearEvent(int callIdx = 0);
-  Event *createSmearEventCaloOrdered(int callIdx = 0);
-  Event *createSmearEventGenOrdered(int callIdx = 0);
+  Event *createSmearEventCaloOrdered();
+  Event *createSmearEventGenOrdered();
   int createJetTruthEvents(std::vector<Event*>& data);
   CorFactors* createCorFactors(int jetid) const;
-  std::vector<Jet*> readCaloJets(int nJets) const;
-  std::vector<Jet*> readGenJetSortedJets(int nJets) const;
+  bool passesJetId(int idx) const;
 
   std::auto_ptr<NJetSel> nJet_;                //!< Njet Selector
   TRandom* rand_;             //!< Random number generator
@@ -71,12 +70,15 @@ class DiJetReader : public EventReader{
   int    nDijetEvents_;         //!< Maximum number of read dijet events
   int    prescale_;             //!< only read every nth event
 
+  double ptRef_;                //!< Reference pt for cuts on additional jet activity
   double minJetEt_;             //!< Minimum pt of jet
   double maxJetEt_;             //!< Maximum pt of jet
   double minDijetEt_;           //!< Minimum dijet pt
   double maxDijetEt_;           //!< Maximum dijet pt
   double max3rdJetEt_;          //!< Maximum pt of 3rd jet in dijet event
+  double minRel3rdJetEt_;       //!< Minimum relative pt of 3rd jet in dijet event
   double maxRel3rdJetEt_;       //!< Maximum relative pt of 3rd jet in dijet event
+  double maxRelSoftJetEt_;
   double minDeltaPhi_;          //!< Minimum DeltaPhi for 0 < DeltaPhi < Pi
   double minJetEta_;            //!< Minimum absolute jet eta
   double maxJetEta_;            //!< Maximum absolute jet eta
@@ -92,6 +94,7 @@ class DiJetReader : public EventReader{
   int    nMinDijetEt_;          //!< Number of events rejected by minDijetEt_ cut
   int    nMaxDijetEt_;          //!< Number of events rejected by maxDijetEt_ cut
   int    nCutOn3rdJet_;         //!< Number of events rejected by max3rdJetEt_ or maxRelJetEt_ cut
+  int    nCutOnSoftJets_;
   int    nMinDeltaPhi_;         //!< Number of events rejected by maxDeltaPhi_ cut
   int    nMinJetEta_;           //!< Number of events rejected by minJetEta_ cut
   int    nMaxJetEta_;           //!< Number of events rejected by maxJetEta_ cut
@@ -107,6 +110,11 @@ class DiJetReader : public EventReader{
   double max_;                  //!< Maximum of truth spectrum in integration
   double truthSpecExp_;         //!< Exponent of truth spectrum
   double genjetpt_,jeteta_,sigmaphi_,sigmaeta_,sumsigmaetaphi_,emf_,meanMoment_; //!< possible binning variables
+
+  int minJetN90Hits_;
+  double maxJetFHPD_;
+  double maxJetFRBX_;
+
   const double* vars_[4];             //!< Jet binning variables
   const double zero_;           //!< just null
 

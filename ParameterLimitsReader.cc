@@ -5,7 +5,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date  2008/12/12
-//!  $Id: ParameterLimitsReader.cc,v 1.11 2010/04/13 13:57:11 mschrode Exp $
+//!  $Id: ParameterLimitsReader.cc,v 1.12 2010/07/22 13:58:30 mschrode Exp $
 //!   
 #include "ParameterLimitsReader.h"
 
@@ -39,28 +39,27 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TPar
     std::cout << "Using default parameter limits for '" << parclass << "':" << std::endl;
 
     // For Gauss Function
-    if( parclass == "SmearParametrizationGauss" ) {
+    // For Gauss Function in one bin
+    if( parclass == "SmearParametrizationGaussAvePt" ) {
       // Loop over jet parameters in one bin
-      for(int i = 0; i < par_->GetNumberOfJetParametersPerBin(); i++) {
-	if( i > -1 ) {
-	  double min = 1E-3;   // Parameters have to be positive
-	  double max = 10000.;
-	  
-	  // Loop over eta and phi bins
-	  for(int j = par_->GetNumberOfTowerParameters() + i; 
-	      j <  par_->GetNumberOfParameters(); 
-	      j += par_->GetNumberOfJetParametersPerBin()) {
-	    if( j < par_->GetNumberOfParameters() )
-	      par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
-	  }
+      for(int i = 0; i < 1; i++) {
+	double min = 1./sqrt(M_PI);   // Log-term has to be positive
+	double max = 10000.;
+
+	// Loop over eta and phi bins
+	for(int j = par_->GetNumberOfTowerParameters() + i; 
+	    j <  par_->GetNumberOfParameters(); 
+	    j += par_->GetNumberOfJetParametersPerBin()) {
+	  if( j < par_->GetNumberOfParameters() )
+	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
 	} // End of loop over eta and phi bins
       } // End of loop over parameters in one bin
     }
     // For Gauss Function in one bin
     else if( parclass == "SmearParametrizationGaussPtBin" ) {
       // Loop over jet parameters in one bin
-      for(int i = 0; i < 1; i++) {
-	double min = 1E-3;   // Parameters have to be positive
+      for(int i = 0; i < par_->GetNumberOfJetParameters(); i++) {
+	double min = sqrt(2./M_PI);   // Log-term has to be positive
 	double max = 10000.;
 
 	// Loop over eta and phi bins
