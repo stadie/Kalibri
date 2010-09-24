@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.18 2010/07/22 17:38:44 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.19 2010/09/22 13:29:44 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -519,14 +519,15 @@ void ControlPlotsJetSmearing::plotResponse() const
       if( ht > 0 ) {
 	double ptAsym = (j1->pt() - j2->pt())/ht;
 	hPtAsymBiased[0]->Fill(ptAsym,weight);
-	if( rand_->Uniform() > 0.5 ) ptAsym *= -1.;
 	hPtAsym[0]->Fill(ptAsym,weight);
+	hPtAsym[0]->Fill(-1.*ptAsym,weight);
       }
       double ptGenAsym = j1->genPt() - j2->genPt();
       ht = j1->genPt() + j2->genPt();
       if( ht > 0 ) {
 	ptGenAsym /= ht;
-	if( rand_->Uniform() > 0.5 ) ptGenAsym *= -1.;
+      } else {
+	ptGenAsym = -2.;
       }
       
       for(int i = 0; i < 2; i++) {        // Loop over both jets
@@ -556,6 +557,7 @@ void ControlPlotsJetSmearing::plotResponse() const
 	  hPtGenAbsBins[bin]->Fill(jet->genPt(),weight);
 	  hRespMCPtHat[bin]->Fill(jet->pt()/ptHat,weight);
 	  hPtGenAsym[bin]->Fill(ptGenAsym,weight);
+	  hPtGenAsym[bin]->Fill(-1.*ptGenAsym,weight);
 	}
       }
     }
