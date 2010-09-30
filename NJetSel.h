@@ -30,109 +30,113 @@ public :
    Float_t         VtxNDof;
    Bool_t          VtxIsFake;
    Int_t           NobjTow;
-   Int_t           TowId[340];   //[NobjTow]
-   Int_t           TowId_phi[340];   //[NobjTow]
-   Int_t           TowId_eta[340];   //[NobjTow]
-   Float_t         TowEt[340];   //[NobjTow]
-   Float_t         TowEta[340];   //[NobjTow]
-   Float_t         TowPhi[340];   //[NobjTow]
-   Float_t         TowE[340];   //[NobjTow]
-   Float_t         TowEm[340];   //[NobjTow]
-   Float_t         TowHad[340];   //[NobjTow]
-   Float_t         TowOE[340];   //[NobjTow]
-   Int_t           Tow_jetidx[340];   //[NobjTow]
-   UInt_t          TowNumBadEcalCells[340];   //[NobjTow]
-   UInt_t          TowNumBadHcalCells[340];   //[NobjTow]
-   UInt_t          TowNumProblematicEcalCells[340];   //[NobjTow]
-   UInt_t          TowNumProblematicHcalCells[340];   //[NobjTow]
-   UInt_t          TowNumRecoveredEcalCells[340];   //[NobjTow]
-   UInt_t          TowNumRecoveredHcalCells[340];   //[NobjTow]
+   Int_t           TowId[1000];   //[NobjTow]
+   Int_t           TowId_phi[1000];   //[NobjTow]
+   Int_t           TowId_eta[1000];   //[NobjTow]
+   Float_t         TowEt[1000];   //[NobjTow]
+   Float_t         TowEta[1000];   //[NobjTow]
+   Float_t         TowPhi[1000];   //[NobjTow]
+   Float_t         TowE[1000];   //[NobjTow]
+   Float_t         TowEm[1000];   //[NobjTow]
+   Float_t         TowHad[1000];   //[NobjTow]
+   Float_t         TowOE[1000];   //[NobjTow]
+   Int_t           Tow_jetidx[1000];   //[NobjTow]
+   UInt_t          TowNumBadEcalCells[1000];   //[NobjTow]
+   UInt_t          TowNumBadHcalCells[1000];   //[NobjTow]
+   UInt_t          TowNumProblematicEcalCells[1000];   //[NobjTow]
+   UInt_t          TowNumProblematicHcalCells[1000];   //[NobjTow]
+   UInt_t          TowNumRecoveredEcalCells[1000];   //[NobjTow]
+   UInt_t          TowNumRecoveredHcalCells[1000];   //[NobjTow]
    Int_t           NobjTrack;
-   Int_t           TrackTowId[451];   //[NobjTrack]
-   Int_t           TrackTowIdPhi[451];   //[NobjTrack]
-   Int_t           TrackTowIdEta[451];   //[NobjTrack]
-   Int_t           TrackId[451];   //[NobjTrack]
-   Int_t           TrackNHits[451];   //[NobjTrack]
-   Bool_t          TrackQualityL[451];   //[NobjTrack]
-   Bool_t          TrackQualityT[451];   //[NobjTrack]
-   Bool_t          TrackQualityHP[451];   //[NobjTrack]
-   Float_t         TrackChi2[451];   //[NobjTrack]
-   Float_t         TrackPt[451];   //[NobjTrack]
-   Float_t         TrackEta[451];   //[NobjTrack]
-   Float_t         TrackPhi[451];   //[NobjTrack]
-   Float_t         TrackP[451];   //[NobjTrack]
-   Float_t         TrackDR[451];   //[NobjTrack]
-   Float_t         TrackPhiOut[451];   //[NobjTrack]
-   Float_t         TrackEtaOut[451];   //[NobjTrack]
-   Float_t         TrackDROut[451];   //[NobjTrack]
-   Float_t         TrackEMC1[451];   //[NobjTrack]
-   Float_t         TrackEMC3[451];   //[NobjTrack]
-   Float_t         TrackEMC5[451];   //[NobjTrack]
-   Float_t         TrackHAC1[451];   //[NobjTrack]
-   Float_t         TrackHAC3[451];   //[NobjTrack]
-   Float_t         TrackHAC5[451];   //[NobjTrack]
-   Int_t           Track_jetidx[451];   //[NobjTrack]
-   Float_t         MuDR[451];   //[NobjTrack]
-   Float_t         MuDE[451];   //[NobjTrack]
-   Float_t         TrackD0[451];   //[NobjTrack]
-   Float_t         TrackZ0[451];   //[NobjTrack]
+   Int_t           TrackTowId[1000];   //[NobjTrack]
+   Int_t           TrackTowIdPhi[1000];   //[NobjTrack]
+   Int_t           TrackTowIdEta[1000];   //[NobjTrack]
+   Int_t           TrackId[1000];   //[NobjTrack]
+   Int_t           TrackNHits[1000];   //[NobjTrack]
+   Bool_t          TrackQualityL[1000];   //[NobjTrack]
+   Bool_t          TrackQualityT[1000];   //[NobjTrack]
+   Bool_t          TrackQualityHP[1000];   //[NobjTrack]
+   Float_t         TrackChi2[1000];   //[NobjTrack]
+   Float_t         TrackPt[1000];   //[NobjTrack]
+   Float_t         TrackEta[1000];   //[NobjTrack]
+   Float_t         TrackPhi[1000];   //[NobjTrack]
+   Float_t         TrackP[1000];   //[NobjTrack]
+   Float_t         TrackDR[1000];   //[NobjTrack]
+   Float_t         TrackPhiOut[1000];   //[NobjTrack]
+   Float_t         TrackEtaOut[1000];   //[NobjTrack]
+   Float_t         TrackDROut[1000];   //[NobjTrack]
+   Float_t         TrackEMC1[1000];   //[NobjTrack]
+   Float_t         TrackEMC3[1000];   //[NobjTrack]
+   Float_t         TrackEMC5[1000];   //[NobjTrack]
+   Float_t         TrackHAC1[1000];   //[NobjTrack]
+   Float_t         TrackHAC3[1000];   //[NobjTrack]
+   Float_t         TrackHAC5[1000];   //[NobjTrack]
+   Int_t           Track_jetidx[1000];   //[NobjTrack]
+   Float_t         MuDR[1000];   //[NobjTrack]
+   Float_t         MuDE[1000];   //[NobjTrack]
+   Float_t         TrackD0[1000];   //[NobjTrack]
+   Float_t         TrackZ0[1000];   //[NobjTrack]
    Int_t           NobjJet;
-   Float_t         JetPt[50];   //[NobjJet]
-   Float_t         JetPhi[50];   //[NobjJet]
-   Float_t         JetEta[50];   //[NobjJet]
-   Float_t         JetEt[50];   //[NobjJet]
-   Float_t         JetE[50];   //[NobjJet]
-   Int_t           JetN90Hits[50];   //[NobjJet]
-   Float_t         JetHad[50];   //[NobjJet]
-   Float_t         JetEMF[50];   //[NobjJet]
-   Float_t         JetFHPD[50];   //[NobjJet]
-   Float_t         JetFRBX[50];   //[NobjJet]
-   Float_t         JetEtWeightedSigmaPhi[50];   //[NobjJet]
-   Float_t         JetEtWeightedSigmaEta[50];   //[NobjJet]
-   Float_t         JetCorrZSP[50];   //[NobjJet]
-   Float_t         JetCorrL2[50];   //[NobjJet]
-   Float_t         JetCorrL3[50];   //[NobjJet]
-   Float_t         JetCorrJPT[50];   //[NobjJet]
-   Float_t         JetCorrL2L3[50];   //[NobjJet]
-   Float_t         JetCorrL2L3JPT[50];   //[NobjJet]
-   Int_t           JetIEta[50];   //[NobjJet]
-   Int_t           JetIPhi[50];   //[NobjJet]
-   Float_t         JetGenJetDeltaR[50];   //[NobjJet]
-   Float_t         GenJetPt[50];   //[NobjJet]
-   Float_t         GenJetPhi[50];   //[NobjJet]
-   Float_t         GenJetEta[50];   //[NobjJet]
-   Float_t         GenJetEt[50];   //[NobjJet]
-   Float_t         GenJetE[50];   //[NobjJet]
+   Float_t         JetPt[100];   //[NobjJet]
+   Float_t         JetPhi[100];   //[NobjJet]
+   Float_t         JetEta[100];   //[NobjJet]
+   Float_t         JetEt[100];   //[NobjJet]
+   Float_t         JetE[100];   //[NobjJet]
+   Int_t           JetN90Hits[100];   //[NobjJet]
+   Float_t         JetHad[100];   //[NobjJet]
+   Float_t         JetEMF[100];   //[NobjJet]
+   Float_t         JetFHPD[100];   //[NobjJet]
+   Float_t         JetFRBX[100];   //[NobjJet]
+   Bool_t          JetIDLoose[100];   //[NobjJet]
+   Bool_t          JetIDTight[100];   //[NobjJet]
+   Float_t         JetEtWeightedSigmaPhi[100];   //[NobjJet]
+   Float_t         JetEtWeightedSigmaEta[100];   //[NobjJet]
+   Float_t         JetCorrZSP[100];   //[NobjJet]
+   Float_t         JetCorrL2[100];   //[NobjJet]
+   Float_t         JetCorrL3[100];   //[NobjJet]
+   Float_t         JetCorrJPT[100];   //[NobjJet]
+   Float_t         JetCorrL2L3[100];   //[NobjJet]
+   Float_t         JetCorrL2L3JPT[100];   //[NobjJet]
+   Float_t         JetCorrL4JW[100];   //[NobjJet]
+   Int_t           JetIEta[100];   //[NobjJet]
+   Int_t           JetIPhi[100];   //[NobjJet]
+   Float_t         JetGenJetDeltaR[100];   //[NobjJet]
+   Float_t         GenJetPt[100];   //[NobjJet]
+   Float_t         GenJetPhi[100];   //[NobjJet]
+   Float_t         GenJetEta[100];   //[NobjJet]
+   Float_t         GenJetEt[100];   //[NobjJet]
+   Float_t         GenJetE[100];   //[NobjJet]
    Int_t           NobjGenJet;
-   Float_t         GenJetColPt[28];   //[NobjGenJet]
-   Float_t         GenJetColPhi[28];   //[NobjGenJet]
-   Float_t         GenJetColEta[28];   //[NobjGenJet]
-   Float_t         GenJetColEt[28];   //[NobjGenJet]
-   Float_t         GenJetColE[28];   //[NobjGenJet]
-   Float_t         GenJetColEmE[28];   //[NobjGenJet]
-   Float_t         GenJetColHadE[28];   //[NobjGenJet]
-   Float_t         GenJetColInvE[28];   //[NobjGenJet]
-   Float_t         GenJetColAuxE[28];   //[NobjGenJet]
-   Int_t           GenJetColJetIdx[28];   //[NobjGenJet]
-   Float_t         GenPartPt_algo[50];   //[NobjJet]
-   Float_t         GenPartPhi_algo[50];   //[NobjJet]
-   Float_t         GenPartEta_algo[50];   //[NobjJet]
-   Float_t         GenPartEt_algo[50];   //[NobjJet]
-   Float_t         GenPartE_algo[50];   //[NobjJet]
-   Float_t         GenPartM_algo[50];   //[NobjJet]
-   Int_t           GenPartId_algo[50];   //[NobjJet]
-   Float_t         GenPartPt_phys[50];   //[NobjJet]
-   Float_t         GenPartPhi_phys[50];   //[NobjJet]
-   Float_t         GenPartEta_phys[50];   //[NobjJet]
-   Float_t         GenPartEt_phys[50];   //[NobjJet]
-   Float_t         GenPartE_phys[50];   //[NobjJet]
-   Float_t         GenPartM_phys[50];   //[NobjJet]
-   Int_t           GenPartId_phys[50];   //[NobjJet]
+   Float_t         GenJetColPt[100];   //[NobjGenJet]
+   Float_t         GenJetColPhi[100];   //[NobjGenJet]
+   Float_t         GenJetColEta[100];   //[NobjGenJet]
+   Float_t         GenJetColEt[100];   //[NobjGenJet]
+   Float_t         GenJetColE[100];   //[NobjGenJet]
+   Float_t         GenJetColEmE[100];   //[NobjGenJet]
+   Float_t         GenJetColHadE[100];   //[NobjGenJet]
+   Float_t         GenJetColInvE[100];   //[NobjGenJet]
+   Float_t         GenJetColAuxE[100];   //[NobjGenJet]
+   Int_t           GenJetColJetIdx[100];   //[NobjGenJet]
+   Float_t         GenPartPt_algo[100];   //[NobjJet]
+   Float_t         GenPartPhi_algo[100];   //[NobjJet]
+   Float_t         GenPartEta_algo[100];   //[NobjJet]
+   Float_t         GenPartEt_algo[100];   //[NobjJet]
+   Float_t         GenPartE_algo[100];   //[NobjJet]
+   Float_t         GenPartM_algo[100];   //[NobjJet]
+   Int_t           GenPartId_algo[100];   //[NobjJet]
+   Float_t         GenPartPt_phys[100];   //[NobjJet]
+   Float_t         GenPartPhi_phys[100];   //[NobjJet]
+   Float_t         GenPartEta_phys[100];   //[NobjJet]
+   Float_t         GenPartEt_phys[100];   //[NobjJet]
+   Float_t         GenPartE_phys[100];   //[NobjJet]
+   Float_t         GenPartM_phys[100];   //[NobjJet]
+   Int_t           GenPartId_phys[100];   //[NobjJet]
    Float_t         GenEvtScale;
    Float_t         Met;
    Float_t         MetPhi;
    Float_t         MetSum;
    Float_t         Weight;
+   Float_t         CrossSection;
 
    // List of branches
    TBranch        *b_RunNumber;   //!
@@ -204,6 +208,8 @@ public :
    TBranch        *b_JetEMF;   //!
    TBranch        *b_JetFHPD;   //!
    TBranch        *b_JetFRBX;   //!
+   TBranch        *b_JetIDLoose;   //!
+   TBranch        *b_JetIDTight;   //!
    TBranch        *b_JetEtWeightedSigmaPhi;   //!
    TBranch        *b_JetEtWeightedSigmaEta;   //!
    TBranch        *b_JetCorrZSP;   //!
@@ -212,6 +218,7 @@ public :
    TBranch        *b_JetCorrJPT;   //!
    TBranch        *b_JetCorrL2L3;   //!
    TBranch        *b_JetCorrL2L3JPT;   //!
+   TBranch        *b_JetCorrL4JW;   //!
    TBranch        *b_JetIEta;   //!
    TBranch        *b_JetIPhi;   //!
    TBranch        *b_JetGenJetDeltaR;   //!
@@ -250,6 +257,7 @@ public :
    TBranch        *b_MetPhi;   //!
    TBranch        *b_MetSum;   //!
    TBranch        *b_Weight;   //!
+   TBranch        *b_CrossSection;   //!
 
    NJetSel(TTree * /*tree*/ =0) { }
    virtual ~NJetSel() { }
@@ -357,6 +365,8 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetEMF", JetEMF, &b_JetEMF);
    fChain->SetBranchAddress("JetFHPD", JetFHPD, &b_JetFHPD);
    fChain->SetBranchAddress("JetFRBX", JetFRBX, &b_JetFRBX);
+   fChain->SetBranchAddress("JetIDLoose", JetIDLoose, &b_JetIDLoose);
+   fChain->SetBranchAddress("JetIDTight", JetIDTight, &b_JetIDTight);
    fChain->SetBranchAddress("JetEtWeightedSigmaPhi", JetEtWeightedSigmaPhi, &b_JetEtWeightedSigmaPhi);
    fChain->SetBranchAddress("JetEtWeightedSigmaEta", JetEtWeightedSigmaEta, &b_JetEtWeightedSigmaEta);
    fChain->SetBranchAddress("JetCorrZSP", JetCorrZSP, &b_JetCorrZSP);
@@ -365,6 +375,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetCorrJPT", JetCorrJPT, &b_JetCorrJPT);
    fChain->SetBranchAddress("JetCorrL2L3", JetCorrL2L3, &b_JetCorrL2L3);
    fChain->SetBranchAddress("JetCorrL2L3JPT", JetCorrL2L3JPT, &b_JetCorrL2L3JPT);
+   fChain->SetBranchAddress("JetCorrL4JW", JetCorrL4JW, &b_JetCorrL4JW);
    fChain->SetBranchAddress("JetIEta", JetIEta, &b_JetIEta);
    fChain->SetBranchAddress("JetIPhi", JetIPhi, &b_JetIPhi);
    fChain->SetBranchAddress("JetGenJetDeltaR", JetGenJetDeltaR, &b_JetGenJetDeltaR);
@@ -403,6 +414,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("MetPhi", &MetPhi, &b_MetPhi);
    fChain->SetBranchAddress("MetSum", &MetSum, &b_MetSum);
    fChain->SetBranchAddress("Weight", &Weight, &b_Weight);
+   fChain->SetBranchAddress("CrossSection", &CrossSection, &b_CrossSection);
 }
 
 Bool_t NJetSel::Notify()
