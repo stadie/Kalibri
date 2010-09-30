@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.56 2010/07/27 13:53:11 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.57 2010/09/22 13:29:44 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1021,7 +1021,7 @@ CorFactors* DiJetReader::createCorFactors(int jetid) const
   return new CorFactors(nJet_->JetCorrZSP[jetid], // L1
 			nJet_->JetCorrL2[jetid],  // L2
 			nJet_->JetCorrL3[jetid],  // L3
-			1.,                         // L4
+			nJet_->JetCorrL4JW[jetid],  // L4
 			1.,                         // L5
 			nJet_->JetCorrJPT[jetid],
 			nJet_->JetCorrL2L3JPT[jetid]); //JPTL2L3
