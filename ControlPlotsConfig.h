@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.4 2010/06/28 13:08:31 stadie Exp $
+// $Id: ControlPlotsConfig.h,v 1.5 2010/06/28 16:27:43 stadie Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -52,12 +52,12 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.4 2010/06/28 13:08:31 stadie Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.5 2010/06/28 16:27:43 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
   //! Different jet energy correction types
-  enum CorrectionType { Uncorrected, Kalibri, L2L3 };
+  enum CorrectionType { Uncorrected, Kalibri, L2L3, L2L3L4 };
   typedef std::vector<CorrectionType>::const_iterator CorrectionTypeIt;  
 
   //! Number of defined profile types

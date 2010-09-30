@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.14 2010/06/29 13:52:00 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.15 2010/07/22 15:10:37 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -188,7 +188,8 @@ std::string ControlPlotsConfig::legendLabel(CorrectionType type) const {
 //! Possible names \p typeName are
 //! - "Uncorrected": \p CorrectionType::Uncorrected
 //! - "Kalibri": \p CorrectionType::Kalibri
-//! - "L2L3": \p CorrectionType::L2L3
+//! - "L2L3"   : \p CorrectionType::L2L3
+//! - "L2L3L4" : \p CorrectionType::L2L3L4
 // --------------------------------------------------
 ControlPlotsConfig::CorrectionType ControlPlotsConfig::correctionType(const std::string &typeName) const {
   CorrectionType type = Uncorrected;
@@ -199,6 +200,8 @@ ControlPlotsConfig::CorrectionType ControlPlotsConfig::correctionType(const std:
     type = Kalibri;
   else if( typeName == "L2L3" )
     type = L2L3;
+  else if( typeName == "L2L3L4" )
+    type = L2L3L4;
   else
     std::cerr << "WARNING: Undefined CorrectionType '" << typeName << "'\n";
 
@@ -210,7 +213,8 @@ ControlPlotsConfig::CorrectionType ControlPlotsConfig::correctionType(const std:
 //! Possible correction types \p corrType are
 //! - \p CorrectionType::Uncorrected: "Uncorrected"
 //! - \p CorrectionType::Kalibri: "Kalibri"
-//! - \p CorrectionType::L2L3: "L2L3"
+//! - \p CorrectionType::L2L3   : "L2L3"
+//! - \p CorrectionType::L2L3L4 : "L2L3L4"
 // --------------------------------------------------
 std::string ControlPlotsConfig::correctionTypeName(CorrectionType corrType) const {
   std::string name = "corrTypeName";
@@ -221,6 +225,8 @@ std::string ControlPlotsConfig::correctionTypeName(CorrectionType corrType) cons
     name = "Kalibri";
   else if( corrType == L2L3 )
     name = "L2L3";
+  else if( corrType == L2L3L4 )
+    name = "L2L3L4";
   else
     std::cerr << "WARNING: Undefined CorrectionType '" << corrType << "'\n";
 
@@ -468,15 +474,18 @@ void ControlPlotsConfig::init() {
   colors_[Uncorrected] = 1;
   colors_[Kalibri] = 2;
   colors_[L2L3] = 4;
+  colors_[L2L3L4] = 8;
 
   markerStyles_[Uncorrected] = 20;
   markerStyles_[Kalibri] = 21;
   markerStyles_[L2L3] = 23;
+  markerStyles_[L2L3L4] = 22;
 
   // Define default legend labels for the different corrections
   legendLabels_[Uncorrected] = "Uncorrected";
   legendLabels_[Kalibri] = "Kalibri";
   legendLabels_[L2L3] = "L2L3";
+  legendLabels_[L2L3L4] = "L2L3L4";
   // Read optional legend labels
   std::vector<std::string> legLabelStr = bag_of_string(config_->read<std::string>(name_+" legend label",";"));
   for(std::vector<std::string>::const_iterator legLabelIt = legLabelStr.begin();

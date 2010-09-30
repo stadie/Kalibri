@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.h,v 1.11 2010/06/28 16:27:43 stadie Exp $
+// $Id: ControlPlotsFunction.h,v 1.12 2010/06/29 13:52:00 stadie Exp $
 
 #ifndef CONTROLPLOTS_FUNCTION_H
 #define CONTROLPLOTS_FUNCTION_H
@@ -24,7 +24,7 @@ class Event;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsFunction.h,v 1.11 2010/06/28 16:27:43 stadie Exp $
+//!  $Id: ControlPlotsFunction.h,v 1.12 2010/06/29 13:52:00 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsFunction {
  public:
@@ -76,7 +76,8 @@ class ControlPlotsFunction {
   double jetTruthEventResponse(const Event * evt) const;
   double jetTruthEventResponseKalibriCorrected(const Event * evt) const;
   double jetTruthEventResponseL2L3Corrected(const Event * evt) const;
-    
+  double jetTruthEventResponseL2L3L4Corrected(const Event * evt) const;
+
   double twoJetsPtBalanceEventJetEta(const Event *evt) const; 
   double twoJetsPtBalanceEventJetAbsEta(const Event *evt) const;
   double twoJetsPtBalanceEventJetPt(const Event *evt) const;
@@ -88,9 +89,11 @@ class ControlPlotsFunction {
   double twoJetsPtBalanceEventAsymmetry(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetryKalibriCorrected(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetryL2L3Corrected(const Event * evt) const;
+  double twoJetsPtBalanceEventAsymmetryL2L3L4Corrected(const Event * evt) const;
   double twoJetsPtBalanceEventB(const Event * evt) const;
   double twoJetsPtBalanceEventBKalibriCorrected(const Event * evt) const;
   double twoJetsPtBalanceEventBL2L3Corrected(const Event * evt) const;
+  double twoJetsPtBalanceEventBL2L3L4Corrected(const Event * evt) const;
  private:
   //! The different correction types of the y quantity
   std::vector<ControlPlotsConfig::CorrectionType> types_;

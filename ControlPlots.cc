@@ -201,6 +201,8 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
     return &ControlPlotsFunction::jetTruthEventResponseKalibriCorrected;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::jetTruthEventResponseL2L3Corrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3L4 )
+    return  &ControlPlotsFunction::jetTruthEventResponseL2L3L4Corrected;
   if( varName == "") {
     return 0;
   }
@@ -238,12 +240,16 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryKalibriCorrected;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3Corrected;
+  if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3L4 )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3L4Corrected;
   if( varName == "B" && type == ControlPlotsConfig::Uncorrected )
     return &ControlPlotsFunction::twoJetsPtBalanceEventB;
   if( varName == "B" && type == ControlPlotsConfig::Kalibri )
     return &ControlPlotsFunction::twoJetsPtBalanceEventBKalibriCorrected;
   if( varName == "B" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3Corrected;
+  if( varName == "B" && type == ControlPlotsConfig::L2L3L4 )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3L4Corrected;
   if( varName == "") {
     return 0;
   }
