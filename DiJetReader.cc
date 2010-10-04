@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.57 2010/09/22 13:29:44 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.58 2010/09/30 16:53:33 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -193,13 +193,22 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   }
   std::cout << " (data class " << dataClass_ << "):\n";
 
+  Int_t cachesize = 50000000; //50 MBytes
+  nJet_->fChain->SetCacheSize(cachesize); 
   if((dataClass_ == 11)||(dataClass_ == 21)) { 
     nJet_->fChain->SetBranchStatus("Track*",0);
-    //nJet_->fChain->SetBranchStatus("Tow*",0);
+    nJet_->fChain->SetBranchStatus("Tow*",0);
+    nJet_->fChain->SetBranchStatus("Vtx*",0);
+    nJet_->fChain->SetBranchStatus("GenPart*",0);
+    nJet_->fChain->SetBranchStatus("GenPartId*",1);
   } else if(dataClass_ == 12) {
-    nJet_->fChain->SetBranchStatus("Track*",0);
+    nJet_->fChain->SetBranchStatus("Track*",0);  
+    nJet_->fChain->SetBranchStatus("Vtx*",0);
+    nJet_->fChain->SetBranchStatus("GenPart*",0);
+    nJet_->fChain->SetBranchStatus("GenPartId*",1);
   } else if(dataClass_ == 5) {
-    nJet_->fChain->SetBranchStatus("Track*",0);
+    nJet_->fChain->SetBranchStatus("Track*",0); 
+    nJet_->fChain->SetBranchStatus("Vtx*",0);
     nJet_->fChain->SetBranchStatus("GenPart*",0);
   }
   // Read the events
