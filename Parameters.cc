@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.55 2010/07/22 13:58:30 mschrode Exp $
+// $Id: Parameters.cc,v 1.56 2010/09/22 13:29:44 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -51,7 +51,9 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
   } else if(name == "L2L3JetParametrization2") {
     return new L2L3JetParametrization2();
   } else if(name == "L2L3JetTrackParametrization") {
-    return new L2L3JetTrackParametrization();
+    return new L2L3JetTrackParametrization();  
+  } else if(name == "ResidualJetParametrization") {
+    return new ResidualJetParametrization();
   } else if(name == "ToySimpleInverseParametrization") {
     return new ToySimpleInverseParametrization();
   } else if(name == "SmearFermiTail") {

@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.67 2010/07/22 13:58:30 mschrode Exp $
+//  $Id: Parametrization.h,v 1.68 2010/09/22 13:29:44 mschrode Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -25,7 +25,7 @@ class TRandom;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.67 2010/07/22 13:58:30 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.68 2010/09/22 13:29:44 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1857,4 +1857,45 @@ public:
   }
 };
 
+
+
+//!  \brief Parametrization of the residual jet correction needed for CMS data
+//!
+//!  This parametrization has 3 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class ResidualJetParametrization: public Parametrization {
+public:
+  ResidualJetParametrization() : Parametrization(0,3,0,0) {}
+  const char* name() const { return "ResidualParametrization";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+    //{ 1 JetEta 1 JetPt [0]-TMath::Abs([1])*TMath::ATan(log10(x/[2])) Correction L2Relative}
+    double pt = (x->pt < 4.0) ? 4.0 : x->pt;
+    double c = par[0] - std::abs(0.01 * par[1]) * atan(log10(pt/std::abs(100*par[2])));
+       
+    if(c != c) {
+      std::cout << "ResidualJetParametrization:correctedJetEt:" << c << ", " 
+		<< pt << ", " << par[1] << ", " << par[2] << '\n'; 
+    }
+ 
+    if(c < 0.1) {
+      //std::cout << "ResidualJetParametrization::correctedGlobalJetEt: at limit " << c << " for pt=" << x->pt
+      //	<< " and eta = " << x->eta << std ::endl;
+      c = 0.1;
+    }
+    if(c > 10.0) {
+      //std::cout << "ResidualJetParametrization::correctedGlobalJetEt: at limit " << c << " for pt=" << x->pt
+      //	<< " and eta = " << x->eta << std ::endl;
+      c = 10.0;
+    }
+    //assert(c > 0);
+    return  c * x->pt;
+  }
+};
 #endif
