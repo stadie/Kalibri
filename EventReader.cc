@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.13 2010/05/26 13:08:12 stadie Exp $
+// $Id: EventReader.cc,v 1.14 2010/09/22 13:29:44 mschrode Exp $
 //
 #include "EventReader.h"
 
@@ -73,6 +73,7 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
   
   if(jcs != "") {
     std::string libname = "lib/lib"+jcs+".so";
+    //std::cout << "loading lib " << libname << '\n';
     void *hndl = dlopen(libname.c_str(), RTLD_NOW);
     if(hndl == NULL){
       std::cerr << "failed to load plugin: " << dlerror() << std::endl;
@@ -139,84 +140,59 @@ EventReader::~EventReader()
   binning_ = 0;
 }
 
+TTree * EventReader::createTree(const std::string& name) const {
+  std::string treeName = config_->read<string>(name+" tree","CalibTree");
+  std::vector<std::string> inputFileNames = bag_of_string(config_->read<std::string>(name+" input file","input/dijet.root"));  
+  int nEvts = config_->read<int>("use "+name+" events",-1);
 
-
-TTree * EventReader::createTree(const std::string &dataType) const {
-  std::string readerName;
-  std::string treeName;
-  std::vector<std::string> inputFileNames;
-  int nEvts = 0;
-  if( dataType == "dijet" ) {
-    readerName = "DiJetReader";
-    treeName = config_->read<string>("Di-Jet tree","CalibTree");
-    inputFileNames = bag_of_string(config_->read<std::string>("Di-Jet input file","input/dijet.root"));  
-    nEvts = config_->read<int>("use Di-Jet events",-1);
-  }
-
-  int inputMode = -1;
-  if( inputFileNames[0] == "toy" ) {
-    inputMode = 0;
-  } else {
-    std::string fileEnding = "";
-    if( inputFileNames[0].size() > 5 ) {
-      fileEnding = inputFileNames[0].substr(inputFileNames[0].size()-5,inputFileNames[0].size());
-      if( fileEnding == ".root" ) {
-	inputMode = 1;
-      }
-    }
+ 
+  std::string fileEnding = "";
+  if( inputFileNames[0].size() > 5 ) {
+    fileEnding = inputFileNames[0].substr(inputFileNames[0].size()-5,inputFileNames[0].size());
     if( fileEnding != ".root" && inputFileNames.size() == 1 ) {
-      inputMode = 2;
+      std::ifstream filelist;
+      filelist.open(inputFileNames[0].c_str());
+      inputFileNames.clear();
+      if( filelist.is_open() ) {
+	std::string name = "";
+	while( !filelist.eof() ) {
+	  filelist >> name;
+	  if( filelist.eof() ) break;
+	  inputFileNames.push_back(name);
+	}
+	filelist.close();
+      } else {
+	std::cerr << "ERROR opening file '" << inputFileNames[0] << "'\n";
+	exit(1);
+      }
     }
   }
   
-  TTree *tree = 0;
-
-  if( inputMode == 0 ) { // Generate Toy MC sample
-    std::cout << "\n" << readerName << ": generating ToyMC events\n";
+  if( inputFileNames[0] == "toy" ) { 
+    // Generate Toy MC sample
+    std::cout << "\n" << name << " reader: generating ToyMC events\n";
     ToyMC* mc = new ToyMC();
     mc->init(config_);
     mc->print();
-    tree = new TTree(treeName.c_str(),dataType.c_str());
-    if( dataType == "dijet" ) {
+    TTree* tree = new TTree(treeName.c_str(),name.c_str());
+    if( name == "Di-Jet" ) {
       mc->generateDiJetTree(tree,nEvts);
+    } else if( name == "Gamma-Jet") {
+      mc->generatePhotonJetTree(tree,nEvts);
+    } else if( name == "Top") {
+      mc->generateTopTree(tree,nEvts);
     }
     delete mc;
-  } else if( inputMode == 1 ) { // Open all files listed in configfile
-    TChain* chain = new TChain(treeName.c_str()); 
-    std::cout << "\n" << readerName << ": opening files\n";
-    for(std::vector<std::string>::const_iterator it = inputFileNames.begin();
-	it!=inputFileNames.end(); ++it){
-      std::cout << " " << (*it) << std::endl;
-      chain->Add( it->c_str() );
-    }  
-    tree = chain;
-  } else if( inputMode == 2 ) { // Open all files listed in input file
-    std::cout << "\n" << readerName << ": opening files in list '" << inputFileNames[0] << "'\n";
-    TChain* chain = new TChain(treeName.c_str()); 
-    std::ifstream filelist;
-    filelist.open(inputFileNames[0].c_str());
-    int nOpenedFiles = 0;
-    if( filelist.is_open() ) {
-      std::string name = "";
-      while( !filelist.eof() ) {
-	filelist >> name;
-	if( filelist.eof() ) break;
-	chain->Add( name.c_str() );
-	nOpenedFiles++;
-      }
-    } else {
-      std::cerr << "ERROR opening file '" << inputFileNames[0] << "'\n";
-      exit(1);
-    }
-    filelist.close();
-    tree = chain;
-    std::cout << "Opened " << nOpenedFiles << " files\n";
-  } else {
-    tree = new TTree();
-    std::cerr << "WARNING: Wrong input file name syntax. No files opened.\n";
-  }
-
-  return tree;
+    return tree;
+  } 
+  
+  TChain* chain = new TChain(treeName.c_str()); 
+  std::cout << "\n" << name  << " reader: opening up to " << inputFileNames.size() << " files\n";
+  for(unsigned int i = 0 ;  i < inputFileNames.size() ; ++i) {
+    std::cout << i << " " << inputFileNames[i] << std::endl;
+    chain->Add(inputFileNames[i].c_str());
+  }  
+  return chain;
 }
  
 int EventReader::addConstraints(std::vector<Event*>& data) {

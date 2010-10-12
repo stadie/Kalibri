@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.23 2010/01/25 17:35:20 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.24 2010/04/13 13:44:10 mschrode Exp $
 //   
 #include "ZJetReader.h"
 
@@ -26,9 +26,9 @@
 #include "TLorentzVector.h"
 
 
-ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
-  EventReader(configfile,p),zjet(new ZJetSel()),Et_cut_on_Z(0),
-  Et_cut_on_jet(0),Had_cut_min(0),Had_cut_max(1)
+ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) 
+  : EventReader(configfile,p),zjet(new ZJetSel()),Et_cut_on_Z(0),
+    Et_cut_on_jet(0),Had_cut_min(0),Had_cut_max(1)
 {
   n_zjet_events     = config_->read<int>("use Z-Jet events",-1); 
   if(n_zjet_events == 0) return ;
@@ -40,16 +40,7 @@ ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) :
   Had_cut_min       = config_->read<double>("Min had fraction",0.07);
   Had_cut_max       = config_->read<double>("Max had fraction",0.95);
 
-  std::string default_tree_name = config_->read<std::string>("Default Tree Name","CalibTree");
-  std::string treename_zjet     = config_->read<std::string>( "Z-Jet tree", default_tree_name );
-  TChain * tchain_zjet      = new TChain( treename_zjet.c_str() );
-  std::vector<std::string> input_zjet = bag_of_string( config_->read<std::string>( "Z-Jet input file", "input/zjet.root" ) );
-  for (bag_of_string::const_iterator it = input_zjet.begin(); it!=input_zjet.end(); ++it){
-    std::cout << "...opening root-file " << (*it) << " for Z-Jet analysis." 
-	      << std::endl;
-    tchain_zjet->Add( it->c_str() );
-  }  
-  zjet->Init( tchain_zjet );
+  zjet->Init(createTree("Z-Jet"));
     
   dataClass = config_->read<int>("Z-Jet data class", 0);
   if((dataClass < 1) || (dataClass > 3)) {

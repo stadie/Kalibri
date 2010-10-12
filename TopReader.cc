@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.21 2009/11/27 15:28:12 stadie Exp $
+//    $Id: TopReader.cc,v 1.22 2010/01/25 17:35:20 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -24,25 +24,23 @@
 #include <iostream>
 #include <cstdlib>
 
-TopReader::TopReader(const std::string& configfile, TParameters* p) :
-  EventReader(configfile,p), top_(new TopSel()),
-  minJetEt_     (0.),
-  maxJetEta_    (0.),
-  minJetHadFrac_(0.07),
-  maxJetHadFrac_(0.95),
-  useToL3CorrectedJets_(false),
-  useMassConstraintW_  (false),
-  useMassConstraintTop_(false),
-  useGenJetInvMass_(false),
-  massConstraintW_  (80.4),
-  massConstraintTop_(172.4),
-  dataClass_(0),
-  createGenWHist_(false)
+TopReader::TopReader(const std::string& configfile, TParameters* p) 
+  : EventReader(configfile,p), top_(new TopSel()),
+    minJetEt_     (0.),
+    maxJetEta_    (0.),
+    minJetHadFrac_(0.07),
+    maxJetHadFrac_(0.95),
+    useToL3CorrectedJets_(false),
+    useMassConstraintW_  (false),
+    useMassConstraintTop_(false),
+    useGenJetInvMass_(false),
+    massConstraintW_  (80.4),
+    massConstraintTop_(172.4),
+    dataClass_(0),
+    createGenWHist_(false)
 {
-  nTopEvents_     = config_->read<int>("use Top events",-1); 
+  nTopEvents_     = config_->read<int>("use Top events",-1);
   if(nTopEvents_ == 0) return;
-
-
   minJetEt_  = config_->read<double>("Et cut on jet",0.0);
   maxJetEta_ = config_->read<double>("Eta cut on jet",100.0);
   minJetHadFrac_ = config_->read<double>("Min had fraction", 0.07);
@@ -60,16 +58,7 @@ TopReader::TopReader(const std::string& configfile, TParameters* p) :
   dataClass_ = config_->read<int>("Top data class", 0);
   if((dataClass_ != 0)&&(dataClass_ != 1)&&(dataClass_ != 2)) dataClass_ = 0;
   
-  std::string default_tree_name = config_->read<std::string>("Default Tree Name","CalibTree");
-  std::string treename_top    = config_->read<std::string>( "Top tree", default_tree_name );
-  TChain * tchain_top = new TChain( treename_top.c_str() );
-  std::vector<std::string> input_top = bag_of_string( config_->read<std::string>( "Top input file", "input/top.root" ) );
-  for (bag_of_string::const_iterator it = input_top.begin(); it!=input_top.end(); ++it){
-    std::cout << "...opening root-file " << (*it) << " for Top analysis." 
-	      << std::endl;
-    tchain_top->Add( it->c_str() );
-  }  
-  top_->Init( tchain_top );
+  top_->Init(createTree("Top"));
 
   createGenWHist_ = config_->read<bool>("create genW histogram",false);
   if(createGenWHist_)

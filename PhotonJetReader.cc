@@ -1,5 +1,5 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.3 2010/02/16 13:31:16 mschrode Exp $
+//  $Id: PhotonJetReader.cc,v 1.29 2010/04/13 13:44:10 mschrode Exp $
 //
 #include "PhotonJetReader.h"
 
@@ -22,8 +22,8 @@
 #include "TVector2.h"
 #include "TLorentzVector.h"
 
-PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) :
-  EventReader(configfile,p), gammaJet_(new GammaJetSel())
+PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
+  : EventReader(configfile,p), gammaJet_(new GammaJetSel())
 {
   // Maximum number of read events
   nGammaJetEvents_     = config_->read<int>("use Gamma-Jet events",-1); 
@@ -62,7 +62,7 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
   }
 
   // Input files
-  gammaJet_->Init(createTree("gammaJet"));
+  gammaJet_->Init(createTree("Gamma-Jet"));
 }
 
 PhotonJetReader::~PhotonJetReader()

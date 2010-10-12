@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.58 2010/09/30 16:53:33 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.59 2010/10/04 08:41:37 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -28,7 +28,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include <fstream>
-
+#include <sstream>
 
 
 //!  \brief Constructor
@@ -43,12 +43,11 @@
 //!  \param p Pointer to \p TParameters object
 // ----------------------------------------------------------------   
 DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
-  : EventReader(configfile,p), nJet_(new NJetSel()), rand_(new TRandom3(0)),
-    zero_(0)
+  : EventReader(configfile,p), nJet_(new NJetSel()), 
+    rand_(new TRandom3(0)), zero_(0)
 {
   // Maximum number of read events
   nDijetEvents_ = config_->read<int>("use Di-Jet events",-1);
-  if(nDijetEvents_ == 0) return;
   prescale_ = config_->read<int>("Di-Jet prescale",1);
   weightRelToNtuple_ = config_->read<double>("Di-Jet weight relative to ntuple weight",1.);
 
@@ -105,7 +104,10 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
     exit(9);
   }
   // Input files
-  nJet_->Init(createTree("dijet")); 
+  nJet_->Init(createTree("Di-Jet")); 
+  // get first event
+  nJet_->fChain->GetEntries();
+  nJet_->GetEntry(0);
 
   const std::string name = "jet binning";
   std::vector<std::string> vars = bag_of_string(config_->read<std::string>(name+" variables","")); 
@@ -193,9 +195,9 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   }
   std::cout << " (data class " << dataClass_ << "):\n";
 
-  Int_t cachesize = 50000000; //50 MBytes
-  nJet_->fChain->SetCacheSize(cachesize); 
-  if((dataClass_ == 11)||(dataClass_ == 21)) { 
+  //Int_t cachesize = 50000000; //50 MBytes
+  //nJet_->fChain->SetCacheSize(cachesize); 
+  if((dataClass_ == 11)||(dataClass_ == 21)||(dataClass_ == 1)) { 
     nJet_->fChain->SetBranchStatus("Track*",0);
     nJet_->fChain->SetBranchStatus("Tow*",0);
     nJet_->fChain->SetBranchStatus("Vtx*",0);
@@ -238,7 +240,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
       nReadEvts++;
       TwoJetsPtBalanceEvent* td = createTwoJetsPtBalanceEvent(); 
       if(td) {
-	//seconed jet should be central...
+	//second jet should be central...
 	if(std::abs(td->getJet1()->eta()) < 1.3) {
 	  data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
 						   td->getJet3() ? td->getJet3()->clone():0,
@@ -310,10 +312,11 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     std::cout << "  " << (nReadEvts-=nMinJetHadFraction_) << std::flush;
     std::cout << " dijet events with hadronic fraction > " << minJetHadFraction_ << "\n";
     std::cout << "  " << (nReadEvts-=nMaxJetHadFraction_) << std::flush;
-    std::cout << " dijet events with jet id and hadronic fraction < " << maxJetHadFraction_ << "\n";
+    std::cout << " dijet events with jet id and hadronic fraction < " << maxJetHadFraction_ << "\n";   
     std::cout << "  " << (nReadEvts-=nCutOn3rdJet_) << std::flush;
-    std::cout << " dijet events with pt(jet3) / pt(dijet) < " << maxRel3rdJetEt_ << " or ";
-    std::cout << "pt(jet3) < " << max3rdJetEt_ << " GeV\n";
+    std::cout << " dijet events with " << minRel3rdJetEt_ << " < pt(jet3) / ptAve < " << maxRel3rdJetEt_ << "\n";
+    std:: cout << "  " << (nReadEvts-=nCutOnSoftJets_) << std::flush;
+    std::cout << " dijet events with pt(jet>3) / ptAve < " << maxRelSoftJetEt_ << "\n";
   } else if( dataClass_ == 11 || dataClass_ == 12 || dataClass_ == 21 ) {
     std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
     std::cout << " events with 2 or more jets\n";
@@ -367,6 +370,26 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   std::cout << "Stored " << nGoodEvts << " dijet events for analysis.\n";
   return nGoodEvts;
 }
+  
+//!  \brief Read dijet data and store in format as specified
+//!         in the config file
+//!  \param data Read data objects are appended to data
+//!  \return Number of appended objects
+// ----------------------------------------------------------------   
+int DiJetReader::readControlEvents(std::vector<Event*>& control, int id)
+{ 
+  std::ostringstream name;
+  name << "Di-Jet Control" << id;
+  nDijetEvents_ = config_->read<int>("use "+name.str()+" events",0);
+  if(nDijetEvents_ == 0) return 0;
+  TTree* tree = createTree(name.str());
+  if(tree->GetEntries() == 0) return 0;
+  nJet_->Init(tree);
+  int nev = readEvents(control);
+  std::cout << "Stored " << nev << " dijet events for control plots.\n";
+  return nev;
+}
+
 
 //!  \brief Use first two jets of dijet event as two JetTruthEvent
 //!         objects where genjet Et is truth
@@ -886,7 +909,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
   if( nJets < 2 ) {
   nDiJetCut_++;
   return 0;
-  } else if( nJets >= 3 ) {
+  } else if(nJets > 3) {
     nJets = 3;
   }
   if( std::abs(TVector2::Phi_mpi_pi(nJet_->JetPhi[0] - nJet_->JetPhi[1])) < minDeltaPhi_ ) {
@@ -934,11 +957,16 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     return 0;
   }
   //loose jet id
-  if(((( nJet_->JetEMF[0] <= 0.01) && (std::abs(nJet_->JetEta[0]) < 2.6) )) ||
-     (( nJet_->JetEMF[1] <= 0.01) && (std::abs(nJet_->JetEta[1]) < 2.6) )) {
+  //if(((( nJet_->JetEMF[0] <= 0.01) && (std::abs(nJet_->JetEta[0]) < 2.6) )) ||
+  //   (( nJet_->JetEMF[1] <= 0.01) && (std::abs(nJet_->JetEta[1]) < 2.6) )) {
+  
+  /*
+  if(! (nJet_->JetIDLoose[0] && nJet_->JetIDLoose[1])) {
     nMaxJetHadFraction_++;
     return 0;
   }
+  */
+  /*
   if( nJet_->JetN90Hits[0] <= 1 || nJet_->JetN90Hits[1] <= 1) {
     nMaxJetHadFraction_++;
     return 0;
@@ -947,11 +975,36 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetHadFraction_++;
     return 0;
   }
-  if( nJets > 2 &&(  2 * nJet_->JetPt[2]/(nJet_->JetPt[0] + nJet_->JetPt[1]) > maxRel3rdJetEt_ ||  nJet_->JetPt[2] > max3rdJetEt_) ) {
-    nCutOn3rdJet_++;
-    return 0;
-  }
+  */
+  double ptAve = 0.5 * (nJet_->JetPt[0]+ nJet_->JetPt[1]);
+  if( nJets > 2) {
+    //compute dijet kin
+    double deltaPhi12 = TVector2::Phi_mpi_pi(nJet_->JetPhi[0]-nJet_->JetPhi[1]);
     
+    // Phi of dijet axis
+    double pPhi = TVector2::Phi_mpi_pi(nJet_->JetPhi[0]-0.5*deltaPhi12+M_PI/2.);
+    double pJ3 = 0.;
+    double ptJet3 = 0.;
+    if( nJet_->NobjJet > 2 ) {
+      pJ3 = nJet_->JetPt[2]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[2]));
+      ptJet3 = nJet_->JetPt[2];
+    }
+    double pSJ = 0.;
+    for(int i = 3; i < nJet_->NobjJet; ++i) {
+      pSJ += nJet_->JetPt[i]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[i]));
+    }
+    //double pUCE = 0.;
+    
+    if( std::abs(pJ3) > maxRel3rdJetEt_*ptAve ) {
+      nCutOn3rdJet_++;
+      return 0;
+    }
+    if( std::abs(pSJ) > 0.75*maxRelSoftJetEt_*ptAve ) {
+      nCutOnSoftJets_++;
+      return 0;
+    }
+  }
+  
   // Pointer to the three jets leading in pt calo
   Jet * jet1 = 0;
   Jet * jet2 = 0;

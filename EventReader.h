@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.12 2010/05/26 13:08:12 stadie Exp $
+// $Id: EventReader.h,v 1.13 2010/09/22 13:29:44 mschrode Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -26,6 +26,9 @@ class EventReader
   EventReader(const std::string& configfile, TParameters* p);
   virtual ~EventReader();
   virtual int readEvents(std::vector<Event*>& data) = 0;
+  virtual int readControlEvents(std::vector<Event*>& control, int id) { 
+    return 0;
+  }
 
   static int addConstraints(std::vector<Event*>& data);
 
@@ -33,7 +36,7 @@ class EventReader
   //! Read CorFactors from Ntuple
   virtual CorFactors* createCorFactors(int jetid) const { return 0;}
   //! Create TTree with data files
-  TTree * createTree(const std::string &dataType) const;
+  TTree* createTree(const std::string& name) const;
 
   ConfigFile* config_;   //!< The configfile
   TParameters* par_;     //!< The parametrization
