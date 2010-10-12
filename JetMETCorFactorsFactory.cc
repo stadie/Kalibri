@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.8 2010/05/01 09:35:34 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.9 2010/07/23 13:04:18 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -23,6 +23,7 @@ JetMETCorFactorsFactory::JetMETCorFactorsFactory(const std::string& name,
   std::string file;
   while(std::getline(ss,file,':')) {
     vParam.push_back(JetCorrectorParameters(file));
+    //vParam.back().printScreen();
   }
   cor_ = new FactorizedJetCorrector(vParam);
   
@@ -42,13 +43,15 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j)
   cor_->setJetE(j->E());
   cor_->setJetPhi(j->phi());
   cor_->setJetEMF(j->EmEt()/(j->EmEt() + j->HadEt())); 
-  
+  cor_->setJetEtaEtaMoment(j->momentEtaEta());
+  cor_->setJetPhiPhiMoment(j->momentPhiPhi());
+
   std::vector<float> levels = cor_->getSubCorrections();
 
-  //std::cout << "eta:" << j->eta() << "  cor levels:" << levels.size() << " :";
+  //std::cout << "eta:" << j->eta() << " pt:" << j->pt() << " etaeta:" << j->momentEtaEta() << "  cor levels:" << levels.size() << " :";
   //std::cout << levels[0] << ", " << levels[1];
   //if(levels.size() == 3) std::cout << ", "<< levels[2] << '\n';
-  //else std::cout << levels[2] << '\n';
+  //else std::cout << '\n';
   return new CorFactors(1.0,
 			levels[0],
 			(levels.size() == 3) ? levels[2]/levels[0] : levels[1]/levels[0],
@@ -68,6 +71,7 @@ JetMETCorFactorsFactory::Register::Register()
   create("Spring10_AK5CaloData","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Spring10DataV1_L2L3Residual_AK5Calo.txt"); 
   create("Spring10_AK5PFData","JetMETObjects/data/Spring10_L2Relative_AK5PF.txt:JetMETObjects/data/Spring10_L3Absolute_AK5PF.txt:JetMETObjects/data/Spring10DataV1_L2L3Residual_AK5PF.txt"); 
   create("Spring10_AK5JPTData","JetMETObjects/data/Spring10_L2Relative_AK5JPT.txt:JetMETObjects/data/Spring10_L3Absolute_AK5JPT.txt:JetMETObjects/data/Spring10DataV1_L2L3Residual_AK5JPT.txt");
+  create("Spring10_AK5CaloJW","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt:JetMETObjects/data/L4JW_AK5Calo.txt");
 }
 
 JetMETCorFactorsFactory* JetMETCorFactorsFactory::Register::create(const std::string& name, const std::string& files) const
