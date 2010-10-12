@@ -18,22 +18,20 @@ class Event;
 //!  The attributes of the control plots are  specified via 
 //!  the configuration file.
 //!
-//!  \author Christian Autermann
-//!  \date Fri Jan 18 13:55:15 2008 UTC
-//!  $Id: ControlPlots.h,v 1.34 2010/01/04 17:04:51 mschrode Exp $
+//!  $Id: ControlPlots.h,v 1.35 2010/06/09 22:30:53 stadie Exp $
 // -------------------------------------------------------------
 class ControlPlots {
  public:
   typedef std::vector<Event*>::const_iterator DataIt;
 
-  ControlPlots(const ConfigFile *configFile, const std::vector<Event*> *data);
+  ControlPlots(const ConfigFile *configFile, const std::vector<std::vector<Event*>* >& samples);
   ~ControlPlots() {};
 
   void makePlots() const;
 
  private:
-  const ConfigFile *config_;                    //!< The configuration file
-  const std::vector<Event*> *data_;             //!< The plotted data
+  const ConfigFile *config_; //!< The configuration file
+  const std::vector<std::vector<Event*>* >& samples_; //!< The plotted data
 
   void createJetTruthEventPlots() const;
   void createTwoJetsPtBalanceEventPlots() const;

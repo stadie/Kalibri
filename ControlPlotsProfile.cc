@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.12 2010/07/22 14:00:32 mschrode Exp $
+// $Id: ControlPlotsProfile.cc,v 1.13 2010/07/22 14:46:45 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -86,17 +86,17 @@ void ControlPlotsProfile::draw() {
   // Draw 2D histograms
   for(std::vector<Bin*>::iterator binIt = bins_.begin();
       binIt != bins_.end(); binIt++) {
-    ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->correctionTypesBegin();
-    for(; corrTypeIt != config_->correctionTypesEnd(); corrTypeIt++) {
+    for(ControlPlotsConfig::InputTagsIterator it = config_->inputTagsBegin() ; 
+	it != config_->inputTagsEnd(); ++it) {
       c1->Clear();
-      TH2D *h = (*binIt)->hYvsX(*corrTypeIt);
+      TH2D *h = (*binIt)->hYvsX(*it);
       h->Draw("COLZ");
       if( config_->logX() ) c1->SetLogx(1);
       c1->RedrawAxis();      
       p1->DrawClone();
       config_->toRootFile(h);
       fileName = config_->outDirName() + "/";
-      fileName += (*binIt)->hist2DFileName(*corrTypeIt) + "." + config_->outFileType();
+      fileName += (*binIt)->hist2DFileName(*it) + "." + config_->outFileType();
       c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
   }
@@ -116,21 +116,30 @@ void ControlPlotsProfile::draw() {
     for(; profTypeIt != config_->profileTypesEnd(); profTypeIt++) {
       c1->Clear();
       bool firstHist = true;
-      ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->correctionTypesBegin();
-      for(; corrTypeIt != config_->correctionTypesEnd(); corrTypeIt++) {
-	TH1D *h = (*binIt)->hXProfile(*corrTypeIt,*profTypeIt);
+      for(ControlPlotsConfig::InputTagsIterator tagsIt = config_->inputTagsBegin() ; tagsIt != config_->inputTagsEnd() ; ++tagsIt) {
+	TH1D *h = (*binIt)->hXProfile(*tagsIt,*profTypeIt);
 	if( firstHist ) {
-	  h->Draw("PE1X0");
+	  if(h->GetMarkerStyle() < 0) {
+	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	    h->Draw("HIST");
+	  } else {
+	    h->Draw("PE1X0");
+	  }
 	  firstHist = false;
-	} else {
-	  h->Draw("PE1X0same");
+	} else { 
+	  if(h->GetMarkerStyle() < 0) {
+	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	    h->Draw("HISTSAME");
+	  } else {
+	    h->Draw("PE1X0same");
+	  }
 	}
 	config_->toRootFile(h);
       } 
       if( *profTypeIt == ControlPlotsConfig::RatioOfMeans 
 	  || *profTypeIt == ControlPlotsConfig::RatioOfGaussFitMeans ) hLine2->Draw("same");
       else if( *profTypeIt == ControlPlotsConfig::Mean
-	  || *profTypeIt == ControlPlotsConfig::GaussFitMean  ) hLine->Draw("same");
+	       || *profTypeIt == ControlPlotsConfig::GaussFitMean  ) hLine->Draw("same");
       leg->Draw("same");
       
       if( config_->logX() ) c1->SetLogx(1);
@@ -149,15 +158,24 @@ void ControlPlotsProfile::draw() {
     for(; profTypeIt != config_->profileTypesEnd(); profTypeIt++) {
       c1->Clear();
       bool firstHist = true;
-      ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->correctionTypesBegin();
-      for(; corrTypeIt != config_->correctionTypesEnd(); corrTypeIt++) {
-	TH1D *h = (*binIt)->hXProfile(*corrTypeIt,*profTypeIt);
+      for(ControlPlotsConfig::InputTagsIterator tagsIt = config_->inputTagsBegin() ; tagsIt != config_->inputTagsEnd(); tagsIt++) {
+	TH1D *h = (*binIt)->hXProfile(*tagsIt,*profTypeIt);
 	h->GetYaxis()->SetRangeUser(config_->yMinZoom(*profTypeIt),config_->yMaxZoom(*profTypeIt));
-	if( firstHist ) {
-	  h->Draw("PE1X0");
+	if( firstHist ) {  
+	  if(h->GetMarkerStyle() < 0) {
+	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	    h->Draw("HIST");
+	  } else {
+	    h->Draw("PE1X0");
+	  }
 	  firstHist = false;
 	} else {
-	  h->Draw("PE1X0same");
+	  if(h->GetMarkerStyle() < 0) {
+	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	    h->Draw("HISTSAME");
+	  } else {
+	    h->Draw("PE1X0same");
+	  }
 	}
       }  
       if( *profTypeIt == ControlPlotsConfig::RatioOfMeans 
@@ -178,18 +196,17 @@ void ControlPlotsProfile::draw() {
   // Draw distributions
   for(std::vector<Bin*>::iterator binIt = bins_.begin();
       binIt != bins_.end(); binIt++) {
-    ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->distributionCorrectionTypesBegin();
-    for(; corrTypeIt != config_->distributionCorrectionTypesEnd(); corrTypeIt++) {
+    for( ControlPlotsConfig::InputTagsIterator tagsIt = config_->distributionInputTagsBegin() ;  tagsIt != config_->distributionInputTagsEnd(); ++tagsIt) {
       for(int n = 0; n < (*binIt)->nDistributions(); n++) {
 	c1->Clear();
-	TH1D *h = (*binIt)->hYDistribution(n,*corrTypeIt);
+	TH1D *h = (*binIt)->hYDistribution(n,*tagsIt);
 	h->Draw("HIST");
 	c1->SetLogx(0);
 	c1->RedrawAxis();
 	p2->DrawClone();
 	config_->toRootFile(h);
 	fileName = config_->outDirName() + "/";
-	fileName += (*binIt)->distributionFileName(n,*corrTypeIt) + "." + config_->outFileType();
+	fileName += (*binIt)->distributionFileName(n,*tagsIt) + "." + config_->outFileType();
 	c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
       }
     }
@@ -225,7 +242,7 @@ void ControlPlotsProfile::draw() {
 //! \p ControlPlotsFunction::yValue(evt).
 //! \sa Bin::fill(), findBin()
 // ----------------------------------------------------------------   
-void ControlPlotsProfile::fill(const Event * evt) {
+void ControlPlotsProfile::fill(const Event * evt, int id) {
   double cutv = function_->cutValue(evt);
   if((cutv < config_->cutMin()) || (cutv > config_->cutMax())) return;
 
@@ -234,11 +251,12 @@ void ControlPlotsProfile::fill(const Event * evt) {
 
   int bin = findBin(evt);
   if( bin >= 0 ) {
-    for(ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->correctionTypesBegin(); 
-	corrTypeIt != config_->correctionTypesEnd(); ++corrTypeIt) {
-      double y = function_->yValue(evt,*corrTypeIt);
-      if( bins_[bin]->fill(x,y,evt->weight(),*corrTypeIt) ) {
-	std::cerr << "ERROR when filling YvsX histograms of CorrectionType '" << *corrTypeIt << "'\n";
+    for(ControlPlotsConfig::InputTagsIterator it = config_->inputTagsBegin(); 
+	it != config_->inputTagsEnd(); ++it) {
+      if(id != it->first) continue;
+      double y = function_->yValue(evt,it->second);
+      if( bins_[bin]->fill(x,y,evt->weight(),*it) ) {
+	std::cerr << "ERROR when filling YvsX histograms of CorrectionType '" << it->first << ", " << it->second << "'\n";
       }
     }
   }
@@ -282,12 +300,12 @@ ControlPlotsProfile::Bin::Bin(int binIdx, double min, double max, const ControlP
   : idx_(binIdx), min_(min), max_(max), config_(config), nCallsFitProfiles_(0) {
 
   // Create one 2D histogram per correction type
-  ControlPlotsConfig::CorrectionTypeIt corrIt;
-  for(corrIt = config_->correctionTypesBegin();
-      corrIt != config_->correctionTypesEnd(); corrIt++) {
+  for(ControlPlotsConfig::InputTagsIterator i = config_->inputTagsBegin();
+      i != config_->inputTagsEnd(); ++i) {
     std::string name = config_->name();
     name += "_"+config_->yVariable()+"Vs"+config_->xVariable();
-    name += "_"+config_->correctionTypeName(*corrIt);
+    name += "_"+config_->sampleName(i->first);
+    name += "_"+config_->correctionTypeName(i->second);
     name += "_"+config_->binName(idx_);
 
     TH2D * h = new TH2D(name.c_str(),"",
@@ -296,8 +314,8 @@ ControlPlotsProfile::Bin::Bin(int binIdx, double min, double max, const ControlP
     h->SetTitle((config_->binTitle(min,max)).c_str());
     h->SetXTitle((config_->xTitle()).c_str());
     h->SetYTitle((config_->yTitle()).c_str());
-    h->SetMarkerColor(config_->color(*corrIt));
-    hYvxX_[*corrIt] = h;
+    h->SetMarkerColor(config_->color(*i));
+    hYvxX_[*i] = h;
   }
 }
 
@@ -305,18 +323,15 @@ ControlPlotsProfile::Bin::Bin(int binIdx, double min, double max, const ControlP
 
 // ----------------------------------------------------------------   
 ControlPlotsProfile::Bin::~Bin() {
-  for(std::map<ControlPlotsConfig::CorrectionType,TH2D*>::iterator it = hYvxX_.begin();
+  for(std::map<ControlPlotsConfig::InputTag,TH2D*>::iterator it = hYvxX_.begin();
       it != hYvxX_.end(); it++) {
     delete it->second;
   }
-  std::map< ControlPlotsConfig::CorrectionType, std::map< ControlPlotsConfig::ProfileType, TH1D*> >::iterator corrIt = hXProfile_.begin();
-  for(; corrIt != hXProfile_.end(); corrIt++) {
-    std::map< ControlPlotsConfig::ProfileType, TH1D*>::iterator profIt = corrIt->second.begin();
-    for(; profIt != corrIt->second.end(); profIt++) {
+  for(std::map< ControlPlotsConfig::InputTag, std::map< ControlPlotsConfig::ProfileType, TH1D*> >::iterator corrIt = hXProfile_.begin() ; corrIt != hXProfile_.end(); corrIt++) {
+    for(std::map< ControlPlotsConfig::ProfileType, TH1D*>::iterator profIt = corrIt->second.begin() ; profIt != corrIt->second.end(); profIt++) {
       delete profIt->second;
     }
-    std::vector<TH1D*>::iterator distIt = hYDistributions_[corrIt->first].begin();
-    for(; distIt != hYDistributions_[corrIt->first].end(); distIt++) {
+    for(std::vector<TH1D*>::iterator distIt = hYDistributions_[corrIt->first].begin() ; distIt != hYDistributions_[corrIt->first].end(); distIt++) {
       delete *distIt;
     }
   }
@@ -325,9 +340,9 @@ ControlPlotsProfile::Bin::~Bin() {
 
 
 // ----------------------------------------------------------------   
-TH2D *ControlPlotsProfile::Bin::hYvsX(ControlPlotsConfig::CorrectionType corrType) {
+TH2D *ControlPlotsProfile::Bin::hYvsX(const ControlPlotsConfig::InputTag& tag) {
   TH2D * h = 0;
-  std::map<ControlPlotsConfig::CorrectionType,TH2D*>::iterator it = hYvxX_.find(corrType);
+  std::map<ControlPlotsConfig::InputTag,TH2D*>::iterator it = hYvxX_.find(tag);
   if( it != hYvxX_.end() ) {
     h = it->second;
   }
@@ -338,9 +353,9 @@ TH2D *ControlPlotsProfile::Bin::hYvsX(ControlPlotsConfig::CorrectionType corrTyp
 
 
 // ----------------------------------------------------------------   
-TH1D *ControlPlotsProfile::Bin::hXProfile(ControlPlotsConfig::CorrectionType corrType, ControlPlotsConfig::ProfileType profType) {
+TH1D *ControlPlotsProfile::Bin::hXProfile(const ControlPlotsConfig::InputTag& tag, ControlPlotsConfig::ProfileType profType) {
   TH1D * h = 0;
-  std::map< ControlPlotsConfig::CorrectionType, std::map< ControlPlotsConfig::ProfileType, TH1D* > >::iterator corrIt = hXProfile_.find(corrType);
+  std::map< ControlPlotsConfig::InputTag, std::map< ControlPlotsConfig::ProfileType, TH1D* > >::iterator corrIt = hXProfile_.find(tag);
   if( corrIt != hXProfile_.end() ) {
     std::map< ControlPlotsConfig::ProfileType, TH1D* >::iterator profIt = corrIt->second.find(profType);
     if( profIt != corrIt->second.end() ) {
@@ -354,9 +369,10 @@ TH1D *ControlPlotsProfile::Bin::hXProfile(ControlPlotsConfig::CorrectionType cor
 
 
 // ----------------------------------------------------------------   
-TH1D *ControlPlotsProfile::Bin::hYDistribution(int n, ControlPlotsConfig::CorrectionType corrType) {
+TH1D *ControlPlotsProfile::Bin::hYDistribution(int n,const  ControlPlotsConfig::InputTag& tag) 
+{
   TH1D * h = 0;
-  std::map< ControlPlotsConfig::CorrectionType, std::vector< TH1D* > >::iterator corrIt = hYDistributions_.find(corrType);
+  std::map< ControlPlotsConfig::InputTag, std::vector< TH1D* > >::iterator corrIt = hYDistributions_.find(tag);
   if( corrIt != hYDistributions_.end() ) {
     if( n >=0 && n < nDistributions() ) {
       h = corrIt->second.at(n);
@@ -369,9 +385,10 @@ TH1D *ControlPlotsProfile::Bin::hYDistribution(int n, ControlPlotsConfig::Correc
 
 
 // ----------------------------------------------------------------   
-int ControlPlotsProfile::Bin::fill(double x, double y, double w, ControlPlotsConfig::CorrectionType type) {
+int ControlPlotsProfile::Bin::fill(double x, double y, double w,const ControlPlotsConfig::InputTag& tag) 
+{
   int status = -1;
-  std::map<ControlPlotsConfig::CorrectionType,TH2D*>::iterator it = hYvxX_.find(type);
+  std::map<ControlPlotsConfig::InputTag,TH2D*>::iterator it = hYvxX_.find(tag);
   if( it != hYvxX_.end() ) {
     it->second->Fill(x,y,w);
     status = 0;
@@ -401,14 +418,11 @@ int ControlPlotsProfile::Bin::fitProfiles() {
   if( nCallsFitProfiles_ > 1 ) {
     std::cerr << "WARNING: FitProfiles has been called already\n";
     // Deleting profiles
-    std::map< ControlPlotsConfig::CorrectionType, std::map< ControlPlotsConfig::ProfileType, TH1D*> >::iterator corrIt = hXProfile_.begin();
-    for(; corrIt != hXProfile_.end(); corrIt++) {
-      std::map< ControlPlotsConfig::ProfileType, TH1D*>::iterator profIt = corrIt->second.begin();
-      for(; profIt != corrIt->second.end(); profIt++) {
+    for(std::map< ControlPlotsConfig::InputTag, std::map< ControlPlotsConfig::ProfileType, TH1D*> >::iterator corrIt = hXProfile_.begin() ; corrIt != hXProfile_.end(); corrIt++) {
+      for(std::map< ControlPlotsConfig::ProfileType, TH1D*>::iterator profIt = corrIt->second.begin(); profIt != corrIt->second.end(); profIt++) {
 	delete profIt->second;
       }
-      std::vector<TH1D*>::iterator distIt = hYDistributions_[corrIt->first].begin();
-      for(; distIt != hYDistributions_[corrIt->first].end(); distIt++) {
+      for( std::vector<TH1D*>::iterator distIt = hYDistributions_[corrIt->first].begin() ; distIt != hYDistributions_[corrIt->first].end(); distIt++) {
 	delete *distIt;
       }
       corrIt->second.clear();
@@ -421,7 +435,7 @@ int ControlPlotsProfile::Bin::fitProfiles() {
   bool isResponse = ((config_->yVariable()).find("Response") != std::string::npos); 
   // Create profile histograms
   // Loop over CorrectionTypes
-  for(std::map<ControlPlotsConfig::CorrectionType,TH2D*>::iterator corrIt = hYvxX_.begin();
+  for(std::map<ControlPlotsConfig::InputTag,TH2D*>::iterator corrIt = hYvxX_.begin();
       corrIt != hYvxX_.end(); corrIt++) {
 
     hYDistributions_[corrIt->first] = std::vector<TH1D*>(corrIt->second->GetNbinsX());
@@ -451,7 +465,7 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 
     // Fill profile histograms
     // Loop over CorrectionTypes
-  for(std::map<ControlPlotsConfig::CorrectionType,TH2D*>::iterator corrIt = hYvxX_.begin();
+  for(std::map<ControlPlotsConfig::InputTag,TH2D*>::iterator corrIt = hYvxX_.begin();
       corrIt != hYvxX_.end(); corrIt++) {
     // Temp histogram to store slice of 2D hists
     TH1D *htemp = new TH1D("htemp","",
@@ -549,11 +563,11 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 
 
 // ----------------------------------------------------------------   
-std::string ControlPlotsProfile::Bin::hist2DFileName(ControlPlotsConfig::CorrectionType type) const {
+std::string ControlPlotsProfile::Bin::hist2DFileName(const ControlPlotsConfig::InputTag& tag) const {
   std::string name = config_->name();
   name += "_2D_"+config_->binName(idx_);
-  name += "_"+config_->correctionTypeName(type);
-
+  name += "_"+config_->sampleName(tag.first);
+  name += "_"+config_->correctionTypeName(tag.second);
   return name;
 }
 
@@ -571,10 +585,11 @@ std::string ControlPlotsProfile::Bin::profileFileName(ControlPlotsConfig::Profil
 
 
 // ----------------------------------------------------------------   
-std::string ControlPlotsProfile::Bin::distributionFileName(int xBin, ControlPlotsConfig::CorrectionType type) const {
+std::string ControlPlotsProfile::Bin::distributionFileName(int xBin, const ControlPlotsConfig::InputTag& tag) const {
   std::string name = config_->name();
   name += "_Dist_"+config_->binName(idx_);
-  name += "_"+config_->correctionTypeName(type);
+  name += "_"+config_->sampleName(tag.first);
+  name += "_"+config_->correctionTypeName(tag.second);
   name += "_"+config_->xBinName(xBin);
 
   return name;
@@ -601,20 +616,19 @@ TLegend *ControlPlotsProfile::Bin::createLegend() {
   size_t nEntries = hXProfile_.size();
   TLegend * leg = 0;
   if( nEntries ) {
-    leg = new TLegend(0.5,0.85-nEntries*0.06,0.8,0.85);
+    leg = new TLegend(0.3,0.85-nEntries*0.06,0.8,0.85);
     leg->SetBorderSize(0);
     leg->SetFillColor(0);
     leg->SetTextFont(42);
     leg->SetTextSize(0.04);
 
     ControlPlotsConfig::ProfileTypeIt profTypeIt = config_->profileTypesBegin();
-    ControlPlotsConfig::CorrectionTypeIt corrTypeIt = config_->correctionTypesBegin();
-    for(; corrTypeIt != config_->correctionTypesEnd(); corrTypeIt++) {
+    for( ControlPlotsConfig::InputTagsIterator corrTypeIt = config_->inputTagsBegin() ; corrTypeIt != config_->inputTagsEnd(); corrTypeIt++) {
       leg->AddEntry(hXProfile(*corrTypeIt,*profTypeIt),
 		    (config_->legendLabel(*corrTypeIt)).c_str(),
 		    "PL");
     }
   }
-
+  
   return leg;
 }

@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.7 2010/05/19 13:34:48 stadie Exp $
+//  $Id: Kalibri.cc,v 1.8 2010/05/27 08:35:30 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -121,7 +121,71 @@ public:
   double tempDeriv2(int i) const { return td2_[i];}
 };
 
+// -----------------------------------------------------------------
+/*
+class ReadThread {
+private:
+  int id_;
+  int ntasks_;
+  std::string configFile_;
+  TParameters * par_;  
+  std::vector<EventReader*> readers_;
+  std::vector<Event*> data_;
+  std::vector<std::vector<Event*> >control_;
+  struct read_events
+  {
+  private:
+    ReadThread *parent_;
+  public:
+    read_events(ReadThread *parent) : parent_(parent) {}
+    void operator()()
+    {
+      for(std::vector<EventReader*>::iterator i = parent_->readers_.begin() ; 
+	  i != parent_->readers_.end() ; ++i) {
+	(*i)->readEvents(parent_->data_);
+	boost::mutex::scoped_lock lock(io_mutex);
+	//(*i)->readControlEvents(parent_->control_[0],1);
+	//(*i)->readControlEvents(parent_->control_[1],2);
+      }
+    }
+  };
+  boost::thread *thread_;
+  friend class read_events;
+public:
+  ReadThread(int id,int ntasks, const std::string& configfile, 
+	     TParameters* par) 
+    : id_(id), ntasks_(ntasks),configFile_(configfile),par_(par),control_(2) 
+  {
+    readers_.push_back(new PhotonJetReader(configFile_,par_,id_,ntasks_));
+    readers_.push_back(new DiJetReader(configFile_,par_,id_,ntasks_));
+    readers_.push_back(new TriJetReader(configFile_,par_,id_,ntasks_));
+    readers_.push_back(new ZJetReader(configFile_,par_,id_,ntasks_));
+    readers_.push_back(new TopReader(configFile_,par_,id_,ntasks_));
+  }
+  ~ReadThread() {
+    for(std::vector<EventReader*>::iterator i = readers_.begin() ; 
+	i != readers_.end() ; ++i) {
+      delete *i;
+    }
+  }
+  void start() { thread_ = new boost::thread(read_events(this)); }
+  bool isDone() { thread_->join(); delete thread_; return true;}
+  int addEvents(std::vector<Event*>& data) {
+    for(DataConstIter i = data_.begin() ; i != data_.end() ; ++i) {
+      data.push_back(*i);
+    }
+    return data_.size();
+  }
+  int addControlEvents(std::vector<Event*>& controls, int id) {
+    for(DataConstIter i = control_[id].begin() ; 
+	i != control_[id].end() ; ++i) {
+      controls.push_back(*i);
+    }
+    return control_[id].size();
+  }
+};
 
+*/
 
 //--------------------------------------------------------------------------------------------
 void Kalibri::run()
@@ -436,7 +500,11 @@ void Kalibri::done()
   // Make control plots
   if( config.read<bool>("create plots",0) ) {
     if( mode_ == 0 ) {  // Control plots for calibration
-      ControlPlots * plots = new ControlPlots(&config,&data_);
+      std::vector<std::vector<Event*>* > samples;
+      samples.push_back(&data_);
+      samples.push_back(&control_[0]);
+      samples.push_back(&control_[1]);      
+      ControlPlots * plots = new ControlPlots(&config,samples);
       plots->makePlots();
       delete plots;
     } else if( mode_ == 1 ) {  // Control plots for jetsmearing
@@ -582,25 +650,21 @@ void Kalibri::init()
 
   outputFile_ = config.read<string>( "Output file", "calibration_k.cfi" );
 
-  //fill data vector
-  PhotonJetReader pjr(configFile_,par_);
-  nGammajetEvents_ = pjr.readEvents(data_);
-  
-  DiJetReader djr(configFile_,par_);
-  nDijetEvents_ = djr.readEvents(data_);
-
-  TriJetReader tjr(configFile_,par_);
-  nTrijetEvents_ = tjr.readEvents(data_);
-
-  ZJetReader zjr(configFile_,par_);
-  nZjetEvents_ = zjr.readEvents(data_);
-
-  TopReader tr(configFile_,par_);
-  nTopEvents_ = tr.readEvents(data_);
-  
-  ParameterLimitsReader plr(configFile_,par_);
-  plr.readEvents(data_);
-
+  //fill data vector  
+  std::vector<EventReader*> readers;
+  readers.push_back(new PhotonJetReader(configFile_,par_));
+  readers.push_back(new DiJetReader(configFile_,par_));
+  readers.push_back(new TriJetReader(configFile_,par_));
+  readers.push_back(new ZJetReader(configFile_,par_));
+  readers.push_back(new TopReader(configFile_,par_));
+  readers.push_back(new ParameterLimitsReader(configFile_,par_));
+  for(std::vector<EventReader*>::iterator i = readers.begin() ; 
+      i != readers.end() ; ++i) {
+    (*i)->readEvents(data_);
+    (*i)->readControlEvents(control_[0],1);
+    (*i)->readControlEvents(control_[1],2);
+    delete *i;
+  }
   EventReader::addConstraints(data_);
 }
 //--^-Kalibri class-^------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-//  $Id: Kalibri.h,v 1.4 2010/04/13 13:53:21 mschrode Exp $
+//  $Id: Kalibri.h,v 1.5 2010/04/24 14:10:52 mschrode Exp $
 
 //!  \mainpage
 //!
@@ -50,7 +50,7 @@ class Measurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Kalibri.h,v 1.4 2010/04/13 13:53:21 mschrode Exp $
+//!  $Id: Kalibri.h,v 1.5 2010/04/24 14:10:52 mschrode Exp $
 // -----------------------------------------------------------------
 class Kalibri {
 public :
@@ -91,18 +91,19 @@ protected:
 
 private:
   //internal variables
-  std::string configFile_;    //!< The configuration file name
-  std::string outputFile_;    //!< The output file name
-  TParameters * par_;         //!< Fit parameters, depend on number of bins & geometry
-  int fitMethod_;             //!< Running mode
-  int nThreads_;              //!< Number of threads
-  std::vector<Event*> data_;  //!< The data
-  int nGammajetEvents_;       //!< Number of gamma-jet events
-  int nDijetEvents_;          //!< Number of dijet events
-  int nTrijetEvents_;         //!< Number of trijet events
-  int nTrackClusterEvents_;   //!< Number of track-cluster events
-  int nZjetEvents_;           //!< Number of Zjet events
-  int nTopEvents_;            //!< Number of top events
+  std::string configFile_;         //!< The configuration file name
+  std::string outputFile_;         //!< The output file name
+  TParameters * par_;              //!< Fit parameters, depend on number of bins & geometry
+  int fitMethod_;                  //!< Running mode
+  int nThreads_;                   //!< Number of threads
+  std::vector<Event*> data_;       //!< The data
+  std::vector<Event*> control_[2]; //!< control samples
+  int nGammajetEvents_;            //!< Number of gamma-jet events
+  int nDijetEvents_;               //!< Number of dijet events
+  int nTrijetEvents_;              //!< Number of trijet events
+  int nTrackClusterEvents_;        //!< Number of track-cluster events
+  int nZjetEvents_;                //!< Number of Zjet events
+  int nTopEvents_;                 //!< Number of top events
   int mode_;
 
   // control parameters of fit

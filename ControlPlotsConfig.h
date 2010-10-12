@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.5 2010/06/28 16:27:43 stadie Exp $
+// $Id: ControlPlotsConfig.h,v 1.6 2010/09/30 16:55:13 stadie Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -52,13 +52,15 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.5 2010/06/28 16:27:43 stadie Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.6 2010/09/30 16:55:13 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
   //! Different jet energy correction types
   enum CorrectionType { Uncorrected, Kalibri, L2L3, L2L3L4 };
   typedef std::vector<CorrectionType>::const_iterator CorrectionTypeIt;  
+  typedef std::pair<int,CorrectionType> InputTag;
+  typedef std::vector<InputTag>::const_iterator InputTagsIterator;  
 
   //! Number of defined profile types
   static const int nProfileTypes = 10;
@@ -136,33 +138,37 @@ class ControlPlotsConfig {
   //! Returns the title of the profile's y axis depending on the \p ProfileType \p type
   std::string yProfileTitle(ProfileType type) const;
 
-  //! Returns the marker and line color for the \p ProfileType \p type 
-  int color(CorrectionType type) const;
-  //! Returns the marker style for the \p ProfileType \p type 
-  int markerStyle(CorrectionType type) const;
-  //! Returns a legend label for the \p ProfileType \p type 
-  std::string legendLabel(CorrectionType type) const;
+  //! Returns the marker and line color for the \p InputTag \p tag 
+  int color(const InputTag& tag) const;
+  //! Returns the marker style for the \p InputTag \p tag
+  int markerStyle(const InputTag& tag) const;
+  //! Returns a legend label for the \p InputTag \p tag
+  std::string legendLabel(const InputTag& tag) const;
 
   //! Returns the correction types for which profiles are to be plotted
-  const std::vector<CorrectionType> *correctionTypes() const { return &corrTypes_; }
+  const std::vector<InputTag> *inputTags() const { return &inputTags_; }
   //! Returns an iterator to the first correction type to be plotted
-  CorrectionTypeIt correctionTypesBegin() const { return corrTypes_.begin(); }
+  InputTagsIterator inputTagsBegin() const { return inputTags_.begin(); }
   //! Returns an iterator to the last correction type to be plotted
-  CorrectionTypeIt correctionTypesEnd() const { return corrTypes_.end(); }
+  InputTagsIterator inputTagsEnd() const { return inputTags_.end(); }
 
   //! Specifies whether the y distributions per x bin are to be drawn
-  bool drawDistributions() const { return corrTypesDistributions_.size() > 0 ? true : false; }
-  //! Returns the correction types for which y distributions are to be plotted
-  const std::vector<CorrectionType> *distributionCorrectionTypes() const { return &corrTypesDistributions_; }
+  bool drawDistributions() const { return ! inputTagsDistributions_.empty(); }
+  //! Returns the input tags for which y distributions are to be plotted
+  const std::vector<InputTag> *distributionInputTags() const { return &inputTagsDistributions_; }
   //! Returns an iterator to the first correction type to be plotted
-  CorrectionTypeIt distributionCorrectionTypesBegin() const { return corrTypesDistributions_.begin(); }
+  InputTagsIterator distributionInputTagsBegin() const { return inputTagsDistributions_.begin(); }
   //! Returns an iterator to the last correction type to be plotted
-  CorrectionTypeIt distributionCorrectionTypesEnd() const { return corrTypesDistributions_.end(); }
+  InputTagsIterator distributionInputTagsEnd() const { return inputTagsDistributions_.end(); }
 
   //! Returns the \p CorrectionType for a given correction type name
   CorrectionType correctionType(const std::string &typeName) const;
-  //! Returns the name of a given \p CorrectionType
-  std::string correctionTypeName(CorrectionType corrType) const;
+   //! Returns the name of a given \p CorrectionType
+  std::string correctionTypeName(CorrectionType corrType) const; 
+  //! Returns the name of a given \p Sample
+  std::string sampleName(int sample) const;
+  //! Returns the name of a given \p InputTag
+  std::string inputTagName(const InputTag& tag) const;
 
   //! Returns the profile types which are to be drawn
   const std::vector<ProfileType> *profileTypes() const { return &profTypes_; }
@@ -205,17 +211,17 @@ class ControlPlotsConfig {
   std::map<ProfileType,double> yMinZoom_;
   std::map<ProfileType,double> yMaxZoom_;
 
-
-  std::vector<CorrectionType> corrTypes_;
-  std::vector<CorrectionType> corrTypesDistributions_;
+  std::map<int,std::string> sampleNames_;
+  std::vector<InputTag> inputTags_;
+  std::vector<InputTag> inputTagsDistributions_;
   std::vector<ProfileType> profTypes_;
 
   std::string outDirName_;
   std::string outFileType_;
 
-  std::map<CorrectionType,int> colors_;
-  std::map<CorrectionType,int> markerStyles_;
-  std::map<CorrectionType,std::string> legendLabels_;
+  std::map<InputTag,int> colors_;
+  std::map<InputTag,int> markerStyles_;
+  std::map<InputTag,std::string> legendLabels_;
 
   //! Read parameter values from configuration file
   void init();

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.15 2010/07/22 15:10:37 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.16 2010/09/30 16:55:14 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -153,9 +153,9 @@ std::string ControlPlotsConfig::yProfileTitle(ProfileType type) const {
 
 
 // --------------------------------------------------
-int ControlPlotsConfig::color(CorrectionType type) const {
+int ControlPlotsConfig::color(const InputTag& tag) const {
   int color = 1;
-  std::map<CorrectionType,int>::const_iterator it = colors_.find(type);
+  std::map<InputTag,int>::const_iterator it = colors_.find(tag);
   if( it != colors_.end() ) color = it->second;
 
   return color;
@@ -164,9 +164,9 @@ int ControlPlotsConfig::color(CorrectionType type) const {
 
 
 // --------------------------------------------------
-int ControlPlotsConfig::markerStyle(CorrectionType type) const {
+int ControlPlotsConfig::markerStyle(const InputTag& tag) const {
   int markerStyle = 7;
-  std::map<CorrectionType,int>::const_iterator it = markerStyles_.find(type);
+  std::map<InputTag,int>::const_iterator it = markerStyles_.find(tag);
   if( it != markerStyles_.end() ) markerStyle = it->second;
 
   return markerStyle; 
@@ -175,9 +175,9 @@ int ControlPlotsConfig::markerStyle(CorrectionType type) const {
 
 
 // --------------------------------------------------
-std::string ControlPlotsConfig::legendLabel(CorrectionType type) const {
+std::string ControlPlotsConfig::legendLabel(const InputTag& tag) const {
   std::string label = "DEFAULT";
-  std::map<CorrectionType,std::string>::const_iterator it = legendLabels_.find(type);
+  std::map<InputTag,std::string>::const_iterator it = legendLabels_.find(tag);
   if( it != legendLabels_.end() ) label = it->second;
 
   return label;
@@ -231,6 +231,15 @@ std::string ControlPlotsConfig::correctionTypeName(CorrectionType corrType) cons
     std::cerr << "WARNING: Undefined CorrectionType '" << corrType << "'\n";
 
   return name;
+}
+
+//! Possible correction types \p corrType are
+//!
+// --------------------------------------------------
+std::string  ControlPlotsConfig::sampleName(int sample) const
+{
+  std::map<int,std::string>::const_iterator i = sampleNames_.find(sample);
+  return i->second;
 }
 
 
@@ -448,20 +457,48 @@ void ControlPlotsConfig::init() {
     assert( yMinZoom_ < yMaxZoom_ );
   }
 
-  // Store which correction types are to be drawn
+  // Store which inputs are to be drawn
   // in the profile plots
-  std::vector<std::string> corrTypesStr = bag_of_string(config_->read<std::string>(name_+" correction types","Uncorrected"));
-  for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr.begin();
-      corrTypesIt != corrTypesStr.end(); corrTypesIt++) {
-    corrTypes_.push_back(correctionType(*corrTypesIt));
+  std::vector<std::string> samplesStr = bag_of_string(config_->read<std::string>(name_+" input samples","0:"));
+  std::vector<int> sampleIds;
+  //std::cout << samplesStr.size() << '\n';
+  for(std::vector<std::string>::const_iterator s = samplesStr.begin() ;
+      s != samplesStr.end() ; ++s) {
+    size_t pos = s->find(':');
+    //std::cout << "string: " << *s << '\n';
+    std::string nums,sname = "";
+    if(pos == std::string::npos) {
+      nums = *s;
+    } else {
+      nums = s->substr(0,pos);
+      if(pos+2 < s->size()) {
+	sname = s->substr(pos+1);
+      } 
+    }
+    std::istringstream iss(nums);
+    int id;
+    iss >> id;
+    //std::cout << "sample id:" << id << " name:" << sname << '\n';
+    sampleIds.push_back(id);
+    sampleNames_[id] = sname;
   }
-
-  // Store which correction types are to be drawn
+  
+  std::vector<std::string> corrTypesStr = bag_of_string(config_->read<std::string>(name_+" correction types","Uncorrected"));
+  for(std::vector<int>::const_iterator samplesIt = sampleIds.begin() ;
+      samplesIt != sampleIds.end() ; samplesIt++) {
+    for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr.begin(); corrTypesIt != corrTypesStr.end(); corrTypesIt++) {
+      inputTags_.push_back(std::make_pair(*samplesIt,correctionType(*corrTypesIt)));
+    }
+  }
+  
+  // Store which input tags are to be drawn
   // in the distributions
-  corrTypesStr = bag_of_string(config_->read<std::string>(name_+" distributions",";"));
-  for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr.begin();
-      corrTypesIt != corrTypesStr.end(); corrTypesIt++) {
-    corrTypesDistributions_.push_back(correctionType(*corrTypesIt));
+  corrTypesStr = bag_of_string(config_->read<std::string>(name_+" distributions",";")); 
+  for(std::vector<int>::const_iterator samplesIt = sampleIds.begin() ;
+      samplesIt != sampleIds.end() ; samplesIt++) {
+    for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr.begin(); corrTypesIt != corrTypesStr.end(); corrTypesIt++) {
+      inputTagsDistributions_.push_back(std::make_pair(*samplesIt,correctionType(*corrTypesIt)));
+    }
   }
 
   // Store directory name for output
@@ -471,28 +508,38 @@ void ControlPlotsConfig::init() {
   outFileType_ = config_->read<std::string>("plots format","eps");
   // Define style for different correction types
   // This should become configurable via config file
-  colors_[Uncorrected] = 1;
-  colors_[Kalibri] = 2;
-  colors_[L2L3] = 4;
-  colors_[L2L3L4] = 8;
+  for(std::vector<int>::const_iterator samplesIt = sampleIds.begin() ;
+      samplesIt != sampleIds.end() ; samplesIt++) {
+    colors_[std::make_pair(*samplesIt,Uncorrected)] = 1;
+    colors_[std::make_pair(*samplesIt,Kalibri)] = 2;
+    colors_[std::make_pair(*samplesIt,L2L3)] = 4;
+    colors_[std::make_pair(*samplesIt,L2L3L4)] = 8;
+    if(samplesIt - sampleIds.begin() == 0) {
+      markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = 20;
+      markerStyles_[std::make_pair(*samplesIt,Kalibri)] = 21;
+      markerStyles_[std::make_pair(*samplesIt,L2L3)] = 23;
+      markerStyles_[std::make_pair(*samplesIt,L2L3L4)] = 22;
+    } else {
+      int style = -(samplesIt - sampleIds.begin());
+      markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = style;
+      markerStyles_[std::make_pair(*samplesIt,Kalibri)] = style;
+      markerStyles_[std::make_pair(*samplesIt,L2L3)] = style;
+      markerStyles_[std::make_pair(*samplesIt,L2L3L4)] = style;
+    }
+    // Define default legend labels for the different corrections
+    std::string name = sampleName(*samplesIt);
+    legendLabels_[std::make_pair(*samplesIt,Uncorrected)] = name + " Uncorrected";
+    legendLabels_[std::make_pair(*samplesIt,Kalibri)] = name + " Kalibri";
+    legendLabels_[std::make_pair(*samplesIt,L2L3)] = name + " L2L3";
+    legendLabels_[std::make_pair(*samplesIt,L2L3L4)] = name +" L2L3L4";
 
-  markerStyles_[Uncorrected] = 20;
-  markerStyles_[Kalibri] = 21;
-  markerStyles_[L2L3] = 23;
-  markerStyles_[L2L3L4] = 22;
-
-  // Define default legend labels for the different corrections
-  legendLabels_[Uncorrected] = "Uncorrected";
-  legendLabels_[Kalibri] = "Kalibri";
-  legendLabels_[L2L3] = "L2L3";
-  legendLabels_[L2L3L4] = "L2L3L4";
-  // Read optional legend labels
-  std::vector<std::string> legLabelStr = bag_of_string(config_->read<std::string>(name_+" legend label",";"));
-  for(std::vector<std::string>::const_iterator legLabelIt = legLabelStr.begin();
-      legLabelIt != legLabelStr.end(); legLabelIt++) {
-    size_t pos = legLabelIt->find(":");
-    if( pos != std::string::npos ) {
-      legendLabels_[correctionType(legLabelIt->substr(0,pos))] = legLabelIt->substr(pos+1);
+    // Read optional legend labels
+    std::vector<std::string> legLabelStr = bag_of_string(config_->read<std::string>(name_+" legend label",";"));
+    for(std::vector<std::string>::const_iterator legLabelIt = legLabelStr.begin(); legLabelIt != legLabelStr.end(); legLabelIt++) {
+      size_t pos = legLabelIt->find(":");
+      if( pos != std::string::npos ) {
+	legendLabels_[std::make_pair(*samplesIt,correctionType(legLabelIt->substr(0,pos)))] = name + " " + legLabelIt->substr(pos+1);
+      }
     }
   }
 }

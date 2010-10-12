@@ -22,8 +22,8 @@
 //!  \param configFile  Configuration file
 //!  \param data        Plotted data
 // -------------------------------------------------------------
-ControlPlots::ControlPlots(const ConfigFile *configFile, const std::vector<Event*> *data)
-  : config_(configFile), data_(data) {
+ControlPlots::ControlPlots(const ConfigFile *configFile, const std::vector<std::vector<Event*>* >& samples)
+  : config_(configFile), samples_(samples) {
   gErrorIgnoreLevel = 1001;
   setGStyle();
 }
@@ -65,9 +65,9 @@ void ControlPlots::createJetTruthEventPlots() const {
     func->setBinFunction(findJetTruthEventFunction(pConfig->binVariable()));
     func->setXFunction(findJetTruthEventFunction(pConfig->xVariable()));
     func->setCutFunction(findJetTruthEventFunction(pConfig->cutVariable()));
-    ControlPlotsConfig::CorrectionTypeIt corrTypeIt = pConfig->correctionTypesBegin();
-    for(; corrTypeIt != pConfig->correctionTypesEnd(); corrTypeIt++) {
-      func->addYFunction(*corrTypeIt,findJetTruthEventFunction(pConfig->yVariable(),*corrTypeIt));
+    for(ControlPlotsConfig::InputTagsIterator it = pConfig->inputTagsBegin() ; 
+	it != pConfig->inputTagsEnd(); ++it) {
+      func->addYFunction(it->second,findJetTruthEventFunction(pConfig->yVariable(),it->second));
     }
     functions.at(i) = func;
 
@@ -77,12 +77,14 @@ void ControlPlots::createJetTruthEventPlots() const {
 
   
   // Fill histograms
-  std::cout << "  Filling plots\n";	  
-  for( DataIt evt = data_->begin(); evt != data_->end(); evt++ ) {
-    JetTruthEvent *jte = dynamic_cast<JetTruthEvent*>(*evt);
-    if( jte ) {
-      for(size_t i = 0; i < configs.size(); i++) {
-	profiles.at(i)->fill(jte);
+  std::cout << "  Filling plots\n";
+  for(unsigned int id = 0 ; id < samples_.size() ; ++id) {
+    for(DataIt evt = samples_[id]->begin() ; evt != samples_[id]->end() ; ++evt) {
+      JetTruthEvent *jte = dynamic_cast<JetTruthEvent*>(*evt);
+      if( jte ) {
+	for(size_t i = 0; i < configs.size(); i++) {
+	  profiles.at(i)->fill(jte,id);
+	}
       }
     }
   }
@@ -126,9 +128,9 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
     func->setBinFunction(findTwoJetsPtBalanceEventFunction(pConfig->binVariable()));
     func->setXFunction(findTwoJetsPtBalanceEventFunction(pConfig->xVariable()));
     func->setCutFunction(findTwoJetsPtBalanceEventFunction(pConfig->cutVariable()));
-    ControlPlotsConfig::CorrectionTypeIt corrTypeIt = pConfig->correctionTypesBegin();
-    for(; corrTypeIt != pConfig->correctionTypesEnd(); corrTypeIt++) {
-      func->addYFunction(*corrTypeIt,findTwoJetsPtBalanceEventFunction(pConfig->yVariable(),*corrTypeIt));
+    for(ControlPlotsConfig::InputTagsIterator it = pConfig->inputTagsBegin() ; 
+	it != pConfig->inputTagsEnd(); ++it) {
+      func->addYFunction(it->second,findTwoJetsPtBalanceEventFunction(pConfig->yVariable(),it->second));
     }
     functions.at(i) = func;
 
@@ -138,12 +140,14 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
 
   
   // Fill histograms
-  std::cout << "  Filling plots\n";	  
-  for( DataIt evt = data_->begin(); evt != data_->end(); evt++ ) {
-    TwoJetsPtBalanceEvent *jte = dynamic_cast<TwoJetsPtBalanceEvent*>(*evt);
-    if( jte ) {
-      for(size_t i = 0; i < configs.size(); i++) {
-	profiles.at(i)->fill(jte);
+  std::cout << "  Filling plots\n"; 
+  for(unsigned int id = 0 ; id < samples_.size() ; ++id) {
+    for( DataIt evt = samples_[id]->begin(); evt != samples_[id]->end(); ++evt ) {
+      TwoJetsPtBalanceEvent *jte = dynamic_cast<TwoJetsPtBalanceEvent*>(*evt);
+      if( jte ) {
+	for(size_t i = 0; i < configs.size(); i++) {
+	  profiles.at(i)->fill(jte,id);
+	}
       }
     }
   }

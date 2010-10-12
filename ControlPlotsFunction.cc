@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.11 2010/06/29 13:52:00 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.12 2010/09/30 16:55:13 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -29,7 +29,7 @@ void ControlPlotsFunction::addYFunction(ControlPlotsConfig::CorrectionType type,
   if( it == yFuncs_.end() ) {
     yFuncs_[type] = func;
   } else {
-    std::cerr << "WARNING: Adding function for already existing CorrectionType '" << type << "'\n";
+    //std::cerr << "WARNING: Adding function for already existing CorrectionType '" << type << "'\n";
   }
 }
 

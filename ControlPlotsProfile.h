@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: ControlPlotsProfile.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
 
 #ifndef CONTROL_PLOTS_PROFILE_H
 #define CONTROL_PLOTS_PROFILE_H
@@ -32,7 +32,7 @@ class Event;
 //!
 //! \author Matthias Schroeder
 //! \date 2009/12/18
-//! $Id: $
+//! $Id: ControlPlotsProfile.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsProfile {
  public:
@@ -44,7 +44,7 @@ class ControlPlotsProfile {
   //! Draws the histograms and profiles
   void draw();
   //! Fills the 2D histograms
-  void fill(const Event *evt);
+  void fill(const Event *evt, int id);
   //! Fits the profile histograms from the 2D histograms in all bins
   void fitProfiles();
 
@@ -56,7 +56,7 @@ class ControlPlotsProfile {
   //! 
   //! \author Matthias Schroeder
   //! \date 2009/12/18
-  //! $Id: $
+  //! $Id: ControlPlotsProfile.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
   // ----------------------------------------------------------------   
   class Bin {
   public:
@@ -71,15 +71,15 @@ class ControlPlotsProfile {
     double max() const { return max_; }
 
     //! Returns the 2D histogram of the correction type \p corrType
-    TH2D *hYvsX(ControlPlotsConfig::CorrectionType corrType);
+    TH2D *hYvsX(const ControlPlotsConfig::InputTag& tag);
     //! Returns the profile of type \p profType for the correction type \p corrType
-    TH1D *hXProfile(ControlPlotsConfig::CorrectionType corrType, ControlPlotsConfig::ProfileType profType);
+    TH1D *hXProfile(const ControlPlotsConfig::InputTag& tag, ControlPlotsConfig::ProfileType profType);
     //! Returns the y distribution of the nth x bin for the correction type \p corrType
-    TH1D *hYDistribution(int n, ControlPlotsConfig::CorrectionType corrType);
+    TH1D *hYDistribution(int n, const ControlPlotsConfig::InputTag& tag);
     //! Returns the number of y distributions i.e. the number of x bins
     int nDistributions() const { return (hYDistributions_.begin())->second.size(); }
     //! Fills the 2D histogram y vs x with weight w for the correction type \p corrType
-    int fill(double x, double y, double w, ControlPlotsConfig::CorrectionType corrType);
+    int fill(double x, double y, double w,const ControlPlotsConfig::InputTag& tag);
     //! Fits the profiles from the 2D histograms
     int fitProfiles();
 
@@ -88,11 +88,11 @@ class ControlPlotsProfile {
     //! Returns a legend to be drawn into the profile
     TLegend *createLegend();
     //! Returns the file name of the 2D histograms
-    std::string hist2DFileName(ControlPlotsConfig::CorrectionType type) const;
+    std::string hist2DFileName(const ControlPlotsConfig::InputTag& tag) const;
     //! Returns the file name of the profile histograms
     std::string profileFileName(ControlPlotsConfig::ProfileType type) const;
     //! Returns the file name of the y distributions
-    std::string distributionFileName(int xBin, ControlPlotsConfig::CorrectionType type) const;
+    std::string distributionFileName(int xBin, const ControlPlotsConfig::InputTag& tag) const;
 
   private:
     const int idx_;
@@ -100,9 +100,9 @@ class ControlPlotsProfile {
     const double max_;
     const ControlPlotsConfig *config_;
 
-    std::map< ControlPlotsConfig::CorrectionType, TH2D* > hYvxX_;
-    std::map< ControlPlotsConfig::CorrectionType, std::map< ControlPlotsConfig::ProfileType, TH1D* > > hXProfile_;
-    std::map< ControlPlotsConfig::CorrectionType, std::vector< TH1D* > > hYDistributions_;
+    std::map< ControlPlotsConfig::InputTag, TH2D* > hYvxX_;
+    std::map< ControlPlotsConfig::InputTag, std::map< ControlPlotsConfig::ProfileType, TH1D* > > hXProfile_;
+    std::map< ControlPlotsConfig::InputTag, std::vector< TH1D* > > hYDistributions_;
  
     //! Counter of the number of calls of \p fitProfiles()
     int nCallsFitProfiles_;
@@ -110,6 +110,7 @@ class ControlPlotsProfile {
 
   const ControlPlotsConfig *config_;
   const ControlPlotsFunction *function_;
+
 
   std::vector<Bin*> bins_;
   TH1D *hXSpectrum_;
