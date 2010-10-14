@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.13 2010/07/22 14:46:45 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.14 2010/10/12 08:40:53 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -616,7 +616,7 @@ TLegend *ControlPlotsProfile::Bin::createLegend() {
   size_t nEntries = hXProfile_.size();
   TLegend * leg = 0;
   if( nEntries ) {
-    leg = new TLegend(0.3,0.85-nEntries*0.06,0.8,0.85);
+    leg = new TLegend(0.4,0.85-nEntries*0.06,0.8,0.85);
     leg->SetBorderSize(0);
     leg->SetFillColor(0);
     leg->SetTextFont(42);
