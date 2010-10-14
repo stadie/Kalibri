@@ -1,4 +1,4 @@
-// $Id: firstDataAnalysis.C,v 1.3 2010/01/18 15:55:04 mschrode Exp $
+// $Id: writeWeights.C,v 1.1 2010/07/20 17:13:38 stadie Exp $
 
 #include "TChain.h"
 #include "TBranch.h"
@@ -51,24 +51,31 @@ void writeWeightsToTree(const char* path, float lumi, int nev = -1) {
 }
 
 void writeWeights() {
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt0to15/ak5Calo*.root",0.1,2197029);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt1000to1400/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt120to170/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt1400to1800/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt15to20/ak5Calo*.root",0.1,2256430);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt170to230/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt1800to2200/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt20to30/ak5Calo*.root",0.1,1034680);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt2200to2600/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt230to300/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt2600to3000/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt3000to3500/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt300to380/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt30to50/ak5Calo*.root",0.1,1161768);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt380to470/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt470to600/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt50to80/ak5Calo*.root",0.1,111289);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt600to800/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt800to1000/ak5Calo*.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt80to120/ak5Calo*.root",0.1,606771);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt0to15*ak5Calo.root",0.1,2197029);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt1000to1400*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt120to170*ak5Calo.root",0.1,58888);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt1400to1800*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt15to20*ak5Calo.root",0.1,2256430);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt170to230*ak5Calo.root",0.1,51680);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt1800to2200*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt20to30*ak5Calo.root",0.1,1037110);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt2200to2600*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt230to300*ak5Calo.root",0.1,52894);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt2600to3000*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt3000to3500*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt300to380*ak5Calo.root",0.1,64265);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt30to50*ak5Calo*.root",0.1,1161768);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt380to470*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt470to600*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt50to80*ak5Calo.root",0.1,111289);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt600to800*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt800to1000*ak5Calo.root",0.1);
+  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt80to120*ak5Calo.root",0.1,606771);
+}
+
+void testWeights() 
+{
+  TChain* c = new TChain("DiJetTree","DiJetTree");
+  c->Add("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt*ak5Calo.root");
+  c->Draw("JetPt[0] >>hpt(700,0,3500)","Weight");
 }
