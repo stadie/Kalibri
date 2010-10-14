@@ -81,6 +81,7 @@ Max had fraction           = 1.05    #Default: 0.95
 Et genJet min              = 0.0
 Et genJet max              = 7000.0
 DeltaR cut on jet matching = 9999
+Max cut on relative n+1 Jet Et = 0.1
 
 #---------------------------------------------------------------------------------
 #   Input / Output
@@ -98,6 +99,7 @@ Z-Jet tree             = ZJetTree
 Track-Tower tree       = TrackTowerTree
 Track-Cluster tree     = TrackClusterTree
 Di-Jet tree            = DiJetTree
+Di-Jet Control1 tree   = DiJetTree
 Tri-Jet tree           = TriJetTree
 Top tree               = TopTree
 
@@ -145,6 +147,7 @@ AsymmetryVsEta bin edges         =  5 10 20 30 50 80 120 200 360 7000
 AsymmetryVsEta correction types  =  Uncorrected; Kalibri
 AsymmetryVsEta profile types     =  Mean; GaussFitMean; RMS; GaussFitWidth; RatioOfMeans; RatioOfGaussFitMeans
 AsymmetryVsEta legend label      =  Uncorrected:CMS default
+AsymmetryVsEta input samples     =  0:data;1:MC
 
 AsymmetryVsPt x variable        =  MeanPt; log
 AsymmetryVsPt x edges           =  30 30 2000
@@ -155,6 +158,7 @@ AsymmetryVsPt bin edges         =  0 1.3 2.6 3.0 5.2
 AsymmetryVsPt correction types  =  Uncorrected; Kalibri
 AsymmetryVsPt profile types     =  Mean; GaussFitMean; RMS; GaussFitWidth; RatioOfMeans; RatioOfGaussFitMeans
 AsymmetryVsPt legend label      =  Uncorrected:CMS default
+AsymmetryVsPt input samples     =  0:data;1:MC
 
 AsymmetryVsEtaEta x variable       =  momentEtaEta
 AsymmetryVsEtaEta x edges          =  30 0 0.3
@@ -165,6 +169,8 @@ AsymmetryVsEtaEta bin edges         =  -5.2 -3.0 -1.3 1.3 3.0 5.2
 AsymmetryVsEtaEta correction types  =  Uncorrected; Kalibri 
 AsymmetryVsEtaEta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
 AsymmetryVsEtaEta legend label      =  Uncorrected:CMS default
+AsymmetryVsEtaEta input samples     =  0:data;1:MC
+
 
 AsymmetryVsEmf x variable       =  EMF
 AsymmetryVsEmf x edges          =  20 0 1.0
@@ -175,6 +181,8 @@ AsymmetryVsEmf bin edges         =  0.0 1.3 2.6 3.0 5.2
 AsymmetryVsEmf correction types  =  Uncorrected; Kalibri
 AsymmetryVsEmf profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
 AsymmetryVsEmf legend label      =  Uncorrected:CMS default
+AsymmetryVsEmf input samples     =  0:data;1:MC
+
 
 AsymmetryVsMeanMoment x variable       =  meanMoment
 AsymmetryVsMeanMoment x edges          =  30 0 0.3
@@ -183,10 +191,12 @@ AsymmetryVsMeanMoment y edges           =  51 -1 1 -0.5 0.5 -0.5 0.5 0.7 1.8 0.7
 AsymmetryVsMeanMoment bin variable      =  AbsEta
 AsymmetryVsMeanMoment bin edges         =  0 1.3 2.6 3.0 5.2
 AsymmetryVsMeanMoment cut variable      =  MeanPt
-AsymmetryVsMeanMoment cut edges         =  20 7000
+AsymmetryVsMeanMoment cut edges         =  80 7000
 AsymmetryVsMeanMoment correction types  =  Uncorrected; Kalibri
 AsymmetryVsMeanMoment profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
 AsymmetryVsMeanMoment legend label      =  Uncorrected:CMS default
+AsymmetryVsMeanMoment input samples     =  0:data;1:MC
+
 
 AsymmetryVsMeanMomentMeanPt x variable       =  meanMoment
 AsymmetryVsMeanMomentMeanPt x edges          =  30 0 0.3
@@ -199,6 +209,8 @@ AsymmetryVsMeanMomentMeanPt cut edges         =  -1.3 1.3
 AsymmetryVsMeanMomentMeanPt correction types  =  Uncorrected; Kalibri
 AsymmetryVsMeanMomentMeanPt profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
 AsymmetryVsMeanMomentMeanPt legend label      =  Uncorrected:CMS default
+AsymmetryVsMeanMomentMeanPt input samples     =  0:data;1:MC
+
 
 AsymmetryVsMeanMomentMeanPt2 x variable       =  meanMoment
 AsymmetryVsMeanMomentMeanPt2 x edges          =  30 0 0.3
@@ -211,12 +223,16 @@ AsymmetryVsMeanMomentMeanPt2 cut edges         =  1.3 2.6
 AsymmetryVsMeanMomentMeanPt2 correction types  =  Uncorrected; Kalibri
 AsymmetryVsMeanMomentMeanPt2 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
 AsymmetryVsMeanMomentMeanPt2 legend label      =  Uncorrected:CMS default
+AsymmetryVsMeanMomentMeanPt2 input samples     =  0:data;1:MC
+
 """
     fcfg = open(filename, "w")
     fcfg.write(config)
     fcfg.write("Di-Jet input file = dijetlist\n")
+    fcfg.write("Di-Jet Control1 input file = mcdijetlist\n")
     fcfg.write("Output file       = "+output+"\n");
     fcfg.write("Number of Threads = "+str(nthreads)+"\n")
+    fcfg.write("Number of IO Threads = 20\n")
     if(useconstraint):
         fcfg.write("jet constraints =  5.0 10.0 0.0 1.2 1 10.0 15.0 0.0 1.2 1 15.0 20.0 0 1.2 1 20.0 25.0 0 1.2 1 25.0 30.0 0 1.2 1 30.0 40.0 0 1.2 1 40.0 50.0 0 1.2  1 50.0 60.0 0 1.2 1 60.0 70.0 0 1.2  1 70.0 80 0 1.2 1  80.0 90.0 0 1.2 1 90.0 100.0 0 1.2 1 100.0 120. 0 1.2 1 120 150 0 1.2 1 150 200 0 1.2 1 200 280 0 1.2 1 280 350 0 1.2 1 350 500 0 1.2 1 500 800 0 1.2 1 800 1400 0 1.2 1 1400 7000 0 1.2 1\n")
     else:
@@ -230,7 +246,7 @@ AsymmetryVsMeanMomentMeanPt2 legend label      =  Uncorrected:CMS default
         fcfg.write("jet error parametrization   = jet et\n")
             
     fcfg.write("use Di-Jet events = "+str(nevents)+"\n")
-            
+    fcfg.write("use Di-Jet Control1 events = "+str(nevents)+"\n")  
     if(input != ""):
         fcfg.write("input calibration = Kalibri; "+input+"\n");
 
@@ -244,12 +260,12 @@ jettype = "Calo"
 #datadir = "/scratch/hh/current/cms/user/stadie/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C"
 #datadir = "/scratch/hh/current/cms/user/stadie/SD_JetMETTau-v9A"
 #datadir = "/scratch/hh/current/cms/user/stadie/JetMETTau_Run2010A-Jul15thReRec-v1A"
-#datadir = "/scratch/hh/current/cms/user/stadie/JetMET_Run2010A-PromptReco-v4_DCSONLY"
-datadir = "/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt*"
-nthreads = 3
+datadir = "/scratch/hh/current/cms/user/mschrode/data/JetMET_Run2010A-PromptReco-v4_DCSONLY_132440-144011_DiJetAve50U"
+datadirmc = "/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A"
+nthreads = 4
 nevents =  -1
-dirname = "/afs/naf.desy.de/group/cms/scratch/stadie/dijetsMCSpring10-CorTest"
-#dirname = "/afs/naf.desy.de/group/cms/scratch/stadie/dijetsRun2010A-DCS-CorRes"
+#dirname = "/afs/naf.desy.de/group/cms/scratch/stadie/dijetsMCSpring10-CorTest2"
+dirname = "/afs/naf.desy.de/group/cms/scratch/stadie/dijetsRun2010A-DCS-CorRes"
 useconstraint = False
 batch = False
 doBinnedFit = False
@@ -257,8 +273,7 @@ doUnbinnedFit = True
 
 
 #write configs and run the fit
-print "fit L2L3 correction for "+jettype+" using "+datadir
-
+print "fit L2L3 correction for "+jettype+" using "+datadir+" and "+datadirmc+" as MC sample"
 if os.path.exists(dirname):
     os.system("rm -rf "+dirname+"/*")
 else:
@@ -270,6 +285,7 @@ os.system("ln -s $PWD/L4JWfit.txt "+dirname+"/")
 os.system("ln -s $PWD/lib "+dirname+"/")
 os.system("ln -s $PWD/JetMETObjects "+dirname+"/")
 os.system("ls "+datadir+"/*"+jettype+"*.root > "+dirname+"/dijetlist");
+os.system("ls "+datadirmc+"/*"+jettype+"*.root > "+dirname+"/mcdijetlist");
 binned= True
 output="Kalibri.txt"
 input ="L4JWfit.txt"
