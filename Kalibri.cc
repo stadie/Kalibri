@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.8 2010/05/27 08:35:30 stadie Exp $
+//  $Id: Kalibri.cc,v 1.9 2010/10/12 08:40:53 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -18,13 +18,15 @@ boost::mutex io_mutex;
 #include "external.h"
 #include "ToyMC.h"
 #include "PhotonJetReader.h"
-#include "DiJetReader.h"
+#include "ThreadedDiJetReader.h"
 #include "TriJetReader.h"
 #include "ZJetReader.h"
 #include "TopReader.h"
 #include "ParameterLimitsReader.h"
 #include "EventProcessor.h"
 #include "EventWeightProcessor.h"
+
+#include <dlfcn.h>
 
 
 using namespace std;
@@ -519,7 +521,15 @@ void Kalibri::done()
   for(DataIter i = data_.begin() ; i != data_.end() ; ++i) {
     delete *i;
   }
-  data_.clear();
+  data_.clear(); 
+  for(DataIter i = control_[0].begin() ; i != control_[0].end() ; ++i) {
+    delete *i;
+  }
+  control_[0].clear(); 
+  for(DataIter i = control_[1].begin() ; i != control_[1].end() ; ++i) {
+    delete *i;
+  }
+  control_[1].clear();
   cout << "Done" << endl;
 }
 
@@ -647,13 +657,30 @@ void Kalibri::init()
        iter != fixedGlobalJetPars_.end() ; ++ iter) {
     par_->fixPar(*iter);
   }
-
+  
+  //load plugin
+  std::string jcs = config.read<string>("jet correction source","");
+  if(jcs != "") {
+    std::string libname = "lib/lib"+jcs+".so";
+    //std::cout << "loading lib " << libname << '\n';
+    void *hndl = dlopen(libname.c_str(), RTLD_NOW);
+    if(hndl == NULL){
+      std::cerr << "failed to load plugin: " << dlerror() << std::endl;
+      exit(-1);
+    }
+  }
   outputFile_ = config.read<string>( "Output file", "calibration_k.cfi" );
 
+  int niothreads = config.read<int>("Number of IO Threads",7); 
   //fill data vector  
   std::vector<EventReader*> readers;
   readers.push_back(new PhotonJetReader(configFile_,par_));
-  readers.push_back(new DiJetReader(configFile_,par_));
+  if(niothreads < 1) {
+    readers.push_back(new DiJetReader(configFile_,par_));
+  } else {
+    std::cout << "reading DiJet data in " << niothreads << " threads.\n";
+    readers.push_back(new ThreadedDiJetReader(configFile_,par_,niothreads));
+  }
   readers.push_back(new TriJetReader(configFile_,par_));
   readers.push_back(new ZJetReader(configFile_,par_));
   readers.push_back(new TopReader(configFile_,par_));

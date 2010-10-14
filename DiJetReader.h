@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.24 2010/09/22 13:29:44 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.25 2010/10/12 08:38:59 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -45,16 +45,17 @@
 class NJetSel;
 class TRandom;
 class JetBin;
+class TTree;
 class TwoJetsPtBalanceEvent;
 
 class DiJetReader : public EventReader{
  public:
   DiJetReader(const std::string& configfile, TParameters *p);
   virtual ~DiJetReader();
-  int readEvents(std::vector<Event*>& data);
-  int readControlEvents(std::vector<Event*>& control, int id);
+  virtual int readEvents(std::vector<Event*>& data);
+  virtual int readControlEvents(std::vector<Event*>& control, int id);
 
- private:
+ protected:
   TwoJetsPtBalanceEvent* createTwoJetsPtBalanceEvent();
   Event* createSmearEvent(int callIdx = 0);
   Event *createSmearEventCaloOrdered();
@@ -62,6 +63,8 @@ class DiJetReader : public EventReader{
   int createJetTruthEvents(std::vector<Event*>& data);
   CorFactors* createCorFactors(int jetid) const;
   bool passesJetId(int idx) const;
+  int readEventsFromTree(std::vector<Event*>& data);
+  void printCutFlow();
   std::auto_ptr<NJetSel> nJet_;                //!< Njet Selector
   TRandom* rand_;             //!< Random number generator
 
@@ -87,6 +90,8 @@ class DiJetReader : public EventReader{
   double maxGenJetEt_;          //!< Maximum pt of genJets of dijets
   double maxDeltaR_;            //!< Maximum DeltaR
 
+  int    nReadEvts_;            //!< Number of read events
+  int    nGoodEvts_;            //!< Number of events passing all cuts
   int    nDiJetCut_;            //!< Number of events with less than 2 jets
   int    nMinJetEt_;            //!< Number of events rejected by minJetEt_ cut
   int    nMaxJetEt_;            //!< Number of events rejected by maxJetEt_ cut
@@ -118,6 +123,8 @@ class DiJetReader : public EventReader{
   const double zero_;           //!< just null
 
   std::vector<Jet::JetIndex*> jetIndices_;
+
+  friend class ThreadedDiJetReader; 
 };
 
 

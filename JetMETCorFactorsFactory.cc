@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.9 2010/07/23 13:04:18 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.10 2010/10/12 08:41:50 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -9,7 +9,6 @@
 #include "JetMETObjects/interface/JetCorrectorParameters.h"
 
 #include <iostream>
-#include <vector>
 #include <string>
 #include <sstream>
 
@@ -18,17 +17,23 @@ JetMETCorFactorsFactory::JetMETCorFactorsFactory(const std::string& name,
   : CorFactorsFactory(name)
 {
   //split files by ":"
-  std::vector<JetCorrectorParameters> vParam;
   std::stringstream ss(files);
   std::string file;
   while(std::getline(ss,file,':')) {
-    vParam.push_back(JetCorrectorParameters(file));
-    //vParam.back().printScreen();
+    vParam_.push_back(JetCorrectorParameters(file));
+    //vParam_.back().printScreen();
   }
-  cor_ = new FactorizedJetCorrector(vParam);
+  cor_ = new FactorizedJetCorrector(vParam_);
   
   //std::cout << "created JetMETCorFactorsFactory: " << name << '\n';
 }
+
+JetMETCorFactorsFactory::JetMETCorFactorsFactory(const JetMETCorFactorsFactory& cff) 
+  : CorFactorsFactory(cff),vParam_(cff.vParam_) 
+{
+  cor_ = new FactorizedJetCorrector(vParam_);
+}
+
 
 JetMETCorFactorsFactory::~JetMETCorFactorsFactory()
 {
@@ -68,9 +73,9 @@ JetMETCorFactorsFactory::Register::Register()
   create("Spring10_AK5PF","JetMETObjects/data/Spring10_L2Relative_AK5PF.txt:JetMETObjects/data/Spring10_L3Absolute_AK5PF.txt");
   create("Spring10_AK5TRK","JetMETObjects/data/Spring10_L2Relative_AK5TRK.txt:JetMETObjects/data/Spring10_L3Absolute_AK5TRK.txt");
   create("Spring10_AK5JPT","JetMETObjects/data/Spring10_L2Relative_AK5JPT.txt:JetMETObjects/data/Spring10_L3Absolute_AK5JPT.txt");
-  create("Spring10_AK5CaloData","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Spring10DataV1_L2L3Residual_AK5Calo.txt"); 
-  create("Spring10_AK5PFData","JetMETObjects/data/Spring10_L2Relative_AK5PF.txt:JetMETObjects/data/Spring10_L3Absolute_AK5PF.txt:JetMETObjects/data/Spring10DataV1_L2L3Residual_AK5PF.txt"); 
-  create("Spring10_AK5JPTData","JetMETObjects/data/Spring10_L2Relative_AK5JPT.txt:JetMETObjects/data/Spring10_L3Absolute_AK5JPT.txt:JetMETObjects/data/Spring10DataV1_L2L3Residual_AK5JPT.txt");
+  create("Spring10_AK5CaloData","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Spring10DataV2_L2L3Residual_AK5Calo.txt"); 
+  create("Spring10_AK5PFData","JetMETObjects/data/Spring10_L2Relative_AK5PF.txt:JetMETObjects/data/Spring10_L3Absolute_AK5PF.txt:JetMETObjects/data/Spring10DataV2_L2L3Residual_AK5PF.txt"); 
+  create("Spring10_AK5JPTData","JetMETObjects/data/Spring10_L2Relative_AK5JPT.txt:JetMETObjects/data/Spring10_L3Absolute_AK5JPT.txt:JetMETObjects/data/Spring10DataV2_L2L3Residual_AK5JPT.txt");
   create("Spring10_AK5CaloJW","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt:JetMETObjects/data/L4JW_AK5Calo.txt");
 }
 

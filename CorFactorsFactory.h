@@ -1,6 +1,6 @@
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: CorFactors.h,v 1.1 2009/11/25 13:07:45 stadie Exp $
+//    $Id: CorFactorsFactory.h,v 1.1 2009/11/26 10:27:48 stadie Exp $
 //   
 #ifndef CORFACTORSFACTORY_H
 #define CORFACTORSFACTORY_H
@@ -17,13 +17,15 @@ class CorFactorsFactory
   CorFactorsFactory(const std::string& name);
   virtual ~CorFactorsFactory();
   virtual CorFactors* create(const Jet* j) = 0;
+  virtual CorFactorsFactory* clone() const = 0;
 
-  static std::map<std::string,CorFactorsFactory*> map;
-
+  static CorFactorsFactory* get(std::string name) {
+    CorFactorsFactory* ccf = map[name];
+    return ccf ? ccf->clone() : 0;
+  }
  private:
-  CorFactorsFactory(const CorFactorsFactory&) {} 
   std::string name_;
-
+  static std::map<std::string,CorFactorsFactory*> map;
   class Cleaner
   {
   public:

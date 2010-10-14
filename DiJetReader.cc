@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.59 2010/10/04 08:41:37 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.60 2010/10/12 08:37:41 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -103,12 +103,6 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
     std::cerr << "DiJetReader: Unknown data class " << dataClass_ << ". Aborting!" << std::endl;
     exit(9);
   }
-  // Input files
-  nJet_->Init(createTree("Di-Jet")); 
-  // get first event
-  nJet_->fChain->GetEntries();
-  nJet_->GetEntry(0);
-
   const std::string name = "jet binning";
   std::vector<std::string> vars = bag_of_string(config_->read<std::string>(name+" variables","")); 
   int j = 0;
@@ -152,30 +146,8 @@ DiJetReader::~DiJetReader() {
 // ----------------------------------------------------------------   
 int DiJetReader::readEvents(std::vector<Event*>& data)
 {
-  if(nDijetEvents_ == 0) return 0;
-
-  // Reset counters of rejected events
-  nDiJetCut_          = 0;
-  nMinJetEt_          = 0;
-  nMaxJetEt_          = 0;
-  nMinDijetEt_        = 0;
-  nMaxDijetEt_        = 0;
-  nCutOn3rdJet_       = 0;
-  nCutOnSoftJets_     = 0;
-  nMinGenJetEt_       = 0;    
-  nMaxGenJetEt_       = 0;     
-  nMaxDeltaR_         = 0;
-  nMinJetEta_         = 0;
-  nMaxJetEta_         = 0;  
-  nMinJetHadFraction_ = 0;     
-  nMaxJetHadFraction_ = 0;     
-  nMinDeltaPhi_       = 0;
-
-  //Run jet-Jet stuff  
-  int nevent    = nJet_->fChain->GetEntries();  // Number of events in chain
-  int nReadEvts = 0;                          // Number of read events
-  int nGoodEvts = 0;                          // Number of events passing all cuts
-
+  // Input files
+  nJet_->Init(createTree("Di-Jet")); 
   // Some informative output for the interested calibrator
   // Check of correct data class
   std::cout << "Reading events of type ";
@@ -195,8 +167,47 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   }
   std::cout << " (data class " << dataClass_ << "):\n";
 
-  //Int_t cachesize = 50000000; //50 MBytes
-  //nJet_->fChain->SetCacheSize(cachesize); 
+  int nev = readEventsFromTree(data);
+  printCutFlow();
+  std::cout << "Stored " << nGoodEvts_ << " dijet events for analysis.\n";
+  delete nJet_->fChain;
+  return nev;
+}
+
+//!  \brief Read dijet data and store in format as specified
+//!         in the config file
+//!  \param data Read data objects are appended to data
+//!  \return Number of appended objects
+// ----------------------------------------------------------------   
+int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
+{
+  if(nDijetEvents_ == 0) return 0;
+  
+  // Reset counters of rejected events
+  nReadEvts_          = 0;
+  nGoodEvts_          = 0;
+  nDiJetCut_          = 0;
+  nMinJetEt_          = 0;
+  nMaxJetEt_          = 0;
+  nMinDijetEt_        = 0;
+  nMaxDijetEt_        = 0;
+  nCutOn3rdJet_       = 0;
+  nCutOnSoftJets_     = 0;
+  nMinGenJetEt_       = 0;    
+  nMaxGenJetEt_       = 0;     
+  nMaxDeltaR_         = 0;
+  nMinJetEta_         = 0;
+  nMaxJetEta_         = 0;  
+  nMinJetHadFraction_ = 0;     
+  nMaxJetHadFraction_ = 0;     
+  nMinDeltaPhi_       = 0;
+
+  //Run jet-Jet stuff  
+  int nevent    = nJet_->fChain->GetEntries();  // Number of events in chain
+
+
+  Int_t cachesize = 10000000; //10 MBytes
+  nJet_->fChain->SetCacheSize(cachesize); 
   if((dataClass_ == 11)||(dataClass_ == 21)||(dataClass_ == 1)) { 
     nJet_->fChain->SetBranchStatus("Track*",0);
     nJet_->fChain->SetBranchStatus("Tow*",0);
@@ -237,7 +248,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
 
 
     if(dataClass_ == 1) {
-      nReadEvts++;
+      nReadEvts_++;
       TwoJetsPtBalanceEvent* td = createTwoJetsPtBalanceEvent(); 
       if(td) {
 	//second jet should be central...
@@ -245,30 +256,30 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
 	  data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
 						   td->getJet3() ? td->getJet3()->clone():0,
 						   td->ptHat(),td->weight()));
-	  ++nGoodEvts;
+	  ++nGoodEvts_;
 	}
 	if(std::abs(td->getJet2()->eta()) < 1.3) {
 	  data.push_back(td ); 
-	  ++nGoodEvts;
+	  ++nGoodEvts_;
 	} else {
 	  delete td;
 	}
       } 
     } else if((dataClass_ == 11)  || (dataClass_ == 12) || (dataClass_ == 21)) {
-      nReadEvts++;
+      nReadEvts_++;
       int nAddedJets = createJetTruthEvents(data);
-      if( nAddedJets ) nGoodEvts += nAddedJets;    
+      if( nAddedJets ) nGoodEvts_ += nAddedJets;    
     } else if(dataClass_ == 5) {
       for(int calls = 0; calls < 1; calls++) {
-	nReadEvts++;
+	nReadEvts_++;
 	Event* td = createSmearEvent(calls); 
 	if(td) {
-	  nGoodEvts++;
+	  nGoodEvts_++;
 	  data.push_back(td ); 
 	} 
       }
     }
-    if(nReadEvts>=nDijetEvents_ && nDijetEvents_>=0 ) break;
+    if(nReadEvts_>=nDijetEvents_ && nDijetEvents_>=0 ) break;
   }
   if(dataClass_ == 21) {
     for(Binning::BinMap::const_iterator ijb = binning_->bins().begin() ; 
@@ -290,85 +301,89 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     }
     binning_->clear();
   }
+  //printCutFlow(); 
+  return nGoodEvts_;
+}
+
+void DiJetReader::printCutFlow()
+{
   // Print cut flow
-  std::cout << "Read " << nReadEvts << " dijet events:\n";
+  std::cout << "Read " << nReadEvts_ << " dijet events:\n";
   if( dataClass_ == 1 ) {
-    std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nDiJetCut_) << std::flush;
     std::cout << " events with 2 or more jets\n"; 
-    std::cout << "  " << (nReadEvts-=nMinDeltaPhi_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinDeltaPhi_) << std::flush;
     std::cout << " dijet events with DeltaPhi > " << minDeltaPhi_ << '\n';;
-    std::cout << "  " << (nReadEvts-=nMinGenJetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinGenJetEt_) << std::flush;
     std::cout << " dijet events with ptgen > " << minGenJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=nMaxGenJetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxGenJetEt_) << std::flush;
     std::cout << " dijet events with ptgen < " << maxGenJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=nMaxDeltaR_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxDeltaR_) << std::flush;
     std::cout << " dijet events with DeltaR < " << maxDeltaR_ << "\n";
-    std::cout << "  " << (nReadEvts-=nMinJetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinJetEt_) << std::flush;
     std::cout << " dijet events Et > " << minJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=nMaxJetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxJetEt_) << std::flush;
     std::cout << " dijet events Et < " << maxJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=(nMinJetEta_+nMaxJetEta_)) << std::flush;
+    std::cout << "  " << (nReadEvts_-=(nMinJetEta_+nMaxJetEta_)) << std::flush;
     std::cout << " dijet events with " << minJetEta_ << " < |eta| < " << maxJetEta_ << "\n";
-    std::cout << "  " << (nReadEvts-=nMinJetHadFraction_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinJetHadFraction_) << std::flush;
     std::cout << " dijet events with hadronic fraction > " << minJetHadFraction_ << "\n";
-    std::cout << "  " << (nReadEvts-=nMaxJetHadFraction_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxJetHadFraction_) << std::flush;
     std::cout << " dijet events with jet id and hadronic fraction < " << maxJetHadFraction_ << "\n";   
-    std::cout << "  " << (nReadEvts-=nCutOn3rdJet_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nCutOn3rdJet_) << std::flush;
     std::cout << " dijet events with " << minRel3rdJetEt_ << " < pt(jet3) / ptAve < " << maxRel3rdJetEt_ << "\n";
-    std:: cout << "  " << (nReadEvts-=nCutOnSoftJets_) << std::flush;
+    std:: cout << "  " << (nReadEvts_-=nCutOnSoftJets_) << std::flush;
     std::cout << " dijet events with pt(jet>3) / ptAve < " << maxRelSoftJetEt_ << "\n";
   } else if( dataClass_ == 11 || dataClass_ == 12 || dataClass_ == 21 ) {
-    std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nDiJetCut_) << std::flush;
     std::cout << " events with 2 or more jets\n";
-    std::cout << "  That are " << (nReadEvts*=2) << " jet-truth events:\n";
-    std::cout << "    " << (nReadEvts-=nMinGenJetEt_) << std::flush;
+    std::cout << "  That are " << (nReadEvts_*=2) << " jet-truth events:\n";
+    std::cout << "    " << (nReadEvts_-=nMinGenJetEt_) << std::flush;
     std::cout << " jet-truth events with ptgen > " << minGenJetEt_ << "\n";
-    std::cout << "    " << (nReadEvts-=nMaxGenJetEt_) << std::flush;
+    std::cout << "    " << (nReadEvts_-=nMaxGenJetEt_) << std::flush;
     std::cout << " jet-truth events with ptgen < " << maxGenJetEt_ << "\n";
-    std::cout << "    " << (nReadEvts-=nMaxDeltaR_) << std::flush;
+    std::cout << "    " << (nReadEvts_-=nMaxDeltaR_) << std::flush;
     std::cout << " jet-truth events with DeltaR < " << maxDeltaR_ << "\n";
-    std::cout << "    " << (nReadEvts-=nMinJetEt_) << std::flush;
+    std::cout << "    " << (nReadEvts_-=nMinJetEt_) << std::flush;
     std::cout << " jet-truth events Et > " << minJetEt_ << "\n";
-    std::cout << "    " << (nReadEvts-=nMaxJetEt_) << std::flush;
+    std::cout << "    " << (nReadEvts_-=nMaxJetEt_) << std::flush;
     std::cout << " jet-truth events Et < " << maxJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=(nMinJetEta_+nMaxJetEta_)) << std::flush;
+    std::cout << "  " << (nReadEvts_-=(nMinJetEta_+nMaxJetEta_)) << std::flush;
     std::cout << " dijet events with " << minJetEta_ << " < |eta| < " << maxJetEta_ << "\n";
-    std::cout << "    " << (nReadEvts-=nMinJetHadFraction_) << std::flush;
+    std::cout << "    " << (nReadEvts_-=nMinJetHadFraction_) << std::flush;
     std::cout << " jet-truth events with hadronic fraction > " << minJetHadFraction_ << "\n";
-    std::cout << "    " << (nReadEvts-=nMaxJetHadFraction_) << std::flush;
+    std::cout << "    " << (nReadEvts_-=nMaxJetHadFraction_) << std::flush;
     std::cout << " jet-truth events with hadronic fraction < " << maxJetHadFraction_ << "\n";
   } else if( dataClass_ == 5 ) {
-    std::cout << "  " << (nReadEvts-=nDiJetCut_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nDiJetCut_) << std::flush;
     std::cout << " events with 2 or more jets\n";
-    std::cout << "  " << (nReadEvts-=nMinGenJetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinGenJetEt_) << std::flush;
     std::cout << " dijet events with ptgen > " << minGenJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=nMaxGenJetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxGenJetEt_) << std::flush;
     std::cout << " dijet events with ptgen < " << maxGenJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=nMinJetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinJetEt_) << std::flush;
     std::cout << " dijet events pt(1) > " << minJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=nMaxJetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxJetEt_) << std::flush;
     std::cout << " dijet events pt(1) < " << maxJetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=nMinDijetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinDijetEt_) << std::flush;
     std::cout << " dijet events pt(ave) > " << minDijetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=nMaxDijetEt_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxDijetEt_) << std::flush;
     std::cout << " dijet events pt(ave) < " << maxDijetEt_ << " GeV\n";
-    std::cout << "  " << (nReadEvts-=(nMinJetEta_+nMaxJetEta_)) << std::flush;
+    std::cout << "  " << (nReadEvts_-=(nMinJetEta_+nMaxJetEta_)) << std::flush;
     std::cout << " dijet events with " << minJetEta_ << " < |eta| < " << maxJetEta_ << "\n";
-    std::cout << "  " << (nReadEvts-=nMinDeltaPhi_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinDeltaPhi_) << std::flush;
     std::cout << " dijet events with DeltaPhi > " << minDeltaPhi_ << '\n';;
-    std::cout << "  " << (nReadEvts-=nCutOn3rdJet_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nCutOn3rdJet_) << std::flush;
     std::cout << " dijet events with " << minRel3rdJetEt_ << " < pt(jet3) / (" << ptRef_ << "GeV) < " << maxRel3rdJetEt_ << "\n";
-    std::cout << "  " << (nReadEvts-=nCutOnSoftJets_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nCutOnSoftJets_) << std::flush;
     std::cout << " dijet events with pt(jet>3) / (" << ptRef_ << " GeV) < " << maxRelSoftJetEt_ << "\n";
-    std::cout << "  " << (nReadEvts-=nMinJetHadFraction_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinJetHadFraction_) << std::flush;
     std::cout << " dijet events with hadronic fraction > " << minJetHadFraction_ << "\n";
-    std::cout << "  " << (nReadEvts-=nMaxJetHadFraction_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxJetHadFraction_) << std::flush;
     std::cout << " dijet events with hadronic fraction < " << maxJetHadFraction_ << "\n";
-    std::cout << "  " << (nReadEvts-=nMaxDeltaR_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxDeltaR_) << std::flush;
     std::cout << " dijet events with DeltaR < " << maxDeltaR_ << "\n";
   }
-  std::cout << "Stored " << nGoodEvts << " dijet events for analysis.\n";
-  return nGoodEvts;
 }
   
 //!  \brief Read dijet data and store in format as specified
@@ -383,10 +398,14 @@ int DiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   nDijetEvents_ = config_->read<int>("use "+name.str()+" events",0);
   if(nDijetEvents_ == 0) return 0;
   TTree* tree = createTree(name.str());
-  if(tree->GetEntries() == 0) return 0;
+  if(tree->GetEntries() == 0) return 0;  
+  delete corFactorsFactory_;
+  corFactorsFactory_ = 0;
   nJet_->Init(tree);
-  int nev = readEvents(control);
+  int nev = readEventsFromTree(control);
+  printCutFlow();
   std::cout << "Stored " << nev << " dijet events for control plots.\n";
+  delete nJet_->fChain;
   return nev;
 }
 
@@ -956,17 +975,20 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetHadFraction_++;
     return 0;
   }
-  //loose jet id
-  //if(((( nJet_->JetEMF[0] <= 0.01) && (std::abs(nJet_->JetEta[0]) < 2.6) )) ||
-  //   (( nJet_->JetEMF[1] <= 0.01) && (std::abs(nJet_->JetEta[1]) < 2.6) )) {
-  
-  /*
-  if(! (nJet_->JetIDLoose[0] && nJet_->JetIDLoose[1])) {
-    nMaxJetHadFraction_++;
+  //loose jet id 
+  /* 
+     if(! (nJet_->JetIDLoose[0] && nJet_->JetIDLoose[1])) {
+     nMaxJetHadFraction_++;
     return 0;
   }
   */
-  /*
+  if(((( nJet_->JetEMF[0] <= 0.01) && (std::abs(nJet_->JetEta[0]) < 2.6) )) ||
+     (( nJet_->JetEMF[1] <= 0.01) && (std::abs(nJet_->JetEta[1]) < 2.6) )) {
+    nMaxJetHadFraction_++;
+    return 0;
+  }
+
+  
   if( nJet_->JetN90Hits[0] <= 1 || nJet_->JetN90Hits[1] <= 1) {
     nMaxJetHadFraction_++;
     return 0;
@@ -975,7 +997,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetHadFraction_++;
     return 0;
   }
-  */
+  
   double ptAve = 0.5 * (nJet_->JetPt[0]+ nJet_->JetPt[1]);
   if( nJets > 2) {
     //compute dijet kin

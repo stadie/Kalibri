@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.14 2010/09/22 13:29:44 mschrode Exp $
+// $Id: EventReader.cc,v 1.15 2010/10/12 08:37:40 stadie Exp $
 //
 #include "EventReader.h"
 
@@ -12,8 +12,6 @@
 #include "TChain.h"
 #include "ToyMC.h"
 #include "TTree.h"
-
-#include <dlfcn.h>
 
 unsigned int EventReader::numberOfEventReaders_ = 0;
 std::vector<JetConstraintEvent*> EventReader::constraints_;
@@ -68,25 +66,16 @@ EventReader::EventReader(const std::string& configfile, TParameters* param)
   else  
     jet_error_param   = par_->jet_error_parametrization;
 
-  std::string jcs = config_->read<string>("jet correction source","");
+  
   std::string jcn = config_->read<string>("jet correction name","");
   
-  if(jcs != "") {
-    std::string libname = "lib/lib"+jcs+".so";
-    //std::cout << "loading lib " << libname << '\n';
-    void *hndl = dlopen(libname.c_str(), RTLD_NOW);
-    if(hndl == NULL){
-      std::cerr << "failed to load plugin: " << dlerror() << std::endl;
-      exit(-1);
-    }
-  }
-  corFactorsFactory_ = CorFactorsFactory::map[jcn];
+  corFactorsFactory_ = CorFactorsFactory::get(jcn);
   if(jcn !="" && (! corFactorsFactory_)) {
-    std::cerr << "Failed to apply correction " << jcn << " from " << jcs << std::endl;
+    std::cerr << "Failed to apply correction " << jcn << std::endl;
     exit(-1);
   } 
   if(corFactorsFactory_) {
-    std::cout << "Jet corrections will be overwritten with " << jcn << " from " << jcs << std::endl; 
+    std::cout << "Jet corrections will be overwritten with " << jcn << " from " << std::endl; 
   }
   correctToL3_ = config_->read<bool>("correct jets to L3",false);
   correctL2L3_ = config_->read<bool>("correct jets L2L3",false);
@@ -138,6 +127,8 @@ EventReader::~EventReader()
   constraints_.clear();
   delete binning_;
   binning_ = 0;
+  delete corFactorsFactory_;
+  delete cp_;
 }
 
 TTree * EventReader::createTree(const std::string& name) const {
@@ -189,7 +180,7 @@ TTree * EventReader::createTree(const std::string& name) const {
   TChain* chain = new TChain(treeName.c_str()); 
   std::cout << "\n" << name  << " reader: opening up to " << inputFileNames.size() << " files\n";
   for(unsigned int i = 0 ;  i < inputFileNames.size() ; ++i) {
-    std::cout << i << " " << inputFileNames[i] << std::endl;
+    //std::cout << i << " " << inputFileNames[i] << std::endl;
     chain->Add(inputFileNames[i].c_str());
   }  
   return chain;
