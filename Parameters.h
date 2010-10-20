@@ -1,7 +1,7 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.61 2010/07/22 13:58:30 mschrode Exp $
+// $Id: Parameters.h,v 1.62 2010/10/20 11:28:19 stadie Exp $
 //
 #ifndef Parameters_h
 #define Parameters_h
@@ -24,9 +24,9 @@
 
 //!  \brief Connection between detector geometry and fit parameters,
 //!         interface to response and error parametrizations
-//!  \author Christian Autermann
+//!  \author Christian Autermann, Hartmut Stadie
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.61 2010/07/22 13:58:30 mschrode Exp $
+//!  $Id: Parameters.h,v 1.62 2010/10/20 11:28:19 stadie Exp $
 // -----------------------------------------------------------------
 class Parameters {  
 public :
@@ -151,26 +151,6 @@ public :
   bool needsUpdate() const { return p->needsUpdate(); }
   void update() { p->update(GetPars()); }
   
-  static float tower_parametrization(const Measurement* x, const double* par) {
-    return instance->p->correctedTowerEt(x,par);
-  }
-  static float jet_parametrization(const Measurement* x, const double* par) {
-    return instance->p->correctedJetEt(x,par);
-  }  
-  static float inv_jet_parametrization(const Measurement* x, const double* par) {
-    return instance->p->inverseJetCorrection(x,par);
-  }  
-  static float track_parametrization(const Measurement* x, const double* par) {
-    return instance->p->GetExpectedResponse(x,par);
-  }
-  static float global_jet_parametrization(const Measurement* x, const double* par) {
-    return instance->p->correctedGlobalJetEt(x,par);
-  }
-
-  static float dummy_parametrization(const Measurement* x, const double* par) {
-    return x->pt;
-  }
-
   //Error parametrization functions:
   template<int Et> static float const_error(const float *x, const Measurement *xorig=0, float errorig=0) {
     return Et;
@@ -313,18 +293,7 @@ public :
   static float const_error_parametrization(const float *x, const Measurement *xorig, float errorig)  {
     return errorig;  
   }
-
-  //Plot paramterization stuff
-  static float plot_parametrization(const Measurement* x, const double* par) {
-    return tower_parametrization(x,par)/x->pt; 
-  }
-
-  static float jes_plot_parametrization(double * x,double * par)  {
-    //return jet_parametrization(x,par)/x->pt;
-    return ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x[0]));   
-
-  }
-
+  
   //Limiting parameters
   static double parameter_limit(const Measurement* x, const double *par) {
     double min = x->pt;
@@ -334,7 +303,7 @@ public :
     return 0;
     //return 1e4/(1+exp(k* (par[0] - min))) + 1e4/(1+exp(-k* (par[0] - max));
   }
-
+  
   float etaEdge(int const etaBin, bool lowerEdge);
   //! return upper edge of bin in eta
   float etaUpperEdge(int const etaBin) { return etaEdge(etaBin, false); };
@@ -353,7 +322,7 @@ public :
   void readCalibrationJetMETL2(const std::string& inputFileName);
   void readCalibrationJetMETL3(const std::string& inputFileName);
 
-  static const Parametrization* parametrization() { return instance->p;}
+  //static const Parametrization* parametrization() { return instance->p;}
 protected:
   Parameters(Parametrization* p) 
     : p(p),k(0),parErrors_(0),parGCorr_(0),parCov_(0),trackEff(0),fitchi2(0) {
