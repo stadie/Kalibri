@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.69 2010/10/07 11:48:29 stadie Exp $
+//  $Id: Parametrization.h,v 1.70 2010/10/20 11:28:19 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -25,7 +25,7 @@ class TRandom;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.69 2010/10/07 11:48:29 stadie Exp $
+//!  $Id: Parametrization.h,v 1.70 2010/10/20 11:28:19 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -117,7 +117,7 @@ public:
   //!  \param par Parameters of the response function of this track
   //!  \return The expected calorimeter response
   // -----------------------------------------------------------------
-  virtual double GetExpectedResponse(const Measurement *x,const double *par) const { return x->pt;}
+  virtual double expectedResponse(const Measurement *x,const double *par) const { return x->pt;}
 
 
   //!  \brief Corrects the measured jet Et with global
@@ -839,7 +839,7 @@ class TrackParametrization : public Parametrization {
     return result;
   }
    
-  double GetExpectedResponse(const Measurement *x,const double *par) const   
+  double expectedResponse(const Measurement *x,const double *par) const   
     {
     double result=0;
     double PiFrac;
@@ -1061,7 +1061,7 @@ public:
     return  c2 * x->pt; 
   }
   
-  double GetExpectedResponse(const Measurement *x,const double *par) const {
+  double expectedResponse(const Measurement *x,const double *par) const {
     double result=0;
     //Groom
     double eh = 1.48 * par[0]; 

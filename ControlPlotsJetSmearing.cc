@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.20 2010/09/24 10:38:15 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.21 2010/10/20 11:28:06 stadie Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -580,16 +580,16 @@ void ControlPlotsJetSmearing::plotResponse() const
 
   // --- Fill histograms of fitted response ----------------
   // Get parameters
-  std::vector<double> fittedPar(param_->GetNumberOfParameters());
-  for(int i = 0; i < param_->GetNumberOfParameters(); i++) {
-    fittedPar.at(i) = param_->GetPars()[i];
+  std::vector<double> fittedPar(param_->numberOfParameters());
+  for(int i = 0; i < param_->numberOfParameters(); i++) {
+    fittedPar.at(i) = param_->parameters()[i];
   }
 
   std::vector<double> auxPar = bag_of<double>(config_->read<string>("mean response parameters","1 0"));
   SmearData * smearData = dynamic_cast<SmearData*>(data_->front());
   if( smearData ) {
     for(int bin = 1; bin <= hDeltaPtJet12Fit->GetNbinsX(); bin++) {
-        double s = param_->GetPars()[0]/sqrt(2.);
+        double s = param_->parameters()[0]/sqrt(2.);
         double d = hDeltaPtJet12Fit->GetBinCenter(bin);
         if( d < 2.*s ) {
 	  double u = d/s;
@@ -639,8 +639,8 @@ void ControlPlotsJetSmearing::plotResponse() const
 
       // Interpolated fit function with start values
       // Copy start values into parameter array
-      for(int i = 0; i < param_->GetNumberOfParameters(); i++) {
-	param_->GetPars()[i] = startParJet_.at(i);
+      for(int i = 0; i < param_->numberOfParameters(); i++) {
+	param_->parameters()[i] = startParJet_.at(i);
       }
       // Plot response function
       for(int bin = 1; bin <= hRespFitStart[ptBin]->GetNbinsX(); bin++) {
@@ -648,8 +648,8 @@ void ControlPlotsJetSmearing::plotResponse() const
 	hRespFitStart[ptBin]->SetBinContent(bin,smearData->pdfResp(r,ptMean));
       }
       // Copy back fitted values into parameter array
-      for(int i = 0; i < param_->GetNumberOfParameters(); i++) {
-	param_->GetPars()[i] = fittedPar.at(i);
+      for(int i = 0; i < param_->numberOfParameters(); i++) {
+	param_->parameters()[i] = fittedPar.at(i);
       }
     } // End of loop over ptBins
   } // End if( smearData )
@@ -1018,8 +1018,8 @@ void ControlPlotsJetSmearing::plotResponse() const
     double ptMean = 1.;
     if( ptBinningVar_ == "ptGen" ) ptMean = hPtGenAbsBins[ptBin]->GetMean();
     else if( ptBinningVar_ == "ptDijet" ) ptMean = hPtDijet->GetMean();
-    double par = scale(0)*param_->GetPars()[0]/ptMean;
-    double parErr = scale(0)*param_->GetErrors()[0]/ptMean;
+    double par = scale(0)*param_->parameters()[0]/ptMean;
+    double parErr = scale(0)*param_->errors()[0]/ptMean;
     double parMCTruth = 0.5*(fitResp[0]->GetParameter(2)+fitResp[1]->GetParameter(2));
     double parMCTruthErr = 0.5*(fitResp[0]->GetParError(2)+fitResp[1]->GetParError(2));
 
@@ -2633,7 +2633,7 @@ void ControlPlotsJetSmearing::plotParameters() const {
   std::cout << "Creating parameter control plots\n";
 
   // ----- Quantities defining the parametrization -----
-  int nPar = param_->GetNumberOfParameters();
+  int nPar = param_->numberOfParameters();
 
 
   // ----- Create histograms -----
@@ -2660,22 +2660,22 @@ void ControlPlotsJetSmearing::plotParameters() const {
   for(int i = 0; i < nPar; i++) {
     int bin = 1+i;
 
-    hPars->SetBinContent(bin,param_->GetPars()[i]);
-    hPars->SetBinError(bin,param_->GetErrors()[i]);
+    hPars->SetBinContent(bin,param_->parameters()[i]);
+    hPars->SetBinError(bin,param_->errors()[i]);
 
-    hAbsPars->SetBinContent(bin,scale(i)*param_->GetPars()[i]);
-    hAbsPars->SetBinError(bin,scale(i)*param_->GetErrors()[i]);
+    hAbsPars->SetBinContent(bin,scale(i)*param_->parameters()[i]);
+    hAbsPars->SetBinError(bin,scale(i)*param_->errors()[i]);
   
-    hRelParErrors->SetBinContent(bin,param_->GetErrors()[i]/param_->GetPars()[i]);
+    hRelParErrors->SetBinContent(bin,param_->errors()[i]/param_->parameters()[i]);
 
-    hGlobalCorr->SetBinContent(bin,param_->GetGlobalCorrCoeff()[i]);
+    hGlobalCorr->SetBinContent(bin,param_->globalCorrCoeff()[i]);
   }
   for(int i = 0; i < nPar; i++) {
     for(int j = 0; j < i+1; j++) {
       int idx = (i*i + i)/2 + j;
       double corr = 0.;
-      if( param_->GetErrors()[i] && param_->GetErrors()[j] ) {
-	corr = param_->GetCovCoeff()[idx] / param_->GetErrors()[i] / param_->GetErrors()[j];
+      if( param_->errors()[i] && param_->errors()[j] ) {
+	corr = param_->covCoeff()[idx] / param_->errors()[i] / param_->errors()[j];
       }
       hParCorr->Fill(i,j,corr);
       if( i != j ) {
@@ -2732,7 +2732,7 @@ void ControlPlotsJetSmearing::plotParameterScan() const {
   int n = 4;
   int nSteps = 2*n+1;
   double nSigma = 2;
-  int nPar = param_->GetNumberOfParameters();
+  int nPar = param_->numberOfParameters();
   std::vector<TH2D*> hParScans2D;
   std::vector<TLine*> lines;
 
@@ -2748,18 +2748,18 @@ void ControlPlotsJetSmearing::plotParameterScan() const {
   // Store original parameter values
   std::vector<double> origPars(nPar);
   for(int i = 0; i < nPar; i++) {
-    origPars[i] = param_->GetPars()[i];
+    origPars[i] = param_->parameters()[i];
   }
   // Outer loop over parameters
   for(int i = 0; i < nPar; i++) {
     if( param_->isFixedPar(i) ) continue;
-    double idVal = nSigma*param_->GetErrors()[i];
+    double idVal = nSigma*param_->errors()[i];
     if( idVal == 0 ) idVal = 0.1;
 			
     // Inner loop over parameters
     for(int j = 0; j < i; j++) {
       if( param_->isFixedPar(j) ) continue;
-      double jdVal = nSigma*param_->GetErrors()[j];
+      double jdVal = nSigma*param_->errors()[j];
       if( jdVal == 0 ) jdVal = 0.046;
       // Create histogram of likelihood from i vs j
       TString name = "hParScan2D";
@@ -2777,10 +2777,10 @@ void ControlPlotsJetSmearing::plotParameterScan() const {
       // Vary parameters i and j
       for(int is = 0; is < nSteps; is++) {
 	double iPar = origPars[i] + (is-n)*idVal; 
-	param_->GetPars()[i] = iPar;
+	param_->parameters()[i] = iPar;
 	for(int js = 0; js < nSteps; js++) {
 	  double jPar = origPars[j] + (js-n)*jdVal; 
-	  param_->GetPars()[j] = jPar;
+	  param_->parameters()[j] = jPar;
 	  double deltaLkh = 0.;
 	  // Calculate likelihood for varied parameters
 	  if( is != n || js != n ) {
@@ -2795,8 +2795,8 @@ void ControlPlotsJetSmearing::plotParameterScan() const {
 	}
       }
       // Reset parameters to original values
-      param_->GetPars()[i] = origPars[i];
-      param_->GetPars()[j] = origPars[j];
+      param_->parameters()[i] = origPars[i];
+      param_->parameters()[j] = origPars[j];
     } // End of inner loop over parameters
   } // End of outer loop over parameters
 
@@ -2927,17 +2927,17 @@ void ControlPlotsJetSmearing::plotLogP() const {
   }
 
   // Store fitted parameters
-  std::vector<double> fittedPar(param_->GetNumberOfParameters());
-  for(int i = 0; i < param_->GetNumberOfParameters(); i++) {
-    fittedPar[i] = param_->GetPars()[i];
+  std::vector<double> fittedPar(param_->numberOfParameters());
+  for(int i = 0; i < param_->numberOfParameters(); i++) {
+    fittedPar[i] = param_->parameters()[i];
   }
   // Copy start values into parameter array
   std::vector<double> startParGlobal = bag_of<double>(config_->read<string>("global jet start values",""));
-  for(int i = 0; i < param_->GetNumberOfParameters(); i++) {
-    if( i < param_->GetNumberOfJetParameters() )
-      param_->GetPars()[i] = startParJet_.at(i);
+  for(int i = 0; i < param_->numberOfParameters(); i++) {
+    if( i < param_->numberOfJetParameters() )
+      param_->parameters()[i] = startParJet_.at(i);
     else
-      param_->GetPars()[i] = startParGlobal[i-param_->GetNumberOfJetParameters()];
+      param_->parameters()[i] = startParGlobal[i-param_->numberOfJetParameters()];
   }
   // Loop over data and fill -log(P) with start
   // parameter values
@@ -2949,8 +2949,8 @@ void ControlPlotsJetSmearing::plotLogP() const {
     }
   }
   // Copy back fitted values into parameter array
-  for(int i = 0; i < param_->GetNumberOfParameters(); i++) {
-    param_->GetPars()[i] = fittedPar.at(i);
+  for(int i = 0; i < param_->numberOfParameters(); i++) {
+    param_->parameters()[i] = fittedPar.at(i);
   }
 
 
@@ -3460,7 +3460,7 @@ double ControlPlotsJetSmearing::gaussian(double *x, double *par) {
 double ControlPlotsJetSmearing::gaussianWidth(double pt) const {
   double a[3];
   for(int i = 0; i < 3; i++) {
-    a[i] = scale(i)*param_->GetPars()[i];
+    a[i] = scale(i)*param_->parameters()[i];
   }
   return sqrt( a[0]*a[0] + a[1]*a[1]*pt + a[2]*a[2]*pt*pt );
 }
@@ -3472,7 +3472,7 @@ double ControlPlotsJetSmearing::gaussianWidthError(double pt) const {
   std::vector<double> ds(3);
   double s = gaussianWidth(pt);
   for(int i = 0; i < 3; i++) {
-    ds[i] = scale(i)*param_->GetPars()[i]/s;
+    ds[i] = scale(i)*param_->parameters()[i]/s;
     if( i == 1 ) ds[i] *= pt;
     if( i == 2 ) ds[i] *= pt*pt;
   }
@@ -3483,9 +3483,9 @@ double ControlPlotsJetSmearing::gaussianWidthError(double pt) const {
     for(int j = 0; j < i+1; j++) { // Inner loop over parameters
       int idx = (i*i + i)/2 + j; // Index of (i,j) in covariance vector
       if( i == j ) { // Diagonal terms
-	var += ds[i]*ds[i]*scale(i)*scale(i)*param_->GetCovCoeff()[idx];
+	var += ds[i]*ds[i]*scale(i)*scale(i)*param_->covCoeff()[idx];
       } else { // Off-diagonal terms
-	var += 2*ds[i]*ds[j]*scale(i)*scale(j)*param_->GetCovCoeff()[idx];
+	var += 2*ds[i]*ds[j]*scale(i)*scale(j)*param_->covCoeff()[idx];
       }
     } // End of inner loop over parameters
   } // End of outer loop over parameters

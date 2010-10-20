@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.10 2010/10/14 17:26:55 stadie Exp $
+//  $Id: Kalibri.cc,v 1.11 2010/10/20 11:28:12 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -212,7 +212,7 @@ void Kalibri::run()
     if(fitMethod_==1) {
       run_Lvmini();
       time_t end = time(0);
-      cout << "Done, fitted " << par_->GetNumberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
+      cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
     } else {
       if( par_->needsUpdate() ) par_->update();
     }
@@ -227,7 +227,7 @@ void Kalibri::run_Lvmini()
 { 
   int naux = 3000000, iret=0;
   
-  int npar = par_->GetNumberOfParameters();
+  int npar = par_->numberOfParameters();
   int mvec = mvec_;
   if( calcCov_ ) mvec = -mvec_;
 
@@ -248,17 +248,17 @@ void Kalibri::run_Lvmini()
   if( fixedJetPars_.size() > 0 ) cout << "Fixed jet parameters:\n";
   for(unsigned int i = 0; i < fixedJetPars_.size(); i++) {
     int idx = fixedJetPars_.at(i);
-    cout << "  " << idx+1 << ": " << par_->GetPars()[idx] << endl;
+    cout << "  " << idx+1 << ": " << par_->parameters()[idx] << endl;
   }
   if( fixedGlobalJetPars_.size() > 0 ) cout << "Fixed global jet parameters:\n";
   for(unsigned int i = 0; i < fixedGlobalJetPars_.size(); i++) {
     int idx = fixedGlobalJetPars_.at(i);
-    cout << "  " << idx+1 << ": " << par_->GetPars()[idx] << endl;
+    cout << "  " << idx+1 << ": " << par_->parameters()[idx] << endl;
   }
   
   ComputeThread *t[nThreads_];
   for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-    t[ithreads] = new ComputeThread(npar, par_->GetPars(),epsilon);
+    t[ithreads] = new ComputeThread(npar, par_->parameters(),epsilon);
   }
 
   //lvmeps_(data_.size()*eps_,wlf1_,wlf2_);
@@ -267,7 +267,7 @@ void Kalibri::run_Lvmini()
   //Set errors per default to 0 //@@ doesn't seem to work...
   int error_index=2;
   error_index = lvmind_(error_index);
-  par_->FillErrors(aux+error_index);
+  par_->fillErrors(aux+error_index);
 
   for( unsigned int loop = 0; loop < residualScalingScheme_.size() ; ++loop ) {
     cout<<"Updating Di-Jet Errors"<<endl;
@@ -339,7 +339,7 @@ void Kalibri::run_Lvmini()
       } 
       //computed step sizes for derivative calculation
       for(int param = 0 ; param < npar ; ++param) {
-	epsilon[param] = derivStep_ * std::abs(par_->GetPars()[param]);
+	epsilon[param] = derivStep_ * std::abs(par_->parameters()[param]);
 	if(epsilon[param] < 1e-06) epsilon[param] = 1e-06;
       }
       //use zero step for fixed pars
@@ -386,14 +386,14 @@ void Kalibri::run_Lvmini()
 	std::cout << std::setw(15) << "d^2p/dx^2\n";
 	for( int param = 0 ; param < npar ; ++param ) {
 	  std::cout << std::setw(5) << param;
-	  std::cout << std::setw(15) << par_->GetPars()[param];
+	  std::cout << std::setw(15) << par_->parameters()[param];
 	  std::cout << std::setw(15) << aux[param];
 	  std::cout << std::setw(15) << aux[param+npar] << std::endl;
 	}
 	std::cout << "fsum:" << fsum << std::endl;
       }
       assert( fsum > 0 );
-      lvmfun_(par_->GetPars(),fsum,iret,aux);
+      lvmfun_(par_->parameters(),fsum,iret,aux);
       //lvmout_(npar,mvec_,aux);
     } while (iret<0); 
 
@@ -402,23 +402,23 @@ void Kalibri::run_Lvmini()
     }  
     int par_index = 1;
     par_index = lvmind_(par_index);
-    par_->SetParameters(aux + par_index);
+    par_->setParameters(aux + par_index);
   }
   //Copy Parameter errors from aux array to the TParameter::e array
   if( !calcCov_ ) {
     error_index=2;
     error_index = lvmind_(error_index);
-    par_->SetErrors(aux+error_index);
+    par_->setErrors(aux+error_index);
   } else {
     // Retrieve parameter errors
     error_index = 3;
     error_index = lvmind_(error_index);
-    par_->SetErrors(aux+error_index);
+    par_->setErrors(aux+error_index);
     // Retrieve global parameter correlation coefficients
     error_index = 4;
     error_index = lvmind_(error_index);
     bool nanOccured = false;
-    for(int i = 0; i < par_->GetNumberOfParameters(); i++) {
+    for(int i = 0; i < par_->numberOfParameters(); i++) {
       if( aux[error_index+i] != aux[error_index+i] ) { // Check for NAN
 	if( !nanOccured ) {
 	  nanOccured = true;
@@ -428,13 +428,13 @@ void Kalibri::run_Lvmini()
 	aux[error_index+i] = 0.;
       }
     }
-    par_->SetGlobalCorrCoeff(aux+error_index);
+    par_->setGlobalCorrCoeff(aux+error_index);
     // Retrieve parameter covariances
     error_index = 5;
     error_index = lvmind_(error_index);
     // Set cov = 0 for fixed parameters
     nanOccured = false;
-    for(int i = 0; i < par_->GetNumberOfCovCoeffs(); i++) {
+    for(int i = 0; i < par_->numberOfCovCoeffs(); i++) {
       if( aux[error_index+i] != aux[error_index+i] ) { // Check for NAN
 	if( !nanOccured ) {
 	  nanOccured = true;
@@ -445,10 +445,8 @@ void Kalibri::run_Lvmini()
 	aux[error_index+i] = 0.;
       }
     }
-    par_->SetCovCoeff(aux+error_index);
+    par_->setCovCoeff(aux+error_index);
   }
-  par_->SetFitChi2(fsum);
-  
   for (int ithreads=0; ithreads<nThreads_; ++ithreads){
     delete t[ithreads];
   }
@@ -465,25 +463,17 @@ void Kalibri::done()
 {
   ConfigFile config( configFile_.c_str() );
 
-  // write calibration to cfi output file if ending is cfi
-  bool cfi=false;
   bool txt=false;
   bool tex=false;
   std::string fileName(getOutputFile());
-  if( fileName.find(".cfi")!=std::string::npos ){
-    if( fileName.substr(fileName.find(".cfi")).compare(".cfi")==0 ){
-      par_->writeCalibrationCfi( fileName.c_str() );
-      cfi=true; // file has a real .cfi ending
-    }
-  }
-  // write calibration to cfi output file if ending is txt
+  // write calibration to txt output file if ending is txt
   if( fileName.find(".txt")!=std::string::npos ){
     if( fileName.substr(fileName.find(".txt")).compare(".txt")==0 ){
       par_->writeCalibrationTxt( fileName.c_str() );
       txt=true; // file has a real .txt ending
     }
   }
-  // write calibration to cfi output file if ending is txt
+  // write calibration to tex output file if ending is tex
   if( fileName.find(".tex")!=std::string::npos ){
     if( fileName.substr(fileName.find(".tex")).compare(".tex")==0 ){
       par_->writeCalibrationTex( fileName.c_str(), config );
@@ -491,9 +481,8 @@ void Kalibri::done()
     }
   }
 
-  // write calibration to cfi & txt output file if w/o ending
-  if( !cfi && !txt && !tex ){
-    par_->writeCalibrationCfi( (fileName+".cfi").c_str() );
+  // write calibration to txt and tex output file if w/o ending
+  if( !txt && !tex ){
     par_->writeCalibrationTxt( (fileName+".txt").c_str() );
     par_->writeCalibrationTex( (fileName+".tex").c_str(), config );
   }
@@ -540,10 +529,10 @@ void Kalibri::init()
 {
   ConfigFile config(configFile_.c_str() );
 
-  par_ = Parameters::CreateParameters(configFile_);
+  par_ = Parameters::createParameters(configFile_);
 
   //initialize temp arrays for fast derivative calculation
-  TAbstractData::total_n_pars     = par_->GetNumberOfParameters();
+  TAbstractData::total_n_pars     = par_->numberOfParameters();
 
   //--------------------------------------------------------------------------
   //read config file
@@ -589,14 +578,14 @@ void Kalibri::init()
       int etaid = fixJetPars[i];
       int phiid = fixJetPars[i+1];
       int parid = fixJetPars[i+2];
-      if(parid >= par_->GetNumberOfJetParametersPerBin()) continue;
-      int jetbin = par_->GetJetBin(par_->GetJetEtaBin(etaid),par_->GetJetPhiBin(phiid));
+      if(parid >= par_->numberOfJetParametersPerBin()) continue;
+      int jetbin = par_->jetBin(par_->jetEtaBin(etaid),par_->jetPhiBin(phiid));
       if(jetbin < 0) {
 	std::cerr<<"WARNING: fixed jet parameter bin index = " << jetbin << endl; 
 	exit(-2);  
       }
       //std::cout << "jetbin:" << jetbin << '\n';
-      fixedJetPars_.push_back(jetbin * par_->GetNumberOfJetParametersPerBin() + par_->GetNumberOfTowerParameters() + parid);
+      fixedJetPars_.push_back(jetbin * par_->numberOfJetParametersPerBin() + par_->numberOfTowerParameters() + parid);
     }
   }
   else if( fixJetPars.size() % 2 == 0 ) {
@@ -604,15 +593,15 @@ void Kalibri::init()
     for(unsigned int i = 0 ; i < fixJetPars.size() ; i += 2) {
       int etaid = fixJetPars[i];
       int phiid = fixJetPars[i+1];
-      int jetbin = par_->GetJetBin(par_->GetJetEtaBin(etaid),par_->GetJetPhiBin(phiid));
+      int jetbin = par_->jetBin(par_->jetEtaBin(etaid),par_->jetPhiBin(phiid));
       if(jetbin < 0) {
 	std::cerr<<"WARNING: fixed jet parameter bin index = " << jetbin << endl; 
 	exit(-2);  
       }
 
-      for(int parIdx = 0; parIdx < par_->GetNumberOfJetParametersPerBin(); parIdx++) {
-	fixedJetPars_.push_back( par_->GetNumberOfTowerParameters() + 
-				 jetbin * par_->GetNumberOfJetParametersPerBin() +
+      for(int parIdx = 0; parIdx < par_->numberOfJetParametersPerBin(); parIdx++) {
+	fixedJetPars_.push_back( par_->numberOfTowerParameters() + 
+				 jetbin * par_->numberOfJetParametersPerBin() +
 				 parIdx );
       }
     }
@@ -621,10 +610,10 @@ void Kalibri::init()
 //     cerr << "       'fixed jet parameter = { <eta_id> <phi_id> <par_id> }' or\n"; 
 //     cerr << "       'fixed jet parameter = { <eta_id> <phi_id> }'\n"; 
     // Fix specified parameters in all jet bins
-    for(int jetBin = 0; jetBin < par_->GetEtaGranularityJet(); jetBin++) {
+    for(int jetBin = 0; jetBin < par_->etaGranularityJet(); jetBin++) {
       for(unsigned int i = 0 ; i < fixJetPars.size() ; i++) {
-	int parIdx = par_->GetNumberOfTowerParameters()
-	  + jetBin * par_->GetNumberOfJetParametersPerBin()
+	int parIdx = par_->numberOfTowerParameters()
+	  + jetBin * par_->numberOfJetParametersPerBin()
 	  + fixJetPars[i];
 	fixedJetPars_.push_back(parIdx);
       }
@@ -641,15 +630,15 @@ void Kalibri::init()
       if( globalJetBin < 0 ) {
 	std::cerr << "ERROR: fixed global jet parameter bin index = " << globalJetBin << std::endl; 
 	exit(-2);  
-      } else if( static_cast<int>(globalJetBin) > par_->GetNumberOfGlobalJetParameters() ) {
+      } else if( static_cast<int>(globalJetBin) > par_->numberOfGlobalJetParameters() ) {
 	std::cerr << "ERROR: fixed global jet parameter bin index = " << globalJetBin;
 	std::cerr << " which is larger than the max number ";
-	std::cerr << par_->GetNumberOfGlobalJetParameters() << " of global parameters." << std::endl;
+	std::cerr << par_->numberOfGlobalJetParameters() << " of global parameters." << std::endl;
 	exit(-2);  
       } else {
-	fixedGlobalJetPars_.push_back( par_->GetNumberOfTowerParameters() +
-				       par_->GetNumberOfJetParameters()   +
-				       par_->GetNumberOfTrackParameters() +
+	fixedGlobalJetPars_.push_back( par_->numberOfTowerParameters() +
+				       par_->numberOfJetParameters()   +
+				       par_->numberOfTrackParameters() +
 				       globalJetBin );
       }
   }

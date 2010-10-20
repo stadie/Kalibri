@@ -1,7 +1,7 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.62 2010/10/20 11:28:19 stadie Exp $
+// $Id: Parameters.h,v 1.63 2010/10/20 11:47:12 stadie Exp $
 //
 #ifndef Parameters_h
 #define Parameters_h
@@ -26,30 +26,28 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann, Hartmut Stadie
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.62 2010/10/20 11:28:19 stadie Exp $
+//!  $Id: Parameters.h,v 1.63 2010/10/20 11:47:12 stadie Exp $
 // -----------------------------------------------------------------
 class Parameters {  
 public :
   
-  static Parameters* CreateParameters(const ConfigFile& config);
+  static Parameters* createParameters(const ConfigFile& config);
 
-  std::string GetName() const;
+  int etaBin(int const eta_id) const { return etaBin(eta_id, eta_granularity_, phi_granularity_, eta_symmetry_);}
+  int phiBin(int const phi_id) const { return phiBin(phi_id, phi_granularity_);}
+  int jetEtaBin(int const eta_id) const { return etaBin(eta_id, eta_granularity_jet_, phi_granularity_jet_, eta_symmetry_);}
+  int jetPhiBin(int const phi_id) const { return phiBin(phi_id, phi_granularity_jet_);}
+  int trackEtaBin(int const eta_id) const { return etaBin(eta_id, eta_granularity_track_, phi_granularity_track_, eta_symmetry_);}
+  int trackPhiBin(int const phi_id) const { return phiBin(phi_id, phi_granularity_jet_);}
+  int bin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity_ + phibin;}
+  int jetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return etabin*phi_granularity_jet_ + phibin;}
+  int trackBin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity_track_ + phibin;}
 
-  int GetEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity, phi_granularity, eta_symmetry);}
-  int GetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity);}
-  int GetJetEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity_jet, phi_granularity_jet, eta_symmetry);}
-  int GetJetPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity_jet);}
-  int GetTrackEtaBin(int const eta_id) const { return GetEtaBin(eta_id, eta_granularity_track, phi_granularity_track, eta_symmetry);}
-  int GetTrackPhiBin(int const phi_id) const { return GetPhiBin(phi_id, phi_granularity_jet);}
-  int GetBin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity + phibin;}
-  int GetJetBin(unsigned const etabin, unsigned const phibin) const { if (etabin<0) return etabin; else return etabin*phi_granularity_jet + phibin;}
-  int GetTrackBin(unsigned const etabin, unsigned const phibin) const {if (etabin<0) return etabin; else return etabin*phi_granularity_track + phibin;}
-
-  int GetNumberOfTowerParameters() const{return p->nTowerPars() *eta_granularity*phi_granularity;}
-  int GetNumberOfJetParameters() const{return p->nJetPars()*eta_granularity_jet*phi_granularity_jet;}
-  int GetNumberOfTrackParameters() const{return p->nTrackPars()*eta_granularity_track*phi_granularity_track;}
-  int GetNumberOfGlobalJetParameters() const{return p->nGlobalJetPars();}
-  int GetNumberOfFixedParameters() const {
+  int numberOfTowerParameters() const{return p_->nTowerPars() *eta_granularity_*phi_granularity_;}
+  int numberOfJetParameters() const{return p_->nJetPars()*eta_granularity_jet_*phi_granularity_jet_;}
+  int numberOfTrackParameters() const{return p_->nTrackPars()*eta_granularity_track_*phi_granularity_track_;}
+  int numberOfGlobalJetParameters() const{return p_->nGlobalJetPars();}
+  int numberOfFixedParameters() const {
     int n = 0;
     for(std::vector<bool>::const_iterator it = isFixedPar_.begin();
 	it != isFixedPar_.end(); it++) {
@@ -58,98 +56,94 @@ public :
     return n;
   }
 
-  int GetNumberOfParameters() const{return GetNumberOfTowerParameters()+GetNumberOfJetParameters() + GetNumberOfTrackParameters()+GetNumberOfGlobalJetParameters();}
-  int GetNumberOfTowerParametersPerBin() const {return p->nTowerPars();}
-  int GetNumberOfJetParametersPerBin() const {return p->nJetPars();}
-  int GetNumberOfTrackParametersPerBin() const {return p->nTrackPars();}
-  int GetNumberOfCovCoeffs() const { 
-    return (GetNumberOfParameters()*GetNumberOfParameters()+GetNumberOfParameters())/2;
+  int numberOfParameters() const{return numberOfTowerParameters()+numberOfJetParameters() + numberOfTrackParameters()+ numberOfGlobalJetParameters();}
+  int numberOfTowerParametersPerBin() const {return p_->nTowerPars();}
+  int numberOfJetParametersPerBin() const {return p_->nJetPars();}
+  int numberOfTrackParametersPerBin() const {return p_->nTrackPars();}
+  int numberOfCovCoeffs() const { 
+    return (numberOfParameters()*numberOfParameters()+numberOfParameters())/2;
   }
 
-  int GetEtaGranularity() const { return eta_granularity;}
-  int GetPhiGranularity() const { return phi_granularity;}
-  int GetEtaGranularityJet() const { return eta_granularity_jet;}
-  int GetPhiGranularityJet() const { return phi_granularity_jet;}
-  int GetEtaGranularityTrack() const { return eta_granularity_track;}
-  int GetPhiGranularityTrack() const { return phi_granularity_track;}
+  int etaGranularity() const { return eta_granularity_;}
+  int phiGranularity() const { return phi_granularity_;}
+  int etaGranularityJet() const { return eta_granularity_jet_;}
+  int phiGranularityJet() const { return phi_granularity_jet_;}
+  int etaGranularityTrack() const { return eta_granularity_track_;}
+  int phiGranularityTrack() const { return phi_granularity_track_;}
 
-  void writeCalibrationCfi(const char* name); //!< write calibration constants to cfi file
   void writeCalibrationTxt(const char* name); //!< write calibration constants to txt file
   void writeCalibrationTex(const char* name, const ConfigFile& config); //!< write calibration constants and some paraemters of the fit to tex file
 
-  double* GetTowerParRef(int bin) { return k + bin*p->nTowerPars(); }
-  double* GetJetParRef(int jetbin)  { return k + GetNumberOfTowerParameters()+jetbin*p->nJetPars();}
-  double* GetTrackParRef(int trackbin)  { return k + GetNumberOfTowerParameters() + GetNumberOfJetParameters() +trackbin*p->nTrackPars();}
-  double* GetGlobalJetParRef()  { return k + GetNumberOfTowerParameters() + GetNumberOfJetParameters() + GetNumberOfTrackParameters();}
+  double* towerParRef(int bin) { return k_ + bin*p_->nTowerPars(); }
+  double* jetParRef(int jetbin)  { return k_ + numberOfTowerParameters()+jetbin*p_->nJetPars();}
+  double* trackParRef(int trackbin)  { return k_ + numberOfTowerParameters() + numberOfJetParameters() +trackbin*p_->nTrackPars();}
+  double* globalJetParRef()  { return k_ + numberOfTowerParameters() + numberOfJetParameters() + numberOfTrackParameters();}
 
-  double* GetTowerParErrorRef(int bin) { 
-    return parErrors_ + bin*p->nTowerPars();
+  double* towerParErrorRef(int bin) { 
+    return parErrors_ + bin*p_->nTowerPars();
   }
-  double* GetJetParErrorRef(int jetbin)  { 
-    return parErrors_ + GetNumberOfTowerParameters()+jetbin*p->nJetPars();
+  double* jetParErrorRef(int jetbin)  { 
+    return parErrors_ + numberOfTowerParameters()+jetbin*p_->nJetPars();
   }
-  double* GetTrackParErrorRef(int trackbin)  {
-    return parErrors_ + GetNumberOfTowerParameters() + GetNumberOfJetParameters() +trackbin*p->nTrackPars();
+  double* trackParErrorRef(int trackbin)  {
+    return parErrors_ + numberOfTowerParameters() + numberOfJetParameters() +trackbin*p_->nTrackPars();
   }
-  double* GetGlobalJetParErrorRef()  { 
-    return parErrors_ + GetNumberOfTowerParameters() + GetNumberOfJetParameters() + GetNumberOfTrackParameters();
+  double* globalJetParErrorRef()  { 
+    return parErrors_ + numberOfTowerParameters() + numberOfJetParameters() + numberOfTrackParameters();
   }
 
-  double* GetTowerParGlobalCorrCoeffRef(int bin) { 
-    return parGCorr_ + bin*p->nTowerPars();
+  double* towerParGlobalCorrCoeffRef(int bin) { 
+    return parGCorr_ + bin*p_->nTowerPars();
   }
-  double* GetJetParGlobalCorrCoeffRef(int jetbin)  { 
-    return parGCorr_ + GetNumberOfTowerParameters()+jetbin*p->nJetPars();
+  double* jetParGlobalCorrCoeffRef(int jetbin)  { 
+    return parGCorr_ + numberOfTowerParameters()+jetbin*p_->nJetPars();
   }
-  double* GetTrackParGlobalCorrCoeffRef(int trackbin)  {
-    return parGCorr_ + GetNumberOfTowerParameters() + GetNumberOfJetParameters() +trackbin*p->nTrackPars();
+  double* trackParGlobalCorrCoeffRef(int trackbin)  {
+    return parGCorr_ + numberOfTowerParameters() + numberOfJetParameters() +trackbin*p_->nTrackPars();
   }
-  double* GetGlobalJetParGlobalCorrCoeffRef()  { 
-    return parGCorr_ + GetNumberOfTowerParameters() + GetNumberOfJetParameters() + GetNumberOfTrackParameters();
+  double* globalJetParGlobalCorrCoeffRef()  { 
+    return parGCorr_ + numberOfTowerParameters() + numberOfJetParameters() + numberOfTrackParameters();
   }
 
   bool isFixedPar(int i) const { 
-    assert( i >= 0 && i < GetNumberOfParameters() );
+    assert( i >= 0 && i < numberOfParameters() );
     return isFixedPar_[i];
   }
   std::string parName(int i) const {
-    assert( i >= 0 && i < GetNumberOfParameters() );
+    assert( i >= 0 && i < numberOfParameters() );
     return parNames_[i];
   }
 
-  void SetParameters(double *np) {
-    std::memcpy(k,np,GetNumberOfParameters()*sizeof(double));
+  void setParameters(double *np) {
+    std::memcpy(k_,np,numberOfParameters()*sizeof(double));
   }
-  void SetErrors(double *ne) {
-    std::memcpy(parErrors_,ne,GetNumberOfParameters()*sizeof(double));
+  void setErrors(double *ne) {
+    std::memcpy(parErrors_,ne,numberOfParameters()*sizeof(double));
   }  
-  void SetGlobalCorrCoeff(double *gcc) {
-    std::memcpy(parGCorr_,gcc,GetNumberOfParameters()*sizeof(double));
+  void setGlobalCorrCoeff(double *gcc) {
+    std::memcpy(parGCorr_,gcc,numberOfParameters()*sizeof(double));
   }  
-  void SetCovCoeff(double *cov) {
-    std::memcpy(parCov_,cov,GetNumberOfCovCoeffs()*sizeof(double));
+  void setCovCoeff(double *cov) {
+    std::memcpy(parCov_,cov,numberOfCovCoeffs()*sizeof(double));
   }
   void fixPar(int i) {
-    assert( i >= 0 && i < GetNumberOfParameters() );
+    assert( i >= 0 && i < numberOfParameters() );
     isFixedPar_[i] = true;
   }
-  void SetFitChi2(double chi2) { fitchi2 = chi2;}
-  double GetFitChi2() const { return fitchi2;}
-  void FillErrors(double* copy) const {
-    std::memcpy(copy,parErrors_,GetNumberOfParameters()*sizeof(double));
+  void fillErrors(double* copy) const {
+    std::memcpy(copy,parErrors_,numberOfParameters()*sizeof(double));
   }
-  double* GetPars() { return k; }
-  double* GetErrors() { return parErrors_; }
-  double* GetGlobalCorrCoeff() { return parGCorr_; }
-  double* GetCovCoeff() { return parCov_; }
-  double* GetEffMap() {return trackEff;}
-  int GetTrackEffBin(double pt, double eta);
+  double* parameters() { return k_; }
+  double* errors() { return parErrors_; }
+  double* globalCorrCoeff() { return parGCorr_; }
+  double* covCoeff() { return parCov_; }
+  double* effMap() {return trackEff_;}
+  int trackEffBin(double pt, double eta);
 
   void print() const;
 
-  const char * name() const { return p->name(); }
-  bool needsUpdate() const { return p->needsUpdate(); }
-  void update() { p->update(GetPars()); }
+  bool needsUpdate() const { return p_->needsUpdate(); }
+  void update() { p_->update(parameters()); }
   
   //Error parametrization functions:
   template<int Et> static float const_error(const float *x, const Measurement *xorig=0, float errorig=0) {
@@ -325,7 +319,7 @@ public :
   //static const Parametrization* parametrization() { return instance->p;}
 protected:
   Parameters(Parametrization* p) 
-    : p(p),k(0),parErrors_(0),parGCorr_(0),parCov_(0),trackEff(0),fitchi2(0) {
+    : p_(p),k_(0),parErrors_(0),parGCorr_(0),parCov_(0),trackEff_(0) {
   };
   virtual ~Parameters();
 
@@ -333,8 +327,8 @@ protected:
 private:
   Parameters();
   Parameters(const Parameters&) {}
-  int GetEtaBin(int phi_id, int etagranu, int phigranu, bool etasym) const;
-  int GetPhiBin(int phi_id, int phigranu) const;
+  int etaBin(int phi_id, int etagranu, int phigranu, bool etasym) const;
+  int phiBin(int phi_id, int phigranu) const;
   //! Return one line of LaTeX tabular containing the name and value of a given parameter from config file
   template<class T> std::string texTabularLine(const ConfigFile& config, const std::string& fieldname) const;
   //! Return submatrix of covariance matrix for \p nPar parameters from \p firstPar
@@ -343,34 +337,33 @@ private:
   std::vector<bool> findParStatus(int firstPar, int nPar) const;
 
   //Towers in Eta-, Phi- direction (according to PTDR Vol I, p.201)
-  unsigned const static eta_ntwr=82, phi_ntwr=72;
-  unsigned eta_ntwr_used;
-  bool eta_symmetry;
-  unsigned int eta_granularity, phi_granularity,eta_granularity_jet, phi_granularity_jet, eta_granularity_track, phi_granularity_track;
-  std::vector<double> start_values, jet_start_values, track_start_values, global_jet_start_values;
+  static  const unsigned int eta_ntwr_=82, phi_ntwr_=72;
+  unsigned int eta_ntwr_used_;
+  bool eta_symmetry_;
+  unsigned int eta_granularity_, phi_granularity_,eta_granularity_jet_, phi_granularity_jet_, eta_granularity_track_, phi_granularity_track_;
+  std::vector<double> start_values_, jet_start_values_, track_start_values_, global_jet_start_values_;
   std::vector<std::string> parNames_;
 
   //The parametrization functions:
-  Parametrization* p;
+  Parametrization* p_;
 
-  double * k; //!< all fit-parameters
+  double * k_; //!< all fit-parameters
   std::vector<bool> isFixedPar_;
   double * parErrors_; //!< all fit-parameter errors
   double * parGCorr_; //!< Global correlation coefficients of parameters
   double * parCov_;
-  double * trackEff; //!< track Efficiency 13eta X 13 ptbins;
-  double fitchi2;
+  double * trackEff_; //!< track Efficiency 13eta X 13 ptbins;
 
   /// ------------------------------------------------------
   /// private functions
 
-  void Init(const ConfigFile& config);
+  void init(const ConfigFile& config);
   void readTrackEffTxt(const std::string& file);
   std::string trim(std::string const& source, char const* delims = " {}\t\r\n");
 
-  static Parameters *instance; 
+  static Parameters *instance_; 
 
-  static Parametrization* CreateParametrization(const std::string& name, const ConfigFile& config);
+  static Parametrization* createParametrization(const std::string& name, const ConfigFile& config);
   
   class Cleaner
   {
@@ -378,9 +371,9 @@ private:
     Cleaner() {}
     ~Cleaner()
     {
-      if(Parameters::instance) { 
-	delete Parameters::instance; 
-	Parameters::instance = 0; 
+      if(Parameters::instance_) { 
+	delete Parameters::instance_; 
+	Parameters::instance_ = 0; 
       }
     }
   };

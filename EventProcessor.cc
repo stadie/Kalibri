@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventProcessor.cc,v 1.4 2010/05/19 13:34:48 stadie Exp $
+//    $Id: EventProcessor.cc,v 1.5 2010/10/20 11:28:08 stadie Exp $
 //   
 #include "EventProcessor.h"
 
@@ -87,7 +87,7 @@ int EventProcessor::getSpectraBin(double m1, double m2=0., double m3=0.)
   else if (m1>max1) bin1=bins1+1;
   else              bin1=(int)(((m1-min1)/max1)*(double)bins1);
   //eta
-  int bin2=0, bins2 = par_->GetEtaGranularityJet()*par_->GetPhiGranularityJet();
+  int bin2=0, bins2 = par_->etaGranularityJet()*par_->phiGranularityJet();
   double min2    = 0.;
   double max2    = 82.;
   if      (m2<min2) bin2=0;

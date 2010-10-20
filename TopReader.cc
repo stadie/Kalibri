@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.23 2010/10/12 08:37:40 stadie Exp $
+//    $Id: TopReader.cc,v 1.24 2010/10/20 11:28:12 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -235,9 +235,9 @@ Event* TopReader::createTwoJetsInvMassEvents()
       TLorentzVector p1,p2;
       p1.SetPtEtaPhiM(jets[0]->genPt(),jets[0]->eta(),jets[0]->phi(),0);
       p2.SetPtEtaPhiM(jets[1]->genPt(),jets[1]->eta(),jets[1]->phi(),0);
-      return new TwoJetsInvMassEvent(jets[0],jets[1],(p1+p2).M(),1.0,par_->GetPars());
+      return new TwoJetsInvMassEvent(jets[0],jets[1],(p1+p2).M(),1.0,par_->parameters());
     }
-    return new TwoJetsInvMassEvent(jets[0],jets[1],massConstraintW_,1.0,par_->GetPars());
+    return new TwoJetsInvMassEvent(jets[0],jets[1],massConstraintW_,1.0,par_->parameters());
   } else {
     delete jets[0];
     delete jets[1];

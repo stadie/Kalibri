@@ -5,7 +5,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date  2008/12/12
-//!  $Id: ParameterLimitsReader.cc,v 1.13 2010/09/22 13:29:44 mschrode Exp $
+//!  $Id: ParameterLimitsReader.cc,v 1.14 2010/10/20 11:28:12 stadie Exp $
 //!   
 #include "ParameterLimitsReader.h"
 
@@ -25,9 +25,9 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
     std::cout << "Using user defined parameter limits:" << std::endl;
     for(unsigned int i = 0 ; i < limits.size() ; i += 4) {
       int index = (int)limits[i];
-      for(int j = par_->GetNumberOfTowerParameters() + index; 
-	  j <  par_->GetNumberOfParameters() ; 
-	  j += par_->GetNumberOfJetParametersPerBin()) {
+      for(int j = par_->numberOfTowerParameters() + index; 
+	  j <  par_->numberOfParameters() ; 
+	  j += par_->numberOfJetParametersPerBin()) {
 	par_limits.push_back(ParameterLimit(j,limits[i+1],limits[i+2],
 					    limits[i+3]));
       }
@@ -47,10 +47,10 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
 	double max = 10000.;
 
 	// Loop over eta and phi bins
-	for(int j = par_->GetNumberOfTowerParameters() + i; 
-	    j <  par_->GetNumberOfParameters(); 
-	    j += par_->GetNumberOfJetParametersPerBin()) {
-	  if( j < par_->GetNumberOfParameters() )
+	for(int j = par_->numberOfTowerParameters() + i; 
+	    j <  par_->numberOfParameters(); 
+	    j += par_->numberOfJetParametersPerBin()) {
+	  if( j < par_->numberOfParameters() )
 	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
 	} // End of loop over eta and phi bins
       } // End of loop over parameters in one bin
@@ -58,15 +58,15 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
     // For Gauss Function in one bin
     else if( parclass == "SmearParametrizationGaussPtBin" ) {
       // Loop over jet parameters in one bin
-      for(int i = 0; i < par_->GetNumberOfJetParameters(); i++) {
+      for(int i = 0; i < par_->numberOfJetParameters(); i++) {
 	double min = sqrt(2./M_PI);   // Log-term has to be positive
 	double max = 10000.;
 
 	// Loop over eta and phi bins
-	for(int j = par_->GetNumberOfTowerParameters() + i; 
-	    j <  par_->GetNumberOfParameters(); 
-	    j += par_->GetNumberOfJetParametersPerBin()) {
-	  if( j < par_->GetNumberOfParameters() )
+	for(int j = par_->numberOfTowerParameters() + i; 
+	    j <  par_->numberOfParameters(); 
+	    j += par_->numberOfJetParametersPerBin()) {
+	  if( j < par_->numberOfParameters() )
 	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
 	} // End of loop over eta and phi bins
       } // End of loop over parameters in one bin
@@ -79,10 +79,10 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
 	double max = 20.;
 
 	// Loop over eta and phi bins
-	for(int j = par_->GetNumberOfTowerParameters() + i; 
-	    j <  par_->GetNumberOfParameters(); 
-	    j += par_->GetNumberOfJetParametersPerBin()) {
-	  if( j < par_->GetNumberOfParameters() )
+	for(int j = par_->numberOfTowerParameters() + i; 
+	    j <  par_->numberOfParameters(); 
+	    j += par_->numberOfJetParametersPerBin()) {
+	  if( j < par_->numberOfParameters() )
 	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
 	} // End of loop over eta and phi bins
       } // End of loop over parameters in one bin
@@ -101,8 +101,8 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
     for(unsigned int i = 0 ; i < limits.size() ; i += 4) {
       int index = (int)limits[i];
       for(int j = index; 
-	  j <  par_->GetNumberOfTowerParameters() ; 
-	  j += par_->GetNumberOfTowerParametersPerBin()) {
+	  j <  par_->numberOfTowerParameters() ; 
+	  j += par_->numberOfTowerParametersPerBin()) {
 	par_limits.push_back(ParameterLimit(j,limits[i+1],limits[i+2],
 					    limits[i+3]));
       }
@@ -132,7 +132,7 @@ int ParameterLimitsReader::readEvents(std::vector<Event*>& data)
     Measurement* limitp  = new Measurement;
     limitp->pt  = pl->min;
     limitp->EMF = pl->max;
-    TData_ParLimit * parlim = new TData_ParLimit(pl->index,limitp,pl->k,par_->GetPars()+pl->index,par_->parameter_limit);
+    TData_ParLimit * parlim = new TData_ParLimit(pl->index,limitp,pl->k,par_->parameters()+pl->index,par_->parameter_limit);
     data.push_back(parlim);
   }
   return par_limits.size();

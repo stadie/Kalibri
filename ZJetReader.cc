@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.25 2010/10/12 08:37:40 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.26 2010/10/20 11:28:16 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -194,10 +194,10 @@ Event* ZJetReader::createJetTruthEvent()
 			par_->jet_function(zjet->TowId_eta[closestTower],
 					   zjet->TowId_phi[closestTower]),
 			jet_error_param,par_->global_jet_function());
-    double* EfficiencyMap = par_->GetEffMap();
+    double* EfficiencyMap = par_->effMap();
     for(int i = 0; i < zjet->NobjTrack; ++i) {
       double scale = zjet->TrackP[i]/zjet->TrackPt[i];  
-      int TrackEffBin = par_->GetTrackEffBin(zjet->TrackPt[i],zjet->TrackEta[i]);
+      int TrackEffBin = par_->trackEffBin(zjet->TrackPt[i],zjet->TrackEta[i]);
       double eff = EfficiencyMap[TrackEffBin];
       jt->addTrack(zjet->TrackP[i],zjet->TrackEMC3[i]*scale,zjet->TrackHAC3[i]*scale,0,zjet->TrackP[i],
 		   zjet->TrackEta[i],zjet->TrackPhi[i],zjet->TrackId[i],zjet->TrackTowId[i],
