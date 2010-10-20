@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.5 2010/05/04 13:53:14 stadie Exp $
+# $Id: createJECValidationHtmlPage.sh,v 1.6 2010/05/05 19:03:41 mschrode Exp $
 #
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -74,9 +74,13 @@ FILE_OUT="index.html"
 # Naming conventions for plots
 ID_GenPt="GenJetPt"
 ID_Eta="Eta"
+ID_MeanWidth="MeanWidth"
+ID_Flavor="Flavor"
 ID_RVs="ResponseVs"
 ID_RVsGenPt="${ID_RVs}${ID_GenPt}"
 ID_RVsEta="${ID_RVs}${ID_Eta}"
+ID_RVsMeanWidth="${ID_RVs}${ID_MeanWidth}"
+ID_RVsFlavor="RespFlavor"
 ID_Response="GaussFitMean"
 ID_Resolution="GaussFitWidth"
 ID_ZOOM="zoom"
@@ -86,8 +90,8 @@ TITLE_ResponseVsGenPt="Response vs genJetPt in bins of eta"
 TITLE_ResponseVsEta="Response vs eta in bins of genJetPt"
 TITLE_ResolutionVsGenPt="Resolution vs genJetPt in bins of eta"
 TITLE_ResolutionVsEta="Resolution vs eta in bins of genJetPt"
-
-
+TITLE_ResponseVsMeanWidth="Response vs JetWidth in bins of genJetPt"
+TITLE_ResponseVsFlavor="Response vs genJetPt for different Flavor (top: gluon, bottom: light flavors)"
 
 
 # ----- Read parameters ---------------------------------------
@@ -246,7 +250,7 @@ if [[ `ls -1 *.eps 2>/dev/null | wc -l` -ne 0 ]]; then
     echo -n " and to "
 fi
 echo "png format and resizing plots"
-for pdf in `ls -1 *${ID_RVs}*.pdf 2>/dev/null`; do
+for pdf in `ls -1 *Resp*.pdf 2>/dev/null`; do
     #pos=(`expr index ${pdf} ${ID_RVs}`)
 	new_pdf=`awk 'BEGIN { print substr("'${pdf}'",index("'${pdf}'","'${ID_RVs}'")) }'`
     new_pdf="${DIR_OUT}_${new_pdf}"
@@ -327,8 +331,13 @@ function html_tag_end {
 
 # Create html file
 echo "Creating html file '${FILE_OUT}'"
+if [[ -e ${FILE_OUT} ]] ; then
+    rm ${FILE_OUT}
+fi
+
 touch ${FILE_OUT}
-if [[ ! -w ${FILE_OUT} ]]; then
+
+if [[ ! -w ${FILE_OUT} ]] ; then
     echo "ERROR: Could not create writable file '${FILE_OUT}' in working directory" 
     exit 1
 fi
@@ -355,7 +364,7 @@ if [[ ${MODE} == "Kalibri" ]]; then
 else
     html_line "See the top-level <a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisJECValidation\">JEC validation</a> TWiki page for a detailed description of the used datasets, the applied event selection, and the validation technique.</p>"
 fi
- 
+
 # Table listing dataset, JEC tag, etc
 html_tag_start table "" "style=\"width:100%; text-align:left; font-size:1em\""
 
@@ -390,11 +399,12 @@ html_tag_end table
 # Create list of available categories of validation plots
 
 # Check presence of different categories (>0: present, 0: not present)
-HAS_PLOTS_ResponseVsGenPt=`ls -1 *${ID_RVsGenPt}*${ID_Response}*.png 2>/dev/null | wc -l`
+HAS_PLOTS_ResponseVsGenPt=`ls -1 *${ID_RVsGenPt}*${ID_Response}*Eta*.png 2>/dev/null | wc -l`
 HAS_PLOTS_ResponseVsEta=`ls -1 *${ID_RVsEta}*${ID_Response}*.png 2>/dev/null | wc -l`
 HAS_PLOTS_ResolutionVsGenPt=`ls -1 *${ID_RVsGenPt}*${ID_Resolution}*.png 2>/dev/null | wc -l`
 HAS_PLOTS_ResolutionVsEta=`ls -1 *${ID_RVsEta}*${ID_Resolution}*.png 2>/dev/null | wc -l`
-
+HAS_PLOTS_ResponseVsMeanWidth=`ls -1 *${ID_RVsMeanWidth}*${ID_Response}*.png 2>/dev/null | wc -l`
+HAS_PLOTS_ResponseVsGenPtFlavor=`ls -1 *${ID_RVsFlavor}*${ID_Response}*.png 2>/dev/null | wc -l`                         
 # Write table of plots to html file
 html_newline 3
 html_comment "List of available validation plots"
@@ -412,6 +422,12 @@ if [[ ${HAS_PLOTS_ResolutionVsGenPt} -ne 0 ]]; then
 fi
 if [[ ${HAS_PLOTS_ResolutionVsEta} -ne 0 ]]; then
     html_tag li "<a href=\"#${ID_RVsEta}_${ID_Resolution}\">${TITLE_ResolutionVsEta}</a>"
+fi
+if [[ ${HAS_PLOTS_ResponseVsMeanWidth} -ne 0 ]]; then
+    html_tag li "<a href=\"#${ID_RVsMeanWidth}_${ID_Response}\">${TITLE_ResponseVsMeanWidth}</a>"
+fi
+if [[ ${HAS_PLOTS_ResponseVsEta} -ne 0 ]]; then
+    html_tag li "<a href=\"#${ID_RVsFlavor}_${ID_Response}\">${TITLE_ResponseVsFlavor}</a>"
 fi
 html_tag_end ol
 html_line "All validation plots are also <a href=\"${PLOTS_TAR}\">archived in pdf format</a>."
@@ -502,6 +518,18 @@ if [[ ${HAS_PLOTS_ResolutionVsEta} -ne 0 ]]; then
     ((COUNT_CATEGORIES=${COUNT_CATEGORIES}+1))
     html_newline
     tableOfPlots "${ID_RVsEta}" "${ID_Resolution}" "${TITLE_ResolutionVsEta}" "${ID_GenPt}" "${COUNT_CATEGORIES}"
+fi
+# Response vs MeanWidth
+if [[ ${HAS_PLOTS_ResponseVsMeanWidth} -ne 0 ]]; then
+    ((COUNT_CATEGORIES=${COUNT_CATEGORIES}+1))
+    html_newline
+    tableOfPlots "${ID_RVsMeanWidth}" "${ID_Response}" "${TITLE_ResponseVsMeanWidth}" "${ID_GenPt}" "${COUNT_CATEGORIES}"
+fi
+# Response for Flavors
+if [[ ${HAS_PLOTS_ResponseVsGenPtFlavor} -ne 0 ]]; then
+    ((COUNT_CATEGORIES=${COUNT_CATEGORIES}+1))
+    html_newline
+    tableOfPlots "${ID_RVsFlavor}" "${ID_Response}" "${TITLE_ResponseVsFlavor}" "${ID_Flavor}" "${COUNT_CATEGORIES}"
 fi
 
 html_tag span "<a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisCalibration\">University of Hamburg calibration group</a>,  `date`" "style=\"font-size:1em\""
