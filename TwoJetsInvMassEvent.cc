@@ -2,7 +2,7 @@
 //    Class for all events with two jets constraint to one invariant mass
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: TwoJetsInvMassEvent.cc,v 1.9 2010/05/19 13:34:48 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.cc,v 1.10 2010/05/19 16:01:41 stadie Exp $
 //     
 #include "TwoJetsInvMassEvent.h"
 
@@ -384,8 +384,8 @@ double TwoJetsInvMassEvent::chi2_fast_inv(double * temp_derivative1,
 					  double * temp_derivative2, const double* epsilon) const
 {
   if(flagged_bad_) return chi2plots_;
-  const double et1 = jet1_->correctedEt(jet1_->Et());
-  const double et2 = jet2_->correctedEt(jet2_->Et());
+  const float et1 = jet1_->correctedEt(jet1_->Et());
+  const float et2 = jet2_->correctedEt(jet2_->Et());
 
   TLorentzVector p1,p2;
   p1.SetPtEtaPhiM(et1,jet1_->eta(),jet1_->phi(),0);
@@ -399,9 +399,9 @@ double TwoJetsInvMassEvent::chi2_fast_inv(double * temp_derivative1,
   double truth1 = et1 * K; 
   double truth2 = et2 * K; 
   
-  double expErr1, expErr2;
-  double expEt1 = jet1_->expectedEt(truth1,truth1,expErr1);  
-  double expEt2 = jet2_->expectedEt(truth2,truth2,expErr2);
+  float expErr1, expErr2;
+  float expEt1 = jet1_->expectedEt(truth1,truth1,expErr1);  
+  float expEt2 = jet2_->expectedEt(truth2,truth2,expErr2);
   if((expEt1 < 0) || (expEt2 < 0)) {
     flagged_bad_ = true;
     return chi2plots_;;
@@ -410,10 +410,10 @@ double TwoJetsInvMassEvent::chi2_fast_inv(double * temp_derivative1,
   //std::cout << "m:" << m << " ..." <<  sqrt(2 * truth1 *jet1_->E() / jet1_->Et() * truth2 * jet2_->E() / jet2_->Et() * alpha)
   //	    << " == " << truth << '\n';;
   
-  double chi21 = expEt1 - jet1_->Et();
-  double chi22 = expEt2 - jet2_->Et();
-  double err21 = expErr1;
-  double err22 = expErr2;
+  float chi21 = expEt1 - jet1_->Et();
+  float chi22 = expEt2 - jet2_->Et();
+  float err21 = expErr1;
+  float err22 = expErr2;
   chi21 *= chi21;
   chi22 *= chi22;
   err21 *= err21;

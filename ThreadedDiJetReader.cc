@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.60 2010/10/12 08:37:41 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.1 2010/10/14 17:26:55 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -10,6 +10,9 @@
 #include "TChain.h"
 #include "TFile.h"
 #include "TChainElement.h"
+#include "JetBin.h"
+#include "Binning.h"
+#include "JetTruthEvent.h"
 
 #include "CorFactorsFactory.h"
 #include <boost/thread/thread.hpp>
@@ -24,10 +27,10 @@
 //!  the cut thresholds are read from the configfile.
 //!
 //!  \param configfile Name of configfile
-//!  \param p Pointer to \p TParameters object
+//!  \param p Pointer to \p Parameters object
 // ----------------------------------------------------------------   
 ThreadedDiJetReader::ThreadedDiJetReader(const std::string& configfile, 
-					 TParameters* p, int niot)
+					 Parameters* p, int niot)
   : DiJetReader(configfile,p)
 {
   for(int i = 0 ; i < niot ; ++i) {
@@ -99,9 +102,9 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
     files.push_back(f);
     TTree* tree = (TTree*)f->Get(chain_->GetName()); 
     //tree->GetEntriesFast();
-    std::cout << "adding " << f->GetName() << " with " <<  tree->GetEntriesFast() << " entries\n";
+    //std::cout << "adding " << f->GetName() << " with " <<  tree->GetEntriesFast() << " entries\n";
     readers_[id]->reader()->nJet_->Init(tree);
-    readers_[id]->reader()->nJet_->GetEntry(0);
+    //readers_[id]->reader()->nJet_->GetEntry(0);
     ++id;
     if(id == readers_.size()) {
       for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
@@ -181,6 +184,27 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
       i != readers_.end() ; ++i) {
     nGoodEvts_ += (*i)->addEvents(data);
     (*i)->reset();
+  }  
+  if(dataClass_ == 21) {
+    for(Binning::BinMap::const_iterator ijb = binning_->bins().begin() ; 
+	ijb != binning_->bins().end() ; ++ijb) {
+      if(ijb->second->nJets() > 10) {
+	Jet *jet = ijb->second->jet();
+	
+	if(corFactorsFactory_) {
+	  jet->updateCorFactors(corFactorsFactory_->create(jet));
+	}
+	if(correctToL3_) {
+	  jet->correctToL3();
+	} else if(correctL2L3_) {
+	  jet->correctL2L3();
+	} 
+	data.push_back(new JetTruthEvent(jet,ijb->second->genPt(),ijb->second->nJets(),true));
+	++nGoodEvts_; 
+      }      
+      delete ijb->second;
+    }
+    binning_->clear();
   }
   printCutFlow();
   std::cout << "Stored " << nGoodEvts_ << " dijet events for analysis.\n";
@@ -210,7 +234,7 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
 }
 
 ThreadedDiJetReader::ReadThread::ReadThread(const std::string& configfile, 
-					    TParameters* p) 
+					    Parameters* p) 
 {
   reader_ = new DiJetReader(configfile,p);
   delete reader_->nJet_->fChain;

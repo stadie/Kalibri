@@ -1,4 +1,4 @@
-// $Id: TwoJetsPtBalanceEvent.cc,v 1.7 2009/11/24 16:52:59 stadie Exp $
+// $Id: TwoJetsPtBalanceEvent.cc,v 1.8 2010/05/19 13:34:48 stadie Exp $
 
 #include "TwoJetsPtBalanceEvent.h"
 
@@ -326,4 +326,94 @@ double TwoJetsPtBalanceEvent::ptSumAbsCorrL2L3() const {
     + jet2_->corFactors().getL2L3() * jet2_->Et() * sin(jet2_->phi());
 
   return sqrt( x*x + y*y );
+}
+
+
+//!  \brief Calculates \f$ \chi^{2} \f$ from pt difference
+// --------------------------------------------------
+double TwoJetsPtBalanceEvent::chi2_relative(double * temp_derivative1, 
+					    double * temp_derivative2, 
+					    const double* epsilon) const
+{
+  // first jet: probe, 2nd jet: tag
+  // Corrected jet pt
+  double pt1 = jet1_->Et();
+  double pt2 = jet2_->Et();
+  double ptave = 0.5*(pt1 + pt2);
+  
+  double var1 = jet1_->expectedError(ptave);
+  var1 *= var1;
+  double var2 = jet2_->expectedError(ptave);
+  var2 *= var2;
+  /*
+  ptave = (pt1/var1 + pt2/var2) /(1/var1+1/var2);
+  var1 = jet1_->expectedError(ptave);
+  var1 *= var1;
+  var2 = jet2_->expectedError(ptave);
+  var2 *= var2;
+  ptave = (pt1/var1 + pt2/var2) /(1/var1+1/var2);
+  */
+  double L = jet1_->correctedEt(ptave)/ptave; 
+  // Residual
+  double res = L * pt1 - ptave - residual_;
+  
+  // Squared error on residual 
+  const double deltaE = 1e-7 * jet1_->Et();
+  double etprime  = (jet1_->correctedEt(ptave + deltaE) - 
+  		     jet1_->correctedEt(ptave - deltaE))/2/deltaE;
+  //var1 = etprime * jet1_->expectedError(ptave);
+  double dr1 = 0.5 * ( (etprime -L)/ptave * pt1  + 2 * L  - 1);
+  double dr2 = 0.5 * ( (etprime -L)/ptave * pt1 - 1);
+
+  double var = dr1 * dr1 * var1 + dr2 * dr2 * var2 + varresidual_;
+  // Likelihood
+  double chi2 = res * res / var;
+
+  if(chi2 != chi2) {//check for NAN
+    std::cout << "TwoJetsPtBalanceEvent::chi2_relative: " << pt1 << ", " << pt2 << ", " <<  jet1_->Et() << ", " << jet2_->Et() << ", " << chi2 << '\n';
+  }
+  double scale = Event::scaleResidual(chi2)/chi2;
+  chi2 = weight() * scale * (log(var) + chi2);
+
+  if(!temp_derivative1) return chi2;
+
+  // Derivative calculation
+  const Jet::VariationColl& varColl1 = jet1_->varyParsDirectly(epsilon,true,ptave);
+
+  // Variation of parameters of first jet
+  for(Jet::VariationCollIter i = varColl1.begin() ; i != varColl1.end() ; ++i) {
+    // Likelihood for lower parameter variation
+    L = i->lowerEt/ptave;
+    etprime = i->lowerEtDeriv;
+    // Residual
+    res = L * pt1 - ptave - residual_;
+    // Squared error on residual 
+    dr1 = 0.5 * ( (etprime -L)/ptave * pt1  + 2 * L  - 1);
+    dr2 = 0.5 * ( (etprime -L)/ptave * pt1 - 1);
+
+    var = dr1 * dr1 * var1 + dr2 * dr2 * var2 + varresidual_;
+    double temp1 = res * res / var; 
+    scale = Event::scaleResidual(temp1)/temp1;
+    temp1 = weight() * scale * (log(var) + temp1);
+
+    // Likelihood for upper parameter variation   
+    L = i->upperEt/ptave;
+    etprime = i->upperEtDeriv;
+    // Residual
+    res = L * pt1 - ptave - residual_;
+    // Squared error on residual 
+    dr1 = 0.5 * ( (etprime -L)/ptave * pt1  + 2 * L  - 1);
+    dr2 = 0.5 * ( (etprime -L)/ptave * pt1 - 1);
+
+    var = dr1 * dr1 * var1 + dr2 * dr2 * var2 + varresidual_;
+    double temp2 = res * res / var;
+    scale = Event::scaleResidual(temp2)/temp2;
+    temp2 = weight() * scale * (log(var) + temp2);
+
+    //std::cout << temp1 << ", " << temp2 << '\n';
+    // Contribution to global derivative
+    temp_derivative1[i->parid] += (temp2 - temp1); // for 1st derivative
+    temp_derivative2[i->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
+  } 
+  return chi2;
 }

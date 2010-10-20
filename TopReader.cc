@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.22 2010/01/25 17:35:20 stadie Exp $
+//    $Id: TopReader.cc,v 1.23 2010/10/12 08:37:40 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -24,7 +24,7 @@
 #include <iostream>
 #include <cstdlib>
 
-TopReader::TopReader(const std::string& configfile, TParameters* p) 
+TopReader::TopReader(const std::string& configfile, Parameters* p) 
   : EventReader(configfile,p), top_(new TopSel()),
     minJetEt_     (0.),
     maxJetEta_    (0.),
@@ -138,7 +138,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
       terr[n] = tower_error_param(&tower.pt,&tower,0); 
       if(terr[n] == 0) {
 	//assume toy MC???
-	terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
+	terr[n] = Parameters::toy_tower_error_parametrization(&tower.pt,&tower);
       }
       terr[n] *= terr[n];
       err2 += terr[n];
@@ -185,7 +185,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
 			  corFactors,
 			  par_->jet_function(top_->TowId_eta[closestTower],
 					     top_->TowId_phi[closestTower]),
-			  jet_error_param, par_->global_jet_function(), minJetEt_);
+			  jet_error_param, par_->global_jet_function());
       for(int j = 0 ; j < top_->NobjTow ; ++j) {
 	if (top_->Tow_jetidx[j]!= i) continue;//look for ij-jet's towers
 	double scale = top_->TowEt[j]/top_->TowE[j];
@@ -209,7 +209,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
 		     corFactors,
 		     par_->jet_function(top_->TowId_eta[closestTower],
 					top_->TowId_phi[closestTower]),
-		     jet_error_param, par_->global_jet_function(), minJetEt_);    
+		     jet_error_param, par_->global_jet_function());    
     }
     if(corFactorsFactory_) {
       (*jet)->updateCorFactors(corFactorsFactory_->create(*jet));

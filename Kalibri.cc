@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.9 2010/10/12 08:40:53 stadie Exp $
+//  $Id: Kalibri.cc,v 1.10 2010/10/14 17:26:55 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -130,7 +130,7 @@ private:
   int id_;
   int ntasks_;
   std::string configFile_;
-  TParameters * par_;  
+  Parameters * par_;  
   std::vector<EventReader*> readers_;
   std::vector<Event*> data_;
   std::vector<std::vector<Event*> >control_;
@@ -155,7 +155,7 @@ private:
   friend class read_events;
 public:
   ReadThread(int id,int ntasks, const std::string& configfile, 
-	     TParameters* par) 
+	     Parameters* par) 
     : id_(id), ntasks_(ntasks),configFile_(configfile),par_(par),control_(2) 
   {
     readers_.push_back(new PhotonJetReader(configFile_,par_,id_,ntasks_));
@@ -540,7 +540,7 @@ void Kalibri::init()
 {
   ConfigFile config(configFile_.c_str() );
 
-  par_ = TParameters::CreateParameters(configFile_);
+  par_ = Parameters::CreateParameters(configFile_);
 
   //initialize temp arrays for fast derivative calculation
   TAbstractData::total_n_pars     = par_->GetNumberOfParameters();
@@ -672,10 +672,11 @@ void Kalibri::init()
   outputFile_ = config.read<string>( "Output file", "calibration_k.cfi" );
 
   int niothreads = config.read<int>("Number of IO Threads",7); 
+  //int djdc = config.read<int>("Di-Jet data class", 0);
   //fill data vector  
   std::vector<EventReader*> readers;
   readers.push_back(new PhotonJetReader(configFile_,par_));
-  if(niothreads < 1) {
+  if((niothreads < 1)) {
     readers.push_back(new DiJetReader(configFile_,par_));
   } else {
     std::cout << "reading DiJet data in " << niothreads << " threads.\n";
@@ -690,6 +691,9 @@ void Kalibri::init()
     (*i)->readEvents(data_);
     (*i)->readControlEvents(control_[0],1);
     (*i)->readControlEvents(control_[1],2);
+  }
+  for(std::vector<EventReader*>::iterator i = readers.begin() ; 
+     i != readers.end() ; ++i) {
     delete *i;
   }
   EventReader::addConstraints(data_);

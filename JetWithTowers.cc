@@ -2,20 +2,20 @@
 //    Class for jets with towers 
 //
 //    first version: Hartmut Stadie 2008/12/25
-//    $Id: JetWithTowers.cc,v 1.25 2010/05/19 13:34:48 stadie Exp $
+//    $Id: JetWithTowers.cc,v 1.26 2010/05/19 16:01:40 stadie Exp $
 //   
 #include"JetWithTowers.h"
 
 #include "TLorentzVector.h"
 
-JetWithTowers::JetWithTowers(double Et, double EmEt, double HadEt ,double OutEt, double E,
-			     double eta,double phi, double phiphi, double etaeta, 
-			     Flavor flavor, double genPt, double dR,
+JetWithTowers::JetWithTowers(float Et, float EmEt, float HadEt ,float OutEt, float E,
+			     float eta,float phi, float phiphi, float etaeta, 
+			     Flavor flavor, float genPt, float dR,
 			     CorFactors* corFactors, const Function& func, 
-			     double (*errfunc)(const double *x, const Measurement *xorig, double err), 
-			     const Function& gfunc, double Etmin) 
+			     float (*errfunc)(const float *x, const Measurement *xorig, float err), 
+			     const Function& gfunc) 
   :  Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,phiphi,etaeta,flavor,genPt,dR,corFactors,
-	 func,errfunc,gfunc,Etmin),
+	 func,errfunc,gfunc),
      ntowerpars_(0)
 {
 }
@@ -50,12 +50,12 @@ void JetWithTowers::changeParAddress(double* oldpar, double* newpar)
   }
 }
 
-double JetWithTowers::correctedEt(double Et,bool fast) const
+float JetWithTowers::correctedEt(float Et,bool fast) const
 {
-  double ccet = EmEt() + OutEt();
-  double HadEt = Et - ccet;
+  float ccet = EmEt() + OutEt();
+  float HadEt = Et - ccet;
   if(! fast) {
-    double chad = 0; 
+    float chad = 0; 
     for(TowerCollConstIter i = towers_.begin() ; i != towers_.end() ; ++i) {
       chad += (*i)->projectionToJetAxis() * (*i)->correctedHadEt((*i)->HadEt());
     }  
@@ -75,7 +75,7 @@ double JetWithTowers::correctedEt(double Et,bool fast) const
 
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& JetWithTowers::varyPars(const double* eps, double Et, double start)
+const Jet::VariationColl& JetWithTowers::varyPars(const double* eps, float Et, float start)
 {
   Jet::varyPars(eps,Et,start);
   int i = Jet::nPar();
@@ -110,7 +110,7 @@ const Jet::VariationColl& JetWithTowers::varyParsDirectly(const double* eps, boo
   Jet::varyParsDirectly(eps,computeDeriv);
   int i = Jet::nPar();
   
-  const double deltaE = 0.1;
+  const float deltaE = 0.1;
   for(std::map<int,double*>::const_iterator iter = towerpars_.begin() ;
       iter != towerpars_.end() ; ++iter) {
     double *p = iter->second;
@@ -142,20 +142,20 @@ const Jet::VariationColl& JetWithTowers::varyParsDirectly(const double* eps, boo
   return varcoll_;
 }
 
-double JetWithTowers::error() const {
-  double var = 0, err;
+float JetWithTowers::error() const {
+  float var = 0, err;
   for(TowerCollConstIter i = towers_.begin() ; i != towers_.end() ; ++i) {
     err = (*i)->projectionToJetAxis() * (*i)->error();
     var += err * err;
   }   
-  double jeterr = Jet::error();
+  float jeterr = Jet::error();
   return sqrt(var + jeterr * jeterr);
 }
 
-double JetWithTowers::expectedError(double et) const
+float JetWithTowers::expectedError(float et) const
 {
-  double var = 0, err;
-  double HadEt = et - EmEt() - OutEt();
+  float var = 0, err;
+  float HadEt = et - EmEt() - OutEt();
   //std::cout << "hadET:" << HadEt << '\n';
   for(TowerCollConstIter i = towers_.begin() ; i != towers_.end() ; ++i) {
     if((*i)->fractionOfJetHadEt() == 0) continue;
@@ -164,24 +164,24 @@ double JetWithTowers::expectedError(double et) const
     //assert(err == err);
     var += err * err;
   }
-  double jeterr = Jet::expectedError(et);
+  float jeterr = Jet::expectedError(et);
   return sqrt(var + jeterr * jeterr);
 }
   
-void JetWithTowers::addTower(double Et, double EmEt, double HadEt ,
-			     double OutEt, double E,double eta,double phi,
+void JetWithTowers::addTower(float Et, float EmEt, float HadEt ,
+			     float OutEt, float E,float eta,float phi,
 			     const Function& func,
-			     double (*errfunc)(const double *x, const Measurement *xorig, double err))
+			     float (*errfunc)(const float *x, const Measurement *xorig, float err))
 {
   TLorentzVector jet, towp;
-  double en = Measurement::HadF + Measurement::EMF + Measurement::OutF;
+  float en = Measurement::HadF + Measurement::EMF + Measurement::OutF;
   en *= Measurement::E/Measurement::pt;
-  double m = en > Measurement::E ? sqrt(en * en - Measurement::E * Measurement::E) : 0;
+  float m = en > Measurement::E ? sqrt(en * en - Measurement::E * Measurement::E) : 0;
   //std::cout << "mass:" << m << '\n';
   jet.SetPtEtaPhiM(Measurement::pt,Measurement::eta,Measurement::phi,m);
   towp.SetPtEtaPhiM(Et,eta,phi,0);
   jet -= towp;
-  double projection = (Measurement::pt - jet.Pt())/Et;
+  float projection = (Measurement::pt - jet.Pt())/Et;
   //projection = 1.0;
   //std::cout << "Jet:" << jet.Eta() << ", " << jet.Phi()
   //	    << " tower:" << towp.Eta() << ", " << towp.Phi() << " :" 
@@ -196,20 +196,20 @@ void JetWithTowers::addTower(double Et, double EmEt, double HadEt ,
 
 
 
-JetWithTowers::Tower::Tower(double Et, double EmEt, double HadEt ,
-			    double OutEt, double E,double eta,double phi, 
-			    double alpha,const Function& func,
-			    double (*errfunc)(const double *x, const Measurement *xorig, double err))
+JetWithTowers::Tower::Tower(float Et, float EmEt, float HadEt ,
+			    float OutEt, float E,float eta,float phi, 
+			    float alpha,const Function& func,
+			    float (*errfunc)(const float *x, const Measurement *xorig, float err))
   :  Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi), alpha_(alpha), lastCorHadEt_(0),
      fraction_(0), f_(func), errf_(errfunc)
 { 
   temp_ = *this;
 }
 
-JetWithTowers::Tower::Tower(double Et, double EmEt, double HadEt ,double OutEt, double E,
-			    double EmEttrue, double HadEttrue, double OutEttrue,
-			    double eta,double phi, double alpha, const Function& func,
-			    double (*errfunc)(const double *x, const Measurement *xorig, double err))
+JetWithTowers::Tower::Tower(float Et, float EmEt, float HadEt ,float OutEt, float E,
+			    float EmEttrue, float HadEttrue, float OutEttrue,
+			    float eta,float phi, float alpha, const Function& func,
+			    float (*errfunc)(const float *x, const Measurement *xorig, float err))
   :  Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi), alpha_(alpha), error_(0),
      mEmEttrue_(EmEttrue), mHadEttrue_(HadEttrue), mOutEttrue_(OutEttrue),
      lastCorHadEt_(0), fraction_(0), f_(func), errf_(errfunc)
@@ -219,7 +219,7 @@ JetWithTowers::Tower::Tower(double Et, double EmEt, double HadEt ,double OutEt, 
 }
 
 
-double JetWithTowers::Tower::correctedHadEt(double HadEt) const
+float JetWithTowers::Tower::correctedHadEt(float HadEt) const
 {
   //assume that only the hadronic energy gets modified!
   temp_.pt   = HadEt + OutF + EMF;  

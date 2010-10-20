@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.25 2010/10/12 08:38:59 stadie Exp $
+//!  $Id: ThreadedDiJetReader.h,v 1.1 2010/10/14 17:26:55 stadie Exp $
 // ----------------------------------------------------------------   
 #include "DiJetReader.h"
 
@@ -41,7 +41,7 @@ class TChain;
 
 class ThreadedDiJetReader : public DiJetReader{
  public:
-  ThreadedDiJetReader(const std::string& configfile, TParameters *p, int niot);
+  ThreadedDiJetReader(const std::string& configfile, Parameters *p, int niot);
   ~ThreadedDiJetReader();
   int readEvents(std::vector<Event*>& data);
   int readControlEvents(std::vector<Event*>& control, int id);
@@ -62,7 +62,7 @@ class ThreadedDiJetReader : public DiJetReader{
     boost::thread *thread_;
     friend class read_events;  
   public:
-    ReadThread(const std::string& configfile, TParameters* p);
+    ReadThread(const std::string& configfile, Parameters* p);
     ~ReadThread();
     void start();
     bool isDone();

@@ -7,7 +7,7 @@
 //!  \param configfile Name of configuration file
 //!  \param param The parameters
 // -----------------------------------------------------------------
-EventWeightProcessor::EventWeightProcessor(const std::string& configfile, TParameters* param)
+EventWeightProcessor::EventWeightProcessor(const std::string& configfile, Parameters* param)
   : EventProcessor(configfile,param) {
   
   ConfigFile config(configfile.c_str());

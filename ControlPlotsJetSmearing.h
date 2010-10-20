@@ -1,5 +1,5 @@
 //
-// $Id: ControlPlotsJetSmearing.h,v 1.11 2010/07/22 13:58:30 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.h,v 1.12 2010/09/22 13:29:44 mschrode Exp $
 //
 #ifndef JS_CONTROLPLOTS_JETSMEARING_H
 #define JS_CONTROLPLOTS_JETSMEARING_H
@@ -26,11 +26,11 @@ class TRandom3;
 //!  \brief Generates validation plots for jet-smearing method
 //!  \author Matthias Schroeder
 //!  \date Thu May  7 11:30:28 CEST 2009 
-//!  $Id: ControlPlotsJetSmearing.h,v 1.11 2010/07/22 13:58:30 mschrode Exp $
+//!  $Id: ControlPlotsJetSmearing.h,v 1.12 2010/09/22 13:29:44 mschrode Exp $
 // --------------------------------------------------
 class ControlPlotsJetSmearing {
  public:
-  ControlPlotsJetSmearing(const std::string& configfile,const std::vector<Event*> * data, TParameters * param, const std::string &outDir = "./controlPlots");
+  ControlPlotsJetSmearing(const std::string& configfile,const std::vector<Event*> * data, Parameters * param, const std::string &outDir = "./controlPlots");
   ~ControlPlotsJetSmearing();
 
   void makePlots() const;
@@ -45,7 +45,7 @@ class ControlPlotsJetSmearing {
 
   const std::vector<Event*> * data_;   //!< The data which is plotted
   const ConfigFile          * config_; //!< The configuration file
-  mutable TParameters       * param_;  //!< The parametrization
+  mutable Parameters        * param_;  //!< The parametrization
   
   bool saveAsEps_;
   std::string outNamePrefix_;

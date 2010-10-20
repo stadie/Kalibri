@@ -2,7 +2,7 @@
 //    Class for jet bins
 //
 //    first version: Hartmut Stadie 2010/05/10
-//    $Id: JetBin.cc,v 1.2 2010/05/19 16:01:36 stadie Exp $
+//    $Id: JetBin.cc,v 1.3 2010/06/09 22:27:04 stadie Exp $
 //   
 
 
@@ -10,9 +10,9 @@
 #include "Jet.h"
 #include "CorFactors.h"
 
-void JetBin::addJet(double Et, double EmEt, double HadEt ,double OutEt, double E,
-		    double eta,double phi, double phiphi, double etaeta, 
-		    double genPt, double dR, const CorFactors& corFactors)
+void JetBin::addJet(float Et, float EmEt, float HadEt ,float OutEt, float E,
+		    float eta,float phi, float phiphi, float etaeta, 
+		    float genPt, float dR, const CorFactors& corFactors)
 {
   //std::cout << "jet added for par eta bin:" << f_.parIndex() << std::endl;
   sumMess_.pt += Et;
@@ -43,7 +43,7 @@ void JetBin::addJet(double Et, double EmEt, double HadEt ,double OutEt, double E
 
 Jet* JetBin::createJet() const {
   if(! njets_) return 0;
-  double w = 1.0/njets_;
+  float w = 1.0/njets_;
   //std::cout << "Jet:" << sumMess_.pt*w << " , " << sumGenPt_ * w 
   //	    << ", " << sumL3_ * w << std::endl;
   Jet* j = new Jet(sumMess_.pt*w, sumMess_.EMF*w, sumMess_.HadF*w, 
@@ -55,7 +55,7 @@ Jet* JetBin::createJet() const {
 				  sumL4_/sumL3_,sumL5_/sumL4_,sumJPT_/sumMess_.pt,
 				  sumJPTL2L3_/sumMess_.pt),
 		   f_,errf_,gf_);
-  double err = sqrt(w*sumPt2_ - j->pt() * j->pt() + w*sumGenPt2_ - j->genPt() * j->genPt());
+  float err = sqrt(w*sumPt2_ - j->pt() * j->pt() + w*sumGenPt2_ - j->genPt() * j->genPt());
   j->setError(err);
   //std::cout << j->pt() << ":" << j->error() << " ; " << err << '\n';
   return j;

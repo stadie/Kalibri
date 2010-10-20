@@ -7,7 +7,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/12
-//!    $Id: ZJetReader.h,v 1.5 2009/11/24 16:52:59 stadie Exp $
+//!    $Id: ZJetReader.h,v 1.6 2009/11/25 13:07:45 stadie Exp $
 // ----------------------------------------------------------------   
 
 #include "EventReader.h"
@@ -19,7 +19,7 @@ class ZJetSel;
 
 class ZJetReader : public EventReader{
  public:
-  ZJetReader(const std::string& configfile, TParameters *p);
+  ZJetReader(const std::string& configfile, Parameters *p);
   virtual ~ZJetReader();
   int readEvents(std::vector<Event*>& data);
  private:

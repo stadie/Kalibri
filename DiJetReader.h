@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.25 2010/10/12 08:38:59 stadie Exp $
+//!  $Id: DiJetReader.h,v 1.26 2010/10/14 17:26:55 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -41,6 +41,9 @@
 #include <vector>
 
 #include "Jet.h"
+#include <boost/thread/mutex.hpp>
+
+
 
 class NJetSel;
 class TRandom;
@@ -50,11 +53,10 @@ class TwoJetsPtBalanceEvent;
 
 class DiJetReader : public EventReader{
  public:
-  DiJetReader(const std::string& configfile, TParameters *p);
+  DiJetReader(const std::string& configfile, Parameters *p);
   virtual ~DiJetReader();
   virtual int readEvents(std::vector<Event*>& data);
   virtual int readControlEvents(std::vector<Event*>& control, int id);
-
  protected:
   TwoJetsPtBalanceEvent* createTwoJetsPtBalanceEvent();
   Event* createSmearEvent(int callIdx = 0);
@@ -125,6 +127,7 @@ class DiJetReader : public EventReader{
   std::vector<Jet::JetIndex*> jetIndices_;
 
   friend class ThreadedDiJetReader; 
+  static boost::mutex dijetmutex;
 };
 
 

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.12 2010/09/30 16:55:13 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.13 2010/10/12 08:40:53 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -106,28 +106,6 @@ double ControlPlotsFunction::jetTruthEventJetMeanMoment(const Event *evt) const 
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
   return 0.5 * (jte->jet()->momentEtaEta()+jte->jet()->momentPhiPhi());
 }
-
-//!  \brief Returns the scaled #eta #eta moment of the jet
-//!
-//!  The \p Event \p evt has to be of type \p JetTruthEvent.
-//!  Implements \p Function.
-// ----------------------------------------------------------------   
-double ControlPlotsFunction::jetTruthEventJetScaledEtaEta(const Event *evt) const {
-  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
-  return jte->jet()->scaledEtaWidth();
-}
-
-
-//!  \brief Returns the scaled #phi #phi moment of the jet
-//!
-//!  The \p Event \p evt has to be of type \p JetTruthEvent.
-//!  Implements \p Function.
-// ----------------------------------------------------------------   
-double ControlPlotsFunction::jetTruthEventJetScaledPhiPhi(const Event *evt) const {
-  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
-  return jte->jet()->scaledPhiWidth();
-}
-
 
 //!  \brief Returns truth pt
 //!

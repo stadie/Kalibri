@@ -5,13 +5,16 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.18 2010/05/19 13:34:48 stadie Exp $
+//!  $Id: Binning.h,v 1.1 2010/05/26 13:08:12 stadie Exp $
 // ----------------------------------------------------------------   
 
 #include <string>
 #include <map>
 #include <set>
 #include <vector>
+
+#include <boost/thread/mutex.hpp>
+
 
 class JetBin;
 class ConfigFile;

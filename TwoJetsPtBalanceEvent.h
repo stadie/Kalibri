@@ -13,7 +13,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.9 2010/05/19 16:01:42 stadie Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.10 2010/06/25 11:44:19 stadie Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
@@ -22,6 +22,8 @@ class TwoJetsPtBalanceEvent : public Event {
     jet1_(j1),
     jet2_(j2),
     jet3_(j3),
+    residual_(0),
+    varresidual_(0),
     flaggedBad_(false),
     chi2Plots_(1000.) {
     error1_ = jet1_->error();
@@ -57,7 +59,8 @@ class TwoJetsPtBalanceEvent : public Event {
   virtual double chi2() const { return chi2_fast(0, 0, 0); }
   virtual double chi2_plots() const { return chi2Plots_; }
   virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double *epsilon) const { 
-    chi2Plots_ = chi2_fast_balance(temp_derivative1,temp_derivative2,epsilon);
+    //chi2Plots_ = chi2_fast_balance(temp_derivative1,temp_derivative2,epsilon);
+    chi2Plots_ = chi2_relative(temp_derivative1,temp_derivative2,epsilon);
     return chi2Plots_;
   }
   virtual void updateError() {
@@ -92,6 +95,8 @@ class TwoJetsPtBalanceEvent : public Event {
   Jet *jet1_;
   Jet *jet2_;
   Jet *jet3_;
+  double residual_;
+  double varresidual_;
 
   mutable bool flaggedBad_;
   mutable double chi2Plots_;   //!< Store chi2 value from last iteration for plots
@@ -102,7 +107,8 @@ class TwoJetsPtBalanceEvent : public Event {
 
   double chi2_fast_balance(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
   double chi2_fast_balance_res(double pt1, double pt2) const;
-  double chi2_fast_balance_dRes2(double pt1, double pt2) const;
+  double chi2_fast_balance_dRes2(double pt1, double pt2) const;  
+  double chi2_relative(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
 };
 
 #endif

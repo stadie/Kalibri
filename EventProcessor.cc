@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventProcessor.cc,v 1.3 2009/11/24 16:52:58 stadie Exp $
+//    $Id: EventProcessor.cc,v 1.4 2010/05/19 13:34:48 stadie Exp $
 //   
 #include "EventProcessor.h"
 
@@ -28,7 +28,7 @@ using std::endl;
 
 
 
-EventProcessor::EventProcessor(const std::string& configfile, TParameters* param)
+EventProcessor::EventProcessor(const std::string& configfile, Parameters* param)
   : par_(param),etCutOnGamma_(0),etCutOnJet_(0),flattenSpectra_(0)
 {  
   ConfigFile config(configfile.c_str());

@@ -1,7 +1,7 @@
 //
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: CorFactorsFactory.cc,v 1.2 2009/11/26 13:03:28 stadie Exp $
+//    $Id: CorFactorsFactory.cc,v 1.3 2010/04/29 13:29:41 stadie Exp $
 // 
 #include "CorFactorsFactory.h"  
 #include "CorFactors.h"
@@ -15,7 +15,6 @@ CorFactorsFactory::CorFactorsFactory(const std::string& name) : name_(name)
 {
   static Cleaner cleaner;
   //std::cout << "creating CorFactorsFactory: " << name_ << '\n';
-
   map[name] = this;
 }
 

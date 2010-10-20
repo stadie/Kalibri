@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.15 2010/05/19 13:34:49 stadie Exp $
+//    $Id: JetTruthEvent.h,v 1.16 2010/05/19 16:01:42 stadie Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -43,7 +43,7 @@ public:
   double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
   double chi2_fast_invert(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
   double chi2_log_fast_invert(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
-  void updateError() { }
+  void updateError() {}
   bool flaggedBad() const { return flagged_bad_; }  //!< Status from inversion procedure
 
   static int nFlagged() { return nflagged_;}

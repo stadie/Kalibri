@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.68 2010/09/22 13:29:44 mschrode Exp $
+//  $Id: Parametrization.h,v 1.69 2010/10/07 11:48:29 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -25,7 +25,7 @@ class TRandom;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.68 2010/09/22 13:29:44 mschrode Exp $
+//!  $Id: Parametrization.h,v 1.69 2010/10/07 11:48:29 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -206,7 +206,7 @@ public:
   {
     // Quadratic interpolation through the points (x[i],y[i]). First find the parabola that
     // is defined by the points and then calculate the y(z).
-    float D[4],a[3];
+    double D[4],a[3];
     D[0] = fX[0]*fX[1]*(fX[0]-fX[1])+fX[1]*fX[2]*(fX[1]-fX[2])+fX[2]*fX[0]*(fX[2]-fX[0]);
     D[3] = fY[0]*(fX[1]-fX[2])+fY[1]*(fX[2]-fX[0])+fY[2]*(fX[0]-fX[1]);
     D[2] = fY[0]*(pow(fX[2],2)-pow(fX[1],2))+fY[1]*(pow(fX[0],2)-pow(fX[2],2))+fY[2]*(pow(fX[1],2)-pow(fX[0],2));

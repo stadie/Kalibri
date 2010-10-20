@@ -1,5 +1,5 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.29 2010/04/13 13:44:10 mschrode Exp $
+//  $Id: PhotonJetReader.cc,v 1.30 2010/10/12 08:37:41 stadie Exp $
 //
 #include "PhotonJetReader.h"
 
@@ -22,7 +22,7 @@
 #include "TVector2.h"
 #include "TLorentzVector.h"
 
-PhotonJetReader::PhotonJetReader(const std::string& configfile, TParameters* p) 
+PhotonJetReader::PhotonJetReader(const std::string& configfile, Parameters* p) 
   : EventReader(configfile,p), gammaJet_(new GammaJetSel())
 {
   // Maximum number of read events
@@ -261,7 +261,7 @@ Event* PhotonJetReader::createJetTruthEvent()
 			LJet.DeltaR(LGenJet),createCorFactors(0),
 			par_->jet_function(gammaJet_->TowId_eta[closestTower],
 					   gammaJet_->TowId_phi[closestTower]),
-			jet_error_param,par_->global_jet_function(),minJetEt_);
+			jet_error_param,par_->global_jet_function());
     for(int i = 0; i < gammaJet_->NobjTowCal; ++i) {
       double scale = gammaJet_->TowEt[i]/gammaJet_->TowE[i];
       jt->addTower(gammaJet_->TowEt[i],gammaJet_->TowEm[i]*scale,
@@ -279,7 +279,7 @@ Event* PhotonJetReader::createJetTruthEvent()
 		createCorFactors(0),
 		par_->jet_function(gammaJet_->TowId_eta[closestTower],
 				   gammaJet_->TowId_phi[closestTower]),
-		jet_error_param,par_->global_jet_function(),minJetEt_);
+		jet_error_param,par_->global_jet_function());
   }
   if(corFactorsFactory_) j->updateCorFactors(corFactorsFactory_->create(j));
   if(correctToL3_) j->correctToL3();

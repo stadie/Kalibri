@@ -4,11 +4,11 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.39 2010/06/09 22:27:39 stadie Exp $
+//!    $Id: Jet.h,v 1.40 2010/07/22 13:58:30 mschrode Exp $
 #ifndef JET_H
 #define JET_H
 
-#include"CalibData.h"
+#include "CalibData.h"
 #include "Function.h"
 
 #include "gsl/gsl_errno.h"
@@ -22,9 +22,9 @@ class Jet : public Measurement
  public:
   class JetIndex {
   public:
-    JetIndex(unsigned int idx, double pt) : idx_(idx), pt_(pt) {};
+    JetIndex(unsigned int idx, float pt) : idx_(idx), pt_(pt) {};
     const unsigned int idx_;
-    const double pt_;
+    const float pt_;
     // For sorting jets in pt
     static bool ptGreaterThan(const JetIndex *idx1, const JetIndex *idx2) {
       // check for 0
@@ -72,30 +72,28 @@ class Jet : public Measurement
   }
 
  public:
-  Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
-      double eta,double phi, double phiphi, double etaeta, Flavor flavor, 
-      double genPt, double dR, CorFactors* corFactors, const Function& f,
-      double (*errfunc)(const double *x, const Measurement *xorig, double err), 
-      const Function& gf, double Etmin = 0); 
+  Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
+      float eta,float phi, float phiphi, float etaeta, Flavor flavor, 
+      float genPt, float dR, CorFactors* corFactors, const Function& f,
+      float (*errfunc)(const float *x, const Measurement *xorig, float err), 
+      const Function& gf); 
   virtual ~Jet();
 
-  double Et()     const {return Measurement::pt;}                 //!< Return transverse energy Et
-  double pt()     const {return Measurement::pt;}                 //!< Return transverse energy Et
-  double EmEt()   const {return EMF;}                //!< Return Et from the ECAL part of the towers
-  double HadEt()  const {return HadF;}               //!< Return Et from the HCAL part of the towers
-  double OutEt()  const {return OutF;}               //!< Return Et from the HOut part of the towers
-  double E()      const {return Measurement::E;}    //!< Return energy
-  double emf()    const {return EMF/(EMF+HadF);}    //!< Return fraction of ECAL energy
-  double hadf()    const {return HadF/(EMF+HadF);}  //!< Return fraction of HCAL energy
-  double eta()    const {return Measurement::eta;}  //!< Return pseudorapidity
-  double phi()    const {return Measurement::phi;}  //!< Return azimuthal angle
-  double momentPhiPhi() const {return Measurement::phiphi;}  //!< Return phi-phi moment (width of jet in phi)
-  double momentEtaEta() const {return Measurement::etaeta;}  //!< Return eta-eta moment (width of jet in eta)
-  double scaledPhiWidth() const { return (sphi_ > 0 ? sphi_ : sphi_ = momentPhiPhi() /( 0.2 - 0.02 * log(Et())));}
-  double scaledEtaWidth() const { return (seta_ > 0 ? seta_ : seta_ = momentEtaEta() /(0.2 -  0.02 * log(Et())));}  
+  float Et()     const {return Measurement::pt;}                 //!< Return transverse energy Et
+  float pt()     const {return Measurement::pt;}                 //!< Return transverse energy Et
+  float EmEt()   const {return EMF;}                //!< Return Et from the ECAL part of the towers
+  float HadEt()  const {return HadF;}               //!< Return Et from the HCAL part of the towers
+  float OutEt()  const {return OutF;}               //!< Return Et from the HOut part of the towers
+  float E()      const {return Measurement::E;}    //!< Return energy
+  float emf()    const {return EMF/(EMF+HadF);}    //!< Return fraction of ECAL energy
+  float hadf()    const {return HadF/(EMF+HadF);}  //!< Return fraction of HCAL energy
+  float eta()    const {return Measurement::eta;}  //!< Return pseudorapidity
+  float phi()    const {return Measurement::phi;}  //!< Return azimuthal angle
+  float momentPhiPhi() const {return Measurement::phiphi;}  //!< Return phi-phi moment (width of jet in phi)
+  float momentEtaEta() const {return Measurement::etaeta;}  //!< Return eta-eta moment (width of jet in eta)
   Flavor flavor() const {return flavor_;}       //!< Return jet flavor
-  double genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
-  double dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet
+  float genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
+  float dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet
   const CorFactors& corFactors() const { return *corFactors_;}
   void updateCorFactors(CorFactors *cor);
   //! Correct measurement by product \p L1*L2*L3
@@ -110,9 +108,9 @@ class Jet : public Measurement
     f_.changeParBase(oldpar,newpar);
     gf_.changeParBase(oldpar,newpar);
   }
-  virtual double correctedEt() const { return correctedEt(Et()); }
-  virtual double correctedEt(double Et, bool fast = false) const;
-  double expectedEt(double truth, double start, double& error,
+  virtual float correctedEt() const { return correctedEt(Et()); }
+  virtual float correctedEt(float Et, bool fast = false) const;
+  float expectedEt(float truth, float start, float& error,
 		    bool fast = false);
 
   //!  \brief Calculate error from original measurement
@@ -123,10 +121,10 @@ class Jet : public Measurement
   //!  
   //!  \return Error of original measurement
   // ---------------------------------------------------------
-  virtual double error() const {return errf_(&(Measurement::pt),this,error_);}
+  virtual float error() const {return errf_(&(Measurement::pt),this,error_);}
 
 
-  void setError(double error) { error_ = error;}
+  void setError(float error) { error_ = error;}
 
   //!  \brief Calculate error from given Et
   //!
@@ -136,7 +134,7 @@ class Jet : public Measurement
   //!  \param et Jet Et
   //!  \return Error from jet Et
   // ---------------------------------------------------------
-  virtual double expectedError(double et) const { return errf_(&et,this,error_);}
+  virtual float expectedError(float et) const { return errf_(&et,this,error_);}
 
   //!  \brief Get number of parameters of this jet
   //!
@@ -157,18 +155,18 @@ class Jet : public Measurement
   // ---------------------------------------------------------
   struct ParameterVariation {
     int    parid;        //!< Id of varied parameter
-    double upperEt;      //!< Expected Et if parameter is varied by +eps
-    double lowerEt;      //!< Expected Et if parameter is varied by -eps
-    double upperError;   //!< Expected error if parameter is varied by +eps
-    double lowerError;   //!< Expected error if parameter is varied by -eps
-    double upperEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
-    double lowerEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
+    float upperEt;      //!< Expected Et if parameter is varied by +eps
+    float lowerEt;      //!< Expected Et if parameter is varied by -eps
+    float upperError;   //!< Expected error if parameter is varied by +eps
+    float lowerError;   //!< Expected error if parameter is varied by -eps
+    float upperEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
+    float lowerEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
     bool operator==(int b) const { return parid == b;} //!< Two ParameterVariation are the same if they have the same parid
   };
   typedef std::vector<ParameterVariation> VariationColl;
   typedef std::vector<ParameterVariation>::const_iterator VariationCollIter;
-  virtual const VariationColl& varyPars(const double* eps, double Et, double start);
-  virtual const VariationColl& varyParsDirectly(const double* eps, bool computeDeriv = true);
+  virtual const VariationColl& varyPars(const double* eps, float Et, float start);
+  virtual const VariationColl& varyParsDirectly(const double* eps, bool computeDeriv = true, float Et = 0);
   
   void print();                       //!< Print some jet members
   static void printInversionStats();  //!< Print some info on inversion
@@ -180,19 +178,18 @@ class Jet : public Measurement
 
  protected:
   mutable VariationColl varcoll_;
-  virtual double expectedEt(double truth, double start, bool fast = false);
+  virtual float expectedEt(float truth, float start, bool fast = false);
   Jet(const Jet&j); //!< disallow copies!
 
  private: 
   Flavor flavor_;           //!< The jet's Flavor
-  double genPt_;            //!< The genjet pt
-  double dR_;               //!< \f$ \Delta R \f$ between jet and genjet
+  float genPt_;            //!< The genjet pt
+  float dR_;               //!< \f$ \Delta R \f$ between jet and genjet
   const CorFactors* corFactors_;   //!< The correction factors
-  double    error_;                //!< Stores error for constant error mode
+  float    error_;                //!< Stores error for constant error mode
   Function  f_;                    //!< Jet correction function
   Function  gf_;                   //!< Global jet correction function
-  double    (*errf_)(const double *x, const Measurement *xorig, double err);   //!< Error function
-  double    etmin_;                //!< Lower cut on measured Et
+  float    (*errf_)(const float *x, const Measurement *xorig, float err);   //!< Error function
 
   bool      secant(double truth, double& x1, double& x2, double eps);
   bool      falseposition(double truth, double& x1, double& x2, double eps);
@@ -203,9 +200,8 @@ class Jet : public Measurement
   static long long nwarns_;        //!< Number of warnings during inversion
 
   mutable Measurement temp_;
-  mutable double root_;
-  mutable double sphi_,seta_;
-  const double EoverPt_;
+  mutable float root_;
+  const float EoverPt_;
   class GslImplementation {
     struct rf_par {
       double y_;

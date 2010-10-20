@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.cc,v 1.7 2010/05/19 16:01:36 stadie Exp $
+//    $Id: JetConstraintEvent.cc,v 1.8 2010/05/27 15:27:49 stadie Exp $
 //   
 
 
@@ -28,8 +28,9 @@ void JetConstraintEvent::addJet(double truePt, const Jet* j,
   if(globalFunc) jet->setGlobalFunction(*globalFunc);
   error_ = error_ * jets_.size() + jet->error();
   jets_.push_back(jet); 
-  error_ /= jets_.size();
+  trusum2_ += jet->Et() * jet->Et();
   trusum_ += jet->Et();
+  error_ = sqrt(trusum2_ -  trusum_ *  trusum_/jets_.size())/jets_.size();
   ptHat_ = truth();
 }
 
@@ -65,9 +66,9 @@ double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_de
   }
   double chi2 = (sumet - trusum_) / error_;
   chi2 *= chi2;
-  chi2 *= weight_ / jets_.size();
-  //std::cout << "JetConstraintEvent::chi2_fast:  Et:" << jets[0]->Et() 
-  //   	    << " chi2:" << chi2 << " sum Et:" << sumet << std::endl;
+  chi2 *= weight_;
+  std::cout << "JetConstraintEvent::chi2_fast:  Et:" << trusum_/jets_.size() 
+     	    << " chi2:" << chi2 << " sum Et:" << sumet << " error:" << error_ << std::endl;
   //derivative....
   for(VarMap::iterator i = varmap_.begin() ; i != varmap_.end() ; ++i) {
     i->second.uppersum_ = sumet;
@@ -90,10 +91,10 @@ double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_de
   for(VarMap::iterator i = varmap_.begin() ; i != varmap_.end() ; ++i) {
     double temp1 = (i->second.lowersum_ - trusum_) / error_;
     temp1 *= temp1;
-    temp1 *= weight_ / jets_.size();
+    temp1 *= weight_;
     double temp2 = (i->second.uppersum_ - trusum_) / error_;
     temp2 *= temp2;
-    temp2 *= weight_ / jets_.size();
+    temp2 *= weight_;
 //     std::cout << "JetConstraintEvent::chi2_fast:  Et:" << jets[0]->Et() 
 // 	      << " temp1:" << temp1 << " sum Et:" <<  i->second.lowersum 
 // 	      << std::endl;
@@ -106,5 +107,3 @@ double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_de
   chi2plots_ = chi2;
   return chi2;
 }
-
-

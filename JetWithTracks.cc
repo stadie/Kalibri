@@ -2,19 +2,19 @@
 //    Class for jets with tracks 
 //
 //    first version: Hartmut Stadie 2009/04/08
-//    $Id: JetWithTracks.cc,v 1.12 2010/05/19 13:34:48 stadie Exp $
+//    $Id: JetWithTracks.cc,v 1.13 2010/05/19 16:01:41 stadie Exp $
 //   
 #include"JetWithTracks.h"
 
 #include "TLorentzVector.h"
 
-JetWithTracks::JetWithTracks(double Et, double EmEt, double HadEt ,double OutEt, double E,
-			     double eta,double phi, double phiphi, double etaeta, Flavor flavor, double genPt, double dR,
+JetWithTracks::JetWithTracks(float Et, float EmEt, float HadEt ,float OutEt, float E,
+			     float eta,float phi, float phiphi, float etaeta, Flavor flavor, float genPt, float dR,
 			     CorFactors* corFactors, const Function& func, 
-			     double (*errfunc)(const double *x, const Measurement *xorig, double err), 
-			     const Function& gfunc, double Etmin) 
+			     float (*errfunc)(const float *x, const Measurement *xorig, float err), 
+			     const Function& gfunc) 
   :  Jet(Et,EmEt,HadEt,OutEt,E,eta,phi,phiphi,etaeta,flavor,genPt,dR,corFactors,
-	 func,errfunc,gfunc,Etmin),
+	 func,errfunc,gfunc),
      ntrackpars_(0), expectedCaloEt_(0), trackPt_(0)
 {
 }
@@ -50,10 +50,10 @@ void JetWithTracks::changeParAddress(double* oldpar, double* newpar)
   }
 }
 
-double JetWithTracks::correctedEt(double Et,bool fast) const
+float JetWithTracks::correctedEt(float Et,bool fast) const
 {
-  const double ConeRadius = 0.5; 
-  const double MIPsignal = 4;   
+  const float ConeRadius = 0.5; 
+  const float MIPsignal = 4;   
   int NoUsedTracks = 0;
   bool isMuon;
   trackPt_ = 0;
@@ -81,14 +81,14 @@ double JetWithTracks::correctedEt(double Et,bool fast) const
     }
   }
   //correct neutral rest
-  double res = (Et > expectedCaloEt_) ? Jet::correctedEt(Et -  expectedCaloEt_) : 0;
+  float res = (Et > expectedCaloEt_) ? Jet::correctedEt(Et -  expectedCaloEt_) : 0;
   //std::cout << "Et:" << Et << " track corrected:" << ccet << " jet cor:" << res << '\n';
   return res + trackPt_;
 }
 
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& JetWithTracks::varyPars(const double* eps, double Et, double start)
+const Jet::VariationColl& JetWithTracks::varyPars(const double* eps, float Et, float start)
 {
   Jet::varyPars(eps,Et,start);
   int i = Jet::nPar();
@@ -120,7 +120,7 @@ const Jet::VariationColl& JetWithTracks::varyParsDirectly(const double* eps, boo
   Jet::varyParsDirectly(eps,computeDeriv);
   int i = Jet::nPar();
 
-  const double deltaE = 0.1;
+  const float deltaE = 0.1;
   for(std::map<int,double*>::const_iterator iter = trackpars_.begin() ;
       iter != trackpars_.end() ; ++iter) {
     double *p = iter->second;
@@ -152,35 +152,35 @@ const Jet::VariationColl& JetWithTracks::varyParsDirectly(const double* eps, boo
   return varcoll_;
 }
 
-double JetWithTracks::error() const {
-  double var = 0, err;
+float JetWithTracks::error() const {
+  float var = 0, err;
   for(TrackCollConstIter i = tracks_.begin() ; i != tracks_.end() ; ++i) {
     err = (*i)->error();
     var += err * err;
   }   
-  double jeterr = Jet::error();
+  float jeterr = Jet::error();
   return sqrt(var + jeterr * jeterr);
 }
 
-double JetWithTracks::expectedError(double et) const
+float JetWithTracks::expectedError(float et) const
 {
-  double var = 0, err;
+  float var = 0, err;
   for(TrackCollConstIter i = tracks_.begin() ; i != tracks_.end() ; ++i) {
     err = (*i)->error();
     var += err * err;
   }
-  double jeterr = Jet::expectedError(et);
+  float jeterr = Jet::expectedError(et);
   return sqrt(var + jeterr * jeterr);
 }
   
-void JetWithTracks::addTrack(double Et, double EmEt, double HadEt ,
-			     double OutEt, double E,double eta,double phi,
-			     int TrackId, int TowerId, double DR, double DRout,
-			     double etaOut, double phiOut, double EM1, double EM5, 
-			     double Had1, double Had5, double TrackChi2, 
-			     int NValidHits, bool TrackQualityT, double MuDR, 
-			     double MuDE, double Efficiency, const Function& func,
-			     double (*errfunc)(const double *x, const Measurement *xorig, double err))
+void JetWithTracks::addTrack(float Et, float EmEt, float HadEt ,
+			     float OutEt, float E,float eta,float phi,
+			     int TrackId, int TowerId, float DR, float DRout,
+			     float etaOut, float phiOut, float EM1, float EM5, 
+			     float Had1, float Had5, float TrackChi2, 
+			     int NValidHits, bool TrackQualityT, float MuDR, 
+			     float MuDE, float Efficiency, const Function& func,
+			     float (*errfunc)(const float *x, const Measurement *xorig, float err))
 {
   tracks_.push_back(new Track(Et,EmEt,HadEt,OutEt,E,eta,phi,TrackId,TowerId,DR,DRout,etaOut,phiOut,
 			     EM1,EM5,Had1,Had5,TrackChi2,NValidHits,TrackQualityT,MuDR,MuDE,Efficiency,
@@ -192,36 +192,36 @@ void JetWithTracks::addTrack(double Et, double EmEt, double HadEt ,
 
 
 
-JetWithTracks::Track::Track(double Et, double EmEt, double HadEt ,
-			    double OutEt, double E,double eta,double phi,
-			    int TrackId, int TowerId, double DR, double DRout,
-			    double etaOut, double phiOut, double EM1, double EM5, 
-			    double Had1, double Had5, double TrackChi2, 
-			    int NValidHits, bool TrackQualityT, double MuDR, 
-			    double MuDE, double Efficiency, const Function& func,
-			    double (*errfunc)(const double *x, const Measurement *xorig, double err))
+JetWithTracks::Track::Track(float Et, float EmEt, float HadEt ,
+			    float OutEt, float E,float eta,float phi,
+			    int TrackId, int TowerId, float DR, float DRout,
+			    float etaOut, float phiOut, float EM1, float EM5, 
+			    float Had1, float Had5, float TrackChi2, 
+			    int NValidHits, bool TrackQualityT, float MuDR, 
+			    float MuDE, float Efficiency, const Function& func,
+			    float (*errfunc)(const float *x, const Measurement *xorig, float err))
   :  TTrack(Et,EmEt,HadEt,OutEt,E,eta,phi,TrackId,TowerId,DR,DRout,etaOut,phiOut,EM1,EM5,Had1,Had5,
 	    TrackChi2,NValidHits,TrackQualityT,MuDR,MuDE,Efficiency), f_(func), errf_(errfunc)
 { 
 }
 
-double JetWithTracks::Track::expectedEt() const
+float JetWithTracks::Track::expectedEt() const
 {
-  double et = f_(this);
+  float et = f_(this);
   assert(et == et);
   assert(et >= 0);
   return et;
 }
 
   
-double JetWithTracks::expectedEt(double truth, double start, bool fast)
+float JetWithTracks::expectedEt(float truth, float start, bool fast)
 {
   correctedEt(start);
   //std::cout << truth << ", " << pt << ", " << cet << ", " 
   //	    <<  expectedCaloEt << ", " << trackPt << "\n";
   if(truth < trackPt_) return (expectedCaloEt_ > 0) ? expectedCaloEt_ : 1.0;
   if(expectedCaloEt_ >=  Measurement::pt) return expectedCaloEt_;
-  double m = Jet::expectedEt(truth, start, fast);
+  float m = Jet::expectedEt(truth, start, fast);
   //std::cout << "expected ET:" << m << '\n';
   //assert(m > 0);
   return m;

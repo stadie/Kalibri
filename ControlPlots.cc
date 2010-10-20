@@ -187,10 +187,6 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
     return  &ControlPlotsFunction::jetTruthEventJetEMF;
   if( varName == "momentEtaEta" )
     return  &ControlPlotsFunction::jetTruthEventJetMomentEtaEta;
-  if( varName == "scaledEtaEta" )
-    return  &ControlPlotsFunction::jetTruthEventJetScaledEtaEta;
-  if( varName == "scaledPhiPhi" )
-    return  &ControlPlotsFunction::jetTruthEventJetScaledPhiPhi;
   if( varName == "GenJetPt" )
     return  &ControlPlotsFunction::jetTruthEventTruthPt;
   if( varName == "momentPhiPhi" )

@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
+// $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -27,7 +27,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
+//!  $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
 class Measurement
 {
 public:
@@ -36,8 +36,8 @@ public:
    etaeta(0)
     {
     }
- Measurement(double Et,double EmEt,double HadEt,double OutEt,double E,
-	     double eta,double phi, double nphiphi = 0,double netaeta = 0)
+ Measurement(float Et,float EmEt,float HadEt,float OutEt,float E,
+	     float eta,float phi, float nphiphi = 0,float netaeta = 0)
    : pt(Et),EMF(EmEt),HadF(HadEt),OutF(OutEt),E(E),eta(eta),phi(phi),
     phiphi(nphiphi),etaeta(netaeta) 
   {
@@ -45,15 +45,15 @@ public:
   }
   virtual ~Measurement() {};
   //all common variables
-  double pt;     //!< Total transverse momentum (pt = EMF + HadF + OutF)
-  double EMF;    //!< Pt from the ECAL part of the tower(s)		
-  double HadF;   //!< Pt from the HCAL part of the towers(s)		
-  double OutF;   //!< Pt fromt the HO part of the tower(s)		
-  double E;      //!< Total energy					
-  double eta;    //!< Pseudorapidity eta				
-  double phi;    //!< Polar angle phi  
-  double phiphi; //!< Phi-Phi moment (width in phi) 
-  double etaeta; //!< Eta-Eta moment (width in eta) 
+  float pt;     //!< Total transverse momentum (pt = EMF + HadF + OutF)
+  float EMF;    //!< Pt from the ECAL part of the tower(s)		
+  float HadF;   //!< Pt from the HCAL part of the towers(s)		
+  float OutF;   //!< Pt fromt the HO part of the tower(s)		
+  float E;      //!< Total energy					
+  float eta;    //!< Pseudorapidity eta				
+  float phi;    //!< Polar angle phi  
+  float phiphi; //!< Phi-Phi moment (width in phi) 
+  float etaeta; //!< Eta-Eta moment (width in eta) 
 };
 
 
@@ -66,16 +66,16 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
+//!  $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
 class TTrack : public Measurement
 {
 public:
   TTrack():Measurement(){};
-  TTrack(double Et, double EmEt, double HadEt ,double OutEt, double E,double eta,
-	 double phi,int TrackId, int TowerId, double DR, double DRout, 
-	 double etaOut, double phiOut, double EM1, double EM5, double Had1, 
-	 double Had5, double TrackChi2, int NValidHits, bool TrackQualityT, 
-	 double MuDR, double MuDE, double Efficiency) 
+  TTrack(float Et, float EmEt, float HadEt ,float OutEt, float E,float eta,
+	 float phi,int TrackId, int TowerId, float DR, float DRout, 
+	 float etaOut, float phiOut, float EM1, float EM5, float Had1, 
+	 float Had5, float TrackChi2, int NValidHits, bool TrackQualityT, 
+	 float MuDR, float MuDE, float Efficiency) 
     : Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi),TrackId(TrackId),TowerId(TowerId),
     DR(DR),DRout(DRout),etaOut(etaOut),phiOut(phiOut),EM1(EM1),EM5(EM5),Had1(Had1),
     Had5(Had5),TrackChi2(TrackChi2),NValidHits(NValidHits),TrackQualityT(TrackQualityT),
@@ -84,20 +84,20 @@ public:
 //variables specific only to Tracks
   int TrackId;
   int TowerId;
-  double DR;
-  double DRout;
-  double etaOut;
-  double phiOut;
-  double EM1;
-  double EM5;
-  double Had1;
-  double Had5;
-  double TrackChi2;
+  float DR;
+  float DRout;
+  float etaOut;
+  float phiOut;
+  float EM1;
+  float EM5;
+  float Had1;
+  float Had5;
+  float TrackChi2;
   int NValidHits;
   bool TrackQualityT;
-  double MuDR;
-  double MuDE;
-  double Efficiency;
+  float MuDR;
+  float MuDE;
+  float Efficiency;
 };
 
 
@@ -123,7 +123,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
+//! $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
 class Event
 {
 public:
@@ -244,7 +244,7 @@ public:
 //!
 //!  \author Hartmut Stadie
 //!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.80 2010/04/13 13:44:09 mschrode Exp $
+//!  $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
 class TAbstractData : public Event
 {
 public:
@@ -255,17 +255,17 @@ public:
   //!  \brief Constructor
   //!
   //!  \param index  Index of the first of the successive parameters
-  //!                covered by this event, see TParameters
+  //!                covered by this event, see Parameters
   //!  \param mess   Pointer to the measurement, see Measurement
   //!  \param truth  Truth
   //!  \param error  Error on measurement
   //!  \param weight Weight of event in \f$ \chi^{2} \f$ sum
   //!  \param par    Pointer to the first of the successive elements in
-  //!                parameter array covered by this event, see TParameters
+  //!                parameter array covered by this event, see Parameters
   //!  \param n_par  Number of succesive parameters covered by this event,
-  //!                see TParameters
+  //!                see Parameters
   //!  \param *func  Pointer to correction function, see Parametrization
-  //!  \param *err   Pointer to error function, see TParameters
+  //!  \param *err   Pointer to error function, see Parameters
   TAbstractData(unsigned short int index, Measurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
         double (*func)(const Measurement*, const double*),
 	double (*err)(const double *,const Measurement *,double))
@@ -287,7 +287,7 @@ public:
   //!  The correction is given by the correction function (see
   //!  Parametrization, TAbstractData) using the parameter
   //!  values currently stored in the parameter
-  //!  array in TParameters.
+  //!  array in Parameters.
   //!
   //!  \return Corrected measurement
   //!
@@ -301,7 +301,7 @@ public:
   //!  The correction is given by the correction function (see
   //!  Parametrization, TAbstractData) using the parameter
   //!  values currently stored in the parameter
-  //!  array in TParameters.
+  //!  array in Parameters.
   //!
   //!  \note This method is intended for  derivative calculation
   //!  (see chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) )

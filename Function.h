@@ -2,7 +2,7 @@
 //    Class representing a correction function
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Function.h,v 1.5 2010/02/04 09:55:05 stadie Exp $
+//    $Id: Function.h,v 1.6 2010/02/15 12:40:18 stadie Exp $
 //   
 #ifndef FUNCTION_H
 #define FUNCTION_H
@@ -19,8 +19,8 @@ class Function {
   Function(ParametrizationFunction func, ParametrizationFunction invfunc,
 	   double *firstpar, int parindex, int npars, const Parametrization* p)
     : func_(func),invfunc_(invfunc),firstpar_(firstpar),parindex_(parindex),
-    npars_(npars),param_(p)
-    {}
+    npars_(npars)
+  {param_ = p; }
   double* firstPar() const { return firstpar_;}
   int parIndex() const { return parindex_;}
   int nPars() const { return npars_;}
@@ -35,6 +35,7 @@ class Function {
   double *firstpar_;
   int parindex_;
   int npars_;
-  const Parametrization* param_;
+  static const Parametrization* param_;
 };
+
 #endif

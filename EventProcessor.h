@@ -1,11 +1,11 @@
 //
-// $Id: EventProcessor.h,v 1.3 2009/07/23 13:46:20 mschrode Exp $
+// $Id: EventProcessor.h,v 1.4 2009/11/24 16:52:59 stadie Exp $
 //
 #ifndef EVENTPROCESSOR_H
 #define EVENTPROCESSOR_H
 
 class Event;
-class TParameters;
+class Parameters;
 class TH1;
 class TF1;
 
@@ -18,7 +18,7 @@ class TF1;
 class EventProcessor
 {
  public:
-  EventProcessor(const std::string& configfile, TParameters* param);
+  EventProcessor(const std::string& configfile, Parameters* param);
   virtual ~EventProcessor();
   virtual int process(std::vector<Event*>& data);
 
@@ -30,7 +30,7 @@ class EventProcessor
   void balanceSpectra(std::vector<Event*>& data);
   int getSpectraBin(double m1, double m2, double m3);
 
-  TParameters* par_;
+  Parameters* par_;
   double etCutOnGamma_;
   double etCutOnJet_;
   bool flattenSpectra_;

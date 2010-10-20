@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.46 2010/05/19 16:01:33 stadie Exp $
+//    $Id: Jet.cc,v 1.47 2010/05/20 15:15:47 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -11,23 +11,24 @@
 #include <iostream>
 #include <iomanip>
 
-Jet::Jet(double Et, double EmEt, double HadEt ,double OutEt, double E,
-         double eta,double phi, double phiphi, double etaeta, Flavor flavor, 
-	 double genPt, double dR, CorFactors* corFactors, const Function& f, 
-	 double (*errfunc)(const double *x, const Measurement *xorig, double err), 
-	 const Function& gf, double Etmin) 
+Jet::Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
+         float eta,float phi, float phiphi, float etaeta, Flavor flavor, 
+	 float genPt, float dR, CorFactors* corFactors, const Function& f, 
+	 float (*errfunc)(const float *x, const Measurement *xorig, float err), 
+	 const Function& gf) 
   : Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi,phiphi,etaeta),flavor_(flavor), 
     genPt_(genPt),dR_(dR),corFactors_(corFactors),f_(f),gf_(gf),
-    errf_(errfunc),etmin_(Etmin),root_(Et),EoverPt_(E/Et),gsl_impl_(this)
+    errf_(errfunc),root_(Et),EoverPt_(E/Et),gsl_impl_(this)
 {
   temp_ = *this;
   varcoll_.resize(f_.nPars() + gf_.nPars());
+  //std::cout << "size:" << sizeof(Jet::GslImplementation) << ", " << sizeof(Jet) << ", " << sizeof(Function) << ", " << sizeof(Measurement) << '\n';
 }
 
 Jet::Jet(const Jet& j) 
   : Measurement(j), flavor_(j.flavor_), genPt_(j.genPt_),dR_(j.dR_), 
     corFactors_(new CorFactors(*(j.corFactors_))),f_(j.f_),
-    gf_(j.gf_),errf_(j.errf_),etmin_(j.etmin_),root_(j.root_),EoverPt_(j.EoverPt_),
+    gf_(j.gf_),errf_(j.errf_),root_(j.root_),EoverPt_(j.EoverPt_),
     gsl_impl_(this)
 {
   temp_ = *this;
@@ -36,6 +37,7 @@ Jet::Jet(const Jet& j)
 
 Jet::~Jet()
 {
+  varcoll_.clear();
   delete corFactors_;
 }
 
@@ -73,16 +75,16 @@ void Jet::correctL2L3()
 //!
 //!  \param eps Amount by which the parameters are varied
 //!  \param Et Et which is to be corrected after parameter variation
-//!  \param start Start value for expectedEt(double truth, double start, bool fast)
+//!  \param start Start value for expectedEt(float truth, float start, bool fast)
 //!  \return Vector of ParameterVariation
 //!  \sa varyParsDirectly
 // -------------------------------------------------------
-const Jet::VariationColl& Jet::varyPars(const double* eps, double Et, double start)
+const Jet::VariationColl& Jet::varyPars(const double* eps, float Et, float start)
 {
   //start = Et;
-  double oldroot = root_;
+  float oldroot = root_;
   for(int i = 0 ; i < f_.nPars() ; ++i) {
-    double orig = f_.firstPar()[i];
+    float orig = f_.firstPar()[i];
     f_.firstPar()[i] += eps[f_.parIndex() + i];
     varcoll_[i].upperEt = expectedEt(Et,start,varcoll_[i].upperError);
     root_ = oldroot;
@@ -97,7 +99,7 @@ const Jet::VariationColl& Jet::varyPars(const double* eps, double Et, double sta
     varcoll_[i].parid = f_.parIndex() + i;
   }
   for(int i = 0,j =  f_.nPars(); i < gf_.nPars() ; ++i,++j) {
-    double orig = gf_.firstPar()[i];
+    float orig = gf_.firstPar()[i];
     gf_.firstPar()[i] += eps[gf_.parIndex() + i];
     varcoll_[j].upperEt = expectedEt(Et,start,varcoll_[j].upperError);
     root_ = oldroot;
@@ -126,39 +128,40 @@ const Jet::VariationColl& Jet::varyPars(const double* eps, double Et, double sta
 //!  \return Vector of ParameterVariation
 //!  \sa varyPars
 // -------------------------------------------------------
-const Jet::VariationColl& Jet::varyParsDirectly(const double* eps, bool computeDeriv)
+const Jet::VariationColl& Jet::varyParsDirectly(const double* eps, bool computeDeriv, float Et)
 {
-  const double deltaE = 1e-07 * Measurement::pt;
+  if(Et == 0) Et = Measurement::pt;
+  const float deltaE = 1e-07 * Et;
   for(int i = 0 ; i < f_.nPars() ; ++i) {
-    double orig = f_.firstPar()[i];
+    float orig = f_.firstPar()[i];
     f_.firstPar()[i] += eps[f_.parIndex() + i];
-    varcoll_[i].upperEt = correctedEt(Measurement::pt);
+    varcoll_[i].upperEt = correctedEt(Et);
     varcoll_[i].upperError = expectedError(varcoll_[i].upperEt);
     if(computeDeriv) {
-      varcoll_[i].upperEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
+      varcoll_[i].upperEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
     f_.firstPar()[i] = orig - eps[f_.parIndex() + i];
-    varcoll_[i].lowerEt = correctedEt(Measurement::pt); 
+    varcoll_[i].lowerEt = correctedEt(Et); 
     varcoll_[i].lowerError = expectedError(varcoll_[i].lowerEt);
     if(computeDeriv) {
-      varcoll_[i].lowerEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
+      varcoll_[i].lowerEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
     f_.firstPar()[i] = orig;
     varcoll_[i].parid = f_.parIndex() + i;
   }  
   for(int i = 0, j =  f_.nPars(); i < gf_.nPars() ; ++i,++j) {
-    double orig = gf_.firstPar()[i];
+    float orig = gf_.firstPar()[i];
     gf_.firstPar()[i] += eps[gf_.parIndex() + i];
-    varcoll_[j].upperEt = correctedEt(Measurement::pt);
+    varcoll_[j].upperEt = correctedEt(Et);
     varcoll_[j].upperError = expectedError(varcoll_[j].upperEt);
     if(computeDeriv) {
-      varcoll_[j].upperEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
+      varcoll_[j].upperEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
     gf_.firstPar()[i] = orig - eps[gf_.parIndex() + i];
-    varcoll_[j].lowerEt = correctedEt(Measurement::pt); 
+    varcoll_[j].lowerEt = correctedEt(Et); 
     varcoll_[j].lowerError = expectedError(varcoll_[j].lowerEt);
     if(computeDeriv) {
-      varcoll_[j].lowerEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
+      varcoll_[j].lowerEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
     gf_.firstPar()[i] = orig;
     varcoll_[j].parid = gf_.parIndex() + i;
@@ -178,7 +181,7 @@ const Jet::VariationColl& Jet::varyParsDirectly(const double* eps, bool computeD
 //!  \param fast No functionality yet
 //!  \return Corrected jet Et
 // -------------------------------------------------------
-double Jet::correctedEt(double Et, bool fast) const {
+float Jet::correctedEt(float Et, bool fast) const {
   
   //std::cout << "Pars:" << f_.firstPar()[0] << ", " << f_.firstPar()[1] << ", " << f_.firstPar()[2]
   //	    << ", " << gf_.firstPar()[0] << ", " << gf_.firstPar()[1] << ", " << gf_.firstPar()[2]
@@ -238,7 +241,7 @@ double Jet::correctedEt(double Et, bool fast) const {
 //!  \param fast No functionality yet
 //!  \return Mean measured Et for given truth
 // -------------------------------------------------------
-double Jet::expectedEt(double truth, double start, bool fast)
+float Jet::expectedEt(float truth, float start, bool fast)
 {
   if(f_.hasInverse()) { 
     temp_.pt   = truth;  
@@ -247,18 +250,9 @@ double Jet::expectedEt(double truth, double start, bool fast)
     temp_.E    = Measurement::E * truth/Measurement::pt;
     return f_.inverse(&temp_);
   }
-  static const double eps = 1.0e-14;
+  static const double eps = 1.0e-014;
 
   /*
-  double step = 2.0 * Error();
-  double x1 = Measurement::pt - step;
-  double x2 = Measurement::pt + step;
-  if(falseposition(truth,x1,x2,eps)) {
-    return root = x2;
-  } 
-  return -1;
-  */
-  
   double x1 = root_;
   //find root of truth - jet->correctedEt(expectedEt)
   // x: expectedEt
@@ -271,7 +265,7 @@ double Jet::expectedEt(double truth, double start, bool fast)
     //std::cout << "this really happens!?\n";
     return x1;
   }
-  
+  */
   //bracket the root
   /*
     double x2 = 1.01 * x1;
@@ -315,41 +309,28 @@ double Jet::expectedEt(double truth, double start, bool fast)
   */
   //x1 = truth * Measurement::pt / correctedEt(Measurement::pt,false);
   
-  x1 = Measurement::pt;
-  double f2,step = 2.0 * error(),x2 = x1 + step;
-  x1 -= step;
-  for(int i = 0 ; i < 1000 ; ++i) {
-    f1 = correctedEt(x1,false);
-    f2 = correctedEt(x2,false);
-    if(f1 > f2) {
-      ++nwarns_;
-//       std::cout << "Warning: corrected jet Pt not monotonically increasing: " << std::endl
-// 		<< "bounds: " << x1 << " -> " << f1 << " and " << x2 << " -> " << f2 
-// 		<< " for measured pt = " << Measurement::pt << " and true pt = " << truth 
-// 		<< " and eta " << Measurement::eta << std::endl;
-      x1 -= step;
-      if(x1 < 0.1) x1 = 0.1;
-      x2 += step;
-    } else {
-      assert(f1 <= f2);
-      if(f1 > truth) x1 -= step;
-      if(f2 < truth) x2 += step;
+  double x1 = Measurement::pt,f1;
+  double f2,x2 = x1 + error();
+  //bracket root from numerical recipes 3rd edition, p447)
+  const int ntries = 50;
+  const double factor = 1.6;
+  f1 = correctedEt(x1,false);
+  f2 = correctedEt(x2,false);
+  for(int i = 0 ; i < ntries ; ++i) {
+    if(((f1 -truth) * (f2 - truth)) <= 0) { 
+      if(! gsl_impl_.root(truth,x1,x2,eps)) return -1;
+      return root_ = x2;
     }
     ++ntries_;
-    step *= 2;
-    //std::cout << x1 << ", " << x2 << std::endl;
-    if(i > 100) {
-      std::cout << "Warning failed to bag: " << x1 << ", " << x2 << ":" << f1 << " < " << truth << " < " << f2 << std::endl;
-      ++nfails_;
-      return -1;
+    if(std::abs(f1 - truth) < std::abs(f2 - truth)) {
+      f1 = correctedEt(x1 += factor*(x1-x2));
+    } else {
+      f2 = correctedEt(x2 += factor*(x2-x1));
     }
-    if((f1 < truth) && (f2 > truth)) break;
   }
-  //assert((x1 == x1) && (x2 == x2));
-  if(! gsl_impl_.root(truth,x1,x2,eps)) return -1;
-  //assert(std::abs(correctedEt(x2)-truth) < eps * truth); 
-  return root_ = x2;
-  
+  ++nfails_;
+  return -1;
+
   //get second point assuming a constant correction factor
   //x2 = (truth - EMF - OutF) * (x1 - EMF - OutF)/(f1 - EMF - OutF) + EMF;
   //x2 = truth * x1 / f1;
@@ -377,18 +358,18 @@ double Jet::expectedEt(double truth, double start, bool fast)
 //!  \param fast No functionality yet
 //!  \return Mean measured Et for given truth
 // -------------------------------------------------------
-double Jet::expectedEt(double truth, double start, double& error,bool fast)
+float Jet::expectedEt(float truth, float start, float& error,bool fast)
 {
   //truncate mean for jet min Et-cut
-  double m = expectedEt(truth,start,fast);
+  float m = expectedEt(truth,start,fast);
   if(m < 0) return m;
-  double s = expectedError(m);
+  float s = expectedError(m);
 
   // hack
   error = s;
   return m;
 
-//   double x = (etmin - m)/s;
+//   float x = (etmin - m)/s;
 //   if(x < -10) {
 //     error = s;
 //     return m;
@@ -397,7 +378,7 @@ double Jet::expectedEt(double truth, double start, double& error,bool fast)
 //   //m + (E^(-((a - m)^2/(2 s^2))) Sqrt[2/\[Pi]] s)/Erfc[(a - m)/(Sq[2] s)]
 //   //truncated RMS
 //   //m^2 + s^2 + (E^(-((a - m)^2/(2 s^2))) (a + m) Sqrt[2/\[Pi]] s)/Erfc[(a - m)/(Sqrt[2] s)]
-//   double l = exp(-x*x/2) * sqrt(2/M_PI) * s/TMath::Erfc(x/sqrt(2));
+//   float l = exp(-x*x/2) * sqrt(2/M_PI) * s/TMath::Erfc(x/sqrt(2));
 //   m += l;
 //   s =  expectedError(m);
 //   error = sqrt(l*(etmin - m) + s * s);

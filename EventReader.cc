@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.15 2010/10/12 08:37:40 stadie Exp $
+// $Id: EventReader.cc,v 1.16 2010/10/14 17:26:55 stadie Exp $
 //
 #include "EventReader.h"
 
@@ -17,7 +17,7 @@ unsigned int EventReader::numberOfEventReaders_ = 0;
 std::vector<JetConstraintEvent*> EventReader::constraints_;
 Binning* EventReader::binning_ = 0;
 
-EventReader::EventReader(const std::string& configfile, TParameters* param) 
+EventReader::EventReader(const std::string& configfile, Parameters* param) 
   : config_(0),par_(param),corFactorsFactory_(0),cp_(new ConstParametrization())
 {
   numberOfEventReaders_++;

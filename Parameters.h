@@ -1,10 +1,10 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.60 2010/04/13 13:53:21 mschrode Exp $
+// $Id: Parameters.h,v 1.61 2010/07/22 13:58:30 mschrode Exp $
 //
-#ifndef TParameters_h
-#define TParameters_h
+#ifndef Parameters_h
+#define Parameters_h
 
 //C++ libs
 #include <vector>
@@ -26,12 +26,12 @@
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.60 2010/04/13 13:53:21 mschrode Exp $
+//!  $Id: Parameters.h,v 1.61 2010/07/22 13:58:30 mschrode Exp $
 // -----------------------------------------------------------------
-class TParameters {  
+class Parameters {  
 public :
   
-  static TParameters* CreateParameters(const ConfigFile& config);
+  static Parameters* CreateParameters(const ConfigFile& config);
 
   std::string GetName() const;
 
@@ -151,40 +151,40 @@ public :
   bool needsUpdate() const { return p->needsUpdate(); }
   void update() { p->update(GetPars()); }
   
-  static double tower_parametrization(const Measurement* x, const double* par) {
+  static float tower_parametrization(const Measurement* x, const double* par) {
     return instance->p->correctedTowerEt(x,par);
   }
-  static double jet_parametrization(const Measurement* x, const double* par) {
+  static float jet_parametrization(const Measurement* x, const double* par) {
     return instance->p->correctedJetEt(x,par);
   }  
-  static double inv_jet_parametrization(const Measurement* x, const double* par) {
+  static float inv_jet_parametrization(const Measurement* x, const double* par) {
     return instance->p->inverseJetCorrection(x,par);
   }  
-  static double track_parametrization(const Measurement* x, const double* par) {
+  static float track_parametrization(const Measurement* x, const double* par) {
     return instance->p->GetExpectedResponse(x,par);
   }
-  static double global_jet_parametrization(const Measurement* x, const double* par) {
+  static float global_jet_parametrization(const Measurement* x, const double* par) {
     return instance->p->correctedGlobalJetEt(x,par);
   }
 
-  static double dummy_parametrization(const Measurement* x, const double* par) {
+  static float dummy_parametrization(const Measurement* x, const double* par) {
     return x->pt;
   }
 
   //Error parametrization functions:
-  template<int Et> static double const_error(const double *x, const Measurement *xorig=0, double errorig=0) {
+  template<int Et> static float const_error(const float *x, const Measurement *xorig=0, float errorig=0) {
     return Et;
   }
-  static double tower_error_parametrization(const double *x, const Measurement *xorig=0, double errorig=0) { 
+  static float tower_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0) { 
     return (x[0]>0 ?  1.25 * sqrt( x[0])   :   1.25 * sqrt(-x[0]) );
   }
-  static double jet_error_parametrization(const double *x, const Measurement *xorig=0, double errorig=0) {
+  static float jet_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0) {
     return (x[0]>0. ? 0.033*x[0] + 5.6   :   0.033*(-x[0]) + 5.6 ); 
   }
 
-  static double track_error_parametrization(const double *x, const Measurement *xorig=0, double errorig=0) { 
+  static float track_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0) { 
     //for full error also see Grooms paper 0605164v4, p.25
-    double error=0,error2=0;
+    float error=0,error2=0;
     error =  (x[0]>0 ? x[0] *( 0.05 + 0.00015 * x[0])   : (-x[0]) *(  0.05 + 0.00015 * (-x[0]) )); //trackerror  to be checken and dependent on pt, eta, chi2, nohits, ....
     error2 = error * error;
 
@@ -195,14 +195,14 @@ public :
 
     //error2 += (1-1/1.48)*(1-1/1.48)*0.125*0.125*x[0]*x[0];   //*(x[0]/100)^(-0.076)          //1/1.48 = h/e
     //following term has to be checked!!!!
-    //double a = 1/(1.48 * 1.48) * 1.25 * 1.25 * pow((fabs(x[0])* (xorig->E / xorig->pt) / 0.96),(0.816 - 1));  // 1- Pi0 * error(h)^2 (h/e)^2
+    //float a = 1/(1.48 * 1.48) * 1.25 * 1.25 * pow((fabs(x[0])* (xorig->E / xorig->pt) / 0.96),(0.816 - 1));  // 1- Pi0 * error(h)^2 (h/e)^2
     //error2 += (x[0]>0 ?  a * x[0]  : a * (-x[0]));    //intrinsic term (HCAL)
     error = sqrt(error2);
     return error;
   }
 
 
-  static double jet_only_tower_error_parametrization(const double *x, const Measurement *xorig=0, double errorig=0) { 
+  static float jet_only_tower_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0) { 
     return 0;
   }
 
@@ -261,19 +261,19 @@ public :
   //!
   //!  \return The absolute resolution
   // -----------------------------------------------------
-  static double jet_only_jet_error_parametrization_et(const double *x, const Measurement *xorig=0, double errorig=0) {
-    const static double a[5] = { 4.44 * 4.44, 4.35 * 4.35, 4.34 * 4.34 , 4.08 * 4.08, 3.90 * 3.90 };
-    const static double b[5] = { 1.11 * 1.11, 1.17 * 1.17, 0.85 * 0.85, 0.45 * 0.45, 0.29 * 0.29};
-    const static double c[5] = { 0.03 * 0.03, 0.04 * 0.04, 0.03 * 0.03, 0.04 * 0.04, 0.09 * 0.09};
+  static float jet_only_jet_error_parametrization_et(const float *x, const Measurement *xorig=0, float errorig=0) {
+    const static float a[5] = { 4.44 * 4.44, 4.35 * 4.35, 4.34 * 4.34 , 4.08 * 4.08, 3.90 * 3.90 };
+    const static float b[5] = { 1.11 * 1.11, 1.17 * 1.17, 0.85 * 0.85, 0.45 * 0.45, 0.29 * 0.29};
+    const static float c[5] = { 0.03 * 0.03, 0.04 * 0.04, 0.03 * 0.03, 0.04 * 0.04, 0.09 * 0.09};
 
-    double abseta = std::abs(xorig->eta);
+    float abseta = std::abs(xorig->eta);
     int i = (abseta < 0.8) ? 0 : ((abseta < 1.5) ? 1 : ((abseta < 2.4) ? 2 : (abseta < 3.2) ? 3 : 4));
     return sqrt(a[i] + (b[i] + c[i] *x[0]) * x[0]);
   }
 
-  static double jet_only_jet_error_parametrization_energy(const double *x, const Measurement *xorig=0, double errorig=0) {
+  static float jet_only_jet_error_parametrization_energy(const float *x, const Measurement *xorig=0, float errorig=0) {
     /*
-    double pmess;
+    float pmess;
     if(std::abs(xorig->eta) < 3.0)  
       pmess =  x[0] * xorig->E / (xorig->pt * xorig->pt) * (xorig->HadF + xorig->OutF); //Et->E hadronic
     else
@@ -281,22 +281,22 @@ public :
     //constant before stochastic term is not properly knowen
     return (x[0]>0. ? 0.033*x[0] + 5.6 + 1.0 * sqrt(pmess)  :   0.033*(-x[0]) + 5.6 + 1.0 * sqrt(-pmess) ); 
     */
-    double E = x[0] * xorig->E/xorig->pt;
-    //double sqE = sqrt(E);
+    float E = x[0] * xorig->E/xorig->pt;
+    //float sqE = sqrt(E);
     return sqrt(1.3*1.3/E + 0.056 * 0.056) * x[0];
   }
 
 
-  static double dummy_error_parametrization(const double *x, const Measurement *xorig=0, double errorig=0) {        
+  static float dummy_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0) {        
     return x[0];  
   }
-  static double fast_error_parametrization(const double *x, const Measurement *xorig, double errorig)  {
+  static float fast_error_parametrization(const float *x, const Measurement *xorig, float errorig)  {
     return (xorig->pt==0. ? errorig : errorig*x[0]/xorig->pt );  
   }
-  static double jans_E_tower_error_parametrization(const double *x, const Measurement *xorig=0, double errorig=0)  {
+  static float jans_E_tower_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0)  {
     
     // E = x[0]*xorig[7];  x[0]=param. mess;    xorig == _mess
-    double pmess;
+    float pmess;
     if(std::abs(xorig->eta) < 3.0)  
       pmess =  x[0] * xorig->E / (xorig->pt * xorig->pt) * (xorig->HadF + xorig->OutF); //Et->E hadronic
     else
@@ -306,20 +306,20 @@ public :
     //return 0;
   }
 
-  static double toy_tower_error_parametrization(const double *x, const Measurement *xorig=0, double errorig=0);
+  static float toy_tower_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0);
   
-  static double toy_jet_error_parametrization(const double *x, const Measurement *xorig=0, double errorig=0);
+  static float toy_jet_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0);
 
-  static double const_error_parametrization(const double *x, const Measurement *xorig, double errorig)  {
+  static float const_error_parametrization(const float *x, const Measurement *xorig, float errorig)  {
     return errorig;  
   }
 
   //Plot paramterization stuff
-  static double plot_parametrization(const Measurement* x, const double* par) {
+  static float plot_parametrization(const Measurement* x, const double* par) {
     return tower_parametrization(x,par)/x->pt; 
   }
 
-  static double jes_plot_parametrization(double * x,double * par)  {
+  static float jes_plot_parametrization(double * x,double * par)  {
     //return jet_parametrization(x,par)/x->pt;
     return ( 1. + 0.295 * par[0] * exp(- 0.02566 * par[1] * x[0]));   
 
@@ -353,17 +353,17 @@ public :
   void readCalibrationJetMETL2(const std::string& inputFileName);
   void readCalibrationJetMETL3(const std::string& inputFileName);
 
-
+  static const Parametrization* parametrization() { return instance->p;}
 protected:
-  TParameters(Parametrization* p) 
+  Parameters(Parametrization* p) 
     : p(p),k(0),parErrors_(0),parGCorr_(0),parCov_(0),trackEff(0),fitchi2(0) {
   };
-  virtual ~TParameters();
+  virtual ~Parameters();
 
 
 private:
-  TParameters();
-  TParameters(const TParameters&) {}
+  Parameters();
+  Parameters(const Parameters&) {}
   int GetEtaBin(int phi_id, int etagranu, int phigranu, bool etasym) const;
   int GetPhiBin(int phi_id, int phigranu) const;
   //! Return one line of LaTeX tabular containing the name and value of a given parameter from config file
@@ -399,7 +399,7 @@ private:
   void readTrackEffTxt(const std::string& file);
   std::string trim(std::string const& source, char const* delims = " {}\t\r\n");
 
-  static TParameters *instance; 
+  static Parameters *instance; 
 
   static Parametrization* CreateParametrization(const std::string& name, const ConfigFile& config);
   
@@ -409,9 +409,9 @@ private:
     Cleaner() {}
     ~Cleaner()
     {
-      if(TParameters::instance) { 
-	delete TParameters::instance; 
-	TParameters::instance = 0; 
+      if(Parameters::instance) { 
+	delete Parameters::instance; 
+	Parameters::instance = 0; 
       }
     }
   };

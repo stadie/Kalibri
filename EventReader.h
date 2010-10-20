@@ -1,11 +1,11 @@
 //
-// $Id: EventReader.h,v 1.13 2010/09/22 13:29:44 mschrode Exp $
+// $Id: EventReader.h,v 1.14 2010/10/12 08:38:59 stadie Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
 
 class Event;
-class TParameters;
+class Parameters;
 class ConfigFile;
 class Measurement;
 class CorFactors;
@@ -23,7 +23,7 @@ class EventReader
  public:
   static unsigned int numberOfEventReaders_;   //!< Number of initialized event readers
 
-  EventReader(const std::string& configfile, TParameters* p);
+  EventReader(const std::string& configfile, Parameters* p);
   virtual ~EventReader();
   virtual int readEvents(std::vector<Event*>& data) = 0;
   virtual int readControlEvents(std::vector<Event*>& control, int id) { 
@@ -39,7 +39,7 @@ class EventReader
   TTree* createTree(const std::string& name) const;
 
   ConfigFile* config_;   //!< The configfile
-  TParameters* par_;     //!< The parametrization
+  Parameters* par_;     //!< The parametrization
   bool useTracks_;       //!< True, if tracks are used in calibration
   CorFactorsFactory* corFactorsFactory_; //! Factory class for external source of CorFactors;
   //! Correct jets to L3 i.e. with L1*L2*L3
@@ -49,9 +49,9 @@ class EventReader
   double weightRelToNtuple_;
 
 
-  double (*tower_error_param)(const double *x, const Measurement *xorig, double err);
-  double (*jet_error_param)  (const double *x, const Measurement *xorig, double err);
-  double (*track_error_param)(const double *x, const Measurement *xorig, double err);  
+  float (*tower_error_param)(const float *x, const Measurement *xorig, float err);
+  float (*jet_error_param)  (const float *x, const Measurement *xorig, float err);
+  float (*track_error_param)(const float *x, const Measurement *xorig, float err);  
 
   static std::vector<JetConstraintEvent*> constraints_;
   Parametrization *cp_;

@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.h,v 1.7 2010/02/15 12:40:18 stadie Exp $
+//    $Id: JetConstraintEvent.h,v 1.8 2010/05/19 13:34:48 stadie Exp $
 //   
 #ifndef JETCONSTRAINTEVENT_H
 #define JETCONSTRAINTEVENT_H
@@ -20,7 +20,7 @@ class JetConstraintEvent : public Event
   JetConstraintEvent(double minpt, double maxpt, double mineta, double maxeta, 
 		     double w) 
     : Event(w), minpt_(minpt),maxpt_(maxpt),mineta_(mineta),maxeta_(maxeta),trusum_(0),
-    error_(0) {}
+    trusum2_(0),error_(0) {}
   ~JetConstraintEvent();
     
   void addJet(double truePt, const Jet* j, const Function* globalFunc = 0);
@@ -55,6 +55,7 @@ class JetConstraintEvent : public Event
   mutable VarMap varmap_;
   std::vector<Jet*> jets_;
   double trusum_;
+  double trusum2_;
   double error_;
   mutable double chi2plots_;   //!< Store chi2 value from last iteration for plots
 };

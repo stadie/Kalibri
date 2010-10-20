@@ -4,7 +4,7 @@
 //    This class reads events according to the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.h,v 1.8 2009/11/24 16:52:59 stadie Exp $
+//    $Id: TopReader.h,v 1.9 2009/11/25 13:07:45 stadie Exp $
 //   
 #ifndef TOPREADER_H
 #define TOPREADER_H
@@ -20,7 +20,7 @@ class TH2F;
 
 class TopReader : public EventReader{
  public:
-  TopReader(const std::string& configfile, TParameters *p);
+  TopReader(const std::string& configfile, Parameters *p);
   virtual ~TopReader();
   int readEvents(std::vector<Event*>& data);
 

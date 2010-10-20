@@ -5,7 +5,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date  2008/12/12
-//!  $Id: ParameterLimitsReader.cc,v 1.12 2010/07/22 13:58:30 mschrode Exp $
+//!  $Id: ParameterLimitsReader.cc,v 1.13 2010/09/22 13:29:44 mschrode Exp $
 //!   
 #include "ParameterLimitsReader.h"
 
@@ -15,7 +15,7 @@
 
 #include <iostream>
 
-ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, TParameters* p) :
+ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Parameters* p) :
   EventReader(configfile,p)
 {
   std::vector<double> limits = bag_of<double>(config_->read<std::string>( "Jet Parameter Limits",""));

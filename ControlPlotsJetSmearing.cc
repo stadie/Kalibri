@@ -1,4 +1,4 @@
-// $Id: ControlPlotsJetSmearing.cc,v 1.19 2010/09/22 13:29:44 mschrode Exp $
+// $Id: ControlPlotsJetSmearing.cc,v 1.20 2010/09/24 10:38:15 mschrode Exp $
 
 #include "ControlPlotsJetSmearing.h"
 
@@ -48,7 +48,7 @@
 //!  \param data The data
 //!  \param param The parametrization
 // --------------------------------------------------
-ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, const std::vector<Event*> * data, TParameters * param, const std::string &outDir)
+ControlPlotsJetSmearing::ControlPlotsJetSmearing(const std::string& configfile, const std::vector<Event*> * data, Parameters * param, const std::string &outDir)
   : data_(data),
     config_(new ConfigFile(configfile.c_str())),
     param_(param),

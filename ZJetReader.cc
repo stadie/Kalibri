@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.24 2010/04/13 13:44:10 mschrode Exp $
+//    $Id: ZJetReader.cc,v 1.25 2010/10/12 08:37:40 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -26,7 +26,7 @@
 #include "TLorentzVector.h"
 
 
-ZJetReader::ZJetReader(const std::string& configfile, TParameters* p) 
+ZJetReader::ZJetReader(const std::string& configfile, Parameters* p) 
   : EventReader(configfile,p),zjet(new ZJetSel()),Et_cut_on_Z(0),
     Et_cut_on_jet(0),Had_cut_min(0),Had_cut_max(1)
 {
@@ -128,7 +128,7 @@ Event* ZJetReader::createJetTruthEvent()
     terr[n] = tower_error_param(&tower.pt,&tower,0); 
     if(terr[n] == 0) {
       //assume toy MC???
-      terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
+      terr[n] = Parameters::toy_tower_error_parametrization(&tower.pt,&tower);
     }
     terr[n] *= terr[n];
     err2 += terr[n];  

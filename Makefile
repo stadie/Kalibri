@@ -37,7 +37,7 @@ RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS)
 RLXX=$(LFLAGS) $(ROOTLIBS) $(BOOSTLINKFLAGS)  #-lrt -lpthread # -lposix4
 ROOTSYS=$(shell root-config --prefix)
 
-SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc ThreadedDiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc CorFactorsFactory.cc JetBin.cc Binning.cc 
+SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsJetSmearing.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc ThreadedDiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc SmearData.cc SmearDiJet.cc SmearPhotonJet.cc JetConstraintEvent.cc CorFactorsFactory.cc JetBin.cc Binning.cc Function.cc
 
 %.o: %.cc
 		$(C) $(RCXX) -c $<
@@ -118,7 +118,7 @@ TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameter
 ZJetReader.o: EventReader.h ZJetReader.h ZJetReader.cc ZJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h JetWithTracks.h Function.h CorFactors.h CorFactorsFactory.h
 	$(C) $(RCXX) -c ZJetReader.cc
 
-TopReader.o: EventReader.h TopReader.h TopReader.cc TopSel.h Parameters.h ConfigFile.h CorFactors.h CorFactorsFactory.h Jet.h
+TopReader.o: EventReader.h TopReader.h TopReader.cc TopSel.h Parameters.h ConfigFile.h CorFactors.h CorFactorsFactory.h Jet.h JetWithTowers.h
 	$(C) $(RCXX) -c TopReader.cc
 
 ParameterLimitsReader.o: EventReader.h ParameterLimitsReader.h ParameterLimitsReader.cc Parameters.h ConfigFile.h CorFactorsFactory.h
@@ -159,6 +159,9 @@ JetWithTracks.o: CalibData.h Jet.h JetWithTracks.h Function.h JetWithTracks.cc P
 
 CorFactorsFactory.o: CorFactors.h CorFactorsFactory.h CorFactorsFactory.cc
 	$(C) $(CFLAGS) -c CorFactorsFactory.cc
+
+Function.o: Function.h
+	$(C) $(CFLAGS) -c Function.cc
 
 lib/libKalibri.so: $(SRC:.cc=.o) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so

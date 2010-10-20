@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.56 2010/09/22 13:29:44 mschrode Exp $
+// $Id: Parameters.cc,v 1.57 2010/10/07 11:48:29 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -15,11 +15,11 @@
 
 using namespace std;
 
-TParameters* TParameters::instance = 0;
+Parameters* Parameters::instance = 0;
 
 
 // -----------------------------------------------------------------
-Parametrization* TParameters::CreateParametrization(const std::string& name, const ConfigFile& config) {
+Parametrization* Parameters::CreateParametrization(const std::string& name, const ConfigFile& config) {
   if(name == "StepParametrization") {
     return new StepParametrization();
   } else if(name == "StepParametrizationEnergy") {
@@ -104,7 +104,7 @@ Parametrization* TParameters::CreateParametrization(const std::string& name, con
   return 0;
 }
 
-TParameters* TParameters::CreateParameters(const ConfigFile& config) 
+Parameters* Parameters::CreateParameters(const ConfigFile& config) 
 {
   static Cleaner cleanup;
   if(  instance != 0  )
@@ -123,7 +123,7 @@ TParameters* TParameters::CreateParameters(const ConfigFile& config)
     parclass = "StepParametrizationEnergy";
   } else if(parclass == "TStepEfracParameters") {
     parclass = "StepEfracParametrization";
-  } else if(parclass == "TJetMETParameters") {
+  } else if(parclass == "TJetMEParameters") {
     parclass = "JetMETParametrization";
   }  else if(parclass == "TGlobalScaleFactorParameters") {
     parclass = "GlobalScaleFactorParametrization";
@@ -155,10 +155,10 @@ TParameters* TParameters::CreateParameters(const ConfigFile& config)
 
   Parametrization *param = CreateParametrization(parclass,config);
   if(! param) {
-    cerr << "TParameters::CreateParameters: could not instantiate class " << parclass << '\n';
+    cerr << "Parameters::CreateParameters: could not instantiate class " << parclass << '\n';
     exit(1);
   }
-  instance = new TParameters(param);
+  instance = new Parameters(param);
 
   instance->Init(config);
 
@@ -168,7 +168,7 @@ TParameters* TParameters::CreateParameters(const ConfigFile& config)
 
 
 // -----------------------------------------------------------------
-void TParameters::Init(const ConfigFile& config)
+void Parameters::Init(const ConfigFile& config)
 {
   eta_ntwr_used   = config.read<unsigned>("maximum eta twr used",82); 
   eta_granularity = config.read<unsigned>("granularity in eta",1); 
@@ -347,7 +347,7 @@ void TParameters::Init(const ConfigFile& config)
 }
 
 
-TParameters::~TParameters() {
+Parameters::~Parameters() {
   delete p;
   delete [] k;
   delete [] parErrors_;
@@ -359,7 +359,7 @@ TParameters::~TParameters() {
 
 
 // -----------------------------------------------------------------
-std::string TParameters::trim(std::string const& source, char const* delims) 
+std::string Parameters::trim(std::string const& source, char const* delims) 
 {
   std::string result(source);
   std::string::size_type index = result.find_last_not_of(delims);
@@ -392,7 +392,7 @@ std::string TParameters::trim(std::string const& source, char const* delims)
 //! maxEta minEta nPar towerParameters jetParameters separated by
 //! blanks
 // ---------------------------------------------------------------
-void TParameters::readCalibrationTxt(std::string const& configFile)
+void Parameters::readCalibrationTxt(std::string const& configFile)
 {
   std::ifstream file(configFile.c_str());
   std::string line; // buffer line
@@ -502,7 +502,7 @@ void TParameters::readCalibrationTxt(std::string const& configFile)
 
 //!  \brief Read predefined calibration constants from cfi file 
 // -----------------------------------------------------------------
-void TParameters::readCalibrationCfi(std::string const& configFile)
+void Parameters::readCalibrationCfi(std::string const& configFile)
 {
   std::ifstream file(configFile.c_str());
 
@@ -656,7 +656,7 @@ void TParameters::readCalibrationCfi(std::string const& configFile)
 
 //!  \brief Read correction factors in CondDB format
 // -----------------------------------------------------------------
-void TParameters::readCalibrationJetMET(const std::vector<std::string>& inputFileNames) {
+void Parameters::readCalibrationJetMET(const std::vector<std::string>& inputFileNames) {
   std::string corrL2FileName;
   std::string corrL3FileName;
   for(size_t i = 0; i < inputFileNames.size(); i++) {
@@ -695,7 +695,7 @@ void TParameters::readCalibrationJetMET(const std::vector<std::string>& inputFil
 //!  in the \p L2L3JetParametrization . The parameter
 //!  values read by this method are scaled accordingly.
 // -----------------------------------------------------------------
-void TParameters::readCalibrationJetMETL2(const std::string& inputFileName) {
+void Parameters::readCalibrationJetMETL2(const std::string& inputFileName) {
   // There are scaling factors in "L2L3JetParametrization"
   std::vector<double> scale(6,1.);
   scale.at(1) = 10.;
@@ -805,7 +805,7 @@ void TParameters::readCalibrationJetMETL2(const std::string& inputFileName) {
 //!
 //!  The pt ranges of validity are not considered.
 // -----------------------------------------------------------------
-void TParameters::readCalibrationJetMETL3(const std::string& inputFileName) {
+void Parameters::readCalibrationJetMETL3(const std::string& inputFileName) {
   std::ifstream file;
   file.open(inputFileName.c_str());
 
@@ -844,7 +844,7 @@ void TParameters::readCalibrationJetMETL3(const std::string& inputFileName) {
 
 //!  \brief Read track efficiency from txt file
 // -----------------------------------------------------------------
-void TParameters::readTrackEffTxt(std::string const& configFile)
+void Parameters::readTrackEffTxt(std::string const& configFile)
 {
   // ---------------------------------------------------------------
   //read Track Efficiency as used in JPT Algorithm
@@ -895,7 +895,7 @@ void TParameters::readTrackEffTxt(std::string const& configFile)
 
 
 // -----------------------------------------------------------------
-int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) const
+int Parameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) const
 {  
   assert(eta_id != 0);
   assert(eta_id <= 41);
@@ -954,7 +954,7 @@ int TParameters::GetEtaBin(int eta_id, int etagranu, int phigranu, bool etasym) 
 //!  \param lowerEdge If true, return value of lower
 //!                   edge else of upper edge
 // -----------------------------------------------------------------
-float TParameters::etaEdge(int const etaBin, bool lowerEdge)
+float Parameters::etaEdge(int const etaBin, bool lowerEdge)
 {
   // return eta bin - eta edge mappting
   switch(etaBin){
@@ -1048,7 +1048,7 @@ float TParameters::etaEdge(int const etaBin, bool lowerEdge)
 
 
 // -----------------------------------------------------------------
-int TParameters::GetPhiBin(int phi_id, int phigranu) const
+int Parameters::GetPhiBin(int phi_id, int phigranu) const
 //This function knows the number of wanted phi-bins and returns 
 //in which phi-bin the tower with eta-ID "phi_id" is located.
 {
@@ -1060,7 +1060,7 @@ int TParameters::GetPhiBin(int phi_id, int phigranu) const
 
 
 // -----------------------------------------------------------------
-void TParameters::print() const
+void Parameters::print() const
 {
   std::cout  << p->name() << " resulting in:\n "
 	     << eta_granularity << " x " << phi_granularity << " tower bins with " 
@@ -1078,7 +1078,7 @@ void TParameters::print() const
 
 
 // -----------------------------------------------------------------
-void TParameters::writeCalibrationTxt(const char* name)
+void Parameters::writeCalibrationTxt(const char* name)
 {
   cout << "Writing calibration to file '" << name << "'" << endl;
 
@@ -1123,7 +1123,7 @@ void TParameters::writeCalibrationTxt(const char* name)
 
 
 // -----------------------------------------------------------------
-void TParameters::writeCalibrationCfi(const char* name)
+void Parameters::writeCalibrationCfi(const char* name)
 {
   cout << "Writing calibration to file '" << name << "'" << endl;
   ofstream file(name, ofstream::binary);
@@ -1436,11 +1436,11 @@ void TParameters::writeCalibrationCfi(const char* name)
 
 
 //-----------------------------------------------------
-void TParameters::writeCalibrationTex(const char* name, const ConfigFile& config)
+void Parameters::writeCalibrationTex(const char* name, const ConfigFile& config)
 {
   cout << "Writing calibration to file '" << name << "'" << endl;
 
-  // Getting fitted jet parameter values from TParameters
+  // Getting fitted jet parameter values from Parameters
   std::vector<double> pJetFit(GetNumberOfJetParameters());
   std::vector<double> pJetError(GetNumberOfJetParameters());
   std::vector<double> pJetGCorr(GetNumberOfJetParameters());
@@ -1454,7 +1454,7 @@ void TParameters::writeCalibrationTex(const char* name, const ConfigFile& config
   // Getting scales from config file
   std::vector<double> pJetScale = bag_of<double>(config.read<string>("jet parameter scales","")); 
 
-  // Getting fitted global parameter values from TParameters
+  // Getting fitted global parameter values from Parameters
   std::vector<double> pGlobalJetFit(GetNumberOfGlobalJetParameters());
   std::vector<double> pGlobalJetParError(GetNumberOfGlobalJetParameters());
   std::vector<double> pGlobalJetParGCorr(GetNumberOfGlobalJetParameters());
@@ -1553,7 +1553,7 @@ void TParameters::writeCalibrationTex(const char* name, const ConfigFile& config
 
 
 // -----------------------------------------------------------------
-int TParameters::GetTrackEffBin(double pt, double eta)
+int Parameters::GetTrackEffBin(double pt, double eta)
 {
   int bin, etabin, ptbin;
   etabin = (int)(fabs(eta)/0.2);
@@ -1573,10 +1573,10 @@ int TParameters::GetTrackEffBin(double pt, double eta)
   return bin;
 }
 
-Function TParameters::tower_function(int etaid, int phiid) {
+Function Parameters::tower_function(int etaid, int phiid) {
   int id = GetBin(GetEtaBin(etaid),GetPhiBin(phiid));
   if (id <0) { 
-    std::cerr<<"WARNING: TParameters::tower_function::index = " << id << endl; 
+    std::cerr<<"WARNING: Parameters::tower_function::index = " << id << endl; 
     exit(-2);  
   }
   int parIndex = id*GetNumberOfTowerParametersPerBin();
@@ -1584,10 +1584,10 @@ Function TParameters::tower_function(int etaid, int phiid) {
 		  GetTowerParRef(id),parIndex,GetNumberOfTowerParametersPerBin(),p);
 }
 
-Function TParameters::jet_function(int etaid, int phiid) {
+Function Parameters::jet_function(int etaid, int phiid) {
   int id = GetJetBin(GetJetEtaBin(etaid),GetJetPhiBin(phiid));
   if (id <0) { 
-    std::cerr<<"WARNING: TParameters::jet_function::index = " << id << endl; 
+    std::cerr<<"WARNING: Parameters::jet_function::index = " << id << endl; 
     exit(-2);  
   }
   int parIndex = id * GetNumberOfJetParametersPerBin() + GetNumberOfTowerParameters();
@@ -1596,10 +1596,10 @@ Function TParameters::jet_function(int etaid, int phiid) {
 		  GetJetParRef(id),parIndex,GetNumberOfJetParametersPerBin(),p);
 }
 
-Function TParameters::track_function(int etaid, int phiid) {
+Function Parameters::track_function(int etaid, int phiid) {
   int id = (etaid == 0) && (phiid == 0) ? 0: GetTrackBin(GetTrackEtaBin(etaid),GetTrackPhiBin(phiid));
   if (id <0) { 
-    std::cerr<<"WARNING: TParameters::track_function::index = " << id << endl; 
+    std::cerr<<"WARNING: Parameters::track_function::index = " << id << endl; 
     exit(-2);  
   }
   int parIndex = id * GetNumberOfTrackParametersPerBin() +
@@ -1608,16 +1608,16 @@ Function TParameters::track_function(int etaid, int phiid) {
 		  GetTrackParRef(id),parIndex,GetNumberOfTrackParametersPerBin(),p);
 }
 
-Function TParameters::global_jet_function() {
+Function Parameters::global_jet_function() {
   int parIndex = GetNumberOfTowerParameters()+GetNumberOfJetParameters()+GetNumberOfTrackParameters();
   return Function(&Parametrization::correctedGlobalJetEt,0,
 		  GetGlobalJetParRef(),parIndex,GetNumberOfGlobalJetParameters(),p);
 }
 
-SmearFunction TParameters::resolutionFitPDF(int etaid, int phiid) {
+SmearFunction Parameters::resolutionFitPDF(int etaid, int phiid) {
   int id = GetJetBin(GetJetEtaBin(etaid),GetJetPhiBin(phiid));
   if (id <0) { 
-    std::cerr<<"WARNING: TParameters::resolutionFitPDF::index = " << id << endl; 
+    std::cerr<<"WARNING: Parameters::resolutionFitPDF::index = " << id << endl; 
     exit(-2);  
   }
   int jetIdx = id * GetNumberOfJetParametersPerBin() + GetNumberOfTowerParameters();
@@ -1633,35 +1633,35 @@ SmearFunction TParameters::resolutionFitPDF(int etaid, int phiid) {
 		       GetCovCoeff(),p);
 }
 
-double TParameters::toy_tower_error_parametrization(const double *x, const Measurement *xorig, double errorig)
+float Parameters::toy_tower_error_parametrization(const float *x, const Measurement *xorig, float errorig)
 {
-  double hadet = x[0] - xorig->EMF - xorig->OutF;
+  float hadet = x[0] - xorig->EMF - xorig->OutF;
   if(hadet < 0.001) hadet = 0.001;
-  double hade = hadet * xorig->E / xorig->pt; 
+  float hade = hadet * xorig->E / xorig->pt; 
   //std::cout << "had Et:" << hadet << " , " << "had E:" << hade << '\n';
   
-  double a = 4.44;
-  double b = 1.11;
-  double c = 0.03;
+  float a = 4.44;
+  float b = 1.11;
+  float c = 0.03;
   
-  double var = a*a/hade/hade + b*b/hade + c*c;
+  float var = a*a/hade/hade + b*b/hade + c*c;
   //truncate variance accordingly
-  double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
+  float truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
   return sqrt(truncvar) * hadet;
 }
 
-double TParameters::toy_jet_error_parametrization(const double *x, const Measurement *xorig, double errorig)
+float Parameters::toy_jet_error_parametrization(const float *x, const Measurement *xorig, float errorig)
 {
-  double a = 4.44;
-  double b = 1.11;
-  double c = 0.03;
+  float a = 4.44;
+  float b = 1.11;
+  float c = 0.03;
   
   //return sqrt(a*a/x[0]/x[0] + b*b/x[0] + c*c)*x[0];
   
-  double e   = x[0] * xorig->E / xorig->pt;
-  double var = a*a/e/e + b*b/e + c*c;
+  float e   = x[0] * xorig->E / xorig->pt;
+  float var = a*a/e/e + b*b/e + c*c;
   //truncate variance accordingly
-  double truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
+  float truncvar = - sqrt(var) * exp(-0.5/var) * sqrt(2/M_PI) + var * TMath::Erf(1/(sqrt(2 * var)));
   return sqrt(truncvar) * x[0];
 }
 
@@ -1672,7 +1672,7 @@ double TParameters::toy_jet_error_parametrization(const double *x, const Measure
 //!  \param fieldname Name of parameter in config file
 //!  \return The line for the LaTeX tabular
 // --------------------------------------------------
-template<class T> std::string TParameters::texTabularLine(const ConfigFile& config, const std::string& fieldname) const {
+template<class T> std::string Parameters::texTabularLine(const ConfigFile& config, const std::string& fieldname) const {
   std::stringstream line;
   line << "\\texttt{" << fieldname << "} & = & $";
   line << config.read<T>(fieldname.c_str(),-1) << "$ \\\\ \n";
@@ -1685,7 +1685,7 @@ template<class T> std::string TParameters::texTabularLine(const ConfigFile& conf
 //! submatrix elements w.r.t. full covariance matrix
 //! \p parCov_ .
 // --------------------------------------------------
-std::vector<int> TParameters::findCovIndices(int firstPar, int nPar) const {
+std::vector<int> Parameters::findCovIndices(int firstPar, int nPar) const {
   // Dimension of the submatrix
   int nCov = (nPar*nPar+nPar)/2;
   std::vector<int> indices(nCov);
@@ -1713,7 +1713,7 @@ std::vector<int> TParameters::findCovIndices(int firstPar, int nPar) const {
 
 
 // --------------------------------------------------
-std::vector<bool> TParameters::findParStatus(int firstPar, int nPar) const {
+std::vector<bool> Parameters::findParStatus(int firstPar, int nPar) const {
   std::vector<bool> isFixed(nPar);
   for(int i = 0; i < nPar; i++) {
     isFixed[i] = isFixedPar(firstPar+i);

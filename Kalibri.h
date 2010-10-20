@@ -1,4 +1,4 @@
-//  $Id: Kalibri.h,v 1.5 2010/04/24 14:10:52 mschrode Exp $
+//  $Id: Kalibri.h,v 1.6 2010/10/12 08:40:53 stadie Exp $
 
 //!  \mainpage
 //!
@@ -36,7 +36,7 @@
 #include <vector>
 #include <string>
 
-class TParameters;
+class Parameters;
 class Controlplots;
 class Event;
 class Measurement;
@@ -50,7 +50,7 @@ class Measurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Kalibri.h,v 1.5 2010/04/24 14:10:52 mschrode Exp $
+//!  $Id: Kalibri.h,v 1.6 2010/10/12 08:40:53 stadie Exp $
 // -----------------------------------------------------------------
 class Kalibri {
 public :
@@ -93,7 +93,7 @@ private:
   //internal variables
   std::string configFile_;         //!< The configuration file name
   std::string outputFile_;         //!< The output file name
-  TParameters * par_;              //!< Fit parameters, depend on number of bins & geometry
+  Parameters * par_;              //!< Fit parameters, depend on number of bins & geometry
   int fitMethod_;                  //!< Running mode
   int nThreads_;                   //!< Number of threads
   std::vector<Event*> data_;       //!< The data

@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.60 2010/10/12 08:37:41 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.61 2010/10/14 17:26:55 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -29,8 +29,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
-
-
+#include <boost/thread/thread.hpp>
 //!  \brief Constructor
 //!
 //!  Reads data from ROOT trees and stores them in an \p NJetSel selector.
@@ -40,9 +39,9 @@
 //!  the cut thresholds are read from the configfile.
 //!
 //!  \param configfile Name of configfile
-//!  \param p Pointer to \p TParameters object
+//!  \param p Pointer to \p Parameters object
 // ----------------------------------------------------------------   
-DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
+DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   : EventReader(configfile,p), nJet_(new NJetSel()), 
     rand_(new TRandom3(0)), zero_(0)
 {
@@ -131,6 +130,8 @@ DiJetReader::DiJetReader(const std::string& configfile, TParameters* p)
   for(; j < 4 ; ++j) vars_[j] = &zero_;
   
   jetIndices_.resize(8,0);
+
+  std::cout << "size:" << sizeof(JetTruthEvent) << ", " << sizeof(Jet) << sizeof(unsigned short) << ", " << sizeof(unsigned int) << '\n';
 }
 
 DiJetReader::~DiJetReader() {
@@ -167,7 +168,27 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   }
   std::cout << " (data class " << dataClass_ << "):\n";
 
-  int nev = readEventsFromTree(data);
+  int nev = readEventsFromTree(data);  
+  if(dataClass_ == 21) {
+    for(Binning::BinMap::const_iterator ijb = binning_->bins().begin() ; 
+	ijb != binning_->bins().end() ; ++ijb) {
+      if(ijb->second->nJets() > 10) {
+	Jet *jet = ijb->second->jet();
+	
+	if(corFactorsFactory_) {
+	  jet->updateCorFactors(corFactorsFactory_->create(jet));
+	}
+	if(correctToL3_) {
+	  jet->correctToL3();
+	} else if(correctL2L3_) {
+	  jet->correctL2L3();
+	} 
+	data.push_back(new JetTruthEvent(jet,ijb->second->genPt(),ijb->second->nJets(),true));
+      }      
+      delete ijb->second;
+    }
+    binning_->clear();
+  }
   printCutFlow();
   std::cout << "Stored " << nGoodEvts_ << " dijet events for analysis.\n";
   delete nJet_->fChain;
@@ -280,26 +301,6 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
       }
     }
     if(nReadEvts_>=nDijetEvents_ && nDijetEvents_>=0 ) break;
-  }
-  if(dataClass_ == 21) {
-    for(Binning::BinMap::const_iterator ijb = binning_->bins().begin() ; 
-	ijb != binning_->bins().end() ; ++ijb) {
-      if(ijb->second->nJets() > 10) {
-	Jet *jet = ijb->second->jet();
-	
-	if(corFactorsFactory_) {
-	  jet->updateCorFactors(corFactorsFactory_->create(jet));
-	}
-	if(correctToL3_) {
-	  jet->correctToL3();
-	} else if(correctL2L3_) {
-	  jet->correctL2L3();
-	} 
-	data.push_back(new JetTruthEvent(jet,ijb->second->genPt(),ijb->second->nJets(),true));
-      }      
-      delete ijb->second;
-    }
-    binning_->clear();
   }
   //printCutFlow(); 
   return nGoodEvts_;
@@ -486,7 +487,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 	terr[n]      = tower_error_param(&tower.pt,&tower,0); 
 	if(terr[n] == 0) {
 	  //assume toy MC???
-	  terr[n] = TParameters::toy_tower_error_parametrization(&tower.pt,&tower);
+	  terr[n] = Parameters::toy_tower_error_parametrization(&tower.pt,&tower);
 	}
 	terr[n]  *= terr[n];
 	err2     += terr[n];
@@ -510,8 +511,8 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
     double err    = jet_error_param(&tower.pt,&tower,0);
     err2         += err * err;
 
-
     if(dataClass_ == 21) {
+      
       jeteta_ = nJet_->JetEta[calJetIdx];
       genjetpt_ = nJet_->GenJetColPt[genJetIdx];
       sigmaeta_ = nJet_->JetEtWeightedSigmaEta[calJetIdx];
@@ -519,6 +520,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       sumsigmaetaphi_ = sigmaeta_ + sigmaphi_;
       meanMoment_ = 0.5 * sumsigmaetaphi_;
       emf_ = nJet_->JetEMF[calJetIdx];
+      boost::mutex::scoped_lock lock(dijetmutex);
       JetBin* bin = (*binning_)(*vars_[0],*vars_[1],*vars_[2],*vars_[3]);
       // std::cout << "adding jet to bin:" << ibin << " with pt=" << nJet_->GenJetColPt[genJetIdx] << ", eta = " << nJet_->JetEta[calJetIdx] << std::endl;
       if(! bin) { 
@@ -549,7 +551,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 			  createCorFactors(calJetIdx),
 			  par_->jet_function(nJet_->JetIEta[calJetIdx],
 					     nJet_->JetIPhi[calJetIdx]),
-			  jet_error_param,par_->global_jet_function(),minJetEt_);
+			  jet_error_param,par_->global_jet_function());
       for(int j = 0 ; j < nJet_->NobjTow ; ++j) {
 	if (nJet_->Tow_jetidx[j]!= calJetIdx) continue;//look for ij-jet's towers
 	double scale = nJet_->TowEt[j]/nJet_->TowE[j];
@@ -571,7 +573,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 		    nJet_->GenJetColPt[genJetIdx],drJetGenjet,
 		    createCorFactors(calJetIdx),
 		    par_->jet_function(nJet_->JetIEta[calJetIdx],nJet_->JetIPhi[calJetIdx]),
-		    jet_error_param,par_->global_jet_function(),minJetEt_);    
+		    jet_error_param,par_->global_jet_function());    
     }
     if(corFactorsFactory_) {
       jet->updateCorFactors(corFactorsFactory_->create(jet));
@@ -1062,8 +1064,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 			par_->jet_function(nJet_->JetIEta[calJetIdx[i]],
 					   nJet_->JetIPhi[calJetIdx[i]]),
 			jet_error_param,
-			par_->global_jet_function(),
-			minJetEt_ );    
+			par_->global_jet_function());    
     
     // Store jet
     if( i == 0 ) {
@@ -1128,3 +1129,5 @@ bool DiJetReader::passesJetId(int idx) const {
 
   return ok;
 }
+
+boost::mutex DiJetReader::dijetmutex;
