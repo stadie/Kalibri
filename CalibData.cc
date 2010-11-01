@@ -1,10 +1,13 @@
 //
-// $Id: CalibData.cc,v 1.32 2009/11/24 17:13:17 stadie Exp $
+// $Id: CalibData.cc,v 1.33 2010/05/19 13:34:48 stadie Exp $
 //
 #include "CalibData.h"
 
+
 #include <map>
 #include <cmath>
+
+#include "Parameters.h"
 
 double (*Event::scaleResidual)(double z2) = &Event::scaleNone;
 
@@ -57,30 +60,3 @@ double Event::scaleTukey(const double z2)
   return w*w * z2;
 }
 
-
-unsigned int TAbstractData::total_n_pars = 0;
-
-
-double TData_ParLimit::chi2_fast(double* temp_derivative1, 
- 				 double* temp_derivative2, const double* epsilon) const {
-  // Penalty term with current parameter values
-  double new_chi2  = chi2();
- 
-  // Variation of parameters
-  double oldpar    = _par[0];
-  _par[0]         += epsilon[_index];
-  double temp2     = chi2();
-  _par[0]          = oldpar - epsilon[_index];
-  double temp1     = chi2();
- 
-  // Difference of chi2 at par+epsilon and par-epsilon
-  temp_derivative1[_index] += (temp2 - temp1);                // for 1st derivative
-  temp_derivative2[_index] += (temp2 + temp1 - 2.*new_chi2);  // for 2nd derivative
- 
-  // Reset original parameter value
-  _par[0]  = oldpar;
- 
-  return new_chi2;
-}
-
-std::vector<TAbstractData*> TData_ParLimit::_cache;

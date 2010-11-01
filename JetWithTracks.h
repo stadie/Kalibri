@@ -12,7 +12,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTracks.h,v 1.12 2010/05/19 16:01:42 stadie Exp $
+//!    $Id: JetWithTracks.h,v 1.13 2010/10/20 11:28:19 stadie Exp $
 // ---------------------------------------------------------------   
 class JetWithTracks : public Jet
 {
@@ -25,14 +25,14 @@ class JetWithTracks : public Jet
 		const Function& gf); 
   virtual ~JetWithTracks(); 
   virtual int nPar() const {return Jet::nPar() + trackpars_.size() * ntrackpars_;}
-  virtual void changeParAddress(double* oldpar, double* newpar);
+  virtual void setParameters(Parameters* param);
   virtual float correctedEt(float Et,bool fast = false) const; 
   virtual float error() const;
   virtual float expectedError(float et) const;
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
-  virtual const VariationColl& varyPars(const double* eps, float Et, float start);
-  virtual const VariationColl& varyParsDirectly(const double* eps, bool computeDeriv);
+  virtual const Parameters::VariationColl& varyPars(const double* eps, float Et, float start);
+  virtual const Parameters::VariationColl& varyParsDirectly(const double* eps, bool computeDeriv);
 
   void addTrack(float Et, float EmEt, float HadEt ,float OutEt, float E,
 		float eta,float phi,int TrackId, int TowerId, float DR, float DRout,
@@ -66,14 +66,14 @@ class JetWithTracks : public Jet
     float dR() const { return TTrack::DR;}
     float dRout() const { return TTrack::DRout;}
     bool goodTrack() const { return TTrack::TrackQualityT;}
-    void changeParAddress(double* oldpar, double* newpar) {f_.changeParBase(oldpar,newpar);}
+    const Function& setParameters(Parameters* param);
     float expectedEt() const;
     float error() const {return 0;}
-    int nPar() const {return f_.nPars();}
-    int firstPar() const {return f_.parIndex();}
-    double *par() const {return f_.firstPar();}
+    int nPar() const {return f_->nPars();}
+    int firstPar() const {return f_->parIndex();}
+    double *par() const {return f_->firstPar();}
   private:
-    Function f_;
+    const Function* f_;
     float (*errf_)(const float *x, const Measurement *xorig, float err);
 
     friend class JetWithTracks;

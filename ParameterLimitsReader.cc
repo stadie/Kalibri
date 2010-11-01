@@ -5,13 +5,14 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date  2008/12/12
-//!  $Id: ParameterLimitsReader.cc,v 1.14 2010/10/20 11:28:12 stadie Exp $
+//!  $Id: ParameterLimitsReader.cc,v 1.15 2010/10/20 13:32:55 stadie Exp $
 //!   
 #include "ParameterLimitsReader.h"
 
 #include "CalibData.h"
 #include "ConfigFile.h"
 #include "Parameters.h"
+#include "ParameterLimit.h"
 
 #include <iostream>
 
@@ -28,7 +29,8 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
       for(int j = par_->numberOfTowerParameters() + index; 
 	  j <  par_->numberOfParameters() ; 
 	  j += par_->numberOfJetParametersPerBin()) {
-	par_limits.push_back(ParameterLimit(j,limits[i+1],limits[i+2],
+	//tower parameter constraints (par_id min max error)
+	par_limits.push_back(ParLimit(j,limits[i+1],limits[i+2],
 					    limits[i+3]));
       }
     }
@@ -51,7 +53,7 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
 	    j <  par_->numberOfParameters(); 
 	    j += par_->numberOfJetParametersPerBin()) {
 	  if( j < par_->numberOfParameters() )
-	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
+	    par_limits.push_back(ParLimit(j,min,max,limits.at(0)));
 	} // End of loop over eta and phi bins
       } // End of loop over parameters in one bin
     }
@@ -67,7 +69,7 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
 	    j <  par_->numberOfParameters(); 
 	    j += par_->numberOfJetParametersPerBin()) {
 	  if( j < par_->numberOfParameters() )
-	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
+	    par_limits.push_back(ParLimit(j,min,max,limits.at(0)));
 	} // End of loop over eta and phi bins
       } // End of loop over parameters in one bin
     }
@@ -83,7 +85,7 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
 	    j <  par_->numberOfParameters(); 
 	    j += par_->numberOfJetParametersPerBin()) {
 	  if( j < par_->numberOfParameters() )
-	    par_limits.push_back(ParameterLimit(j,min,max,limits.at(0)));
+	    par_limits.push_back(ParLimit(j,min,max,limits.at(0)));
 	} // End of loop over eta and phi bins
       } // End of loop over parameters in one bin
     }
@@ -103,8 +105,8 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
       for(int j = index; 
 	  j <  par_->numberOfTowerParameters() ; 
 	  j += par_->numberOfTowerParametersPerBin()) {
-	par_limits.push_back(ParameterLimit(j,limits[i+1],limits[i+2],
-					    limits[i+3]));
+	par_limits.push_back(ParLimit(j,limits[i+1],limits[i+2],
+				      limits[i+3]));
       }
     }
   } else if(limits.size() > 1) {
@@ -119,7 +121,7 @@ ParameterLimitsReader::~ParameterLimitsReader()
 
 int ParameterLimitsReader::readEvents(std::vector<Event*>& data)
 {
-  for(std::vector<ParameterLimit>::const_iterator pl = par_limits.begin() ;
+  for(std::vector<ParLimit>::const_iterator pl = par_limits.begin() ;
       pl != par_limits.end() ; ++pl) {
     std::cout << " Adding limit for parameter " << std::flush;
     if     ( pl->index+1 < 10   ) std::cout << pl->index+1 << ":  " << std::flush;
@@ -128,12 +130,7 @@ int ParameterLimitsReader::readEvents(std::vector<Event*>& data)
     std::cout << "  min: " << pl->min << "\t" << std::flush;
     std::cout <<  " max: " << pl->max << "\t" << std::flush;
     std::cout <<  " k: "   << pl->k << std::endl;
-
-    Measurement* limitp  = new Measurement;
-    limitp->pt  = pl->min;
-    limitp->EMF = pl->max;
-    TData_ParLimit * parlim = new TData_ParLimit(pl->index,limitp,pl->k,par_->parameters()+pl->index,par_->parameter_limit);
-    data.push_back(parlim);
+    data.push_back(new ParameterLimit(pl->index, *par_, pl->min, pl->max, pl->k));
   }
   return par_limits.size();
 }

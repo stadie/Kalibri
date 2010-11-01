@@ -1,4 +1,4 @@
-// $Id: SmearData.h,v 1.11 2010/07/22 13:58:30 mschrode Exp $
+// $Id: SmearData.h,v 1.12 2010/09/22 13:29:44 mschrode Exp $
 
 #ifndef SmearData_h
 #define SmearData_h
@@ -10,7 +10,7 @@
 //!  \brief Abstract base class for jetsmearing method
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 15:24:49 CEST 2009
-//!  $Id: SmearData.h,v 1.11 2010/07/22 13:58:30 mschrode Exp $
+//!  $Id: SmearData.h,v 1.12 2010/09/22 13:29:44 mschrode Exp $
 // --------------------------------------------------
 class SmearData : public Event {
  public:
@@ -24,7 +24,7 @@ class SmearData : public Event {
   virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const = 0;
   virtual void printInitStats() const = 0;
 
-  virtual void changeParAddress(double* oldpar, double* newpar) { pdf_.changeParBase(oldpar,newpar); }
+  virtual void setParameters(Parameters* param);
   virtual Measurement * mess() const { return mess_; }
   virtual double truth() const { return kTruth_; }
   virtual DataType type() const { return kType_; }

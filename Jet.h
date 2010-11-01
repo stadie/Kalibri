@@ -4,18 +4,20 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.40 2010/07/22 13:58:30 mschrode Exp $
+//!    $Id: Jet.h,v 1.41 2010/10/20 11:28:17 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
 #include "CalibData.h"
 #include "Function.h"
+#include "Parameters.h"
 
 #include "gsl/gsl_errno.h"
 #include "gsl/gsl_math.h"
 #include "gsl/gsl_roots.h"
      
 class CorFactors;
+
 
 class Jet : public Measurement
 {
@@ -104,10 +106,7 @@ class Jet : public Measurement
   //!  \brief Change address of parameters covered by this jet
   //!  \sa Parameters
   // ---------------------------------------------------------
-  virtual void changeParAddress(double* oldpar, double* newpar) {
-    f_.changeParBase(oldpar,newpar);
-    gf_.changeParBase(oldpar,newpar);
-  }
+  virtual void setParameters(Parameters* param); 
   virtual float correctedEt() const { return correctedEt(Et()); }
   virtual float correctedEt(float Et, bool fast = false) const;
   float expectedEt(float truth, float start, float& error,
@@ -144,7 +143,7 @@ class Jet : public Measurement
   //!
   //!  \return Number of parameters of this jet
   // ---------------------------------------------------------
-  virtual int nPar() const {return f_.nPars() + gf_.nPars();}
+  virtual int nPar() const {return f_->nPars() + gf_->nPars();}
 
   //!  \brief Represents a corrected jet if one parameter of
   //!         the correction function is varied (for derivative
@@ -153,31 +152,18 @@ class Jet : public Measurement
   //!  Stores the corrected Et and error if a parameter is
   //!  varied by +/- eps for derivative calculation.
   // ---------------------------------------------------------
-  struct ParameterVariation {
-    int    parid;        //!< Id of varied parameter
-    float upperEt;      //!< Expected Et if parameter is varied by +eps
-    float lowerEt;      //!< Expected Et if parameter is varied by -eps
-    float upperError;   //!< Expected error if parameter is varied by +eps
-    float lowerError;   //!< Expected error if parameter is varied by -eps
-    float upperEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
-    float lowerEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
-    bool operator==(int b) const { return parid == b;} //!< Two ParameterVariation are the same if they have the same parid
-  };
-  typedef std::vector<ParameterVariation> VariationColl;
-  typedef std::vector<ParameterVariation>::const_iterator VariationCollIter;
-  virtual const VariationColl& varyPars(const double* eps, float Et, float start);
-  virtual const VariationColl& varyParsDirectly(const double* eps, bool computeDeriv = true, float Et = 0);
+  virtual const Parameters::VariationColl& varyPars(const double* eps, float Et, float start);
+  virtual const Parameters::VariationColl& varyParsDirectly(const double* eps, bool computeDeriv = true, float Et = 0);
   
   void print();                       //!< Print some jet members
   static void printInversionStats();  //!< Print some info on inversion
 
-  int parIndex() const { return f_.parIndex(); }
+  int parIndex() const { return f_->parIndex(); }
 
   virtual Jet* clone() const { return new Jet(*this);} //!< Clone this jet
-  void setGlobalFunction(const Function& ngf) { gf_ = ngf;} //!< Set global correction function, needed for constraints
+  void setGlobalFunction(const Function& ngf) { gf_ = &ngf;} //!< Set global correction function, needed for constraints
 
  protected:
-  mutable VariationColl varcoll_;
   virtual float expectedEt(float truth, float start, bool fast = false);
   Jet(const Jet&j); //!< disallow copies!
 
@@ -187,8 +173,8 @@ class Jet : public Measurement
   float dR_;               //!< \f$ \Delta R \f$ between jet and genjet
   const CorFactors* corFactors_;   //!< The correction factors
   float    error_;                //!< Stores error for constant error mode
-  Function  f_;                    //!< Jet correction function
-  Function  gf_;                   //!< Global jet correction function
+  const Function*  f_;            //!< Jet correction function
+  const Function*  gf_;           //!< Global jet correction function
   float    (*errf_)(const float *x, const Measurement *xorig, float err);   //!< Error function
 
   bool      secant(double truth, double& x1, double& x2, double eps);
@@ -199,26 +185,17 @@ class Jet : public Measurement
   static long long nfails_;        //!< Number of failed tries during inversion
   static long long nwarns_;        //!< Number of warnings during inversion
 
-  mutable Measurement temp_;
-  mutable float root_;
-  const float EoverPt_;
-  class GslImplementation {
-    struct rf_par {
-      double y_;
-      const Jet* jet_;
-      rf_par(double y, const Jet *jet) : y_(y), jet_(jet) {}
-    } par_;
-    gsl_root_fsolver *s_;
-    gsl_function F_;
-    static double rf(double x, void* params) {
-      rf_par* p = (rf_par*)params;
-      return p->y_ - p->jet_->correctedEt(x,true);
-    };
-  public:
-    GslImplementation(const Jet* jet);
-    ~GslImplementation();
-    bool root(double truth, double& x1, double& x2, double eps);
-  } gsl_impl_;
+  struct rf_par {
+    double y_;
+    const Jet* jet_;
+  rf_par(double y, const Jet *jet) : y_(y), jet_(jet) {}
+  };
+  static double rf(double x, void* params) {
+    rf_par* p = (rf_par*)params;
+    return p->y_ - p->jet_->correctedEt(x,true);
+  };
+ protected:
+  Parameters* parameters_;
 };
 
 #endif

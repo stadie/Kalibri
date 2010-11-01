@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.22 2010/05/19 16:01:38 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.23 2010/10/20 11:28:09 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -32,8 +32,8 @@ double JetTruthEvent::chi2_fast_blobel(double * temp_derivative1,
   chi2 *= chi2 * err2inv;
   chi2 = weight_ * Event::scaleResidual(chi2);
   double temp1,temp2;
-  const Jet::VariationColl& varcoll = jet_->varyParsDirectly(epsilon);
-  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+  const Parameters::VariationColl& varcoll = jet_->varyParsDirectly(epsilon);
+  for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     temp1 = truth_ - i->lowerEt;
     //err2inv = jet_->expectedError(i->lowerEt);;
     //err2inv *= err2inv;
@@ -69,8 +69,8 @@ double JetTruthEvent::chi2_fast_simple_scaled(double * temp_derivative1,
     std::cout << truth_ << ", " << et << ", " <<  jet_->Et() << ", " << c << ", " << chi2 << '\n';
   }
   double temp1,temp2;
-  const Jet::VariationColl& varcoll = jet_->varyParsDirectly(epsilon);
-  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+  const Parameters::VariationColl& varcoll = jet_->varyParsDirectly(epsilon);
+  for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     temp1 = truth_ - i->lowerEt;
     c = i->lowerEt / jet_->Et();  
     //if(c <= 0) c = 1.0;
@@ -102,10 +102,10 @@ double JetTruthEvent::chi2_fast_scaled(double * temp_derivative1,
 				       const double* epsilon) const
 {
   if(flagged_bad_) return 0;
-  double et = jet_->correctedEt(jet_->Et());
-  double c = et / jet_->Et();
-  const double deltaE = 1e-7 * jet_->Et();
-  double etprime  = (jet_->correctedEt(jet_->Et() + deltaE) - 
+  float et = jet_->correctedEt(jet_->Et());
+  float c = et / jet_->Et();
+  const float deltaE = 1e-4 * jet_->Et();
+  float etprime  = (jet_->correctedEt(jet_->Et() + deltaE) - 
 		     jet_->correctedEt(jet_->Et() - deltaE))/2/deltaE;
   if(etprime < 0.1) {
     //std::cout <<"low deriv:" << etprime << " for " << jet_->Et() << " " 
@@ -136,8 +136,8 @@ double JetTruthEvent::chi2_fast_scaled(double * temp_derivative1,
     std::cout << "too large:"<< truth_ << ", " << et << ", " <<  jet_->Et() << ", " << c << ", " << log(err2) << ", " << etprime << ", " << chi2 << '\n';
   }
   double temp1,temp2;
-  const Jet::VariationColl& varcoll = jet_->varyParsDirectly(epsilon);
-  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+  const Parameters::VariationColl& varcoll = jet_->varyParsDirectly(epsilon);
+  for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     temp1 = truth_ - i->lowerEt;
     c = i->lowerEt / jet_->Et();
     //if(c <= 0) c = 1.0;
@@ -202,8 +202,8 @@ double JetTruthEvent::chi2_fast_simple(double * temp_derivative1,
   }
   chi2 = weight_ * Event::scaleResidual(chi2);
   double temp1,temp2;
-  const Jet::VariationColl& varcoll = jet_->varyParsDirectly(epsilon);
-  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+  const Parameters::VariationColl& varcoll = jet_->varyParsDirectly(epsilon);
+  for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     temp1 = truth_ - i->lowerEt;
     c = i->lowerEt/jet_->Et(); 
     err2inv = jet_->expectedError(truth_/c);
@@ -256,8 +256,8 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
   
   //calculate chi2 for derivatives
   double temp1,temp2;
-  const Jet::VariationColl& varcoll = jet_->varyPars(epsilon,truth_,truth_);
-  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+  const Parameters::VariationColl& varcoll = jet_->varyPars(epsilon,truth_,truth_);
+  for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     if(( i->lowerEt < 0 ) || ( i->upperEt < 0 )) {
       flagged_bad_ = true;
       ++nflagged_;
@@ -265,7 +265,7 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
     }
   }
 
-  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+  for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     //std::cout << i->parid << ":" << i->lowerEt << ";" << i->upperEt << " diff:" 
     //	      << i->upperEt - i->lowerEt << ", " << i->upperError <<
     //  ", " << i->lowerError << '\n';
@@ -326,7 +326,7 @@ double JetTruthEvent::chi2_log_fast_invert(double * temp_derivative1,
   if(flagged_bad_) return 0;
   //find expected measurement of jet Et 
   float err2;
-  double expectedEt = jet_->expectedEt(truth_,truth_,err2);
+  float expectedEt = jet_->expectedEt(truth_,truth_,err2);
   if(expectedEt < 0) {
     flagged_bad_ = true;
     ++nflagged_;
@@ -343,8 +343,8 @@ double JetTruthEvent::chi2_log_fast_invert(double * temp_derivative1,
 
   //calculate chi2 for derivatives
   double temp1,temp2;
-  const Jet::VariationColl& varcoll = jet_->varyPars(epsilon,truth_,expectedEt);
-  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+  const Parameters::VariationColl& varcoll = jet_->varyPars(epsilon,truth_,expectedEt);
+  for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     if(( i->lowerEt < 0 ) || ( i->upperEt < 0 )) {
       flagged_bad_ = true;
       ++nflagged_;
@@ -352,7 +352,7 @@ double JetTruthEvent::chi2_log_fast_invert(double * temp_derivative1,
     }
   }
 
-  for(Jet::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
+  for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     if((std::abs((i->lowerEt - expectedEt)/expectedEt) > 0.05) || 
        (std::abs((i->upperEt - expectedEt)/expectedEt) > 0.05)) {
       std::cout << "strange extrapolation result modifying par:" << i->parid << ":" 

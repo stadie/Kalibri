@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.1 2010/10/14 17:26:55 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.2 2010/10/20 11:28:12 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -32,11 +32,11 @@
 ThreadedDiJetReader::ThreadedDiJetReader(const std::string& configfile, 
 					 Parameters* p, int niot)
   : DiJetReader(configfile,p)
-{
+{  
   for(int i = 0 ; i < niot ; ++i) {
     readers_.push_back(new ReadThread(configfile, p));
   }
-  chain_ = (TChain*)createTree("Di-Jet");
+  tree_ = createTree("Di-Jet");
 };
 
 ThreadedDiJetReader::~ThreadedDiJetReader()
@@ -91,65 +91,72 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
   nReadEvts_          = 0;
   nGoodEvts_          = 0;
 
-  TObjArray *fileElements=chain_->GetListOfFiles();
-  TIter next(fileElements);
-  TChainElement *chEl=0;
+  TChain* chain = dynamic_cast<TChain*>(tree_);
   unsigned int id = 0;
   std::vector<TFile*> files;
-  while (( chEl=(TChainElement*)next() )) {
-    TFile* f = TFile::Open(chEl->GetTitle());
-    //std::cout << "opened file " << f->GetName() << '\n';
-    files.push_back(f);
-    TTree* tree = (TTree*)f->Get(chain_->GetName()); 
-    //tree->GetEntriesFast();
-    //std::cout << "adding " << f->GetName() << " with " <<  tree->GetEntriesFast() << " entries\n";
-    readers_[id]->reader()->nJet_->Init(tree);
-    //readers_[id]->reader()->nJet_->GetEntry(0);
-    ++id;
-    if(id == readers_.size()) {
-      for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
-	  i != readers_.end() ; ++i) {
-	(*i)->start();
-      }
-      for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
-	  i != readers_.end() ; ++i) {
-	//std::cout << "waiting for reader " << i - readers_.begin() << '\n';
-	if((*i)->isDone()) {
-	  DiJetReader* djr = (*i)->reader();
-	  //std::cout << "adding for reader " << i - readers_.begin() 
-	  //	    << " with " <<  djr->nReadEvts_ << " events.\n";
-	  nReadEvts_          += djr->nReadEvts_;
-	  nDiJetCut_          += djr->nDiJetCut_;
-	  nMinJetEt_          += djr->nMinJetEt_;
-	  nMaxJetEt_          += djr->nMaxJetEt_;
-	  nMinDijetEt_        += djr->nMinDijetEt_;
-	  nMaxDijetEt_        += djr->nMaxDijetEt_;
-	  nCutOn3rdJet_       += djr->nCutOn3rdJet_;
-	  nCutOnSoftJets_     += djr->nCutOnSoftJets_;
-	  nMinGenJetEt_       += djr->nMinGenJetEt_;
-	  nMaxGenJetEt_       += djr->nMaxGenJetEt_;  
-	  nMaxDeltaR_         += djr->nMaxDeltaR_;
-	  nMinJetEta_         += djr->nMinJetEta_;
-	  nMaxJetEta_         += djr->nMaxJetEta_;
-	  nMinJetHadFraction_ += djr->nMinJetHadFraction_;    
-	  nMaxJetHadFraction_ += djr->nMaxJetHadFraction_;    
-	  nMinDeltaPhi_       += djr->nMinDeltaPhi_;
+  if(! chain) { 
+    id = 1;
+    readers_[0]->reader()->nJet_->Init(tree_);
+    readers_[0]->start();
+  } else {
+    TObjArray *fileElements=chain->GetListOfFiles();
+    TIter next(fileElements);
+    TChainElement *chEl=0;
+    while (( chEl=(TChainElement*)next() )) {
+      TFile* f = TFile::Open(chEl->GetTitle());
+      //std::cout << "opened file " << f->GetName() << '\n';
+      files.push_back(f);
+      TTree* tree = (TTree*)f->Get(chain->GetName()); 
+      //tree->GetEntriesFast();
+      //std::cout << "adding " << f->GetName() << " with " <<  tree->GetEntriesFast() << " entries\n";
+      readers_[id]->reader()->nJet_->Init(tree);
+      //readers_[id]->reader()->nJet_->GetEntry(0);
+      ++id;
+      if(id == readers_.size()) {
+	for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
+	    i != readers_.end() ; ++i) {
+	  (*i)->start();
 	}
+	for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
+	    i != readers_.end() ; ++i) {
+	  //std::cout << "waiting for reader " << i - readers_.begin() << '\n';
+	  if((*i)->isDone()) {
+	    DiJetReader* djr = (*i)->reader();
+	    //std::cout << "adding for reader " << i - readers_.begin() 
+	    //	    << " with " <<  djr->nReadEvts_ << " events.\n";
+	    nReadEvts_          += djr->nReadEvts_;
+	    nDiJetCut_          += djr->nDiJetCut_;
+	    nMinJetEt_          += djr->nMinJetEt_;
+	    nMaxJetEt_          += djr->nMaxJetEt_;
+	    nMinDijetEt_        += djr->nMinDijetEt_;
+	    nMaxDijetEt_        += djr->nMaxDijetEt_;
+	    nCutOn3rdJet_       += djr->nCutOn3rdJet_;
+	    nCutOnSoftJets_     += djr->nCutOnSoftJets_;
+	    nMinGenJetEt_       += djr->nMinGenJetEt_;
+	    nMaxGenJetEt_       += djr->nMaxGenJetEt_;  
+	    nMaxDeltaR_         += djr->nMaxDeltaR_;
+	    nMinJetEta_         += djr->nMinJetEta_;
+	    nMaxJetEta_         += djr->nMaxJetEta_;
+	    nMinJetHadFraction_ += djr->nMinJetHadFraction_;    
+	    nMaxJetHadFraction_ += djr->nMaxJetHadFraction_;    
+	    nMinDeltaPhi_       += djr->nMinDeltaPhi_;
+	  }
+	}
+	std::cout << nReadEvts_ << " events read\n";
+	id = 0;
+	if((nDijetEvents_ > 0) && (nReadEvts_ >= nDijetEvents_)) break; 
+	for(std::vector<TFile*>::const_iterator f = files.begin() ;
+	    f!= files.end() ; ++f){
+	  (*f)->Close();
+	  delete *f;
+	}
+	files.clear();
       }
-      std::cout << nReadEvts_ << " events read\n";
-      id = 0;
-      if((nDijetEvents_ > 0) && (nReadEvts_ >= nDijetEvents_)) break; 
-      for(std::vector<TFile*>::const_iterator f = files.begin() ;
-	  f!= files.end() ; ++f){
-	(*f)->Close();
-	delete *f;
-      }
-      files.clear();
+    } 
+    //read last batch
+    for(unsigned int  i = 0 ; i < id ; ++i) {
+      readers_[i]->start();
     }
-  }   
-  //read last batch
-  for(unsigned int  i = 0 ; i < id ; ++i) {
-    readers_[i]->start();
   }
   for(unsigned int  i = 0 ; i < id ; ++i) {
     if(readers_[i]->isDone()) {
@@ -173,7 +180,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
     }
   }
   std::cout << nReadEvts_ << " events read\n";
-  
+    
   for(std::vector<TFile*>::const_iterator f = files.begin() ;
       f!= files.end() ; ++f){
     (*f)->Close();
@@ -208,7 +215,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
   }
   printCutFlow();
   std::cout << "Stored " << nGoodEvts_ << " dijet events for analysis.\n";
-  delete chain_;
+  delete tree_;
   return nGoodEvts_;
 };
 
@@ -224,8 +231,8 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   name << "Di-Jet Control" << id;
   nDijetEvents_ = config_->read<int>("use "+name.str()+" events",0);
   if(nDijetEvents_ == 0) return 0;
-  chain_ = (TChain*)createTree(name.str());
-  if(chain_->GetEntries() == 0) return 0;
+  tree_ = createTree(name.str());
+  if(tree_->GetEntries() == 0) return 0;
   delete corFactorsFactory_;
   corFactorsFactory_ = 0;
   int nev = readEvents(control);

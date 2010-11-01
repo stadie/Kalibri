@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.h,v 1.8 2010/05/19 13:34:48 stadie Exp $
+//    $Id: JetConstraintEvent.h,v 1.9 2010/10/20 11:28:19 stadie Exp $
 //   
 #ifndef JETCONSTRAINTEVENT_H
 #define JETCONSTRAINTEVENT_H
@@ -23,7 +23,7 @@ class JetConstraintEvent : public Event
     trusum2_(0),error_(0) {}
   ~JetConstraintEvent();
     
-  void addJet(double truePt, const Jet* j, const Function* globalFunc = 0);
+  void addJet(double truePt, const Jet* j, Function* globalFunc = 0);
   
 
   //interface from TData
@@ -31,7 +31,7 @@ class JetConstraintEvent : public Event
   double truth() const { return jets_.size() ? trusum_ / jets_.size() : 0;}
   double parametrizedMess() const { return jets_[0]->correctedEt(jets_[0]->Et());}
 
-  void changeParAddress(double* oldpar, double* newpar);
+  void setParameters(Parameters* param);
   DataType type() const { return JetConstraint;} 
   
   double chi2() const;

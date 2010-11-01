@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventProcessor.cc,v 1.5 2010/10/20 11:28:08 stadie Exp $
+//    $Id: EventProcessor.cc,v 1.6 2010/10/20 13:32:55 stadie Exp $
 //   
 #include "EventProcessor.h"
 
@@ -64,16 +64,18 @@ int EventProcessor::process(std::vector<Event*>& data)
  
 bool EventProcessor::NotBalancedRejection::operator()(Event *d) {
   bool result = false;
-  TAbstractData *ad = dynamic_cast<TAbstractData*>(d);
-  if(! ad) return true;
   
-  if(ad->type()!=GammaJet ||
-     ad->mess()->pt<_min ||
-     ad->mess()->pt>_max ||
-     ad->mess()->pt==0.0 ) result = true;
-  else
-    result = (1.0-ad->truth()/ad->mess()->pt) >
-      _cut[(int)(ad->mess()->pt-_min)];
+  // TAbstractData *ad = dynamic_cast<TAbstractData*>(d);
+  // if(! ad) return true;
+  
+  // if(ad->type()!=GammaJet ||
+  //    ad->mess()->pt<_min ||
+  //    ad->mess()->pt>_max ||
+  //    ad->mess()->pt==0.0 ) result = true;
+  // else
+  //   result = (1.0-ad->truth()/ad->mess()->pt) >
+  //     _cut[(int)(ad->mess()->pt-_min)];
+  
   return result;
 }
 
@@ -130,264 +132,263 @@ void EventProcessor::fitWithoutBottom(TH1 * hist, TF1 * func, double bottom)
 int EventProcessor::flattenSpectra(std::vector<Event*>& data)
 {
   int numProcEvts = 0; // Number of processed events
+  
+  // double allweights=0;
+  // //@@ Replace "7" with some more meaningful variable name!!!
+  // for(int i=0;i<7;++i)
+  //   allweights += relWeight_[i];
 
-  double allweights=0;
-  //@@ Replace "7" with some more meaningful variable name!!!
-  for(int i=0;i<7;++i)
-    allweights += relWeight_[i];
-
-  std::map<int,double> weights[7];
-  double tot[7];
-  double alltotal=0;
-  for(int i=0;i<7;++i)
-    tot[i]=0.;
+  // std::map<int,double> weights[7];
+  // double tot[7];
+  // double alltotal=0;
+  // for(int i=0;i<7;++i)
+  //   tot[i]=0.;
  
-  for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
-    TAbstractData* dt = dynamic_cast<TAbstractData*>(*it);
-    if(! dt) continue;
-    if( dt->type() == ParLimit ) continue;
-    numProcEvts++;
-    alltotal+=dt->weight();
-    for (int type=0; type<7; ++type){
-      if (dt->type()!=type) continue;
-      if (dt->type()==InvMass) continue;
-      double em = 0.;
-      double had = 0.;
-      int index=0;
-      double min_tower_dr = 10.;
-      //double ptmax=0;
+  // for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
+  //   TAbstractData* dt = dynamic_cast<TAbstractData*>(*it);
+  //   if(! dt) continue;
+  //   if( dt->type() == ParLimit ) continue;
+  //   numProcEvts++;
+  //   alltotal+=dt->weight();
+  //   for (int type=0; type<7; ++type){
+  //     if (dt->type()!=type) continue;
+  //     if (dt->type()==InvMass) continue;
+  //     double em = 0.;
+  //     double had = 0.;
+  //     int index=0;
+  //     double min_tower_dr = 10.;
+  //     //double ptmax=0;
        
-      TLorentzVector Ljet(0.,0.,0.,0.);
-      Ljet.SetPtEtaPhiE(dt->mess()->pt,dt->mess()->eta,dt->mess()->phi,dt->mess()->E);
-      for(std::vector<TAbstractData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
-	em  += (*t)->mess()->EMF;
-	had += (*t)->mess()->HadF;
-	had += (*t)->mess()->OutF;
-	TLorentzVector Ltower(0.,0.,0.,0.);
-	Ltower.SetPtEtaPhiE((*t)->mess()->pt,(*t)->mess()->eta,(*t)->mess()->phi,(*t)->mess()->E);
-	double dr = Ltower.DeltaR(Ljet);
-	if (dr<min_tower_dr) {
-	  index = (*t)->GetIndex();
-	  min_tower_dr = dr;
-	}
-      }
-      //int bin = getSpectraBin( dt->GetScale(), index, em/(em+had)  );
-      //int bin = getSpectraBin( dt->GetScale(), index );
-      int bin = getSpectraBin( dt->GetScale() );
-      double error = 1.;//dt->GetParametrizedErr( &dt->mess()->pt );
-      weights[type][bin]+=dt->weight()/error;
-      tot[type]+=dt->weight()/error;
-    }
-  }
-  for (int type=0; type<7; ++type){
-    if (tot[type]!=0.)
-      for (DataIter it = data.begin(); it!=data.end(); ++it) {
-	TAbstractData* dt = dynamic_cast<TAbstractData*>(*it);
-	if(! dt) continue;
-	if (dt->type()!=type) continue;
-	if (dt->type()==InvMass) continue;
+  //     TLorentzVector Ljet(0.,0.,0.,0.);
+  //     Ljet.SetPtEtaPhiE(dt->mess()->pt,dt->mess()->eta,dt->mess()->phi,dt->mess()->E);
+  //     for(std::vector<TAbstractData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
+  // 	em  += (*t)->mess()->EMF;
+  // 	had += (*t)->mess()->HadF;
+  // 	had += (*t)->mess()->OutF;
+  // 	TLorentzVector Ltower(0.,0.,0.,0.);
+  // 	Ltower.SetPtEtaPhiE((*t)->mess()->pt,(*t)->mess()->eta,(*t)->mess()->phi,(*t)->mess()->E);
+  // 	double dr = Ltower.DeltaR(Ljet);
+  // 	if (dr<min_tower_dr) {
+  // 	  index = (*t)->GetIndex();
+  // 	  min_tower_dr = dr;
+  // 	}
+  //     }
+  //     //int bin = getSpectraBin( dt->GetScale(), index, em/(em+had)  );
+  //     //int bin = getSpectraBin( dt->GetScale(), index );
+  //     int bin = getSpectraBin( dt->GetScale() );
+  //     double error = 1.;//dt->GetParametrizedErr( &dt->mess()->pt );
+  //     weights[type][bin]+=dt->weight()/error;
+  //     tot[type]+=dt->weight()/error;
+  //   } 
+  // }
+  // for (int type=0; type<7; ++type){
+  //   if (tot[type]!=0.)
+  //     for (DataIter it = data.begin(); it!=data.end(); ++it) {
+  // 	TAbstractData* dt = dynamic_cast<TAbstractData*>(*it);
+  // 	if(! dt) continue;
+  // 	if (dt->type()!=type) continue;
+  // 	if (dt->type()==InvMass) continue;
 	 
 	 
-	double em = 0;
-	double had = 0;
-	int index=0;
-	double min_tower_dr = 10.;
-	TLorentzVector Ljet(0,0,0,0);
+  // 	double em = 0;
+  // 	double had = 0;
+  // 	int index=0;
+  // 	double min_tower_dr = 10.;
+  // 	TLorentzVector Ljet(0,0,0,0);
 	 
-	Ljet.SetPtEtaPhiE(dt->mess()->pt,dt->mess()->eta,dt->mess()->phi,dt->mess()->E);
-	for(std::vector<TAbstractData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
-	  em  += (*t)->mess()->EMF;
-	  had += (*t)->mess()->HadF;
-	  had += (*t)->mess()->OutF;
-	  TLorentzVector Ltower(0.,0.,0.,0.);
-	  Ltower.SetPtEtaPhiE((*t)->mess()->pt,(*t)->mess()->eta,(*t)->mess()->phi,(*t)->mess()->E);
-	  double dr = Ltower.DeltaR(Ljet);
-	  if (dr<min_tower_dr) {
-	    index = (*t)->GetIndex();
-	    min_tower_dr = dr;
-	  }
-	}
-	//int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had) );
-	//int bin = GetSpectraBin( dt->GetScale(), index );
-	int bin = getSpectraBin( dt->GetScale() );
-	//dt->SetWeight(1);
-	 
-	 
-	//dt->SetWeight(dt->weight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
-	 
-	dt->setWeight(dt->weight()/weights[type][bin] * (alltotal / double(weights[type].size()) )  * relWeight_[type] / allweights );
+  // 	Ljet.SetPtEtaPhiE(dt->mess()->pt,dt->mess()->eta,dt->mess()->phi,dt->mess()->E);
+  // 	for(std::vector<TAbstractData*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
+  // 	  em  += (*t)->mess()->EMF;
+  // 	  had += (*t)->mess()->HadF;
+  // 	  had += (*t)->mess()->OutF;
+  // 	  TLorentzVector Ltower(0.,0.,0.,0.);
+  // 	  Ltower.SetPtEtaPhiE((*t)->mess()->pt,(*t)->mess()->eta,(*t)->mess()->phi,(*t)->mess()->E);
+  // 	  double dr = Ltower.DeltaR(Ljet);
+  // 	  if (dr<min_tower_dr) {
+  // 	    index = (*t)->GetIndex();
+  // 	    min_tower_dr = dr;
+  // 	  }
+  // 	}
+  // 	//int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had) );
+  // 	//int bin = GetSpectraBin( dt->GetScale(), index );
+  // 	int bin = getSpectraBin( dt->GetScale() );
+  // 	//dt->SetWeight(1);
 	 
 	 
-	//dt->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
-      }
+  // 	//dt->SetWeight(dt->weight()/weights[type][bin] * (double(tot[type]) / double(weights[type].size())));
+	 
+  // 	dt->setWeight(dt->weight()/weights[type][bin] * (alltotal / double(weights[type].size()) )  * relWeight_[type] / allweights );
+	 
+	 
+  // 	//dt->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
+  //     }
      
-    /*
-    // Old version using leading tower bin as jet bin
-    for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
-    if (dt->type()!=type) continue;
-    double em = 0;
-    double had = 0;
-    int index=0;
-    double ptmax=0;
-    for(std::vector<Event*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
-    em  += (*t)->mess()[1];
-    had += (*t)->mess()[2];
-    had += (*t)->mess()[3];
-    if ((*t)->mess()[1]>ptmax) {
-    ptmax=(*t)->mess()[1];
-    index=(*t)->GetIndex();
-    }
-    }
-    //int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had)  );
-    int bin = GetSpectraBin( dt->GetScale(), index );
-    //int bin = GetSpectraBin( dt->GetScale() );
-    weights[bin]+=dt->weight();
-    tot+=dt->weight();
-    }
+  //   /*
+  //   // Old version using leading tower bin as jet bin
+  //   for (DataConstIter it = data.begin(); it!=data.end(); ++it) {
+  //   if (dt->type()!=type) continue;
+  //   double em = 0;
+  //   double had = 0;
+  //   int index=0;
+  //   double ptmax=0;
+  //   for(std::vector<Event*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
+  //   em  += (*t)->mess()[1];
+  //   had += (*t)->mess()[2];
+  //   had += (*t)->mess()[3];
+  //   if ((*t)->mess()[1]>ptmax) {
+  //   ptmax=(*t)->mess()[1];
+  //   index=(*t)->GetIndex();
+  //   }
+  //   }
+  //   //int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had)  );
+  //   int bin = GetSpectraBin( dt->GetScale(), index );
+  //   //int bin = GetSpectraBin( dt->GetScale() );
+  //   weights[bin]+=dt->weight();
+  //   tot+=dt->weight();
+  //   }
 	
-    if (tot!=0.)
-    for (DataIter it = data.begin(); it!=data.end(); ++it) {
-    if (dt->type()!=type) continue;
+  //   if (tot!=0.)
+  //   for (DataIter it = data.begin(); it!=data.end(); ++it) {
+  //   if (dt->type()!=type) continue;
     
-    double em = 0;
-    double had = 0;
-    int index=0;
-    double ptmax=0;
-    for(std::vector<Event*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
-    em  += (*t)->mess()[1];
-    had += (*t)->mess()[2];
-    had += (*t)->mess()[3];
-    if ((*t)->mess()[1]>ptmax) {
-    ptmax=(*t)->mess()[1];
-    index=(*t)->GetIndex();
-    }
-    }
+  //   double em = 0;
+  //   double had = 0;
+  //   int index=0;
+  //   double ptmax=0;
+  //   for(std::vector<Event*>::const_iterator t=dt->GetRef().begin(); t!=dt->GetRef().end(); ++t) {
+  //   em  += (*t)->mess()[1];
+  //   had += (*t)->mess()[2];
+  //   had += (*t)->mess()[3];
+  //   if ((*t)->mess()[1]>ptmax) {
+  //   ptmax=(*t)->mess()[1];
+  //   index=(*t)->GetIndex();
+  //   }
+  //   }
 
-    //int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had) );
-    int bin = GetSpectraBin( dt->GetScale(), index );
-    //int bin = GetSpectraBin( dt->GetScale() );
-    //dt->SetWeight(1);
-    //dt->SetWeight(1./weights[bin]);
-    dt->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
-    }
-    */
-
-  } 
-
+  //   //int bin = GetSpectraBin( dt->GetScale(), index, em/(em+had) );
+  //   int bin = GetSpectraBin( dt->GetScale(), index );
+  //   //int bin = GetSpectraBin( dt->GetScale() );
+  //   //dt->SetWeight(1);
+  //   //dt->SetWeight(1./weights[bin]);
+  //   dt->SetWeight((1./weights[bin]) * (double(tot) / weights.size()));
+  //   }
+  // */
+  // } 
   return numProcEvts;
 }
   
 //further weighting.............................................................
 void EventProcessor::balanceSpectra(std::vector<Event*>& data)
 {
-  cout<<"...further weighting"<<endl;
-  double min = etCutOnGamma_;
-  double max = 100.; //GeV
-  int nbins = (int)(max-min);//one bin per GeV
-  if (nbins<2) return;
-  double EMF[nbins];
-  double TOT[nbins];
-  
-  TCanvas * c1 = new TCanvas("controlplots","",600,600);
-  TPostScript ps("balance_spectra.ps",111);
-  TH1F * gauss_forpt[nbins];
-  TH1F * gauss_forpt_truth[nbins];
-  gauss_forpt[0] = new TH1F("hgauss","pT bin[20..21GeV];#frac{pT jet - pT truth}{pT jet}",600,-3,3);
-  gauss_forpt_truth[0] = new TH1F("hgauss_truth","pT bin[20..21GeV];pT truth",400,0,200);
-  char * name = new char[100];
-  for(int i = 1 ; i < nbins; ++i) {
-    gauss_forpt[i] = (TH1F*)gauss_forpt[0]->Clone();
-    sprintf(name,"pT bin[%d..%dGeV]",(int)min+i,(int)min+i+1);
-    gauss_forpt[i]->SetTitle(name);
-    gauss_forpt_truth[i] = (TH1F*)gauss_forpt_truth[0]->Clone();
-    sprintf(name,"pT bin[%d..%dGeV]",(int)min+i,(int)min+i+1);
-    gauss_forpt_truth[i]->SetTitle(name);
-  }
-
-  cout<<"...fill truth histograms for each jet-pT bin"<<endl;
-  //loop over all fit-events
-  for ( std::vector<Event*>::iterator i = data.begin(); 
-        i != data.end() ; ++i )  {
-    TAbstractData* jg = dynamic_cast<TAbstractData*>(*i);
-    if(! jg) continue;
-    if (jg->type()!=GammaJet) continue;
-    
-    //double etjetcor = jg->GetParametrizedMess();
-    if(jg->mess()->pt>min && jg->mess()->pt<max) {
-      gauss_forpt[(int)(jg->mess()->pt-min)]->Fill( (jg->mess()->pt-jg->truth())/jg->mess()->pt,jg->weight() );
-      gauss_forpt_truth[(int)(jg->mess()->pt-min)]->Fill( jg->truth(),jg->weight() );
-      EMF[(int)(jg->mess()->pt-min)] += jg->weight()*jg->mess()->EMF;
-      TOT[(int)(jg->mess()->pt-min)] += jg->weight()*jg->mess()->pt;
-    }      
-  }
-
-  cout<<"...fit the truth distributions"<<endl;
-  double edge;
-  TF1 * f = new TF1("gauss_step",gaussStep,-3,3,5);
-  double * cuts = new double[nbins];
-  TText * text = new TText();
-  text->SetTextSize(0.03);
-  text->SetTextColor(2);
-
-  for(int i = 0; i < nbins; ++i) {
-    if ( (i+1)%(nbins/10)==0) cout << (100*(i+1)/nbins)<<"% events weighted" << endl;  
-    //TF1 *f=0;
-    //gauss_forpt[i]->Fit("gaus","LLQNO","");
-    //f = (TF1*)gROOT->GetFunction("gaus")->Clone();
-    edge = 1.0-etCutOnGamma_/(((double)i)+min+0.5);
-    f->SetParameters(-1.,2.0,3.0, edge, 0.0001);
-    f->FixParameter(3, edge);
-    f->FixParameter(4, 0.0001);
-    fitWithoutBottom(gauss_forpt[i], f);
-    //bla->Fit("gauss_step","LLQNO","");
-    //delete bla;
-
-    gauss_forpt[i]->Draw("h");
-    f->SetLineColor(2);
-    f->Draw("same");
-    sprintf(name,"mean %f",f->GetParameter(0));
-    text->DrawText(1.4,0.7*gauss_forpt[i]->GetMaximum(),name);
-
-    sprintf(name,"average truth %f", (double)i+0.5+min-((double)i+0.5+min)*f->GetParameter(0));
-    text->DrawText(0.50,0.65*gauss_forpt[i]->GetMaximum(),name);
-    c1->Draw();
-
-    if (TOT[i]!=0.0) EMF[i] = EMF[i]/TOT[i];
-    sprintf(name,"average/truth %+f",(double)i+0.5+min-((double)i+0.5+min)*f->GetParameter(0) / 
-	    (1.3*((double)i+0.5+min)   )); //-EMF[i])  );
-    text->DrawText(0.50,0.60*gauss_forpt[i]->GetMaximum(),name);
-    c1->Draw();
-
-
-    gauss_forpt_truth[i]->Draw("h");
-    c1->Draw();
-    
-    cout<<"bin "<<i
-	<<": mean="<<f->GetParameter(0)
-	<<", sigma="<<f->GetParameter(1)
-	<<", height="<<f->GetParameter(2)
-	<<", edge("<<edge<<")="<<f->GetParameter(3)
-	<<", width-edge="<<f->GetParameter(4)
-	<<endl;
-    cuts[i] = f->GetParameter(0)-fabs(f->GetParameter(0)-f->GetParameter(3))+0.2;
-  }
-  delete f;
-  ps.Close();
  
-  DataIter beg = partition(data.begin(), data.end(), 
-                           NotBalancedRejection(cuts, min, max));
-  cout<<"...remove " << int(data.end()-beg) << " events which are not 'balanced'";
-  for(DataIter i = beg ; i != data.end() ; ++i) {
-    cout<<".";
-    delete *i;
-  }
-  cout<<endl;
-  data.erase(beg,data.end());
+  // cout<<"...further weighting"<<endl;
+  // double min = etCutOnGamma_;
+  // double max = 100.; //GeV
+  // int nbins = (int)(max-min);//one bin per GeV
+  // if (nbins<2) return;
+  // double EMF[nbins];
+  // double TOT[nbins];
+  
+  // TCanvas * c1 = new TCanvas("controlplots","",600,600);
+  // TPostScript ps("balance_spectra.ps",111);
+  // TH1F * gauss_forpt[nbins];
+  // TH1F * gauss_forpt_truth[nbins];
+  // gauss_forpt[0] = new TH1F("hgauss","pT bin[20..21GeV];#frac{pT jet - pT truth}{pT jet}",600,-3,3);
+  // gauss_forpt_truth[0] = new TH1F("hgauss_truth","pT bin[20..21GeV];pT truth",400,0,200);
+  // char * name = new char[100];
+  // for(int i = 1 ; i < nbins; ++i) {
+  //   gauss_forpt[i] = (TH1F*)gauss_forpt[0]->Clone();
+  //   sprintf(name,"pT bin[%d..%dGeV]",(int)min+i,(int)min+i+1);
+  //   gauss_forpt[i]->SetTitle(name);
+  //   gauss_forpt_truth[i] = (TH1F*)gauss_forpt_truth[0]->Clone();
+  //   sprintf(name,"pT bin[%d..%dGeV]",(int)min+i,(int)min+i+1);
+  //   gauss_forpt_truth[i]->SetTitle(name);
+  // }
 
-  cout<<"...cleaning up"<<endl;
-  for(int i = 0; i < nbins; ++i){
-    delete gauss_forpt[i];
-  }  
-  delete [] cuts;
-  delete name;
+  // cout<<"...fill truth histograms for each jet-pT bin"<<endl;
+  // //loop over all fit-events
+  // for ( std::vector<Event*>::iterator i = data.begin(); 
+  //       i != data.end() ; ++i )  {
+  //   TAbstractData* jg = dynamic_cast<TAbstractData*>(*i);
+  //   if(! jg) continue;
+  //   if (jg->type()!=GammaJet) continue;
+    
+  //   //double etjetcor = jg->GetParametrizedMess();
+  //   if(jg->mess()->pt>min && jg->mess()->pt<max) {
+  //     gauss_forpt[(int)(jg->mess()->pt-min)]->Fill( (jg->mess()->pt-jg->truth())/jg->mess()->pt,jg->weight() );
+  //     gauss_forpt_truth[(int)(jg->mess()->pt-min)]->Fill( jg->truth(),jg->weight() );
+  //     EMF[(int)(jg->mess()->pt-min)] += jg->weight()*jg->mess()->EMF;
+  //     TOT[(int)(jg->mess()->pt-min)] += jg->weight()*jg->mess()->pt;
+  //   }      
+  // }
+
+  // cout<<"...fit the truth distributions"<<endl;
+  // double edge;
+  // TF1 * f = new TF1("gauss_step",gaussStep,-3,3,5);
+  // double * cuts = new double[nbins];
+  // TText * text = new TText();
+  // text->SetTextSize(0.03);
+  // text->SetTextColor(2);
+
+  // for(int i = 0; i < nbins; ++i) {
+  //   if ( (i+1)%(nbins/10)==0) cout << (100*(i+1)/nbins)<<"% events weighted" << endl;  
+  //   //TF1 *f=0;
+  //   //gauss_forpt[i]->Fit("gaus","LLQNO","");
+  //   //f = (TF1*)gROOT->GetFunction("gaus")->Clone();
+  //   edge = 1.0-etCutOnGamma_/(((double)i)+min+0.5);
+  //   f->SetParameters(-1.,2.0,3.0, edge, 0.0001);
+  //   f->FixParameter(3, edge);
+  //   f->FixParameter(4, 0.0001);
+  //   fitWithoutBottom(gauss_forpt[i], f);
+  //   //bla->Fit("gauss_step","LLQNO","");
+  //   //delete bla;
+
+  //   gauss_forpt[i]->Draw("h");
+  //   f->SetLineColor(2);
+  //   f->Draw("same");
+  //   sprintf(name,"mean %f",f->GetParameter(0));
+  //   text->DrawText(1.4,0.7*gauss_forpt[i]->GetMaximum(),name);
+
+  //   sprintf(name,"average truth %f", (double)i+0.5+min-((double)i+0.5+min)*f->GetParameter(0));
+  //   text->DrawText(0.50,0.65*gauss_forpt[i]->GetMaximum(),name);
+  //   c1->Draw();
+
+  //   if (TOT[i]!=0.0) EMF[i] = EMF[i]/TOT[i];
+  //   sprintf(name,"average/truth %+f",(double)i+0.5+min-((double)i+0.5+min)*f->GetParameter(0) / 
+  // 	    (1.3*((double)i+0.5+min)   )); //-EMF[i])  );
+  //   text->DrawText(0.50,0.60*gauss_forpt[i]->GetMaximum(),name);
+  //   c1->Draw();
+
+
+  //   gauss_forpt_truth[i]->Draw("h");
+  //   c1->Draw();
+    
+  //   cout<<"bin "<<i
+  // 	<<": mean="<<f->GetParameter(0)
+  // 	<<", sigma="<<f->GetParameter(1)
+  // 	<<", height="<<f->GetParameter(2)
+  // 	<<", edge("<<edge<<")="<<f->GetParameter(3)
+  // 	<<", width-edge="<<f->GetParameter(4)
+  // 	<<endl;
+  //   cuts[i] = f->GetParameter(0)-fabs(f->GetParameter(0)-f->GetParameter(3))+0.2;
+  // }
+  // delete f;
+  // ps.Close();
+ 
+  // DataIter beg = partition(data.begin(), data.end(), 
+  //                          NotBalancedRejection(cuts, min, max));
+  // cout<<"...remove " << int(data.end()-beg) << " events which are not 'balanced'";
+  // for(DataIter i = beg ; i != data.end() ; ++i) {
+  //   cout<<".";
+  //   delete *i;
+  // }
+  // cout<<endl;
+  // data.erase(beg,data.end());
+
+  // cout<<"...cleaning up"<<endl;
+  // for(int i = 0; i < nbins; ++i){
+  //   delete gauss_forpt[i];
+  // }  
+  // delete [] cuts;
+  // delete name;
 }

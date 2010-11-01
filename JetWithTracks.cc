@@ -2,10 +2,11 @@
 //    Class for jets with tracks 
 //
 //    first version: Hartmut Stadie 2009/04/08
-//    $Id: JetWithTracks.cc,v 1.13 2010/05/19 16:01:41 stadie Exp $
+//    $Id: JetWithTracks.cc,v 1.14 2010/10/20 11:28:12 stadie Exp $
 //   
 #include"JetWithTracks.h"
 
+#include "Parameters.h"
 #include "TLorentzVector.h"
 
 JetWithTracks::JetWithTracks(float Et, float EmEt, float HadEt ,float OutEt, float E,
@@ -27,7 +28,7 @@ JetWithTracks::JetWithTracks(const JetWithTracks& j)
     addTrack(t->Et(),t->EmEt(),t->HadEt(),t->OutEt(),t->E(),t->eta(),t->phi(),
 	     t->TrackId,t->TowerId,t->DR,t->DRout,t->etaOut,t->phiOut,
 	     t->EM1,t->EM5,t->Had1,t->Had5,t->TrackChi2,t->NValidHits,
-	     t->TrackQualityT,t->MuDR,t->MuDE,t->Efficiency,t->f_,t->errf_);
+	     t->TrackQualityT,t->MuDR,t->MuDE,t->Efficiency,*(t->f_),t->errf_);
   }
 }
 
@@ -38,15 +39,12 @@ JetWithTracks::~JetWithTracks()
   }
 }  
 
-void JetWithTracks::changeParAddress(double* oldpar, double* newpar) 
+void JetWithTracks::setParameters(Parameters* param) 
 {
-  Jet::changeParAddress(oldpar,newpar);
+  Jet::setParameters(param);
   for(TrackCollIter i = tracks_.begin() ; i != tracks_.end() ; ++i) {
-    (*i)->changeParAddress(oldpar,newpar);
-  }
-  for(std::map<int,double*>::iterator iter = trackpars_.begin() ;
-      iter != trackpars_.end() ; ++iter) {
-    iter->second += newpar - oldpar;
+    const Function& f = (*i)->setParameters(param);
+    trackpars_[f.parIndex()] = f.firstPar();
   }
 }
 
@@ -88,11 +86,12 @@ float JetWithTracks::correctedEt(float Et,bool fast) const
 
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& JetWithTracks::varyPars(const double* eps, float Et, float start)
+const Parameters::VariationColl& JetWithTracks::varyPars(const double* eps, float Et, float start)
 {
   Jet::varyPars(eps,Et,start);
   int i = Jet::nPar();
-
+  Parameters::VariationColl& varcoll = parameters_->cachedVariationColl();
+  varcoll.resize(nPar());
   for(std::map<int,double*>::const_iterator iter = trackpars_.begin() ;
       iter != trackpars_.end() ; ++iter) {
     double *p = iter->second;
@@ -102,24 +101,26 @@ const Jet::VariationColl& JetWithTracks::varyPars(const double* eps, float Et, f
       //std::cout <<  "truth: " << Et << " alternating par:" << id + trkpar << "  = " << p[trkpar] << std::endl;
       double orig = p[trkpar]; 
       p[trkpar] += eps[id + trkpar];
-      varcoll_[i].upperEt = Jet::expectedEt(Et,start,varcoll_[i].upperError);
+      varcoll[i].upperEt = Jet::expectedEt(Et,start,varcoll[i].upperError);
       p[trkpar] = orig - eps[id + trkpar];
-      varcoll_[i].lowerEt = Jet::expectedEt(Et,start,varcoll_[i].lowerError); 
+      varcoll[i].lowerEt = Jet::expectedEt(Et,start,varcoll[i].lowerError); 
       p[trkpar] = orig;
-      varcoll_[i].parid = id + trkpar;
+      varcoll[i].parid = id + trkpar;
       ++i;
     }
   }
   //std::cout << i << " parameters modified.\n";
-  return varcoll_;
+  return varcoll;
 }
 // varies all parameters for this jet by eps and returns a vector of the
 // parameter id and the Et for the par + eps and par - eps variation
-const Jet::VariationColl& JetWithTracks::varyParsDirectly(const double* eps, bool computeDeriv)
+const Parameters::VariationColl& JetWithTracks::varyParsDirectly(const double* eps, bool computeDeriv)
 {
   Jet::varyParsDirectly(eps,computeDeriv);
   int i = Jet::nPar();
 
+  Parameters::VariationColl& varcoll = parameters_->cachedVariationColl();
+  varcoll.resize(nPar());
   const float deltaE = 0.1;
   for(std::map<int,double*>::const_iterator iter = trackpars_.begin() ;
       iter != trackpars_.end() ; ++iter) {
@@ -131,25 +132,25 @@ const Jet::VariationColl& JetWithTracks::varyParsDirectly(const double* eps, boo
       //		<< ", " << p << std::endl;
       double orig = p[trkpar]; 
       p[trkpar] += eps[id + trkpar];
-      varcoll_[i].upperEt = correctedEt(Measurement::pt);
-      varcoll_[i].upperError = expectedError(varcoll_[i].upperEt);
+      varcoll[i].upperEt = correctedEt(Measurement::pt);
+      varcoll[i].upperError = expectedError(varcoll[i].upperEt);
       if(computeDeriv) {
-	varcoll_[i].upperEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
+	varcoll[i].upperEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
       }
       p[trkpar] = orig - eps[id + trkpar];
-      varcoll_[i].lowerEt = correctedEt(Measurement::pt); 
-      varcoll_[i].lowerError = expectedError(varcoll_[i].lowerEt);
+      varcoll[i].lowerEt = correctedEt(Measurement::pt); 
+      varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
       if(computeDeriv) {
-	varcoll_[i].lowerEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
+	varcoll[i].lowerEtDeriv =  (correctedEt(Measurement::pt+deltaE) -  correctedEt(Measurement::pt-deltaE))/2/deltaE;
       }      
       p[trkpar] = orig;
-      varcoll_[i].parid = id + trkpar;
-      //std::cout << "up:" << varcoll_[i].upperEt << " low:" << varcoll_[i].lowerEt << '\n'; 
+      varcoll[i].parid = id + trkpar;
+      //std::cout << "up:" << varcoll[i].upperEt << " low:" << varcoll[i].lowerEt << '\n'; 
       ++i;
     }
   }
   //std::cout << i << " parameters modified.\n";
-  return varcoll_;
+  return varcoll;
 }
 
 float JetWithTracks::error() const {
@@ -187,7 +188,6 @@ void JetWithTracks::addTrack(float Et, float EmEt, float HadEt ,
 			     func,errfunc)); 
   ntrackpars_ = func.nPars();
   trackpars_[func.parIndex()] = func.firstPar();
-  varcoll_.resize(Jet::nPar() + trackpars_.size() * ntrackpars_);
 }
 
 
@@ -201,13 +201,19 @@ JetWithTracks::Track::Track(float Et, float EmEt, float HadEt ,
 			    float MuDE, float Efficiency, const Function& func,
 			    float (*errfunc)(const float *x, const Measurement *xorig, float err))
   :  TTrack(Et,EmEt,HadEt,OutEt,E,eta,phi,TrackId,TowerId,DR,DRout,etaOut,phiOut,EM1,EM5,Had1,Had5,
-	    TrackChi2,NValidHits,TrackQualityT,MuDR,MuDE,Efficiency), f_(func), errf_(errfunc)
+	    TrackChi2,NValidHits,TrackQualityT,MuDR,MuDE,Efficiency), f_(&func), errf_(errfunc)
 { 
 }
 
+const Function& JetWithTracks::Track::setParameters(Parameters* param) {
+  f_ = &(param->function(*f_));
+  return *f_;
+}
+
+
 float JetWithTracks::Track::expectedEt() const
 {
-  float et = f_(this);
+  float et = (*f_)(this);
   assert(et == et);
   assert(et >= 0);
   return et;

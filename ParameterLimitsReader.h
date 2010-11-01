@@ -4,7 +4,7 @@
 //    This class add user defined parameter limits
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ParameterLimitsReader.h,v 1.2 2009/11/24 16:52:59 stadie Exp $
+//    $Id: ParameterLimitsReader.h,v 1.3 2010/10/20 11:28:19 stadie Exp $
 //   
 #ifndef PARAMETERLIMITSREADER_H
 #define PARAMETERLIMITSREADER_H
@@ -19,16 +19,16 @@ class ParameterLimitsReader : public EventReader{
   virtual ~ParameterLimitsReader();
   int readEvents(std::vector<Event*>& data);
  private:
-  class ParameterLimit {
+  class ParLimit {
   public:
     int index;
     double min;
     double max;
     double k;
-    ParameterLimit(int index, double min, double max, double k) 
+    ParLimit(int index, double min, double max, double k) 
       : index(index), min(min), max(max), k(k) {}
   };
-  std::vector<ParameterLimit> par_limits;
+  std::vector<ParLimit> par_limits;
 };
 
 

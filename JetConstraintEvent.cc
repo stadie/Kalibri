@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.cc,v 1.8 2010/05/27 15:27:49 stadie Exp $
+//    $Id: JetConstraintEvent.cc,v 1.9 2010/10/20 11:28:08 stadie Exp $
 //   
 
 
@@ -19,7 +19,7 @@ JetConstraintEvent::~JetConstraintEvent()
 }
 
 void JetConstraintEvent::addJet(double truePt, const Jet* j, 
-				const Function* globalFunc) 
+				Function* globalFunc) 
 {
   if((truePt > maxpt_) || (truePt < minpt_) || 
      (std::abs(j->eta()) > maxeta_) || (std::abs(j->eta()) < mineta_)) return; 
@@ -35,9 +35,9 @@ void JetConstraintEvent::addJet(double truePt, const Jet* j,
 }
 
 
-void JetConstraintEvent::changeParAddress(double* oldpar, double* newpar) { 
+void JetConstraintEvent::setParameters(Parameters* param) { 
   for(unsigned int i = 0, njets = jets_.size() ; i < njets ; ++i) {
-    jets_[i]->changeParAddress(oldpar,newpar);
+    jets_[i]->setParameters(param);
   }
 }
  
@@ -75,9 +75,9 @@ double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_de
     i->second.lowersum_ = sumet;
   }
   for(unsigned int i = 0 ; i < njets ; ++i) {
-    const Jet::VariationColl& varcoll = jets_[i]->varyParsDirectly(epsilon,false);
+    const Parameters::VariationColl& varcoll = jets_[i]->varyParsDirectly(epsilon,false);
     double et = jets_[i]->correctedEt(jets_[i]->Et());
-    for(Jet::VariationCollIter j = varcoll.begin() ; j != varcoll.end() ; ++j) {
+    for(Parameters::VariationCollIter j = varcoll.begin() ; j != varcoll.end() ; ++j) {
       VarMap::iterator k = varmap_.find(j->parid);
       if(k == varmap_.end()) {
 	k = varmap_.insert(k,std::make_pair(j->parid,Variation()));

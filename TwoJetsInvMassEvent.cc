@@ -2,10 +2,10 @@
 //    Class for all events with two jets constraint to one invariant mass
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: TwoJetsInvMassEvent.cc,v 1.10 2010/05/19 16:01:41 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.cc,v 1.11 2010/10/20 11:28:13 stadie Exp $
 //     
 #include "TwoJetsInvMassEvent.h"
-
+#include "Parameters.h"
 #include "TLorentzVector.h"
 #include <algorithm>
 
@@ -15,6 +15,12 @@ double TwoJetsInvMassEvent::chi2() const
   return chi2;
 }
  
+void  TwoJetsInvMassEvent::setParameters(Parameters* param) {
+  par_ = param->parameters();
+  jet1_->setParameters(param);
+  jet2_->setParameters(param);
+}
+
 double  TwoJetsInvMassEvent::correctedMass() const {
   double et1 = jet1_->correctedEt(jet1_->Et());
   double et2 = jet2_->correctedEt(jet2_->Et());
@@ -61,12 +67,12 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
   if(!temp_derivative1) return chi2;
 
   double temp1,temp2;
-  const Jet::VariationColl& varcoll1 = jet1_->varyParsDirectly(epsilon);
-  const Jet::VariationColl& varcoll2 = jet2_->varyParsDirectly(epsilon);
-  for(Jet::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) {
+  const Parameters::VariationColl& varcoll1 = jet1_->varyParsDirectly(epsilon);
+  const Parameters::VariationColl& varcoll2 = jet2_->varyParsDirectly(epsilon);
+  for(Parameters::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) {
     p1.SetPtEtaPhiM(i1->lowerEt,jet1_->eta(),jet1_->phi(),0);
     c1 = i1->lowerEt/jet1_->Et();
-    Jet::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
+    Parameters::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
     if(i2 != varcoll2.end()) {
       assert(i1->parid == i2->parid);
       p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
@@ -115,10 +121,10 @@ double TwoJetsInvMassEvent::chi2_fast_simple(double * temp_derivative1,
     //  temp_derivative2[i1->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
     //}
   }
-  for(Jet::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
+  for(Parameters::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
     p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
     c2 = i2->lowerEt/jet2_->Et();
-    Jet::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
+    Parameters::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
     if(i1 != varcoll1.end()) {
       continue;
     } else {
@@ -181,11 +187,11 @@ double TwoJetsInvMassEvent::chi2_fast_const_error(double * temp_derivative1,
   if(!temp_derivative1) return chi2;
 
   double temp1,temp2;
-  const Jet::VariationColl& varcoll1 = jet1_->varyParsDirectly(epsilon);
-  const Jet::VariationColl& varcoll2 = jet2_->varyParsDirectly(epsilon);
-  for(Jet::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) {
+  const Parameters::VariationColl& varcoll1 = jet1_->varyParsDirectly(epsilon);
+  const Parameters::VariationColl& varcoll2 = jet2_->varyParsDirectly(epsilon);
+  for(Parameters::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) {
     p1.SetPtEtaPhiM(i1->lowerEt,jet1_->eta(),jet1_->phi(),0);
-    Jet::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
+    Parameters::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
     if(i2 != varcoll2.end()) {
       assert(i1->parid == i2->parid);
       p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
@@ -211,9 +217,9 @@ double TwoJetsInvMassEvent::chi2_fast_const_error(double * temp_derivative1,
     //  temp_derivative2[i1->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
     //}
   }
-  for(Jet::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
+  for(Parameters::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
     p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
-    Jet::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
+    Parameters::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
     if(i1 != varcoll1.end()) {
       continue;
     } else {
@@ -277,12 +283,12 @@ double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1,
   if(!temp_derivative1) return chi2;
 
   double temp1,temp2;
-  const Jet::VariationColl& varcoll1 = jet1_->varyParsDirectly(epsilon);
-  const Jet::VariationColl& varcoll2 = jet2_->varyParsDirectly(epsilon);
-  for(Jet::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) {
+  const Parameters::VariationColl& varcoll1 = jet1_->varyParsDirectly(epsilon);
+  const Parameters::VariationColl& varcoll2 = jet2_->varyParsDirectly(epsilon);
+  for(Parameters::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) {
     p1.SetPtEtaPhiM(i1->lowerEt,jet1_->eta(),jet1_->phi(),0);
     c1 = (i1->lowerEt + i1->lowerEtDeriv)/jet1_->Et();
-    Jet::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
+    Parameters::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
     if(i2 != varcoll2.end()) {
       p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
       c2 = (i2->lowerEt + i2->lowerEtDeriv)/jet2_->Et();
@@ -335,10 +341,10 @@ double TwoJetsInvMassEvent::chi2_fast_scaled(double * temp_derivative1,
     temp_derivative1[i1->parid] += (temp2 - temp1); // for 1st derivative
     temp_derivative2[i1->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
   }
-  for(Jet::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
+  for(Parameters::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
     p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
     c2 = (i2->lowerEt + i2->lowerEtDeriv) / jet2_->Et();
-    Jet::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
+    Parameters::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
     if(i1 != varcoll1.end()) {
       continue;
     } else {
@@ -428,11 +434,11 @@ double TwoJetsInvMassEvent::chi2_fast_inv(double * temp_derivative1,
   if(!temp_derivative1) return chi2;
 
   double temp1,temp2;
-  const Jet::VariationColl& varcoll1 = jet1_->varyParsDirectly(epsilon);;
-  const Jet::VariationColl& varcoll2 = jet2_->varyParsDirectly(epsilon);;
-  for(Jet::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) { 
+  const Parameters::VariationColl& varcoll1 = jet1_->varyParsDirectly(epsilon);;
+  const Parameters::VariationColl& varcoll2 = jet2_->varyParsDirectly(epsilon);;
+  for(Parameters::VariationCollIter i1 = varcoll1.begin() ; i1 != varcoll1.end() ; ++i1) { 
     p1.SetPtEtaPhiM(i1->lowerEt,jet1_->eta(),jet1_->phi(),0);
-    Jet::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
+    Parameters::VariationCollIter i2 = find(varcoll2.begin(),varcoll2.end(),i1->parid);
     if(i2 != varcoll2.end()) {  
       p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
     } else {
@@ -488,9 +494,9 @@ double TwoJetsInvMassEvent::chi2_fast_inv(double * temp_derivative1,
     temp_derivative1[i1->parid] += (temp2 - temp1); // for 1st derivative
     temp_derivative2[i1->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
   }
-  for(Jet::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
+  for(Parameters::VariationCollIter i2 = varcoll2.begin() ; i2 != varcoll2.end() ; ++i2) {
     p2.SetPtEtaPhiM(i2->lowerEt,jet2_->eta(),jet2_->phi(),0);
-    Jet::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
+    Parameters::VariationCollIter i1 = find(varcoll1.begin(),varcoll1.end(),i2->parid);
     if(i1 != varcoll1.end()) {
       continue;
     } 

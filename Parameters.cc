@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.58 2010/10/20 11:28:12 stadie Exp $
+// $Id: Parameters.cc,v 1.59 2010/10/20 13:32:55 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iomanip>
-
+#include <algorithm>
 
 #include "Parameters.h"
 
@@ -16,7 +16,12 @@
 using namespace std;
 
 Parameters* Parameters::instance_ = 0;
-
+std::vector<Parameters*> Parameters::clones_;
+Parametrization* Parameters::p_ = 0;
+long long Parameters::ncalls_ = 0;
+long long Parameters::ntries_ = 0;
+long long Parameters::nfails_ = 0;
+long long Parameters::nwarns_ = 0;
 
 // -----------------------------------------------------------------
 Parametrization* Parameters::createParametrization(const std::string& name, const ConfigFile& config) {
@@ -164,8 +169,6 @@ Parameters* Parameters::createParameters(const ConfigFile& config)
 
   return instance_;
 }
-
-
 
 // -----------------------------------------------------------------
 void Parameters::init(const ConfigFile& config)
@@ -346,18 +349,67 @@ void Parameters::init(const ConfigFile& config)
   parNames_ = std::vector<std::string>(numberOfParameters(),"");
 }
 
-
 Parameters::~Parameters() {
-  delete p_;
   delete [] k_;
   delete [] parErrors_;
   delete [] trackEff_;
   delete [] parGCorr_;
   delete [] parCov_;
+  for(FunctionMap::const_iterator i = funcmap_.begin() ; 
+      i != funcmap_.end() ; ++i) {
+    delete i->second;
+  } 
+  gsl_root_fsolver_free(s_); 
+  if((this == instance_) && ncalls_) {
+    std::cout << "Inversion statistics for Jet::expectedEt:\n";
+    std::cout << "calls: " << ncalls_ << " average number of iterations:"
+	      << (double)ntries_/ncalls_ << " failures:" << (double)nfails_/ncalls_*100
+	      << "% warnings:" << (double)nwarns_/ntries_*100 << "%" <<std::endl;
+  }
+}
+ 
+Parameters* Parameters::clone() const {
+  assert(this == instance_);
+  Parameters* c = new Parameters(0);
+  c->eta_ntwr_used_ = eta_ntwr_used_;
+  c->eta_symmetry_ = eta_symmetry_;
+  c->eta_granularity_ = eta_granularity_; 
+  c->phi_granularity_ = phi_granularity_;
+  c->eta_granularity_jet_ = eta_granularity_jet_;
+  c->phi_granularity_jet_ = phi_granularity_jet_; 
+  c->eta_granularity_track_ = eta_granularity_track_; 
+  c->phi_granularity_track_ = phi_granularity_track_;
+  // do not copy entries that are not needed...
+  //std::vector<double> start_values_, jet_start_values_, track_start_values_, global_jet_start_values_;
+  //std::vector<std::string> parNames_;
+  int n = numberOfParameters();
+  c->k_ = new double[n];
+  for(int i = 0 ; i < n ; ++i) c->k_[i] = k_[i]; 
+  c->parErrors_ = 0;
+  c->parGCorr_ = 0;
+  c->parCov_ = 0;
+  c->trackEff_ = 0;
+
+  //clone function map
+  for(FunctionMap::const_iterator i = funcmap_.begin() ; 
+      i != funcmap_.end() ; ++i) {
+    Function* f = new Function(*(i->second));
+    //std::cout << "cloning..." << i->second << ", " << f << '\n';
+    f->changeParBase(k_,c->k_);
+    c->funcmap_[i->first] = f;
+  }
+  clones_.push_back(c);
+  return c;
 }
 
-
-
+void Parameters::removeClone(Parameters* p) {
+  std::vector<Parameters*>::iterator i = find(clones_.begin(), 
+					      clones_.end(),p);
+  if(i != clones_.end()) {
+    delete *i;
+    clones_.erase(i);
+  }
+}
 // -----------------------------------------------------------------
 std::string Parameters::trim(std::string const& source, char const* delims) 
 {
@@ -1257,30 +1309,43 @@ int Parameters::trackEffBin(double pt, double eta)
   return bin;
 }
 
-Function Parameters::tower_function(int etaid, int phiid) {
+const Function& Parameters::tower_function(int etaid, int phiid) {
   int id = bin(etaBin(etaid),phiBin(phiid));
   if (id <0) { 
     std::cerr<<"WARNING: Parameters::tower_function::index = " << id << endl; 
     exit(-2);  
   }
-  int parIndex = id*numberOfTowerParametersPerBin();
-  return Function(&Parametrization::correctedTowerEt,0,
-		  towerParRef(id),parIndex,numberOfTowerParametersPerBin(),p_);
+  int parIndex = id*numberOfTowerParametersPerBin(); 
+  FunctionID fid(Tower, parIndex);
+  Function* f = funcmap_[fid];
+  if(! f) {
+    f = new Function(&Parametrization::correctedTowerEt,0,
+		     towerParRef(id),parIndex,numberOfTowerParametersPerBin(),p_);
+    funcmap_[fid] = f;
+  }
+  return *f;
 }
 
-Function Parameters::jet_function(int etaid, int phiid) {
+const Function& Parameters::jet_function(int etaid, int phiid) {
   int id = jetBin(jetEtaBin(etaid),jetPhiBin(phiid));
   if (id <0) { 
     std::cerr<<"WARNING: Parameters::jet_function::index = " << id << endl; 
     exit(-2);  
   }
   int parIndex = id * numberOfJetParametersPerBin() + numberOfTowerParameters();
-  return Function(&Parametrization::correctedJetEt,
-		  p_->hasInvertedCorrection() ? &Parametrization::inverseJetCorrection : 0,
-		  jetParRef(id),parIndex,numberOfJetParametersPerBin(),p_);
+  FunctionID fid(Jet, parIndex);
+  Function* f = funcmap_[fid];
+  if(! f) {
+    f = new Function(&Parametrization::correctedJetEt,
+		     p_->hasInvertedCorrection() ? &Parametrization::inverseJetCorrection : 0,
+		     jetParRef(id),parIndex,numberOfJetParametersPerBin(),p_);
+    
+    funcmap_[fid] = f;
+  }
+  return *f;
 }
 
-Function Parameters::track_function(int etaid, int phiid) {
+const Function& Parameters::track_function(int etaid, int phiid) {
   int id = (etaid == 0) && (phiid == 0) ? 0: trackBin(trackEtaBin(etaid),trackPhiBin(phiid));
   if (id <0) { 
     std::cerr<<"WARNING: Parameters::track_function::index = " << id << endl; 
@@ -1288,15 +1353,36 @@ Function Parameters::track_function(int etaid, int phiid) {
   }
   int parIndex = id * numberOfTrackParametersPerBin() +
     numberOfTowerParameters() + numberOfJetParameters();
-  return Function(&Parametrization::expectedResponse,0,
-		  trackParRef(id),parIndex,numberOfTrackParametersPerBin(),p_);
+  FunctionID fid(Track, parIndex);
+  Function* f = funcmap_[fid];
+  if(! f) {
+    f = new Function(&Parametrization::expectedResponse,0,
+		     trackParRef(id),parIndex,numberOfTrackParametersPerBin(),p_);
+    
+    funcmap_[fid] = f;
+  }
+  return *f;
 }
 
-Function Parameters::global_jet_function() {
+const Function& Parameters::global_jet_function() {
   int parIndex = numberOfTowerParameters()+numberOfJetParameters()+numberOfTrackParameters();
-  return Function(&Parametrization::correctedGlobalJetEt,0,
-		  globalJetParRef(),parIndex,numberOfGlobalJetParameters(),p_);
+  FunctionID id(Global, parIndex);
+  Function* f = funcmap_[id];
+  if(! f) {
+    f = new Function(&Parametrization::correctedGlobalJetEt,0,
+		     globalJetParRef(),parIndex,numberOfGlobalJetParameters(),
+		     p_);
+    
+    funcmap_[id] = f;
+  }
+  return *f;
 }
+
+const Function& Parameters::function(const Function& f) {
+  FunctionID id(f.parFunc(), f.parIndex());
+  return *(funcmap_[id]);
+}
+
 
 SmearFunction Parameters::resolutionFitPDF(int etaid, int phiid) {
   int id = jetBin(jetEtaBin(etaid),jetPhiBin(phiid));
@@ -1405,3 +1491,35 @@ std::vector<bool> Parameters::findParStatus(int firstPar, int nPar) const {
 
   return isFixed;
 }
+ 
+bool Parameters::findRoot(double (* f) (double x, void * params), 
+			  void* params, double& x1, double& x2, double eps) 
+{
+  ++ncalls_;
+  F_.function = f;
+  F_.params = params;
+  if(gsl_root_fsolver_set(s_,&F_,x1,x2)) {
+    std::cout << "Warning: root not bracketed\n";
+    ++nfails_;
+    return false;
+  }
+  int status, iter = 0;
+  double r;
+  do {
+    iter++;
+    status = gsl_root_fsolver_iterate(s_);
+    r = gsl_root_fsolver_root(s_);
+    x1 = gsl_root_fsolver_x_lower(s_);
+    x2 = gsl_root_fsolver_x_upper(s_);
+    status = gsl_root_test_interval(x1,x2,0, eps);
+  }
+  while(status == GSL_CONTINUE && iter < 100);
+  ntries_ += iter;
+  if(status != GSL_SUCCESS) {
+    std::cout << "inversion failed:" << x1 << ", " << x2 << std::endl;
+    ++nfails_;
+    return false;
+  }
+  x2 = r;
+  return true;
+} 

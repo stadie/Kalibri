@@ -1,7 +1,7 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.63 2010/10/20 11:47:12 stadie Exp $
+// $Id: Parameters.h,v 1.64 2010/10/20 13:32:55 stadie Exp $
 //
 #ifndef Parameters_h
 #define Parameters_h
@@ -20,13 +20,15 @@
 #include "Parametrization.h"
 #include "Function.h"
 #include "SmearFunction.h"
-
+#include "gsl/gsl_errno.h"
+#include "gsl/gsl_math.h"
+#include "gsl/gsl_roots.h"
 
 //!  \brief Connection between detector geometry and fit parameters,
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann, Hartmut Stadie
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.63 2010/10/20 11:47:12 stadie Exp $
+//!  $Id: Parameters.h,v 1.64 2010/10/20 13:32:55 stadie Exp $
 // -----------------------------------------------------------------
 class Parameters {  
 public :
@@ -279,23 +281,13 @@ public :
     
     //return 0;
   }
-
+  
   static float toy_tower_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0);
   
   static float toy_jet_error_parametrization(const float *x, const Measurement *xorig=0, float errorig=0);
-
+  
   static float const_error_parametrization(const float *x, const Measurement *xorig, float errorig)  {
     return errorig;  
-  }
-  
-  //Limiting parameters
-  static double parameter_limit(const Measurement* x, const double *par) {
-    double min = x->pt;
-    double max = x->EMF;
-    if(par[0] < min) return (min-par[0]);
-    if(par[0] > max) return (par[0]-max);
-    return 0;
-    //return 1e4/(1+exp(k* (par[0] - min))) + 1e4/(1+exp(-k* (par[0] - max));
   }
   
   float etaEdge(int const etaBin, bool lowerEdge);
@@ -303,30 +295,53 @@ public :
   float etaUpperEdge(int const etaBin) { return etaEdge(etaBin, false); };
   //! return lower edge of bin in eta
   float etaLowerEdge(int const etaBin) { return etaEdge(etaBin, true ); };
-
-  Function tower_function(int etaid, int phiid);
-  Function jet_function(int etaid, int phiid);
-  Function track_function(int etaid, int phiid);
-  Function global_jet_function();
+  
+  const Function& tower_function(int etaid, int phiid);
+  const Function& jet_function(int etaid, int phiid);
+  const Function& track_function(int etaid, int phiid);
+  const Function& global_jet_function();
+  const Function& function(const Function& f);
   SmearFunction resolutionFitPDF(int etaid, int phiid);
-
+  
   void readCalibrationCfi(const std::string& file);
   void readCalibrationTxt(const std::string& file);
   void readCalibrationJetMET(const std::vector<std::string>& inputFileNames);
   void readCalibrationJetMETL2(const std::string& inputFileName);
   void readCalibrationJetMETL3(const std::string& inputFileName);
-
+  
   //static const Parametrization* parametrization() { return instance->p;}
-protected:
-  Parameters(Parametrization* p) 
-    : p_(p),k_(0),parErrors_(0),parGCorr_(0),parCov_(0),trackEff_(0) {
+  
+  Parameters* clone() const;
+  static void removeClone(Parameters* p);
+  
+  bool findRoot(double (* f) (double x, void * params), void* params,
+		double& x1, double& x2, double eps); 
+  
+  struct Variation {
+    int    parid;        //!< Id of varied parameter
+    float upperEt;      //!< Expected Et if parameter is varied by +eps
+    float lowerEt;      //!< Expected Et if parameter is varied by -eps
+    float upperError;   //!< Expected error if parameter is varied by +eps
+    float lowerError;   //!< Expected error if parameter is varied by -eps
+    float upperEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
+    float lowerEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
+    bool operator==(int b) const { return parid == b;} //!< Two ParameterVariation are the same if they have the same parid
   };
+  typedef std::vector<Variation> VariationColl;
+  typedef std::vector<Variation>::const_iterator VariationCollIter;
+
+
+  VariationColl& cachedVariationColl() const { return cachedvariationcoll_;}
+ protected:
+   Parameters(Parametrization* p) : k_(0),parErrors_(0),parGCorr_(0),
+    parCov_(0),trackEff_(0),s_(gsl_root_fsolver_alloc(gsl_root_fsolver_brent)) 
+    {
+      if(p) p_ = p;
+      gsl_set_error_handler_off();
+    };
   virtual ~Parameters();
 
-
-private:
-  Parameters();
-  Parameters(const Parameters&) {}
+ private:
   int etaBin(int phi_id, int etagranu, int phigranu, bool etasym) const;
   int phiBin(int phi_id, int phigranu) const;
   //! Return one line of LaTeX tabular containing the name and value of a given parameter from config file
@@ -345,7 +360,7 @@ private:
   std::vector<std::string> parNames_;
 
   //The parametrization functions:
-  Parametrization* p_;
+  static Parametrization* p_;
 
   double * k_; //!< all fit-parameters
   std::vector<bool> isFixedPar_;
@@ -361,7 +376,8 @@ private:
   void readTrackEffTxt(const std::string& file);
   std::string trim(std::string const& source, char const* delims = " {}\t\r\n");
 
-  static Parameters *instance_; 
+  static Parameters *instance_;
+  static std::vector<Parameters*> clones_;
 
   static Parametrization* createParametrization(const std::string& name, const ConfigFile& config);
   
@@ -371,13 +387,57 @@ private:
     Cleaner() {}
     ~Cleaner()
     {
+      //delete clones
+      for(std::vector<Parameters*>::const_iterator i = clones_.begin();
+	  i != clones_.end() ; ++i) {
+	delete *i;
+      }
       if(Parameters::instance_) { 
 	delete Parameters::instance_; 
 	Parameters::instance_ = 0; 
-      }
+      }  
+      delete p_;
     }
   };
   friend class Cleaner;
+  
+  enum FunctionType { Tower, Jet, Global, Track};
+  
+  class FunctionID {
+    FunctionType t_;
+    const unsigned short int i_;
+  public:
+  FunctionID(const Function::ParametrizationFunction& f, unsigned short int i)
+    : i_(i) 
+    {
+      if(f == &Parametrization::expectedResponse) t_ = Track;
+      else if(f == &Parametrization::correctedGlobalJetEt) t_ = Global;
+      else if(f == &Parametrization::correctedJetEt) t_ = Jet;
+      else if(f == &Parametrization::correctedTowerEt) t_ = Tower;
+      else {
+	exit(12);
+      }
+    }
+  FunctionID(FunctionType t, unsigned short int i)
+    : t_(t), i_(i) 
+    {}  
+    bool operator<(const FunctionID& r) const {
+      if(i_ < r.i_) return true;
+      if(i_ > r.i_) return false;
+      if(t_ < r.t_) return true;
+      return false;
+    }
+  };
+  typedef std::map<FunctionID,Function*> FunctionMap;
+  FunctionMap funcmap_;
+  mutable VariationColl cachedvariationcoll_;
+  //root finding
+  gsl_root_fsolver* s_;
+  gsl_function F_; 
+  static long long ncalls_;        //!< Number of calls of inversion methods 
+  static long long ntries_;        //!< Number of tries in iteration during inversion
+  static long long nfails_;        //!< Number of failed tries during inversion
+  static long long nwarns_;        //!< Number of warnings during inversion
 };
 
 #endif

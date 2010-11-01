@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
+// $Id: CalibData.h,v 1.82 2010/10/20 11:28:16 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cassert>
 
+class Parameters;
 
 //!  \brief Type of data
 //!
@@ -27,7 +28,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
+//!  $Id: CalibData.h,v 1.82 2010/10/20 11:28:16 stadie Exp $
 class Measurement
 {
 public:
@@ -66,7 +67,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
+//!  $Id: CalibData.h,v 1.82 2010/10/20 11:28:16 stadie Exp $
 class TTrack : public Measurement
 {
 public:
@@ -123,7 +124,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
+//! $Id: CalibData.h,v 1.82 2010/10/20 11:28:16 stadie Exp $
 class Event
 {
 public:
@@ -132,7 +133,7 @@ public:
   virtual Measurement *mess() const = 0;                           //!< Get Measurement object
   virtual double truth() const = 0;                                 //!< Get truth of measurement
   virtual double parametrizedMess() const = 0;                      //!< Get corrected measurement
-  virtual void changeParAddress(double* oldpar, double* newpar) = 0;   //!< Change adress of parameter array
+  virtual void setParameters(Parameters* param) = 0;                  //!< Set Parameters
   virtual DataType type() const = 0;                                //!< Get DataType
   double weight() const { return weight_;}                          //!< Get weight
   void   setWeight(double w)  {weight_ = w;}                           //!< Set weight
@@ -234,203 +235,6 @@ public:
 };
 
 
-//!  \brief Interface to the data for the original calibration
-//!         scheme ("Correction of the measurement")
-//!
-//!  For a description of the functionality see Event
-//!
-//!  TAbstractData is a virtual base class. The derived interfaces are
-//!  specific for a certain type of data.
-//!
-//!  \author Hartmut Stadie
-//!  \date Thu Dec 11 17:20:25 2008 UTC
-//!  $Id: CalibData.h,v 1.81 2010/05/19 13:34:48 stadie Exp $
-class TAbstractData : public Event
-{
-public:
-  //!  \brief Constructor (default)
-  TAbstractData() : Event() {_par=0;};
 
-
-  //!  \brief Constructor
-  //!
-  //!  \param index  Index of the first of the successive parameters
-  //!                covered by this event, see Parameters
-  //!  \param mess   Pointer to the measurement, see Measurement
-  //!  \param truth  Truth
-  //!  \param error  Error on measurement
-  //!  \param weight Weight of event in \f$ \chi^{2} \f$ sum
-  //!  \param par    Pointer to the first of the successive elements in
-  //!                parameter array covered by this event, see Parameters
-  //!  \param n_par  Number of succesive parameters covered by this event,
-  //!                see Parameters
-  //!  \param *func  Pointer to correction function, see Parametrization
-  //!  \param *err   Pointer to error function, see Parameters
-  TAbstractData(unsigned short int index, Measurement * mess, double truth, double error, double weight, double * par, unsigned short int n_par,
-        double (*func)(const Measurement*, const double*),
-	double (*err)(const double *,const Measurement *,double))
-    : Event(weight),_index(index), _mess(mess),_truth(truth),_error(error),_par(par),_n_par(n_par),_func(func),_err(err){};
-
-
-  //!  \brief Destructor
-  virtual ~TAbstractData(){
-    delete _mess;
-  };
-
-  Measurement *mess() const { return _mess;}; //!< Get Measurement object
-
-
-  //!  \brief Get corrected measurement
-  //!
-  //!  Calculates the corrected measurement from the
-  //!  original measurement as returned byGetMess().
-  //!  The correction is given by the correction function (see
-  //!  Parametrization, TAbstractData) using the parameter
-  //!  values currently stored in the parameter
-  //!  array in Parameters.
-  //!
-  //!  \return Corrected measurement
-  //!
-  //!  \sa GetParametrizedMess(double *const paramess)
-  double parametrizedMess() const { return _func(_mess,_par); };  
-
-  //!  \brief Correct a user defined measurement
-  //!
-  //!  Calculates the corrected measurement from a \e specified
-  //!  measurement 'paramess'.
-  //!  The correction is given by the correction function (see
-  //!  Parametrization, TAbstractData) using the parameter
-  //!  values currently stored in the parameter
-  //!  array in Parameters.
-  //!
-  //!  \note This method is intended for  derivative calculation
-  //!  (see chi2_fast(double * temp_derivative1, double * temp_derivative2, double const epsilon) )
-  //!  in a Event_TruthMultMess object. If the tower energies 
-  //!  are corrected with different parameters, a different jet
-  //!  energy (sum of tower energies) enters the jet correction 
-  //!  function. This can be done using this method.
-  //!
-  //!  \param paramess Array of measurements which are to be corrected
-  //!  \return Corrected measurement
-  //!
-  //!  \sa GetParametrizedMess()
-  virtual double GetParametrizedMess(double *const paramess) const {
-    Measurement m(*_mess);
-    m.pt = paramess[0];
-    return _func(&m,_par);
-  };
-
-
-  //!  \brief Get error of measurement 
-  //!
-  //!  Returns the error of the original measurement.
-  //!
-  //!  \note This method might have a different functionality
-  //!  in derived classes. In that case, the error of the
-  //!  corrected measurement is calculated using the error
-  //!  parametrization function _err.
-  //!
-  //!  \return Error of original measurement
-  virtual double GetParametrizedErr() const { return _error;};
-
-
-  //!  \brief Get error of a user defined measurement 
-  //!
-  //!  Returns the error of a \e specified measurement.
-  //!  The error of the specified measurement 'paramess'is
-  //!  calculated using the error parametrization function
-  //!  _err.
-  //!
-  //!  \param paramess Pointer to measurements for which the error is to be calculated
-  //!  \return Error of the measurement
-  virtual double GetParametrizedErr(double *const paramess) const { return _err(paramess,_mess,_error);};
-
-
-  //!  \brief Get error square of a user defined measurement 
-  //!
-  //!  Returns the squared error of a \e specified measurement.
-  //!  This is the same as
-  //!  GetParametrizedErr(double *const paramess) * GetParametrizedErr(double *const paramess)
-  //!
-  //!  \param paramess Pointer to measurements for which the error is to be calculated
-  //!  \return Squared error of the measurement
-  //!  \sa GetParametrizedErr(double *const paramess)
-  virtual double GetParametrizedErr2(double *const paramess){ 
-    double error = GetParametrizedErr(paramess);
-    return error *error;
-  };
-
-  double truth() const { return _truth;};
-  virtual double GetScale() const {return truth();};//flatten spectrum w.r.t. this
-  virtual void updateError(){};
-  double GetError() const { return _error;};
-  DataType type() const {return _type;};
-  void SetType(DataType type) {_type=type;};
-  unsigned short int GetIndex(){return _index;};
-  virtual const std::vector<TAbstractData*>& GetRef() = 0;
-  virtual const std::vector<TAbstractData*>& GetRefTrack() = 0;
-  virtual double chi2() const {return 0.;};
-  double chi2_plots() const { return chi2(); }
-  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double *epsilon) const = 0;
-  double * GetPar(){return _par;};
-  unsigned short int GetNumberOfPars() const {return _n_par;};
-  virtual void changeParAddress(double* oldpar, double* newpar) { _par += newpar - oldpar;}
-  virtual bool GetTrackuse() {return true;}
-
-  static unsigned int total_n_pars;
-
-protected:
-  unsigned short int _index; //limited from 0 to 65535
-  Measurement *_mess;
-  double _truth, _error, _weight;
-  double *_par;
-  double _invisError;
-  unsigned short int _n_par; //limited from 0 to 65535
-  double (*_func)(const Measurement *x, const double *par);
-  double (*_err)(const double *x, const Measurement *x_original, double error);
-  DataType _type;
-};
-
-
-//!  \brief Data class to limit a parameter
-class TData_ParLimit : public TAbstractData
-{
- public:
- TData_ParLimit(unsigned short int index, Measurement *mess, double error,
-		double *par,double (*func)(const Measurement *,const double*))
-   : TAbstractData(index,mess,0,error,1.0,par,1,func,0)
-    { 
-      _type=ParLimit;
-      _invisError=0;
-    };
-  
-  virtual const std::vector<TAbstractData*>& GetRef() { 
-    _cache.clear();
-    _cache.push_back(this);
-    return _cache;
-  };
-  //only a dummy
-  virtual const std::vector<TAbstractData*>& GetRefTrack() { 
-    _cache.clear();
-    _cache.push_back(this);
-    return _cache;
-  };
-  
-  virtual double GetParametrizedErr(double *const paramess) const{ 
-    return _error;
-  };
-  
-  virtual double chi2() const{  
-    double new_mess  = parametrizedMess();
-    double new_error = GetParametrizedErr(&new_mess);
-    return new_mess * new_mess / (new_error * new_error);
-  };
-  
-  virtual double chi2_fast(double* temp_derivative1, 
-			   double* temp_derivative2, const double* epsilon) const;
-  
- private:
-  static std::vector<TAbstractData*> _cache;
-};
 
 #endif

@@ -3,7 +3,7 @@
 //
 //    first version: Hartmut Stadie 2008/12/14
 //
-//    $Id: TwoJetsInvMassEvent.h,v 1.10 2010/05/19 13:34:49 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.h,v 1.11 2010/05/19 16:01:42 stadie Exp $
 //   
 
 #ifndef TWOJETSINVMASSEVENT_H
@@ -32,11 +32,7 @@ public:
   Jet *jet1() const {return jet1_;}
   Jet *jet2() const {return jet2_;}
 
-  void changeParAddress(double* oldpar, double* newpar) {
-    par_ = newpar;
-    jet1_->changeParAddress(oldpar,newpar);
-    jet2_->changeParAddress(oldpar,newpar);
-  }
+  void setParameters(Parameters* param);
   DataType type() const { return InvMass;} 
   double correctedMass() const;
   

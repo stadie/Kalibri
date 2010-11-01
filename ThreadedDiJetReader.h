@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: ThreadedDiJetReader.h,v 1.1 2010/10/14 17:26:55 stadie Exp $
+//!  $Id: ThreadedDiJetReader.h,v 1.2 2010/10/20 11:28:21 stadie Exp $
 // ----------------------------------------------------------------   
 #include "DiJetReader.h"
 
@@ -72,7 +72,7 @@ class ThreadedDiJetReader : public DiJetReader{
     DiJetReader* reader() { return reader_;}
   };
   std::vector<ReadThread*> readers_;
-  TChain* chain_;
+  TTree* tree_;
 };
 
 

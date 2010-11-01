@@ -1,10 +1,10 @@
-// $Id: SmearData.cc,v 1.9 2010/04/13 13:38:23 mschrode Exp $
+// $Id: SmearData.cc,v 1.10 2010/05/19 13:34:48 stadie Exp $
 
 #include "SmearData.h"
 
 #include "CalibData.h"
 
-
+#include "Parameters.h"
 //!  \brief Constructor
 //!  \param type Data type
 //!  \param mess The measurement
@@ -18,4 +18,7 @@ SmearData::SmearData(DataType type, Measurement * mess, double truth, double ptH
 };
 
 
-
+void SmearData::setParameters(Parameters* param) { 
+  double *oldpar = pdf_.par() - pdf_.parIdx();
+   pdf_.changeParBase(oldpar,param->parameters()); 
+ }

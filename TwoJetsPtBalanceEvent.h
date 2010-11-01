@@ -13,7 +13,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.10 2010/06/25 11:44:19 stadie Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.11 2010/10/20 11:28:21 stadie Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
@@ -46,10 +46,10 @@ class TwoJetsPtBalanceEvent : public Event {
 
   bool hasJet3() const { return jet3_ != 0 ? true : false; }
 
-  virtual void changeParAddress(double* oldpar, double* newpar) {
-    jet1_->changeParAddress(oldpar,newpar);
-    jet2_->changeParAddress(oldpar,newpar);
-    if( hasJet3() ) jet3_->changeParAddress(oldpar,newpar);
+  virtual void setParameters(Parameters* param) {
+    jet1_->setParameters(param);
+    jet2_->setParameters(param);
+    if( hasJet3() ) jet3_->setParameters(param);
   }
 
   virtual double truth() const { return 0.; }

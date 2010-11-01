@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.61 2010/10/14 17:26:55 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.62 2010/10/20 11:28:07 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -131,7 +131,7 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   
   jetIndices_.resize(8,0);
 
-  std::cout << "size:" << sizeof(JetTruthEvent) << ", " << sizeof(Jet) << sizeof(unsigned short) << ", " << sizeof(unsigned int) << '\n';
+  //std::cout << "size:" << sizeof(JetTruthEvent) << ", " << sizeof(Jet) << ", " << sizeof(Measurement) << '\n';
 }
 
 DiJetReader::~DiJetReader() {

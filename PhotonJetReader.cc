@@ -1,5 +1,5 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.30 2010/10/12 08:37:41 stadie Exp $
+//  $Id: PhotonJetReader.cc,v 1.31 2010/10/20 11:28:12 stadie Exp $
 //
 #include "PhotonJetReader.h"
 
@@ -31,9 +31,9 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, Parameters* p)
 
   // Cuts
   minJetEt_           = config_->read<double>("Et min cut on jet",0.0); 
-  maxJetEt_           = config_->read<double>("Et max cut on jet",0.0); 
+  maxJetEt_           = config_->read<double>("Et max cut on jet",99999.0); 
   minGammaEt_         = config_->read<double>("Et min cut on gamma",0.0);
-  maxGammaEt_         = config_->read<double>("Et max cut on gamma",0.0);
+  maxGammaEt_         = config_->read<double>("Et max cut on gamma",99999.0);
   maxRel2ndJetEt_     = config_->read<double>("Relative n+1 Jet Et Cut",0.1);
   minGenJetEt_        = config_->read<double>("Et genJet min",0.0);
   maxGenJetEt_        = config_->read<double>("Et genJet max",10000.0);

@@ -1,4 +1,4 @@
-// $Id: TwoJetsPtBalanceEvent.cc,v 1.8 2010/05/19 13:34:48 stadie Exp $
+// $Id: TwoJetsPtBalanceEvent.cc,v 1.9 2010/10/20 11:28:15 stadie Exp $
 
 #include "TwoJetsPtBalanceEvent.h"
 
@@ -30,16 +30,16 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
   if(!temp_derivative1) return chi2;
 
   // Derivative calculation
-  const Jet::VariationColl& varColl1 = jet1_->varyParsDirectly(epsilon);
-  const Jet::VariationColl& varColl2 = jet2_->varyParsDirectly(epsilon);
+  const Parameters::VariationColl& varColl1 = jet1_->varyParsDirectly(epsilon);
+  const Parameters::VariationColl& varColl2 = jet2_->varyParsDirectly(epsilon);
 
   // Variation of parameters of first jet
-  for(Jet::VariationCollIter i1 = varColl1.begin() ; i1 != varColl1.end() ; ++i1) {
+  for(Parameters::VariationCollIter i1 = varColl1.begin() ; i1 != varColl1.end() ; ++i1) {
     // Corrected pt in case of 
     // lower parameter variation
     double pt1tmp = i1->lowerEt;
     double pt2tmp = 0.;
-    Jet::VariationCollIter i2 = find(varColl2.begin(),varColl2.end(),i1->parid);
+    Parameters::VariationCollIter i2 = find(varColl2.begin(),varColl2.end(),i1->parid);
     if(i2 != varColl2.end()) { // Parameter also covered by jet 2
       assert(i1->parid == i2->parid);
       pt2tmp = i2->lowerEt;
@@ -77,8 +77,8 @@ double TwoJetsPtBalanceEvent::chi2_fast_simple(double * temp_derivative1,
   }  // End variation of parameters of first jet
 
   // Variation of parameters of second jet
-  for(Jet::VariationCollIter i2 = varColl2.begin() ; i2 != varColl2.end() ; ++i2) {
-    Jet::VariationCollIter i1 = find(varColl1.begin(),varColl1.end(),i2->parid);
+  for(Parameters::VariationCollIter i2 = varColl2.begin() ; i2 != varColl2.end() ; ++i2) {
+    Parameters::VariationCollIter i1 = find(varColl1.begin(),varColl1.end(),i2->parid);
     if(i1 != varColl1.end()) continue; // Parameter already covered by jet 1 par variation
 
     // Corrected pt in case of 
@@ -160,16 +160,16 @@ double TwoJetsPtBalanceEvent::chi2_fast_balance(double * temp_derivative1,
   if(!temp_derivative1) return chi2;
 
   // Derivative calculation
-  const Jet::VariationColl& varColl1 = jet1_->varyParsDirectly(epsilon);
-  const Jet::VariationColl& varColl2 = jet2_->varyParsDirectly(epsilon);
+  const Parameters::VariationColl& varColl1 = jet1_->varyParsDirectly(epsilon);
+  const Parameters::VariationColl& varColl2 = jet2_->varyParsDirectly(epsilon);
 
   // Variation of parameters of first jet
-  for(Jet::VariationCollIter i1 = varColl1.begin() ; i1 != varColl1.end() ; ++i1) {
+  for(Parameters::VariationCollIter i1 = varColl1.begin() ; i1 != varColl1.end() ; ++i1) {
     // Corrected pt in case of 
     // lower parameter variation
     double pt1tmp = i1->lowerEt;
     double pt2tmp = 0.;
-    Jet::VariationCollIter i2 = find(varColl2.begin(),varColl2.end(),i1->parid);
+    Parameters::VariationCollIter i2 = find(varColl2.begin(),varColl2.end(),i1->parid);
     if(i2 != varColl2.end()) { // Parameter also covered by jet 2
       assert(i1->parid == i2->parid);
       pt2tmp = i2->lowerEt;
@@ -207,8 +207,8 @@ double TwoJetsPtBalanceEvent::chi2_fast_balance(double * temp_derivative1,
   }  // End variation of parameters of first jet
 
   // Variation of parameters of second jet
-  for(Jet::VariationCollIter i2 = varColl2.begin() ; i2 != varColl2.end() ; ++i2) {
-    Jet::VariationCollIter i1 = find(varColl1.begin(),varColl1.end(),i2->parid);
+  for(Parameters::VariationCollIter i2 = varColl2.begin() ; i2 != varColl2.end() ; ++i2) {
+    Parameters::VariationCollIter i1 = find(varColl1.begin(),varColl1.end(),i2->parid);
     if(i1 != varColl1.end()) continue; // Parameter already covered by jet 1 par variation
 
     // Corrected pt in case of 
@@ -378,10 +378,10 @@ double TwoJetsPtBalanceEvent::chi2_relative(double * temp_derivative1,
   if(!temp_derivative1) return chi2;
 
   // Derivative calculation
-  const Jet::VariationColl& varColl1 = jet1_->varyParsDirectly(epsilon,true,ptave);
+  const Parameters::VariationColl& varColl1 = jet1_->varyParsDirectly(epsilon,true,ptave);
 
   // Variation of parameters of first jet
-  for(Jet::VariationCollIter i = varColl1.begin() ; i != varColl1.end() ; ++i) {
+  for(Parameters::VariationCollIter i = varColl1.begin() ; i != varColl1.end() ; ++i) {
     // Likelihood for lower parameter variation
     L = i->lowerEt/ptave;
     etprime = i->lowerEtDeriv;

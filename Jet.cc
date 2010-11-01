@@ -2,11 +2,12 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.47 2010/05/20 15:15:47 stadie Exp $
+//    $Id: Jet.cc,v 1.48 2010/10/20 11:28:08 stadie Exp $
 //   
 #include "Jet.h"  
 
 #include "CorFactors.h"
+#include "Parameters.h"
 
 #include <iostream>
 #include <iomanip>
@@ -17,28 +18,28 @@ Jet::Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
 	 float (*errfunc)(const float *x, const Measurement *xorig, float err), 
 	 const Function& gf) 
   : Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi,phiphi,etaeta),flavor_(flavor), 
-    genPt_(genPt),dR_(dR),corFactors_(corFactors),f_(f),gf_(gf),
-    errf_(errfunc),root_(Et),EoverPt_(E/Et),gsl_impl_(this)
+    genPt_(genPt),dR_(dR),corFactors_(corFactors),f_(&f),gf_(&gf),
+    errf_(errfunc),parameters_(0)
 {
-  temp_ = *this;
-  varcoll_.resize(f_.nPars() + gf_.nPars());
   //std::cout << "size:" << sizeof(Jet::GslImplementation) << ", " << sizeof(Jet) << ", " << sizeof(Function) << ", " << sizeof(Measurement) << '\n';
 }
 
 Jet::Jet(const Jet& j) 
   : Measurement(j), flavor_(j.flavor_), genPt_(j.genPt_),dR_(j.dR_), 
     corFactors_(new CorFactors(*(j.corFactors_))),f_(j.f_),
-    gf_(j.gf_),errf_(j.errf_),root_(j.root_),EoverPt_(j.EoverPt_),
-    gsl_impl_(this)
+    gf_(j.gf_),errf_(j.errf_),parameters_(0)
 {
-  temp_ = *this;
-  varcoll_.resize(f_.nPars() + gf_.nPars());
 }
 
 Jet::~Jet()
 {
-  varcoll_.clear();
   delete corFactors_;
+}
+ 
+void Jet::setParameters(Parameters* param) {
+  parameters_ = param;
+  f_ = &(param->function(*f_));
+  gf_ = &(param->function(*gf_));
 }
 
 void Jet::updateCorFactors(CorFactors *cor)
@@ -54,7 +55,6 @@ void Jet::correctToL3()
   Measurement::EMF  *= corFactors_->getToL3();
   Measurement::HadF *= corFactors_->getToL3();
   Measurement::OutF *= corFactors_->getToL3();
-  temp_ = *this;
 }
 
 void Jet::correctL2L3()
@@ -64,7 +64,6 @@ void Jet::correctL2L3()
   Measurement::EMF  *= corFactors_->getL2L3();
   Measurement::HadF *= corFactors_->getL2L3();
   Measurement::OutF *= corFactors_->getL2L3();
-  temp_ = *this;
 }
 
 //!  \brief Varies all parameters for this jet by +/-eps
@@ -79,41 +78,38 @@ void Jet::correctL2L3()
 //!  \return Vector of ParameterVariation
 //!  \sa varyParsDirectly
 // -------------------------------------------------------
-const Jet::VariationColl& Jet::varyPars(const double* eps, float Et, float start)
+const Parameters::VariationColl& Jet::varyPars(const double* eps, float Et, float start)
 {
-  //start = Et;
-  float oldroot = root_;
-  for(int i = 0 ; i < f_.nPars() ; ++i) {
-    float orig = f_.firstPar()[i];
-    f_.firstPar()[i] += eps[f_.parIndex() + i];
-    varcoll_[i].upperEt = expectedEt(Et,start,varcoll_[i].upperError);
-    root_ = oldroot;
-    //if( varcoll_[i].upperEt < 0) return varcoll_;
-    //varcoll_[i].upperEt = expectedEt(Et,s,false);
-    f_.firstPar()[i] = orig - eps[f_.parIndex() + i];
-    varcoll_[i].lowerEt = expectedEt(Et,start,varcoll_[i].lowerError); 
-    root_ = oldroot;
-    //if( varcoll_[i].lowerEt < 0) return varcoll_;
-    //varcoll_[i].lowerEt = expectedEt(Et,s,false);
-    f_.firstPar()[i] = orig;
-    varcoll_[i].parid = f_.parIndex() + i;
+  //start = Et; 
+  Parameters::VariationColl& varcoll = parameters_->cachedVariationColl();
+  varcoll.resize(nPar());
+  for(int i = 0 ; i < f_->nPars() ; ++i) {
+    double orig = f_->firstPar()[i];
+    f_->firstPar()[i] += eps[f_->parIndex() + i];
+    varcoll[i].upperEt = expectedEt(Et,start,varcoll[i].upperError);
+    //if( varcoll[i].upperEt < 0) return varcoll;
+    //varcoll[i].upperEt = expectedEt(Et,s,false);
+    f_->firstPar()[i] = orig - eps[f_->parIndex() + i];
+    varcoll[i].lowerEt = expectedEt(Et,start,varcoll[i].lowerError); 
+    //if( varcoll[i].lowerEt < 0) return varcoll;
+    //varcoll[i].lowerEt = expectedEt(Et,s,false);
+    f_->firstPar()[i] = orig;
+    varcoll[i].parid = f_->parIndex() + i;
   }
-  for(int i = 0,j =  f_.nPars(); i < gf_.nPars() ; ++i,++j) {
-    float orig = gf_.firstPar()[i];
-    gf_.firstPar()[i] += eps[gf_.parIndex() + i];
-    varcoll_[j].upperEt = expectedEt(Et,start,varcoll_[j].upperError);
-    root_ = oldroot;
-    //if( varcoll_[j].upperEt < 0) return varcoll_;
-    //varcoll_[j].upperEt = expectedEt(Et,s,false);
-    gf_.firstPar()[i] = orig - eps[gf_.parIndex() + i];
-    varcoll_[j].lowerEt = expectedEt(Et,start,varcoll_[j].lowerError);
-    root_ = oldroot;
-    //if( varcoll_[j].lowerEt < 0) return varcoll_;
-    //varcoll_[j].lowerEt = expectedEt(Et,s,false);
-    gf_.firstPar()[i] = orig;
-    varcoll_[j].parid = gf_.parIndex() + i;
+  for(int i = 0,j =  f_->nPars(); i < gf_->nPars() ; ++i,++j) {
+    double orig = gf_->firstPar()[i];
+    gf_->firstPar()[i] += eps[gf_->parIndex() + i];
+    varcoll[j].upperEt = expectedEt(Et,start,varcoll[j].upperError);
+    //if( varcoll[j].upperEt < 0) return varcoll;
+    //varcoll[j].upperEt = expectedEt(Et,s,false);
+    gf_->firstPar()[i] = orig - eps[gf_->parIndex() + i];
+    varcoll[j].lowerEt = expectedEt(Et,start,varcoll[j].lowerError);
+    //if( varcoll[j].lowerEt < 0) return varcoll;
+    //varcoll[j].lowerEt = expectedEt(Et,s,false);
+    gf_->firstPar()[i] = orig;
+    varcoll[j].parid = gf_->parIndex() + i;
   }
-  return varcoll_;
+  return varcoll;
 }
 
 //!  \brief Varies all parameters for this jet by +/-eps
@@ -128,45 +124,47 @@ const Jet::VariationColl& Jet::varyPars(const double* eps, float Et, float start
 //!  \return Vector of ParameterVariation
 //!  \sa varyPars
 // -------------------------------------------------------
-const Jet::VariationColl& Jet::varyParsDirectly(const double* eps, bool computeDeriv, float Et)
-{
+const Parameters::VariationColl& Jet::varyParsDirectly(const double* eps, bool computeDeriv, float Et)
+{ 
+  Parameters::VariationColl& varcoll = parameters_->cachedVariationColl();
+  varcoll.resize(nPar());
   if(Et == 0) Et = Measurement::pt;
-  const float deltaE = 1e-07 * Et;
-  for(int i = 0 ; i < f_.nPars() ; ++i) {
-    float orig = f_.firstPar()[i];
-    f_.firstPar()[i] += eps[f_.parIndex() + i];
-    varcoll_[i].upperEt = correctedEt(Et);
-    varcoll_[i].upperError = expectedError(varcoll_[i].upperEt);
+  const float deltaE = 1e-04 * Et;
+  for(int i = 0 ; i < f_->nPars() ; ++i) {
+    double orig = f_->firstPar()[i];
+    f_->firstPar()[i] += eps[f_->parIndex() + i];
+    varcoll[i].upperEt = correctedEt(Et);
+    varcoll[i].upperError = expectedError(varcoll[i].upperEt);
     if(computeDeriv) {
-      varcoll_[i].upperEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
+      varcoll[i].upperEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
-    f_.firstPar()[i] = orig - eps[f_.parIndex() + i];
-    varcoll_[i].lowerEt = correctedEt(Et); 
-    varcoll_[i].lowerError = expectedError(varcoll_[i].lowerEt);
+    f_->firstPar()[i] = orig - eps[f_->parIndex() + i];
+    varcoll[i].lowerEt = correctedEt(Et); 
+    varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     if(computeDeriv) {
-      varcoll_[i].lowerEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
+      varcoll[i].lowerEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
-    f_.firstPar()[i] = orig;
-    varcoll_[i].parid = f_.parIndex() + i;
+    f_->firstPar()[i] = orig;
+    varcoll[i].parid = f_->parIndex() + i;
   }  
-  for(int i = 0, j =  f_.nPars(); i < gf_.nPars() ; ++i,++j) {
-    float orig = gf_.firstPar()[i];
-    gf_.firstPar()[i] += eps[gf_.parIndex() + i];
-    varcoll_[j].upperEt = correctedEt(Et);
-    varcoll_[j].upperError = expectedError(varcoll_[j].upperEt);
+  for(int i = 0, j =  f_->nPars(); i < gf_->nPars() ; ++i,++j) {
+    double orig = gf_->firstPar()[i];
+    gf_->firstPar()[i] += eps[gf_->parIndex() + i];
+    varcoll[j].upperEt = correctedEt(Et);
+    varcoll[j].upperError = expectedError(varcoll[j].upperEt);
     if(computeDeriv) {
-      varcoll_[j].upperEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
+      varcoll[j].upperEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
-    gf_.firstPar()[i] = orig - eps[gf_.parIndex() + i];
-    varcoll_[j].lowerEt = correctedEt(Et); 
-    varcoll_[j].lowerError = expectedError(varcoll_[j].lowerEt);
+    gf_->firstPar()[i] = orig - eps[gf_->parIndex() + i];
+    varcoll[j].lowerEt = correctedEt(Et); 
+    varcoll[j].lowerError = expectedError(varcoll[j].lowerEt);
     if(computeDeriv) {
-      varcoll_[j].lowerEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
+      varcoll[j].lowerEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
-    gf_.firstPar()[i] = orig;
-    varcoll_[j].parid = gf_.parIndex() + i;
+    gf_->firstPar()[i] = orig;
+    varcoll[j].parid = gf_->parIndex() + i;
   }
-  return varcoll_;
+  return varcoll;
 }
 
 
@@ -183,40 +181,44 @@ const Jet::VariationColl& Jet::varyParsDirectly(const double* eps, bool computeD
 // -------------------------------------------------------
 float Jet::correctedEt(float Et, bool fast) const {
   
-  //std::cout << "Pars:" << f_.firstPar()[0] << ", " << f_.firstPar()[1] << ", " << f_.firstPar()[2]
-  //	    << ", " << gf_.firstPar()[0] << ", " << gf_.firstPar()[1] << ", " << gf_.firstPar()[2]
-  //	    << ", " <<  gf_.firstPar()[3] << '\n';
+  //std::cout << "Pars:" << f_->firstPar()[0] << ", " << f_->firstPar()[1] << ", " << f_->firstPar()[2]
+  //	    << ", " << gf_->firstPar()[0] << ", " << gf_->firstPar()[1] << ", " << gf_->firstPar()[2]
+  //	    << ", " <<  gf_->firstPar()[3] << '\n';
   // 
   //assume that only the hadronic energy gets modified!
-  temp_.pt   = Et;  
+  if(Et < 1.0) Et = 1.0;
+  float oldpt = Measurement::pt;
+  float oldE  = Measurement::E;
+  Jet* self = const_cast<Jet*>(this);
+  self->Measurement::pt   = Et;  
   //temp_.HadF = Et - OutF - EMF;
   // if(temp_.HadF < 0) temp_.HadF = 0;
-  temp_.E    = EoverPt_ * Et;
-  temp_.pt = f_(&temp_);
+  self->Measurement::E    = Et/oldpt;
+  self->Measurement::pt = (*f_)(this);
   /*
     if(corEt != corEt) 
     std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
     assert(corEt == corEt);
     //if(corEt <  OutF + EMF) corEt = OutF + EMF;
   */
-  if(temp_.pt <= 0.1) {
+  if(Measurement::pt <= 0.1) {
     //std::cout << "WARNING: jet cor. Et <= 0.1 GeV:" << temp_.pt << " at eta " << Measurement::eta << '\n';
-    temp_.pt = 0.1;
-    temp_.E = EoverPt_ * 0.1;
+    self->Measurement::pt = 0.1;
   }
   //temp_.HadF = corEt - OutF - EMF;
   //if(temp_.HadF < 0) temp_.HadF = 0;
-  temp_.E = EoverPt_ * temp_.pt;  
-  temp_.pt = gf_(&temp_);
+  self->Measurement::E = oldE * Measurement::pt/oldpt;  
+  float ptcor = (*gf_)(this);
   //if(corEt != corEt) std::cout << "Et:" << Et << "  orig Et:" << pt << " cor Et:" << corEt << "\n";
   //assert(corEt == corEt);
   //if(corEt <  OutF + EMF) corEt = OutF + EMF;
-  if(temp_.pt <= 0.1) {
+  if(ptcor <= 1.0) {
     //std::cout << "WARNING: global jet cor. Et <= 0.1 GeV:" << temp_.pt << " at eta " << Measurement::eta << '\n';
-    temp_.pt = 0.1;
-    temp_.E = EoverPt_;
+    ptcor = 1.0;
   }
-  return temp_.pt;
+  self->Measurement::pt  = oldpt;
+  self->Measurement::E   = oldE;
+  return ptcor;
 }
 
 
@@ -243,14 +245,17 @@ float Jet::correctedEt(float Et, bool fast) const {
 // -------------------------------------------------------
 float Jet::expectedEt(float truth, float start, bool fast)
 {
-  if(f_.hasInverse()) { 
-    temp_.pt   = truth;  
-    temp_.HadF = truth - OutF - EMF;
-    if(temp_.HadF < 0) temp_.HadF = 0;
-    temp_.E    = Measurement::E * truth/Measurement::pt;
-    return f_.inverse(&temp_);
+  if(f_->hasInverse()) {
+    float oldpt = Measurement::pt;
+    float oldE  = Measurement::E;
+    Measurement::pt   = truth;  
+    Measurement::E    *= truth/Measurement::pt;
+    float pt = f_->inverse(this);
+    Measurement::pt = oldpt;
+    Measurement::E  = oldE;
+    return pt;
   }
-  static const double eps = 1.0e-014;
+  static const double eps = 1.0e-05;
 
   /*
   double x1 = root_;
@@ -317,9 +322,10 @@ float Jet::expectedEt(float truth, float start, bool fast)
   f1 = correctedEt(x1,false);
   f2 = correctedEt(x2,false);
   for(int i = 0 ; i < ntries ; ++i) {
-    if(((f1 -truth) * (f2 - truth)) <= 0) { 
-      if(! gsl_impl_.root(truth,x1,x2,eps)) return -1;
-      return root_ = x2;
+    if(((f1 -truth) * (f2 - truth)) <= 0) {
+      rf_par par(truth,this);
+      if(! parameters_->findRoot(rf,&par,x1,x2,eps)) return -1;
+      return x2;
     }
     ++ntries_;
     if(std::abs(f1 - truth) < std::abs(f2 - truth)) {
@@ -552,63 +558,7 @@ bool Jet::secant(double truth, double& x2, double& x1,double eps)
   return true;
 }
 
-bool Jet::GslImplementation::root(double truth, double& x1, double& x2, double eps) {
-  par_.y_ = truth;
-  ++ncalls_;
- 
-  if(gsl_root_fsolver_set(s_,&F_,x1,x2)) {
-    std::cout << "Warning: root not bracketed\n";
-    ++nfails_;
-    return false;
-  }
-  int status, iter = 0;
-  double r;
-  do {
-    iter++;
-    status = gsl_root_fsolver_iterate(s_);
-    r = gsl_root_fsolver_root(s_);
-    x1 = gsl_root_fsolver_x_lower(s_);
-    x2 = gsl_root_fsolver_x_upper(s_);
-    status = gsl_root_test_interval(x1,x2,0, eps);
-    }
-  while(status == GSL_CONTINUE && iter < 100);
-  ntries_ += iter;
-  if(status != GSL_SUCCESS) {
-    std::cout << "inversion failed:" << x1 << ", " << x2 << " truth:" 
-	      << truth << std::endl;
-    ++nfails_;
-    return false;
-  }
-  x2 = r;
-  return true;
-}
 
-// ------------------------------------------------------------
-void Jet::print()
-{
-  std::cout << "Jet  Et: " << Et() << " GeV, eta: " << eta() << std::endl;
-  std::cout << "Jet par: ";
-  for(int i = 0; i < f_.nPars(); i++) {
-    std::cout << f_.firstPar()[i] << "  ";
-  }
-  std::cout << "\nGlobal par: ";
-  for(int i = 0; i < gf_.nPars(); i++) {
-    std::cout << gf_.firstPar()[i] << "  ";
-  }
-  std::cout << "\n";
-}
-
-Jet::GslImplementation::GslImplementation(const Jet* jet) 
-  : par_(0,jet),s_(gsl_root_fsolver_alloc(gsl_root_fsolver_brent))
-{
-  F_.function = &rf;
-  F_.params = &par_;
-  gsl_set_error_handler_off();
-}
-
-Jet::GslImplementation::~GslImplementation() {
-  gsl_root_fsolver_free(s_);
-} 
 
 // ------------------------------------------------------------
 long long Jet::ncalls_ = 0;

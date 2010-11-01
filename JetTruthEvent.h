@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.16 2010/05/19 16:01:42 stadie Exp $
+//    $Id: JetTruthEvent.h,v 1.17 2010/10/20 11:28:19 stadie Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -23,7 +23,7 @@ public:
   double truth() const { return truth_;}
   double parametrizedMess() const { return jet_->correctedEt(jet_->Et());}
 
-  void changeParAddress(double* oldpar, double* newpar) { jet_->changeParAddress(oldpar,newpar);}
+  void setParameters(Parameters* param) { jet_->setParameters(param);}
   DataType type() const { return GammaJet;} 
   Jet* jet() const {return jet_;}
   

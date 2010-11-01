@@ -12,7 +12,7 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTowers.h,v 1.23 2010/05/19 16:01:42 stadie Exp $
+//!    $Id: JetWithTowers.h,v 1.24 2010/10/20 11:28:19 stadie Exp $
 // ----------------------------------------------------------------   
 class JetWithTowers : public Jet
 {
@@ -25,17 +25,17 @@ class JetWithTowers : public Jet
 		const Function& gf); 
   virtual ~JetWithTowers(); 
   virtual int nPar() const {return Jet::nPar() + towerpars_.size() * ntowerpars_;}
-  virtual void changeParAddress(double* oldpar, double* newpar);
+  virtual void setParameters(Parameters* param);
   virtual float correctedEt(float Et,bool fast = false) const; 
   virtual float error() const;
   virtual float expectedError(float et) const;
   // varies all parameters for this jet by eps and returns a vector of the
   // parameter id and the Et for the par + eps and par - eps variation
-  virtual const VariationColl& varyPars(const double* eps, float Et, float start);
-  virtual const VariationColl& varyParsDirectly(const double* eps, bool computeDeriv = false);
+  virtual const Parameters::VariationColl& varyPars(const double* eps, float Et, float start);
+  virtual const Parameters::VariationColl& varyParsDirectly(const double* eps, bool computeDeriv = false);
 
   void addTower(float Et, float EmEt, float HadEt ,float OutEt, float E,
-		float eta,float phi,const Function& f,
+		float eta,float phi, const Function& f,
 		float (*errfunc)(const float *x, const Measurement *xorig, float err));
   virtual Jet* clone() const { return new JetWithTowers(*this);} //!< Clone this jet
  private:
@@ -60,14 +60,14 @@ class JetWithTowers : public Jet
     float projectionToJetAxis() const {return alpha_;}
     float fractionOfJetHadEt() const { return fraction_;}
     void setFractionOfJetHadEt(float frac) const { fraction_ = frac;}
-    void changeParAddress(double* oldpar, double* newpar) {f_.changeParBase(oldpar,newpar);}
+    const Function& setParameters(Parameters* param);
     float correctedHadEt(float HadEt) const;
     float lastCorrectedHadEt() const { return lastCorHadEt_;}  
     float error() const {return errf_(&(Measurement::pt),this,error_);}
     float expectedError(float et) const { return  errf_(&et,this,error_);}
-    int nPar() const {return f_.nPars();}
-    int firstPar() const {return f_.parIndex();}
-    double *par() const {return f_.firstPar();}
+    int nPar() const {return f_->nPars();}
+    int firstPar() const {return f_->parIndex();}
+    double *par() const {return f_->firstPar();}
   private:
     float alpha_;                //!< Projection factor onto jet axis
     float error_;                //!< Error for constant error mode
@@ -78,7 +78,7 @@ class JetWithTowers : public Jet
     mutable Measurement temp_;
     mutable float lastCorHadEt_;
     mutable float fraction_;
-    Function f_;
+    const Function* f_;
     float (*errf_)(const float *x, const Measurement *xorig, float err);
 
     friend class JetWithTowers;

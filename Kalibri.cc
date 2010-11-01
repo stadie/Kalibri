@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.11 2010/10/20 11:28:12 stadie Exp $
+//  $Id: Kalibri.cc,v 1.12 2010/10/20 13:32:55 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -56,7 +56,7 @@ private:
   double chi2_;
   double * td1_;
   double * td2_;
-  double *parorig_, *mypar_;
+  Parameters *parorig_, *mypar_;
   const double *epsilon_;
   std::vector<Event*> data_;
   bool data_changed_;
@@ -68,19 +68,21 @@ private:
     calc_chi2_on(ComputeThread *parent) : parent_(parent) {}
     void operator()()
     {
-      //      {
-      // 	boost::mutex::scoped_lock lock(io_mutex);
-      // 	std::cout << "start Thread for " << parent << std::endl; 
-      //       }   
+      {
+       	//boost::mutex::scoped_lock lock(io_mutex);
+      	//std::cout << "start Thread for " << parent_ << "  " 
+	//	  << parent_->data_changed_ << " " << parent_->mypar_->parameters() << std::endl;
+      }   
       if(parent_->data_changed_) {
-	for (DataIter it=parent_->data_.begin() ; it!= parent_->data_.end() ; ++it)
-	  (*it)->changeParAddress(parent_->parorig_,parent_->mypar_); 
+	for (DataIter it=parent_->data_.begin() ; it!= parent_->data_.end() ; ++it) {
+	  (*it)->setParameters(parent_->mypar_);
+	} 
 	parent_->data_changed_ = false;
       }
       for (int param = 0 ; param < parent_->npar_ ; ++param) {
 	parent_->td1_[param]= 0.0;
 	parent_->td2_[param]= 0.0;
-	parent_->mypar_[param] = parent_->parorig_[param];
+	parent_->mypar_->parameters()[param] = parent_->parorig_->parameters()[param];
       }
       parent_->chi2_ =0.0;   
       for (DataIter it=parent_->data_.begin() ; it != parent_->data_.end() ; ++it) { 
@@ -92,16 +94,16 @@ private:
   boost::thread *thread_;
   friend class calc_chi2_on;
 public:
-  ComputeThread(int npar,double *par, const double *epsilon) 
+  ComputeThread(int npar,Parameters *par, const double *epsilon) 
     : npar_(npar), td1_(new double[npar]), td2_(new double[npar]), parorig_(par),
-      mypar_(new double[npar]), epsilon_(epsilon), data_changed_(false) {
+      mypar_(par->clone()), epsilon_(epsilon), data_changed_(false) {
     //std::cout << "threads par array:" << mypar << '\n';
   }
   ~ComputeThread() {
     clearData();
     delete [] td1_;
     delete [] td2_;
-    delete [] mypar_;
+    Parameters::removeClone(mypar_);
   }
   void addData(Event* d) { 
     //d->ChangeParAddress(parorig, mypar);
@@ -109,85 +111,21 @@ public:
     data_.push_back(d);
   }
   void clearData() {   
-    for (DataIter it= data_.begin() ; it!= data_.end() ; ++it)  
-      (*it)->changeParAddress(mypar_,parorig_);
+    for (DataIter it= data_.begin() ; it!= data_.end() ; ++it) {
+      (*it)->setParameters(parorig_);
+    }
     data_.clear();
   }
   void start() { thread_ = new boost::thread(calc_chi2_on(this)); }
   bool isDone() { thread_->join(); delete thread_; return true;}
   void syncParameters() {
-    for (int param = 0 ; param < npar_ ; ++param) mypar_[param] = parorig_[param];
+    for (int param = 0 ; param < npar_ ; ++param) mypar_->parameters()[param] = parorig_->parameters()[param];
   }
   double chi2() const { return chi2_;}
   double tempDeriv1(int i) const { return td1_[i];}
   double tempDeriv2(int i) const { return td2_[i];}
 };
 
-// -----------------------------------------------------------------
-/*
-class ReadThread {
-private:
-  int id_;
-  int ntasks_;
-  std::string configFile_;
-  Parameters * par_;  
-  std::vector<EventReader*> readers_;
-  std::vector<Event*> data_;
-  std::vector<std::vector<Event*> >control_;
-  struct read_events
-  {
-  private:
-    ReadThread *parent_;
-  public:
-    read_events(ReadThread *parent) : parent_(parent) {}
-    void operator()()
-    {
-      for(std::vector<EventReader*>::iterator i = parent_->readers_.begin() ; 
-	  i != parent_->readers_.end() ; ++i) {
-	(*i)->readEvents(parent_->data_);
-	boost::mutex::scoped_lock lock(io_mutex);
-	//(*i)->readControlEvents(parent_->control_[0],1);
-	//(*i)->readControlEvents(parent_->control_[1],2);
-      }
-    }
-  };
-  boost::thread *thread_;
-  friend class read_events;
-public:
-  ReadThread(int id,int ntasks, const std::string& configfile, 
-	     Parameters* par) 
-    : id_(id), ntasks_(ntasks),configFile_(configfile),par_(par),control_(2) 
-  {
-    readers_.push_back(new PhotonJetReader(configFile_,par_,id_,ntasks_));
-    readers_.push_back(new DiJetReader(configFile_,par_,id_,ntasks_));
-    readers_.push_back(new TriJetReader(configFile_,par_,id_,ntasks_));
-    readers_.push_back(new ZJetReader(configFile_,par_,id_,ntasks_));
-    readers_.push_back(new TopReader(configFile_,par_,id_,ntasks_));
-  }
-  ~ReadThread() {
-    for(std::vector<EventReader*>::iterator i = readers_.begin() ; 
-	i != readers_.end() ; ++i) {
-      delete *i;
-    }
-  }
-  void start() { thread_ = new boost::thread(read_events(this)); }
-  bool isDone() { thread_->join(); delete thread_; return true;}
-  int addEvents(std::vector<Event*>& data) {
-    for(DataConstIter i = data_.begin() ; i != data_.end() ; ++i) {
-      data.push_back(*i);
-    }
-    return data_.size();
-  }
-  int addControlEvents(std::vector<Event*>& controls, int id) {
-    for(DataConstIter i = control_[id].begin() ; 
-	i != control_[id].end() ; ++i) {
-      controls.push_back(*i);
-    }
-    return control_[id].size();
-  }
-};
-
-*/
 
 //--------------------------------------------------------------------------------------------
 void Kalibri::run()
@@ -258,7 +196,7 @@ void Kalibri::run_Lvmini()
   
   ComputeThread *t[nThreads_];
   for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-    t[ithreads] = new ComputeThread(npar, par_->parameters(),epsilon);
+    t[ithreads] = new ComputeThread(npar, par_,epsilon);
   }
 
   //lvmeps_(data_.size()*eps_,wlf1_,wlf2_);
@@ -531,8 +469,6 @@ void Kalibri::init()
 
   par_ = Parameters::createParameters(configFile_);
 
-  //initialize temp arrays for fast derivative calculation
-  TAbstractData::total_n_pars     = par_->numberOfParameters();
 
   //--------------------------------------------------------------------------
   //read config file
@@ -661,6 +597,7 @@ void Kalibri::init()
   outputFile_ = config.read<string>( "Output file", "calibration_k.cfi" );
 
   int niothreads = config.read<int>("Number of IO Threads",7); 
+  
   //int djdc = config.read<int>("Di-Jet data class", 0);
   //fill data vector  
   std::vector<EventReader*> readers;
