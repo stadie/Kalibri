@@ -21,6 +21,8 @@ Fit method = 2
 #Parametrization
 Parametrization Class = L2L3JetParametrization
 
+Number of IO Threads = 6
+
 #Error Parametrization
 tower error parametrization = const
 jet error parametrization   = jet et
@@ -172,10 +174,12 @@ MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L2L3
 
 """
 
-jettypes = ["Calo","PF","JPT","Track"]
-datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1A"
-jecname = "Spring10"
+#jettypes = ["Calo","PF","JPT","Track"]
+jettypes = ["Calo","PF","JPT"]
+datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1B"
+jecname = "Fall10"
 datasetname="QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO"
+correctJets=True
 
 for jettype in jettypes:
     print "make plots for jettype "+jettype
@@ -189,6 +193,9 @@ for jettype in jettypes:
     fcfg.write(config)
     fcfg.write("plots output directory = tempplots\n")
     fcfg.write("Di-Jet input file = tempdijetlist\n")
+    if correctJets:
+        fcfg.write("jet correction source = JetMETCor\n");
+        fcfg.write("jet correction name   = "+jecname+"_AK5"+jettype+"\n");
     fcfg.close()
     
     kalibricmd = "./junk valid.cfg"

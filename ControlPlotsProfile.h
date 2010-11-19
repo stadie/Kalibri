@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
+// $Id: ControlPlotsProfile.h,v 1.2 2010/10/12 08:40:53 stadie Exp $
 
 #ifndef CONTROL_PLOTS_PROFILE_H
 #define CONTROL_PLOTS_PROFILE_H
@@ -18,7 +18,7 @@
 
 class ControlPlotsFunction;
 class Event;
-
+class TGraph;
 
 //! \brief Creates different profile plots from 2D histograms
 //!
@@ -32,7 +32,7 @@ class Event;
 //!
 //! \author Matthias Schroeder
 //! \date 2009/12/18
-//! $Id: ControlPlotsProfile.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
+//! $Id: ControlPlotsProfile.h,v 1.2 2010/10/12 08:40:53 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsProfile {
  public:
@@ -56,7 +56,7 @@ class ControlPlotsProfile {
   //! 
   //! \author Matthias Schroeder
   //! \date 2009/12/18
-  //! $Id: ControlPlotsProfile.h,v 1.1 2010/01/04 17:04:51 mschrode Exp $
+  //! $Id: ControlPlotsProfile.h,v 1.2 2010/10/12 08:40:53 stadie Exp $
   // ----------------------------------------------------------------   
   class Bin {
   public:
@@ -94,6 +94,7 @@ class ControlPlotsProfile {
     //! Returns the file name of the y distributions
     std::string distributionFileName(int xBin, const ControlPlotsConfig::InputTag& tag) const;
 
+    int id() const { return idx_;}
   private:
     const int idx_;
     const double min_;
@@ -117,5 +118,7 @@ class ControlPlotsProfile {
 
   //! Find the index of the \p Bin in which the event \p evt falls
   int findBin(const Event *evt) const;
+
+  static TGraph* makeGraph(TH1* h);
 };
 #endif

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.14 2010/10/12 08:40:53 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.15 2010/10/14 17:27:48 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -9,6 +9,7 @@
 #include "TROOT.h"
 #include "TImage.h"
 #include "TStyle.h"
+#include "TGraph.h"
 
 #include "CalibData.h"
 #include "ControlPlotsFunction.h"
@@ -124,14 +125,18 @@ void ControlPlotsProfile::draw() {
 	    h->Draw("HIST");
 	  } else {
 	    h->Draw("PE1X0");
+	    makeGraph(h)->Draw("LSAME");
 	  }
+	  h->GetXaxis()->SetMoreLogLabels();
+	  h->GetXaxis()->SetNoExponent();
 	  firstHist = false;
 	} else { 
 	  if(h->GetMarkerStyle() < 0) {
 	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
 	    h->Draw("HISTSAME");
 	  } else {
-	    h->Draw("PE1X0same");
+	    h->Draw("PE1X0same"); 
+	    makeGraph(h)->Draw("LSAME");
 	  }
 	}
 	config_->toRootFile(h);
@@ -166,15 +171,19 @@ void ControlPlotsProfile::draw() {
 	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
 	    h->Draw("HIST");
 	  } else {
-	    h->Draw("PE1X0");
+	    h->Draw("PE1X0"); 
+	    makeGraph(h)->Draw("LSAME");
 	  }
 	  firstHist = false;
+	  h->GetXaxis()->SetMoreLogLabels();
+	  h->GetXaxis()->SetNoExponent();
 	} else {
 	  if(h->GetMarkerStyle() < 0) {
 	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
 	    h->Draw("HISTSAME");
 	  } else {
-	    h->Draw("PE1X0same");
+	    h->Draw("PE1X0same"); 
+	    makeGraph(h)->Draw("LSAME");
 	  }
 	}
       }  
@@ -191,8 +200,72 @@ void ControlPlotsProfile::draw() {
       fileName += (*binIt)->profileFileName(*profTypeIt) + "_zoom." + config_->outFileType();
       c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
+  }
+  delete leg;
+  // Draw Mikko's profile histograms (zoom on y axis)
+  for(std::vector<Bin*>::iterator binIt = bins_.begin();
+      binIt != bins_.end(); binIt++) { 
+    c1->Clear();
+    bool firstHist = true;
+    leg = new TLegend(0.3,0.85-2*0.06,0.8,0.85);
+    leg->SetBorderSize(0);
+    leg->SetFillColor(0);
+    leg->SetTextFont(42);
+    leg->SetTextSize(0.04);
+    for(ControlPlotsConfig::InputTagsIterator tagsIt = config_->inputTagsBegin() ; tagsIt != config_->inputTagsEnd(); tagsIt++) {
+      if( tagsIt->second == ControlPlotsConfig::Uncorrected) continue;
+      
+      TH1D *hg = (*binIt)->hXProfile(*tagsIt,ControlPlotsConfig::GaussFitMean);
+      TH1D *hm = (*binIt)->hXProfile(*tagsIt,ControlPlotsConfig::Mean);
+      if( (!hg) || (!hm)) continue;
+      hg->GetYaxis()->SetRangeUser(config_->yMinZoom(ControlPlotsConfig::GaussFitMean),config_->yMaxZoom(ControlPlotsConfig::GaussFitMean));
+      if( firstHist ) {  
+	if(hg->GetMarkerStyle() < 0) {
+	  hg->SetYTitle("Response");
+	  hg->SetLineStyle(std::abs(hg->GetMarkerStyle()));
+	  hg->Draw("HIST");
+	} else { 
+	  hg->SetYTitle("Response");
+	  hg->Draw("PE1X0"); 
+	  makeGraph(hg)->Draw("LSAME");
+	}
+	hg->GetXaxis()->SetMoreLogLabels();
+	hg->GetXaxis()->SetNoExponent();
+	firstHist = false;
+      } else {
+	if(hg->GetMarkerStyle() < 0) {
+	  hg->SetLineStyle(std::abs(hg->GetMarkerStyle()));
+	  hg->Draw("HISTSAME");
+	} else {
+	  hg->Draw("PE1X0same"); 
+	  makeGraph(hg)->Draw("LSAME");
+	}
+      }
+      hm->SetLineStyle(7);
+      if(hm->GetMarkerStyle() < 0) {
+	hm->SetLineStyle(std::abs(hm->GetMarkerStyle()-1));
+	hm->Draw("HISTSAME");
+      } else {
+	hm->SetMarkerStyle(hm->GetMarkerStyle()+5);
+	hm->Draw("PE1X0same"); 
+	makeGraph(hm)->Draw("CSAME");
+      } 
+      leg->AddEntry(hg,(config_->legendLabel(*tagsIt)+ " Gauss").c_str(),
+		    "PL");
+      leg->AddEntry(hm,(config_->legendLabel(*tagsIt)+ " Mean").c_str(),
+		    "PL");
+    }
+    leg->Draw("same");
+    hLine->Draw("same");
+    if( config_->logX() ) c1->SetLogx(1);
+    c1->RedrawAxis();
+    p2->DrawClone();
+    fileName = config_->outDirName() + "/";
+    fileName += config_->name() +"_Special_"+config_->binName((*binIt)->id())+ "_zoom." + config_->outFileType();
+    c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
+    delete leg;
   }  
-
+  
   // Draw distributions
   for(std::vector<Bin*>::iterator binIt = bins_.begin();
       binIt != bins_.end(); binIt++) {
@@ -227,7 +300,6 @@ void ControlPlotsProfile::draw() {
   // Clean up
   delete p1;
   delete c1;
-  delete leg;
   delete hLine;
   delete hLine2;
 }
@@ -289,7 +361,20 @@ int ControlPlotsProfile::findBin(const Event * evt) const {
   return bin;
 }
 
-
+//! create Graph for Hist
+// ----------------------------------------------------------------   
+TGraph* ControlPlotsProfile::makeGraph(TH1* h) {
+  TGraph* gr = new TGraph(h);	
+  for(int i = 0 ; i < gr->GetN() ; ++i) {
+    //std::cout << i << ":" << gr->GetY()[i]  << '\n';
+    if(gr->GetY()[i] <= 0) {
+      gr->RemovePoint(i);
+      --i;
+      //std::cout << "after:" << gr->GetY()[i]  << '\n';
+    }
+  }
+  return gr;
+}
 
 //! \param binIdx Index of this bin
 //! \param min Minimum value of the binning variable in this bin

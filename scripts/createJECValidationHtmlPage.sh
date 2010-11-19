@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.6 2010/05/05 19:03:41 mschrode Exp $
+# $Id: createJECValidationHtmlPage.sh,v 1.7 2010/10/20 10:00:25 stadie Exp $
 #
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -80,7 +80,7 @@ ID_RVs="ResponseVs"
 ID_RVsGenPt="${ID_RVs}${ID_GenPt}"
 ID_RVsEta="${ID_RVs}${ID_Eta}"
 ID_RVsMeanWidth="${ID_RVs}${ID_MeanWidth}"
-ID_RVsFlavor="RespFlavor"
+ID_RVsFlavor="RespFlavorVsGenJetPt"
 ID_Response="GaussFitMean"
 ID_Resolution="GaussFitWidth"
 ID_ZOOM="zoom"
@@ -240,6 +240,9 @@ if [[ `ls -1 *.eps 2>/dev/null | wc -l` -eq 0 ]]; then
 	exit 1
     fi
 fi
+#remove unwanted files
+rm *_Mean_*
+rm *MeanWidth_GaussFitWidth_*
 echo -n "Converting to "
 if [[ `ls -1 *.eps 2>/dev/null | wc -l` -ne 0 ]]; then
     echo -n "pdf"
@@ -255,12 +258,12 @@ for pdf in `ls -1 *Resp*.pdf 2>/dev/null`; do
 	new_pdf=`awk 'BEGIN { print substr("'${pdf}'",index("'${pdf}'","'${ID_RVs}'")) }'`
     new_pdf="${DIR_OUT}_${new_pdf}"
     mv ${pdf} ${new_pdf}
-    convert ${new_pdf} -resize 400x400 `basename ${new_pdf} .pdf`.png
+    convert ${new_pdf} -resize 400x400 `basename ${new_pdf} .pdf`.jpg
 done
-echo "Preparing archive with plots in pdf format"
+#echo "Preparing archive with plots in pdf format"
 rm ${PLOTS_TAR}
-PLOTS_TAR=(${DIR_OUT}.tar)
-tar -cf ${PLOTS_TAR} *.pdf
+#PLOTS_TAR=(${DIR_OUT}.tar)
+#tar -cf ${PLOTS_TAR} *.pdf
 
 
 
@@ -399,12 +402,12 @@ html_tag_end table
 # Create list of available categories of validation plots
 
 # Check presence of different categories (>0: present, 0: not present)
-HAS_PLOTS_ResponseVsGenPt=`ls -1 *${ID_RVsGenPt}*${ID_Response}*Eta*.png 2>/dev/null | wc -l`
-HAS_PLOTS_ResponseVsEta=`ls -1 *${ID_RVsEta}*${ID_Response}*.png 2>/dev/null | wc -l`
-HAS_PLOTS_ResolutionVsGenPt=`ls -1 *${ID_RVsGenPt}*${ID_Resolution}*.png 2>/dev/null | wc -l`
-HAS_PLOTS_ResolutionVsEta=`ls -1 *${ID_RVsEta}*${ID_Resolution}*.png 2>/dev/null | wc -l`
-HAS_PLOTS_ResponseVsMeanWidth=`ls -1 *${ID_RVsMeanWidth}*${ID_Response}*.png 2>/dev/null | wc -l`
-HAS_PLOTS_ResponseVsGenPtFlavor=`ls -1 *${ID_RVsFlavor}*${ID_Response}*.png 2>/dev/null | wc -l`                         
+HAS_PLOTS_ResponseVsGenPt=`ls -1 *${ID_RVsGenPt}*${ID_Response}*Eta*.jpg 2>/dev/null | wc -l`
+HAS_PLOTS_ResponseVsEta=`ls -1 *${ID_RVsEta}*${ID_Response}*.jpg 2>/dev/null | wc -l`
+HAS_PLOTS_ResolutionVsGenPt=`ls -1 *${ID_RVsGenPt}*${ID_Resolution}*.jpg 2>/dev/null | wc -l`
+HAS_PLOTS_ResolutionVsEta=`ls -1 *${ID_RVsEta}*${ID_Resolution}*.jpg 2>/dev/null | wc -l`
+HAS_PLOTS_ResponseVsMeanWidth=`ls -1 *${ID_RVsMeanWidth}*${ID_Response}*.jpg 2>/dev/null | wc -l`
+HAS_PLOTS_ResponseVsGenPtFlavor=`ls -1 *${ID_RVsFlavor}*${ID_Response}*.jpg 2>/dev/null | wc -l`                         
 # Write table of plots to html file
 html_newline 3
 html_comment "List of available validation plots"
@@ -430,12 +433,12 @@ if [[ ${HAS_PLOTS_ResponseVsEta} -ne 0 ]]; then
     html_tag li "<a href=\"#${ID_RVsFlavor}_${ID_Response}\">${TITLE_ResponseVsFlavor}</a>"
 fi
 html_tag_end ol
-html_line "All validation plots are also <a href=\"${PLOTS_TAR}\">archived in pdf format</a>."
+#html_line "All validation plots are also <a href=\"${PLOTS_TAR}\">archived in pdf format</a>."
 
 # Write plots to html file
 function tableOfPlots {
-    NUM_UNZOOMED=`ls -1 *${1}*${2}*${4}*[^zoom].png 2>/dev/null | wc -l`;
-    NUM_ZOOMED=`ls -1 *${1}*${2}*${4}*[zoom].png 2>/dev/null | wc -l`;
+    NUM_UNZOOMED=`ls -1 *${1}*${2}*${4}*[^zoom].jpg 2>/dev/null | wc -l`;
+    NUM_ZOOMED=`ls -1 *${1}*Special*${4}*[zoom].jpg 2>/dev/null | wc -l`;
     ((NUM=${NUM_UNZOOMED}+${NUM_ZOOMED}))
     if [[ ${NUM} -ne 0 ]]; then
 	COUNT=0
@@ -443,7 +446,7 @@ function tableOfPlots {
 	html_tag_start li "<h3 id=\"${1}_${2}\">$3</h3>"
 	html_tag_start table "" "style=\"text-align:left\" border=\"0\""
 	
-	for plot in `ls -1 *${1}*${2}*${4}*.png 2>/dev/null`; do
+	for plot in `ls -1 *${1}*${2}*${4}*.jpg 2>/dev/null`; do
 	    if [[ ${NUM_UNZOOMED} -ne 0 ]]; then
 		if [[ ${plot} == *zoom* ]]; then
 		    continue
@@ -458,7 +461,7 @@ function tableOfPlots {
 	    html_line "<img src=\"${plot}\" style=\"border:0\">"
 	    html_tag_end td
 	    html_tag_start td
-	    html_line "( <a href=\"${plot}\">png</a> | <a href=\"`basename ${plot} .png`.pdf\">pdf</a> )"
+	    html_line "( <a href=\"${plot}\">png</a> | <a href=\"`basename ${plot} .jpg`.pdf\">pdf</a> )"
 	    html_tag_end td
 
 	    if [[ ${NUM_ZOOMED} -eq 0 ]]; then
@@ -469,13 +472,23 @@ function tableOfPlots {
 		continue
 	    fi
 		
-	    plot=`basename ${plot} .png`_zoom.png
+	    plot=`basename ${plot} .jpg`_zoom.jpg
+	    plotn=`echo $plot | sed -e 's/GaussFitMean/Special/'`
+	    if [ ${plot} != ${plotn} ]; then 
+		rm ${plot} 
+		plot=`basename ${plot} .jpg`.pdf
+		rm ${plot}
+		#plot=`basename ${plotn} _zoom.jpg`.jpg
+		#rm ${plot}
+		#plot=`basename ${plot} .jpg`.pdf
+		#rm ${plot}
+	    fi
 	    html_tag td "" "style=\"width:5%\""
 	    html_tag_start td
-	    html_line "<img src=\"${plot}\" style=\"border:0\">"
+	    html_line "<img src=\"${plotn}\" style=\"border:0\">"
 	    html_tag_end td
 	    html_tag_start td
-	    html_line "( <a href=\"${plot}\">png</a> | <a href=\"`basename ${plot} .png`.pdf\">pdf</a> )"
+	    html_line "( <a href=\"${plotn}\">png</a> | <a href=\"`basename ${plotn} .jpg`.pdf\">pdf</a> )"
 	    html_tag_end td
 	    	    
 	    html_tag_end tr
