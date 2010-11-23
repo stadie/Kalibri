@@ -175,11 +175,12 @@ MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L2L3
 """
 
 #jettypes = ["Calo","PF","JPT","Track"]
-jettypes = ["Calo","PF","JPT"]
-datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1B"
+jettypes = ["ak5PF","ak7PF","ic5PF","kt4PF","kt6PF","ak5Calo","ak7Calo","ic5Calo","kt4Calo","kt6Calo","ak5JPT"]
+#jettypes = ["ak7Calo"]
+datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1C"
 jecname = "Fall10"
 datasetname="QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO"
-correctJets=True
+correctJets=False
 
 for jettype in jettypes:
     print "make plots for jettype "+jettype
@@ -193,9 +194,11 @@ for jettype in jettypes:
     fcfg.write(config)
     fcfg.write("plots output directory = tempplots\n")
     fcfg.write("Di-Jet input file = tempdijetlist\n")
+    jetalgo = jettype[0:3]
+    
     if correctJets:
         fcfg.write("jet correction source = JetMETCor\n");
-        fcfg.write("jet correction name   = "+jecname+"_AK5"+jettype+"\n");
+        fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"\n");
     fcfg.close()
     
     kalibricmd = "./junk valid.cfg"
@@ -209,7 +212,8 @@ for jettype in jettypes:
 print "please run:"
 for jettype in jettypes:
     tarball=os.getcwd()+"/"+jecname+"plots"+jettype+".tar"
-    webcmd = "./scripts/createJECValidationHtmlPage.sh jetmet "+tarball+" \""+jecname+"\" \""+jecname+"\" "+datasetname+" ak5 "+jettype.lower()
+    
+    webcmd = "./scripts/createJECValidationHtmlPage.sh jetmet "+tarball+" \""+jecname+"\" \""+jecname+"\" "+datasetname+" "+jettype[0:3] +" "+jettype[3:len(jettype)].lower()
     print webcmd
     #os.system(webcmd)
     

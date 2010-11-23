@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.7 2010/10/20 10:00:25 stadie Exp $
+# $Id: createJECValidationHtmlPage.sh,v 1.8 2010/11/19 10:11:40 stadie Exp $
 #
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -163,8 +163,21 @@ until [[ ${CORRECT_INPUT} -eq 1 ]]; do
     elif [[ ${JET_ALGO} == "sc5" ]]; then
 	CORRECT_INPUT=1
 	JET_ALGO="SC5"
+    elif [[ ${JET_ALGO} == "ak7" ]]; then
+	CORRECT_INPUT=1
+	JET_ALGO="AK7"
+    elif [[ ${JET_ALGO} == "ic5" ]]; then
+	CORRECT_INPUT=1
+	JET_ALGO="IC5"
+    elif [[ ${JET_ALGO} == "kt4" ]]; then
+	CORRECT_INPUT=1
+	JET_ALGO="KT4"
+    elif [[ ${JET_ALGO} == "kt6" ]]; then
+	CORRECT_INPUT=1
+	JET_ALGO="KT6"
+	
     else	
-	echo -n "Enter jet algorithm ('ak5','sc5'): "
+	echo -n "Enter jet algorithm ('ak5','sc5','ak7,'ic5','kt4','kt6'): "
 	read JET_ALGO
     fi
 done    
@@ -252,7 +265,7 @@ if [[ `ls -1 *.eps 2>/dev/null | wc -l` -ne 0 ]]; then
     done
     echo -n " and to "
 fi
-echo "png format and resizing plots"
+echo "jpg format and resizing plots"
 for pdf in `ls -1 *Resp*.pdf 2>/dev/null`; do
     #pos=(`expr index ${pdf} ${ID_RVs}`)
 	new_pdf=`awk 'BEGIN { print substr("'${pdf}'",index("'${pdf}'","'${ID_RVs}'")) }'`
@@ -461,7 +474,7 @@ function tableOfPlots {
 	    html_line "<img src=\"${plot}\" style=\"border:0\">"
 	    html_tag_end td
 	    html_tag_start td
-	    html_line "( <a href=\"${plot}\">png</a> | <a href=\"`basename ${plot} .jpg`.pdf\">pdf</a> )"
+	    html_line "( <a href=\"${plot}\">jpg</a> | <a href=\"`basename ${plot} .jpg`.pdf\">pdf</a> )"
 	    html_tag_end td
 
 	    if [[ ${NUM_ZOOMED} -eq 0 ]]; then
@@ -488,7 +501,7 @@ function tableOfPlots {
 	    html_line "<img src=\"${plotn}\" style=\"border:0\">"
 	    html_tag_end td
 	    html_tag_start td
-	    html_line "( <a href=\"${plotn}\">png</a> | <a href=\"`basename ${plotn} .jpg`.pdf\">pdf</a> )"
+	    html_line "( <a href=\"${plotn}\">jpg</a> | <a href=\"`basename ${plotn} .jpg`.pdf\">pdf</a> )"
 	    html_tag_end td
 	    	    
 	    html_tag_end tr
