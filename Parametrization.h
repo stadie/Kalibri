@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.70 2010/10/20 11:28:19 stadie Exp $
+//  $Id: Parametrization.h,v 1.71 2010/10/20 13:32:55 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -25,7 +25,7 @@ class TRandom;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.70 2010/10/20 11:28:19 stadie Exp $
+//!  $Id: Parametrization.h,v 1.71 2010/10/20 13:32:55 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -931,15 +931,15 @@ public:
     double logpt = log10(pt);
     double c = par[0]+logpt*(0.1 * par[1]+logpt *(0.01* par[2]+logpt*(0.01*par[3])))+ par[4] * pow(pt/500.0,3);
     
-    if(c < 0.05) {
+    if(c < 0.5) {
       //std::cout << "L2L3JetParametrization::correctedJetEt: at limit " << c << " for pt=" << x->pt
       //	<< " and eta = " << x->eta << std ::endl;
-      c = 0.05;
+      c = 0.5;
     }
-    if(c > 20.0) {
+    if(c > 10.0) {
       //std::cout << "L2L3JetParametrization::correctedJetEt: at limit " << c << " for pt=" << x->pt
       //	<< " and eta = " << x->eta << std ::endl;
-      c = 20.0;
+      c = 10.0;
     }
     //assert(c > 0);
     return c * x->pt;
@@ -1797,16 +1797,41 @@ public:
 // -----------------------------------------------------------------
 class MeanWidthParametrization: public Parametrization {
 public:
-  MeanWidthParametrization() : Parametrization(0,10,0,0) {}
+  MeanWidthParametrization() : Parametrization(0,20,0,0) {}
   const char* name() const { return "MeanWidthParametrization";}
     
+  double cuttedPt(const Measurement *x) const {
+    double abs_eta = std::abs(x->eta),pt_min,pt_max;
+    if(abs_eta>0.000&&abs_eta<1.305) {pt_min=15; pt_max=1000;}
+    else if(abs_eta>1.305&&abs_eta<2.65) {pt_min=10; pt_max=600;}
+    else if(abs_eta>2.65&&abs_eta<2.964) {pt_min=10; pt_max=180;}
+    else if(abs_eta>2.964&&abs_eta<5.191) {pt_min=15; pt_max=100;}
+    else {std::cout << "Warning: not in valid eta-range, return uncorrected jetet"<<std::endl;return x->pt;}    
+    return (x->pt < pt_min) ? pt_min : (x->pt > pt_max) ? pt_max : x->pt; 
+  }
+
+  double widthMean(const Measurement *x,const double *par) const {
+    double pt = cuttedPt(x);
+    //    double logpt = log10(pt); is log10 in other parametrizations...
+    double logpt = log(pt);
+    return ((par[0]/10.)+(par[1]/100.)*logpt+(par[2]/10000)*pt) + ((par[3]/10.))*exp( (par[4]/10.)*pt);
+  }
+
+  double widthSigma(const Measurement *x,const double *par) const {
+    double pt = cuttedPt(x);
+    //    double logpt = log10(pt); is log10 in other parametrizations...
+    double logpt = log(pt);
+    double sigma= ((par[5]/100.)+(par[6]/1000.)*logpt+(par[7]/1000000.)*pt) + ((par[8]/100.))*exp( (par[9]/10.)*pt);
+    if(sigma < 0.001) sigma = 0.001;
+    return sigma;
+  }
+ 
   double correctedTowerEt(const Measurement *x,const double *par) const {
     return x->pt;
   }
  
   double correctedJetEt(const Measurement *x,const double *par) const {
-
-
+    /*
     const static double meanpar[][5] ={
       {2.22197,-2.43273,0.161247,-1.8384,-1.12056},
       {2.211,-2.34235,0.196643,-1.71561,-1.20111},
@@ -1814,50 +1839,43 @@ public:
       {-1.83367,7.87148,-7.93116,2.17698,-0.351629}
       //      {0.000000,0.00000,0.000000,0.00000,0.0000000}
     };
-      
-      const static double sigmapar[][5] = {
-	{3.76558,-1.28309,-1.21227,4.97975,-1.06063},
-	{4.04847,-2.31725,0.363659,4.69276,-1.1739},
-	{15.1794,-29.3188,141.953,-5.74235,-0.27755},
-	{4.34203,-3.78074,24.1966,4477.12,-8.18597}
-	//	{0.000000,0.00000,0.000000,0.00000,0.0000000}
-      };
-
-      int eta_choice;
-      double pt_min;
-      double pt_max;
     
-      double abs_eta = std::abs(x->eta);
-
-      if(abs_eta>0.000&&abs_eta<1.305) {eta_choice=0; pt_min=15; pt_max=1000;}
-      else if(abs_eta>1.305&&abs_eta<2.65) {eta_choice=1; pt_min=10; pt_max=600;}
-      else if(abs_eta>2.65&&abs_eta<2.964) {eta_choice=2; pt_min=10; pt_max=180;}
-      else if(abs_eta>2.964&&abs_eta<5.191) {eta_choice=3; pt_min=15; pt_max=100;}
-      else {std::cout << "Warning: not in valid eta-range, return uncorrected jetet"<<std::endl;return x->pt;}
-
-
-      //-5.191 -2.964 -2.65 -1.392  1.392 2.65 2.964 5.191
-    double pt = (x->pt < pt_min) ? pt_min : (x->pt > pt_max) ? pt_max : x->pt; 
+    const static double sigmapar[][5] = {
+      {3.76558,-1.28309,-1.21227,4.97975,-1.06063},
+      {4.04847,-2.31725,0.363659,4.69276,-1.1739},
+      {15.1794,-29.3188,141.953,-5.74235,-0.27755},
+      {4.34203,-3.78074,24.1966,4477.12,-8.18597}
+      //	{0.000000,0.00000,0.000000,0.00000,0.0000000}
+    };
+    */
+    //-5.191 -2.964 -2.65 -1.392  1.392 2.65 2.964 5.191
+    double pt = cuttedPt(x); 
     //    double logpt = log10(pt); is log10 in other parametrizations...
     double logpt = log(pt);
     
-    double mean = ((meanpar[eta_choice][0]/10.)+(meanpar[eta_choice][1]/100.)*logpt+(meanpar[eta_choice][2]/10000)*pt) + ((meanpar[eta_choice][3]/10.))*exp( (meanpar[eta_choice][4]/10.)*pt);
-    double sigma =  ((sigmapar[eta_choice][0]/100.)+(sigmapar[eta_choice][1]/1000.)*logpt+(sigmapar[eta_choice][2]/1000000.)*pt) + ((sigmapar[eta_choice][3]/100.))*exp( (sigmapar[eta_choice][4]/10.)*pt);
+    double mean = widthMean(x,par);
+    double sigma =  widthSigma(x,par);
     
     double y =  0.5*(x->phiphi+x->etaeta);
    
-    double b = (par[0]+(par[1]/10.)*logpt+(par[2]/10000.)*pt) + ((par[3]*10.))*exp( (par[4]/100.)*pt);
-    double c =  ((par[5]*10.)+par[6]*logpt+(par[7]/100.)*pt) + ((par[8]*10.))*exp( (par[9]/100.)*pt);
+    double b = (par[10]+(par[11]/10.)*logpt+(par[12]/10000.)*pt) + ((par[13]*10.))*exp( (par[14]/100.)*pt);
+    double c =  ((par[15]*10.)+par[16]*logpt+(par[17]/100.)*pt) + ((par[18]*10.))*exp( (par[19]/100.)*pt);
     
-    double cf = (1- sigma*sigma * c) +b * (y-mean) + c*(y-mean)*(y-mean);  
+    double yr =  y-mean;
+    //if(yr > 3 * sigma)  yr = 3 * sigma;
+    //if(yr < -3 * sigma) yr = -3 * sigma;
+    double cf = (1- sigma*sigma * c) +b * (yr) + c*yr*yr;  
     if(cf < 0.3) cf = 0.3;
     if(cf > 3.0) cf = 3.0;
-    if(cf==0.3||cf==3.0) std::cout << "strange correction factor " << cf << " really " << (1- sigma*sigma * c) +b * (y-mean) + c*(y-mean)*(y-mean) << " pt of jet: " << x->pt << " mean Moment y: "  << y <<  " jet-eta: " << abs_eta <<std::endl;
+    /*
+    if(cf==0.3||cf==3.0) {
+      std::cout << "strange correction factor " << cf << " really " << (1- sigma*sigma * c) +b * yr+ c*yr*yr << " pt of jet: " << x->pt << " mean Moment y: "  << y <<  " jet-eta: " << abs_eta <<std::endl;
+      assert(cf!=0.3 && cf!=3.0);
+    }
+    */
     return 1/cf * x->pt;  
   }
 };
-
-
 
 //!  \brief Parametrization of the residual jet correction needed for CMS data
 //!
