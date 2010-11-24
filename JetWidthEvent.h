@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetWidthEvent.h,v 1.18 2010/11/01 15:47:40 stadie Exp $
+//    $Id: JetWidthEvent.h,v 1.1 2010/11/24 09:36:38 stadie Exp $
 //   
 #ifndef JETWIDTHEVENT_H
 #define JETWIDTHEVENT_H
@@ -31,7 +31,7 @@ public:
   
   double chi2() const;
   double chi2_plots() const { return chi2plots_; }
-  double chi2_fast(long double * temp_derivative1, long double * temp_derivative2, const double* epsilon) const; 
+  double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const; 
   void updateError() {}
  private:
   Jet* jet_;

@@ -18,8 +18,8 @@ class ParameterLimit : public Event
   
   double chi2() const;
   
-  double chi2_fast(long double* temp_derivative1, 
-		   long double* temp_derivative2, const double* epsilon) const;
+  double chi2_fast(double* temp_derivative1, 
+		   double* temp_derivative2, const double* epsilon) const;
   Measurement *mess() const { return 0;}
   double truth() const { return 0;}
   double parametrizedMess() const { return 0;}

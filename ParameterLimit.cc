@@ -15,8 +15,8 @@ void ParameterLimit::setParameters(Parameters* param)
   par_ = *param;
 }
 
-double ParameterLimit::chi2_fast(long double* temp_derivative1, 
-				 long double* temp_derivative2, 
+double ParameterLimit::chi2_fast(double* temp_derivative1, 
+				 double* temp_derivative2, 
 				 const double* epsilon) const
 {
   // Penalty term with current parameter values
