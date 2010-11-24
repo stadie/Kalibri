@@ -22,6 +22,14 @@ public :
    UInt_t          LumiBlockNumber;
    UInt_t          EventNumber;
    Bool_t          HltPhysicsDelcared;
+   Bool_t          HltL1Jet6U;
+   Bool_t          HltDiJetAve15U;
+   Bool_t          HltDiJetAve30U;
+   Bool_t          HltDiJetAve50U;
+   Bool_t          HltDiJetAve70U;
+   Bool_t          HltDiJetAve100U;
+   Bool_t          HltDiJetAve140U;
+   Int_t           VtxN;
    Int_t           VtxNTracks;
    Float_t         VtxPosX;
    Float_t         VtxPosY;
@@ -143,6 +151,14 @@ public :
    TBranch        *b_LumiBlockNumber;   //!
    TBranch        *b_EventNumber;   //!
    TBranch        *b_HltPhysicsDelcared;   //!
+   TBranch        *b_HltL1Jet6U;   //!
+   TBranch        *b_HltDiJetAve15U;   //!
+   TBranch        *b_HltDiJetAve30U;   //!
+   TBranch        *b_HltDiJetAve50U;   //!
+   TBranch        *b_HltDiJetAve70U;   //!
+   TBranch        *b_HltDiJetAve100U;   //!
+   TBranch        *b_HltDiJetAve140U;   //!
+   TBranch        *b_VtxN;   //!
    TBranch        *b_VtxNTracks;   //!
    TBranch        *b_VtxPosX;   //!
    TBranch        *b_VtxPosY;   //!
@@ -300,6 +316,14 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("LumiBlockNumber", &LumiBlockNumber, &b_LumiBlockNumber);
    fChain->SetBranchAddress("EventNumber", &EventNumber, &b_EventNumber);
    fChain->SetBranchAddress("HltPhysicsDelcared", &HltPhysicsDelcared, &b_HltPhysicsDelcared);
+   fChain->SetBranchAddress("HltL1Jet6U", &HltL1Jet6U, &b_HltL1Jet6U);
+   fChain->SetBranchAddress("HltDiJetAve15U", &HltDiJetAve15U, &b_HltDiJetAve15U);
+   fChain->SetBranchAddress("HltDiJetAve30U", &HltDiJetAve30U, &b_HltDiJetAve30U);
+   fChain->SetBranchAddress("HltDiJetAve50U", &HltDiJetAve50U, &b_HltDiJetAve50U);
+   fChain->SetBranchAddress("HltDiJetAve70U", &HltDiJetAve70U, &b_HltDiJetAve70U);
+   fChain->SetBranchAddress("HltDiJetAve100U", &HltDiJetAve100U, &b_HltDiJetAve100U);
+   fChain->SetBranchAddress("HltDiJetAve140U", &HltDiJetAve140U, &b_HltDiJetAve140U);
+   fChain->SetBranchAddress("VtxN", &VtxN, &b_VtxN);
    fChain->SetBranchAddress("VtxNTracks", &VtxNTracks, &b_VtxNTracks);
    fChain->SetBranchAddress("VtxPosX", &VtxPosX, &b_VtxPosX);
    fChain->SetBranchAddress("VtxPosY", &VtxPosY, &b_VtxPosY);
