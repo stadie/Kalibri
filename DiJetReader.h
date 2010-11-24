@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.26 2010/10/14 17:26:55 stadie Exp $
+//!  $Id: DiJetReader.h,v 1.27 2010/10/20 11:28:16 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -115,7 +115,7 @@ class DiJetReader : public EventReader{
   double min_;                  //!< Minimum of truth spectrum in integration
   double max_;                  //!< Maximum of truth spectrum in integration
   double truthSpecExp_;         //!< Exponent of truth spectrum
-  double genjetpt_,jeteta_,sigmaphi_,sigmaeta_,sumsigmaetaphi_,emf_,meanMoment_; //!< possible binning variables
+  double genjetpt_,genjete_,jeteta_,sigmaphi_,sigmaeta_,sumsigmaetaphi_,emf_,meanMoment_; //!< possible binning variables
 
   int minJetN90Hits_;
   double maxJetFHPD_;
