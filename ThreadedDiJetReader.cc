@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.2 2010/10/20 11:28:12 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.3 2010/11/01 15:47:41 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -67,6 +67,8 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
       std::cerr << "WARNING: Jets are not corrected!\n";
       exit(9);
     }
+  } else if (dataClass_ == 31) {
+    std::cout << "'JetWidthEvent'";
   } else {
     std::cerr << "Unknown data class " << dataClass_ << '\n';
     exit(9);
