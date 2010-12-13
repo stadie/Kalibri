@@ -85,34 +85,33 @@ EventWeightProcessor::~EventWeightProcessor() {
 //!  \param data The data
 //!  \return Number of weighted events
 // -----------------------------------------------------------------
-int EventWeightProcessor::process(std::vector<Event*>& data) {
+int EventWeightProcessor::preprocess(std::vector<Event*>& data) {
+  if(! weightEvents_) return data.size();
+  
   int nProcEvts = 0; // Number of processed events
-
-  if( weightEvents_ ) {
-    std::vector<Event*>::iterator evt = data.begin();
-    for(; evt != data.end(); evt++) {
-      if( (*evt)->type() == ParLimit ) continue;
-      double weight   = 0.;
-
-      if( type_ == 0 ) {
-	for(size_t ptHatBin = 0; ptHatBin < minPtHat_.size(); ptHatBin++) {
-	  if( (*evt)->ptHat() > minPtHat_.at(ptHatBin) )
-	    weight = weights_.at(ptHatBin);
-	  else
-	    break;
-	}
+  std::vector<Event*>::iterator evt = data.begin();
+  for(; evt != data.end(); evt++) {
+    if( (*evt)->type() == ParLimit ) continue;
+    double weight   = 0.;
+    
+    if( type_ == 0 ) {
+      for(size_t ptHatBin = 0; ptHatBin < minPtHat_.size(); ptHatBin++) {
+	if( (*evt)->ptHat() > minPtHat_.at(ptHatBin) )
+	  weight = weights_.at(ptHatBin);
+	else
+	  break;
       }
-      else if( type_ == 1 ) {
-	weight = globalWeight_*pow((*evt)->ptHat(),expo_);
-      }
-
-      (*evt)->setWeight( weight );
-      nProcEvts++;
     }
-
-    std::cout << "  Applied weights for " << nProcEvts << " events\n";
+    else if( type_ == 1 ) {
+      weight = globalWeight_*pow((*evt)->ptHat(),expo_);
+    }
+    
+    (*evt)->setWeight( weight );
+    nProcEvts++;
   }
-
+  
+  std::cout << "  Applied weights for " << nProcEvts << " events\n";
+  
   return nProcEvts;
 }
 

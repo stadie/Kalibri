@@ -1,18 +1,13 @@
 //
-// $Id: EventProcessor.h,v 1.4 2009/11/24 16:52:59 stadie Exp $
+// $Id: EventProcessor.h,v 1.5 2010/10/20 11:28:17 stadie Exp $
 //
 #ifndef EVENTPROCESSOR_H
 #define EVENTPROCESSOR_H
 
+#include <vector>
+
 class Event;
 class Parameters;
-class TH1;
-class TF1;
-
-#include <vector>
-#include <string>
-
-
 
 // -----------------------------------------------------------------
 class EventProcessor
@@ -20,33 +15,11 @@ class EventProcessor
  public:
   EventProcessor(const std::string& configfile, Parameters* param);
   virtual ~EventProcessor();
-  virtual int process(std::vector<Event*>& data);
+  virtual int preprocess(std::vector<Event*>& data) = 0;
+  virtual int postprocess(std::vector<Event*>& data) = 0;
 
  private:
-  static void fitWithoutBottom(TH1 * hist, TF1 * func, double bottom=0.33);
-  static double gaussStep(double *x, double *par);
-
-  int flattenSpectra(std::vector<Event*>& data);
-  void balanceSpectra(std::vector<Event*>& data);
-  int getSpectraBin(double m1, double m2, double m3);
-
   Parameters* par_;
-  double etCutOnGamma_;
-  double etCutOnJet_;
-  bool flattenSpectra_;
-  double relWeight_[7];//@@ Replace 7 by something meaningful
-  //  std::vector<int> residualScalingScheme_;          // Iteration scheme of scaling of residuals
-
-  typedef std::vector<Event*>::iterator DataIter;
-  typedef std::vector<Event*>::const_iterator DataConstIter;
-  //"Not-Balanced" Rejection: Make average-fitting equal to peak-fitting
-  struct NotBalancedRejection {
-  NotBalancedRejection(double *cut, double min, double max):
-    _cut(cut),_min(min),_max(max){};
-    bool operator()(Event *d);
-    double *_cut;
-    double _min, _max;
-  };
 };
 
 

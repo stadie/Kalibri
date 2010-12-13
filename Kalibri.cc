@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.12 2010/10/20 13:32:55 stadie Exp $
+//  $Id: Kalibri.cc,v 1.13 2010/11/01 15:47:41 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -25,6 +25,7 @@ boost::mutex io_mutex;
 #include "ParameterLimitsReader.h"
 #include "EventProcessor.h"
 #include "EventWeightProcessor.h"
+#include "EventBinning.h"
 
 #include <dlfcn.h>
 
@@ -134,15 +135,13 @@ void Kalibri::run()
 
     time_t start = time(0);
     
-    //calls FlattenSpectra and BalanceSpectra if enabled in config
-    EventProcessor ep(configFile_,par_);
-    ep.process(data_);
+    std::vector<EventProcessor*> processors;
+    processors.push_back(new EventWeightProcessor(configFile_,par_));
+    processors.push_back(new EventBinning(configFile_,par_));
 
-    // Apply event weights if enabled
-    EventWeightProcessor ewp(configFile_,par_);
-    if( ewp.applyWeights() ) {
-      ewp.process(data_);
-    }
+    for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
+      (*i)->preprocess(data_);
+    } 
     if(! data_.size()) {
       std::cout << "Warning: No events to perform the fit!\n";
       return;
@@ -153,7 +152,11 @@ void Kalibri::run()
       cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
     } else {
       if( par_->needsUpdate() ) par_->update();
-    }
+    } 
+    for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
+      (*i)->postprocess(data_);
+      delete *i;
+    } 
   } 
   //Dummy Configuration: Nothing to be done, start-values are written to file
 }
@@ -276,10 +279,16 @@ void Kalibri::run_Lvmini()
 	temp_derivative2[param]=0.0;
       } 
       //computed step sizes for derivative calculation
+      if(printParNDeriv_) std::cout << "new par:\n";
       for(int param = 0 ; param < npar ; ++param) {
+	if(printParNDeriv_)  {
+	  std::cout << std::setw(5) << param;
+	  std::cout << std::setw(15) << par_->parameters()[param];
+	}
 	epsilon[param] = derivStep_ * std::abs(par_->parameters()[param]);
 	if(epsilon[param] < 1e-06) epsilon[param] = 1e-06;
       }
+      if(printParNDeriv_) std::cout << std::endl;
       //use zero step for fixed pars
       for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
 	   iter != fixedJetPars_.end() ; ++ iter) {
@@ -293,6 +302,7 @@ void Kalibri::run_Lvmini()
 	if(t[ithreads]->isDone()) {
 	  fsum += t[ithreads]->chi2();
 	  for (int param=0 ; param < npar ; ++param) {
+	    assert(t[ithreads]->tempDeriv1(param) == t[ithreads]->tempDeriv1(param));
 	    temp_derivative1[param] += t[ithreads]->tempDeriv1(param);
 	    temp_derivative2[param] += t[ithreads]->tempDeriv2(param);
 	  }
@@ -311,6 +321,9 @@ void Kalibri::run_Lvmini()
 	} else {
 	  aux[param] = 0;
 	  aux[param+npar] = 0;
+	}
+	if(aux[param] != aux[param]) {
+	  std::cout << "bad derivative: par = " << param << " td = " << temp_derivative1[param] << " epsilon = " << epsilon[param] << '\n';
 	}
  	assert(aux[param] == aux[param]);
  	assert(aux[param+npar] == aux[param+npar]);
