@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.71 2010/10/20 13:32:55 stadie Exp $
+//  $Id: Parametrization.h,v 1.72 2010/11/24 09:36:38 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -25,7 +25,7 @@ class TRandom;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.71 2010/10/20 13:32:55 stadie Exp $
+//!  $Id: Parametrization.h,v 1.72 2010/11/24 09:36:38 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1821,8 +1821,13 @@ public:
     double pt = cuttedPt(x);
     //    double logpt = log10(pt); is log10 in other parametrizations...
     double logpt = log(pt);
-    double sigma= ((par[5]/100.)+(par[6]/1000.)*logpt+(par[7]/1000000.)*pt) + ((par[8]/100.))*exp( (par[9]/10.)*pt);
+    double arg = par[9]/10 *pt;
+    if(arg > 100) arg  = 100;
+    double sigma= ((par[5]/100.)+(par[6]/1000.)*logpt+(par[7]/1000000.)*pt) + ((par[8]/100.))*exp(arg);
     if(sigma < 0.001) sigma = 0.001;
+    if(std::isinf(sigma)) {
+      std::cout << "inf:" << par[8] << ", " << par[9] << ", " << pt << ", " << exp( (par[9]/10.)*pt) << '\n';
+    }
     return sigma;
   }
  
