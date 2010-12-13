@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.63 2010/11/01 15:47:43 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.64 2010/11/24 09:36:38 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -30,6 +30,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include <iterator>
+
 #include <boost/thread/thread.hpp>
 //!  \brief Constructor
 //!
@@ -70,6 +72,44 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   maxGenJetEt_       = config_->read<double>("Et genJet max",10000.0);
   maxDeltaR_         = config_->read<double>("DeltaR cut on jet matching",0.25);
 
+  //read trigger map
+  std::vector<std::string> trignames = bag_of_string(config_->read<std::string>("Di-Jet trigger names",""));
+  std::vector<double> trigthresholds = bag_of<double>(config_->read<std::string>("Di-Jet trigger thresholds",""));
+  if(trignames.size() != trigthresholds.size()) {
+    std::cerr << "DiJetReader: numer of triggers and thresholds mismatch." 
+	      << trignames.size() << " != " << trigthresholds.size() << std::endl;
+    exit(9);
+  }
+  requireTrigger_ = trignames.size();
+  for(int i = 0, l = trignames.size() ; i < l ; ++i) {
+    bool* trigvar = 0;
+    if(trignames[i] == "HLT_DiJetAve15U") {
+      trigvar = &hltdijetave15incl_;
+    }
+    else if(trignames[i] == "HLT_DiJetAve30U") {
+      trigvar = &hltdijetave30incl_;
+    }
+    else if(trignames[i] == "HLT_DiJetAve50U") {
+      trigvar = &hltdijetave50incl_;
+    }
+    else if(trignames[i] == "HLT_DiJetAve70U") {
+      trigvar = &hltdijetave70incl_;
+    }
+    else if(trignames[i] == "HLT_DiJetAve100U") {
+      trigvar = &hltdijetave100incl_;
+    }
+    else if(trignames[i] == "HLT_DiJetAve140U") {
+      trigvar = &hltdijetave140incl_;
+    }
+    else {
+      std::cerr << "DiJetReader: unknown trigger name:" 
+		<< trignames[i] << std::endl;
+      exit(9);
+    }
+    trigmap_[trigthresholds[i]] = trigvar;
+    
+  }
+  
   // Loose JetID for barrel
   // Replace by ntuple variabel in newer Kalibri-trees
   minJetN90Hits_ = 2;
@@ -92,6 +132,7 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   nMinGenJetEt_       = 0;    
   nMaxGenJetEt_       = 0;     
   nMaxDeltaR_         = 0;
+  nTriggerSel_        = 0;
   // Integration parameter for SmearData
   maxNIter_  = config_->read<int>("DiJet integration number of iterations",5);
   eps_       = config_->read<double>("DiJet integration epsilon",1.E-5);
@@ -215,6 +256,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
   nDiJetCut_          = 0;
   nMinJetEt_          = 0;
   nMaxJetEt_          = 0;
+  nTriggerSel_        = 0;
   nMinDijetEt_        = 0;
   nMaxDijetEt_        = 0;
   nCutOn3rdJet_       = 0;
@@ -307,7 +349,10 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     }
     if(nReadEvts_>=nDijetEvents_ && nDijetEvents_>=0 ) break;
   }
-  //printCutFlow(); 
+  //printCutFlow();
+
+  //hack: disable trigger selection after first reading
+  requireTrigger_ = false;
   return nGoodEvts_;
 }
 
@@ -330,6 +375,8 @@ void DiJetReader::printCutFlow()
     std::cout << " dijet events Et > " << minJetEt_ << " GeV\n";
     std::cout << "  " << (nReadEvts_-=nMaxJetEt_) << std::flush;
     std::cout << " dijet events Et < " << maxJetEt_ << " GeV\n";
+    std::cout << "  " << (nReadEvts_-=nTriggerSel_) << std::flush;
+    std::cout << " dijet events passing trigger \n"; 
     std::cout << "  " << (nReadEvts_-=(nMinJetEta_+nMaxJetEta_)) << std::flush;
     std::cout << " dijet events with " << minJetEta_ << " < |eta| < " << maxJetEta_ << "\n";
     std::cout << "  " << (nReadEvts_-=nMinJetHadFraction_) << std::flush;
@@ -339,7 +386,7 @@ void DiJetReader::printCutFlow()
     std::cout << "  " << (nReadEvts_-=nCutOn3rdJet_) << std::flush;
     std::cout << " dijet events with " << minRel3rdJetEt_ << " < pt(jet3) / ptAve < " << maxRel3rdJetEt_ << "\n";
     std:: cout << "  " << (nReadEvts_-=nCutOnSoftJets_) << std::flush;
-    std::cout << " dijet events with pt(jet>3) / ptAve < " << maxRelSoftJetEt_ << "\n";
+    std::cout << " dijet events with sqrt(sum |pt(jet>3)|) / ptAve < " << maxRelSoftJetEt_ << "\n";
   } else if( dataClass_ == 11 || dataClass_ == 12 || dataClass_ == 21 ) {
     std::cout << "  " << (nReadEvts_-=nDiJetCut_) << std::flush;
     std::cout << " events with 2 or more jets\n";
@@ -526,7 +573,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       sumsigmaetaphi_ = sigmaeta_ + sigmaphi_;
       meanMoment_ = 0.5 * sumsigmaetaphi_;
       emf_ = nJet_->JetEMF[calJetIdx];
-      boost::mutex::scoped_lock lock(dijetmutex);
+      boost::mutex::scoped_lock lock(dijetmutex_);
       JetBin* bin = (*binning_)(*vars_[0],*vars_[1],*vars_[2],*vars_[3]);
       // std::cout << "adding jet to bin:" << ibin << " with pt=" << nJet_->GenJetColPt[genJetIdx] << ", eta = " << nJet_->JetEta[calJetIdx] << std::endl;
       if(! bin) { 
@@ -976,6 +1023,31 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetEt_++;
     return 0;
   }
+  //trigger cuts
+  if(requireTrigger_ && trigmap_.size()) {
+    hltdijetave15incl_ = nJet_->HltDiJetAve15U;
+    hltdijetave30incl_ = hltdijetave15incl_ || nJet_->HltDiJetAve30U;
+    hltdijetave50incl_ = hltdijetave30incl_ || nJet_->HltDiJetAve50U;
+    hltdijetave70incl_ = hltdijetave50incl_ || nJet_->HltDiJetAve70U;
+    hltdijetave100incl_ = hltdijetave70incl_ || nJet_->HltDiJetAve100U;
+    hltdijetave140incl_ = hltdijetave100incl_ || nJet_->HltDiJetAve140U;
+    double diJetPtAve = 0.5 * (nJet_->JetCorrL2L3[0] * nJet_->JetPt[0]+ nJet_->JetCorrL2L3[1] * nJet_->JetPt[1]);
+    std::map<double,bool*>::iterator it = trigmap_.lower_bound(diJetPtAve);
+    if(it == trigmap_.begin()) {
+      //std::cout << "below all trigger thresholds:" << diJetPtAve << '\n';
+      nTriggerSel_++;
+      return 0;
+    }
+    --it;
+    if(! *(it->second)) {
+      //std::cout << "failing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
+      nTriggerSel_++;
+      return 0;
+    } 
+    // std::cout << "passing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
+  }
+
+
   if( std::abs(nJet_->JetEta[0]) > maxJetEta_ || std::abs(nJet_->JetEta[1]) > maxJetEta_ ) {
     nMaxJetEta_++;
     return 0;
@@ -991,19 +1063,17 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     return 0;
   }
   //loose jet id 
-  /* 
-     if(! (nJet_->JetIDLoose[0] && nJet_->JetIDLoose[1])) {
-     nMaxJetHadFraction_++;
+   
+  if(! (nJet_->JetIDLoose[0] && nJet_->JetIDLoose[1])) {
+    nMaxJetHadFraction_++;
     return 0;
   }
-  */
+  /*
   if(((( nJet_->JetEMF[0] <= 0.01) && (std::abs(nJet_->JetEta[0]) < 2.6) )) ||
      (( nJet_->JetEMF[1] <= 0.01) && (std::abs(nJet_->JetEta[1]) < 2.6) )) {
     nMaxJetHadFraction_++;
     return 0;
-  }
-
-  
+  }  
   if( nJet_->JetN90Hits[0] <= 1 || nJet_->JetN90Hits[1] <= 1) {
     nMaxJetHadFraction_++;
     return 0;
@@ -1012,8 +1082,8 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetHadFraction_++;
     return 0;
   }
-  
-  double ptAve = 0.5 * (nJet_->JetPt[0]+ nJet_->JetPt[1]);
+  */
+  double ptAve = 0.5 * (nJet_->JetCorrL2L3[0] * nJet_->JetPt[0]+ nJet_->JetCorrL2L3[1] * nJet_->JetPt[1]);
   if( nJets > 2) {
     //compute dijet kin
     double deltaPhi12 = TVector2::Phi_mpi_pi(nJet_->JetPhi[0]-nJet_->JetPhi[1]);
@@ -1023,12 +1093,12 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     double pJ3 = 0.;
     double ptJet3 = 0.;
     if( nJet_->NobjJet > 2 ) {
-      pJ3 = nJet_->JetPt[2]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[2]));
-      ptJet3 = nJet_->JetPt[2];
+      pJ3 = nJet_->JetCorrL2L3[2] * nJet_->JetPt[2]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[2]));
+      ptJet3 = nJet_->JetCorrL2L3[2] * nJet_->JetPt[2];
     }
     double pSJ = 0.;
     for(int i = 3; i < nJet_->NobjJet; ++i) {
-      pSJ += nJet_->JetPt[i]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[i]));
+      pSJ += std::abs(nJet_->JetCorrL2L3[i] * nJet_->JetPt[i]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[i])));
     }
     //double pUCE = 0.;
     
@@ -1036,7 +1106,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
       nCutOn3rdJet_++;
       return 0;
     }
-    if( std::abs(pSJ) > 0.75*maxRelSoftJetEt_*ptAve ) {
+    if( sqrt(pSJ) > maxRelSoftJetEt_*ptAve ) {
       nCutOnSoftJets_++;
       return 0;
     }
@@ -1119,6 +1189,7 @@ CorFactors* DiJetReader::createCorFactors(int jetid) const
   return new CorFactors(nJet_->JetCorrZSP[jetid], // L1
 			nJet_->JetCorrL2[jetid],  // L2
 			nJet_->JetCorrL3[jetid],  // L3
+			nJet_->JetCorrL2L3[jetid]/nJet_->JetCorrL2[jetid]/nJet_->JetCorrL3[jetid],
 			nJet_->JetCorrL4JW[jetid],  // L4
 			1.,                         // L5
 			nJet_->JetCorrJPT[jetid],
@@ -1143,4 +1214,4 @@ bool DiJetReader::passesJetId(int idx) const {
   return ok;
 }
 
-boost::mutex DiJetReader::dijetmutex;
+boost::mutex DiJetReader::dijetmutex_;

@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.27 2010/10/20 11:28:16 stadie Exp $
+//!  $Id: DiJetReader.h,v 1.28 2010/11/24 09:41:03 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -109,7 +109,7 @@ class DiJetReader : public EventReader{
   int    nMaxGenJetEt_;         //!< Number of events rejected by maxGenJetEt_ cut
   int    nMinGenJetEt_;         //!< Number of events rejected by minGenJetEt_ cut
   int    nMaxDeltaR_;           //!< Number of events rejected by maxDeltaR_ cut
-
+  int    nTriggerSel_;          //!< Number of events not passing the trigger selection
   int    maxNIter_;             //!< Max number of iterations in integration
   double eps_;                  //!< Integration precision for convergence
   double min_;                  //!< Minimum of truth spectrum in integration
@@ -127,7 +127,13 @@ class DiJetReader : public EventReader{
   std::vector<Jet::JetIndex*> jetIndices_;
 
   friend class ThreadedDiJetReader; 
-  static boost::mutex dijetmutex;
+  static boost::mutex dijetmutex_;
+
+  //for DiJetAve trigger
+  bool hltdijetave15incl_,hltdijetave30incl_,hltdijetave50incl_,hltdijetave70incl_,hltdijetave100incl_,hltdijetave140incl_;
+  std::map<double,bool*> trigmap_;
+  std::map<double,double> mcweightmap_[2];
+  bool requireTrigger_, mcweightmapid_;
 };
 
 

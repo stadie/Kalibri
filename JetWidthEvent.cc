@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetWidthEvent.cc,v 1.1 2010/11/24 09:36:38 stadie Exp $
+//    $Id: JetWidthEvent.cc,v 1.2 2010/11/24 09:53:04 stadie Exp $
 //   
 
 #include "JetWidthEvent.h"
@@ -50,18 +50,31 @@ double JetWidthEvent::chi2_fast(double * temp_derivative1,
     mu = mwp->widthMean(jet_,f->firstPar());
     sigma = mwp->widthSigma(jet_,f->firstPar());
     temp1 = (jw-mu)/sigma;
-    temp1*= temp1;
+    temp1*= temp1;   
     temp1 = weight_ * Event::scaleResidual(log2pi+2*log(sigma)+temp1);
+    if(std::isinf(temp1)) {
+      std::cout << "Grrh:" << mu << ", " << sigma << ", " << jw << '\n';
+    }
     assert(temp1 == temp1);
     f->firstPar()[i] = orig - epsilon[parid];
     mu = mwp->widthMean(jet_,f->firstPar());
     sigma = mwp->widthSigma(jet_,f->firstPar());
-    temp2 = (jw-mu)/sigma;
-    temp2*= temp2;
+    temp2 = (jw-mu)/sigma; 
+    temp2*= temp2; 
     temp2 = weight_ * Event::scaleResidual(log2pi+2*log(sigma)+temp2);
+    if(std::isinf(temp2)) {
+      std::cout << "Grrh:" << mu << ", " << sigma << ", " << jw << '\n';
+      std::cout << "i = " << i << " orig = " << orig << "  eps = " << epsilon[parid] << '\n';
+    }
     assert(temp2 == temp2);
     f->firstPar()[i] = orig;
-    temp_derivative1[parid] += (temp1 - temp2); // for 1st derivative
+    double td1 = temp1 - temp2;
+    if(td1 != td1) {
+      std:: cout << "td = " << td1 << " temp1 = " << temp1 << " temp2 = " 
+		 << temp2 << '\n';
+    }
+    assert(td1 == td1);
+    temp_derivative1[parid] += td1; // for 1st derivative
     temp_derivative2[parid] += (temp1 - chi2 + temp2 - chi2); // for 2nd derivative
   }
   return chi2plots_ = chi2;

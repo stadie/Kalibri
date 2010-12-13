@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.26 2010/10/20 11:28:16 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.27 2010/10/20 13:32:55 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -231,6 +231,7 @@ CorFactors* ZJetReader::createCorFactors(int jetid) const
   return new CorFactors(zjet->JetCorrZSP, // L1
 			zjet->JetCorrL2,  // L2
 			zjet->JetCorrL3,  // L3
+			zjet->JetCorrL2L3/zjet->JetCorrL2/zjet->JetCorrL3,
 			1.,              // L4
 			1.,              // L5
 			zjet->JetCorrJPT,

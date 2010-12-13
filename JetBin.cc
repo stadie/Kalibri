@@ -2,7 +2,7 @@
 //    Class for jet bins
 //
 //    first version: Hartmut Stadie 2010/05/10
-//    $Id: JetBin.cc,v 1.4 2010/10/20 11:28:08 stadie Exp $
+//    $Id: JetBin.cc,v 1.5 2010/11/01 15:47:43 stadie Exp $
 //   
 
 
@@ -33,8 +33,9 @@ void JetBin::addJet(float Et, float EmEt, float HadEt ,float OutEt, float E,
   sumL1_ += corFactors.getL1() * Et;
   sumL2_ += corFactors.getL2() * Et;
   sumL3_ += corFactors.getL3() * corFactors.getL2() * Et;
-  sumL4_ += corFactors.getL4() * corFactors.getL3() * corFactors.getL2() * Et;
-  sumL5_ += corFactors.getL5() * corFactors.getL4() * corFactors.getL3() * corFactors.getL2() * Et;
+  sumLres_ += corFactors.getLRes() * corFactors.getL3() * corFactors.getL2() * Et;
+  sumL4_ += corFactors.getL4() * corFactors.getLRes() * corFactors.getL3() * corFactors.getL2() * Et;
+  sumL5_ += corFactors.getL5() * corFactors.getL4() * corFactors.getLRes() * corFactors.getL3() * corFactors.getL2() * Et;
   sumJPT_ += corFactors.getJPT() * Et;
   sumJPTL2L3_ += corFactors.getJPTL2L3() * Et;
 
@@ -51,8 +52,8 @@ Jet* JetBin::createJet() const {
 		   sumMess_.eta*w, sumMess_.phi*w, sumMess_.phiphi*w, 
 		   sumMess_.etaeta*w, Jet::unknown,
 		   sumGenPt_*w, sumdR_*w, 
-		   new CorFactors(sumL1_*w,sumL2_/sumMess_.pt,sumL3_/sumL2_,
-				  sumL4_/sumL3_,sumL5_/sumL4_,sumJPT_/sumMess_.pt,
+		   new CorFactors(sumL1_*w,sumL2_/sumMess_.pt,sumL3_/sumL2_,sumLres_/sumL3_,
+				  sumL4_/sumLres_,sumL5_/sumL4_,sumJPT_/sumMess_.pt,
 				  sumJPTL2L3_/sumMess_.pt),
 		   *f_,errf_,*gf_);
   float err = sqrt(w*sumPt2_ - j->pt() * j->pt() + w*sumGenPt2_ - j->genPt() * j->genPt());

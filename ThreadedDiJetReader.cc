@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.3 2010/11/01 15:47:41 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.4 2010/11/26 10:35:52 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -78,8 +78,10 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
   nDiJetCut_          = 0;
   nMinJetEt_          = 0;
   nMaxJetEt_          = 0;
+  nTriggerSel_        = 0;
   nMinDijetEt_        = 0;
   nMaxDijetEt_        = 0;
+  nTriggerSel_        = 0;
   nCutOn3rdJet_       = 0;
   nCutOnSoftJets_     = 0;
   nMinGenJetEt_       = 0;    
@@ -130,6 +132,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 	    nDiJetCut_          += djr->nDiJetCut_;
 	    nMinJetEt_          += djr->nMinJetEt_;
 	    nMaxJetEt_          += djr->nMaxJetEt_;
+	    nTriggerSel_        += djr->nTriggerSel_;
 	    nMinDijetEt_        += djr->nMinDijetEt_;
 	    nMaxDijetEt_        += djr->nMaxDijetEt_;
 	    nCutOn3rdJet_       += djr->nCutOn3rdJet_;
@@ -216,7 +219,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
     binning_->clear();
   }
   printCutFlow();
-  std::cout << "Stored " << nGoodEvts_ << " dijet events for analysis.\n";
+  std::cout << "Stored " << nGoodEvts_ << " dijet events.\n";
   delete tree_;
   return nGoodEvts_;
 };
@@ -238,7 +241,7 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   delete corFactorsFactory_;
   corFactorsFactory_ = 0;
   int nev = readEvents(control);
-  std::cout << "Stored " << nev << " dijet events for control plots.\n";
+  std::cout << "Will use events for control plots.\n";
   return nev;
 }
 

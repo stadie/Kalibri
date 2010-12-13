@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.15 2010/10/14 17:27:48 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.16 2010/11/19 10:11:40 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -36,18 +36,26 @@ ControlPlotsProfile::ControlPlotsProfile(const ControlPlotsConfig *config, const
   for(size_t i = 0; i < bins_.size(); i++) {
     assert( bins_.size() > 0 && bins_.at(i)->min() < bins_.at(i)->max() );
   }
-  
-  // Create histogram for x spectrum
-  std::string name = config_->name();
-  name += "_" + config_->xVariable() + "Spectrum";
-  hXSpectrum_ = new TH1D(name.c_str(),"",
-			 config_->nXBins(),
-			 config_->xMin(),
-			 config_->xMax());
-  hXSpectrum_->SetMarkerStyle(20);
-  hXSpectrum_->SetXTitle((config_->xTitle()).c_str());
-  hXSpectrum_->SetYTitle("Number of events");
-  hXSpectrum_->GetXaxis()->SetNdivisions(505);
+  hXSpectrum_[0] = 0;
+  hXSpectrum_[1] = 0;
+  hXSpectrum_[2] = 0;
+
+
+  // Create histogram for x spectrum 
+  for(ControlPlotsConfig::InputTagsIterator i = config_->inputTagsBegin();
+      i != config_->inputTagsEnd(); ++i) {
+    int id = i->first;
+    if(hXSpectrum_[id]) continue;
+    std::string name = config_->name() + "_" + config_->sampleName(i->first) + "_" + config_->xVariable() + "Spectrum";
+    hXSpectrum_[id] = new TH1D(name.c_str(),"",
+			       config_->nXBins(),&(config_->xBinEdges()->front()));
+    hXSpectrum_[id]->SetMarkerStyle(20);
+    hXSpectrum_[id]->SetMarkerColor(config_->color(*i));
+    hXSpectrum_[id]->SetLineColor(config_->color(*i));
+    hXSpectrum_[id]->SetXTitle((config_->xTitle()).c_str());
+    hXSpectrum_[id]->SetYTitle("Number of events");
+    //hXSpectrum_[id]->GetXaxis()->SetNdivisions(505);
+  }
 }
 
 
@@ -59,7 +67,9 @@ ControlPlotsProfile::~ControlPlotsProfile() {
     delete *it;
   }
   bins_.clear();
-  delete hXSpectrum_;
+  delete hXSpectrum_[0];
+  delete hXSpectrum_[1];
+  delete hXSpectrum_[2];
 }
 
 
@@ -125,7 +135,7 @@ void ControlPlotsProfile::draw() {
 	    h->Draw("HIST");
 	  } else {
 	    h->Draw("PE1X0");
-	    makeGraph(h)->Draw("LSAME");
+	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
 	  }
 	  h->GetXaxis()->SetMoreLogLabels();
 	  h->GetXaxis()->SetNoExponent();
@@ -136,7 +146,7 @@ void ControlPlotsProfile::draw() {
 	    h->Draw("HISTSAME");
 	  } else {
 	    h->Draw("PE1X0same"); 
-	    makeGraph(h)->Draw("LSAME");
+	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
 	  }
 	}
 	config_->toRootFile(h);
@@ -172,7 +182,7 @@ void ControlPlotsProfile::draw() {
 	    h->Draw("HIST");
 	  } else {
 	    h->Draw("PE1X0"); 
-	    makeGraph(h)->Draw("LSAME");
+	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
 	  }
 	  firstHist = false;
 	  h->GetXaxis()->SetMoreLogLabels();
@@ -183,7 +193,7 @@ void ControlPlotsProfile::draw() {
 	    h->Draw("HISTSAME");
 	  } else {
 	    h->Draw("PE1X0same"); 
-	    makeGraph(h)->Draw("LSAME");
+	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
 	  }
 	}
       }  
@@ -227,7 +237,7 @@ void ControlPlotsProfile::draw() {
 	} else { 
 	  hg->SetYTitle("Response");
 	  hg->Draw("PE1X0"); 
-	  makeGraph(hg)->Draw("LSAME");
+	  if(TGraph* g = makeGraph(hg)) g->Draw("LSAME");
 	}
 	hg->GetXaxis()->SetMoreLogLabels();
 	hg->GetXaxis()->SetNoExponent();
@@ -238,7 +248,7 @@ void ControlPlotsProfile::draw() {
 	  hg->Draw("HISTSAME");
 	} else {
 	  hg->Draw("PE1X0same"); 
-	  makeGraph(hg)->Draw("LSAME");
+	  if(TGraph* g = makeGraph(hg)) g->Draw("LSAME");
 	}
       }
       hm->SetLineStyle(7);
@@ -248,7 +258,7 @@ void ControlPlotsProfile::draw() {
       } else {
 	hm->SetMarkerStyle(hm->GetMarkerStyle()+5);
 	hm->Draw("PE1X0same"); 
-	makeGraph(hm)->Draw("CSAME");
+	if(TGraph* g = makeGraph(hm)) g->Draw("CSAME");
       } 
       leg->AddEntry(hg,(config_->legendLabel(*tagsIt)+ " Gauss").c_str(),
 		    "PL");
@@ -288,15 +298,21 @@ void ControlPlotsProfile::draw() {
   // Draw x spectrum
   c1->Clear();
   c1->cd();
-  hXSpectrum_->Draw("PE1");
-  c1->SetLogx(0);
+  hXSpectrum_[0]->Draw("PE1");
+  hXSpectrum_[0]->GetXaxis()->SetMoreLogLabels();
+  hXSpectrum_[0]->GetXaxis()->SetNoExponent();
+  if(hXSpectrum_[1]) hXSpectrum_[1]->Draw("HISTSAME");
+  if(hXSpectrum_[2]) hXSpectrum_[2]->Draw("HISTSAME");
+  c1->SetLogx(1);
   c1->SetLogy(1);
   p2->DrawClone();
   fileName = config_->outDirName() + "/";
-  fileName += hXSpectrum_->GetName();
+  fileName += hXSpectrum_[0]->GetName();
   fileName += "." + config_->outFileType();
   c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
-  config_->toRootFile(hXSpectrum_);
+  config_->toRootFile(hXSpectrum_[0]);
+  if(hXSpectrum_[1]) config_->toRootFile(hXSpectrum_[1]);
+  if(hXSpectrum_[2]) config_->toRootFile(hXSpectrum_[2]);
   // Clean up
   delete p1;
   delete c1;
@@ -319,7 +335,7 @@ void ControlPlotsProfile::fill(const Event * evt, int id) {
   if((cutv < config_->cutMin()) || (cutv > config_->cutMax())) return;
 
   double x = function_->xValue(evt);
-  hXSpectrum_->Fill(x,evt->weight());
+  hXSpectrum_[id]->Fill(x,evt->weight());
 
   int bin = findBin(evt);
   if( bin >= 0 ) {
@@ -367,12 +383,13 @@ TGraph* ControlPlotsProfile::makeGraph(TH1* h) {
   TGraph* gr = new TGraph(h);	
   for(int i = 0 ; i < gr->GetN() ; ++i) {
     //std::cout << i << ":" << gr->GetY()[i]  << '\n';
-    if(gr->GetY()[i] <= 0) {
+    if(gr->GetY()[i] == 0) {
       gr->RemovePoint(i);
       --i;
       //std::cout << "after:" << gr->GetY()[i]  << '\n';
     }
   }
+  if(gr->GetN() == 0) return 0;
   return gr;
 }
 

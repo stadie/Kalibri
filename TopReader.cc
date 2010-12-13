@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.24 2010/10/20 11:28:12 stadie Exp $
+//    $Id: TopReader.cc,v 1.25 2010/10/20 13:32:55 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -250,6 +250,7 @@ CorFactors* TopReader::createCorFactors(int jetid) const
   return new CorFactors(top_->JetCorrL1[jetid],
 			top_->JetCorrL2[jetid],
 			top_->JetCorrL3[jetid],
+			1.0,
 			top_->JetCorrL4[jetid],            
-			top_->JetCorrL5[jetid]);
+			top_->JetCorrL5[jetid],1.0,1.0);
 }

@@ -201,6 +201,8 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
     return &ControlPlotsFunction::jetTruthEventResponseKalibriCorrected;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::jetTruthEventResponseL2L3Corrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3Res )
+    return  &ControlPlotsFunction::jetTruthEventResponseL2L3ResCorrected;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3L4 )
     return  &ControlPlotsFunction::jetTruthEventResponseL2L3L4Corrected;
   if( varName == "") {
@@ -234,12 +236,16 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi; 
   if( varName == "meanMoment" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment;
+  if( varName == "ThirdJetFraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::Uncorrected )
     return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetry;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::Kalibri )
     return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryKalibriCorrected;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3Corrected;
+  if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3Res )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3ResCorrected;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3L4 )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3L4Corrected;
   if( varName == "B" && type == ControlPlotsConfig::Uncorrected )
@@ -248,6 +254,8 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventBKalibriCorrected;
   if( varName == "B" && type == ControlPlotsConfig::L2L3 )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3Corrected;
+  if( varName == "B" && type == ControlPlotsConfig::L2L3Res )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3ResCorrected;
   if( varName == "B" && type == ControlPlotsConfig::L2L3L4 )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3L4Corrected;
   if( varName == "") {

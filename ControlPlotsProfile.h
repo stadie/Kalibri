@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.h,v 1.2 2010/10/12 08:40:53 stadie Exp $
+// $Id: ControlPlotsProfile.h,v 1.3 2010/11/19 10:11:40 stadie Exp $
 
 #ifndef CONTROL_PLOTS_PROFILE_H
 #define CONTROL_PLOTS_PROFILE_H
@@ -32,7 +32,7 @@ class TGraph;
 //!
 //! \author Matthias Schroeder
 //! \date 2009/12/18
-//! $Id: ControlPlotsProfile.h,v 1.2 2010/10/12 08:40:53 stadie Exp $
+//! $Id: ControlPlotsProfile.h,v 1.3 2010/11/19 10:11:40 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsProfile {
  public:
@@ -56,7 +56,7 @@ class ControlPlotsProfile {
   //! 
   //! \author Matthias Schroeder
   //! \date 2009/12/18
-  //! $Id: ControlPlotsProfile.h,v 1.2 2010/10/12 08:40:53 stadie Exp $
+  //! $Id: ControlPlotsProfile.h,v 1.3 2010/11/19 10:11:40 stadie Exp $
   // ----------------------------------------------------------------   
   class Bin {
   public:
@@ -114,7 +114,7 @@ class ControlPlotsProfile {
 
 
   std::vector<Bin*> bins_;
-  TH1D *hXSpectrum_;
+  TH1D *hXSpectrum_[3];
 
   //! Find the index of the \p Bin in which the event \p evt falls
   int findBin(const Event *evt) const;

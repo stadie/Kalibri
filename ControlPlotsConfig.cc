@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.16 2010/09/30 16:55:14 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.17 2010/10/12 08:40:53 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -43,9 +43,9 @@ std::string ControlPlotsConfig::binName(int binIdx) const {
 // --------------------------------------------------
 std::string ControlPlotsConfig::binTitle(double min, double max) const {
   std::string title = toString(min);
-  title += " < ";
+  title += " #leq ";
   title += varTitle(binVariable());
-  title += " < ";
+  title += " #leq ";
   title += toString(max);
 
   std::string unit = unitTitle(binVariable());
@@ -56,9 +56,9 @@ std::string ControlPlotsConfig::binTitle(double min, double max) const {
   if(cutVariable() != "") {
     title += "  and  ";
     title += toString(cutMin());
-    title += " < ";
+    title += " #leq ";
     title += varTitle(cutVariable());
-    title += " < ";
+    title += " #leq ";
     title += toString(cutMax());
     std::string unit = unitTitle(cutVariable());
     if( unit != "" ) {
@@ -94,7 +94,7 @@ std::string ControlPlotsConfig::xBinTitle(int xBinIdx, double binMin, double bin
   if( xBinIdx >= 0 && xBinIdx < nXBins() ) {
     title += ",  ";
     title += toString(round(xBinEdges_.at(xBinIdx)));
-    title += " < " + varTitle(xVariable()) + " < ";
+    title += " #leq " + varTitle(xVariable()) + " #leq ";
     title += toString(round(xBinEdges_.at(xBinIdx+1)));
     std::string unit = unitTitle(xVariable());
     if( unit != "" ) {
@@ -189,6 +189,7 @@ std::string ControlPlotsConfig::legendLabel(const InputTag& tag) const {
 //! - "Uncorrected": \p CorrectionType::Uncorrected
 //! - "Kalibri": \p CorrectionType::Kalibri
 //! - "L2L3"   : \p CorrectionType::L2L3
+//! - "L2L3Res"   : \p CorrectionType::L2L3Res
 //! - "L2L3L4" : \p CorrectionType::L2L3L4
 // --------------------------------------------------
 ControlPlotsConfig::CorrectionType ControlPlotsConfig::correctionType(const std::string &typeName) const {
@@ -200,6 +201,8 @@ ControlPlotsConfig::CorrectionType ControlPlotsConfig::correctionType(const std:
     type = Kalibri;
   else if( typeName == "L2L3" )
     type = L2L3;
+  else if( typeName == "L2L3Res" )
+    type = L2L3Res;
   else if( typeName == "L2L3L4" )
     type = L2L3L4;
   else
@@ -214,6 +217,7 @@ ControlPlotsConfig::CorrectionType ControlPlotsConfig::correctionType(const std:
 //! - \p CorrectionType::Uncorrected: "Uncorrected"
 //! - \p CorrectionType::Kalibri: "Kalibri"
 //! - \p CorrectionType::L2L3   : "L2L3"
+//! - \p CorrectionType::L2L3Res   : "L2L3res"
 //! - \p CorrectionType::L2L3L4 : "L2L3L4"
 // --------------------------------------------------
 std::string ControlPlotsConfig::correctionTypeName(CorrectionType corrType) const {
@@ -224,7 +228,9 @@ std::string ControlPlotsConfig::correctionTypeName(CorrectionType corrType) cons
   else if( corrType == Kalibri )
     name = "Kalibri";
   else if( corrType == L2L3 )
-    name = "L2L3";
+    name = "L2L3"; 
+  else if( corrType == L2L3Res )
+    name = "L2L3res";
   else if( corrType == L2L3L4 )
     name = "L2L3L4";
   else
@@ -483,20 +489,25 @@ void ControlPlotsConfig::init() {
     sampleNames_[id] = sname;
   }
   
-  std::vector<std::string> corrTypesStr = bag_of_string(config_->read<std::string>(name_+" correction types","Uncorrected"));
+  std::vector<std::string> corrTypesStr[3];
+  std::string corstrs = config_->read<std::string>(name_+" correction types","Uncorrected");
+  corrTypesStr[0] = bag_of_string(corstrs);
+  corrTypesStr[1] = bag_of_string(config_->read<std::string>(name_+" 1 correction types",corstrs));
+  corrTypesStr[2] = bag_of_string(config_->read<std::string>(name_+" 2 correction types",corstrs));
+  
   for(std::vector<int>::const_iterator samplesIt = sampleIds.begin() ;
       samplesIt != sampleIds.end() ; samplesIt++) {
-    for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr.begin(); corrTypesIt != corrTypesStr.end(); corrTypesIt++) {
+    for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr[*samplesIt].begin(); corrTypesIt != corrTypesStr[*samplesIt].end(); corrTypesIt++) {
       inputTags_.push_back(std::make_pair(*samplesIt,correctionType(*corrTypesIt)));
     }
   }
   
   // Store which input tags are to be drawn
   // in the distributions
-  corrTypesStr = bag_of_string(config_->read<std::string>(name_+" distributions",";")); 
+  std::vector<std::string> corrTypesStr2 = bag_of_string(config_->read<std::string>(name_+" distributions",";")); 
   for(std::vector<int>::const_iterator samplesIt = sampleIds.begin() ;
       samplesIt != sampleIds.end() ; samplesIt++) {
-    for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr.begin(); corrTypesIt != corrTypesStr.end(); corrTypesIt++) {
+    for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr2.begin(); corrTypesIt != corrTypesStr2.end(); corrTypesIt++) {
       inputTagsDistributions_.push_back(std::make_pair(*samplesIt,correctionType(*corrTypesIt)));
     }
   }
@@ -512,18 +523,21 @@ void ControlPlotsConfig::init() {
       samplesIt != sampleIds.end() ; samplesIt++) {
     colors_[std::make_pair(*samplesIt,Uncorrected)] = 1;
     colors_[std::make_pair(*samplesIt,Kalibri)] = 2;
-    colors_[std::make_pair(*samplesIt,L2L3)] = 4;
+    colors_[std::make_pair(*samplesIt,L2L3)] = kBlue;
+    colors_[std::make_pair(*samplesIt,L2L3Res)] = kBlue+2;
     colors_[std::make_pair(*samplesIt,L2L3L4)] = 8;
     if(samplesIt - sampleIds.begin() == 0) {
       markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = 20;
       markerStyles_[std::make_pair(*samplesIt,Kalibri)] = 21;
-      markerStyles_[std::make_pair(*samplesIt,L2L3)] = 23;
-      markerStyles_[std::make_pair(*samplesIt,L2L3L4)] = 22;
+      markerStyles_[std::make_pair(*samplesIt,L2L3)] = 24;
+      markerStyles_[std::make_pair(*samplesIt,L2L3Res)] = 27;
+      markerStyles_[std::make_pair(*samplesIt,L2L3L4)] = 28;
     } else {
       int style = -(samplesIt - sampleIds.begin());
       markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = style;
       markerStyles_[std::make_pair(*samplesIt,Kalibri)] = style;
       markerStyles_[std::make_pair(*samplesIt,L2L3)] = style;
+      markerStyles_[std::make_pair(*samplesIt,L2L3Res)] = style;
       markerStyles_[std::make_pair(*samplesIt,L2L3L4)] = style;
     }
     // Define default legend labels for the different corrections
@@ -531,6 +545,7 @@ void ControlPlotsConfig::init() {
     legendLabels_[std::make_pair(*samplesIt,Uncorrected)] = name + " Uncorrected";
     legendLabels_[std::make_pair(*samplesIt,Kalibri)] = name + " Kalibri";
     legendLabels_[std::make_pair(*samplesIt,L2L3)] = name + " L2L3";
+    legendLabels_[std::make_pair(*samplesIt,L2L3Res)] = name + " L2L3res";
     legendLabels_[std::make_pair(*samplesIt,L2L3L4)] = name +" L2L3L4";
 
     // Read optional legend labels
@@ -627,7 +642,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "p_{T} / p^{gen}_{T}";
   else if( varName == "Asymmetry") 
     title = "(p_{T,1} - p_{T,2})/(p_{T,1} + p_{T,2})";
-  
+  else if( varName == "ThirdJetFraction") 
+    title = "p_{3}^{proj.}/#bar p_{T}";
   return title;
 }
 

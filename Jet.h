@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.42 2010/11/01 15:47:40 stadie Exp $
+//!    $Id: Jet.h,v 1.43 2010/11/24 09:53:04 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -93,6 +93,7 @@ class Jet : public Measurement
   float phi()    const {return Measurement::phi;}  //!< Return azimuthal angle
   float momentPhiPhi() const {return Measurement::phiphi;}  //!< Return phi-phi moment (width of jet in phi)
   float momentEtaEta() const {return Measurement::etaeta;}  //!< Return eta-eta moment (width of jet in eta)
+  float meanMoment() const {return 0.5 * (Measurement::phiphi + Measurement::etaeta);}  //!< Return mean moment (width of jet)
   Flavor flavor() const {return flavor_;}       //!< Return jet flavor
   float genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
   float dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet

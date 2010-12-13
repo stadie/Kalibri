@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.13 2010/10/12 08:40:53 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.14 2010/10/20 11:28:04 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -6,6 +6,7 @@
 #include "Jet.h"
 #include "JetTruthEvent.h"
 #include "TwoJetsPtBalanceEvent.h"
+#include "TVector2.h"
 
 /*
 //!  Will return 0 if \p type does not exist in \p types_
@@ -184,6 +185,22 @@ double ControlPlotsFunction::jetTruthEventResponseL2L3Corrected(const Event * ev
 //!  The response is defined as
 //!  \f[  p^{jet'}_{T} / p^{true}_{T}\f],
 //!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
+//!  the JetMET L2L3Res JEC.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventResponseL2L3ResCorrected(const Event * evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  Jet * jet = static_cast<Jet*>(jte->mess());
+
+  return jet->corFactors().getL2L3Res() * jet->pt() / jte->truth();
+}
+
+//!  \brief Returns the corrected jet response
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  The response is defined as
+//!  \f[  p^{jet'}_{T} / p^{true}_{T}\f],
+//!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
 //!  the JetMET L2L3L4 JEC.
 //!  Implements \p Function.
 // ----------------------------------------------------------------   
@@ -215,6 +232,23 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta(const Event *evt) co
   return std::abs(jte->getJet1()->eta());
 }
 
+//!  \brief Returns fraction of momentum of third jet projected to dijet axis 
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  if (! tjpbe->hasJet3()) return 0;
+  
+  if(tjpbe->getJet1()->pt() < 8) return 0;
+  // Phi of dijet axis
+  double pPhi = TVector2::Phi_mpi_pi(0.5*(tjpbe->getJet1()->phi() + tjpbe->getJet2()->phi()) + M_PI/2.);
+  double pJ3 = tjpbe->getJet3()->corFactors().getL2L3() * tjpbe->getJet3()->pt() * cos(TVector2::Phi_mpi_pi(pPhi-tjpbe->getJet3()->phi()));
+
+  return pJ3/tjpbe->ptDijetCorrL2L3();
+}
+
 //!  \brief Returns mean p_{T} of the first two jets
 //!
 //!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
@@ -222,7 +256,7 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta(const Event *evt) co
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::twoJetsPtBalanceEventMeanPt(const Event *evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
-  return jte->ptDijet();
+  return jte->ptDijetCorrL2L3();
 }
 
 
@@ -329,6 +363,22 @@ double ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3Corrected(const E
   return (jet1->corFactors().getL2L3() * jet1->pt() - jet2->corFactors().getL2L3() * jet2->pt())/(jet1->corFactors().getL2L3() * jet1->pt()+jet2->corFactors().getL2L3() * jet2->pt());
 }
 
+//!  \brief Returns the corrected jet asymmetry
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The asymmetry is defined as
+//!  \f[  p^{jet'}_{T} / p^{true}_{T}\f],
+//!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
+//!  the JetMET L2L3Res JEC.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3ResCorrected(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  return (jet1->corFactors().getL2L3Res() * jet1->pt() - jet2->corFactors().getL2L3Res() * jet2->pt())/(jet1->corFactors().getL2L3Res() * jet1->pt()+jet2->corFactors().getL2L3Res() * jet2->pt());
+}
 
 
 //!  \brief Returns the corrected jet asymmetry
@@ -416,4 +466,21 @@ double ControlPlotsFunction::twoJetsPtBalanceEventBL2L3Corrected(const Event * e
   Jet * jet1 = jte->getJet1();
   Jet * jet2 = jte->getJet2();
   return (jet1->corFactors().getL2L3() * jet1->pt() - jet2->corFactors().getL2L3() * jet2->pt())/(jet1->corFactors().getL2L3() * jet1->pt()+jet2->corFactors().getL2L3() * jet2->pt())*2;
+}
+
+//!  \brief Returns the corrected jet B
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The B is defined as
+//!  \f[  p^{jet'}_{T} / p^{true}_{T}\f],
+//!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
+//!  the JetMET L2L3Res JEC.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventBL2L3ResCorrected(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  return (jet1->corFactors().getL2L3Res() * jet1->pt() - jet2->corFactors().getL2L3Res() * jet2->pt())/(jet1->corFactors().getL2L3Res() * jet1->pt()+jet2->corFactors().getL2L3Res() * jet2->pt())*2;
 }

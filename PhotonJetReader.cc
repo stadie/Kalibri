@@ -1,5 +1,5 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.31 2010/10/20 11:28:12 stadie Exp $
+//  $Id: PhotonJetReader.cc,v 1.32 2010/11/01 15:47:41 stadie Exp $
 //
 #include "PhotonJetReader.h"
 
@@ -359,6 +359,7 @@ CorFactors* PhotonJetReader::createCorFactors(int jetid) const
   return new CorFactors(gammaJet_->JetCorrZSP, // L1
 			gammaJet_->JetCorrL2,  // L2
 			gammaJet_->JetCorrL3,  // L3
+			gammaJet_->JetCorrL2L3/gammaJet_->JetCorrL2/gammaJet_->JetCorrL3,
 			1.,                  // L4
 			1.,                  // L5
 			gammaJet_->JetCorrJPT,
