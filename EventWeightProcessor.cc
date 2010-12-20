@@ -85,7 +85,10 @@ EventWeightProcessor::~EventWeightProcessor() {
 //!  \param data The data
 //!  \return Number of weighted events
 // -----------------------------------------------------------------
-int EventWeightProcessor::preprocess(std::vector<Event*>& data) {
+int EventWeightProcessor::preprocess(std::vector<Event*>& data,
+				     std::vector<Event*>& control1,
+				     std::vector<Event*>& control2) 
+{
   if(! weightEvents_) return data.size();
   
   int nProcEvts = 0; // Number of processed events

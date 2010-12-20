@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.13 2010/11/01 15:47:41 stadie Exp $
+//  $Id: Kalibri.cc,v 1.14 2010/12/13 10:55:09 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -26,6 +26,7 @@ boost::mutex io_mutex;
 #include "EventProcessor.h"
 #include "EventWeightProcessor.h"
 #include "EventBinning.h"
+#include "DiJetEventWeighting.h"
 
 #include <dlfcn.h>
 
@@ -138,9 +139,10 @@ void Kalibri::run()
     std::vector<EventProcessor*> processors;
     processors.push_back(new EventWeightProcessor(configFile_,par_));
     processors.push_back(new EventBinning(configFile_,par_));
+    processors.push_back(new DiJetEventWeighting(configFile_,par_));
 
     for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
-      (*i)->preprocess(data_);
+      (*i)->preprocess(data_,control_[0],control_[1]);
     } 
     if(! data_.size()) {
       std::cout << "Warning: No events to perform the fit!\n";
@@ -154,7 +156,7 @@ void Kalibri::run()
       if( par_->needsUpdate() ) par_->update();
     } 
     for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
-      (*i)->postprocess(data_);
+      (*i)->postprocess(data_,control_[0],control_[1]);
       delete *i;
     } 
   } 

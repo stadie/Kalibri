@@ -1,5 +1,5 @@
 //
-// $Id: EventBinning.h,v 1.5 2010/10/20 11:28:17 stadie Exp $
+// $Id: EventBinning.h,v 1.1 2010/12/13 10:55:09 stadie Exp $
 //
 #ifndef EVENTBINNING_H
 #define EVENTBINNING_H
@@ -20,9 +20,13 @@ class EventBinning : public EventProcessor
  public:
   EventBinning(const std::string& configfile, Parameters* param);
   virtual ~EventBinning();
-  virtual int preprocess(std::vector<Event*>& data);
-  virtual int postprocess(std::vector<Event*>& data);
-
+  virtual int preprocess(std::vector<Event*>& data,
+			 std::vector<Event*>& control1,
+			 std::vector<Event*>& control2);
+  virtual int postprocess(std::vector<Event*>& data,
+			  std::vector<Event*>& control1,
+			  std::vector<Event*>& control2);
+  
  private:
   typedef std::vector<Event*>::iterator DataIter;
   typedef std::vector<Event*>::const_iterator DataConstIter;

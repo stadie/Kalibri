@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventBinning.cc,v 1.7 2010/11/01 15:47:43 stadie Exp $
+//    $Id: EventBinning.cc,v 1.1 2010/12/13 10:55:09 stadie Exp $
 //   
 #include "EventBinning.h"
 
@@ -46,7 +46,7 @@ EventBinning::EventBinning(const std::string& configfile, Parameters* param)
     } else if(*i == "meanMoment") {
       jetfunc_[j] = &Jet::meanMoment;   
     } else {
-      std::cerr << "unknown binning varible: " << *i << '\n';
+      std::cerr << "unknown binning variable: " << *i << '\n';
       exit(3);
     }
     ++j;
@@ -59,8 +59,11 @@ EventBinning::~EventBinning()
 }
   
 
-int EventBinning::preprocess(std::vector<Event*>& data)
+int EventBinning::preprocess(std::vector<Event*>& data,
+			     std::vector<Event*>& control1,
+			     std::vector<Event*>& control2)
 {
+  if(! binEvents_) return data.size();
   float x[4];
   for(DataIter i = data.begin() ; i != data.end() ; ++i) {
     if(((*i)->type() != GammaJet) && ((*i)->type() != JWFit))continue;
@@ -101,8 +104,11 @@ int EventBinning::preprocess(std::vector<Event*>& data)
   return data.size();
 }
  
-int EventBinning::postprocess(std::vector<Event*>& data)
+int EventBinning::postprocess(std::vector<Event*>& data,
+			      std::vector<Event*>& control1,
+			      std::vector<Event*>& control2)
 {
+  if(! binEvents_) return data.size();
   for(DataIter i = data.begin() ; i != data.end() ; ++i) {
     if(((*i)->type() != GammaJet) && ((*i)->type() != JWFit))continue;
     --i;
