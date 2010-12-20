@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.12 2010/11/19 10:13:34 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.13 2010/12/13 10:38:28 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -59,7 +59,7 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j)
   //else std::cout << '\n';
   return new CorFactors(1.0,
 			levels[0],
-			levels[1]/levels[2],
+			levels[1]/levels[0],
 			(levels.size() == 3) ? levels[2]/levels[1] : 1.0,
 			1.0,1.0,0.0,0.0);			
 }
