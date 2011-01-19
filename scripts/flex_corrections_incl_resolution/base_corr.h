@@ -17,6 +17,7 @@
 #include <TProfile.h>
 #include <TStyle.h>
 #include <TCanvas.h>
+#include <TPaveStats.h>
 #include <TMath.h>
 #include <iostream>
 #include <iomanip>
@@ -34,8 +35,10 @@ public :
   std::stringstream testout;
   std::string s;
 
-                 const static Int_t entries_to_run = -1; //set to -1 to run over all events
-  //           const static Int_t entries_to_run = 100000; //set to -1 to run over all events
+      const static Int_t entries_to_run = -1; //set to -1 to run over all events
+  //    const static Int_t entries_to_run = 100000; //set to -1 to run over all events
+  const static Bool_t titleprint=0;
+  const static Bool_t statbox=0;
 
   
   const static Bool_t debug=0;
@@ -43,51 +46,85 @@ public :
   const static Bool_t plots=1;
   std::stringstream img_extension;
 
-  const static Int_t pt_bins_x = 100;
-  const static Int_t s_phi_bins_x = 100;
-  const static Int_t response_bins = 100;
+  const static Int_t pt_bins_x = 50;
+  const static Int_t s_phi_bins_x = 50;
+  const static Int_t response_bins = 50;
 
   const static Double_t s_phi_xlow = -1.05;
   const static Double_t s_phi_xhigh = 1.05;
   std::vector < std::pair < Double_t,Double_t > > corr_var_x_edges_;///////////////////////////////////////////////////////////////////
   //  std::vector < Double_t > corr_var_xhigh;/////////////////////////////////////DIES HIER ERGAENZEN!!!
   std::vector < std::pair < Double_t,Double_t > > param_fit_y_edges_;
+  std::vector < std::pair < Double_t,Double_t > > eta_region_;
 
-  const static Double_t response_low = -0.5;
-  const static Double_t response_high = 2.0;
+  const static Double_t response_low = 0.5;
+  const static Double_t response_high =1.5;
 
   const static Double_t iso_max       = 0.5;
+  const static Int_t cut_fitslices       = 10;
+  std::vector <int> good_markers;
+
+
+  TString L2L3_response_label;
+  TString L2L3_raw_response_label;
+  TString L2L3_L2_response_label;
 
   Int_t no_pt_bins_;
   Int_t no_small_pt_bins_;
+  Int_t no_of_populated_bins;
+  Int_t no_eta_region_;
+
+
   std::vector< std::pair <Double_t,Double_t> > pt_bins_;
 
   Int_t no_X_labels_;
   Int_t no_Corr_labels_;
   Int_t no_all_Corr_labels_;
+  Int_t no_all_Corr_labels_plus_parametrisations_;
   Int_t bin_choice;
   TString img_choice;
   Int_t X_choice;
+  Int_t PDG_choice;
+  Int_t eta_choice;
   TString Corr_choice;
 
   std::vector <  TString > X_labels_;
   std::vector < std::pair < TString,TString > > Corr_labels_;
   std::vector <  TString > double_gauss_labels_;
   std::vector <  TString > param_fit_labels_;
+  std::vector <  TString > eta_region_labels_;
   std::vector < Int_t > Corr_selected_labels_;
+  Int_t  PDG_selector;
+  std::vector <  TString > PDG_labels_;
+  Int_t no_PDG_labels_;
+  //  Int_t no_PDG_labels_nm_;
+
+
 
 std::vector < std::vector < TH1D* > > tlj_X_counts_all_;
+std::vector < std::vector < TF1* > > fit_functions_all_;
+std::vector < TF1* > fit_param_functions_X0_;
+std::vector < TF1* > fit_param_functions_Sigma_;
+std::vector < TF1* > fit_param_functions_B_;
+std::vector < TF1* > fit_param_functions_C_;
+
+
+
+
 
   TCanvas *test;
 
       Double_t _GenJetColE;	    
       Double_t _GenJetColEt;	    
       Double_t _GenJetColPt;	    
+      Double_t _L2JetResponse;	    
       Double_t _L2L3JetResponse;	    
       Double_t _L2L3JetE;	    
       Double_t _L2L3JetPt;	    
+      Double_t _L2JetPt;	    
       Double_t _JetResponse;	    
       Double_t _JetE;	    
+      Double_t _JetEta;	    
       Double_t _JetPt;	    
       Double_t _JetEt;	    
       Double_t _JetEtWeightedSigmaPhi;	    
@@ -101,23 +138,24 @@ std::vector < std::vector < TH1D* > > tlj_X_counts_all_;
 
 
     /////base functions for variables, labels and histo-definitions 
-      virtual void base_corr::Fill_obvious_vars(Int_t genjet_i, Int_t match);
-      virtual void base_corr::Declare_Labels();
-   TH1D* base_corr::define_pt_histo(TString Name, TString Title, std::vector< std::pair <Double_t,Double_t> > pt_bins_, Int_t pt_i,Int_t nbinsx, Double_t xlow, Double_t xup);
-   TH2D* base_corr::define_pt_histo(TString Name, TString Title, std::vector< std::pair <Double_t,Double_t> > pt_bins_, Int_t pt_i,Int_t nbinsx, Double_t xlow, Double_t xup, Int_t nbinsy, Double_t ylow, Double_t yup);
-   TProfile* base_corr::define_pt_histo(TString Name, TString Title, std::vector< std::pair <Double_t,Double_t> > pt_bins_, Int_t pt_i,Int_t nbinsx, Double_t xlow, Double_t xup, Double_t ylow, Double_t yup);
-   TString base_corr::define_pt_histo_name(TString Name, std::vector< std::pair <Double_t,Double_t> > pt_bins_, Int_t pt_i);
+      virtual void Fill_obvious_vars(Int_t genjet_i, Int_t match);
+      virtual void Declare_Labels();
+      THStack* define_pt_stack(TString Name, TString Title, std::vector< std::pair <Double_t,Double_t> > pt_bins_, Int_t pt_i);
+   TH1D* define_pt_histo(TString Name, TString Title, std::vector< std::pair <Double_t,Double_t> > pt_bins_, Int_t pt_i,Int_t nbinsx, Double_t xlow, Double_t xup);
+   TH2D* define_pt_histo(TString Name, TString Title, std::vector< std::pair <Double_t,Double_t> > pt_bins_, Int_t pt_i,Int_t nbinsx, Double_t xlow, Double_t xup, Int_t nbinsy, Double_t ylow, Double_t yup);
+   TProfile* define_pt_histo(TString Name, TString Title, std::vector< std::pair <Double_t,Double_t> > pt_bins_, Int_t pt_i,Int_t nbinsx, Double_t xlow, Double_t xup, Double_t ylow, Double_t yup);
+   TString define_pt_histo_name(TString Name, std::vector< std::pair <Double_t,Double_t> > pt_bins_, Int_t pt_i);
 
 
-   std::vector < Double_t > base_corr::get_EMF_vars_(Int_t genjet_i, Int_t match);
-   std::vector < Double_t > base_corr::get_new_sigma_phi_vars_(Int_t genjet_i, Int_t match);
-   std::vector < Double_t > base_corr::get_X_Vars_(Int_t genjet_i, Int_t match);
-   std::vector < Double_t > base_corr::get_Correction_Vars_(Int_t genjet_i, Int_t match);
-   std::vector<Double_t> base_corr::doublefit_gaus(TH1D *histo);
+   std::vector < Double_t > get_EMF_vars_(Int_t genjet_i, Int_t match);
+   std::vector < Double_t > get_new_sigma_phi_vars_(Int_t genjet_i, Int_t match);
+   std::vector < Double_t > get_X_Vars_(Int_t genjet_i, Int_t match);
+   std::vector < Double_t > get_Correction_Vars_(Int_t genjet_i, Int_t match);
+   std::vector<Double_t> doublefit_gaus(TH1D *histo);
 
-    TGraphErrors* base_corr::make_graph(std::vector < std::vector < Double_t > >  Double_gauss_, Int_t y_para, TString title, Int_t X_par=-1);
-    TGraphErrors* base_corr::make_graph(std::vector < TString > params_labels_, std::vector < std::vector < Double_t > >  Double_gauss_, Int_t y_para, TString title, Int_t X_par=-1);
-  virtual void base_corr::draw_graphs(std::vector <TGraphErrors*> graphs_, Double_t ylow, Double_t yhigh, TLegend *legend, TString PDF_PNG_name);
+    TGraphErrors* make_graph(std::vector < std::vector < Double_t > >  Double_gauss_, Int_t y_para, TString title, Int_t X_par=-1);
+    TGraphErrors* make_graph(std::vector < TString > params_labels_, std::vector < std::vector < Double_t > >  Double_gauss_, Int_t y_para, TString title, Int_t X_par=-1, Int_t x_offset=0);
+  virtual void draw_graphs(std::vector <TGraphErrors*> graphs_, Double_t ylow, Double_t yhigh, TLegend *legend, TString PDF_PNG_name, Double_t xlow=0, Double_t xhigh=-1);
 
 
    ////////ENDE EIGENER TEIL
@@ -401,7 +439,9 @@ base_corr::base_corr(TTree *tree)
       TChain * chain = new TChain("DiJetTree","");
  
 
-        chain->Add("/rdata/cms-data01/proof/calibration/Summer09QCDFlat-MC_31X_V9_7TeV-v1_E/Summer09QCDFlat_Pt15to3000MC_31X_V9_7TeV-v1_*.root");   
+        chain->Add("/rdata/cms-data01/proof/calibration/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1-ak5Calo_*.root");   
+	//        chain->Add("../QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1-ak5Calo_*.root");   
+	//	        chain->Add("/rdata/cms-data01/proof/calibration/Summer09QCDFlat-MC_31X_V9_7TeV-v1_E/Summer09QCDFlat_Pt15to3000MC_31X_V9_7TeV-v1_*.root");   
 	//      chain->Add("/rdata/cms-data01/proof/calibration/MinBiasSpring10-START3X_V26A_356ReReco-v1/MinBiasSpring10-START3X_V26A_356ReReco-v1_*.root");
 
       tree = chain;
@@ -410,7 +450,13 @@ base_corr::base_corr(TTree *tree)
 
    }
    Init(tree);
-test = new TCanvas("TEST", "TEST",341,360,1024,768);
+   test = new TCanvas("TEST", "TEST",341,360,550,500);
+  test->SetRightMargin(0.03);
+  //  test->SetLeftMargin(0.16);
+  test->SetTopMargin(0.13);
+//  test->SetGridy(); 
+//  test->SetGridx();
+
 }
 
 base_corr::~base_corr()
