@@ -237,12 +237,12 @@ lib/libJetMETObjects.so: dirs JetMETObjects
 	@env STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX} -DSTANDALONE -I.'  /bin/sh -c 'make -e -C JetMETObjects'
 
 JetMETObjects:
-	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -r V01-09-01-10 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
+	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -r V03-01-15 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 	patch -d JetMETObjects/src < JetMETObjects.patch
 
 plugins: dirs lib/libJetMETCor.so
 
 lib/libJetMETCor.so: CorFactors.h lib/libJetMETObjects.so JetMETCorFactorsFactory.h JetMETCorFactorsFactory.cc CorFactorsFactory.h Jet.h
-	$(C) $(CFLAGS) -c JetMETCorFactorsFactory.cc
+	$(C) $(CFLAGS) -DSTANDALONE -c JetMETCorFactorsFactory.cc
 	$(LD) $(CFLAGS) -shared JetMETCorFactorsFactory.o lib/libJetMETObjects.so lib/libKalibri.so $(RLXX) -o lib/libJetMETCor.so
 	@echo '-> JetMETCor plugin created.'

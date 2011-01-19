@@ -1,6 +1,6 @@
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: JetMETCorFactorsFactory.h,v 1.4 2009/11/26 13:23:40 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.h,v 1.5 2010/10/14 17:26:55 stadie Exp $
 //   
 #ifndef JETMETCORFACTORSFACTORY_H
 #define JETMETCORFACTORSFACTORY_H
@@ -12,10 +12,10 @@ class FactorizedJetCorrector;
 class JetCorrectorParameters;
 
 class JetMETCorFactorsFactory : public CorFactorsFactory
-{
+{  
  public:
-  JetMETCorFactorsFactory(const std::string& name, const std::string& files);
-  JetMETCorFactorsFactory(const JetMETCorFactorsFactory& cff);
+  enum Levels {L1L2L3,L2L3,L2L3res,L2L3L4};
+  JetMETCorFactorsFactory(const std::string& name, const std::string& files,Levels type);
   ~JetMETCorFactorsFactory();
 
   CorFactors* create(const Jet* j);
@@ -25,12 +25,13 @@ class JetMETCorFactorsFactory : public CorFactorsFactory
  private:
   FactorizedJetCorrector* cor_;
   std::vector<JetCorrectorParameters> vParam_;
+  Levels type_;
 
   class Register {
   public:
     Register();
   private:
-    JetMETCorFactorsFactory* create(const std::string& name, const std::string& files) const;
+    JetMETCorFactorsFactory* create(const std::string& name, const std::string& files,Levels type) const;
   };
   static Register register_;
 };
