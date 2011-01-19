@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: DiJetEventWeighting.cc,v 1.1 2010/12/13 10:55:09 stadie Exp $
+//    $Id: DiJetEventWeighting.cc,v 1.1 2010/12/20 11:08:13 stadie Exp $
 //   
 #include "DiJetEventWeighting.h"
 
@@ -46,7 +46,7 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
     TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(*i);
     std::map<double,double>::iterator it = ndata_.lower_bound(tje->ptDijetCorrL2L3());
     if(it == ndata_.begin()) {
-      std::cout << "bad event" << tje->ptDijetCorrL2L3() << " " << it->first << '\n';
+      std::cout << "bad event " << tje->ptDijetCorrL2L3() << " " << it->first << '\n';
       --i;
       delete tje;
       data.erase(i+1);
