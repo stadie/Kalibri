@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.64 2010/11/24 09:36:38 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.65 2010/12/13 10:38:28 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -327,7 +327,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 	  ++nGoodEvts_;
 	}
 	if(std::abs(td->getJet2()->eta()) < 1.3) {
-	  data.push_back(td ); 
+	  data.push_back(td); 
 	  ++nGoodEvts_;
 	} else {
 	  delete td;
@@ -350,9 +350,6 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     if(nReadEvts_>=nDijetEvents_ && nDijetEvents_>=0 ) break;
   }
   //printCutFlow();
-
-  //hack: disable trigger selection after first reading
-  requireTrigger_ = false;
   return nGoodEvts_;
 }
 
@@ -448,7 +445,9 @@ int DiJetReader::readControlEvents(std::vector<Event*>& control, int id)
 { 
   std::ostringstream name;
   name << "Di-Jet Control" << id;
-  nDijetEvents_ = config_->read<int>("use "+name.str()+" events",0);
+  nDijetEvents_ = config_->read<int>("use "+name.str()+" events",0); 
+  //hack: disable trigger selection after first reading
+  requireTrigger_ = false;
   if(nDijetEvents_ == 0) return 0;
   TTree* tree = createTree(name.str());
   if(tree->GetEntries() == 0) return 0;  
@@ -1031,20 +1030,21 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     hltdijetave70incl_ = hltdijetave50incl_ || nJet_->HltDiJetAve70U;
     hltdijetave100incl_ = hltdijetave70incl_ || nJet_->HltDiJetAve100U;
     hltdijetave140incl_ = hltdijetave100incl_ || nJet_->HltDiJetAve140U;
-    double diJetPtAve = 0.5 * (nJet_->JetCorrL2L3[0] * nJet_->JetPt[0]+ nJet_->JetCorrL2L3[1] * nJet_->JetPt[1]);
+    double diJetPtAve = 0.5 * (nJet_->JetCorrL2[0] * nJet_->JetCorrL3[0] * nJet_->JetPt[0]+ nJet_->JetCorrL2[1] * nJet_->JetCorrL3[1] * nJet_->JetPt[1]);
     std::map<double,bool*>::iterator it = trigmap_.lower_bound(diJetPtAve);
     if(it == trigmap_.begin()) {
       //std::cout << "below all trigger thresholds:" << diJetPtAve << '\n';
       nTriggerSel_++;
       return 0;
     }
+    
     --it;
     if(! *(it->second)) {
       //std::cout << "failing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
       nTriggerSel_++;
       return 0;
     } 
-    // std::cout << "passing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
+    //std::cout << "passing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
   }
 
 
@@ -1083,7 +1083,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     return 0;
   }
   */
-  double ptAve = 0.5 * (nJet_->JetCorrL2L3[0] * nJet_->JetPt[0]+ nJet_->JetCorrL2L3[1] * nJet_->JetPt[1]);
+  double ptAve = 0.5 * (nJet_->JetCorrL2[0] * nJet_->JetCorrL3[0]* nJet_->JetPt[0]+ nJet_->JetCorrL2[1] * nJet_->JetCorrL3[1] * nJet_->JetPt[1]);
   if( nJets > 2) {
     //compute dijet kin
     double deltaPhi12 = TVector2::Phi_mpi_pi(nJet_->JetPhi[0]-nJet_->JetPhi[1]);
@@ -1093,12 +1093,12 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     double pJ3 = 0.;
     double ptJet3 = 0.;
     if( nJet_->NobjJet > 2 ) {
-      pJ3 = nJet_->JetCorrL2L3[2] * nJet_->JetPt[2]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[2]));
-      ptJet3 = nJet_->JetCorrL2L3[2] * nJet_->JetPt[2];
+      pJ3 = nJet_->JetCorrL2[2] * nJet_->JetCorrL3[2]* nJet_->JetPt[2]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[2]));
+      ptJet3 = nJet_->JetCorrL2[2] * nJet_->JetCorrL3[2] * nJet_->JetPt[2];
     }
     double pSJ = 0.;
     for(int i = 3; i < nJet_->NobjJet; ++i) {
-      pSJ += std::abs(nJet_->JetCorrL2L3[i] * nJet_->JetPt[i]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[i])));
+      pSJ += std::abs(nJet_->JetCorrL2[i] * nJet_->JetCorrL3[i] * nJet_->JetPt[i]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[i])));
     }
     //double pUCE = 0.;
     
@@ -1106,7 +1106,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
       nCutOn3rdJet_++;
       return 0;
     }
-    if( sqrt(pSJ) > maxRelSoftJetEt_*ptAve ) {
+    if( pSJ > maxRelSoftJetEt_*ptAve ) {
       nCutOnSoftJets_++;
       return 0;
     }
@@ -1178,7 +1178,6 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
   // Create TwoJetsInvMassEvent
   TwoJetsPtBalanceEvent * evt
     = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight) ;
-  
   return evt;
 }
 
