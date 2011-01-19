@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.4 2010/11/26 10:35:52 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.5 2010/12/13 10:38:28 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -235,6 +235,12 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   std::ostringstream name;
   name << "Di-Jet Control" << id;
   nDijetEvents_ = config_->read<int>("use "+name.str()+" events",0);
+  //hack disable trigger
+  requireTrigger_ = false;
+  for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
+	    i != readers_.end() ; ++i) {
+    (*i)->reader()->requireTrigger_ = false;
+  }
   if(nDijetEvents_ == 0) return 0;
   tree_ = createTree(name.str());
   if(tree_->GetEntries() == 0) return 0;
@@ -254,11 +260,11 @@ ThreadedDiJetReader::ReadThread::ReadThread(const std::string& configfile,
   
 ThreadedDiJetReader::ReadThread::~ReadThread() 
 { 
-  data_.clear();
   delete reader_;
 }
     
 void  ThreadedDiJetReader::ReadThread::start() {
+  data_.clear();
   thread_ = new boost::thread(read_events(this)); 
 }
 
@@ -282,3 +288,4 @@ void ThreadedDiJetReader::ReadThread::reset() {
 void ThreadedDiJetReader::ReadThread::read_events::operator()() {
   parent_->reader_->readEventsFromTree(parent_->data_);
 }
+
