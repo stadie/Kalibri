@@ -238,7 +238,7 @@ lib/libJetMETObjects.so: dirs JetMETObjects
 
 JetMETObjects:
 	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -r V03-01-15 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
-	patch -d JetMETObjects/src < JetMETObjects.patch
+	patch -p0 < JetMETObjects.patch
 
 plugins: dirs lib/libJetMETCor.so
 
