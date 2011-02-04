@@ -1,4 +1,4 @@
-// $Id: writeWeights.C,v 1.1 2010/07/20 17:13:38 stadie Exp $
+// $Id: writeWeights.C,v 1.2 2010/10/14 17:28:27 stadie Exp $
 
 #include "TChain.h"
 #include "TBranch.h"
@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-void writeWeightsToTree(const char* path, float lumi, int nev = -1) {
+void writeWeightsToTree(const char* path, float lumi, int nev = -1, double ptHatExpo = 0., double ptHatNorm = 1.) {
   TChain* c = new TChain("DiJetTree","DiJetTree");
   c->Add(path);
   
@@ -15,14 +15,16 @@ void writeWeightsToTree(const char* path, float lumi, int nev = -1) {
   Float_t xsec;
   TBranch* bCrossSection;
   c->SetBranchAddress("CrossSection", &xsec,&bCrossSection);
-  
+
   Long64_t nentries = c->GetEntries();
   if(nev < 0) nev = nentries;
   bCrossSection->GetEntry(0);
   Float_t newweight = (xsec * lumi) / nev;  
   std::cout << path << " and n events:" << nentries <<'\n';
   std::cout << "gen events:" << nev << " x-sec:" << xsec << " pb\n";
-  std::cout << "new weight:" << newweight << '\n';
+  std::cout << "new weight:" << newweight;
+  if( ptHatExpo < 0. ) std::cout << " * ptHat^{" << ptHatExpo << "}";
+  std::cout << '\n';
   TObjArray *fileElements=c->GetListOfFiles();
   TIter next(fileElements);
   TChainElement *chEl=0;
@@ -36,9 +38,16 @@ void writeWeightsToTree(const char* path, float lumi, int nev = -1) {
     delete djt;
     TBranch* bWeight = ndjt->Branch("Weight", &weight, "Weight/F");
     weight = newweight;
+    Float_t ptHat = 0.;
+    ndjt->SetBranchAddress("GenEvtScale",&ptHat);
     //read the number of entries in the t3
     nentries = ndjt->GetEntries();
     for (Long64_t i = 0; i < nentries; i++){
+      if( ptHatExpo < 0. ) {
+	ndjt->GetEntry(i);
+	weight = newweight*pow(static_cast<double>(ptHat/ptHatNorm),ptHatExpo);
+	//	if( i < 10 ) std::cout << "PtHat " << ptHat << " -- > " << weight << std::endl;
+      }
       bWeight->Fill();
       //std::cout << bWeight->Fill() << '\n';
     }
@@ -50,27 +59,9 @@ void writeWeightsToTree(const char* path, float lumi, int nev = -1) {
   delete c;
 }
 
+
 void writeWeights() {
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt0to15*ak5Calo.root",0.1,2197029);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt1000to1400*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt120to170*ak5Calo.root",0.1,58888);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt1400to1800*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt15to20*ak5Calo.root",0.1,2256430);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt170to230*ak5Calo.root",0.1,51680);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt1800to2200*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt20to30*ak5Calo.root",0.1,1037110);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt2200to2600*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt230to300*ak5Calo.root",0.1,52894);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt2600to3000*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt3000to3500*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt300to380*ak5Calo.root",0.1,64265);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt30to50*ak5Calo*.root",0.1,1161768);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt380to470*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt470to600*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt50to80*ak5Calo.root",0.1,111289);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt600to800*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt800to1000*ak5Calo.root",0.1);
-  writeWeightsToTree("/scratch/hh/current/cms/user/stadie/QCDDiJetSummer10-START36_V9_S09-v1A/Pt80to120*ak5Calo.root",0.1,606771);
+  writeWeightsToTree("/scratch/hh/current/cms/user/mschrode/mc/tmp/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6job_*_ak5JPT.root",1.,-1,-4.5,15.);
 }
 
 void testWeights() 
