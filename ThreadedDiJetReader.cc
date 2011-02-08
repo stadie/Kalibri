@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.5 2010/12/13 10:38:28 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.6 2011/01/19 15:07:14 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -144,7 +144,8 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 	    nMaxJetEta_         += djr->nMaxJetEta_;
 	    nMinJetHadFraction_ += djr->nMinJetHadFraction_;    
 	    nMaxJetHadFraction_ += djr->nMaxJetHadFraction_;    
-	    nMinDeltaPhi_       += djr->nMinDeltaPhi_;
+	    nMinDeltaPhi_       += djr->nMinDeltaPhi_; 
+	    //std::cout << *i << ":events " << (*i)->nEvents() << ";" << djr->nReadEvts_<< '\n';
 	  }
 	}
 	std::cout << nReadEvts_ << " events read\n";
@@ -181,7 +182,8 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
       nMaxJetEta_         += djr->nMaxJetEta_;
       nMinJetHadFraction_ += djr->nMinJetHadFraction_;    
       nMaxJetHadFraction_ += djr->nMaxJetHadFraction_;    
-      nMinDeltaPhi_       += djr->nMinDeltaPhi_;
+      nMinDeltaPhi_       += djr->nMinDeltaPhi_;  
+      //std::cout << readers_[i] << ":events " << readers_[i]->nEvents() << ";" << djr->nReadEvts_<< '\n';
     }
   }
   std::cout << nReadEvts_ << " events read\n";
@@ -264,7 +266,6 @@ ThreadedDiJetReader::ReadThread::~ReadThread()
 }
     
 void  ThreadedDiJetReader::ReadThread::start() {
-  data_.clear();
   thread_ = new boost::thread(read_events(this)); 
 }
 
