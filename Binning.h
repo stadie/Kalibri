@@ -5,7 +5,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: Binning.h,v 1.1 2010/05/26 13:08:12 stadie Exp $
+//!  $Id: Binning.h,v 1.2 2010/10/20 11:28:16 stadie Exp $
 // ----------------------------------------------------------------   
 
 #include <string>
@@ -38,8 +38,8 @@ class Binning
   void clear() {
     jetbins_.clear();
   }
- private:
   int findBin(double x1, double x2, double x3, double x4) const;
+ private:
   typedef  std::vector<std::set<double> > BorderSets;
   BorderSets borders_;
   BinMap jetbins_;
