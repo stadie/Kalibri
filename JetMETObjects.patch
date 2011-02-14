@@ -13,36 +13,22 @@ RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/interfa
 retrieving revision 1.6
 diff -r1.6 FactorizedJetCorrector.h
 18c18
-<     enum VarTypes   {kJetPt,kJetEta,kJetPhi,kJetE,kJetEMF,kRelLepPt,kPtRel,kNPV};
+<     enum VarTypes   {kJetPt,kJetEta,kJetPhi,kJetE,kJetEMF,kRelLepPt,kPtRel,kNPV,kJetA,kRho};
 ---
->     enum VarTypes   {kJetPt,kJetEta,kJetPhi,kJetE,kJetEMF,kRelLepPt,kPtRel,kNPV,kJW};
-25,32c25,34
-<     void setJetEta      (float fEta);
-<     void setJetPt       (float fPt); 
-<     void setJetE        (float fE);
-<     void setJetPhi      (float fE);
+>   enum VarTypes   {kJetPt,kJetEta,kJetPhi,kJetE,kJetEMF,kRelLepPt,kPtRel,kNPV,kJetA,kRho,kJW};
+29c29,31
 <     void setJetEMF      (float fEMF); 
-<     void setLepPx       (float fLepPx);
-<     void setLepPy       (float fLepPy);
-<     void setLepPz       (float fLepPz);
 ---
->     void setJetEta          (float fEta);
->     void setJetPt           (float fPt); 
->     void setJetE            (float fE);
->     void setJetPhi          (float fE);
->     void setJetEMF          (float fEMF); 
+>     void setJetEMF      (float fEMF);
 >     void setJetEtaEtaMoment (float fEtaEta); 
->     void setJetPhiPhiMoment (float fPhiPhi);  
->     void setLepPx           (float fLepPx);
->     void setLepPy           (float fLepPy);
->     void setLepPz           (float fLepPz);
-58c60,62
+>     void setJetPhiPhiMoment (float fPhiPhi);   
+60c62,64
 <     float mJetEMF; 
 ---
 >     float mJetEMF;
 >     float mJetEtaEta;
 >     float mJetPhiPhi;
-68c72,74
+72c76,78
 <     bool  mIsJetEMFset; 
 ---
 >     bool  mIsJetEMFset;
@@ -65,127 +51,73 @@ Index: JetMETObjects/src/FactorizedJetCorrector.cc
 RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/src/FactorizedJetCorrector.cc,v
 retrieving revision 1.13
 diff -r1.13 FactorizedJetCorrector.cc
-22,29c22,31
-<   mJetEta = -9999;
-<   mJetPt  = -9999;
-<   mJetPhi = -9999;
-<   mJetE   = -9999;
-<   mJetEMF = -9999;
-<   mLepPx  = -9999;
-<   mLepPy  = -9999;
-<   mLepPz  = -9999;
----
->   mJetEta    = -9999;
->   mJetPt     = -9999;
->   mJetPhi    = -9999;
->   mJetE      = -9999;
->   mJetEMF    = -9999;
+28a29,30
 >   mJetEtaEta = -9999;
 >   mJetPhiPhi = -9999;
->   mLepPx     = -9999;
->   mLepPy     = -9999;
->   mLepPz     = -9999;
 35a38,39
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-48,55c52,61
-<   mJetEta = -9999;
-<   mJetPt  = -9999;
-<   mJetPhi = -9999;
-<   mJetE   = -9999;
-<   mJetEMF = -9999;
-<   mLepPx  = -9999;
-<   mLepPy  = -9999;
-<   mLepPz  = -9999;
----
->   mJetEta    = -9999;
->   mJetPt     = -9999;
->   mJetPhi    = -9999;
->   mJetE      = -9999;
->   mJetEMF    = -9999;
+41a46,47
+>   mIsJetEtaEtaset   = false;
+>   mIsJetPhiPhiset   = false;
+58a65,66
 >   mJetEtaEta = -9999;
 >   mJetPhiPhi = -9999;
->   mLepPx     = -9999;
->   mLepPy     = -9999;
->   mLepPz     = -9999;
-63c69,71
+69c77,79
 <   mIsJetEMFset      = false;
 ---
 >   mIsJetEMFset      = false;  
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-75,82c83,92
-<   mJetEta = -9999;
-<   mJetPt  = -9999;
-<   mJetPhi = -9999;
-<   mJetE   = -9999;
-<   mJetEMF = -9999;
-<   mLepPx  = -9999;
-<   mLepPy  = -9999;
-<   mLepPz  = -9999;
+71c81,83
+<   mIsRhoset         = false; 
 ---
->   mJetEta    = -9999;
->   mJetPt     = -9999;
->   mJetPhi    = -9999;
->   mJetE      = -9999;
->   mJetEMF    = -9999;
+>   mIsRhoset         = false;
+>   mIsJetEtaEtaset   = false;
+>   mIsJetPhiPhiset   = false; 
+89c101,103
+<   mRho    = -9999;
+---
+>   mRho    = -9999; 
 >   mJetEtaEta = -9999;
 >   mJetPhiPhi = -9999;
->   mLepPx     = -9999;
->   mLepPy     = -9999;
->   mLepPz     = -9999;
-90c100,102
+100c114,116
 <   mIsJetEMFset      = false;
 ---
 >   mIsJetEMFset      = false;  
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-105a118,119
+102a119,120
+>   mIsJetEtaEtaset   = false;
+>   mIsJetPhiPhiset   = false;
+123a142,143
 >       else if (ss == "L4JW")
 >         mLevels.push_back(kL4);
-144a159,160
+164c184,186
+<         mLevels.push_back(kL6);
+---
+> 	mLevels.push_back(kL6);
 >       else if (tmp[i] == "L4JW")
 >         mLevels.push_back(kL4);
-208c224,226
+224c246,248
 < 	 result.push_back(kJetEMF);
 ---
 > 	 result.push_back(kJetEMF); 
 >       else if (ss=="JetWidth")
 > 	 result.push_back(kJW);
-349,357c367,377
-<   mIsJetEset   = false;
-<   mIsJetPtset  = false;
-<   mIsJetPhiset = false;
-<   mIsJetEtaset = false;
-<   mIsJetEMFset = false;
-<   mIsLepPxset  = false;
-<   mIsLepPyset  = false;
-<   mIsLepPzset  = false;
-<   mAddLepToJet = false;
----
->   mIsJetEset      = false;
->   mIsJetPtset     = false;
->   mIsJetPhiset    = false;
->   mIsJetEtaset    = false;
->   mIsJetEMFset    = false;
->   mIsJetEtaEtaset = false;
->   mIsJetPhiPhiset = false;
->   mIsLepPxset     = false;
->   mIsLepPyset     = false;
->   mIsLepPzset     = false;
->   mAddLepToJet    = false;
-395c415
+417c441
 <             handleError("FactorizedJetCorrector","jet E is not set");
 ---
 > 	    handleError("FactorizedJetCorrector","jet E is not set");
-396a417,422
->         }   
+437a462,467
 >       else if (fVarTypes[i] == kJW) 
->         {
->           if (!mIsJetEtaEtaset || !mIsJetPhiPhiset) 
->             handleError("FactorizedJetCorrector","jet phiphi- or etaetamoments are not set");
->           result.push_back(0.5*(mJetEtaEta+mJetPhiPhi));
-500a527,538
+> 	{
+> 	  if (!mIsJetEtaEtaset || !mIsJetPhiPhiset) 
+> 	    handleError("FactorizedJetCorrector","jet phiphi- or etaetamoments are not set");
+> 	  result.push_back(0.5*(mJetEtaEta+mJetPhiPhi));
+> 	}
+517a548,560
+> //------------------------------------------------------------------------
 > void FactorizedJetCorrector::setJetEtaEtaMoment(float fEtaEta)
 > {
 >   mJetEtaEta = fEtaEta;
@@ -203,22 +135,23 @@ Index: JetMETObjects/src/JetCorrectorParameters.cc
 RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/src/JetCorrectorParameters.cc,v
 retrieving revision 1.18
 diff -r1.18 JetCorrectorParameters.cc
-447a448
+448a449
 > #ifndef STANDALONE
-448a450,453
+449a451,454
 > #else
 >   std::cerr << " cannot find key " << static_cast<int>(k) << std::endl;
 >   throw "InvalidInput";
 > #endif
 528a534
 > #ifndef STANDALONE
-529a536,540
+531c537,540
+< 
+---
 > #else 
 >   std::cerr  << " Cannot find label " << label << std::endl;
 >   throw "InvalidInput";
 > #endif
->   
-537,540c548,553
+538,541c547,552
 < #include "FWCore/Utilities/interface/typelookup.h"
 <  
 < TYPELOOKUP_DATA_REG(JetCorrectorParameters);
@@ -230,3 +163,4 @@ diff -r1.18 JetCorrectorParameters.cc
 >   TYPELOOKUP_DATA_REG(JetCorrectorParameters);
 >   TYPELOOKUP_DATA_REG(JetCorrectorParametersCollection);
 > #endif
+
