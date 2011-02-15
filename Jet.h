@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.43 2010/11/24 09:53:04 stadie Exp $
+//!    $Id: Jet.h,v 1.44 2010/12/13 10:38:28 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -98,7 +98,9 @@ class Jet : public Measurement
   float genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
   float dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet
   const CorFactors& corFactors() const { return *corFactors_;}
-  void updateCorFactors(CorFactors *cor);
+  void updateCorFactors(CorFactors *cor);  
+  //! Correct measurement by \p L1
+  void correctL1();
   //! Correct measurement by product \p L1*L2*L3
   void correctToL3();
   //! Correct measurement by product \p L2*L3
@@ -174,9 +176,9 @@ class Jet : public Measurement
  private: 
   Flavor flavor_;           //!< The jet's Flavor
   float genPt_;            //!< The genjet pt
-  float dR_;               //!< \f$ \Delta R \f$ between jet and genjet
+  float dR_;               //!< \f$ \Delta R \f$ between jet and genjet 
+  float error_;                //!< Stores error for constant error mode
   const CorFactors* corFactors_;   //!< The correction factors
-  float    error_;                //!< Stores error for constant error mode
   const Function*  f_;            //!< Jet correction function
   const Function*  gf_;           //!< Global jet correction function
   float    (*errf_)(const float *x, const Measurement *xorig, float err);   //!< Error function

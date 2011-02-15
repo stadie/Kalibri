@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.6 2011/01/19 15:07:14 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.7 2011/02/08 14:25:52 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -15,7 +15,6 @@
 #include "JetTruthEvent.h"
 
 #include "CorFactorsFactory.h"
-#include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
 //!  \brief Constructor
@@ -114,7 +113,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
       //tree->GetEntriesFast();
       //std::cout << "adding " << f->GetName() << " with " <<  tree->GetEntriesFast() << " entries\n";
       readers_[id]->reader()->nJet_->Init(tree);
-      //readers_[id]->reader()->nJet_->GetEntry(0);
+      readers_[id]->reader()->nJet_->GetEntry(0);
       ++id;
       if(id == readers_.size()) {
 	for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
@@ -126,8 +125,8 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 	  //std::cout << "waiting for reader " << i - readers_.begin() << '\n';
 	  if((*i)->isDone()) {
 	    DiJetReader* djr = (*i)->reader();
-	    //std::cout << "adding for reader " << i - readers_.begin() 
-	    //	    << " with " <<  djr->nReadEvts_ << " events.\n";
+	    std::cout << "adding from reader " << i - readers_.begin() 
+		      << " " <<  djr->nReadEvts_ << " events.\n";
 	    nReadEvts_          += djr->nReadEvts_;
 	    nDiJetCut_          += djr->nDiJetCut_;
 	    nMinJetEt_          += djr->nMinJetEt_;
@@ -164,9 +163,12 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
       readers_[i]->start();
     }
   }
-  for(unsigned int  i = 0 ; i < id ; ++i) {
+  for(unsigned int  i = 0 ; i < id ; ++i) { 
+    std::cout << "waiting for reader " << i  << '\n';
     if(readers_[i]->isDone()) {
-      DiJetReader* djr = readers_[i]->reader(); 
+      DiJetReader* djr = readers_[i]->reader();  
+      std::cout << "adding from reader " << i  
+		<< " " <<  djr->nReadEvts_ << " events.\n";
       nReadEvts_          += djr->nReadEvts_;
       nDiJetCut_          += djr->nDiJetCut_;
       nMinJetEt_          += djr->nMinJetEt_;
@@ -266,13 +268,13 @@ ThreadedDiJetReader::ReadThread::~ReadThread()
 }
     
 void  ThreadedDiJetReader::ReadThread::start() {
-  thread_ = new boost::thread(read_events(this)); 
+  thread_ = boost::shared_ptr<boost::thread>(new boost::thread(read_events(this))); 
 }
 
 
 bool ThreadedDiJetReader::ReadThread::isDone() { 
   thread_->join(); 
-  delete thread_; 
+  //delete thread_; 
   return true;
 }
 

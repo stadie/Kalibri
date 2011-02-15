@@ -28,15 +28,14 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: ThreadedDiJetReader.h,v 1.2 2010/10/20 11:28:21 stadie Exp $
+//!  $Id: ThreadedDiJetReader.h,v 1.3 2010/11/01 15:47:40 stadie Exp $
 // ----------------------------------------------------------------   
 #include "DiJetReader.h"
 
 #include <vector>
 
-namespace boost {
-class thread;
-}
+#include <boost/shared_ptr.hpp>
+#include <boost/thread/thread.hpp>
 class TChain;
 
 class ThreadedDiJetReader : public DiJetReader{
@@ -59,7 +58,7 @@ class ThreadedDiJetReader : public DiJetReader{
       read_events(ReadThread *parent) : parent_(parent) {}
       void operator()();
     };
-    boost::thread *thread_;
+    boost::shared_ptr<boost::thread> thread_;
     friend class read_events;  
   public:
     ReadThread(const std::string& configfile, Parameters* p);

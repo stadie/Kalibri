@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.65 2010/12/13 10:38:28 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.66 2011/01/19 15:08:51 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -224,6 +224,9 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
 	if(corFactorsFactory_) {
 	  jet->updateCorFactors(corFactorsFactory_->create(jet));
 	}
+	if(correctL1_) {
+	  jet->correctL1();
+	}
 	if(correctToL3_) {
 	  jet->correctToL3();
 	} else if(correctL2L3_) {
@@ -293,10 +296,12 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     nJet_->fChain->SetBranchStatus("GenPart*",0);
   }
   // Read the events
+  //std::cout << "reading " << nevent << " events...\n";
   for (int i=0 ; i < nevent ; i+= prescale_) {
+    //std::cout << "event " << i << " of " << nevent << '\n';
     if((i+1)%10000==0) std::cout << "  " << i+1 << std::endl;
     nJet_->fChain->GetEvent(i); 
-    if (nJet_->NobjTow>10000 || nJet_->NobjJet>100) {
+    if((nJet_->NobjTow > 10000) || (nJet_->NobjJet > 100)) {
       std::cerr << "ERROR: Increase array sizes in NJet_Selector; NobjTow="
 		<< nJet_->NobjTow<<", NobjJet="<<nJet_->NobjJet<<"!"<<std::endl;
       exit(9);
@@ -628,8 +633,11 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 		    jet_error_param,par_->global_jet_function());    
     }
     if(corFactorsFactory_) {
-      jet->updateCorFactors(corFactorsFactory_->create(jet));
+      jet->updateCorFactors(corFactorsFactory_->create(jet,nJet_->VtxN));
       //std::cout << jet->pt() << " L2L3:" << jet->corFactors().getL2() << ", " << jet->corFactors().getL3() << '\n';
+    }
+    if(correctL1_) {
+      jet->correctL1();
     }
     if(correctToL3_) {
       jet->correctToL3();
@@ -787,6 +795,9 @@ Event* DiJetReader::createSmearEventCaloOrdered()
 	  if(corFactorsFactory_) {
 	    jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i]));
 	  }
+	  if(correctL1_) {
+	    jets[i]->correctL1();
+	  }
 	  // Correct measurement to L3 (L1*L2*L3)
 	  if(correctToL3_) {
 	    jets[i]->correctToL3();
@@ -933,6 +944,9 @@ Event* DiJetReader::createSmearEventGenOrdered() {
 	  // Read external correction factors
 	  if(corFactorsFactory_) {
 	    jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i]));
+	  }
+	  if(correctL1_) {
+	    jets[i]->correctL1();
 	  }
 	  // Correct measurement to L3 (L1*L2*L3)
 	  if(correctToL3_) {
@@ -1159,9 +1173,14 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     }
   }  // End of loop over jets 
   if(corFactorsFactory_) {
-    jet1->updateCorFactors(corFactorsFactory_->create(jet1));
-    jet2->updateCorFactors(corFactorsFactory_->create(jet2));
-    if(jet3) jet3->updateCorFactors(corFactorsFactory_->create(jet3));    
+    jet1->updateCorFactors(corFactorsFactory_->create(jet1,nJet_->VtxN));
+    jet2->updateCorFactors(corFactorsFactory_->create(jet2,nJet_->VtxN));
+    if(jet3) jet3->updateCorFactors(corFactorsFactory_->create(jet3,nJet_->VtxN));    
+  }
+  if(correctL1_) {
+    jet1->correctL1();
+    jet2->correctL1();
+    if(jet3) jet3->correctL1();
   }
   // Correct measurement to L3 (L1*L2*L3)
   if(correctToL3_) {

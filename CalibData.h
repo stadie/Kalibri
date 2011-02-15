@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.83 2010/11/01 15:47:40 stadie Exp $
+// $Id: CalibData.h,v 1.84 2010/11/24 09:53:04 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -28,7 +28,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.83 2010/11/01 15:47:40 stadie Exp $
+//!  $Id: CalibData.h,v 1.84 2010/11/24 09:53:04 stadie Exp $
 class Measurement
 {
 public:
@@ -67,7 +67,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.83 2010/11/01 15:47:40 stadie Exp $
+//!  $Id: CalibData.h,v 1.84 2010/11/24 09:53:04 stadie Exp $
 class TTrack : public Measurement
 {
 public:
@@ -78,13 +78,15 @@ public:
 	 float Had5, float TrackChi2, int NValidHits, bool TrackQualityT, 
 	 float MuDR, float MuDE, float Efficiency) 
     : Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi),TrackId(TrackId),TowerId(TowerId),
-    DR(DR),DRout(DRout),etaOut(etaOut),phiOut(phiOut),EM1(EM1),EM5(EM5),Had1(Had1),
-    Had5(Had5),TrackChi2(TrackChi2),NValidHits(NValidHits),TrackQualityT(TrackQualityT),
+    NValidHits(NValidHits),TrackQualityT(TrackQualityT),DR(DR),DRout(DRout),etaOut(etaOut),
+    phiOut(phiOut),EM1(EM1),EM5(EM5),Had1(Had1),Had5(Had5),TrackChi2(TrackChi2),
     MuDR(MuDR),MuDE(MuDE),Efficiency(Efficiency) {}
   virtual ~TTrack() {}
 //variables specific only to Tracks
   int TrackId;
-  int TowerId;
+  int TowerId;  
+  int NValidHits;
+  bool TrackQualityT;
   float DR;
   float DRout;
   float etaOut;
@@ -94,8 +96,6 @@ public:
   float Had1;
   float Had5;
   float TrackChi2;
-  int NValidHits;
-  bool TrackQualityT;
   float MuDR;
   float MuDE;
   float Efficiency;
@@ -124,7 +124,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.83 2010/11/01 15:47:40 stadie Exp $
+//! $Id: CalibData.h,v 1.84 2010/11/24 09:53:04 stadie Exp $
 class Event
 {
 public:

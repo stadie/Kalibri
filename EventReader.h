@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.14 2010/10/12 08:38:59 stadie Exp $
+// $Id: EventReader.h,v 1.15 2010/10/20 11:28:17 stadie Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -40,12 +40,15 @@ class EventReader
 
   ConfigFile* config_;   //!< The configfile
   Parameters* par_;     //!< The parametrization
-  bool useTracks_;       //!< True, if tracks are used in calibration
   CorFactorsFactory* corFactorsFactory_; //! Factory class for external source of CorFactors;
+  Parametrization *cp_; 
+  bool useTracks_;       //!< True, if tracks are used in calibration
   //! Correct jets to L3 i.e. with L1*L2*L3
   bool correctToL3_;
   //!< Correct jets with L2*L3 corrections
-  bool correctL2L3_;
+  bool correctL2L3_; 
+  //! Correct jets with L1 correction
+  bool correctL1_;
   double weightRelToNtuple_;
 
 
@@ -54,7 +57,6 @@ class EventReader
   float (*track_error_param)(const float *x, const Measurement *xorig, float err);  
 
   static std::vector<JetConstraintEvent*> constraints_;
-  Parametrization *cp_;
   static Binning* binning_;
 };
 

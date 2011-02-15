@@ -31,6 +31,8 @@ else ifeq (exists, $(shell [ -d /sw/include/boost ] && echo exists))
  BOOSTFLAGS=-I/sw/include/boost
  SPECIALFLAGS += -arch i386 -I/sw/include
  LFLAGS += -L/sw/lib
+else
+ SPECIALFLAGS += $(BOOSTFLAGS)
 endif
 
 RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS)
@@ -243,6 +245,6 @@ JetMETObjects:
 plugins: dirs lib/libJetMETCor.so
 
 lib/libJetMETCor.so: CorFactors.h lib/libJetMETObjects.so JetMETCorFactorsFactory.h JetMETCorFactorsFactory.cc CorFactorsFactory.h Jet.h
-	$(C) $(CFLAGS) -DSTANDALONE -c JetMETCorFactorsFactory.cc
+	$(C) $(RCXX) -DSTANDALONE -c JetMETCorFactorsFactory.cc
 	$(LD) $(CFLAGS) -shared JetMETCorFactorsFactory.o lib/libJetMETObjects.so lib/libKalibri.so $(RLXX) -o lib/libJetMETCor.so
 	@echo '-> JetMETCor plugin created.'
