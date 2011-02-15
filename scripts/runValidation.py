@@ -21,7 +21,7 @@ Fit method = 2
 #Parametrization
 Parametrization Class = L2L3JetParametrization
 
-Number of IO Threads = 6
+Number of IO Threads = 5
 
 #Error Parametrization
 tower error parametrization = const
@@ -67,7 +67,7 @@ DeltaR cut on jet matching = 0.25
 #---------------------------------------------------------------------------------
 #   Input / Output
 #---------------------------------------------------------------------------------
-Number of IO Threads = 6
+Number of IO Threads = 5
 
 #jet correction source = JetMETCor
 #jet correction name   = Spring10_AK5TRK
@@ -175,12 +175,12 @@ MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L2L3
 """
 
 #jettypes = ["Calo","PF","JPT","Track"]
-jettypes = ["ak5PF","ak7PF","ic5PF","kt4PF","kt6PF","ak5Calo","ak7Calo","ic5Calo","kt4Calo","kt6Calo","ak5JPT"]
-#jettypes = ["ak7Calo"]
-datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1C"
+#jettypes = ["ak5PF","ak7PF","ic5PF","kt4PF","kt6PF","ak5Calo","ak7Calo","ic5Calo","kt4Calo","kt6Calo","ak5JPT"]
+jettypes = ["ak5PF","ak5Calo"]
+datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1Amerged"
 jecname = "Fall10"
-datasetname="QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO"
-correctJets=False
+datasetname="/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1/AODSIM"
+correctJets=True
 
 for jettype in jettypes:
     print "make plots for jettype "+jettype
@@ -199,6 +199,7 @@ for jettype in jettypes:
     if correctJets:
         fcfg.write("jet correction source = JetMETCor\n");
         fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"\n");
+    fcfg.write("correct jets L1 = true");
     fcfg.close()
     
     kalibricmd = "./junk valid.cfg"
