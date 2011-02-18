@@ -56,7 +56,7 @@ Et cut on tower            = 0.0
 Et cut on cluster          = 0.0
 Et cut on track            = 0.0
 Et cut on n+1 Jet          = 0.0
-Eta cut on jet             = 6.0
+Eta max cut on jet         = 6.0
 Relative Rest Jet Cut      = 0.2      #NonLeadingJetsEt / PhotonEt
 Min had fraction           = -0.05    #Default: 0.07
 Max had fraction           = 1.05    #Default: 0.95
@@ -116,7 +116,7 @@ create JetTruthEvent plots    =  true
 
 JetTruthEvent plots names =  MCTruthResponseVsGenJetPt; MCTruthResponseVsEta; MCTruthRespFlavorVsGenJetPt; MCTruthResponseVsMeanWidth
 MCTruthResponseVsGenJetPt x variable        =  GenJetPt;  log
-MCTruthResponseVsGenJetPt x edges           =  30 10 3000
+MCTruthResponseVsGenJetPt x edges           =  50 10 3000
 MCTruthResponseVsGenJetPt y variable        =  GenJetResponse
 MCTruthResponseVsGenJetPt y edges           =  51 0 2.0 0.9 1.1 0.0 0.5
 MCTruthResponseVsGenJetPt bin variable      =  Eta
@@ -129,11 +129,11 @@ MCTruthResponseVsGenJetPt legend label      =  L2L3:CMS L2L3
 
 JetTruthEvent plots name 2              =  MCTruthResponseVsEta
 MCTruthResponseVsEta x variable         =  Eta
-MCTruthResponseVsEta x edges            =  20 -5 5
+MCTruthResponseVsEta x edges            =  40 -5 5
 MCTruthResponseVsEta y variable         =  GenJetResponse
 MCTruthResponseVsEta y edges            =  51 0 2.0 0.9 1.1 0.0 0.5
 MCTruthResponseVsEta bin variable       =  GenJetPt
-MCTruthResponseVsEta bin edges          =  10 50 100 500 2000
+MCTruthResponseVsEta bin edges          =  20 50 100 500 2000
 MCTruthResponseVsEta correction types   =  Uncorrected; L2L3
 #; L2L3L4 
 MCTruthResponseVsEta profile types      =  GaussFitMean; GaussFitWidth
@@ -141,7 +141,7 @@ MCTruthResponseVsEta legend label       =  L2L3:CMS L2L3
 #; L2L3L4:CMS L2L3 + L4JW
 
 MCTruthResolVsGenJetPt x variable        =  GenJetPt;  log
-MCTruthResolVsGenJetPt x edges           =  30 10 3000
+MCTruthResolVsGenJetPt x edges           =  50 10 3000
 MCTruthResolVsGenJetPt y variable        =  GenJetResponse
 MCTruthResolVsGenJetPt y edges           =  51 0 1.0 0 0.5
 MCTruthResolVsGenJetPt bin variable      =  Eta
@@ -153,7 +153,7 @@ MCTruthResolVsGenJetPt legend label      =  L2L3:CMS L2L3
 #; L2L3L4:CMS L2L3 + L4JW
 
 MCTruthRespFlavorVsGenJetPt x variable        =  GenJetPt;  log
-MCTruthRespFlavorVsGenJetPt x edges           =  30 10 3000
+MCTruthRespFlavorVsGenJetPt x edges           =  50 10 3000
 MCTruthRespFlavorVsGenJetPt y variable        =  GenJetResponse
 MCTruthRespFlavorVsGenJetPt y edges           =  51 0 2 0.9 1.1 0.9 1.1
 MCTruthRespFlavorVsGenJetPt bin variable      =  Flavor
@@ -163,7 +163,7 @@ MCTruthRespFlavorVsGenJetPt profile types     =  Mean; GaussFitMean
 MCTruthRespFlavorVsGenJetPt legend label      =  L2L3:CMS L2L3
 
 MCTruthResponseVsMeanWidth x variable         =  meanMoment
-MCTruthResponseVsMeanWidth x edges            =  20 0 0.5
+MCTruthResponseVsMeanWidth x edges            =  30 0 0.5
 MCTruthResponseVsMeanWidth y variable         =  GenJetResponse
 MCTruthResponseVsMeanWidth y edges            =  51 0 2 0.9 1.1 0.9 1.1 0.0 0.5
 MCTruthResponseVsMeanWidth bin variable       =  GenJetPt
@@ -177,9 +177,11 @@ MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L2L3
 #jettypes = ["Calo","PF","JPT","Track"]
 #jettypes = ["ak5PF","ak7PF","ic5PF","kt4PF","kt6PF","ak5Calo","ak7Calo","ic5Calo","kt4Calo","kt6Calo","ak5JPT"]
 jettypes = ["ak5PF","ak5Calo"]
-datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1Amerged"
+datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1Dmerged"
+#datadir  = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1Amerged"
 jecname = "Fall10"
-datasetname="/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1/AODSIM"
+datasetname="QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO"
+#datasetname="/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1/AODSIM"
 correctJets=True
 
 for jettype in jettypes:
@@ -199,6 +201,7 @@ for jettype in jettypes:
     if correctJets:
         fcfg.write("jet correction source = JetMETCor\n");
         fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"\n");
+        #fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"NoOffset\n");
     fcfg.write("correct jets L1 = true");
     fcfg.close()
     
