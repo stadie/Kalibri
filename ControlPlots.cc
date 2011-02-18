@@ -238,6 +238,8 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment;
   if( varName == "ThirdJetFraction" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction;
+  if( varName == "ThirdJetFractionPlain" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFractionPlain;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::Uncorrected )
     return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetry;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::Kalibri )

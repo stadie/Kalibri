@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.14 2010/10/20 11:28:04 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.15 2010/12/13 10:38:28 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -240,12 +240,28 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta(const Event *evt) co
 double ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction(const Event *evt) const {
   const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   if (! tjpbe->hasJet3()) return 0;
-  
+
   if(tjpbe->getJet1()->pt() < 8) return 0;
   // Phi of dijet axis
   double pPhi = TVector2::Phi_mpi_pi(0.5*(tjpbe->getJet1()->phi() + tjpbe->getJet2()->phi()) + M_PI/2.);
   double pJ3 = tjpbe->getJet3()->corFactors().getL2L3() * tjpbe->getJet3()->pt() * cos(TVector2::Phi_mpi_pi(pPhi-tjpbe->getJet3()->phi()));
 
+  if(tjpbe->getJet1()->pt() < 8) return 0;
+  if(pJ3 < 6) return 0;
+  return pJ3/tjpbe->ptDijetCorrL2L3();
+}
+
+//!  \brief Returns fraction of momentum of third jet and average dijet momentum  
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFractionPlain(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  if (! tjpbe->hasJet3()) return 0;
+  if(tjpbe->getJet1()->pt() < 8) return 0;
+  double pJ3 = tjpbe->getJet3()->corFactors().getL2L3() * tjpbe->getJet3()->pt();
+  if(pJ3 < 6) return 0;
   return pJ3/tjpbe->ptDijetCorrL2L3();
 }
 

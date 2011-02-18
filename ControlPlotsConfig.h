@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.7 2010/10/12 08:40:53 stadie Exp $
+// $Id: ControlPlotsConfig.h,v 1.8 2010/12/13 10:38:28 stadie Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -52,7 +52,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.7 2010/10/12 08:40:53 stadie Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.8 2010/12/13 10:38:28 stadie Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -185,6 +185,8 @@ class ControlPlotsConfig {
   std::string outDirName() const { return outDirName_; }
   //! Returns the file ending ("eps") of the control plots
   std::string outFileType() const { return outFileType_; }
+  //! Specifies whether the plots are only saved in a root-file.
+  bool outOnlyRoot() const { return outOnlyRoot_; }
   //! Writes a \p obj to ROOT file 
   void toRootFile(TObject *obj) const;
 
@@ -218,6 +220,7 @@ class ControlPlotsConfig {
 
   std::string outDirName_;
   std::string outFileType_;
+  bool outOnlyRoot_;
 
   std::map<InputTag,int> colors_;
   std::map<InputTag,int> markerStyles_;

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.17 2010/10/12 08:40:53 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.18 2010/12/13 10:38:28 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -516,6 +516,9 @@ void ControlPlotsConfig::init() {
   outDirName_ = config_->read<std::string>("plots output directory","controlPlots");
   gSystem->MakeDirectory(outDirName_.c_str()); 
 
+  // Store whether plots are only exported to root-file
+  outOnlyRoot_= config_->read<bool>("plots only to root-file",0);
+ 
   outFileType_ = config_->read<std::string>("plots format","eps");
   // Define style for different correction types
   // This should become configurable via config file
@@ -644,6 +647,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "(p_{T,1} - p_{T,2})/(p_{T,1} + p_{T,2})";
   else if( varName == "ThirdJetFraction") 
     title = "p_{3}^{proj.}/#bar p_{T}";
+  else if( varName == "ThirdJetFractionPlain") 
+    title = "p_{3}/#bar p_{T}";
   return title;
 }
 

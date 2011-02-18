@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.17 2010/12/13 10:38:28 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.18 2011/02/18 15:33:39 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -95,6 +95,9 @@ void ControlPlotsProfile::draw() {
   c1->cd();
   std::string fileName;
 
+  Bool_t only_to_root = config_->outOnlyRoot();
+  //  std::cout << "only to root: " << only_to_root << std::endl; 
+
   // Draw 2D histograms
   for(std::vector<Bin*>::iterator binIt = bins_.begin();
       binIt != bins_.end(); binIt++) {
@@ -109,7 +112,7 @@ void ControlPlotsProfile::draw() {
       config_->toRootFile(h);
       fileName = config_->outDirName() + "/";
       fileName += (*binIt)->hist2DFileName(*it) + "." + config_->outFileType();
-      c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
+      if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
   }
 
@@ -163,7 +166,7 @@ void ControlPlotsProfile::draw() {
       p2->DrawClone();
       fileName = config_->outDirName() + "/";
       fileName += (*binIt)->profileFileName(*profTypeIt) + "." + config_->outFileType();
-      c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
+      if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
   }  
 
@@ -209,7 +212,7 @@ void ControlPlotsProfile::draw() {
       p2->DrawClone();
       fileName = config_->outDirName() + "/";
       fileName += (*binIt)->profileFileName(*profTypeIt) + "_zoom." + config_->outFileType();
-      c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
+      if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
   }
   delete leg;
@@ -273,10 +276,10 @@ void ControlPlotsProfile::draw() {
     p2->DrawClone();
     fileName = config_->outDirName() + "/";
     fileName += config_->name() +"_Special_"+config_->binName((*binIt)->id())+ "_zoom." + config_->outFileType();
-    c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
+    if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     delete leg;
   }  
-  
+
   // Draw distributions
   for(std::vector<Bin*>::iterator binIt = bins_.begin();
       binIt != bins_.end(); binIt++) {
@@ -291,7 +294,7 @@ void ControlPlotsProfile::draw() {
 	config_->toRootFile(h);
 	fileName = config_->outDirName() + "/";
 	fileName += (*binIt)->distributionFileName(n,*tagsIt) + "." + config_->outFileType();
-	c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
+	if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
       }
     }
   }
@@ -310,7 +313,7 @@ void ControlPlotsProfile::draw() {
   fileName = config_->outDirName() + "/";
   fileName += hXSpectrum_[0]->GetName();
   fileName += "." + config_->outFileType();
-  c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
+  if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
   config_->toRootFile(hXSpectrum_[0]);
   if(hXSpectrum_[1]) config_->toRootFile(hXSpectrum_[1]);
   if(hXSpectrum_[2]) config_->toRootFile(hXSpectrum_[2]);
