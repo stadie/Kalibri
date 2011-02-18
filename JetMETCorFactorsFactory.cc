@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.15 2011/01/19 15:10:40 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.16 2011/02/15 12:53:14 stadie Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -108,6 +108,8 @@ JetMETCorFactorsFactory::Register::Register()
   //  create("Spring10_AK5CaloJW","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt:JetMETObjects/data/L4JW_AK5Calo.txt",L2L3L4);  
   create("Fall10_AK5Calo","JetMETObjects/data/Fall10_L1Offset_AK5Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK5Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Jec10V1_L2L3Residual_AK5Calo.txt",L1L2L3res);
   create("Fall10_AK5PF","JetMETObjects/data/Fall10_L1Offset_AK5PF.txt:JetMETObjects/data/Fall10_L2Relative_AK5PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK5PF.txt:JetMETObjects/data/Jec10V1_L2L3Residual_AK5PF.txt",L1L2L3res);
+  create("Fall10_AK5CaloNoOffset","JetMETObjects/data/Fall10_L2Relative_AK5Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Jec10V1_L2L3Residual_AK5Calo.txt",L2L3res);
+  create("Fall10_AK5PFNoOffset","JetMETObjects/data/Fall10_L2Relative_AK5PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK5PF.txt:JetMETObjects/data/Jec10V1_L2L3Residual_AK5PF.txt",L2L3res);
   create("Fall10_AK5JPT","JetMETObjects/data/Fall10_L2Relative_AK5JPT.txt:JetMETObjects/data/Fall10_L3Absolute_AK5JPT.txt:JetMETObjects/data/Jec10V1_L2L3Residual_AK5JPT.txt",L2L3res);
 }
 
