@@ -1,6 +1,6 @@
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: CorFactors.h,v 1.6 2010/10/20 11:28:16 stadie Exp $
+//    $Id: CorFactors.h,v 1.7 2010/12/13 10:38:28 stadie Exp $
 //   
 #ifndef CORFACTORS_H
 #define CORFACTORS_H
@@ -20,7 +20,8 @@ class CorFactors
   float getJPT() const { return jpt_; }   //!< Return Jet+Track correction factor
   float getL2L3() const { return l2_*l3_; }   //!< Return product of L2 and L3 correction factors
   float getL2L3Res() const { return l2_*l3_*lres_; }   //!< Return product of L2 and L3 correction factors
-  float getL2L3L4() const { return l2_*l3_*lres_*l4_; }   //!< Return product of L2,L3 and L4 correction factors
+  float getL2L3L4() const { return l2_*l3_*l4_; }   //!< Return product of L2,L3 and L4 correction factors
+  float getL2L3ResL4() const { return l2_*l3_*lres_*l4_; }   //!< Return product of L2,L3,L2L3Res and L4 correction factors
   float getJPTL2L3() const { return jptL2L3_; }   //!< Return product of L2 and L3 correction factors for Jet+Track
   float getToL2() const { return l1_*l2_; }         //!< Return factor needed to get L2 corrected from raw jets: L1*L2
   float getToL3() const { return getToL2()*l3_; }   //!< Return factor needed to get L3 corrected from raw jets: L1*L2*L3  

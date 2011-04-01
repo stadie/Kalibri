@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.18 2011/02/23 16:34:31 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.19 2011/02/25 09:29:32 kirschen Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -63,7 +63,7 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j,int nPV)
 			  1.0,1.0,1.0,0.0,0.0);			
   case L1L2L3:
     return new CorFactors(levels[0],
-			  levels[1]/levels[0],
+!			  levels[1]/levels[0],
 			  levels[2]/levels[1],
 			  1.0,1.0,1.0,0.0,0.0);
   case L2L3res:
@@ -84,6 +84,13 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j,int nPV)
 			  levels[1]/levels[0],
 			  1.0,
 			  levels[2]/levels[1],
+			  1.0,0.0,0.0);
+  case L1L2L3resL4:
+    return new CorFactors(levels[0],
+			  levels[1]/levels[0],
+			  levels[2]/levels[1],
+			  levels[3]/levels[2],
+			  levels[4]/levels[3],
 			  1.0,0.0,0.0);
   };
   return new CorFactors(1.0,1.0,1.0,1.0,
@@ -106,6 +113,7 @@ JetMETCorFactorsFactory::Register::Register()
   //  create("Spring10_AK5PFData","JetMETObjects/data/Spring10_L2Relative_AK5PF.txt:JetMETObjects/data/Spring10_L3Absolute_AK5PF.txt:JetMETObjects/data/Spring10DataV2_L2L3Residual_AK5PF.txt",L2L3res); 
   //  create("Spring10_AK5JPTData","JetMETObjects/data/Spring10_L2Relative_AK5JPT.txt:JetMETObjects/data/Spring10_L3Absolute_AK5JPT.txt:JetMETObjects/data/Spring10DataV2_L2L3Residual_AK5JPT.txt",L2L3res);
   //  create("Spring10_AK5CaloJW","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt:JetMETObjects/data/L4JW_AK5Calo.txt",L2L3L4);  
+  create("Fall10_L4JW_AK5Calo","JetMETObjects/data/Fall10_L1Offset_AK5Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK5Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5Calo.txt:JetMETObjects/data/L4JW_AK5Calo.txt",L1L2L3resL4);
   create("Fall10_AK5Calo","JetMETObjects/data/Fall10_L1Offset_AK5Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK5Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5Calo.txt",L1L2L3res);
   create("Fall10_AK7Calo","JetMETObjects/data/Fall10_L1Offset_AK7Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK7Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK7Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK7Calo.txt",L1L2L3res);
   create("Fall10_AK5PF","JetMETObjects/data/Fall10_L1Offset_AK5PF.txt:JetMETObjects/data/Fall10_L2Relative_AK5PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK5PF.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5PF.txt",L1L2L3res);
@@ -126,7 +134,7 @@ JetMETCorFactorsFactory* JetMETCorFactorsFactory::Register::create(const std::st
   catch(std::exception& e) {
     std::cout << "...failed to create " << name << ":\n";
     std::cout << "     " << e.what() << std::endl;
-    jmcff = 0;
+    jmcff = 0;			// 
   } 
   return jmcff;
 }
