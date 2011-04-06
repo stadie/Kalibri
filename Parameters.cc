@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.59 2010/10/20 13:32:55 stadie Exp $
+// $Id: Parameters.cc,v 1.60 2010/11/01 15:47:41 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -105,6 +105,8 @@ Parametrization* Parameters::createParametrization(const std::string& name, cons
     return new SimplePhiPhiParametrization();
   } else if(name == "MeanWidthParametrization") {
     return new MeanWidthParametrization();
+  } else if(name == "MeanWidthParametrization_old") {
+    return new MeanWidthParametrization_old();
   }
   return 0;
 }

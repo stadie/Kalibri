@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.72 2010/11/24 09:36:38 stadie Exp $
+//  $Id: Parametrization.h,v 1.73 2010/12/13 10:32:42 stadie Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -25,7 +25,7 @@ class TRandom;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.72 2010/11/24 09:36:38 stadie Exp $
+//!  $Id: Parametrization.h,v 1.73 2010/12/13 10:32:42 stadie Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1788,6 +1788,113 @@ public:
   }  
 };
 
+//!  \brief Parametrization of jet response based on the mean jet widths
+//!
+//!  This parametrization has 12 jet parameters.
+//!
+//!  \sa Parametrization
+// -----------------------------------------------------------------
+class MeanWidthParametrization_old: public Parametrization {
+public:
+  MeanWidthParametrization_old() : Parametrization(0,10,0,0) {}
+  const char* name() const { return "MeanWidthParametrization_old";}
+    
+  double correctedTowerEt(const Measurement *x,const double *par) const {
+    return x->pt;
+  }
+ 
+  double correctedJetEt(const Measurement *x,const double *par) const {
+
+    //fall10 monte carlo PARTICLE FLOW aber nicht volle statistik...
+    const static double meanpar[][5] ={
+      {2.04935,-2.18344,-0.00424848,0.137968,-0.202291},
+      {2.43712,-3.14575,0.581481,-2.69756,-2.16874},
+      {2.76346,-4.57397,1.4011,-2.45124,-1.8415},
+      {1.40188,-1.3099,1.02883,0.654566,-0.162188}
+    };
+      
+    const static double sigmapar[][5] = {
+      {2.71289,1.24771,-8.83457,0.814632,-0.553046},
+      {3.10193,0.603284,-14.0773,0.927204,-1.1575},
+      {6.21258,-6.18612,5.45987,-1.51799,-0.480023},
+      {1.07128,4.5193,-47.7701,1.40375,-0.342566}
+    };
+
+
+
+//    //fall10 monte carlo CALO-jets
+//    const static double meanpar[][5] ={
+//      {2.1988,-2.37038,0.0876772,-1.47483,-1.03809},
+//      {2.22064,-2.35995,0.161878,-1.19171,-1.02994},
+//      {2.14159,-2.31265,0.653101,-1.86204,-1.79834},
+//      {2.38096,-3.13152,1.18353,-1.74803,-1.91168}
+//      //      {0.000000,0.00000,0.000000,0.00000,0.0000000}
+//    };
+//      
+//    const static double sigmapar[][5] = {
+//      {3.7187,-1.10172,-5.20505,3.39389,-1.11507},
+//      {4.08409,-2.35141,-2.29392,3.54647,-1.40302},
+//      {5.28458,-4.83123,45.7567,-0.520108,0.0416974},
+//      {3.33901,-1.17592,5.66937,0.490263,-0.389494}
+//      //	{0.000000,0.00000,0.000000,0.00000,0.0000000}
+//    };
+//
+
+
+
+// old spring 10 MC
+//    const static double meanpar[][5] ={
+//      {2.22197,-2.43273,0.161247,-1.8384,-1.12056},
+//      {2.211,-2.34235,0.196643,-1.71561,-1.20111},
+//      {2.09358,-2.15426,0.409124,-2.36072,-2.00319},
+//      {-1.83367,7.87148,-7.93116,2.17698,-0.351629}
+//      //      {0.000000,0.00000,0.000000,0.00000,0.0000000}
+//    };
+//      
+//      const static double sigmapar[][5] = {
+//	{3.76558,-1.28309,-1.21227,4.97975,-1.06063},
+//	{4.04847,-2.31725,0.363659,4.69276,-1.1739},
+//	{15.1794,-29.3188,141.953,-5.74235,-0.27755},
+//	{4.34203,-3.78074,24.1966,4477.12,-8.18597}
+//	//	{0.000000,0.00000,0.000000,0.00000,0.0000000}
+//      };
+//
+      int eta_choice;
+      double pt_min;
+      double pt_max;
+    
+      double abs_eta = std::abs(x->eta);
+
+      if(abs_eta>0.000&&abs_eta<1.305) {eta_choice=0; pt_min=15; pt_max=1000;}
+      else if(abs_eta>1.305&&abs_eta<2.65) {eta_choice=1; pt_min=10; pt_max=600;}
+      else if(abs_eta>2.65&&abs_eta<2.964) {eta_choice=2; pt_min=10; pt_max=180;}
+      else if(abs_eta>2.964&&abs_eta<5.191) {eta_choice=3; pt_min=15; pt_max=100;}
+      else {std::cout << "Warning: not in valid eta-range, return uncorrected jetet"<<std::endl;return x->pt;}
+
+
+      //-5.191 -2.964 -2.65 -1.392  1.392 2.65 2.964 5.191
+    double pt = (x->pt < pt_min) ? pt_min : (x->pt > pt_max) ? pt_max : x->pt; 
+    //    double logpt = log10(pt); is log10 in other parametrizations...
+    double logpt = log(pt);
+    
+    double mean = ((meanpar[eta_choice][0]/10.)+(meanpar[eta_choice][1]/100.)*logpt+(meanpar[eta_choice][2]/10000)*pt) + ((meanpar[eta_choice][3]/10.))*exp( (meanpar[eta_choice][4]/10.)*pt);
+    double sigma =  ((sigmapar[eta_choice][0]/100.)+(sigmapar[eta_choice][1]/1000.)*logpt+(sigmapar[eta_choice][2]/1000000.)*pt) + ((sigmapar[eta_choice][3]/100.))*exp( (sigmapar[eta_choice][4]/10.)*pt);
+    
+    double y =  0.5*(x->phiphi+x->etaeta);
+   
+    double b = (par[0]+(par[1]/10.)*logpt+(par[2]/10000.)*pt) + ((par[3]*10.))*exp( (par[4]/100.)*pt);
+    double c =  ((par[5]*10.)+par[6]*logpt+(par[7]/100.)*pt) + ((par[8]*10.))*exp( (par[9]/100.)*pt);
+    
+    double cf = (1- sigma*sigma * c) +b * (y-mean) + c*(y-mean)*(y-mean);  
+    if(cf < 0.3) cf = 0.3;
+    if(cf > 3.0) cf = 3.0;
+    //    if(cf==0.3||cf==3.0) std::cout << "strange correction factor " << cf << " really " << (1- sigma*sigma * c) +b * (y-mean) + c*(y-mean)*(y-mean) << " pt of jet: " << x->pt << " mean Moment y: "  << y <<  " jet-eta: " << abs_eta <<std::endl;
+    return cf * x->pt;  
+  }
+};
+
+
+//NEUE VERSION...MIT EIGENER MEAN_SIGMA-EINLESE.... UMSTELLEN!!!
 
 //!  \brief Parametrization of jet response based on the mean jet widths
 //!
@@ -1878,9 +1985,11 @@ public:
       assert(cf!=0.3 && cf!=3.0);
     }
     */
-    return 1/cf * x->pt;  
+    return cf * x->pt;  
   }
 };
+
+
 
 //!  \brief Parametrization of the residual jet correction needed for CMS data
 //!
