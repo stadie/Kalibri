@@ -208,6 +208,8 @@ MCTruthRespFlavorVsGenJetPt legend label      =  Uncorrected:CMS L2L3
     if(input != ""):
         fcfg.write("input calibration = Kalibri; "+input+"\n");
 
+
+    fcfg.write("correct jets L1 = true");
     fcfg.close()
     return
 

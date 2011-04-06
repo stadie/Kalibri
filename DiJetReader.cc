@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.66 2011/01/19 15:08:51 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.67 2011/02/15 12:53:14 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -49,9 +49,10 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
     rand_(new TRandom3(0)), zero_(0)
 {
   // Maximum number of read events
-  nDijetEvents_ = config_->read<int>("use Di-Jet events",-1);
-  prescale_ = config_->read<int>("Di-Jet prescale",1);
-  weightRelToNtuple_ = config_->read<double>("Di-Jet weight relative to ntuple weight",1.);
+  nDijetEvents_         = config_->read<int>("use Di-Jet events",-1);
+  prescale_             = config_->read<int>("Di-Jet prescale",1);
+  weightRelToNtuple_    = config_->read<double>("Di-Jet weight relative to ntuple weight",1.);
+  weights_eq_one_       = config_->read<bool>("set weights to one",false);
 
   // Cuts
   ptRef_             = config_->read<double>("Reference pt",1.);
@@ -138,6 +139,10 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   eps_       = config_->read<double>("DiJet integration epsilon",1.E-5);
   min_       = config_->read<double>("DiJet integration min",0.);
   max_       = config_->read<double>("DiJet integration max",1.);
+
+
+
+
   // Data class
   dataClass_ = config_->read<int>("Di-Jet data class", 0);
   if((dataClass_ != 1)&&(dataClass_ != 11)&&(dataClass_ != 12)&&(dataClass_ != 21)&&(dataClass_ != 5)&&(dataClass_ != 31)) {
@@ -295,12 +300,27 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     nJet_->fChain->SetBranchStatus("Vtx*",0);
     nJet_->fChain->SetBranchStatus("GenPart*",0);
   }
+
+
+  //Set weight equal to one if requested
+  if(weights_eq_one_){
+    std::cout << "weights will be set to one... "  << std::endl;
+    nJet_->fChain->SetBranchStatus("Weight",0);
+    nJet_->Weight=1.;
+    //    std::cout << "weight of event: "  << nJet_->Weight << std::endl;
+  }
+  else {
+    std::cout << "event weights will be kept "  << std::endl;
+  }
+
+
   // Read the events
   //std::cout << "reading " << nevent << " events...\n";
   for (int i=0 ; i < nevent ; i+= prescale_) {
     //std::cout << "event " << i << " of " << nevent << '\n';
     if((i+1)%10000==0) std::cout << "  " << i+1 << std::endl;
-    nJet_->fChain->GetEvent(i); 
+    nJet_->fChain->GetEvent(i);
+    //    std::cout << "weight of event: "  << nJet_->Weight << std::endl;
     if((nJet_->NobjTow > 10000) || (nJet_->NobjJet > 100)) {
       std::cerr << "ERROR: Increase array sizes in NJet_Selector; NobjTow="
 		<< nJet_->NobjTow<<", NobjJet="<<nJet_->NobjJet<<"!"<<std::endl;
@@ -649,6 +669,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       data.push_back(jwe);
       ++njets;
     } else {
+      //      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],1.);
       JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],nJet_->Weight);
       data.push_back(jte);
       ++njets;

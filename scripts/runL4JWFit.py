@@ -94,6 +94,8 @@ DeltaR cut on jet matching = 0.25
 #   Input / Output
 #---------------------------------------------------------------------------------
 
+jet correction source = JetMETCor
+jet correction name   = Fall10_AK5Calo
 #jet correction source = JetMETCor
 #jet correction name   = Spring10_AK5TRK
 Default Tree Name      = CalibTree
@@ -233,6 +235,7 @@ MCTruthResponseVsMeanWidth legend label       =  Uncorrected:CMS L2L3
             
     if(input != ""):
         fcfg.write("input calibration = Kalibri; "+input+"\n");
+    fcfg.write("correct jets L1 = true");
 
     fcfg.close()
     return
@@ -240,13 +243,14 @@ MCTruthResponseVsMeanWidth legend label       =  Uncorrected:CMS L2L3
 
 #main program starts here!!!
 #change these variables to steer the fit
-jettype = "PF"
-datadir = "/scratch/hh/current/cms/user/stadie/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C"
-nthreads = 3
-nevents =  -1
-dirname = "L4fitPF"
+jettype = "Calo"
+datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1Dmerged"
+#datadir = "/scratch/hh/current/cms/user/stadie/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C"
+nthreads = 5
+nevents =  100000
+dirname = "NEW_L4fitCalo_nonbatch_100k"
 useconstraint = False
-batch = True
+batch = False
 doBinnedFit = True
 doUnbinnedFit = True
 

@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.28 2010/11/24 09:41:03 stadie Exp $
+//!  $Id: DiJetReader.h,v 1.29 2010/12/13 10:38:28 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -73,6 +73,7 @@ class DiJetReader : public EventReader{
   int    dataClass_;            //!< Data class, see also Event
   int    nDijetEvents_;         //!< Maximum number of read dijet events
   int    prescale_;             //!< only read every nth event
+  bool   weights_eq_one_;       //!< force weight for each event to one
 
   double ptRef_;                //!< Reference pt for cuts on additional jet activity
   double minJetEt_;             //!< Minimum pt of jet
