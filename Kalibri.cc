@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.14 2010/12/13 10:55:09 stadie Exp $
+//  $Id: Kalibri.cc,v 1.15 2010/12/20 11:08:13 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -315,11 +315,12 @@ void Kalibri::run_Lvmini()
 	temp_derivative1[*iter] = 0;
 	temp_derivative2[*iter] = 0;
       }
+      fsum *= 0.5;//lvmini uses log likelihood not chi2
       //fast derivative calculation:
       for( int param = 0 ; param < npar ; ++param ) {
 	if(epsilon[param] > 0) {
-	aux[param]      = temp_derivative1[param]/(2.0*epsilon[param]);
-	aux[param+npar] = temp_derivative2[param]/(epsilon[param]*epsilon[param]);
+	aux[param]      = 0.5 * temp_derivative1[param]/(2.0*epsilon[param]);
+	aux[param+npar] = 0.5 * temp_derivative2[param]/(epsilon[param]*epsilon[param]);
 	} else {
 	  aux[param] = 0;
 	  aux[param+npar] = 0;
