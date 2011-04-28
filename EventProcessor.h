@@ -1,10 +1,11 @@
 //
-// $Id: EventProcessor.h,v 1.6 2010/12/13 10:55:09 stadie Exp $
+// $Id: EventProcessor.h,v 1.7 2010/12/20 11:08:13 stadie Exp $
 //
 #ifndef EVENTPROCESSOR_H
 #define EVENTPROCESSOR_H
 
 #include <vector>
+#include <string>
 
 class Event;
 class Parameters;

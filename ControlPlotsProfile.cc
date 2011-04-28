@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.18 2011/02/18 15:33:39 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.19 2011/02/18 15:58:08 kirschen Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -14,7 +14,7 @@
 #include "CalibData.h"
 #include "ControlPlotsFunction.h"
 
-
+#include <cstdlib>
 
 //! \param config Configuration file
 //! \param function The functions which return the x, y, and binning

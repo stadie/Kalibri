@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.44 2010/12/13 10:38:28 stadie Exp $
+//!    $Id: Jet.h,v 1.45 2011/02/15 12:53:14 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -15,7 +15,9 @@
 #include "gsl/gsl_errno.h"
 #include "gsl/gsl_math.h"
 #include "gsl/gsl_roots.h"
-     
+   
+#include <cstdlib>
+  
 class CorFactors;
 
 
