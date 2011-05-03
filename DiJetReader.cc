@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.67 2011/02/15 12:53:14 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.68 2011/04/06 13:34:27 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -53,6 +53,7 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   prescale_             = config_->read<int>("Di-Jet prescale",1);
   weightRelToNtuple_    = config_->read<double>("Di-Jet weight relative to ntuple weight",1.);
   weights_eq_one_       = config_->read<bool>("set weights to one",false);
+  fire_all_dijet_triggers_    = config_->read<bool>("fire all triggers",false);
 
   // Cuts
   ptRef_             = config_->read<double>("Reference pt",1.);
@@ -101,6 +102,12 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
     }
     else if(trignames[i] == "HLT_DiJetAve140U") {
       trigvar = &hltdijetave140incl_;
+    }
+    else if(trignames[i] == "HLT_DiJetAve180U") {
+      trigvar = &hltdijetave180incl_;
+    }
+    else if(trignames[i] == "HLT_DiJetAve300U") {
+      trigvar = &hltdijetave300incl_;
     }
     else {
       std::cerr << "DiJetReader: unknown trigger name:" 
@@ -312,6 +319,33 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
   else {
     std::cout << "event weights will be kept "  << std::endl;
   }
+
+
+  // Set all triggers to true for MC
+  if(fire_all_dijet_triggers_){
+    std::cout << "trigger bits will be set to one "  << std::endl;
+    nJet_->fChain->SetBranchStatus("HltDiJetAve15U",0);
+    nJet_->fChain->SetBranchStatus("HltDiJetAve30U",0);
+    nJet_->fChain->SetBranchStatus("HltDiJetAve50U",0);
+    nJet_->fChain->SetBranchStatus("HltDiJetAve70U",0);
+    nJet_->fChain->SetBranchStatus("HltDiJetAve100U",0);
+    nJet_->fChain->SetBranchStatus("HltDiJetAve140U",0);
+    nJet_->fChain->SetBranchStatus("HltDiJetAve180U",0);
+    nJet_->fChain->SetBranchStatus("HltDiJetAve300U",0);
+    nJet_->HltDiJetAve15U=true;
+    nJet_->HltDiJetAve30U=true;
+    nJet_->HltDiJetAve50U=true;
+    nJet_->HltDiJetAve70U=true;
+    nJet_->HltDiJetAve100U=true;
+    nJet_->HltDiJetAve140U=true;
+    nJet_->HltDiJetAve180U=true;
+    nJet_->HltDiJetAve300U=true;
+  }
+  else {
+    std::cout << "all trigger bits will be kept "  << std::endl;
+  }
+
+
 
 
   // Read the events
@@ -1065,6 +1099,8 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     hltdijetave70incl_ = hltdijetave50incl_ || nJet_->HltDiJetAve70U;
     hltdijetave100incl_ = hltdijetave70incl_ || nJet_->HltDiJetAve100U;
     hltdijetave140incl_ = hltdijetave100incl_ || nJet_->HltDiJetAve140U;
+    hltdijetave180incl_ = hltdijetave140incl_ || nJet_->HltDiJetAve180U;
+    hltdijetave300incl_ = hltdijetave180incl_ || nJet_->HltDiJetAve300U;
     double diJetPtAve = 0.5 * (nJet_->JetCorrL2[0] * nJet_->JetCorrL3[0] * nJet_->JetPt[0]+ nJet_->JetCorrL2[1] * nJet_->JetCorrL3[1] * nJet_->JetPt[1]);
     std::map<double,bool*>::iterator it = trigmap_.lower_bound(diJetPtAve);
     if(it == trigmap_.begin()) {
@@ -1103,6 +1139,8 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetHadFraction_++;
     return 0;
   }
+
+
   /*
   if(((( nJet_->JetEMF[0] <= 0.01) && (std::abs(nJet_->JetEta[0]) < 2.6) )) ||
      (( nJet_->JetEMF[1] <= 0.01) && (std::abs(nJet_->JetEta[1]) < 2.6) )) {

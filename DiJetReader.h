@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.29 2010/12/13 10:38:28 stadie Exp $
+//!  $Id: DiJetReader.h,v 1.30 2011/04/06 13:34:27 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -74,6 +74,7 @@ class DiJetReader : public EventReader{
   int    nDijetEvents_;         //!< Maximum number of read dijet events
   int    prescale_;             //!< only read every nth event
   bool   weights_eq_one_;       //!< force weight for each event to one
+  bool   fire_all_dijet_triggers_;       //!< Set all trigger btis to one (branches need to be revised...)
 
   double ptRef_;                //!< Reference pt for cuts on additional jet activity
   double minJetEt_;             //!< Minimum pt of jet
@@ -131,7 +132,7 @@ class DiJetReader : public EventReader{
   static boost::mutex dijetmutex_;
 
   //for DiJetAve trigger
-  bool hltdijetave15incl_,hltdijetave30incl_,hltdijetave50incl_,hltdijetave70incl_,hltdijetave100incl_,hltdijetave140incl_;
+  bool hltdijetave15incl_,hltdijetave30incl_,hltdijetave50incl_,hltdijetave70incl_,hltdijetave100incl_,hltdijetave140incl_,hltdijetave180incl_,hltdijetave300incl_;
   std::map<double,bool*> trigmap_;
   std::map<double,double> mcweightmap_[2];
   bool requireTrigger_, mcweightmapid_;

@@ -29,6 +29,8 @@ public :
    Bool_t          HltDiJetAve70U;
    Bool_t          HltDiJetAve100U;
    Bool_t          HltDiJetAve140U;
+   Bool_t          HltDiJetAve180U;
+   Bool_t          HltDiJetAve300U;
    Int_t           VtxN;
    Int_t           VtxNTracks;
    Float_t         VtxPosX;
@@ -158,6 +160,8 @@ public :
    TBranch        *b_HltDiJetAve70U;   //!
    TBranch        *b_HltDiJetAve100U;   //!
    TBranch        *b_HltDiJetAve140U;   //!
+   TBranch        *b_HltDiJetAve180U;   //!
+   TBranch        *b_HltDiJetAve300U;   //!
    TBranch        *b_VtxN;   //!
    TBranch        *b_VtxNTracks;   //!
    TBranch        *b_VtxPosX;   //!
@@ -323,6 +327,8 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("HltDiJetAve70U", &HltDiJetAve70U, &b_HltDiJetAve70U);
    fChain->SetBranchAddress("HltDiJetAve100U", &HltDiJetAve100U, &b_HltDiJetAve100U);
    fChain->SetBranchAddress("HltDiJetAve140U", &HltDiJetAve140U, &b_HltDiJetAve140U);
+   fChain->SetBranchAddress("HltDiJetAve180U", &HltDiJetAve180U, &b_HltDiJetAve180U);
+   fChain->SetBranchAddress("HltDiJetAve300U", &HltDiJetAve300U, &b_HltDiJetAve300U);
    fChain->SetBranchAddress("VtxN", &VtxN, &b_VtxN);
    fChain->SetBranchAddress("VtxNTracks", &VtxNTracks, &b_VtxNTracks);
    fChain->SetBranchAddress("VtxPosX", &VtxPosX, &b_VtxPosX);
