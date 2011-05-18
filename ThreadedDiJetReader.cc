@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.7 2011/02/08 14:25:52 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.8 2011/02/15 12:53:14 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -109,7 +109,8 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
       TFile* f = TFile::Open(chEl->GetTitle());
       //std::cout << "opened file " << f->GetName() << '\n';
       files.push_back(f);
-      TTree* tree = (TTree*)f->Get(chain->GetName()); 
+      TTree* tree = (TTree*)f->Get(chain->GetName());
+      if(! tree) continue;
       //tree->GetEntriesFast();
       //std::cout << "adding " << f->GetName() << " with " <<  tree->GetEntriesFast() << " entries\n";
       readers_[id]->reader()->nJet_->Init(tree);

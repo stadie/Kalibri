@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.68 2011/04/06 13:34:27 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.69 2011/05/03 09:08:20 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -690,21 +690,23 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       jet->updateCorFactors(corFactorsFactory_->create(jet,nJet_->VtxN));
       //std::cout << jet->pt() << " L2L3:" << jet->corFactors().getL2() << ", " << jet->corFactors().getL3() << '\n';
     }
+    //std::cout << jet->pt() << " L1L2L3:" << jet->corFactors().getL1() << ", " << jet->corFactors().getL2() << ", " << jet->corFactors().getL3() << '\n';
     if(correctL1_) {
       jet->correctL1();
     }
+    //std::cout << jet->pt() << " L1L2L3:" << jet->corFactors().getL1() << ", " << jet->corFactors().getL2() << ", " << jet->corFactors().getL3() << '\n';
     if(correctToL3_) {
       jet->correctToL3();
     } else if(correctL2L3_) {
       jet->correctL2L3();
     }
     if(dataClass_ == 31) {
-      JetWidthEvent* jwe = new JetWidthEvent(jet,nJet_->Weight);
+      JetWidthEvent* jwe = new JetWidthEvent(jet,nJet_->Weight,0,nJet_->PUMCNumVtx);
       data.push_back(jwe);
       ++njets;
     } else {
       //      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],1.);
-      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],nJet_->Weight);
+      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],nJet_->Weight,0,nJet_->PUMCNumVtx);
       data.push_back(jte);
       ++njets;
       //add jet to constraints
@@ -1263,7 +1265,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 // ----------------------------------------------------------------   
 CorFactors* DiJetReader::createCorFactors(int jetid) const 
 {
-  return new CorFactors(nJet_->JetCorrZSP[jetid], // L1
+  return new CorFactors(nJet_->JetCorrL1[jetid], // L1
 			nJet_->JetCorrL2[jetid],  // L2
 			nJet_->JetCorrL3[jetid],  // L3
 			nJet_->JetCorrL2L3[jetid]/nJet_->JetCorrL2[jetid]/nJet_->JetCorrL3[jetid],

@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetWidthEvent.h,v 1.1 2010/11/24 09:36:38 stadie Exp $
+//    $Id: JetWidthEvent.h,v 1.2 2010/11/24 09:53:04 stadie Exp $
 //   
 #ifndef JETWIDTHEVENT_H
 #define JETWIDTHEVENT_H
@@ -17,7 +17,7 @@ class Parameters;
 class JetWidthEvent : public Event
 {
 public:
- JetWidthEvent(Jet *j, double w) : Event(w),jet_(j),chi2plots_(1000.) {}
+ JetWidthEvent(Jet *j, double w, double pthat = 0, short npu = 0) : Event(w,pthat,npu),jet_(j),chi2plots_(1000.) {}
   ~JetWidthEvent();
 
   //interface from Event

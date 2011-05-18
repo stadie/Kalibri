@@ -31,6 +31,15 @@ public :
    Bool_t          HltDiJetAve140U;
    Bool_t          HltDiJetAve180U;
    Bool_t          HltDiJetAve300U;
+   Bool_t          HltDiJetAve30;
+   Bool_t          HltDiJetAve60;
+   Bool_t          HltDiJetAve80;
+   Bool_t          HltDiJetAve110;
+   Bool_t          HltDiJetAve150;
+   Bool_t          HltDiJetAve190;
+   Bool_t          HltDiJetAve240;
+   Bool_t          HltDiJetAve300;
+   Bool_t          HltDiJetAve370;
    Int_t           VtxN;
    Int_t           VtxNTracks;
    Float_t         VtxPosX;
@@ -39,6 +48,8 @@ public :
    Float_t         VtxNormalizedChi2;
    Float_t         VtxNDof;
    Bool_t          VtxIsFake;
+   Int_t           PUMCNumVtx;
+   Float_t         Rho;
    Int_t           NobjTow;
    Int_t           TowId[1000];   //[NobjTow]
    Int_t           TowId_phi[1000];   //[NobjTow]
@@ -97,11 +108,17 @@ public :
    Float_t         JetEMF[100];   //[NobjJet]
    Float_t         JetFHPD[100];   //[NobjJet]
    Float_t         JetFRBX[100];   //[NobjJet]
+   Float_t         JetFChargedHadron[100];   //[NobjJet]
+   Float_t         JetNeutralHadrons[100];   //[NobjJet]
+   Float_t         JetFPhotons[100];   //[NobjJet]
+   Float_t         JetFElectrons[100];   //[NobjJet]
    Bool_t          JetIDLoose[100];   //[NobjJet]
    Bool_t          JetIDTight[100];   //[NobjJet]
    Float_t         JetEtWeightedSigmaPhi[100];   //[NobjJet]
    Float_t         JetEtWeightedSigmaEta[100];   //[NobjJet]
+   Float_t         JetArea[100];   //[NobjJet]
    Float_t         JetCorrZSP[100];   //[NobjJet]
+   Float_t         JetCorrL1[100];   //[NobjJet]
    Float_t         JetCorrL2[100];   //[NobjJet]
    Float_t         JetCorrL3[100];   //[NobjJet]
    Float_t         JetCorrJPT[100];   //[NobjJet]
@@ -110,6 +127,7 @@ public :
    Float_t         JetCorrL4JW[100];   //[NobjJet]
    Int_t           JetIEta[100];   //[NobjJet]
    Int_t           JetIPhi[100];   //[NobjJet]
+   Int_t           JetNChargedHadrons[100];   //[NobjJet]
    Float_t         JetGenJetDeltaR[100];   //[NobjJet]
    Float_t         GenJetPt[100];   //[NobjJet]
    Float_t         GenJetPhi[100];   //[NobjJet]
@@ -162,6 +180,15 @@ public :
    TBranch        *b_HltDiJetAve140U;   //!
    TBranch        *b_HltDiJetAve180U;   //!
    TBranch        *b_HltDiJetAve300U;   //!
+   TBranch        *b_HltDiJetAve30;   //!
+   TBranch        *b_HltDiJetAve60;   //!
+   TBranch        *b_HltDiJetAve80;   //!
+   TBranch        *b_HltDiJetAve110;   //!
+   TBranch        *b_HltDiJetAve150;   //!
+   TBranch        *b_HltDiJetAve190;   //!
+   TBranch        *b_HltDiJetAve240;   //!
+   TBranch        *b_HltDiJetAve300;   //!
+   TBranch        *b_HltDiJetAve370;   //!
    TBranch        *b_VtxN;   //!
    TBranch        *b_VtxNTracks;   //!
    TBranch        *b_VtxPosX;   //!
@@ -170,6 +197,8 @@ public :
    TBranch        *b_VtxNormalizedChi2;   //!
    TBranch        *b_VtxNDof;   //!
    TBranch        *b_VtxIsFake;   //!
+   TBranch        *b_PUMCNumVtx;   //!
+   TBranch        *b_Rho;   //!
    TBranch        *b_NobjTow;   //!
    TBranch        *b_TowId;   //!
    TBranch        *b_TowId_phi;   //!
@@ -228,11 +257,17 @@ public :
    TBranch        *b_JetEMF;   //!
    TBranch        *b_JetFHPD;   //!
    TBranch        *b_JetFRBX;   //!
+   TBranch        *b_JetFChargedHadron;   //!
+   TBranch        *b_JetNeutralHadrons;   //!
+   TBranch        *b_JetFPhotons;   //!
+   TBranch        *b_JetFElectrons;   //!
    TBranch        *b_JetIDLoose;   //!
-   TBranch        *b_JetIDTight;   //!
+   TBranch        *b_JetIDTight;   //!   
    TBranch        *b_JetEtWeightedSigmaPhi;   //!
    TBranch        *b_JetEtWeightedSigmaEta;   //!
+   TBranch        *b_JetArea;   //!
    TBranch        *b_JetCorrZSP;   //!
+   TBranch        *b_JetCorrL1;   //!
    TBranch        *b_JetCorrL2;   //!
    TBranch        *b_JetCorrL3;   //!
    TBranch        *b_JetCorrJPT;   //!
@@ -241,6 +276,7 @@ public :
    TBranch        *b_JetCorrL4JW;   //!
    TBranch        *b_JetIEta;   //!
    TBranch        *b_JetIPhi;   //!
+   TBranch        *b_JetNChargedHadrons;   //!
    TBranch        *b_JetGenJetDeltaR;   //!
    TBranch        *b_GenJetPt;   //!
    TBranch        *b_GenJetPhi;   //!
@@ -300,6 +336,7 @@ public :
 
 #endif
 
+
 #ifdef NJetSel_cxx
 void NJetSel::Init(TTree *tree)
 {
@@ -329,6 +366,15 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("HltDiJetAve140U", &HltDiJetAve140U, &b_HltDiJetAve140U);
    fChain->SetBranchAddress("HltDiJetAve180U", &HltDiJetAve180U, &b_HltDiJetAve180U);
    fChain->SetBranchAddress("HltDiJetAve300U", &HltDiJetAve300U, &b_HltDiJetAve300U);
+   fChain->SetBranchAddress("HltDiJetAve30", &HltDiJetAve30, &b_HltDiJetAve30);
+   fChain->SetBranchAddress("HltDiJetAve60", &HltDiJetAve60, &b_HltDiJetAve60);
+   fChain->SetBranchAddress("HltDiJetAve80", &HltDiJetAve80, &b_HltDiJetAve80);
+   fChain->SetBranchAddress("HltDiJetAve110", &HltDiJetAve110, &b_HltDiJetAve110);
+   fChain->SetBranchAddress("HltDiJetAve150", &HltDiJetAve150, &b_HltDiJetAve150);
+   fChain->SetBranchAddress("HltDiJetAve190", &HltDiJetAve190, &b_HltDiJetAve190);
+   fChain->SetBranchAddress("HltDiJetAve240", &HltDiJetAve240, &b_HltDiJetAve240);
+   fChain->SetBranchAddress("HltDiJetAve300", &HltDiJetAve300, &b_HltDiJetAve300);
+   fChain->SetBranchAddress("HltDiJetAve370", &HltDiJetAve370, &b_HltDiJetAve370);
    fChain->SetBranchAddress("VtxN", &VtxN, &b_VtxN);
    fChain->SetBranchAddress("VtxNTracks", &VtxNTracks, &b_VtxNTracks);
    fChain->SetBranchAddress("VtxPosX", &VtxPosX, &b_VtxPosX);
@@ -337,6 +383,8 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("VtxNormalizedChi2", &VtxNormalizedChi2, &b_VtxNormalizedChi2);
    fChain->SetBranchAddress("VtxNDof", &VtxNDof, &b_VtxNDof);
    fChain->SetBranchAddress("VtxIsFake", &VtxIsFake, &b_VtxIsFake);
+   fChain->SetBranchAddress("PUMCNumVtx", &PUMCNumVtx, &b_PUMCNumVtx);
+   fChain->SetBranchAddress("Rho", &Rho, &b_Rho);
    fChain->SetBranchAddress("NobjTow", &NobjTow, &b_NobjTow);
    fChain->SetBranchAddress("TowId", TowId, &b_TowId);
    fChain->SetBranchAddress("TowId_phi", TowId_phi, &b_TowId_phi);
@@ -395,11 +443,17 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetEMF", JetEMF, &b_JetEMF);
    fChain->SetBranchAddress("JetFHPD", JetFHPD, &b_JetFHPD);
    fChain->SetBranchAddress("JetFRBX", JetFRBX, &b_JetFRBX);
+   fChain->SetBranchAddress("JetFChargedHadron", JetFChargedHadron, &b_JetFChargedHadron);
+   fChain->SetBranchAddress("JetNeutralHadrons", JetNeutralHadrons, &b_JetNeutralHadrons);
+   fChain->SetBranchAddress("JetFPhotons", JetFPhotons, &b_JetFPhotons);
+   fChain->SetBranchAddress("JetFElectrons", JetFElectrons, &b_JetFElectrons);
    fChain->SetBranchAddress("JetIDLoose", JetIDLoose, &b_JetIDLoose);
    fChain->SetBranchAddress("JetIDTight", JetIDTight, &b_JetIDTight);
    fChain->SetBranchAddress("JetEtWeightedSigmaPhi", JetEtWeightedSigmaPhi, &b_JetEtWeightedSigmaPhi);
    fChain->SetBranchAddress("JetEtWeightedSigmaEta", JetEtWeightedSigmaEta, &b_JetEtWeightedSigmaEta);
+   fChain->SetBranchAddress("JetArea", JetArea, &b_JetArea);
    fChain->SetBranchAddress("JetCorrZSP", JetCorrZSP, &b_JetCorrZSP);
+   fChain->SetBranchAddress("JetCorrL1", JetCorrL1, &b_JetCorrL1);
    fChain->SetBranchAddress("JetCorrL2", JetCorrL2, &b_JetCorrL2);
    fChain->SetBranchAddress("JetCorrL3", JetCorrL3, &b_JetCorrL3);
    fChain->SetBranchAddress("JetCorrJPT", JetCorrJPT, &b_JetCorrJPT);
@@ -408,6 +462,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetCorrL4JW", JetCorrL4JW, &b_JetCorrL4JW);
    fChain->SetBranchAddress("JetIEta", JetIEta, &b_JetIEta);
    fChain->SetBranchAddress("JetIPhi", JetIPhi, &b_JetIPhi);
+   fChain->SetBranchAddress("JetNChargedHadrons", JetNChargedHadrons, &b_JetNChargedHadrons);
    fChain->SetBranchAddress("JetGenJetDeltaR", JetGenJetDeltaR, &b_JetGenJetDeltaR);
    fChain->SetBranchAddress("GenJetPt", GenJetPt, &b_GenJetPt);
    fChain->SetBranchAddress("GenJetPhi", GenJetPhi, &b_GenJetPhi);
