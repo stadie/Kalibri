@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.19 2011/02/18 15:58:08 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.20 2011/04/01 10:23:49 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -45,7 +45,7 @@ std::string ControlPlotsConfig::binTitle(double min, double max) const {
   std::string title = toString(min);
   title += " #leq ";
   title += varTitle(binVariable());
-  title += " #leq ";
+  title += " < ";
   title += toString(max);
 
   std::string unit = unitTitle(binVariable());
@@ -58,7 +58,7 @@ std::string ControlPlotsConfig::binTitle(double min, double max) const {
     title += toString(cutMin());
     title += " #leq ";
     title += varTitle(cutVariable());
-    title += " #leq ";
+    title += " < ";
     title += toString(cutMax());
     std::string unit = unitTitle(cutVariable());
     if( unit != "" ) {
@@ -660,6 +660,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "p_{3}^{proj.}/#bar p_{T}";
   else if( varName == "ThirdJetFractionPlain") 
     title = "p_{3}/#bar p_{T}";
+  else if( varName == "NPU")
+    title = "n_{PU}^{MC}";
   return title;
 }
 

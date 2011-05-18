@@ -177,7 +177,9 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
 //!  \p type.
 // -------------------------------------------------------------
 ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type) const {
-  if( varName == "Eta" )
+  if( varName == "NPU" )
+    return  &ControlPlotsFunction::jetTruthEventNPU;
+   if( varName == "Eta" )
     return  &ControlPlotsFunction::jetTruthEventJetEta;
   if( varName == "AbsEta" )
     return  &ControlPlotsFunction::jetTruthEventJetAbsEta;
