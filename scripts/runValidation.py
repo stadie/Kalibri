@@ -114,7 +114,7 @@ create plots                     = true
 # JetTruthEvent plots
 create JetTruthEvent plots    =  true
 
-JetTruthEvent plots names =  MCTruthResponseVsGenJetPt; MCTruthResponseVsEta; MCTruthRespFlavorVsGenJetPt; MCTruthResponseVsMeanWidth
+JetTruthEvent plots names =  MCTruthResponseVsGenJetPt; MCTruthResponseVsEta; MCTruthResponsePU; MCTruthResolPU; MCTruthRespFlavorVsGenJetPt
 MCTruthResponseVsGenJetPt x variable        =  GenJetPt;  log
 MCTruthResponseVsGenJetPt x edges           =  50 10 3000
 MCTruthResponseVsGenJetPt y variable        =  GenJetResponse
@@ -124,20 +124,47 @@ MCTruthResponseVsGenJetPt bin edges         =  -5.0 -3.0 -1.3 1.3 3.0 5.0
 MCTruthResponseVsGenJetPt correction types  =  Uncorrected; L2L3
 #; L2L3L4
 MCTruthResponseVsGenJetPt profile types     =  GaussFitMean; GaussFitWidth
-MCTruthResponseVsGenJetPt legend label      =  L2L3:CMS L2L3
+MCTruthResponseVsGenJetPt legend label      =  L2L3:CMS L1L2L3
 #; L2L3L4:CMS L2L3 + L4JW
 
-JetTruthEvent plots name 2              =  MCTruthResponseVsEta
 MCTruthResponseVsEta x variable         =  Eta
 MCTruthResponseVsEta x edges            =  40 -5 5
 MCTruthResponseVsEta y variable         =  GenJetResponse
-MCTruthResponseVsEta y edges            =  51 0 2.0 0.9 1.1 0.0 0.5
+MCTruthResponseVsEta y edges            =  51 0 2.0 0.9 1.1
 MCTruthResponseVsEta bin variable       =  GenJetPt
 MCTruthResponseVsEta bin edges          =  20 50 100 500 2000
 MCTruthResponseVsEta correction types   =  Uncorrected; L2L3
 #; L2L3L4 
-MCTruthResponseVsEta profile types      =  GaussFitMean; GaussFitWidth
-MCTruthResponseVsEta legend label       =  L2L3:CMS L2L3
+MCTruthResponseVsEta profile types      =  GaussFitMean
+MCTruthResponseVsEta legend label       =  L2L3:CMS L1L2L3
+#; L2L3L4:CMS L2L3 + L4JW
+
+MCTruthResponsePU x variable         =  Eta
+MCTruthResponsePU x edges            =  40 -5 5
+MCTruthResponsePU y variable         =  GenJetResponse
+MCTruthResponsePU y edges            =  51 0 2.0 0.9 1.1
+MCTruthResponsePU bin variable       =  NPU
+MCTruthResponsePU bin edges          =  0 1 4 8 20
+MCTruthResponsePU cut variable       =  GenJetPt
+MCTruthResponsePU cut edges          =  50 100
+MCTruthResponsePU correction types   =  Uncorrected; L2L3
+#; L2L3L4 
+MCTruthResponsePU profile types      =  GaussFitMean
+MCTruthResponsePU legend label       =  L2L3:CMS L1L2L3
+#; L2L3L4:CMS L2L3 + L4JW
+
+MCTruthResolPU x variable        =  GenJetPt;  log
+MCTruthResolPU x edges           =  25 10 3000
+MCTruthResolPU y variable        =  GenJetResponse
+MCTruthResolPU y edges           =  51 0 1.0 0 0.5
+MCTruthResolPU bin variable      =  NPU
+MCTruthResolPU bin edges         =  0 1 4 8 20
+MCTruthResolPU cut variable   =  Eta
+MCTruthResolPU cut edges      =  -1.3 1.3
+MCTruthResolPU correction types  =  Uncorrected; L2L3
+#; L2L3L4
+MCTruthResolPU profile types     =  GaussFitWidth
+MCTruthResolPU legend label      =  L2L3:CMS L1L2L3
 #; L2L3L4:CMS L2L3 + L4JW
 
 MCTruthResolVsGenJetPt x variable        =  GenJetPt;  log
@@ -149,7 +176,7 @@ MCTruthResolVsGenJetPt bin edges         =  -5.0 -3.0 -1.3 1.3 3.0 5.0
 MCTruthResolVsGenJetPt correction types  =  Uncorrected; L2L3
 #; L2L3L4
 MCTruthResolVsGenJetPt profile types     =  GaussFitWidth
-MCTruthResolVsGenJetPt legend label      =  L2L3:CMS L2L3
+MCTruthResolVsGenJetPt legend label      =  L2L3:CMS L1L2L3
 #; L2L3L4:CMS L2L3 + L4JW
 
 MCTruthRespFlavorVsGenJetPt x variable        =  GenJetPt;  log
@@ -160,7 +187,7 @@ MCTruthRespFlavorVsGenJetPt bin variable      =  Flavor
 MCTruthRespFlavorVsGenJetPt bin edges         =  -0.5 0.5 1.5
 MCTruthRespFlavorVsGenJetPt correction types  =  Uncorrected; L2L3
 MCTruthRespFlavorVsGenJetPt profile types     =  Mean; GaussFitMean
-MCTruthRespFlavorVsGenJetPt legend label      =  L2L3:CMS L2L3
+MCTruthRespFlavorVsGenJetPt legend label      =  L2L3:CMS L1L2L3
 
 MCTruthResponseVsMeanWidth x variable         =  meanMoment
 MCTruthResponseVsMeanWidth x edges            =  30 0 0.5
@@ -170,19 +197,19 @@ MCTruthResponseVsMeanWidth bin variable       =  GenJetPt
 MCTruthResponseVsMeanWidth bin edges          =  10 30 50 80 120 300 600 2000
 MCTruthResponseVsMeanWidth correction types   =  Uncorrected; L2L3
 MCTruthResponseVsMeanWidth profile types      =  Mean; GaussFitMean; GaussFitWidth
-MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L2L3
+MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L1L2L3
 
 """
 
 #jettypes = ["Calo","PF","JPT","Track"]
 #jettypes = ["ak5PF","ak7PF","ic5PF","kt4PF","kt6PF","ak5Calo","ak7Calo","ic5Calo","kt4Calo","kt6Calo","ak5JPT"]
-jettypes = ["ak5PF","ak5Calo"]
-datadir = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1Dmerged"
+jettypes = ["ak5Calo", "ak5PF"]
+datadir = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6_Summer11-PU_S3_START42_V11-v1/merged/"
 #datadir  = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1Amerged"
-jecname = "Fall10"
-datasetname="QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO"
+jecname = "JEC11_V1"
+datasetname="/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6/Summer11-PU_S3_START42_V11-v1/AODSIM"
 #datasetname="/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1/AODSIM"
-correctJets=True
+correctJets=False
 
 for jettype in jettypes:
     print "make plots for jettype "+jettype
@@ -209,7 +236,7 @@ for jettype in jettypes:
     print "running "+kalibricmd
     os.system(kalibricmd)
     tarball=jecname+"plots"+jettype+".tar"
-    tarcmd = "cd tempplots; tar cf ../"+tarball+" *Eta[0-9].eps *Pt[0-9].eps *Eta[0-9]_zoom.eps *Pt[0-9]_zoom.eps *Flavor[0-9].eps *Flavor[0-9]_zoom.eps; cd -"
+    tarcmd = "cd tempplots; tar cf ../"+tarball+" *Eta[0-9].eps *Pt[0-9].eps *Eta[0-9]_zoom.eps *Pt[0-9]_zoom.eps *Flavor[0-9].eps *Flavor[0-9]_zoom.eps *NPU[0-9].eps *NPU[0-9]_zoom.eps; cd -"
     print "running "+tarcmd
     os.system(tarcmd)
 

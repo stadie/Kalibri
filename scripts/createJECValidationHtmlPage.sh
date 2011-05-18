@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.8 2010/11/19 10:11:40 stadie Exp $
+# $Id: createJECValidationHtmlPage.sh,v 1.9 2010/11/23 15:42:23 stadie Exp $
 #
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -74,6 +74,7 @@ FILE_OUT="index.html"
 # Naming conventions for plots
 ID_GenPt="GenJetPt"
 ID_Eta="Eta"
+ID_NPU="NPU"
 ID_MeanWidth="MeanWidth"
 ID_Flavor="Flavor"
 ID_RVs="ResponseVs"
@@ -81,6 +82,8 @@ ID_RVsGenPt="${ID_RVs}${ID_GenPt}"
 ID_RVsEta="${ID_RVs}${ID_Eta}"
 ID_RVsMeanWidth="${ID_RVs}${ID_MeanWidth}"
 ID_RVsFlavor="RespFlavorVsGenJetPt"
+ID_RVPU="ResponsePU"
+ID_RSPU="ResolPU"
 ID_Response="GaussFitMean"
 ID_Resolution="GaussFitWidth"
 ID_ZOOM="zoom"
@@ -90,6 +93,8 @@ TITLE_ResponseVsGenPt="Response vs genJetPt in bins of eta"
 TITLE_ResponseVsEta="Response vs eta in bins of genJetPt"
 TITLE_ResolutionVsGenPt="Resolution vs genJetPt in bins of eta"
 TITLE_ResolutionVsEta="Resolution vs eta in bins of genJetPt"
+TITLE_ResponsePU="Response vs eta in bins of N PU"
+TITLE_ResolutionPU="Resolution vs genJetPt in bins of N PU"
 TITLE_ResponseVsMeanWidth="Response vs JetWidth in bins of genJetPt"
 TITLE_ResponseVsFlavor="Response vs genJetPt for different Flavor (top: gluon, bottom: light flavors)"
 
@@ -255,7 +260,7 @@ if [[ `ls -1 *.eps 2>/dev/null | wc -l` -eq 0 ]]; then
 fi
 #remove unwanted files
 rm *_Mean_*
-rm *MeanWidth_GaussFitWidth_*
+rm -f *MeanWidth_GaussFitWidth_*
 echo -n "Converting to "
 if [[ `ls -1 *.eps 2>/dev/null | wc -l` -ne 0 ]]; then
     echo -n "pdf"
@@ -266,7 +271,7 @@ if [[ `ls -1 *.eps 2>/dev/null | wc -l` -ne 0 ]]; then
     echo -n " and to "
 fi
 echo "jpg format and resizing plots"
-for pdf in `ls -1 *Resp*.pdf 2>/dev/null`; do
+for pdf in `ls -1 *Res*.pdf 2>/dev/null`; do
     #pos=(`expr index ${pdf} ${ID_RVs}`)
 	new_pdf=`awk 'BEGIN { print substr("'${pdf}'",index("'${pdf}'","'${ID_RVs}'")) }'`
     new_pdf="${DIR_OUT}_${new_pdf}"
@@ -378,7 +383,7 @@ html_line "<p>On this page, validation plots are presented for the ${ID} jet ene
 if [[ ${MODE} == "Kalibri" ]]; then
     html_line "The corrections were derived with an unbinned maximum likelihood fit using the Kalibri tool. See the top-level <a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisCalibration\">Kalibri TWiki</a> page for a detailed description of the fitting technique, the used datasets, the applied event selection, and the validation technique.</p>"
 else
-    html_line "See the top-level <a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisJECValidation\">JEC validation</a> TWiki page for a detailed description of the used datasets, the applied event selection, and the validation technique.</p>"
+    html_line "See the top-level <a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisJECValidation\">JEC validation</a> TWiki page for a detailed description of the used datasets, the applied event selection, and the validation technique.</p>Caveat: Even the uncorrected jets are in fact corrected with L1</p>"
 fi
 
 # Table listing dataset, JEC tag, etc
@@ -420,6 +425,8 @@ HAS_PLOTS_ResponseVsEta=`ls -1 *${ID_RVsEta}*${ID_Response}*.jpg 2>/dev/null | w
 HAS_PLOTS_ResolutionVsGenPt=`ls -1 *${ID_RVsGenPt}*${ID_Resolution}*.jpg 2>/dev/null | wc -l`
 HAS_PLOTS_ResolutionVsEta=`ls -1 *${ID_RVsEta}*${ID_Resolution}*.jpg 2>/dev/null | wc -l`
 HAS_PLOTS_ResponseVsMeanWidth=`ls -1 *${ID_RVsMeanWidth}*${ID_Response}*.jpg 2>/dev/null | wc -l`
+HAS_PLOTS_ResponsePU=`ls -1 *${ID_RVPU}*${ID_Response}*.jpg 2>/dev/null | wc -l`
+HAS_PLOTS_ResolutionPU=`ls -1 *${ID_RSPU}*${ID_Resolution}*.jpg 2>/dev/null | wc -l`
 HAS_PLOTS_ResponseVsGenPtFlavor=`ls -1 *${ID_RVsFlavor}*${ID_Response}*.jpg 2>/dev/null | wc -l`                         
 # Write table of plots to html file
 html_newline 3
@@ -436,11 +443,14 @@ fi
 if [[ ${HAS_PLOTS_ResolutionVsGenPt} -ne 0 ]]; then
     html_tag li "<a href=\"#${ID_RVsGenPt}_${ID_Resolution}\">${TITLE_ResolutionVsGenPt}</a>"
 fi
-if [[ ${HAS_PLOTS_ResolutionVsEta} -ne 0 ]]; then
-    html_tag li "<a href=\"#${ID_RVsEta}_${ID_Resolution}\">${TITLE_ResolutionVsEta}</a>"
-fi
 if [[ ${HAS_PLOTS_ResponseVsMeanWidth} -ne 0 ]]; then
     html_tag li "<a href=\"#${ID_RVsMeanWidth}_${ID_Response}\">${TITLE_ResponseVsMeanWidth}</a>"
+fi
+if [[ ${HAS_PLOTS_ResponsePU} -ne 0 ]]; then
+    html_tag li "<a href=\"#${ID_RVPU}_${ID_Response}\">${TITLE_ResponsePU}</a>"
+fi
+if [[ ${HAS_PLOTS_ResolutionPU} -ne 0 ]]; then
+    html_tag li "<a href=\"#${ID_RSPU}_${ID_Resolution}\">${TITLE_ResolutionPU}</a>"
 fi
 if [[ ${HAS_PLOTS_ResponseVsEta} -ne 0 ]]; then
     html_tag li "<a href=\"#${ID_RVsFlavor}_${ID_Response}\">${TITLE_ResponseVsFlavor}</a>"
@@ -550,6 +560,18 @@ if [[ ${HAS_PLOTS_ResponseVsMeanWidth} -ne 0 ]]; then
     ((COUNT_CATEGORIES=${COUNT_CATEGORIES}+1))
     html_newline
     tableOfPlots "${ID_RVsMeanWidth}" "${ID_Response}" "${TITLE_ResponseVsMeanWidth}" "${ID_GenPt}" "${COUNT_CATEGORIES}"
+fi
+# Response vs Eta for PU
+if [[ ${HAS_PLOTS_ResponsePU} -ne 0 ]]; then
+    ((COUNT_CATEGORIES=${COUNT_CATEGORIES}+1))
+    html_newline
+    tableOfPlots "${ID_RVPU}" "${ID_Response}" "${TITLE_ResponsePU}" "${ID_PU}" "${COUNT_CATEGORIES}"
+fi
+# Resolution vs Pt for PU
+if [[ ${HAS_PLOTS_ResolutionPU} -ne 0 ]]; then
+    ((COUNT_CATEGORIES=${COUNT_CATEGORIES}+1))
+    html_newline
+    tableOfPlots "${ID_RSPU}" "${ID_Resolution}" "${TITLE_ResolutionPU}" "${ID_PU}" "${COUNT_CATEGORIES}"
 fi
 # Response for Flavors
 if [[ ${HAS_PLOTS_ResponseVsGenPtFlavor} -ne 0 ]]; then
