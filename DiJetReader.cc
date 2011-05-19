@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.69 2011/05/03 09:08:20 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.70 2011/05/18 15:58:34 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -141,6 +141,8 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   nMaxGenJetEt_       = 0;     
   nMaxDeltaR_         = 0;
   nTriggerSel_        = 0;
+
+  nMaxMCPU_  =  config_->read<int>("MAX n PU from MC",10000.0);
   // Integration parameter for SmearData
   maxNIter_  = config_->read<int>("DiJet integration number of iterations",5);
   eps_       = config_->read<double>("DiJet integration epsilon",1.E-5);
@@ -371,8 +373,8 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 //     std::cout << nJet_->GenJetColPt[1] << std::endl;
 //     std::cout << nJet_->GenJetColPt[2] << std::endl;
 //     }
-
-
+    //cut on PU
+    if(nJet_->PUMCNumVtx > nMaxMCPU_) continue;
 
     if(dataClass_ == 1) {
       nReadEvts_++;

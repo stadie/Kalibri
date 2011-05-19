@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.30 2011/04/06 13:34:27 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.31 2011/05/03 09:08:20 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -112,6 +112,7 @@ class DiJetReader : public EventReader{
   int    nMinGenJetEt_;         //!< Number of events rejected by minGenJetEt_ cut
   int    nMaxDeltaR_;           //!< Number of events rejected by maxDeltaR_ cut
   int    nTriggerSel_;          //!< Number of events not passing the trigger selection
+  int    nMaxMCPU_;             //!< Max number of mixed-in PU events
   int    maxNIter_;             //!< Max number of iterations in integration
   double eps_;                  //!< Integration precision for convergence
   double min_;                  //!< Minimum of truth spectrum in integration

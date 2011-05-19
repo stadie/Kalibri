@@ -204,12 +204,14 @@ MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L1L2L3
 #jettypes = ["Calo","PF","JPT","Track"]
 #jettypes = ["ak5PF","ak7PF","ic5PF","kt4PF","kt6PF","ak5Calo","ak7Calo","ic5Calo","kt4Calo","kt6Calo","ak5JPT"]
 jettypes = ["ak5Calo", "ak5PF"]
-datadir = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6_Summer11-PU_S3_START42_V11-v1/merged/"
+datadir = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6_Summer11-PU_S3_START42_V11-v2/job*/"
 #datadir  = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1Amerged"
 jecname = "JEC11_V1"
-datasetname="/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6/Summer11-PU_S3_START42_V11-v1/AODSIM"
+datasetname="/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6/Summer11-PU_S3_START42_V11-v2/AODSIM"
 #datasetname="/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1/AODSIM"
 correctJets=False
+CutAwayPU=True
+
 
 for jettype in jettypes:
     print "make plots for jettype "+jettype
@@ -220,6 +222,10 @@ for jettype in jettypes:
 
     os.system("ls "+datadir+"/*"+jettype+"*.root > tempdijetlist");
     fcfg = open("valid.cfg", "w")
+    #change labels
+    if CutAwayPU:
+        config = config.replace('CMS L1L2L3','CMS L2L3')
+
     fcfg.write(config)
     fcfg.write("plots output directory = tempplots\n")
     fcfg.write("Di-Jet input file = tempdijetlist\n")
@@ -229,22 +235,27 @@ for jettype in jettypes:
         fcfg.write("jet correction source = JetMETCor\n");
         fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"\n");
         #fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"NoOffset\n");
-    fcfg.write("correct jets L1 = true");
+    if CutAwayPU:
+        fcfg.write("MAX n PU from MC = 0\n");
+        fcfg.write("correct jets L1 = false\n");
+        jec = jecname+'NoPU';
+    else:
+        fcfg.write("correct jets L1 = true\n");
     fcfg.close()
     
     kalibricmd = "./junk valid.cfg"
     print "running "+kalibricmd
     os.system(kalibricmd)
-    tarball=jecname+"plots"+jettype+".tar"
+    tarball=jec+"plots"+jettype+".tar"
     tarcmd = "cd tempplots; tar cf ../"+tarball+" *Eta[0-9].eps *Pt[0-9].eps *Eta[0-9]_zoom.eps *Pt[0-9]_zoom.eps *Flavor[0-9].eps *Flavor[0-9]_zoom.eps *NPU[0-9].eps *NPU[0-9]_zoom.eps; cd -"
     print "running "+tarcmd
     os.system(tarcmd)
 
 print "please run:"
 for jettype in jettypes:
-    tarball=os.getcwd()+"/"+jecname+"plots"+jettype+".tar"
+    tarball=os.getcwd()+"/"+jec+"plots"+jettype+".tar"
     
-    webcmd = "./scripts/createJECValidationHtmlPage.sh jetmet "+tarball+" \""+jecname+"\" \""+jecname+"\" "+datasetname+" "+jettype[0:3] +" "+jettype[3:len(jettype)].lower()
+    webcmd = "./scripts/createJECValidationHtmlPage.sh jetmet "+tarball+" \""+jec+"\" \""+jecname+"\" "+datasetname+" "+jettype[0:3] +" "+jettype[3:len(jettype)].lower()
     print webcmd
     #os.system(webcmd)
     
