@@ -1,4 +1,4 @@
-C=g++
+CC=g++
 LD=g++
 GCC_VERSION=$(shell g++ --version | head -1 | cut -f 3 -d' ' | cut -f 1 -d'.')
 ifeq ($(GCC_VERSION), 3)
@@ -11,42 +11,35 @@ endif
 
 
 #O2 for optimization, g for debugging, pg for profiling
-SPECIALFLAGS= -fpic -g -O2#-O1 #-pg# -O2
+SPECIALFLAGS= -fpic -g -Wall -O2 #-O1 #-pg# -O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
 ROOTLIBS=$(shell root-config --libs) -lMinuit
-#-I. -I./include -I$(SRT_PUBLIC_CONTEXT)/include 
-CFLAGS= $(SPECIALFLAGS) -Wall $(ROOTAUXCFLAGS)
-#-L../../lib/$(SRT_SUBDIR)/
 LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS) -lgsl -lgslcblas -lm
-BOOSTFLAGS=-I/usr/include/boost
 BOOSTLINKFLAGS=-lboost_thread -lpthread
 # change path for MacPort or fink@MacOS
  ifeq (exists, $(shell [ -d /opt/local/include/boost ] && echo exists)) 
- BOOSTFLAGS=-I/opt/local/include/boost
- SPECIALFLAGS += -I/opt/local/include
+ BOOSTFLAGS=-I/opt/local/include/boost -I/opt/local/include
  LFLAGS += -L/opt/local/lib
  BOOSTLINKFLAGS=-lboost_thread-mt -lpthread
 else ifeq (exists, $(shell [ -d /sw/include/boost ] && echo exists)) 
- BOOSTFLAGS=-I/sw/include/boost
- SPECIALFLAGS += -arch i386 -I/sw/include
+ BOOSTFLAGS=-I/sw/include/boost -I/sw/include
+ SPECIALFLAGS += -arch i386
  LFLAGS += -L/sw/lib
 else
- SPECIALFLAGS += $(BOOSTFLAGS)
-endif
-
-RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS) -DSTANDALONE 
+ BOOSTFLAGS=-I/usr/include/boost
+endif 
+RCXX=$(SPECIALFLAGS) $(BOOSTFLAGS) -I. $(ROOTCFLAGS) -DSTANDALONE 
 RLXX=$(LFLAGS) $(ROOTLIBS) $(BOOSTLINKFLAGS)  #-lrt -lpthread # -lposix4
 ROOTSYS=$(shell root-config --prefix)
 
 
 #all files that end up in the Kalibri library:
-SRCS=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsResolution.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc ThreadedDiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc DiJetResolutionEvent.cc JetConstraintEvent.cc CorFactorsFactory.cc JetBin.cc Binning.cc Function.cc ResolutionParametrization.cc ResolutionFunction.cc ParameterLimit.cc JetWidthEvent.cc EventBinning.cc DiJetEventWeighting.cc
-
+SRCS=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsResolution.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc ThreadedDiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc DiJetResolutionEvent.cc JetConstraintEvent.cc CorFactorsFactory.cc JetBin.cc Binning.cc Function.cc ResolutionParametrization.cc ResolutionFunction.cc ParameterLimit.cc JetWidthEvent.cc EventBinning.cc DiJetEventWeighting.cc 
 
 OBJS = $(SRCS:.cc=.o)
 
-.PHONY: depend clean
+.PHONY: clean
 
 all: dirs lib bin
 
@@ -60,6 +53,7 @@ clean:
 	@rm -f *~
 	@rm -f *.o 
 	@rm -f *#
+	@rm -f *.P
 	@rm -f .nfs*
 	@rm -f *.bkp
 	@rm -f junk
@@ -108,7 +102,7 @@ comp: 	ControlPlotsComparison.o compareControlPlots.o
 
 #target for plugins:
 lib/libJetMETCor.so: lib/libJetMETObjects.so lib/libKalibri.so JetMETCorFactorsFactory.o
-	$(LD) $(CFLAGS) -shared JetMETCorFactorsFactory.o lib/libJetMETObjects.so lib/libKalibri.so $(RLXX) -o lib/libJetMETCor.so
+	$(LD) $(RCXX) -shared JetMETCorFactorsFactory.o lib/libJetMETObjects.so lib/libKalibri.so $(RLXX) -o lib/libJetMETCor.so
 	@echo '-> JetMETCor plugin created.'
 
 lib/libJetMETObjects.so: dirs JetMETObjects
@@ -119,14 +113,13 @@ JetMETObjects:
 	patch -p0 < JetMETObjects.patch
 
 
-# this is a suffix replacement rule for building .o's from .c's
-# it uses automatic variables $<: the name of the prerequisite of
-# the rule(a .c file) and $@: the name of the target of the rule (a .o file) 
-# (see the gnu make manual section about automatic variables)
-.cc.o:	
-	$(C) $(RCXX) -c $< -o $@
 
-depend: $(SRCS) ControlPlotsComparison.cc caliber.cc compareControlPlots.cc JetMETCorFactorsFactory.cc 
-	makedepend $(RCXX) $^
+.cc.o:
+	$(CC) $(RCXX) -MD -c -o $@ $<
+	@cp $*.d $*.P; \
+            sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+                -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+            rm -f $*.d	
+ 
+-include $(SRCS:%.cc=%.P) ControlPlotsComparison.P caliber.P compareControlPlots.P JetMETCorFactorsFactory.P
 
-# DO NOT DELETE THIS LINE -- make depend needs it
