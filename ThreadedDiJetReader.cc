@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.9 2011/05/18 15:58:35 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.10 2011/05/26 07:42:53 mschrode Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -92,6 +92,8 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
   nGoodEvts_          = 0;
   nMinJetEta_         = 0;
   nMaxJetEta_         = 0;
+  nMinGenJetEt_       = 0;
+  nMaxGenJetEt_       = 0;
 
 TChain* chain = dynamic_cast<TChain*>(tree_);
   unsigned int id = 0;

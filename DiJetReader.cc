@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.71 2011/05/19 14:13:10 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.72 2011/05/26 07:42:52 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -131,6 +131,7 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   maxJetFRBX_ = 0.98;
 
   // Counter for cutflow
+  nVtx_               = 0;
   nReadEvts_          = 0;
   nGoodEvts_          = 0;
   nDiJetCut_          = 0;
@@ -146,6 +147,13 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   nMaxJetHadFraction_ = 0;     
   nMaxDeltaR_         = 0;
   nTriggerSel_        = 0;
+  nHlt_               = 0;
+  nMinGenJetEt_       = 0;
+  nMaxGenJetEt_       = 0;
+  nMinDijetEt_        = 0;
+  nMaxDijetEt_        = 0;
+
+
 
   // Integration parameter for ResolutionData
   maxNIter_  = config_->read<int>("DiJet integration number of iterations",5);
