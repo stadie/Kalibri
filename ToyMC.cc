@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.44 2010/05/25 16:05:12 mschrode Exp $
+// $Id: ToyMC.cc,v 1.45 2011/05/26 07:42:53 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -781,6 +781,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 
   // All correction factors are 1 in ToyMC
   float jscaleZSP[3]    = { 1., 1., 1. };
+  float jscalel1[3]     = { 1., 1., 1. };
   float jscalel2[3]     = { 1., 1., 1. };
   float jscalel3[3]     = { 1., 1., 1. };
   float jscalel23[3]    = { 1., 1., 1. };
@@ -942,6 +943,7 @@ int ToyMC::generateDiJetTree(TTree* CalibTree, int nevents)
 
   // Correction factors
   CalibTree->Branch( "JetCorrZSP",     jscaleZSP, "JetCorrZSP[NobjJet]/F" );
+  CalibTree->Branch( "JetCorrL1",      jscalel1,  "JetCorrL1[NobjJet]/F" );
   CalibTree->Branch( "JetCorrL2",      jscalel2,  "JetCorrL2[NobjJet]/F" );
   CalibTree->Branch( "JetCorrL3",      jscalel3,  "JetCorrL3[NobjJet]/F" );
   CalibTree->Branch( "JetCorrL2L3",    jscalel23,  "JetCorrL2L3[NobjJet]/F" );
