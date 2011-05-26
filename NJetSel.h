@@ -49,6 +49,7 @@ public :
    Float_t         VtxNDof;
    Bool_t          VtxIsFake;
    Int_t           PUMCNumVtx;
+   Int_t           PUMCNumVtxOOT;
    Float_t         Rho;
    Int_t           NobjTow;
    Int_t           TowId[1000];   //[NobjTow]
@@ -199,6 +200,7 @@ public :
    TBranch        *b_VtxNDof;   //!
    TBranch        *b_VtxIsFake;   //!
    TBranch        *b_PUMCNumVtx;   //!
+   TBranch        *b_PUMCNumVtxOOT;   //!
    TBranch        *b_Rho;   //!
    TBranch        *b_NobjTow;   //!
    TBranch        *b_TowId;   //!
@@ -387,6 +389,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("VtxNDof", &VtxNDof, &b_VtxNDof);
    fChain->SetBranchAddress("VtxIsFake", &VtxIsFake, &b_VtxIsFake);
    fChain->SetBranchAddress("PUMCNumVtx", &PUMCNumVtx, &b_PUMCNumVtx);
+   fChain->SetBranchAddress("PUMCNumVtxOOT", &PUMCNumVtxOOT, &b_PUMCNumVtxOOT);
    fChain->SetBranchAddress("Rho", &Rho, &b_Rho);
    fChain->SetBranchAddress("NobjTow", &NobjTow, &b_NobjTow);
    fChain->SetBranchAddress("TowId", TowId, &b_TowId);

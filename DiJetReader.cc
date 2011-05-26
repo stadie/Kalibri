@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.72 2011/05/26 07:42:52 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.73 2011/05/26 11:32:04 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -380,7 +380,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 //     std::cout << nJet_->GenJetColPt[2] << std::endl;
 //     }
     //cut on PU
-    if(nJet_->PUMCNumVtx > nMaxMCPU_) continue;
+    if(nJet_->PUMCNumVtx + nJet_->PUMCNumVtxOOT > nMaxMCPU_) continue;
 
     if(dataClass_ == 1) {
       nReadEvts_++;
