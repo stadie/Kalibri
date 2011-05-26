@@ -10,25 +10,27 @@ diff -r1.6 Makefile
 Index: JetMETObjects/interface/FactorizedJetCorrector.h
 ===================================================================
 RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h,v
-retrieving revision 1.6
-diff -r1.6 FactorizedJetCorrector.h
-18c18
-<     enum VarTypes   {kJetPt,kJetEta,kJetPhi,kJetE,kJetEMF,kRelLepPt,kPtRel,kNPV,kJetA,kRho};
+retrieving revision 1.11
+diff -r1.11 FactorizedJetCorrector.h
+19c19
+<     enum VarTypes   {kJetPt,kJetEta,kJetPhi,kJetE,kJetEMF,kRelLepPt,kPtRel,kNPV,kJetA,kRho,kJPTrawE,kJPTrawEt,kJPTrawPt,kJPTrawEta,kJPTrawOff};
 ---
->   enum VarTypes   {kJetPt,kJetEta,kJetPhi,kJetE,kJetEMF,kRelLepPt,kPtRel,kNPV,kJetA,kRho,kJW};
-29c29,31
+>     enum VarTypes   {kJetPt,kJetEta,kJetPhi,kJetE,kJetEMF,kRelLepPt,kPtRel,kNPV,kJetA,kRho,kJPTrawE,kJPTrawEt,kJPTrawPt,kJPTrawEta,kJPTrawOff,kJW};
+20a21
+> 
+30c31,33
 <     void setJetEMF      (float fEMF); 
 ---
 >     void setJetEMF      (float fEMF);
 >     void setJetEtaEtaMoment (float fEtaEta); 
 >     void setJetPhiPhiMoment (float fPhiPhi);   
-60c62,64
+63c66,68
 <     float mJetEMF; 
 ---
 >     float mJetEMF;
 >     float mJetEtaEta;
 >     float mJetPhiPhi;
-72c76,78
+80c85,87
 <     bool  mIsJetEMFset; 
 ---
 >     bool  mIsJetEMFset;
@@ -37,8 +39,8 @@ diff -r1.6 FactorizedJetCorrector.h
 Index: JetMETObjects/interface/JetCorrectorParameters.h
 ===================================================================
 RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/interface/JetCorrectorParameters.h,v
-retrieving revision 1.13
-diff -r1.13 JetCorrectorParameters.h
+retrieving revision 1.14
+diff -r1.14 JetCorrectorParameters.h
 14c14,17
 < #include "FWCore/Utilities/interface/Exception.h"
 ---
@@ -49,74 +51,100 @@ diff -r1.13 JetCorrectorParameters.h
 Index: JetMETObjects/src/FactorizedJetCorrector.cc
 ===================================================================
 RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/src/FactorizedJetCorrector.cc,v
-retrieving revision 1.13
-diff -r1.13 FactorizedJetCorrector.cc
-28a29,30
+retrieving revision 1.19
+diff -r1.19 FactorizedJetCorrector.cc
+22,32c22,34
+<   mJetEta  = -9999;
+<   mJetPt   = -9999;
+<   mJetPhi  = -9999;
+<   mJetE    = -9999;
+<   mJetEMF  = -9999;
+<   mJetA    = -9999;
+<   mRho     = -9999;
+<   mLepPx   = -9999;
+<   mLepPy   = -9999;
+<   mLepPz   = -9999;
+<   mNPV     = -9999;
+---
+>   mJetEta = -9999;
+>   mJetPt  = -9999;
+>   mJetPhi = -9999;
+>   mJetE   = -9999;
+>   mJetEMF = -9999;
+>   mJetA   = -9999;
+>   mRho    = -9999;
 >   mJetEtaEta = -9999;
 >   mJetPhiPhi = -9999;
-35a38,39
+>   mLepPx  = -9999;
+>   mLepPy  = -9999;
+>   mLepPz  = -9999;
+>   mNPV    = -9999; 
+37a40
+> 
+40a44,45
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-41a46,47
+46a52,53
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-58a65,66
+65a73,74
 >   mJetEtaEta = -9999;
 >   mJetPhiPhi = -9999;
-69c77,79
+81c90,92
 <   mIsJetEMFset      = false;
 ---
 >   mIsJetEMFset      = false;  
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-71c81,83
-<   mIsRhoset         = false; 
----
->   mIsRhoset         = false;
+83a95,96
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false; 
-89c101,103
+103c116,118
 <   mRho    = -9999;
 ---
 >   mRho    = -9999; 
 >   mJetEtaEta = -9999;
 >   mJetPhiPhi = -9999;
-100c114,116
+119c134,136
 <   mIsJetEMFset      = false;
 ---
 >   mIsJetEMFset      = false;  
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-102a119,120
+121a139,140
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-123a142,143
->       else if (ss == "L4JW")
+127a147
+> 
+138a159,160
+>       mLevels.push_back(kL4); 
+>     else if (ss == "L4JW")
+168a191
+> 
+179c202,204
+<       mLevels.push_back(kL4);
+---
+>       mLevels.push_back(kL4);  
+>     else if (tmp[i] == "L4JW")
 >         mLevels.push_back(kL4);
-164c184,186
-<         mLevels.push_back(kL6);
+227a253
+> 
+241c267,269
+<       result.push_back(kRelLepPt);
 ---
-> 	mLevels.push_back(kL6);
->       else if (tmp[i] == "L4JW")
->         mLevels.push_back(kL4);
-224c246,248
-< 	 result.push_back(kJetEMF);
----
-> 	 result.push_back(kJetEMF); 
->       else if (ss=="JetWidth")
-> 	 result.push_back(kJW);
-417c441
-<             handleError("FactorizedJetCorrector","jet E is not set");
----
-> 	    handleError("FactorizedJetCorrector","jet E is not set");
-437a462,467
->       else if (fVarTypes[i] == kJW) 
-> 	{
-> 	  if (!mIsJetEtaEtaset || !mIsJetPhiPhiset) 
-> 	    handleError("FactorizedJetCorrector","jet phiphi- or etaetamoments are not set");
-> 	  result.push_back(0.5*(mJetEtaEta+mJetPhiPhi));
-> 	}
-517a548,560
+>       result.push_back(kRelLepPt); 
+>     else if (ss=="JetWidth")
+>       result.push_back(kJW);
+417a446
+> 
+448a478,483
+>     else if (fVarTypes[i] == kJW) 
+>       {
+> 	if (!mIsJetEtaEtaset || !mIsJetPhiPhiset) 
+> 	  handleError("FactorizedJetCorrector","jet phiphi- or etaetamoments are not set");
+> 	result.push_back(0.5*(mJetEtaEta+mJetPhiPhi));
+>       }
+559a595,607
 > //------------------------------------------------------------------------
 > void FactorizedJetCorrector::setJetEtaEtaMoment(float fEtaEta)
 > {
@@ -133,8 +161,8 @@ diff -r1.13 FactorizedJetCorrector.cc
 Index: JetMETObjects/src/JetCorrectorParameters.cc
 ===================================================================
 RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/src/JetCorrectorParameters.cc,v
-retrieving revision 1.18
-diff -r1.18 JetCorrectorParameters.cc
+retrieving revision 1.19
+diff -r1.19 JetCorrectorParameters.cc
 448a449
 > #ifndef STANDALONE
 449a451,454
@@ -163,4 +191,3 @@ diff -r1.18 JetCorrectorParameters.cc
 >   TYPELOOKUP_DATA_REG(JetCorrectorParameters);
 >   TYPELOOKUP_DATA_REG(JetCorrectorParametersCollection);
 > #endif
-

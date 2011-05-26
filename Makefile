@@ -35,14 +35,18 @@ else
  SPECIALFLAGS += $(BOOSTFLAGS)
 endif
 
-RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS)
+RCXX=$(SPECIALFLAGS) -Wall $(ROOTCFLAGS) -DSTANDALONE 
 RLXX=$(LFLAGS) $(ROOTLIBS) $(BOOSTLINKFLAGS)  #-lrt -lpthread # -lposix4
 ROOTSYS=$(shell root-config --prefix)
 
-SRC=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsResolution.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc ThreadedDiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc DiJetResolutionEvent.cc JetConstraintEvent.cc CorFactorsFactory.cc JetBin.cc Binning.cc Function.cc ResolutionParametrization.cc ResolutionFunction.cc ParameterLimit.cc JetWidthEvent.cc EventBinning.cc DiJetEventWeighting.cc
 
-%.o: %.cc
-		$(C) $(RCXX) -c $<
+#all files that end up in the Kalibri library:
+SRCS=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsResolution.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc ThreadedDiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc DiJetResolutionEvent.cc JetConstraintEvent.cc CorFactorsFactory.cc JetBin.cc Binning.cc Function.cc ResolutionParametrization.cc ResolutionFunction.cc ParameterLimit.cc JetWidthEvent.cc EventBinning.cc DiJetEventWeighting.cc
+
+
+OBJS = $(SRCS:.cc=.o)
+
+.PHONY: depend clean
 
 all: dirs lib bin
 
@@ -50,158 +54,6 @@ dirs:
 	@mkdir -p bin
 	@mkdir -p lib
 	@mkdir -p tmp
-
-lbfgs.o: lbfgs.F
-	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
-
-ConfigFile.o: ConfigFile.cc ConfigFile.h
-	$(C) $(CFLAGS) -c ConfigFile.cc
-
-GammaJetSel.o: GammaJetSel.cc GammaJetSel.h
-	$(C) $(RCXX) -c GammaJetSel.cc
-
-ZJetSel.o: ZJetSel.cc ZJetSel.h
-	$(C) $(RCXX) -c ZJetSel.cc
-
-TopSel.o: TopSel.cc TopSel.h
-	$(C) $(RCXX) -c TopSel.cc
-
-NJetSel.o: NJetSel.cc NJetSel.h
-	$(C) $(RCXX) -c NJetSel.cc
-
-CalibData.o: CalibData.cc CalibData.h Parametrization.h Parameters.h
-	$(C) $(CFLAGS) -c CalibData.cc
-
-DiJetResolutionEvent.o: DiJetResolutionEvent.cc DiJetResolutionEvent.h Jet.h CalibData.h Parameters.h ResolutionFunction.h
-	$(C) $(CFLAGS) -c DiJetResolutionEvent.cc
-
-Parametrization.o: Parametrization.h Parametrization.cc
-	$(C) $(RCXX) -c Parametrization.cc
-
-Parameters.o: Parameters.cc Parameters.h Parametrization.h Function.h ResolutionFunction.h ConfigFile.h
-	$(C) $(RCXX) -c Parameters.cc
-
-ControlPlots.o: ControlPlots.cc ControlPlots.h ControlPlotsConfig.h ControlPlotsProfile.h ControlPlotsFunction.h CalibData.h Function.h Jet.h JetTruthEvent.h TwoJetsPtBalanceEvent.h
-	$(C) $(RCXX) -c ControlPlots.cc
-
-ControlPlotsProfile.o: ControlPlotsProfile.cc ControlPlotsProfile.h ControlPlotsConfig.h ControlPlotsFunction.h ConfigFile.h CalibData.h
-	$(C) $(RCXX) -c ControlPlotsProfile.cc
-
-ControlPlotsFunction.o: ControlPlotsFunction.cc ControlPlotsFunction.h ControlPlotsConfig.h Jet.h JetTruthEvent.h CorFactors.h TwoJetsPtBalanceEvent.h
-	$(C) $(RCXX) -c ControlPlotsFunction.cc
-
-ControlPlotsConfig.o: ControlPlotsConfig.cc ControlPlotsConfig.h ConfigFile.h
-	$(C) $(RCXX) -c ControlPlotsConfig.cc
-
-ControlPlotsResolution.o: ControlPlotsResolution.cc ControlPlotsResolution.h CalibData.h ConfigFile.h Parameters.h DiJetResolutionEvent.h Jet.h ResolutionFunction.h
-	$(C) $(RCXX) -c ControlPlotsResolution.cc
-
-EventReader.o: EventReader.h EventReader.cc Parameters.h Parametrization.h ConfigFile.h CorFactorsFactory.h CorFactors.h ToyMC.h  JetConstraintEvent.h Binning.h
-	$(C) $(RCXX) -c EventReader.cc
-
-PhotonJetReader.o: EventReader.h PhotonJetReader.h PhotonJetReader.cc  GammaJetSel.h ToyMC.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h Function.h CorFactors.h CorFactorsFactory.h
-	$(C) $(RCXX) -c PhotonJetReader.cc
-
-DiJetReader.o: EventReader.h DiJetReader.h DiJetReader.cc NJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h TwoJetsPtBalanceEvent.h JetWithTowers.h Function.h ResolutionFunction.h CorFactors.h CorFactorsFactory.h JetConstraintEvent.h JetBin.h DiJetResolutionEvent.h JetWidthEvent.h
-	$(C) $(RCXX) -c DiJetReader.cc
-
-ThreadedDiJetReader.o: EventReader.h DiJetReader.h ThreadedDiJetReader.h ThreadedDiJetReader.cc NJetSel.h Parameters.h ConfigFile.h 
-	$(C) $(RCXX) -c ThreadedDiJetReader.cc
-
-TriJetReader.o: EventReader.h TriJetReader.h TriJetReader.cc NJetSel.h Parameters.h ConfigFile.h CorFactors.h CorFactorsFactory.h
-	$(C) $(RCXX) -c TriJetReader.cc
-
-ZJetReader.o: EventReader.h ZJetReader.h ZJetReader.cc ZJetSel.h Parameters.h ConfigFile.h Jet.h JetTruthEvent.h JetWithTowers.h JetWithTracks.h Function.h CorFactors.h CorFactorsFactory.h
-	$(C) $(RCXX) -c ZJetReader.cc
-
-TopReader.o: EventReader.h TopReader.h TopReader.cc TopSel.h Parameters.h ConfigFile.h CorFactors.h CorFactorsFactory.h Jet.h JetWithTowers.h
-	$(C) $(RCXX) -c TopReader.cc
-
-ParameterLimitsReader.o: EventReader.h ParameterLimitsReader.h ParameterLimitsReader.cc Parameters.h ConfigFile.h CorFactorsFactory.h ParameterLimit.h
-	$(C) $(CFLAGS) -c ParameterLimitsReader.cc
-
-EventProcessor.o: CalibData.h ConfigFile.h Parameters.h EventProcessor.h EventProcessor.cc Binning.h JetTruthEvent.h Jet.h
-	$(C) $(CFLAGS) -c EventProcessor.cc
-
-EventBinning.o: CalibData.h ConfigFile.h Parameters.h EventProcessor.h EventBinning.h EventBinning.cc Binning.h JetTruthEvent.h Jet.h
-	$(C) $(CFLAGS) -c EventBinning.cc
-
-DiJetEventWeighting.o: CalibData.h ConfigFile.h Parameters.h EventProcessor.h DiJetEventWeighting.h DiJetEventWeighting.cc  TwoJetsPtBalanceEvent.h
-	$(C) $(CFLAGS) -c DiJetEventWeighting.cc
-
-EventWeightProcessor.o: CalibData.h ConfigFile.h EventProcessor.h Parameters.h EventWeightProcessor.cc
-	$(C) $(RCXX) -c EventWeightProcessor.cc
-
-Binning.o: Binning.h JetBin.h Binning.cc ConfigFile.h
-	$(C) $(CFLAGS) -c Binning.cc
-
-Jet.o: CalibData.h Jet.h Jet.cc Parametrization.h Function.h CorFactors.h Parameters.h
-	$(C) $(RCXX) -c Jet.cc
-
-JetBin.o: CorFactors.h CalibData.h Jet.h Function.h JetBin.h JetBin.cc
-	$(C) $(CFLAGS) -c JetBin.cc
-
-JetTruthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetTruthEvent.cc
-	$(C) $(CFLAGS) -c JetTruthEvent.cc
-
-JetWidthEvent.o: CalibData.h Jet.h JetTruthEvent.h JetWidthEvent.cc Parameters.h Parametrization.h
-	$(C) $(CFLAGS) -c JetWidthEvent.cc
-
-TwoJetsInvMassEvent.o: CalibData.h Jet.h TwoJetsInvMassEvent.h TwoJetsInvMassEvent.cc Parameters.h
-	$(C) $(RCXX) -c TwoJetsInvMassEvent.cc
-
-TwoJetsPtBalanceEvent.o: CalibData.h Jet.h TwoJetsPtBalanceEvent.h TwoJetsPtBalanceEvent.cc CorFactors.h
-	$(C) $(RCXX) -c TwoJetsPtBalanceEvent.cc
-
-JetConstraintEvent.o: JetConstraintEvent.h CalibData.h Jet.h JetConstraintEvent.cc Function.h
-	$(C) $(CFLAGS) -c JetConstraintEvent.cc
-
-ParamterLimit.o: Event.h ParamterLimit.h CalibData.h
-	$(C) $(CFLAGS) -c ParameterLimit.cc
-
-JetWithTowers.o: CalibData.h Jet.h JetWithTowers.h Function.h JetWithTowers.cc Parametrization.h Parameters.h
-	$(C) $(RCXX) -c JetWithTowers.cc
-
-JetWithTracks.o: CalibData.h Jet.h JetWithTracks.h Function.h JetWithTracks.cc Parametrization.h Parameters.h
-	$(C) $(RCXX) -c JetWithTracks.cc
-
-CorFactorsFactory.o: CorFactors.h CorFactorsFactory.h CorFactorsFactory.cc
-	$(C) $(CFLAGS) -c CorFactorsFactory.cc
-
-Function.o: Function.h
-	$(C) $(CFLAGS) -c Function.cc
-
-ResolutionParametrization.o: ResolutionParametrization.h ResolutionParametrization.cc
-	$(C) $(RCXX) -c ResolutionParametrization.cc
-
-ResolutionFunction.o: ResolutionFunction.h Function.h
-	$(C) $(CFLAGS) -c ResolutionFunction.cc
-
-
-lib/libKalibri.so: $(SRC:.cc=.o) lbfgs.o
-	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
-	@echo '-> Kalibri library created.'
-
-Kalibri.o: Kalibri.cc Kalibri.h CalibMath.h external.h ConfigFile.h CalibData.h Parameters.h ControlPlots.h ControlPlotsResolution.h EventReader.h DiJetReader.h ThreadedDiJetReader.h TriJetReader.h ZJetReader.h TopReader.h ParameterLimitsReader.h  EventProcessor.h  EventWeightProcessor.h Jet.h TwoJetsInvMassEvent.h TwoJetsPtBalanceEvent.h DiJetEventWeighting.h
-	$(C) $(CFLAGS) $(RCXX) $(BOOSTFLAGS) -c Kalibri.cc 
-
-caliber.o: caliber.cc Kalibri.h JetTruthEvent.h Jet.h
-	$(C) $(RCXX) -c caliber.cc
-
-
-lib: dirs lib/libKalibri.so
-
-bin: dirs junk caliber
-
-junk: $(SRC:.cc=.o) lbfgs.o caliber.o
-	$(LD) $^ $(RLXX) -o bin/junk
-	@ln -s -f bin/junk
-	@echo '-> static Kalibri executable created.'
-
-caliber: caliber.o lib/libKalibri.so
-	$(LD) caliber.o $(RLXX) -Llib -lKalibri -o bin/caliber
-	@ln -f -s bin/caliber
-	@echo '-> shared Kalibri executable created.'
 
 clean:
 	@rm -rf ti_files
@@ -220,32 +72,61 @@ clean:
 	@rm -f fort.*
 	@rm -f .#*
 
+lib: dirs lib/libKalibri.so
+
+bin: dirs junk caliber
+
+plugins: dirs lib/libJetMETCor.so
+
+lbfgs.o: lbfgs.F
+	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
 
 
-ToyMC.o: ToyMC.h ToyMC.cc ConfigFile.h
-	$(C) $(RCXX) -c ToyMC.cc
+lib/libKalibri.so: $(OBJS) lbfgs.o
+	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
+	@echo '-> Kalibri library created.'
 
+
+junk: $(OBJS) lbfgs.o caliber.o
+	$(LD) $^ $(RLXX) -o bin/junk
+	@ln -s -f bin/junk
+	@echo '-> static Kalibri executable created.'
+
+caliber: caliber.o lib/libKalibri.so
+	$(LD) caliber.o $(RLXX) -Llib -lKalibri -o bin/caliber
+	@ln -f -s bin/caliber
+	@echo '-> shared Kalibri executable created.'
+
+#special targets:
 toy:	ToyMC.o toy.o ConfigFile.o
 	$(LD) ToyMC.o toy.o ConfigFile.o $(RLXX) -o toy
 	@echo '-> toy MC executable created.'
-
-ControlPlotsComparison.o: ControlPlotsComparison.cc ControlPlotsComparison.h
-	$(C) $(RCXX) -c ControlPlotsComparison.cc
 
 comp: 	ControlPlotsComparison.o compareControlPlots.o
 	$(LD) ControlPlotsComparison.o compareControlPlots.o $(RLXX) -o compControlPlots
 	@echo '-> Comparison executable created. Type "compControlPlots" to compare control plots.'
 
-lib/libJetMETObjects.so: dirs JetMETObjects
-	@env STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX} -DSTANDALONE -I.'  /bin/sh -c 'make -e -C JetMETObjects'
-
-JetMETObjects:
-	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -r V03-01-26 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
-	patch -p0 < JetMETObjects.patch
-
-plugins: dirs lib/libJetMETCor.so
-
-lib/libJetMETCor.so: CorFactors.h lib/libJetMETObjects.so JetMETCorFactorsFactory.h JetMETCorFactorsFactory.cc CorFactorsFactory.h Jet.h
-	$(C) $(RCXX) -DSTANDALONE -c JetMETCorFactorsFactory.cc
+#target for plugins:
+lib/libJetMETCor.so: lib/libJetMETObjects.so lib/libKalibri.so JetMETCorFactorsFactory.o
 	$(LD) $(CFLAGS) -shared JetMETCorFactorsFactory.o lib/libJetMETObjects.so lib/libKalibri.so $(RLXX) -o lib/libJetMETCor.so
 	@echo '-> JetMETCor plugin created.'
+
+lib/libJetMETObjects.so: dirs JetMETObjects
+	@env STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX} -I.'  /bin/sh -c 'make -e -C JetMETObjects'
+
+JetMETObjects:
+	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -r V03-02-02 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
+	patch -p0 < JetMETObjects.patch
+
+
+# this is a suffix replacement rule for building .o's from .c's
+# it uses automatic variables $<: the name of the prerequisite of
+# the rule(a .c file) and $@: the name of the target of the rule (a .o file) 
+# (see the gnu make manual section about automatic variables)
+.cc.o:	
+	$(C) $(RCXX) -c $< -o $@
+
+depend: $(SRCS) ControlPlotsComparison.cc caliber.cc compareControlPlots.cc JetMETCorFactorsFactory.cc 
+	makedepend $(RCXX) $^
+
+# DO NOT DELETE THIS LINE -- make depend needs it
