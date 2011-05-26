@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.8 2011/02/15 12:53:14 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.9 2011/05/18 15:58:35 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -60,8 +60,9 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
     std::cout << "'TwoJetsPtBalanceEvent'";
   } else if((dataClass_ == 11)  || (dataClass_ == 12) || (dataClass_ == 21)) {
     std::cout << "'JetTruthEvent'";
-  } else if(dataClass_ == 5) {
-    std::cout << "'SmearData'";
+  } else if( (dataClass_ == 5) || (dataClass_ == 51) ){
+    std::cout << "'DiJetResolutionEvent'";
+    if( dataClass_ == 51 ) std::cout << " from dijet skim";
     if( !correctToL3_ && !correctL2L3_ ) {
       std::cerr << "WARNING: Jets are not corrected!\n";
       exit(9);
@@ -73,28 +74,26 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
     exit(9);
   }
   std::cout << " (data class " << dataClass_ << "):\n";
-  
+
   nDiJetCut_          = 0;
-  nMinJetEt_          = 0;
-  nMaxJetEt_          = 0;
-  nTriggerSel_        = 0;
+  nHlt_               = 0;
+  nVtx_               = 0;
   nMinDijetEt_        = 0;
   nMaxDijetEt_        = 0;
+  nMinJetEt_          = 0;
+  nMaxJetEt_          = 0;
+  nMinDeltaPhi_       = 0;
   nTriggerSel_        = 0;
   nCutOn3rdJet_       = 0;
   nCutOnSoftJets_     = 0;
-  nMinGenJetEt_       = 0;    
-  nMaxGenJetEt_       = 0;     
+  nJetIDCut_          = 0;
   nMaxDeltaR_         = 0;
-  nMinJetEta_         = 0;
-  nMaxJetEta_         = 0;  
-  nMinJetHadFraction_ = 0;     
-  nMaxJetHadFraction_ = 0;     
-  nMinDeltaPhi_       = 0;
   nReadEvts_          = 0;
   nGoodEvts_          = 0;
+  nMinJetEta_         = 0;
+  nMaxJetEta_         = 0;
 
-  TChain* chain = dynamic_cast<TChain*>(tree_);
+TChain* chain = dynamic_cast<TChain*>(tree_);
   unsigned int id = 0;
   std::vector<TFile*> files;
   if(! chain) { 
@@ -130,6 +129,8 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 		      << " " <<  djr->nReadEvts_ << " events.\n";
 	    nReadEvts_          += djr->nReadEvts_;
 	    nDiJetCut_          += djr->nDiJetCut_;
+	    nHlt_               += djr->nHlt_;
+	    nVtx_               += djr->nVtx_;
 	    nMinJetEt_          += djr->nMinJetEt_;
 	    nMaxJetEt_          += djr->nMaxJetEt_;
 	    nTriggerSel_        += djr->nTriggerSel_;
@@ -145,6 +146,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 	    nMinJetHadFraction_ += djr->nMinJetHadFraction_;    
 	    nMaxJetHadFraction_ += djr->nMaxJetHadFraction_;    
 	    nMinDeltaPhi_       += djr->nMinDeltaPhi_; 
+	    nJetIDCut_          += djr->nJetIDCut_;
 	    //std::cout << *i << ":events " << (*i)->nEvents() << ";" << djr->nReadEvts_<< '\n';
 	  }
 	}
@@ -172,10 +174,14 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 		<< " " <<  djr->nReadEvts_ << " events.\n";
       nReadEvts_          += djr->nReadEvts_;
       nDiJetCut_          += djr->nDiJetCut_;
-      nMinJetEt_          += djr->nMinJetEt_;
-      nMaxJetEt_          += djr->nMaxJetEt_;
+      nHlt_               += djr->nHlt_;
+      nVtx_               += djr->nVtx_;
+      nMinDeltaPhi_       += djr->nMinDeltaPhi_;
+      nJetIDCut_          += djr->nJetIDCut_;
       nMinDijetEt_        += djr->nMinDijetEt_;
       nMaxDijetEt_        += djr->nMaxDijetEt_;
+      nMinJetEt_          += djr->nMinJetEt_;
+      nMaxJetEt_          += djr->nMaxJetEt_;
       nCutOn3rdJet_       += djr->nCutOn3rdJet_;
       nCutOnSoftJets_     += djr->nCutOnSoftJets_;
       nMinGenJetEt_       += djr->nMinGenJetEt_;

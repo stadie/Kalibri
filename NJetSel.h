@@ -145,6 +145,7 @@ public :
    Float_t         GenJetColInvE[100];   //[NobjGenJet]
    Float_t         GenJetColAuxE[100];   //[NobjGenJet]
    Int_t           GenJetColJetIdx[100];   //[NobjGenJet]
+   Int_t           L2L3CorrJetColJetIdx[100];   //[NobjGenJet]
    Float_t         GenPartPt_algo[100];   //[NobjJet]
    Float_t         GenPartPhi_algo[100];   //[NobjJet]
    Float_t         GenPartEta_algo[100];   //[NobjJet]
@@ -294,6 +295,7 @@ public :
    TBranch        *b_GenJetColInvE;   //!
    TBranch        *b_GenJetColAuxE;   //!
    TBranch        *b_GenJetColJetIdx;   //!
+   TBranch        *b_L2L3CorrJetColJetIdx; //!
    TBranch        *b_GenPartPt_algo;   //!
    TBranch        *b_GenPartPhi_algo;   //!
    TBranch        *b_GenPartEta_algo;   //!
@@ -340,6 +342,7 @@ public :
 #ifdef NJetSel_cxx
 void NJetSel::Init(TTree *tree)
 {
+   NobjTow = 0;
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
    // pointers of the tree will be set.
@@ -480,6 +483,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("GenJetColInvE", GenJetColInvE, &b_GenJetColInvE);
    fChain->SetBranchAddress("GenJetColAuxE", GenJetColAuxE, &b_GenJetColAuxE);
    fChain->SetBranchAddress("GenJetColJetIdx", GenJetColJetIdx, &b_GenJetColJetIdx);
+   fChain->SetBranchAddress("L2L3CorrJetColJetIdx", L2L3CorrJetColJetIdx, &b_L2L3CorrJetColJetIdx);
    fChain->SetBranchAddress("GenPartPt_algo", GenPartPt_algo, &b_GenPartPt_algo);
    fChain->SetBranchAddress("GenPartPhi_algo", GenPartPhi_algo, &b_GenPartPhi_algo);
    fChain->SetBranchAddress("GenPartEta_algo", GenPartEta_algo, &b_GenPartEta_algo);

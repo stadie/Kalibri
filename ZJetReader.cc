@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.27 2010/10/20 13:32:55 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.28 2010/12/13 10:38:28 stadie Exp $
 //   
 #include "ZJetReader.h"
 
@@ -30,7 +30,7 @@ ZJetReader::ZJetReader(const std::string& configfile, Parameters* p)
   : EventReader(configfile,p),zjet(new ZJetSel()),Et_cut_on_Z(0),
     Et_cut_on_jet(0),Had_cut_min(0),Had_cut_max(1)
 {
-  n_zjet_events     = config_->read<int>("use Z-Jet events",-1); 
+  n_zjet_events     = config_->read<int>("use Z-Jet events",0); 
   if(n_zjet_events == 0) return ;
 
   Et_cut_on_Z       = config_->read<double>("Et cut on Z",0.0); 

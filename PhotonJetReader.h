@@ -7,7 +7,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: PhotonJetReader.h,v 1.10 2010/04/13 13:44:10 mschrode Exp $
+//!  $Id: PhotonJetReader.h,v 1.11 2010/10/20 11:28:21 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -27,7 +27,6 @@ class PhotonJetReader : public EventReader{
 
  private:
   Event* createJetTruthEvent();
-  Event* createSmearEvent();
   CorFactors* createCorFactors(int jetid) const;
 
   std::auto_ptr<GammaJetSel> gammaJet_;        //!< Gamma-jet Selector

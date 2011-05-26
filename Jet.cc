@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.49 2010/11/01 15:47:43 stadie Exp $
+//    $Id: Jet.cc,v 1.50 2011/02/15 12:53:14 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -74,6 +74,15 @@ void Jet::correctL2L3()
   Measurement::HadF *= corFactors_->getL2L3();
   Measurement::OutF *= corFactors_->getL2L3();
 }
+
+void Jet::correctToLRes() {
+  Measurement::pt   *= corFactors_->getToLRes();
+  Measurement::E    *= corFactors_->getToLRes();
+  Measurement::EMF  *= corFactors_->getToLRes();
+  Measurement::HadF *= corFactors_->getToLRes();
+  Measurement::OutF *= corFactors_->getToLRes();
+}
+
 
 //!  \brief Varies all parameters for this jet by +/-eps
 //!

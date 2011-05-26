@@ -1,8 +1,8 @@
 //
-// $Id: ControlPlotsJetSmearing.h,v 1.12 2010/09/22 13:29:44 mschrode Exp $
+// $Id: ControlPlotsResolution.h,v 1.12 2010/09/22 13:29:44 mschrode Exp $
 //
-#ifndef JS_CONTROLPLOTS_JETSMEARING_H
-#define JS_CONTROLPLOTS_JETSMEARING_H
+#ifndef CONTROLPLOTS_RESOLUTION_H
+#define CONTROLPLOTS_RESOLUTION_H
 
 #include <string>
 #include <vector>
@@ -15,6 +15,7 @@
 
 class Jet;
 class TCanvas;
+class TF1;
 class TH1;
 class TLegend;
 class TObject;
@@ -23,15 +24,15 @@ class TPostScript;
 class TRandom3;
 
 
-//!  \brief Generates validation plots for jet-smearing method
+//!  \brief Generates validation plots for resolution measurement
 //!  \author Matthias Schroeder
 //!  \date Thu May  7 11:30:28 CEST 2009 
-//!  $Id: ControlPlotsJetSmearing.h,v 1.12 2010/09/22 13:29:44 mschrode Exp $
+//!  $Id: ControlPlotsResolution.h,v 1.12 2010/09/22 13:29:44 mschrode Exp $
 // --------------------------------------------------
-class ControlPlotsJetSmearing {
+class ControlPlotsResolution {
  public:
-  ControlPlotsJetSmearing(const std::string& configfile,const std::vector<Event*> * data, Parameters * param, const std::string &outDir = "./controlPlots");
-  ~ControlPlotsJetSmearing();
+  ControlPlotsResolution(const std::string& configfile,const std::vector<Event*> * data, Parameters * param, const std::string &outDir = "./controlPlots");
+  ~ControlPlotsResolution();
 
   void makePlots() const;
   void setBinningResp(int nbins, double min, double max) { respNBins_ = nbins; respMin_ = min; respMax_ = max;}
@@ -55,16 +56,16 @@ class ControlPlotsJetSmearing {
   std::string  dir_;                   //!< Directory in which the control plots are written
   TRandom3 *rand_;
   std::string parClass_;
-  std::vector<double> startParJet_;
   std::vector<double> scale_;
   std::vector<double> truthPar_;
+  TF1* truthRes_;
   std::string ptBinningVar_;
   std::vector<double> ptBinEdges_;
-  std::vector<double> ptBinCenters_;
-  double minJetPt_;
-  double maxJetPt_;
+  double etaMin_;
+  double etaMax_;
+  std::vector<TString> titleBins_;
+  TString title_;
 
-  void plotDijets() const;
   void plotResponse() const;
   void plotParameters() const;
   //! Plots the negative log-likelihood for different parameter values
@@ -73,8 +74,12 @@ class ControlPlotsJetSmearing {
   //! each event before and after the fit
   void plotLogP() const;
   void plotMeanResponseAndResolution() const;
-  void plotAsymmetrySimulation() const;
   void plotParallelComponents() const;
+  void plotTails() const;
+
+  std::vector<double> findBinEdgesForCombinedSpectrum() const;
+  void interpolateTails(TH1* hTails, TH1* &hInter) const;
+  void subtractGaussian(const TH1* hResp, TH1* &hTail, TH1* &hTailClean, TF1* &gauss) const;
 
   double gaussianWidth(double pt) const;
   double gaussianWidthError(double pt) const;
@@ -83,12 +88,6 @@ class ControlPlotsJetSmearing {
   double scale(unsigned int i) const {
     return i < scale_.size() ? scale_[i] : 1.;
   }
-  int nPtBins() const { return static_cast<int>(ptBinEdges_.size()-1); }
-  double ptBinsMin() const { return ptBinEdges_.front(); }
-  double ptBinsMax() const { return ptBinEdges_.back(); }
-  int findPtBin(const Jet *jet) const;
-  int findPtBin(double pt) const;
-  int findBin(double x, const std::vector<double> &binEdges) const;
   bool equidistLogBins(std::vector<double>& bins, int nBins, double first, double last) const;
 
   TLegend *createLegend(int nEntries, double width = 1., double lineHgt = -1., double yOffset = 0.) const;

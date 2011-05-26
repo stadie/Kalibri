@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.18 2010/10/20 13:32:55 stadie Exp $
+// $Id: EventReader.cc,v 1.19 2011/02/15 12:53:14 stadie Exp $
 //
 #include "EventReader.h"
 
@@ -24,9 +24,10 @@ EventReader::EventReader(const std::string& configfile, Parameters* param)
 
   config_ = new ConfigFile(configfile.c_str());
   
-  useTracks_ = config_->read<bool>("use Tracks",true);
+  useTracks_ = config_->read<bool>("use Tracks",false);
   if(par_->numberOfTrackParameters() < 1) useTracks_ = false;
   weightRelToNtuple_ = 1.;
+  eventWeight_ = -1.;
 
   //Error Parametrization...
   //...for tracks:
@@ -79,11 +80,11 @@ EventReader::EventReader(const std::string& configfile, Parameters* param)
   }
   correctToL3_ = config_->read<bool>("correct jets to L3",false);
   correctL2L3_ = config_->read<bool>("correct jets L2L3",false);
-  correctL1_   = config_->read<bool>("correct jets L1",false);
   if( correctToL3_ && correctL2L3_ ) {
     std::cerr << "WARNING: Jets are corrected twice (to L3 and L2L3).\n" << std::endl;
     exit(-9);
   }
+  correctL1_   = config_->read<bool>("correct jets L1",false);
 
   // Print info only once for all readers
   if( numberOfEventReaders_ == 1 ) {
@@ -93,10 +94,10 @@ EventReader::EventReader(const std::string& configfile, Parameters* param)
     // Correction of jets
     if(correctL1_) {
       std::cout << "Jets will be corrected to Level 1" << std::endl;
-    }
-    if(correctToL3_) {
+    } else if(correctToL3_) {
       std::cout << "Jets will be corrected to Level 3 (i.e. with L1 * L2 * L3)" << std::endl;
-    } else if(correctL2L3_) {
+    } 
+    if(correctL2L3_) {
       std::cout << "Jets will be corrected with L2 * L3" << std::endl;
     } 
   }

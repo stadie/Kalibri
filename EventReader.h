@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.15 2010/10/20 11:28:17 stadie Exp $
+// $Id: EventReader.h,v 1.16 2011/02/15 12:53:14 stadie Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -50,6 +50,7 @@ class EventReader
   //! Correct jets with L1 correction
   bool correctL1_;
   double weightRelToNtuple_;
+  double eventWeight_;
 
 
   float (*tower_error_param)(const float *x, const Measurement *xorig, float err);

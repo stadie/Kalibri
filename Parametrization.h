@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.73 2010/12/13 10:32:42 stadie Exp $
+//  $Id: Parametrization.h,v 1.74 2011/04/06 13:31:15 kirschen Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -13,9 +13,6 @@
 #include "gsl/gsl_math.h"
 #include "gsl/gsl_roots.h"
      
-class TH1;
-class TRandom;
-
 
 //!  \brief Abstract base class for parametrizations of
 //!         correction functions
@@ -25,37 +22,11 @@ class TRandom;
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.73 2010/12/13 10:32:42 stadie Exp $
+//!  $Id: Parametrization.h,v 1.74 2011/04/06 13:31:15 kirschen Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
 public:
-  class CrystalBallFunction {
-  public:
-    CrystalBallFunction();
-    ~CrystalBallFunction();
-
-    double integral(double mean, double sigma, double alpha, double n, double min, double max) const;	
-    double norm(double mean, double sigma, double alpha, double n) const;
-    double pdf(double x, double mean, double sigma, double alpha, double n) const {
-      return norm(mean,sigma,alpha,n)*value(x,mean,sigma,alpha,n);
-    }
-    double random(double mean, double sigma, double alpha, double n) const;
-    double value(double x, double mean, double sigma, double alpha, double n) const;
-
-    double truncPdf(double x, double mean, double sigma, double alpha, double n, double min) const;
-    double truncRandom(double mean, double sigma, double alpha, double n, double min) const;
-    double truncValue(double x, double mean, double sigma, double alpha, double n, double min) const {
-      return x > min ? value(x,mean,sigma,alpha,n) : 0.;
-    }
-    
-	
-  private:
-    TRandom *rand_;
-    std::vector<double> par_;
-  };
-
-
   //!  \brief Constructor
   //!  \param ntowerpars Number of parameters for tower parametrization
   //!  \param njetpars Number of parameters for (eta,phi)-dependent jet parametrization
@@ -140,17 +111,6 @@ public:
   //!  \return The corrected Et of a jet
   // -----------------------------------------------------------------
   virtual double correctedGlobalJetEt(const Measurement *x,const double *par) const { return x->pt;}
-
-
-  //! Returns probability density of measured jet pts given a true jet pt
-  virtual double pdfPtMeas(double ptMeas1, double ptMeas2, double ptTrue, const double *par) const { return 0.; }
-  //! Returns probability density of true jet pt
-  virtual double pdfPtTrue(double ptTrue, const double *par) const { return 0.; }
-  virtual double pdfPtTrueError(double ptTrue, const double *par, const double *cov, const std::vector<int> &covIdx) const { return 0.; }
-  //! Returns probability density of response given a true jet pt
-  virtual double pdfResponse(double r, double ptTrue, const double *par) const { return 0.; }
-  virtual double pdfResponseError(double r, double ptTrue, const double *par, const double *cov, const std::vector<int> &covIdx) const { return 0.; }
-  virtual double pdfDijetAsym(double a, double ptTrue, const double *par) const { return 0.; }
 
 
   //!  \brief Get the name of the parametrization class
@@ -1153,206 +1113,6 @@ public:
 };
 
 
-//!  \brief Parametrization used for SmearFunction estimation
-// -----------------------------------------------------------------
-class SmearFermiTail : public Parametrization{
- public:
-  SmearFermiTail() : Parametrization(0,3,0,0) {}
-  const char * name() const { return "SmearFermiTail"; }
-
-  double correctedTowerEt(const Measurement *x,const double *par) const {
-    return 0.;
-  }
-
-  //!  \brief Returns probability density of response
-  //!  \param x   Measurement::E is response for which the 
-  //!             probability density is returned
-  //!  \param par Pointer to parameters
-  //!  \return Probability density of response
-  // ------------------------------------------------------------------------
-  double correctedJetEt(const Measurement *x,const double *par) const {
-    double c      = par[0];
-    double mu     = 1.;
-    double sigma  = par[1];
-    double T      = par[2];
-
-    if(c < 0.) c = 0.;
-    if(c > 1.) c = 1.;
-    if(T < 0.) T = 0.;
-
-    double p = c / sqrt(2.* M_PI ) / sigma * exp(-pow((x->E - mu) / sigma, 2.) / 2.);
-    p += (1. - c) / (T * log(1 + exp(mu / T))) / (exp((x->E - mu) / T) + 1.);
-
-    return p;
-  }
-
-  double correctedGlobalJetEt(const Measurement *x,const double *par) const {
-    return 0.;
-  }
-};
-
-
-
-//! \brief Parametrization used for resolution function estimation
-//!        with a Gaussian function with one sigma (not pt-dependent)
-// ------------------------------------------------------------------------
-class SmearGaussAvePt : public Parametrization
-{ 
- public:
-  //! Constructor
-  SmearGaussAvePt(double ptAveMin, double ptAveMax);
-
-  const char* name() const { return "SmearGaussAvePt";}
-
-  virtual bool needsUpdate() const { return true; }
-  virtual void update(const double * par);
-
-  //! Returns 0
-  double correctedTowerEt(const Measurement *x,const double *par) const { return 0.; }
-  double correctedJetEt(const Measurement *x,const double *par) const { return 0.; }
-  double correctedGlobalJetEt(const Measurement *x,const double *par) const { return 0.; }
-
-  double pdfPtMeas(double ptMeas1, double ptMeas2, double ptTrue, const double *par) const;
-  double pdfResponse(double r, double ptTrue, const double *par) const;
-  double pdfDijetAsym(double a, double ptTrue, const double *par) const;
-
-
- private:
-  const double ptAveMin_;                   //!< Minimum of pt dijet
-  const double ptAveMax_;                   //!< Maximum of pt dijet
-  double dMeasMax_;
-
-  double sigma(const double *par) const {
-    double p = par[0] > 1./sqrt(M_PI) ? par[0] : 1./sqrt(M_PI);
-    return p;
-  }
-
-  //! Print some initialization details
-  void print() const;
-};
-
-
-
-
-//! \brief Parametrization used for resolution function estimation
-//!        with a Gaussian function with one sigma (not pt-dependent)
-// ------------------------------------------------------------------------
-class SmearGaussPtBin : public Parametrization
-{ 
- public:
-  //! Constructor
-  SmearGaussPtBin(double tMin, double tMax, double xMin, double xMax, const std::vector<double> &parScales, const std::vector<double> &startPar, const std::string &spectrum);
-
-  ~SmearGaussPtBin();
-
-  const char* name() const { return "SmearGaussPtBin";}
-
-  virtual bool needsUpdate() const { return true; }
-  virtual void update(const double * par);
-
-  //! Returns 0
-  double correctedTowerEt(const Measurement *x,const double *par) const { return 0.; }
-  double correctedJetEt(const Measurement *x,const double *par) const { return 0.; }
-  double correctedGlobalJetEt(const Measurement *x,const double *par) const { return 0.; }
-
-  double pdfPtMeas(double ptMeas1, double ptMeas2, double ptTrue, const double *par) const;
-  double pdfPtTrue(double ptTrue, const double *par) const;
-  double pdfResponse(double r, double ptTrue, const double *par) const;
-  double pdfResponseError(double r, double ptTrue, const double *par, const double *cov, const std::vector<int> &covIdx) const;
-  double pdfDijetAsym(double a, double ptTrue, const double *par) const;
-
-
- private:
-  const double tMin_;                   //!< Minimum of non-zero range of truth pdf
-  const double tMax_;                   //!< Maximum of non-zero range of truth pdf
-  const double xMin_;                   //!< Minimum of pt dijet
-  const double xMax_;                   //!< Maximum of pt dijet
-  const std::vector<double> scale_;     //!< Parameter scales
-  TH1 *hashTablePdfPtTrue_;
-  TH1 *hPdfPtTrue_;
-  double dMeasMax_;
-
-  double sigma(const double *par) const {
-    return scale_[0]*par[0] > sqrt(2./M_PI) ? scale_[0]*par[0] : sqrt(2./M_PI);
-  }
-
-  void hashPdfPtTrue(const double *par) const;
-  double pdfPtTrueNotNorm(double ptTrue, const double *par) const;
-  double underlyingPdfPtTrue(double ptTrue, const double *par) const;
-
-  //! Print some initialization details
-  void print() const;
-};
-
-
-
-//! \brief Parametrization used for resolution function estimation
-//!        with a Crystal Ball function with one sigma (not pt-dependent)
-// ------------------------------------------------------------------------
-class SmearCrystalBallPtBin : public Parametrization
-{ 
- public:
-  //! Constructor
-  SmearCrystalBallPtBin(double tMin, double tMax, double xMin, double xMax, double rMin, double rMax, const std::vector<double> &parScales, const std::vector<double> &startPar, const std::string &spectrum);
-
-  ~SmearCrystalBallPtBin();
-
-  const char* name() const { return "SmearCrystalBallPtBin";}
-
-  virtual bool needsUpdate() const { return false; }
-
-  //! Returns 0
-  double correctedTowerEt(const Measurement *x,const double *par) const { return 0.; }
-  double correctedJetEt(const Measurement *x,const double *par) const { return 0.; }
-  double correctedGlobalJetEt(const Measurement *x,const double *par) const { return 0.; }
-
-  double pdfPtMeas(double ptMeas1, double ptMeas2, double ptTrue, const double *par) const;
-  double pdfPtTrue(double ptTrue, const double *par) const;
-  double pdfResponse(double r, double ptTrue, const double *par) const;
-  double pdfResponseError(double r, double ptTrue, const double *par, const double *cov, const std::vector<int> &covIdx) const { return 0.; }
-  double pdfDijetAsym(double a, double ptTrue, const double *par) const;
-
-
- private:
-  const double tMin_;                   //!< Minimum of non-zero range of truth pdf
-  const double tMax_;                   //!< Maximum of non-zero range of truth pdf
-  const double xMin_;                   //!< Minimum of pt dijet
-  const double xMax_;                   //!< Maximum of pt dijet
-  const double rMin_;
-  const double rMax_;
-  const std::vector<double> scale_;     //!< Parameter scales
-  CrystalBallFunction *cb_;
-  TH1 *hashTablePdfPtTrue_;
-  TH1 *hPdfPtTrue_;
-
-  double sigma(const double *par) const {
-    double p = par[0] > 1E-3 ? par[0] : 1E-3;
-    return scale_[0]*p;
-  }
-  double alpha(const double *par) const {
-    double p = par[1] > 1E-3 ? par[1] : 1E-3;
-    return scale_[1]*p;
-  }
-  double n(const double *par) const {
-    double p = par[2] > 1E-3 ? par[2] : 1E-3;
-    return scale_[2]*p;
-  }
-  double specSigmaPar(const double *par, int i) const {
-    return scale_[3+i]*par[3+i];
-  }
-  double specSlopePar(const double *par, int i) const {
-    return scale_[6+i]*par[6+i];
-  }
-
-  void hashPdfPtTrue(const double *par) const;
-  double pdfPtTrueNotNorm(double ptTrue, const double *par) const;
-  double underlyingPdfPtTrue(double ptTrue, const double *par) const;
-
-  //! Print some initialization details
-  void print() const;
-};
-
-
 
 //!  \brief Jet parametrization using power law from Groom
 //!
@@ -2029,5 +1789,19 @@ public:
     //assert(c > 0);
     return  c * x->pt;
   }
+};
+
+
+
+//! Dummy to store number of pt bins for ResolutionParametrization.
+//! To be removed with clean-up of Parameters.
+// -----------------------------------------------------------------
+class EmptyParametrization: public Parametrization {
+ public:
+  EmptyParametrization(unsigned int nJetPars) : Parametrization(0,nJetPars,0,0) {};
+
+    const char * name() const { return "EmptyParametrization"; }
+    double correctedTowerEt(const Measurement *x,const double *par) const { return 0.; }
+    double correctedJetEt(const Measurement *x,const double *par) const { return 0.; }
 };
 #endif

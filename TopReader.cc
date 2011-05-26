@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.25 2010/10/20 13:32:55 stadie Exp $
+//    $Id: TopReader.cc,v 1.26 2010/12/13 10:38:28 stadie Exp $
 //   
 #include "TopReader.h"
 
@@ -39,7 +39,7 @@ TopReader::TopReader(const std::string& configfile, Parameters* p)
     dataClass_(0),
     createGenWHist_(false)
 {
-  nTopEvents_     = config_->read<int>("use Top events",-1);
+  nTopEvents_     = config_->read<int>("use Top events",0);
   if(nTopEvents_ == 0) return;
   minJetEt_  = config_->read<double>("Et cut on jet",0.0);
   maxJetEta_ = config_->read<double>("Eta cut on jet",100.0);

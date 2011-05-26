@@ -1,6 +1,6 @@
 #include "EventWeightProcessor.h"
 
-#include "SmearDiJet.h"
+#include "DiJetResolutionEvent.h"
 
 #include <cmath>
 

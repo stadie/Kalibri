@@ -2,7 +2,7 @@
 //    Class representing a correction function
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Function.h,v 1.8 2010/11/01 15:47:40 stadie Exp $
+//    $Id: Function.h,v 1.9 2010/11/24 09:50:21 stadie Exp $
 //   
 #ifndef FUNCTION_H
 #define FUNCTION_H
@@ -20,6 +20,11 @@ class Function {
     : func_(func),invfunc_(invfunc),firstpar_(firstpar),parindex_(parindex),
     npars_(npars)
   {param_ = p; }
+    
+  virtual ~Function() {}
+  virtual Function* clone() {
+    return new Function(*this);
+  }
   double* firstPar() const { return firstpar_;}
   int parIndex() const { return parindex_;}
   int nPars() const { return npars_;}
@@ -30,7 +35,8 @@ class Function {
   double inverse(const Measurement* x) const { return invfunc_ ? (param_->*invfunc_)(x,firstpar_) : 0;}
   const ParametrizationFunction& parFunc() const { return func_;}
   const Parametrization* parametrization() const { return param_;}
- private:
+
+ protected:
   ParametrizationFunction func_;
   ParametrizationFunction invfunc_;
   double *firstpar_;

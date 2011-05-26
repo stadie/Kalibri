@@ -1,4 +1,4 @@
-// $Id: ToyMC.cc,v 1.43 2010/04/18 14:39:34 mschrode Exp $
+// $Id: ToyMC.cc,v 1.44 2010/05/25 16:05:12 mschrode Exp $
 
 #include "ToyMC.h"
 
@@ -168,9 +168,9 @@ void ToyMC::calculateSmearFactor(const TLorentzVector* jet, double E) {
   }
   else if ( (resolutionModel_ == Gauss) ) {
     do {
-      smear = random_->Gaus(1.0,sqrt(parReso_.at(0)*parReso_.at(0)/x/x +
-				     parReso_.at(1)*parReso_.at(1)/x   +
-				     parReso_.at(2)*parReso_.at(2))      );
+      smear = random_->Gaus(1.0,22./x);//sqrt(parReso_.at(0)*parReso_.at(0)/x/x +
+ 				     //parReso_.at(1)*parReso_.at(1)/x   +
+ 				     //parReso_.at(2)*parReso_.at(2))      );
     } while((smear < 0) || (smear > 2));
   }
   else if( resolutionModel_ == GaussUniform ) {

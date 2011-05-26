@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.31 2011/05/03 09:08:20 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.32 2011/05/19 14:13:10 stadie Exp $
 // ----------------------------------------------------------------   
 
 
@@ -41,6 +41,7 @@
 #include <vector>
 
 #include "Jet.h"
+#include "NJetSel.h"
 #include <boost/thread/mutex.hpp>
 
 
@@ -59,14 +60,24 @@ class DiJetReader : public EventReader{
   virtual int readControlEvents(std::vector<Event*>& control, int id);
  protected:
   TwoJetsPtBalanceEvent* createTwoJetsPtBalanceEvent();
-  Event* createSmearEvent(int callIdx = 0);
-  Event *createSmearEventCaloOrdered();
-  Event *createSmearEventGenOrdered();
+  Event* createDiJetResolutionEvent();
+  Event* createDiJetResolutionEventRecoOrdered();
+  Event* createDiJetResolutionEventGenOrdered();
+  Event* createDiJetResolutionEventFromSkim();
   int createJetTruthEvents(std::vector<Event*>& data);
   CorFactors* createCorFactors(int jetid) const;
   bool passesJetId(int idx) const;
   int readEventsFromTree(std::vector<Event*>& data);
   void printCutFlow();
+  double deltaR(double eta1, double eta2, double phi1, double phi2) const;
+  double deltaRGenJetCol(int jet1Idx, int jet2Idx) const {
+    return deltaR(nJet_->GenJetColEta[jet1Idx],nJet_->GenJetColEta[jet2Idx],nJet_->GenJetColPhi[jet1Idx],nJet_->GenJetColPhi[jet2Idx]);
+  }
+  bool passesHltChainANDOR() const;
+  bool passesHlt(const std::string &trigger) const;
+  double eventWeight() const;
+
+
   std::auto_ptr<NJetSel> nJet_;                //!< Njet Selector
   TRandom* rand_;             //!< Random number generator
 
@@ -76,7 +87,6 @@ class DiJetReader : public EventReader{
   bool   weights_eq_one_;       //!< force weight for each event to one
   bool   fire_all_dijet_triggers_;       //!< Set all trigger btis to one (branches need to be revised...)
 
-  double ptRef_;                //!< Reference pt for cuts on additional jet activity
   double minJetEt_;             //!< Minimum pt of jet
   double maxJetEt_;             //!< Maximum pt of jet
   double minDijetEt_;           //!< Minimum dijet pt
@@ -84,6 +94,7 @@ class DiJetReader : public EventReader{
   double max3rdJetEt_;          //!< Maximum pt of 3rd jet in dijet event
   double minRel3rdJetEt_;       //!< Minimum relative pt of 3rd jet in dijet event
   double maxRel3rdJetEt_;       //!< Maximum relative pt of 3rd jet in dijet event
+  double minRelSoftJetEt_;
   double maxRelSoftJetEt_;
   double minDeltaPhi_;          //!< Minimum DeltaPhi for 0 < DeltaPhi < Pi
   double minJetEta_;            //!< Minimum absolute jet eta
@@ -93,30 +104,32 @@ class DiJetReader : public EventReader{
   double minGenJetEt_;          //!< Minimum pt of genJets of dijets
   double maxGenJetEt_;          //!< Maximum pt of genJets of dijets
   double maxDeltaR_;            //!< Maximum DeltaR
+  std::vector<std::string> hltChainANDOR_;
 
   int    nReadEvts_;            //!< Number of read events
   int    nGoodEvts_;            //!< Number of events passing all cuts
   int    nDiJetCut_;            //!< Number of events with less than 2 jets
-  int    nMinJetEt_;            //!< Number of events rejected by minJetEt_ cut
-  int    nMaxJetEt_;            //!< Number of events rejected by maxJetEt_ cut
+  int    nHlt_;
+  int    nVtx_;
   int    nMinDijetEt_;          //!< Number of events rejected by minDijetEt_ cut
   int    nMaxDijetEt_;          //!< Number of events rejected by maxDijetEt_ cut
+  int    nMinJetEt_;
+  int    nMaxJetEt_;
   int    nCutOn3rdJet_;         //!< Number of events rejected by max3rdJetEt_ or maxRelJetEt_ cut
   int    nCutOnSoftJets_;
   int    nMinDeltaPhi_;         //!< Number of events rejected by maxDeltaPhi_ cut
   int    nMinJetEta_;           //!< Number of events rejected by minJetEta_ cut
   int    nMaxJetEta_;           //!< Number of events rejected by maxJetEta_ cut
-  int    nMinJetHadFraction_;   //!< Number of events rejected by minJetHadFraction_ cut
-  int    nMaxJetHadFraction_;   //!< Number of events rejected by maxJetHadFraction_ cut
   int    nMaxGenJetEt_;         //!< Number of events rejected by maxGenJetEt_ cut
   int    nMinGenJetEt_;         //!< Number of events rejected by minGenJetEt_ cut
+  int    nJetIDCut_;
+  int    nMinJetHadFraction_;   //!< Number of events rejected by minJetHadFraction_ cut
+  int    nMaxJetHadFraction_;   //!< Number of events rejected by maxJetHadFraction_ cut
   int    nMaxDeltaR_;           //!< Number of events rejected by maxDeltaR_ cut
   int    nTriggerSel_;          //!< Number of events not passing the trigger selection
   int    nMaxMCPU_;             //!< Max number of mixed-in PU events
   int    maxNIter_;             //!< Max number of iterations in integration
   double eps_;                  //!< Integration precision for convergence
-  double min_;                  //!< Minimum of truth spectrum in integration
-  double max_;                  //!< Maximum of truth spectrum in integration
   double truthSpecExp_;         //!< Exponent of truth spectrum
   double genjetpt_,genjete_,jeteta_,sigmaphi_,sigmaeta_,sumsigmaetaphi_,emf_,meanMoment_; //!< possible binning variables
 

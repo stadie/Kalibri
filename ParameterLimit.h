@@ -10,7 +10,7 @@ class Parameters;
 class ParameterLimit : public Event
 {
  public:
-  ParameterLimit(unsigned short int index, Parameters& parameters, double min, double max, double error = 1.0)
+  ParameterLimit(unsigned short int index, Parameters* parameters, double min, double max, double error = 1.0)
    : Event(1.0,0.0), index_(index),  min_(min), max_(max), 
     error2_(error*error), par_(parameters) 
     { 
@@ -31,7 +31,7 @@ class ParameterLimit : public Event
  private:
   unsigned short int index_;
   double min_, max_, error2_;
-  Parameters& par_;
+  Parameters* par_;
 };
 
 #endif

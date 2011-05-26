@@ -5,7 +5,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date  2008/12/12
-//!  $Id: ParameterLimitsReader.cc,v 1.15 2010/10/20 13:32:55 stadie Exp $
+//!  $Id: ParameterLimitsReader.cc,v 1.16 2010/11/01 15:47:41 stadie Exp $
 //!   
 #include "ParameterLimitsReader.h"
 
@@ -38,56 +38,22 @@ ParameterLimitsReader::ParameterLimitsReader(const std::string& configfile, Para
   // In case default limits are to be used
   else if( limits.size() == 1 ) {
     std::string parclass = config_->read<std::string>("Parametrization Class","");
-    std::cout << "Using default parameter limits for '" << parclass << "':" << std::endl;
+    std::cout << "Using default parameter limits for '" << parclass << "'" << std::endl;
 
     // For Gauss Function
     // For Gauss Function in one bin
-    if( parclass == "SmearParametrizationGaussAvePt" ) {
-      // Loop over jet parameters in one bin
-      for(int i = 0; i < 1; i++) {
-	double min = 1./sqrt(M_PI);   // Log-term has to be positive
+    if( parclass == "ResolutionGaussAvePt" ) {
+      for(int i = 0; i < par_->numberOfParameters(); i++) {
+	double min = 2./sqrt(M_PI);   // Log-term has to be positive
 	double max = 10000.;
-
-	// Loop over eta and phi bins
-	for(int j = par_->numberOfTowerParameters() + i; 
-	    j <  par_->numberOfParameters(); 
-	    j += par_->numberOfJetParametersPerBin()) {
-	  if( j < par_->numberOfParameters() )
-	    par_limits.push_back(ParLimit(j,min,max,limits.at(0)));
-	} // End of loop over eta and phi bins
-      } // End of loop over parameters in one bin
-    }
-    // For Gauss Function in one bin
-    else if( parclass == "SmearParametrizationGaussPtBin" ) {
-      // Loop over jet parameters in one bin
-      for(int i = 0; i < par_->numberOfJetParameters(); i++) {
-	double min = sqrt(2./M_PI);   // Log-term has to be positive
+	par_limits.push_back(ParLimit(i,min,max,limits.at(0)));
+      } // End of loop over parameters
+    } else if( parclass == "ResolutionGauss" ) {
+      for(int i = 0; i < par_->numberOfParameters(); i++) {
+	double min = 2.*sqrt(2./M_PI);   // Log-term has to be positive
 	double max = 10000.;
-
-	// Loop over eta and phi bins
-	for(int j = par_->numberOfTowerParameters() + i; 
-	    j <  par_->numberOfParameters(); 
-	    j += par_->numberOfJetParametersPerBin()) {
-	  if( j < par_->numberOfParameters() )
-	    par_limits.push_back(ParLimit(j,min,max,limits.at(0)));
-	} // End of loop over eta and phi bins
-      } // End of loop over parameters in one bin
-    }
-    // For Crystal Ball function in pt bins
-    else if( parclass == "SmearParametrizationCrystalBallPtBin" ) {
-      // Loop over jet parameters in one bin
-      for(int i = 0; i < 3; i++) {
-	double min = 1E-3;   // Parameters have to be positive
-	double max = 20.;
-
-	// Loop over eta and phi bins
-	for(int j = par_->numberOfTowerParameters() + i; 
-	    j <  par_->numberOfParameters(); 
-	    j += par_->numberOfJetParametersPerBin()) {
-	  if( j < par_->numberOfParameters() )
-	    par_limits.push_back(ParLimit(j,min,max,limits.at(0)));
-	} // End of loop over eta and phi bins
-      } // End of loop over parameters in one bin
+	par_limits.push_back(ParLimit(i,min,max,limits.at(0)));
+      } // End of loop over parameters
     }
   }
 
@@ -130,7 +96,7 @@ int ParameterLimitsReader::readEvents(std::vector<Event*>& data)
     std::cout << "  min: " << pl->min << "\t" << std::flush;
     std::cout <<  " max: " << pl->max << "\t" << std::flush;
     std::cout <<  " k: "   << pl->k << std::endl;
-    data.push_back(new ParameterLimit(pl->index, *par_, pl->min, pl->max, pl->k));
+    data.push_back(new ParameterLimit(pl->index, par_, pl->min, pl->max, pl->k));
   }
   return par_limits.size();
 }

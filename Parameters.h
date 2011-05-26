@@ -1,7 +1,7 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.64 2010/10/20 13:32:55 stadie Exp $
+// $Id: Parameters.h,v 1.65 2010/11/01 15:47:40 stadie Exp $
 //
 #ifndef Parameters_h
 #define Parameters_h
@@ -19,20 +19,22 @@
 #include "ConfigFile.h"
 #include "Parametrization.h"
 #include "Function.h"
-#include "SmearFunction.h"
+#include "ResolutionParametrization.h"
+#include "ResolutionFunction.h"
 #include "gsl/gsl_errno.h"
 #include "gsl/gsl_math.h"
 #include "gsl/gsl_roots.h"
+
+class TH1;
 
 //!  \brief Connection between detector geometry and fit parameters,
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann, Hartmut Stadie
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.64 2010/10/20 13:32:55 stadie Exp $
+//!  $Id: Parameters.h,v 1.65 2010/11/01 15:47:40 stadie Exp $
 // -----------------------------------------------------------------
 class Parameters {  
-public :
-  
+ public:
   static Parameters* createParameters(const ConfigFile& config);
 
   int etaBin(int const eta_id) const { return etaBin(eta_id, eta_granularity_, phi_granularity_, eta_symmetry_);}
@@ -72,6 +74,20 @@ public :
   int phiGranularityJet() const { return phi_granularity_jet_;}
   int etaGranularityTrack() const { return eta_granularity_track_;}
   int phiGranularityTrack() const { return phi_granularity_track_;}
+
+  unsigned int nPtBins() const { return ptBinEdges_.size() - 1; }
+  unsigned int nParPerPtBin() const { return resParam_->nParPerPtBin(); }
+  bool findPtBin(double pt, unsigned int &bin) const { return findBin(pt,ptBinEdges_,bin); }
+  double ptMin(unsigned int bin) const { return ptBinEdges_.at(bin); }
+  double ptMax(unsigned int bin) const { return ptBinEdges_.at(bin+1); }
+  double ptMin() const { return ptBinEdges_.front(); }
+  double ptMax() const { return ptBinEdges_.back(); }
+  double ptBinEdge(unsigned int bin) const { return ptBinEdges_.at(bin); }
+  const std::vector<double>& ptBinEdges() const { return ptBinEdges_; }
+  double ptTrueMin(unsigned int bin) const { return ptTrueMin_.at(bin); }
+  double ptTrueMax(unsigned int bin) const { return ptTrueMax_.at(bin); }
+  double ptTrueMin() const { return ptTrueMin_.front(); }
+  double ptTrueMax() const { return ptTrueMax_.back(); }
 
   void writeCalibrationTxt(const char* name); //!< write calibration constants to txt file
   void writeCalibrationTex(const char* name, const ConfigFile& config); //!< write calibration constants and some paraemters of the fit to tex file
@@ -142,10 +158,22 @@ public :
   double* effMap() {return trackEff_;}
   int trackEffBin(double pt, double eta);
 
+  double jetStartPar(unsigned int i) const { return jet_start_values_.at(i); }
+
   void print() const;
 
-  bool needsUpdate() const { return p_->needsUpdate(); }
-  void update() { p_->update(parameters()); }
+
+  void printFuncs() {
+    std::cout << "funcs: " << &funcmap_ << " \n";
+    for(FunctionMap::const_iterator i = funcmap_.begin() ; 
+	i != funcmap_.end() ; ++i) {
+      std::cout << " f:" << i->first.intVal() << " " << &(i->second) << ", " << i->second << '\n';
+    }
+  }
+
+
+  bool needsUpdate() const { return resParam_->needsUpdate(); }
+  void update() { resParam_->update(parameters()); }
   
   //Error parametrization functions:
   template<int Et> static float const_error(const float *x, const Measurement *xorig=0, float errorig=0) {
@@ -295,14 +323,16 @@ public :
   float etaUpperEdge(int const etaBin) { return etaEdge(etaBin, false); };
   //! return lower edge of bin in eta
   float etaLowerEdge(int const etaBin) { return etaEdge(etaBin, true ); };
-  
+
+  // Return parametrization functions
   const Function& tower_function(int etaid, int phiid);
   const Function& jet_function(int etaid, int phiid);
   const Function& track_function(int etaid, int phiid);
   const Function& global_jet_function();
   const Function& function(const Function& f);
-  SmearFunction resolutionFitPDF(int etaid, int phiid);
-  
+  const ResolutionFunction& function(const ResolutionFunction& f);
+  const ResolutionFunction& resolutionFitPDF(unsigned int ptBin, int etaid, int phiid);
+
   void readCalibrationCfi(const std::string& file);
   void readCalibrationTxt(const std::string& file);
   void readCalibrationJetMET(const std::vector<std::string>& inputFileNames);
@@ -332,14 +362,16 @@ public :
 
 
   VariationColl& cachedVariationColl() const { return cachedvariationcoll_;}
+
+
  protected:
-   Parameters(Parametrization* p) : k_(0),parErrors_(0),parGCorr_(0),
-    parCov_(0),trackEff_(0),s_(gsl_root_fsolver_alloc(gsl_root_fsolver_brent)) 
-    {
-      if(p) p_ = p;
-      gsl_set_error_handler_off();
-    };
+  Parameters();
+  Parameters(const Parametrization& p) {};
+  Parameters(Parametrization* p);
+  Parameters(ResolutionParametrization *resParam); 
   virtual ~Parameters();
+  Parameters& operator=(const Parameters& p);
+
 
  private:
   int etaBin(int phi_id, int etagranu, int phigranu, bool etasym) const;
@@ -361,6 +393,7 @@ public :
 
   //The parametrization functions:
   static Parametrization* p_;
+  static ResolutionParametrization* resParam_;
 
   double * k_; //!< all fit-parameters
   std::vector<bool> isFixedPar_;
@@ -369,17 +402,25 @@ public :
   double * parCov_;
   double * trackEff_; //!< track Efficiency 13eta X 13 ptbins;
 
+  std::vector<double> ptBinEdges_;
+  std::vector<double> ptBinCenters_;
+  std::vector<double> ptTrueMin_;
+  std::vector<double> ptTrueMax_;
+
   /// ------------------------------------------------------
   /// private functions
 
   void init(const ConfigFile& config);
   void readTrackEffTxt(const std::string& file);
   std::string trim(std::string const& source, char const* delims = " {}\t\r\n");
+  bool findBin(double x, const std::vector<double> &binEdges, unsigned int &bin) const;
 
   static Parameters *instance_;
   static std::vector<Parameters*> clones_;
 
   static Parametrization* createParametrization(const std::string& name, const ConfigFile& config);
+  static ResolutionParametrization* createResolutionParametrization(const std::string& name, const ConfigFile& config);
+
   
   class Cleaner
   {
@@ -401,32 +442,36 @@ public :
   };
   friend class Cleaner;
   
-  enum FunctionType { Tower, Jet, Global, Track};
+  enum FunctionType { Tower, Jet, Global, Track, Resolution };
   
   class FunctionID {
     FunctionType t_;
     const unsigned short int i_;
   public:
-  FunctionID(const Function::ParametrizationFunction& f, unsigned short int i)
-    : i_(i) 
-    {
-      if(f == &Parametrization::expectedResponse) t_ = Track;
-      else if(f == &Parametrization::correctedGlobalJetEt) t_ = Global;
-      else if(f == &Parametrization::correctedJetEt) t_ = Jet;
-      else if(f == &Parametrization::correctedTowerEt) t_ = Tower;
-      else {
-	exit(12);
+    FunctionID(const Function::ParametrizationFunction& f, unsigned short int i)
+      : i_(i) 
+      {
+	if(f == &Parametrization::expectedResponse) t_ = Track;
+	else if(f == &Parametrization::correctedGlobalJetEt) t_ = Global;
+	else if(f == &Parametrization::correctedJetEt) t_ = Jet;
+	else if(f == &Parametrization::correctedTowerEt) t_ = Tower;
+	else {
+	  exit(12);
+	}
       }
-    }
-  FunctionID(FunctionType t, unsigned short int i)
-    : t_(t), i_(i) 
-    {}  
-    bool operator<(const FunctionID& r) const {
-      if(i_ < r.i_) return true;
-      if(i_ > r.i_) return false;
-      if(t_ < r.t_) return true;
-      return false;
-    }
+      FunctionID(FunctionType t, unsigned short int i)
+	: t_(t), i_(i) 
+	{}  
+	
+	bool operator<(const FunctionID& r) const {
+	  if(i_ < r.i_) return true;
+	  if(i_ > r.i_) return false;
+	  if(t_ < r.t_) return true;
+	  return false;
+	}
+	int intVal() const {
+	  return t_*10000 + i_;
+	}
   };
   typedef std::map<FunctionID,Function*> FunctionMap;
   FunctionMap funcmap_;
@@ -439,5 +484,8 @@ public :
   static long long nfails_;        //!< Number of failed tries during inversion
   static long long nwarns_;        //!< Number of warnings during inversion
 };
+
+
+
 
 #endif

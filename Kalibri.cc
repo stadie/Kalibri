@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.15 2010/12/20 11:08:13 stadie Exp $
+//  $Id: Kalibri.cc,v 1.16 2011/04/07 08:02:06 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -13,7 +13,7 @@ boost::mutex io_mutex;
 #include "ConfigFile.h"
 #include "Parameters.h"
 #include "ControlPlots.h"
-#include "ControlPlotsJetSmearing.h"
+#include "ControlPlotsResolution.h"
 #include "CalibMath.h"
 #include "external.h"
 #include "ToyMC.h"
@@ -133,7 +133,6 @@ public:
 void Kalibri::run()
 {
   if (fitMethod_!=3){
-
     time_t start = time(0);
     
     std::vector<EventProcessor*> processors;
@@ -144,6 +143,7 @@ void Kalibri::run()
     for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
       (*i)->preprocess(data_,control_[0],control_[1]);
     } 
+
     if(! data_.size()) {
       std::cout << "Warning: No events to perform the fit!\n";
       return;
@@ -198,12 +198,10 @@ void Kalibri::run_Lvmini()
     int idx = fixedGlobalJetPars_.at(i);
     cout << "  " << idx+1 << ": " << par_->parameters()[idx] << endl;
   }
-  
   ComputeThread *t[nThreads_];
   for (int ithreads=0; ithreads<nThreads_; ++ithreads){
     t[ithreads] = new ComputeThread(npar, par_,epsilon);
   }
-
   //lvmeps_(data_.size()*eps_,wlf1_,wlf2_);
   lvmeps_(eps_,wlf1_,wlf2_);
 
@@ -217,9 +215,7 @@ void Kalibri::run_Lvmini()
     for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
       (*it)->updateError();
     }
-
     if( par_->needsUpdate() ) par_->update();
-
     // Setting function to scale residuals in chi2 calculation
     cout << loop+1 << flush;
     if(  loop+1 == 1  ) cout << "st" << flush;
@@ -273,7 +269,6 @@ void Kalibri::run_Lvmini()
       n++;
       if(n == nThreads_) n = 0;
     }
-    
     do {
       //set storage for temporary derivative storage to zero
       for (int param=0; param< npar ; ++param) {
@@ -296,10 +291,8 @@ void Kalibri::run_Lvmini()
 	   iter != fixedJetPars_.end() ; ++ iter) {
 	epsilon[*iter] = 0;
       }
-      
       fsum = 0;
       for (int ithreads=0; ithreads<nThreads_; ++ithreads) t[ithreads]->start();
-      
       for (int ithreads=0; ithreads<nThreads_; ++ithreads){
 	if(t[ithreads]->isDone()) {
 	  fsum += t[ithreads]->chi2();
@@ -350,7 +343,6 @@ void Kalibri::run_Lvmini()
       lvmfun_(par_->parameters(),fsum,iret,aux);
       //lvmout_(npar,mvec_,aux);
     } while (iret<0); 
-
     for (int ithreads=0; ithreads<nThreads_; ++ithreads){
       t[ithreads]->clearData();
     }  
@@ -401,6 +393,7 @@ void Kalibri::run_Lvmini()
     }
     par_->setCovCoeff(aux+error_index);
   }
+
   for (int ithreads=0; ithreads<nThreads_; ++ithreads){
     delete t[ithreads];
   }
@@ -415,6 +408,9 @@ void Kalibri::run_Lvmini()
 //--------------------------------------------------------------------------------------------
 void Kalibri::done()
 {
+  std::cout << "Kalibri::done()\n";
+  if( par_->needsUpdate() ) par_->update();
+  
   ConfigFile config( configFile_.c_str() );
 
   bool txt=false;
@@ -453,7 +449,7 @@ void Kalibri::done()
       plots->makePlots();
       delete plots;
     } else if( mode_ == 1 ) {  // Control plots for jetsmearing
-      ControlPlotsJetSmearing * plotsjs = new ControlPlotsJetSmearing(configFile_,&data_,par_);
+      ControlPlotsResolution * plotsjs = new ControlPlotsResolution(configFile_,&data_,par_);
       plotsjs->makePlots();
       delete plotsjs;
     }
@@ -510,6 +506,8 @@ void Kalibri::init()
       residualScalingScheme_.push_back( static_cast<int>(*resScheme - '0') );
       resScheme++;
     }
+
+
   outlierChi2Cut_        = config.read<double>("Outlier Cut on Chi2",100.0);
 
   //BFGS fit parameters
@@ -519,7 +517,7 @@ void Kalibri::init()
   eps_        = config.read<double>("BFGS eps",1e-02);
   wlf1_       = config.read<double>("BFGS 1st wolfe parameter",1e-04);
   wlf2_       = config.read<double>("BFGS 2nd wolfe parameter",0.9);
-  calcCov_    = config.read<double>("BFGS calculate covariance",false);
+  calcCov_    = config.read<bool>("BFGS calculate covariance",false);
   printParNDeriv_ = config.read<bool>("BFGS print derivatives",false);
 
   //fixed jet parameters
@@ -612,8 +610,8 @@ void Kalibri::init()
   }
   outputFile_ = config.read<string>( "Output file", "calibration_k.cfi" );
 
-  int niothreads = config.read<int>("Number of IO Threads",7); 
-  
+  int niothreads = config.read<int>("Number of IO Threads",1); 
+
   //int djdc = config.read<int>("Di-Jet data class", 0);
   //fill data vector  
   std::vector<EventReader*> readers;

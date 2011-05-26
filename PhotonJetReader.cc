@@ -1,10 +1,9 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.32 2010/11/01 15:47:41 stadie Exp $
+//  $Id: PhotonJetReader.cc,v 1.33 2010/12/13 10:38:28 stadie Exp $
 //
 #include "PhotonJetReader.h"
 
 #include "CalibData.h"
-#include "SmearPhotonJet.h"
 #include "JetTruthEvent.h"
 #include "Jet.h"
 #include "JetWithTowers.h"
@@ -26,7 +25,7 @@ PhotonJetReader::PhotonJetReader(const std::string& configfile, Parameters* p)
   : EventReader(configfile,p), gammaJet_(new GammaJetSel())
 {
   // Maximum number of read events
-  nGammaJetEvents_     = config_->read<int>("use Gamma-Jet events",-1); 
+  nGammaJetEvents_     = config_->read<int>("use Gamma-Jet events",0); 
   if(nGammaJetEvents_ == 0) return;
 
   // Cuts
@@ -96,7 +95,7 @@ int PhotonJetReader::readEvents(std::vector<Event*>& data)
   if((dataClass_ == 1)  || (dataClass_ == 2)) {
     std::cout << "'JetTruthEvent'";
   } else if(dataClass_ == 5) {
-    std::cout << "'SmearData'";
+    std::cout << "'DiJetResolutionEvent'";
     if( !correctToL3_ && !correctL2L3_ ) {
       std::cerr << "WARNING: Jets are not corrected! Aborting\n";
       exit(9);
@@ -156,7 +155,6 @@ int PhotonJetReader::readEvents(std::vector<Event*>& data)
       
       Event*                                  ev = 0;
       if(dataClass_ == 1 || dataClass_ == 2)  ev = createJetTruthEvent();
-      else if(dataClass_ == 5)                ev = createSmearEvent();
       
       if(ev) {
 	data.push_back(ev); 
@@ -288,70 +286,6 @@ Event* PhotonJetReader::createJetTruthEvent()
   return jte;
 }
 
-
-
-//!  \brief Create SmearPhotonJet event for jet smearing
-//!  \note Measured pt is L2L3 corrected
-// ----------------------------------------------------------------   
-Event* PhotonJetReader::createSmearEvent()
-{
-  //Find the jets eta & phi index using the nearest tower to jet axis:
-  double min_tower_dr = 10.;
-  double em           = 0;
-  double had          = 0;
-  double out          = 0;
-  int    closestTower = 0;
-
-  TLorentzVector LJet(0,0,0,0);
-  LJet.SetPtEtaPhiE(gammaJet_->JetCalEt,gammaJet_->JetCalEta,gammaJet_->JetCalPhi,gammaJet_->JetCalE);
-  TLorentzVector LGenJet(0,0,0,0);
-  LGenJet.SetPtEtaPhiE(gammaJet_->JetGenPt,gammaJet_->JetGenEta,gammaJet_->JetGenPhi,gammaJet_->JetGenE);
-
-  for (int n=0; n<gammaJet_->NobjTowCal; ++n) {
-    em  += gammaJet_->TowEm[n];
-    had += gammaJet_->TowHad[n];
-    out += gammaJet_->TowOE[n];
-    TLorentzVector LTower(0,0,0,0);
-    LTower.SetPtEtaPhiE(gammaJet_->TowEt[n],gammaJet_->TowEta[n],gammaJet_->TowPhi[n],gammaJet_->TowE[n]);
-    double dr = LTower.DeltaR(LJet);
-    if (dr<min_tower_dr) {
-      min_tower_dr = dr;
-      closestTower = n;
-    }
-  }
-
-  // Cuts on hadronic fraction 
-  if(had/(had + em) < minJetHadFraction_) {
-    nMinJetHadFraction_++;
-    return 0;
-  } else if(had/(had + em) > maxJetHadFraction_) { 
-    nMaxJetHadFraction_++;
-    return 0;
-  }
-
-  // Set up measurement
-  double projFac   = gammaJet_->JetCalEt /  gammaJet_->JetCalE;
-  Jet *jet = new Jet(gammaJet_->JetCalEt,
-		     em * projFac,
-		     had * projFac,
-		     out * projFac,
-		     gammaJet_->JetCalE,
-		     gammaJet_->JetCalEta,
-		     gammaJet_->JetCalPhi,
-		     0.,
-		     0.,
-		     Jet::uds,
-		     gammaJet_->JetGenPt,
-		     LJet.DeltaR(LGenJet),
-		     createCorFactors(0),
-		     par_->jet_function(gammaJet_->TowId_eta[closestTower],
-					gammaJet_->TowId_phi[closestTower]),
-		     jet_error_param,
-		     par_->global_jet_function());
-
-  // Create smear event
-  return new SmearPhotonJet(jet,gammaJet_->PhotonEt,1.,1.,par_->resolutionFitPDF(1,1));
-}
 
 
 CorFactors* PhotonJetReader::createCorFactors(int jetid) const

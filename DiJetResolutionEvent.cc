@@ -1,112 +1,100 @@
-// $Id: SmearDiJet.cc,v 1.11 2010/07/22 13:58:30 mschrode Exp $
+// $Id: $
 
-#include "SmearDiJet.h"
+#include "DiJetResolutionEvent.h"
 
-#include <cassert>
-#include <cmath>
-#include <iomanip>
-
-//#include "TVector3.h"
-
-
-//!  \brief Constructor
-//!  \param jet1 First jet
-//!  \param jet2 Second jet
-//!  \param jet3 Third jet (for cuts)
-//!  \param weight Event weight
-//!  \param respPDF Response probability density
-//!  \param truthPDF True pt probability density
-//!  \param min Minimum true pt in integration range
-//!  \param max Maximum true pt in integration range
-//!  \param eps Integration precision for convergence
-//!  \param niter Maximum number of iterations in integration
-// --------------------------------------------------
-SmearDiJet::SmearDiJet(Jet * jet1, const Jet * jet2, const Jet * jet3,
-		       double deltaPhi12, double pPhi, double ptJet3, double ptJet4,
-		       double pJ3, double pSJ, double pUCE, double ptRef,
-		       double ptHat, double weight,
-		       const SmearFunction& pdf,
-		       double min, double max, double eps, int niter)
-  : SmearData(TypeSmearDiJet,jet1,0,ptHat,weight,pdf),
-    kMaxNIter_(niter),kEps_(eps),kMin_(min),kMax_(max),
-    jet2_(jet2),jet3_(jet3),
-    deltaPhi12_(deltaPhi12), pPhi_(pPhi), pJ3_(pJ3), pSJ_(pSJ),
-    pUCE_(pUCE), ptRef_(ptRef), ptJet3_(ptJet3), ptJet4_(ptJet4) {}
+//#include <iomanip>
 
 
 // --------------------------------------------------
-SmearDiJet::~SmearDiJet() { 
+DiJetResolutionEvent::DiJetResolutionEvent(Jet* jet1, Jet* jet2, double deltaPhi12, double pPhi,
+					   double ptJet3, double ptJet4, double pJ3, double pSJ, double ptRef,
+					   double ptHat, double weight, const ResolutionFunction& pdf,
+					   double min, double max, double eps, int niter)
+  : Event(weight,ptHat,0),
+    pdf_(&pdf), jet1_(jet1), jet2_(jet2),
+    deltaPhi12_(deltaPhi12), pPhi_(pPhi),
+    ptRef_(ptRef), ptJet3_(ptJet3), ptJet4_(ptJet4), pJ3_(pJ3), pSJ_(pSJ),
+    kMaxNIter_(niter),kEps_(eps),kMin_(min),kMax_(max) {};
+
+
+
+// --------------------------------------------------
+DiJetResolutionEvent::~DiJetResolutionEvent() { 
+  delete jet1_;
   delete jet2_;
-  delete jet3_;
 }
 
+
+// --------------------------------------------------
+void DiJetResolutionEvent::setParameters(Parameters* param) { 
+  jet1_->setParameters(param);
+  jet2_->setParameters(param);
+  pdf_ = &(param->function(*pdf_));
+}
 
 
 //!  \brief Get the negative log-likelihood and the
 //!         contributions to the 1. and 2. derivatives
 //!
-//!  Calculates the negative log-likelihood \f$ -\ln L \f$
+//!  Calculates the negative log-likelihood \f$ -2\ln L \f$
 //!  of this event. Moreover the contribution to the 
 //!  first and second derivative ('temp_derivative1',
 //!  'temp_derivative2') of the global \f$ -\ln L \f$
 //!  function is calculated numerically and returned
 //!  by reference, where
 //!  \f[
-//!   \frac{\partial (-\ln L) }{\partial p}
-//!   = \sum \frac{\textrm{temp\_derivative1}}{2\epsilon}
+//!   -2\frac{\partial (\ln L) }{\partial p}
+//!   = 2\sum \frac{\textrm{temp\_derivative1}}{2\epsilon}
 //!  \f]
 //!  and
 //!  \f[
-//!   \frac{\partial^{2} (-\ln L) }{\partial p^{2}}
-//!   = \sum \frac{\textrm{temp\_derivative2}}{\epsilon^{2}}
+//!   -2\frac{\partial^{2} (\ln L) }{\partial p^{2}}
+//!   = 2\sum \frac{\textrm{temp\_derivative2}}{\epsilon^{2}}
 //!  \f]
 //!
 //!  \param temp_derivative1 Pointer to first derivative contribution
 //!  \param temp_derivative2 Pointer to second derivative contribution
-//!  \param epsilon Step size \f$ \epsilon \f$ for derivative calculation
+//!  \param epsilon Step sizes \f$ \epsilon \f$ for derivative calculation
 //!  \return The negative log-likelihood of this event
 // --------------------------------------------------
-double SmearDiJet::chi2_fast(double * temp_derivative1,
-			     double * temp_derivative2,
-			     const double* epsilon) const {
+double DiJetResolutionEvent::chi2_fast(double * temp_derivative1,
+			    double * temp_derivative2,
+			    const double* epsilon) const {
   double f = chi2();
 
-  double oldpar;
-  double temp1;
-  double temp2;
+  double   oldpar;
+  double   temp1;
+  double   temp2;
 
   // Vary parameters of response pdf
-  for(int i = 0; i < pdf_.nPars(); i++) {
-    if( !pdf_.isFixedPar(i) ) {
-      oldpar = pdf_.par()[i];
-      
-      pdf_.par()[i] += epsilon[pdf_.parIdx()+i];
-      temp1 = chi2();
-      
-//        std::cout << std::endl;
-//        std::cout << std::setprecision(10) << i << ": " << oldpar << " -- > " << f << std::endl;
-//        std::cout << "   " << pdf_.par()[i] << " -- > " << temp1 << std::endl;
-      
-      pdf_.par()[i] -= 2.*epsilon[pdf_.parIdx()+i];
-      temp2 = chi2();
-      
-      //      std::cout << "   " << pdf_.par()[i] << " -- > " << temp1 << std::endl;
-      
-      
-      pdf_.par()[i] = oldpar;
-      
-      //      std::cout << i << ": " << pdf_.parIdx()+i << " += " << temp1 - temp2 << std::endl;
-      
-      temp_derivative1[pdf_.parIdx()+i] += temp1 - temp2;
-      temp_derivative2[pdf_.parIdx()+i] += temp1 + temp2 - 2*f;
+  for(int i = 0; i < pdf_->nPars(); i++) {
+    oldpar = pdf_->firstPar()[i];
+
+    pdf_->firstPar()[i] += epsilon[pdf_->parIndex()+i];
+    temp1 = chi2();
+
+//     std::cout << std::endl;
+//     std::cout << std::setprecision(10) << i << ": " << oldpar << " -- > " << f << std::endl;
+//     std::cout << "   " << pdf_->firstPar()[i] << " -- > " << temp1 << std::endl;
 
 
-//        if( !(f == f) ) {
-//  	std::cout << "NAN error\n";
-//  	std::cout << "  " << jet1()->genPt() << ",  " << jet1()->pt() << std::endl;
-//  	std::cout << "  " << jet2()->genPt() << ",  " << jet2()->pt() << std::endl;
-//        }
+    pdf_->firstPar()[i] -= 2.*epsilon[pdf_->parIndex()+i];
+    temp2 = chi2();
+    
+    //    std::cout << "   " << pdf_->firstPar()[i] << " -- > " << temp1 << std::endl;
 
+
+    pdf_->firstPar()[i] = oldpar;
+
+    //    std::cout << i << ": " << pdf_->parIndex()+i << " += " << temp1 - temp2 << std::endl;
+
+
+    temp_derivative1[pdf_->parIndex()+i] += temp1 - temp2;
+    temp_derivative2[pdf_->parIndex()+i] += temp1 + temp2 - 2*f;
+
+    if( !(f == f) ) {
+      std::cerr << "ERROR in DiJetResolutionEvent::chi2_fast(): nan error\n";
+      std::cerr << "  " << i << ": " << pdf_->firstPar()[i] << std::endl;
     }
   }
 
@@ -115,8 +103,9 @@ double SmearDiJet::chi2_fast(double * temp_derivative1,
 
 
 
+//! \brief Using pdf without spectrum (delta function)
 // --------------------------------------------------
-double SmearDiJet::chi2Simple() const {
+double DiJetResolutionEvent::chi2Simple() const {
    double pdf = pdfPtMeas(jet1()->pt(),jet2()->pt(),0.);
    if( pdf != pdf ) {
      pdf = 0.;
@@ -153,7 +142,7 @@ double SmearDiJet::chi2Simple() const {
 //!
 //!  \return The negative log-likelihood of this event
 // --------------------------------------------------
-double SmearDiJet::chi2Spectrum() const {
+double DiJetResolutionEvent::chi2Spectrum() const {
 
   double h = kMax_ - kMin_;     // Integration interval
   double pint = 0.;              // Current value of integral over response pdfs
@@ -200,7 +189,12 @@ double SmearDiJet::chi2Spectrum() const {
 
     if( pint_old ) eps = std::abs((pint - pint_old) / pint_old);
   }
-  if( pint <= 0 ) return 0.;
+  if( !(pint == pint) ) {
+    std::cerr << "ERROR in DiJetResolutionEvent::chi2Spectrum(): pint = nan" << std::endl;
+    std::cerr << "  " << jet1()->genPt() << ",  " << jet1()->pt() << std::endl;
+    std::cerr << "  " << jet2()->genPt() << ",  " << jet2()->pt() << std::endl;
+  }
+  if( pint <= 0. ) return 0.;
   
   return  weight()*(-2.*log(pint));
 }
@@ -209,10 +203,12 @@ double SmearDiJet::chi2Spectrum() const {
 
 //!  \brief Print event parameters
 // --------------------------------------------------
-void SmearDiJet::printInitStats() const {
+void DiJetResolutionEvent::printInitStats() const {
   std::cout << "Event type: " << type() << "\n";
   std::cout << "Integration parameters\n";
   std::cout << "  niter: " << kMaxNIter_ << "\n";
   std::cout << "  eps:   " << kEps_ << "\n";
   std::cout << "  range: " << kMin_ << " < truth < " << kMax_ << " (GeV)\n";
 }
+
+

@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.85 2011/02/15 12:53:14 stadie Exp $
+// $Id: CalibData.h,v 1.86 2011/05/18 15:58:34 stadie Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -15,7 +15,7 @@ class Parameters;
 //!
 //!  \sa TAbstractData 
 enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
-               InvMass, typeTowerConstraint, ParLimit, TypeSmearPhotonJet, TypeSmearDiJet, JetConstraint, JWFit};
+               InvMass, typeTowerConstraint, ParLimit, DiJetResolution, JetConstraint, JWFit};
 
 //!  \brief Base class of a measurement
 //!
@@ -28,7 +28,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.85 2011/02/15 12:53:14 stadie Exp $
+//!  $Id: CalibData.h,v 1.86 2011/05/18 15:58:34 stadie Exp $
 class Measurement
 {
 public:
@@ -67,7 +67,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.85 2011/02/15 12:53:14 stadie Exp $
+//!  $Id: CalibData.h,v 1.86 2011/05/18 15:58:34 stadie Exp $
 class TTrack : public Measurement
 {
 public:
@@ -124,7 +124,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.85 2011/02/15 12:53:14 stadie Exp $
+//! $Id: CalibData.h,v 1.86 2011/05/18 15:58:34 stadie Exp $
 class Event
 {
 public:

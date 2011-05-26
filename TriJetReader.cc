@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TriJetReader.cc,v 1.5 2010/10/12 08:37:40 stadie Exp $
+//    $Id: TriJetReader.cc,v 1.6 2010/10/20 11:28:12 stadie Exp $
 //   
 #include "TriJetReader.h"
 
@@ -15,7 +15,7 @@
 TriJetReader::TriJetReader(const std::string& configfile, Parameters* p) 
   : EventReader(configfile,p),Et_cut_nplus1Jet(0),Rel_cut_on_nJet(10),n_trijet_events(0)
 {
-  n_trijet_events = config_->read<int>("use Tri-Jet events",-1);
+  n_trijet_events = config_->read<int>("use Tri-Jet events",0);
   if(n_trijet_events == 0) return;
   Et_cut_nplus1Jet = config_->read<double>("Et cut on n+1 Jet",10.0);
   Rel_cut_on_nJet  = config_->read<double>("Relative n+1 Jet Et Cut",0.2);

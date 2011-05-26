@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.45 2011/02/15 12:53:14 stadie Exp $
+//!    $Id: Jet.h,v 1.46 2011/04/28 16:05:34 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -107,6 +107,8 @@ class Jet : public Measurement
   void correctToL3();
   //! Correct measurement by product \p L2*L3
   void correctL2L3();
+  //! Correct measurement by L1*l2*L3*Residual
+  void correctToLRes();
 
   //!  \brief Change address of parameters covered by this jet
   //!  \sa Parameters

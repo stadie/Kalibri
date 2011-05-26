@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.60 2010/11/01 15:47:41 stadie Exp $
+// $Id: Parameters.cc,v 1.61 2011/04/06 13:31:15 kirschen Exp $
 
 #include <fstream>
 #include <cassert>
@@ -11,13 +11,18 @@
 
 #include "Parameters.h"
 
+#include "TFile.h"
+#include "TH1.h"
+#include "TH1D.h"
 #include "TMath.h"
+#include "TString.h"
 
 using namespace std;
 
 Parameters* Parameters::instance_ = 0;
 std::vector<Parameters*> Parameters::clones_;
 Parametrization* Parameters::p_ = 0;
+ResolutionParametrization* Parameters::resParam_ = 0;
 long long Parameters::ncalls_ = 0;
 long long Parameters::ntries_ = 0;
 long long Parameters::nfails_ = 0;
@@ -61,30 +66,6 @@ Parametrization* Parameters::createParametrization(const std::string& name, cons
     return new ResidualJetParametrization();
   } else if(name == "ToySimpleInverseParametrization") {
     return new ToySimpleInverseParametrization();
-  } else if(name == "SmearFermiTail") {
-    return new SmearFermiTail();
-  } else if(name == "SmearGaussAvePt") {
-    return new SmearGaussAvePt(0.,10000.);
-  } else if(name == "SmearGaussPtBin") {
-    double tMin = config.read<double>("DiJet integration min",0.);
-    double tMax = config.read<double>("DiJet integration max",1.);
-    double xMin = config.read<double>("Et min cut on dijet",0.);
-    double xMax = config.read<double>("Et max cut on dijet",1.);
-    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    std::vector<double> startPar = bag_of<double>(config.read<string>("jet start values",""));
-    std::string spectrum = config.read<string>("jet parameters spectrum","default.root");
-    return new SmearGaussPtBin(tMin,tMax,xMin,xMax,scale,startPar,spectrum);
-  } else if(name == "SmearCrystalBallPtBin") {
-    double tMin = config.read<double>("DiJet integration min",0.);
-    double tMax = config.read<double>("DiJet integration max",1.);
-    double xMin = config.read<double>("Et min cut on jet",0.);
-    double xMax = config.read<double>("Et max cut on jet",1.);
-    double rMin = config.read<double>("Response pdf min",0.);
-    double rMax = config.read<double>("Response pdf max",2.);
-    std::vector<double> scale = bag_of<double>(config.read<string>("jet parameter scales",""));
-    std::vector<double> startPar = bag_of<double>(config.read<string>("jet start values",""));
-    std::string spectrum = config.read<string>("jet parameters spectrum","default.root");
-    return new SmearCrystalBallPtBin(tMin,tMax,xMin,xMax,rMin,rMax,scale,startPar,spectrum);
   } else if(name == "GroomParametrization") {
     return new GroomParametrization();
   } else if(name == "EtaEtaParametrization") {
@@ -111,6 +92,65 @@ Parametrization* Parameters::createParametrization(const std::string& name, cons
   return 0;
 }
 
+
+// -----------------------------------------------------------------
+ResolutionParametrization* Parameters::createResolutionParametrization(const std::string& name, const ConfigFile& config) {
+  std::vector<double> ptBinEdges = bag_of<double>(config.read<std::string>("PtAve bin edges","-2 -1"));
+  if( ptBinEdges.front() == -2. ) {
+    ptBinEdges.at(0) = config.read<double>("Et min cut on dijet",-1.);
+    ptBinEdges.at(1) = config.read<double>("Et max cut on dijet",-1.);
+  }
+  assert( ptBinEdges.size() > 1 && ptBinEdges.front() >= 0. );
+  unsigned int nPtBins = ptBinEdges.size()-1;
+  ResolutionParametrization *param = 0;
+  if(name == "ResolutionGaussAvePt") {
+    param = new ResolutionGaussAvePt(nPtBins);
+  } else if(name == "ResolutionGauss") {
+    // Read spectrum from file and split into pdfs for different pt bins
+    TH1 *hPtGen = 0;
+    std::string spectrum = config.read<string>("jet spectrum","default.root");
+    std::cout << "Getting spectrum from file '" << spectrum << "'\n";
+    TFile file(spectrum.c_str(),"READ");
+    file.GetObject("hPtGen",hPtGen);
+    if( !hPtGen ) {
+      std::cerr << "ERROR: No histogram 'hPtGen' found in file '" << file.GetName() << "'\n";
+      exit(1);
+    }
+    hPtGen->SetDirectory(0);
+    file.Close();
+
+    // Split into spectra per bin
+    std::vector<TH1*> spectra(nPtBins);
+    std::cout << "Creating underlying pdfs per bin\n";
+    for(unsigned int i = 0; i < nPtBins; ++i) {
+      double ptTrueMin = 0.4*ptBinEdges[i];
+      double ptTrueMax = 1.8*ptBinEdges[i+1];
+      if( nPtBins == 1 ) {
+	ptTrueMin = config.read<double>("Et genJet min",ptTrueMin);
+	ptTrueMax = config.read<double>("Et genJet max",ptTrueMax);
+      }
+      int binMin = hPtGen->FindBin(ptTrueMin);
+      int binMax = hPtGen->FindBin(ptTrueMax);
+      TString name = "spectrum";
+      name += i;
+      spectra[i] = new TH1D(name,"",1+binMax-binMin,hPtGen->GetXaxis()->GetBinLowEdge(binMin),hPtGen->GetXaxis()->GetBinUpEdge(binMax));
+      for(int xBin = 1; xBin <= spectra[i]->GetNbinsX(); ++xBin) {
+	spectra[i]->SetBinContent(xBin,hPtGen->GetBinContent(binMin+xBin-1));
+      }
+      if( spectra[i]->Integral("width") ) spectra[i]->Scale(1./spectra[i]->Integral("width"));
+    }
+
+    param = new ResolutionGauss(nPtBins,ptBinEdges,spectra);
+
+  } else {
+    param = new ResolutionEmpty(1);
+  }
+
+  return param;
+}
+
+
+// -----------------------------------------------------------------
 Parameters* Parameters::createParameters(const ConfigFile& config) 
 {
   static Cleaner cleanup;
@@ -146,31 +186,66 @@ Parameters* Parameters::createParameters(const ConfigFile& config)
     parclass = "StepJetParametrization";
   } else if(parclass == "TTrackParameters") {
     parclass = "TrackParametrization";
-  } else if(parclass == "SmearParametrizationFermiTail") {
-    parclass = "SmearFermiTail";
-  } else if(parclass == "SmearParametrizationGaussAvePt") {
-    parclass = "SmearGaussAvePt";
-  } else if(parclass == "SmearParametrizationGaussPtBin") {
-    parclass = "SmearGaussPtBin";
-  } else if(parclass == "SmearParametrizationGaussExtrapolation") {
-    parclass = "SmearGaussExtrapolation";
-  } else if(parclass == "SmearParametrizationGaussImbalance") {
-    parclass = "SmearGaussImbalance";
-  } else if(parclass == "SmearParametrizationCrystalBallPtBin") {
-    parclass = "SmearCrystalBallPtBin";
   }
-
-  Parametrization *param = createParametrization(parclass,config);
-  if(! param) {
-    cerr << "Parameters::createParameters: could not instantiate class " << parclass << '\n';
+  
+  int mode = config.read<int>("Mode",0);
+  if( mode == 0 ) {
+    Parametrization *param = createParametrization(parclass,config);
+    if(! param) {
+      cerr << "Parameters::createParameters: could not instantiate class " << parclass << '\n';
+      exit(1);
+    }
+    instance_ = new Parameters(param);
+  } else if( mode == 1 ) {
+    ResolutionParametrization *resParam = createResolutionParametrization(parclass,config);
+    if( !resParam ) {
+      cerr << "Parameters::createParameters: could not instantiate class " << parclass << '\n';
+      exit(1);
+    }
+    instance_ = new Parameters(resParam);
+  } else {
+    std::cerr << "Parameters::createParameters: unknown mode '" << mode << "'\n";
     exit(1);
   }
-  instance_ = new Parameters(param);
-
+  
   instance_->init(config);
 
   return instance_;
 }
+
+
+// -----------------------------------------------------------------
+Parameters::Parameters() 
+  : k_(0),parErrors_(0),parGCorr_(0),parCov_(0),trackEff_(0),
+    s_(gsl_root_fsolver_alloc(gsl_root_fsolver_brent)) {
+  gsl_set_error_handler_off();
+}
+
+
+// -----------------------------------------------------------------
+Parameters::Parameters(Parametrization* p) 
+  : k_(0),parErrors_(0),parGCorr_(0),parCov_(0),trackEff_(0),
+    s_(gsl_root_fsolver_alloc(gsl_root_fsolver_brent)) {
+  if(p) p_ = p;
+  gsl_set_error_handler_off();
+  if( !resParam_ ) resParam_ = new ResolutionEmpty(0);
+}
+
+// -----------------------------------------------------------------
+Parameters::Parameters(ResolutionParametrization *resParam) 
+  : k_(0),parErrors_(0),parGCorr_(0),parCov_(0),trackEff_(0),
+    s_(gsl_root_fsolver_alloc(gsl_root_fsolver_brent)) {
+  if( resParam ) resParam_ = resParam;
+  if( !p_ ) p_ = new EmptyParametrization(resParam_->nPtBins()*resParam_->nParPerPtBin());
+  gsl_set_error_handler_off();
+}
+
+// -----------------------------------------------------------------
+Parameters& Parameters::operator=(const Parameters& p) {
+    return *instance_;
+}
+
+
 
 // -----------------------------------------------------------------
 void Parameters::init(const ConfigFile& config)
@@ -215,9 +290,17 @@ void Parameters::init(const ConfigFile& config)
 
   jet_start_values_ = bag_of<double>(config.read<string>("jet start values",""));
   if ( jet_start_values_.size()< p_->nJetPars()){
-    cerr<< "ERROR: Number of jet start values and free jet parameters does not match!"<<endl
-        << "       There must be at least " << p_->nJetPars() << " parameters!" << endl;
-    exit(3);
+    if( jet_start_values_.size() == resParam_->nParPerPtBin() ) { // for resolution parametrisation; add better condition
+      for(unsigned int i = 1; i < resParam_->nPtBins(); ++i) {
+	for(unsigned int j = 0; j < resParam_->nParPerPtBin(); ++j) {
+	  jet_start_values_.push_back(jet_start_values_[0+j]);
+	}
+      }
+    } else {
+      cerr<< "ERROR: Number of jet start values and free jet parameters does not match!"<<endl
+	  << "       There must be at least " << p_->nJetPars() << " parameters!" << endl;
+      exit(3);
+    }
   }
   track_start_values_ = bag_of<double>(config.read<string>("track start values","")); 
   if ( track_start_values_.size()< p_->nTrackPars()){
@@ -347,6 +430,28 @@ void Parameters::init(const ConfigFile& config)
   readTrackEffTxt(trackEffFileName);
   }
 
+
+  // Specific to resolution fit
+  
+  // PtBinning
+  ptBinEdges_ = bag_of<double>(config.read<std::string>("PtAve bin edges","-2 -1"));
+  if( ptBinEdges_.front() == -2. ) {
+    ptBinEdges_.at(0) = config.read<double>("Et min cut on dijet",-1.);
+    ptBinEdges_.at(1) = config.read<double>("Et max cut on dijet",-1.);
+  }
+  ptBinCenters_ = std::vector<double>(nPtBins());
+  ptTrueMin_ = std::vector<double>(nPtBins());
+  ptTrueMax_ = std::vector<double>(nPtBins());
+  for(unsigned int i = 0; i < nPtBins(); i++) { 
+    ptBinCenters_[i] = 0.5*( ptBinEdges_[i] + ptBinEdges_[i+1] ); // Just to have a scale, use mean
+    ptTrueMin_[i] = 0.4*ptBinEdges_[i];
+    ptTrueMax_[i] = 1.8*ptBinEdges_[i+1];
+  }
+  if( nPtBins() == 1 ) {
+    ptTrueMin_[0] = config.read<double>("Et genJet min",ptTrueMin_[0]);
+    ptTrueMax_[0] = config.read<double>("Et genJet max",ptTrueMax_[0]);
+  }
+
   //TODO: Should be made available via config
   parNames_ = std::vector<std::string>(numberOfParameters(),"");
 }
@@ -372,7 +477,7 @@ Parameters::~Parameters() {
  
 Parameters* Parameters::clone() const {
   assert(this == instance_);
-  Parameters* c = new Parameters(0);
+  Parameters* c = new Parameters();
   c->eta_ntwr_used_ = eta_ntwr_used_;
   c->eta_symmetry_ = eta_symmetry_;
   c->eta_granularity_ = eta_granularity_; 
@@ -386,21 +491,35 @@ Parameters* Parameters::clone() const {
   //std::vector<std::string> parNames_;
   int n = numberOfParameters();
   c->k_ = new double[n];
-  for(int i = 0 ; i < n ; ++i) c->k_[i] = k_[i]; 
-  c->parErrors_ = 0;
-  c->parGCorr_ = 0;
-  c->parCov_ = 0;
-  c->trackEff_ = 0;
+  c->parErrors_ = new double[n];
+  c->parGCorr_ = new double[n];
+  for(int i = 0 ; i < n ; ++i) {
+    c->k_[i] = k_[i]; 
+    c->parErrors_[i] = parErrors_[i];
+    c->parGCorr_[i] = parGCorr_[i];
+  }
+  c->parCov_ = new double[numberOfCovCoeffs()];
+  for(int i = 0; i < numberOfCovCoeffs(); ++i) {
+    c->parCov_[i] = parCov_[i];
+  }
+  c->trackEff_ = new double[169];
+
+  c->isFixedPar_ = isFixedPar_; 
+  c->ptBinEdges_ = ptBinEdges_;
+  c->ptBinCenters_ = ptBinCenters_;
+  c->ptTrueMin_ = ptTrueMin_;
+  c->ptTrueMax_ = ptTrueMax_;
 
   //clone function map
   for(FunctionMap::const_iterator i = funcmap_.begin() ; 
       i != funcmap_.end() ; ++i) {
-    Function* f = new Function(*(i->second));
-    //std::cout << "cloning..." << i->second << ", " << f << '\n';
+    Function* f = i->second->clone();
+    //    std::cout << "cloning..." << i->second << ", " << f << '\n';
     f->changeParBase(k_,c->k_);
     c->funcmap_[i->first] = f;
   }
   clones_.push_back(c);
+
   return c;
 }
 
@@ -1386,23 +1505,38 @@ const Function& Parameters::function(const Function& f) {
 }
 
 
-SmearFunction Parameters::resolutionFitPDF(int etaid, int phiid) {
-  int id = jetBin(jetEtaBin(etaid),jetPhiBin(phiid));
-  if (id <0) { 
-    std::cerr<<"WARNING: Parameters::resolutionFitPDF::index = " << id << endl; 
+const ResolutionFunction& Parameters::function(const ResolutionFunction& f) {
+  FunctionID id(Resolution, f.parIndex());
+  return static_cast<const ResolutionFunction&>(*(funcmap_[id]));
+}
+
+
+const ResolutionFunction& Parameters::resolutionFitPDF(unsigned int ptBin, int etaid, int phiid) {
+  int etaPhiBin = jetBin(jetEtaBin(etaid),jetPhiBin(phiid));
+  if( etaPhiBin < 0 ) { 
+    std::cerr<<"WARNING: Parameters::resolutionFitPDF::index = " << etaPhiBin << endl; 
     exit(-2);  
   }
-  int jetIdx = id * numberOfJetParametersPerBin() + numberOfTowerParameters();
-  return SmearFunction(&Parametrization::pdfPtMeas,
-		       &Parametrization::pdfPtTrue,
-		       &Parametrization::pdfPtTrueError,
-		       &Parametrization::pdfResponse,
-		       &Parametrization::pdfResponseError,
-		       &Parametrization::pdfDijetAsym,
-		       jetIdx,numberOfJetParametersPerBin(),jetParRef(id),
-		       findParStatus(jetIdx,numberOfJetParameters()),
-		       findCovIndices(jetIdx,numberOfJetParameters()),
-		       covCoeff(),p_);
+  unsigned short int firstParIdx = numberOfTowerParameters() + etaPhiBin*numberOfJetParametersPerBin() + ptBin*resParam_->nParPerPtBin();
+  double *firstParRef = k_ + firstParIdx;
+
+//    std::cout << "\nptBin " << ptBin << std::endl;
+//    std::cout << "jetIdx " << firstParIdx << std::endl;
+//    std::cout << "jetParRef " << firstParRef << std::endl;
+  FunctionID id(Resolution,firstParIdx);
+  Function* f = funcmap_[id];
+  if(! f) {
+    f = new ResolutionFunction(resParam_->nParPerPtBin(),ptBin,firstParIdx,firstParRef,
+			       findParStatus(firstParIdx,resParam_->nParPerPtBin()),
+			       &ResolutionParametrization::pdfPtMeas,
+			       &ResolutionParametrization::pdfPtTrue,
+			       &ResolutionParametrization::pdfResp,
+			       &ResolutionParametrization::pdfDijetAsym,
+			       &ResolutionParametrization::dMeasMax,
+			       resParam_);
+    funcmap_[id] = f;
+  }
+  return static_cast<const ResolutionFunction&>(*(funcmap_[id]));
 }
 
 float Parameters::toy_tower_error_parametrization(const float *x, const Measurement *xorig, float errorig)
@@ -1493,7 +1627,25 @@ std::vector<bool> Parameters::findParStatus(int firstPar, int nPar) const {
 
   return isFixed;
 }
- 
+
+
+// --------------------------------------------------
+bool Parameters::findBin(double x, const std::vector<double> &binEdges, unsigned int &bin) const {
+  bin = 0;
+  bool inRange = false;
+  if( x >= binEdges.front() && x <= binEdges.back() ) {
+    inRange = true;
+    for(unsigned int i = 0; i < (binEdges.size()-1); ++i) {
+      if( x > binEdges[i] ) bin = i;
+      else break;
+    }
+  }
+
+  return inRange;
+}
+
+
+// --------------------------------------------------
 bool Parameters::findRoot(double (* f) (double x, void * params), 
 			  void* params, double& x1, double& x2, double eps) 
 {
