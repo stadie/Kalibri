@@ -80,13 +80,16 @@ lib/libKalibri.so: $(OBJS) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
 
+junk: bin/junk
 
-junk: $(OBJS) lbfgs.o caliber.o
+bin/junk: $(OBJS) lbfgs.o caliber.o
 	$(LD) $^ $(RLXX) -o bin/junk
 	@ln -s -f bin/junk
 	@echo '-> static Kalibri executable created.'
 
-caliber: caliber.o lib/libKalibri.so
+caliber: bin/caliber
+
+bin/caliber: caliber.o lib/libKalibri.so
 	$(LD) caliber.o $(RLXX) -Llib -lKalibri -o bin/caliber
 	@ln -f -s bin/caliber
 	@echo '-> shared Kalibri executable created.'
@@ -111,7 +114,6 @@ lib/libJetMETObjects.so: dirs JetMETObjects
 JetMETObjects:
 	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -r V03-02-02 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 	patch -p0 < JetMETObjects.patch
-
 
 
 .cc.o:
