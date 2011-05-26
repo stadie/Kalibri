@@ -53,7 +53,7 @@ clean:
 	@rm -f *~
 	@rm -f *.o 
 	@rm -f *#
-	@rm -f *.P
+	@rm -f *.d
 	@rm -f .nfs*
 	@rm -f *.bkp
 	@rm -f junk
@@ -115,11 +115,9 @@ JetMETObjects:
 
 
 .cc.o:
-	$(CC) $(RCXX) -MD -c -o $@ $<
-	@cp $*.d $*.P; \
-            sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-                -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
-            rm -f $*.d	
- 
--include $(SRCS:%.cc=%.P) ControlPlotsComparison.P caliber.P compareControlPlots.P JetMETCorFactorsFactory.P
+	$(CC) $(RCXX) -MMD -c -o $@ $<
+	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+             -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.d
+
+-include $(SRCS:%.cc=%.d) ControlPlotsComparison.d caliber.d compareControlPlots.d JetMETCorFactorsFactory.d
 
