@@ -33,9 +33,11 @@ RCXX=$(SPECIALFLAGS) $(BOOSTFLAGS) -I. $(ROOTCFLAGS) -DSTANDALONE
 RLXX=$(LFLAGS) $(ROOTLIBS) $(BOOSTLINKFLAGS)  #-lrt -lpthread # -lposix4
 ROOTSYS=$(shell root-config --prefix)
 
+#other .cc files
+OTHERSRCS=ControlPlotsComparison.cc caliber.cc compareControlPlots.cc JetMETCorFactorsFactory.cc toy.cc
 
 #all files that end up in the Kalibri library:
-SRCS=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc CalibData.cc Parametrization.cc Parameters.cc ControlPlots.cc ControlPlotsProfile.cc ControlPlotsFunction.cc ControlPlotsConfig.cc ControlPlotsResolution.cc ToyMC.cc EventReader.cc PhotonJetReader.cc DiJetReader.cc ThreadedDiJetReader.cc TriJetReader.cc ZJetReader.cc TopReader.cc ParameterLimitsReader.cc EventProcessor.cc EventWeightProcessor.cc Jet.cc JetTruthEvent.cc JetWithTowers.cc TwoJetsInvMassEvent.cc TwoJetsPtBalanceEvent.cc JetWithTracks.cc DiJetResolutionEvent.cc JetConstraintEvent.cc CorFactorsFactory.cc JetBin.cc Binning.cc Function.cc ResolutionParametrization.cc ResolutionFunction.cc ParameterLimit.cc JetWidthEvent.cc EventBinning.cc DiJetEventWeighting.cc 
+SRCS=$(filter-out $(OTHERSRCS),$(wildcard *.cc))
 
 OBJS = $(SRCS:.cc=.o)
 
@@ -51,22 +53,8 @@ tmp:
 	@mkdir -p tmp
 
 clean:
-	@rm -rf ti_files
-	@rm -f *~
-	@rm -f *.o 
-	@rm -f *#
-	@rm -f *.d
-	@rm -f .nfs*
-	@rm -f *.bkp
-	@rm -f junk
-	@rm -f caliber
-	@rm -f libKalibri.so
-	@rm -rf tmp
-	@rm -rf lib
-	@rm -rf bin
-	@rm -f *.cfi
-	@rm -f fort.*
-	@rm -f .#*
+	@rm -rf ti_files tmp lib bin
+	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#*
 
 libs: lib lib/libKalibri.so
 
@@ -77,17 +65,14 @@ plugins: lib lib/libJetMETCor.so
 lbfgs.o: lbfgs.F
 	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
 
-
 lib/libKalibri.so: $(OBJS) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
-
 
 bin/junk: $(OBJS) lbfgs.o caliber.o
 	$(LD) $^ $(RLXX) -o bin/junk
 	@ln -s -f bin/junk
 	@echo '-> static Kalibri executable created.'
-
 
 bin/caliber: caliber.o lib/libKalibri.so
 	$(LD) caliber.o $(RLXX) -Llib -lKalibri -o bin/caliber
@@ -116,10 +101,11 @@ JetMETObjects:
 	patch -p0 < JetMETObjects.patch
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
+#rules
 .cc.o:
 	$(CC) $(RCXX) -MMD -c -o $@ $<
 	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
              -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.d
 
--include $(SRCS:%.cc=%.d) ControlPlotsComparison.d caliber.d compareControlPlots.d JetMETCorFactorsFactory.d
+-include $(SRCS:%.cc=%.d) $(OTHERSRCS:%.cc=%.d)
 
