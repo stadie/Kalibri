@@ -39,13 +39,15 @@ SRCS=Kalibri.cc GammaJetSel.cc ZJetSel.cc NJetSel.cc TopSel.cc ConfigFile.cc Cal
 
 OBJS = $(SRCS:.cc=.o)
 
-.PHONY: clean
+.PHONY: clean bins libs plugins all
 
-all: dirs lib bin
+all: libs bins
 
-dirs:
+bin:
 	@mkdir -p bin
+lib:
 	@mkdir -p lib
+tmp:
 	@mkdir -p tmp
 
 clean:
@@ -66,11 +68,11 @@ clean:
 	@rm -f fort.*
 	@rm -f .#*
 
-lib: dirs lib/libKalibri.so
+libs: lib lib/libKalibri.so
 
-bin: dirs junk caliber
+bins: bin bin/junk bin/caliber
 
-plugins: dirs lib/libJetMETCor.so
+plugins: lib lib/libJetMETCor.so
 
 lbfgs.o: lbfgs.F
 	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
@@ -80,14 +82,12 @@ lib/libKalibri.so: $(OBJS) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
 
-junk: bin/junk
 
 bin/junk: $(OBJS) lbfgs.o caliber.o
 	$(LD) $^ $(RLXX) -o bin/junk
 	@ln -s -f bin/junk
 	@echo '-> static Kalibri executable created.'
 
-caliber: bin/caliber
 
 bin/caliber: caliber.o lib/libKalibri.so
 	$(LD) caliber.o $(RLXX) -Llib -lKalibri -o bin/caliber
@@ -108,13 +108,13 @@ lib/libJetMETCor.so: lib/libJetMETObjects.so lib/libKalibri.so JetMETCorFactorsF
 	$(LD) $(RCXX) -shared JetMETCorFactorsFactory.o lib/libJetMETObjects.so lib/libKalibri.so $(RLXX) -o lib/libJetMETCor.so
 	@echo '-> JetMETCor plugin created.'
 
-lib/libJetMETObjects.so: dirs JetMETObjects
-	@env STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX} -I.'  /bin/sh -c 'make -e -C JetMETObjects'
+lib/libJetMETObjects.so: bin lib tmp JetMETObjects 
+	cd JetMETObjects && $(MAKE) STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX}' lib
 
 JetMETObjects:
 	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -r V03-02-02 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 	patch -p0 < JetMETObjects.patch
-
+	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
 .cc.o:
 	$(CC) $(RCXX) -MMD -c -o $@ $<
