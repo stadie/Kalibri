@@ -32,6 +32,7 @@ endif
 RCXX=$(SPECIALFLAGS) $(BOOSTFLAGS) -I. $(ROOTCFLAGS) -DSTANDALONE 
 RLXX=$(LFLAGS) $(ROOTLIBS) $(BOOSTLINKFLAGS)  #-lrt -lpthread # -lposix4
 ROOTSYS=$(shell root-config --prefix)
+KALIBRIDIR=$(PWD)
 
 #other .cc files
 OTHERSRCS=ControlPlotsComparison.cc caliber.cc compareControlPlots.cc JetMETCorFactorsFactory.cc toy.cc
@@ -53,10 +54,10 @@ tmp:
 	@mkdir -p tmp
 
 clean:
-	@rm -rf ti_files tmp lib bin
+	@rm -rf ti_files tmp lib bin share
 	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#*
 
-libs: lib lib/libKalibri.so
+libs: lib lib/libKalibri.so lib/liblbfgs-1.10.so
 
 bins: bin bin/junk bin/caliber
 
@@ -65,17 +66,26 @@ plugins: lib lib/libJetMETCor.so
 lbfgs.o: lbfgs.F
 	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
 
-lib/libKalibri.so: $(OBJS) lbfgs.o
+lib/libKalibri.so: $(OBJS) lbfgs.o include/lbfgs.h
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
 
-bin/junk: $(OBJS) lbfgs.o caliber.o
-	$(LD) $^ $(RLXX) -o bin/junk
+include/lbfgs.h lib/liblbfgs.a lib/liblbfgs.so: liblbfgs-1.10
+	cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
+	@echo '-> shared library lib/liblbfgs-1.10.so created.'
+
+liblbfgs-1.10:
+	wget --no-check-certificate https://github.com/downloads/chokkan/liblbfgs/liblbfgs-1.10.tar.gz
+	tar zxvf liblbfgs-1.10.tar.gz
+	cd liblbfgs-1.10 && ./configure --prefix=$(KALIBRIDIR)
+
+bin/junk: $(OBJS) lbfgs.o caliber.o lib/liblbfgs.a
+	$(LD) $^ $(RLXX) lib/liblbfgs.a -o bin/junk
 	@ln -s -f bin/junk
 	@echo '-> static Kalibri executable created.'
 
-bin/caliber: caliber.o lib/libKalibri.so
-	$(LD) caliber.o $(RLXX) -Llib -lKalibri -o bin/caliber
+bin/caliber: caliber.o lib/libKalibri.so lib/liblbfgs.so
+	$(LD) caliber.o $(RLXX) -Llib -lKalibri -llbfgs -o bin/caliber
 	@ln -f -s bin/caliber
 	@echo '-> shared Kalibri executable created.'
 

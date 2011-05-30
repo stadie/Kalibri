@@ -1,4 +1,4 @@
-//  $Id: Kalibri.h,v 1.6 2010/10/12 08:40:53 stadie Exp $
+//  $Id: Kalibri.h,v 1.7 2010/10/20 11:28:19 stadie Exp $
 
 //!  \mainpage
 //!
@@ -36,11 +36,14 @@
 #include <vector>
 #include <string>
 
+#include "include/lbfgs.h"
+
+
 class Parameters;
 class Controlplots;
 class Event;
 class Measurement;
-
+class ComputeThread;
 
 //!  \brief Main program
 //!  \note  For profiling:
@@ -50,7 +53,7 @@ class Measurement;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Kalibri.h,v 1.6 2010/10/12 08:40:53 stadie Exp $
+//!  $Id: Kalibri.h,v 1.7 2010/10/20 11:28:19 stadie Exp $
 // -----------------------------------------------------------------
 class Kalibri {
 public :
@@ -58,24 +61,12 @@ public :
   //!  \param f Name of the configuration file
   // -----------------------------------------------------------------
   Kalibri(const std::string& f)
-  : configFile_(f),
-  par_(0),
-  fitMethod_(1),
-  nThreads_(1),
-  nGammajetEvents_(0),
-  nDijetEvents_(0),
-  nTrijetEvents_(0),
-  nTrackClusterEvents_(0),
-  nZjetEvents_(0),
-  nTopEvents_(0),
-  printParNDeriv_(false),
-  derivStep_(1e-03),
-  mvec_(6),
-  nIter_(100),
-  eps_(1e-02),
-  wlf1_(1e-04),
-  wlf2_(0.9),
-  calcCov_(false)
+    : configFile_(f), par_(0), fitMethod_(1), nThreads_(1), nGammajetEvents_(0),
+      nDijetEvents_(0), nTrijetEvents_(0), nTrackClusterEvents_(0),
+      nZjetEvents_(0), nTopEvents_(0), printParNDeriv_(false), 
+      derivStep_(1e-03), mvec_(6), nIter_(100), eps_(1e-02), wlf1_(1e-04),
+      wlf2_(0.9), calcCov_(false), epsilon_(0), temp_derivative1_(0),
+      temp_derivative2_(0),threads_(0)
   {};
 
   ~Kalibri(){};
@@ -88,7 +79,17 @@ public :
 protected:  
   //internal functions
   void run_Lvmini();  //!< Run the fit
-
+  void run_lbfgs();   //!< Run the fit 
+  static lbfgsfloatval_t lbfgs_evaluate(void *instance, 
+					const lbfgsfloatval_t *x,
+					lbfgsfloatval_t *g, const int npar,
+					const lbfgsfloatval_t step);
+  static int lbfgs_progress(void *instance, const lbfgsfloatval_t *x,
+			    const lbfgsfloatval_t *g, const lbfgsfloatval_t fx,
+			    const lbfgsfloatval_t xnorm, 
+			    const lbfgsfloatval_t gnorm,
+			    const lbfgsfloatval_t step,
+			    int n, int k, int ls);
 private:
   //internal variables
   std::string configFile_;         //!< The configuration file name
@@ -121,6 +122,10 @@ private:
   float wlf1_;              //!< Parameter 1 of strong Wolfe condition in LVMINI
   float wlf2_;              //!< Parameter 2 of strong Wolfe condition in LVMINI
   bool calcCov_;            //!< If true, calculate covariance matrix of fitted parameters
+  double *epsilon_;
+  double *temp_derivative1_;
+  double *temp_derivative2_;
+  ComputeThread **threads_;
 };
 
 #endif

@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.16 2011/04/07 08:02:06 stadie Exp $
+//  $Id: Kalibri.cc,v 1.17 2011/05/26 07:42:53 mschrode Exp $
 
 #include "Kalibri.h"
 
@@ -29,7 +29,6 @@ boost::mutex io_mutex;
 #include "DiJetEventWeighting.h"
 
 #include <dlfcn.h>
-
 
 using namespace std;
 
@@ -147,12 +146,56 @@ void Kalibri::run()
     if(! data_.size()) {
       std::cout << "Warning: No events to perform the fit!\n";
       return;
-    }
-    if(fitMethod_==1) {
-      run_Lvmini();
-      time_t end = time(0);
-      cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
-    } else {
+    } 
+    if((fitMethod_==1) || (fitMethod_==0)) {
+      int npar = par_->numberOfParameters();
+      epsilon_ = new double[npar];
+      temp_derivative1_ = new double[npar];
+      temp_derivative2_ = new double[npar];
+      
+      cout << "\nFitting " << npar << " parameters; \n";
+      par_->print();
+      if(fitMethod_==1) 
+	cout << " with LVMINI.\n"; 
+      else 
+	cout << " with lbfgs.\n"; 
+      cout << "Using " << data_.size() << " total events and ";
+      cout << nThreads_ << " threads.\n";
+      
+      // Fixed pars
+      if( fixedJetPars_.size() > 0 ) cout << "Fixed jet parameters:\n";
+      for(unsigned int i = 0; i < fixedJetPars_.size(); i++) {
+	int idx = fixedJetPars_.at(i);
+	cout << "  " << idx+1 << ": " << par_->parameters()[idx] << endl;
+      }
+      if( fixedGlobalJetPars_.size() > 0 ) cout << "Fixed global jet parameters:\n";
+      for(unsigned int i = 0; i < fixedGlobalJetPars_.size(); i++) {
+	int idx = fixedGlobalJetPars_.at(i);
+	cout << "  " << idx+1 << ": " << par_->parameters()[idx] << endl;
+      }
+      threads_ = new ComputeThread*[nThreads_];
+      for (int ithreads=0; ithreads<nThreads_; ++ithreads){
+	threads_[ithreads] = new ComputeThread(npar, par_,epsilon_);
+      }
+      
+      if(fitMethod_==1) {
+	run_Lvmini();
+	time_t end = time(0);
+	cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
+      } else if(fitMethod_==0) {
+	run_lbfgs();
+	time_t end = time(0);
+	cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
+      }
+      for (int ithreads=0; ithreads<nThreads_; ++ithreads){
+	delete threads_[ithreads];
+      }
+      delete [] threads_;
+      delete [] epsilon_;
+      delete [] temp_derivative1_;
+      delete [] temp_derivative2_;
+    }  
+    else {
       if( par_->needsUpdate() ) par_->update();
     } 
     for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
@@ -160,7 +203,192 @@ void Kalibri::run()
       delete *i;
     } 
   } 
-  //Dummy Configuration: Nothing to be done, start-values are written to file
+}
+
+// code for lbfgs
+
+lbfgsfloatval_t Kalibri::lbfgs_evaluate(void *instance,
+					const lbfgsfloatval_t *x,
+					lbfgsfloatval_t *g,
+					const int npar,
+					const lbfgsfloatval_t step)
+{
+  Kalibri *k = static_cast<Kalibri*>(instance);
+
+  lbfgsfloatval_t fsum = 0.0;
+   
+  for (int param=0; param< npar ; ++param) {
+    k->temp_derivative1_[param]=0.0;
+    k->temp_derivative2_[param]=0.0;
+  } 
+  //computed step sizes for derivative calculation
+  if(k->printParNDeriv_) std::cout << "new par:\n";
+  for(int param = 0 ; param < npar ; ++param) {
+    k->par_->parameters()[param] = x[param]; 
+    if(k->printParNDeriv_)  {
+      std::cout << std::setw(5) << param;
+      std::cout << std::setw(15) << k->par_->parameters()[param];
+    }
+    //k->epsilon_[param] = step ? step : k->derivStep_;
+    k->epsilon_[param] =  k->derivStep_ * std::abs( k->par_->parameters()[param]);
+    if( k->epsilon_[param] < 1e-06)  k->epsilon_[param] = 1e-06;
+  }
+  if(k->printParNDeriv_) std::cout << std::endl;
+  //use zero step for fixed pars
+  for( std::vector<int>::const_iterator iter = k->fixedJetPars_.begin();
+       iter != k->fixedJetPars_.end() ; ++ iter) {
+    k->epsilon_[*iter] = 0;
+  }
+
+  for (int ithreads=0; ithreads < k->nThreads_; ++ithreads) k->threads_[ithreads]->start();
+  for (int ithreads=0; ithreads < k->nThreads_; ++ithreads){
+    if(k->threads_[ithreads]->isDone()) {
+      fsum += k->threads_[ithreads]->chi2();
+      for (int param=0 ; param < npar ; ++param) {
+	assert(k->threads_[ithreads]->tempDeriv1(param) == k->threads_[ithreads]->tempDeriv1(param));
+	k->temp_derivative1_[param] += k->threads_[ithreads]->tempDeriv1(param);
+	k->temp_derivative2_[param] += k->threads_[ithreads]->tempDeriv2(param);
+      }
+    }
+  }
+  for( std::vector<int>::const_iterator iter = k->fixedGlobalJetPars_.begin();
+       iter != k->fixedGlobalJetPars_.end() ; ++ iter) {
+    k->temp_derivative1_[*iter] = 0;
+    k->temp_derivative2_[*iter] = 0;
+  }
+  fsum *= 0.5;//lvmini uses log likelihood not chi2
+  //fast derivative calculation:
+  for( int param = 0 ; param < npar ; ++param ) {
+    //std::cout << "hier:" << step << " " << k->epsilon_[param] << " " 
+    //	      << k->temp_derivative1_[param] << '\n';
+    if(k->epsilon_[param] > 0) {
+      g[param]      = 0.5 * k->temp_derivative1_[param]/(2.0*k->epsilon_[param]);
+    } else {
+      g[param] = 0;
+    }
+    if(g[param] != g[param]) {
+      std::cout << "bad derivative: par = " << param << " td = " << k->temp_derivative1_[param] << " epsilon = " << k->epsilon_[param] << '\n';
+    }
+    assert(g[param] == g[param]);
+  }
+  //print derivatives:
+  if(k->printParNDeriv_) {
+    std::cout << std::setw(5) << "\npar";
+    std::cout << std::setw(15) << "p";
+    std::cout << std::setw(15) << "dp/dx";
+    std::cout << std::setw(15) << "d^2p/dx^2\n";
+    for( int param = 0 ; param < npar ; ++param ) {
+      std::cout << std::setw(5) << param;
+      std::cout << std::setw(15) << k->par_->parameters()[param];
+      std::cout << std::setw(15) << g[param] 
+		<< std::setw(15) << 0 << std::endl;
+    }
+    std::cout << "fsum:" << fsum << std::endl;
+  }
+  assert( fsum > 0 );
+  return fsum;
+}
+
+int Kalibri::lbfgs_progress(void *instance,
+			    const lbfgsfloatval_t *x,
+			    const lbfgsfloatval_t *g,
+			    const lbfgsfloatval_t fx,
+			    const lbfgsfloatval_t xnorm,
+			    const lbfgsfloatval_t gnorm,
+			    const lbfgsfloatval_t step,
+			    int n, int k, int ls)
+{
+  printf("Iteration %d:\n", k);
+  printf("  fx = %f, x[0] = %f, x[1] = %f\n", fx, x[0], x[1]);
+  printf("  xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
+  printf("\n");
+  return 0;
+}
+
+void Kalibri::run_lbfgs()
+{
+  int npar = par_->numberOfParameters();
+  lbfgsfloatval_t fx;
+  lbfgsfloatval_t *x = lbfgs_malloc(npar);
+  lbfgs_parameter_t param;
+  
+  if (x == NULL) {
+    printf("ERROR: Failed to allocate a memory block for variables.\n");
+    return;
+  }
+
+  /*
+    Start the L-BFGS optimization; this will invoke the callback functions
+    evaluate() and progress() when necessary.
+  */  
+  for( unsigned int loop = 0; loop < residualScalingScheme_.size() ; ++loop ) {
+    cout<<"Updating Di-Jet Errors"<<endl;
+    for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
+      (*it)->updateError();
+    }
+    if( par_->needsUpdate() ) par_->update();
+    // Setting function to scale residuals in chi2 calculation
+    cout << loop+1 << flush;
+    if(  loop+1 == 1  ) cout << "st" << flush;
+    else if(  loop+1 == 2  ) cout << "nd" << flush;
+    else if(  loop+1 == 3  ) cout << "rd" << flush;
+    else cout << "th" << flush;
+    cout << " of " << residualScalingScheme_.size() <<" iteration(s)" << flush;
+    if( mode_ == 0 ) {
+      if(  residualScalingScheme_.at(loop) == 0  ) {
+	Event::scaleResidual = &Event::scaleNone;	
+	cout << ": no scaling of residuals." << endl;
+	
+	cout << "Rejecting outliers " << flush;
+	DataIter beg = partition(data_.begin(), data_.end(), OutlierRejection(outlierChi2Cut_));
+	for(DataIter i = beg ; i != data_.end() ; ++i) {
+	  delete *i;
+	}
+	data_.erase(beg,data_.end());
+	cout << "and using " << data_.size() << " events." << endl;
+      }
+      else if(  residualScalingScheme_.at(loop) == 1  ) {
+	Event::scaleResidual = &Event::scaleCauchy;	
+	cout << ": scaling of residuals with Cauchy-Function." << endl;
+      }
+      else if(  residualScalingScheme_.at(loop) == 2  ) {
+	Event::scaleResidual = &Event::scaleHuber;	
+	cout << ": scaling of residuals with Huber-Function." << endl;
+      }
+      else if(  residualScalingScheme_.at(loop) == 3  ) {
+	Event::scaleResidual = &Event::scaleTukey;	
+	cout << ": scaling of residuals a la Tukey." << endl;
+      }
+      else {
+	cerr << "ERROR: " << residualScalingScheme_.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
+	break;
+      }
+    } else {
+      std::cout << std::endl;
+    }
+    /*param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;*/
+    /* Initialize the parameters for the L-BFGS optimization. */ 
+    for(int i = 0 ; i < npar ; ++i) {
+      x[i] = par_->parameters()[i];
+    } 
+    lbfgs_parameter_init(&param);
+    int n = 0;
+    for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
+      threads_[n]->addData(*it);
+      n++;
+      if(n == nThreads_) n = 0;
+    }
+    
+    int ret = lbfgs(npar, x, &fx, lbfgs_evaluate, lbfgs_progress, this, &param);
+    /* Report the result. */
+    printf("L-BFGS optimization terminated with status code = %d\n", ret);
+    printf("  fx = %f, x[0] = %f, x[1] = %f\n", fx, x[0], x[1]);
+    
+    for (int ithreads=0; ithreads<nThreads_; ++ithreads){
+      threads_[ithreads]->clearData();
+    }  
+  }
+  lbfgs_free(x); 
 }
 
 
@@ -178,30 +406,9 @@ void Kalibri::run_Lvmini()
   cout<<"array of size "<<naux<<" needed."<<endl;
 
   double* aux = new double[naux], fsum = 0;
-  double *epsilon = new double[npar];
-  double *temp_derivative1 = new double[npar];
-  double *temp_derivative2 = new double[npar];
+ 
 
-  cout << "\nFitting " << npar << " parameters; \n";
-  par_->print();
-  cout << " with LVMINI.\n" << "Using " << data_.size() << " total events and ";
-  cout << nThreads_ << " threads.\n";
-
-  // Fixed pars
-  if( fixedJetPars_.size() > 0 ) cout << "Fixed jet parameters:\n";
-  for(unsigned int i = 0; i < fixedJetPars_.size(); i++) {
-    int idx = fixedJetPars_.at(i);
-    cout << "  " << idx+1 << ": " << par_->parameters()[idx] << endl;
-  }
-  if( fixedGlobalJetPars_.size() > 0 ) cout << "Fixed global jet parameters:\n";
-  for(unsigned int i = 0; i < fixedGlobalJetPars_.size(); i++) {
-    int idx = fixedGlobalJetPars_.at(i);
-    cout << "  " << idx+1 << ": " << par_->parameters()[idx] << endl;
-  }
-  ComputeThread *t[nThreads_];
-  for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-    t[ithreads] = new ComputeThread(npar, par_,epsilon);
-  }
+ 
   //lvmeps_(data_.size()*eps_,wlf1_,wlf2_);
   lvmeps_(eps_,wlf1_,wlf2_);
 
@@ -265,15 +472,15 @@ void Kalibri::run_Lvmini()
     int n = 0;
     
     for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
-      t[n]->addData(*it);
+      threads_[n]->addData(*it);
       n++;
       if(n == nThreads_) n = 0;
     }
     do {
       //set storage for temporary derivative storage to zero
       for (int param=0; param< npar ; ++param) {
-	temp_derivative1[param]=0.0;
-	temp_derivative2[param]=0.0;
+	temp_derivative1_[param]=0.0;
+	temp_derivative2_[param]=0.0;
       } 
       //computed step sizes for derivative calculation
       if(printParNDeriv_) std::cout << "new par:\n";
@@ -282,44 +489,44 @@ void Kalibri::run_Lvmini()
 	  std::cout << std::setw(5) << param;
 	  std::cout << std::setw(15) << par_->parameters()[param];
 	}
-	epsilon[param] = derivStep_ * std::abs(par_->parameters()[param]);
-	if(epsilon[param] < 1e-06) epsilon[param] = 1e-06;
+	epsilon_[param] = derivStep_ * std::abs(par_->parameters()[param]);
+	if(epsilon_[param] < 1e-06) epsilon_[param] = 1e-06;
       }
       if(printParNDeriv_) std::cout << std::endl;
       //use zero step for fixed pars
       for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
 	   iter != fixedJetPars_.end() ; ++ iter) {
-	epsilon[*iter] = 0;
+	epsilon_[*iter] = 0;
       }
       fsum = 0;
-      for (int ithreads=0; ithreads<nThreads_; ++ithreads) t[ithreads]->start();
+      for (int ithreads=0; ithreads<nThreads_; ++ithreads) threads_[ithreads]->start();
       for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-	if(t[ithreads]->isDone()) {
-	  fsum += t[ithreads]->chi2();
+	if(threads_[ithreads]->isDone()) {
+	  fsum += threads_[ithreads]->chi2();
 	  for (int param=0 ; param < npar ; ++param) {
-	    assert(t[ithreads]->tempDeriv1(param) == t[ithreads]->tempDeriv1(param));
-	    temp_derivative1[param] += t[ithreads]->tempDeriv1(param);
-	    temp_derivative2[param] += t[ithreads]->tempDeriv2(param);
+	    assert(threads_[ithreads]->tempDeriv1(param) == threads_[ithreads]->tempDeriv1(param));
+	    temp_derivative1_[param] += threads_[ithreads]->tempDeriv1(param);
+	    temp_derivative2_[param] += threads_[ithreads]->tempDeriv2(param);
 	  }
 	}
       }
       for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
 	   iter != fixedGlobalJetPars_.end() ; ++ iter) {
-	temp_derivative1[*iter] = 0;
-	temp_derivative2[*iter] = 0;
+	temp_derivative1_[*iter] = 0;
+	temp_derivative2_[*iter] = 0;
       }
       fsum *= 0.5;//lvmini uses log likelihood not chi2
       //fast derivative calculation:
       for( int param = 0 ; param < npar ; ++param ) {
-	if(epsilon[param] > 0) {
-	aux[param]      = 0.5 * temp_derivative1[param]/(2.0*epsilon[param]);
-	aux[param+npar] = 0.5 * temp_derivative2[param]/(epsilon[param]*epsilon[param]);
+	if(epsilon_[param] > 0) {
+	aux[param]      = 0.5 * temp_derivative1_[param]/(2.0*epsilon_[param]);
+	aux[param+npar] = 0.5 * temp_derivative2_[param]/(epsilon_[param]*epsilon_[param]);
 	} else {
 	  aux[param] = 0;
 	  aux[param+npar] = 0;
 	}
 	if(aux[param] != aux[param]) {
-	  std::cout << "bad derivative: par = " << param << " td = " << temp_derivative1[param] << " epsilon = " << epsilon[param] << '\n';
+	  std::cout << "bad derivative: par = " << param << " td = " << temp_derivative1_[param] << " epsilon_ = " << epsilon_[param] << '\n';
 	}
  	assert(aux[param] == aux[param]);
  	assert(aux[param+npar] == aux[param+npar]);
@@ -344,7 +551,7 @@ void Kalibri::run_Lvmini()
       //lvmout_(npar,mvec_,aux);
     } while (iret<0); 
     for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-      t[ithreads]->clearData();
+      threads_[ithreads]->clearData();
     }  
     int par_index = 1;
     par_index = lvmind_(par_index);
@@ -393,14 +600,7 @@ void Kalibri::run_Lvmini()
     }
     par_->setCovCoeff(aux+error_index);
   }
-
-  for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-    delete t[ithreads];
-  }
   delete [] aux;  
-  delete [] epsilon;
-  delete [] temp_derivative1;
-  delete [] temp_derivative2;
 }
 
 
