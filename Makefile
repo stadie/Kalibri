@@ -57,7 +57,7 @@ clean:
 	@rm -rf ti_files tmp lib bin share
 	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#*
 
-libs: lib lib/libKalibri.so lib/liblbfgs-1.10.so
+libs: lib lib/libKalibri.so lib/liblbfgs.so
 
 bins: bin bin/junk bin/caliber
 

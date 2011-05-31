@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.17 2011/05/26 07:42:53 mschrode Exp $
+//  $Id: Kalibri.cc,v 1.18 2011/05/30 15:58:52 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -229,7 +229,6 @@ lbfgsfloatval_t Kalibri::lbfgs_evaluate(void *instance,
       std::cout << std::setw(5) << param;
       std::cout << std::setw(15) << k->par_->parameters()[param];
     }
-    //k->epsilon_[param] = step ? step : k->derivStep_;
     k->epsilon_[param] =  k->derivStep_ * std::abs( k->par_->parameters()[param]);
     if( k->epsilon_[param] < 1e-06)  k->epsilon_[param] = 1e-06;
   }
@@ -298,22 +297,23 @@ int Kalibri::lbfgs_progress(void *instance,
 			    const lbfgsfloatval_t step,
 			    int n, int k, int ls)
 {
-  printf("Iteration %d:\n", k);
-  printf("  fx = %f, x[0] = %f, x[1] = %f\n", fx, x[0], x[1]);
-  printf("  xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
-  printf("\n");
+  std::cout << std::setw(5) << k << std::setw(15) << fx 
+	    << std::setw(15) << xnorm << std::setw(15) << gnorm
+	    << std::setw(15) << step << '\n';
   return 0;
 }
 
 void Kalibri::run_lbfgs()
 {
+  //please see http://www.chokkan.org/software/liblbfgs/
+
   int npar = par_->numberOfParameters();
   lbfgsfloatval_t fx;
   lbfgsfloatval_t *x = lbfgs_malloc(npar);
   lbfgs_parameter_t param;
   
   if (x == NULL) {
-    printf("ERROR: Failed to allocate a memory block for variables.\n");
+    std::cerr << "ERROR: Failed to allocate a memory block for variables.\n";
     return;
   }
 
@@ -366,7 +366,11 @@ void Kalibri::run_lbfgs()
     } else {
       std::cout << std::endl;
     }
-    /*param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;*/
+    param.linesearch = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE;
+    param.max_iterations = nIter_;//The maximum number of iterations. 
+    param.m =  mvec_;//The number of corrections to approximate the inverse hessian matrix. 
+    param.epsilon = eps_;//Epsilon for convergence test. 
+    param.wolfe = wlf1_;//A coefficient for the Wolfe condition. 
     /* Initialize the parameters for the L-BFGS optimization. */ 
     for(int i = 0 ; i < npar ; ++i) {
       x[i] = par_->parameters()[i];
@@ -378,12 +382,20 @@ void Kalibri::run_lbfgs()
       n++;
       if(n == nThreads_) n = 0;
     }
-    
+    std::cout << std::setw(5) << "i" << std::setw(15) << "fx" 
+	      << std::setw(15) << "xnorm" << std::setw(15) << "gnorm"
+	      << std::setw(15) << "step" << '\n';
     int ret = lbfgs(npar, x, &fx, lbfgs_evaluate, lbfgs_progress, this, &param);
     /* Report the result. */
-    printf("L-BFGS optimization terminated with status code = %d\n", ret);
-    printf("  fx = %f, x[0] = %f, x[1] = %f\n", fx, x[0], x[1]);
-    
+    std::cout << "L-BFGS optimization terminated with status code = " << ret
+	      << " and fx = " << fx << '\n';
+    std::cout << "paramters:\n";
+    for(int i = 0 ; i < npar ; ++i) {
+      par_->parameters()[i] = x[i];
+      if((i > 1) && (i%3 == 0)) std::cout << '\n';
+      std::cout << std::setw(10) << i << std::setw(15) << x[i];
+    }
+    std::cout << '\n';
     for (int ithreads=0; ithreads<nThreads_; ++ithreads){
       threads_[ithreads]->clearData();
     }  
