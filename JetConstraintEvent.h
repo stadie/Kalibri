@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.h,v 1.9 2010/10/20 11:28:19 stadie Exp $
+//    $Id: JetConstraintEvent.h,v 1.10 2010/11/01 15:47:40 stadie Exp $
 //   
 #ifndef JETCONSTRAINTEVENT_H
 #define JETCONSTRAINTEVENT_H
@@ -36,7 +36,7 @@ class JetConstraintEvent : public Event
   
   double chi2() const;
   double chi2_plots() const { return chi2plots_; }
-  double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
+  double chi2_fast(double * temp_derivative1, double * temp_derivative2,  double * temp_derivative3, double * temp_derivative4, const double* epsilon) const;
   void updateError() { } 
   double minEta() const { return mineta_;}
   double maxEta() const { return maxeta_;}

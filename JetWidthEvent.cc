@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetWidthEvent.cc,v 1.2 2010/11/24 09:53:04 stadie Exp $
+//    $Id: JetWidthEvent.cc,v 1.3 2010/12/13 10:38:28 stadie Exp $
 //   
 
 #include "JetWidthEvent.h"
@@ -27,7 +27,9 @@ double JetWidthEvent::chi2() const
 }
 
 double JetWidthEvent::chi2_fast(double * temp_derivative1, 
-				double * temp_derivative2, 
+				double * temp_derivative2,  
+				double * temp_derivative3, 
+				double * temp_derivative4,
 				const double* epsilon) const
 {
   static const double log2pi = log(2*M_PI)+20;

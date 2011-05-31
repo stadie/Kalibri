@@ -1,4 +1,4 @@
-// $Id:  $
+// $Id: DiJetResolutionEvent.h,v 1.1 2011/05/26 07:42:52 mschrode Exp $
 
 #ifndef DIJET_RESOLUTION_EVENT_H
 #define DIJET_RESOLUTION_EVENT_H
@@ -10,7 +10,7 @@
 //!  \brief A dijet event for resolution measurement
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 15:24:49 CEST 2009
-//!  $Id: $
+//!  $Id: DiJetResolutionEvent.h,v 1.1 2011/05/26 07:42:52 mschrode Exp $
 // --------------------------------------------------
 class DiJetResolutionEvent : public Event {
 public:
@@ -31,7 +31,7 @@ public:
   // Implements event interface
   DataType type() const { return DiJetResolution; }
   double chi2() const { return chi2Spectrum(); }
-  double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
+  double chi2_fast(double * temp_derivative1, double * temp_derivative2,  double * temp_derivative3, double * temp_derivative4, const double* epsilon) const;
   void printInitStats() const;
 
   // DiJetResolutionEvent specific methods

@@ -1,7 +1,7 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.65 2010/11/01 15:47:40 stadie Exp $
+// $Id: Parameters.h,v 1.66 2011/05/26 07:42:52 mschrode Exp $
 //
 #ifndef Parameters_h
 #define Parameters_h
@@ -31,7 +31,7 @@ class TH1;
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann, Hartmut Stadie
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.65 2010/11/01 15:47:40 stadie Exp $
+//!  $Id: Parameters.h,v 1.66 2011/05/26 07:42:52 mschrode Exp $
 // -----------------------------------------------------------------
 class Parameters {  
  public:
@@ -354,8 +354,24 @@ class Parameters {
     float upperError;   //!< Expected error if parameter is varied by +eps
     float lowerError;   //!< Expected error if parameter is varied by -eps
     float upperEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
-    float lowerEtDeriv; //!< Derivative of Et if parameter is  varied by +eps
-    bool operator==(int b) const { return parid == b;} //!< Two ParameterVariation are the same if they have the same parid
+    float lowerEtDeriv; //!< Derivative of Et if parameter is  varied by -eps
+    float upperEt2;      //!< Expected Et if parameter is varied by +2eps
+    float lowerEt2;      //!< Expected Et if parameter is varied by -2eps
+    float upperError2;   //!< Expected error if parameter is varied by +2eps
+    float lowerError2;   //!< Expected error if parameter is varied by -2eps
+    float upperEtDeriv2; //!< Derivative of Et if parameter is  varied by +2eps
+    float lowerEtDeriv2; //!< Derivative of Et if parameter is  varied by -2eps
+    bool operator==(int b) const { return parid == b;} //!< Two
+						       //!ParameterVariation
+						       //!are the same
+						       //!if they have
+						       //!the same
+						       //!parid
+    Variation() : parid(-1),upperEt(0),lowerEt(0),upperError(0),lowerError(0),
+		  upperEtDeriv(0),lowerEtDeriv(0),upperEt2(0),lowerEt2(0),
+		  upperError2(0),lowerError2(0),upperEtDeriv2(0),
+		  lowerEtDeriv2(0) {}
+
   };
   typedef std::vector<Variation> VariationColl;
   typedef std::vector<Variation>::const_iterator VariationCollIter;

@@ -13,7 +13,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.11 2010/10/20 11:28:21 stadie Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.12 2010/11/01 15:47:40 stadie Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
@@ -29,7 +29,7 @@ class TwoJetsPtBalanceEvent : public Event {
     error1_ = jet1_->error();
     error2_ = jet2_->error();
   }
-  ~TwoJetsPtBalanceEvent() { delete jet1_; delete jet2_; if( hasJet3() ) delete jet3_; }
+  virtual ~TwoJetsPtBalanceEvent() { delete jet1_; delete jet2_; if( hasJet3() ) delete jet3_; }
 
   virtual Measurement *mess() const { return jet1_; }
   virtual double parametrizedMess() const { return jet1_->correctedEt();}
@@ -56,9 +56,9 @@ class TwoJetsPtBalanceEvent : public Event {
   virtual DataType type() const { return PtBalance; } 
 
   double correctedMass() const;  
-  virtual double chi2() const { return chi2_fast(0, 0, 0); }
+  virtual double chi2() const { return chi2_fast(0, 0, 0, 0, 0); }
   virtual double chi2_plots() const { return chi2Plots_; }
-  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double *epsilon) const { 
+  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double * temp_derivative3, double * temp_derivative4, const double *epsilon) const { 
     //chi2Plots_ = chi2_fast_balance(temp_derivative1,temp_derivative2,epsilon);
     chi2Plots_ = chi2_relative(temp_derivative1,temp_derivative2,epsilon);
     return chi2Plots_;

@@ -2,7 +2,7 @@
 //    Class for constraints on the jet correction
 //
 //    first version: Hartmut Stadie 2009/07/23
-//    $Id: JetConstraintEvent.cc,v 1.9 2010/10/20 11:28:08 stadie Exp $
+//    $Id: JetConstraintEvent.cc,v 1.10 2010/11/01 15:47:43 stadie Exp $
 //   
 
 
@@ -53,7 +53,7 @@ double JetConstraintEvent::chi2() const
   return weight_ * chi2 * chi2 / jets_.size();
 }
 
-double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const
+double JetConstraintEvent::chi2_fast(double * temp_derivative1, double * temp_derivative2,  double * temp_derivative3, double * temp_derivative4, const double* epsilon) const
 {
   double sumet = 0;
   unsigned int njets = jets_.size();

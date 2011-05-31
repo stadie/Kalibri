@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: DiJetResolutionEvent.cc,v 1.1 2011/05/26 07:42:52 mschrode Exp $
 
 #include "DiJetResolutionEvent.h"
 
@@ -58,8 +58,10 @@ void DiJetResolutionEvent::setParameters(Parameters* param) {
 //!  \return The negative log-likelihood of this event
 // --------------------------------------------------
 double DiJetResolutionEvent::chi2_fast(double * temp_derivative1,
-			    double * temp_derivative2,
-			    const double* epsilon) const {
+				       double * temp_derivative2, 
+				       double * temp_derivative3, 
+				       double * temp_derivative4,
+				       const double* epsilon) const {
   double f = chi2();
 
   double   oldpar;

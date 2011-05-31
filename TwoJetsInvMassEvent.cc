@@ -2,7 +2,7 @@
 //    Class for all events with two jets constraint to one invariant mass
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: TwoJetsInvMassEvent.cc,v 1.11 2010/10/20 11:28:13 stadie Exp $
+//    $Id: TwoJetsInvMassEvent.cc,v 1.12 2010/11/01 15:47:40 stadie Exp $
 //     
 #include "TwoJetsInvMassEvent.h"
 #include "Parameters.h"
@@ -11,7 +11,7 @@
 
 double TwoJetsInvMassEvent::chi2() const
 {
-  double chi2 = chi2_fast(0, 0, 0);
+  double chi2 = chi2_fast(0, 0, 0, 0, 0);
   return chi2;
 }
  

@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.50 2011/02/15 12:53:14 stadie Exp $
+//    $Id: Jet.cc,v 1.51 2011/05/26 07:42:53 mschrode Exp $
 //   
 #include "Jet.h"  
 
@@ -110,6 +110,14 @@ const Parameters::VariationColl& Jet::varyPars(const double* eps, float Et, floa
     f_->firstPar()[i] = orig - eps[f_->parIndex() + i];
     varcoll[i].lowerEt = expectedEt(Et,start,varcoll[i].lowerError); 
     //if( varcoll[i].lowerEt < 0) return varcoll;
+    //varcoll[i].lowerEt = expectedEt(Et,s,false); 
+    f_->firstPar()[i] =  orig + 2 * eps[f_->parIndex() + i];
+    varcoll[i].upperEt2 = expectedEt(Et,start,varcoll[i].upperError2);
+    //if( varcoll[i].upperEt < 0) return varcoll;
+    //varcoll[i].upperEt = expectedEt(Et,s,false);
+    f_->firstPar()[i] = orig - 2 * eps[f_->parIndex() + i];
+    varcoll[i].lowerEt2 = expectedEt(Et,start,varcoll[i].lowerError2); 
+    //if( varcoll[i].lowerEt < 0) return varcoll;
     //varcoll[i].lowerEt = expectedEt(Et,s,false);
     f_->firstPar()[i] = orig;
     varcoll[i].parid = f_->parIndex() + i;
@@ -122,6 +130,14 @@ const Parameters::VariationColl& Jet::varyPars(const double* eps, float Et, floa
     //varcoll[j].upperEt = expectedEt(Et,s,false);
     gf_->firstPar()[i] = orig - eps[gf_->parIndex() + i];
     varcoll[j].lowerEt = expectedEt(Et,start,varcoll[j].lowerError);
+    //if( varcoll[j].lowerEt < 0) return varcoll;
+    //varcoll[j].lowerEt = expectedEt(Et,s,false);   
+    gf_->firstPar()[i] = orig + 2*eps[gf_->parIndex() + i];
+    varcoll[j].upperEt2 = expectedEt(Et,start,varcoll[j].upperError2);
+    //if( varcoll[j].upperEt < 0) return varcoll;
+    //varcoll[j].upperEt = expectedEt(Et,s,false);
+    gf_->firstPar()[i] = orig - 2*eps[gf_->parIndex() + i];
+    varcoll[j].lowerEt2 = expectedEt(Et,start,varcoll[j].lowerError2);
     //if( varcoll[j].lowerEt < 0) return varcoll;
     //varcoll[j].lowerEt = expectedEt(Et,s,false);
     gf_->firstPar()[i] = orig;
@@ -147,7 +163,7 @@ const Parameters::VariationColl& Jet::varyParsDirectly(const double* eps, bool c
   Parameters::VariationColl& varcoll = parameters_->cachedVariationColl();
   varcoll.resize(nPar());
   if(Et == 0) Et = Measurement::pt;
-  const float deltaE = 1e-04 * Et;
+  const float deltaE = 1e-05 * Et;
   for(int i = 0 ; i < f_->nPars() ; ++i) {
     double orig = f_->firstPar()[i];
     f_->firstPar()[i] += eps[f_->parIndex() + i];
@@ -161,6 +177,18 @@ const Parameters::VariationColl& Jet::varyParsDirectly(const double* eps, bool c
     varcoll[i].lowerError = expectedError(varcoll[i].lowerEt);
     if(computeDeriv) {
       varcoll[i].lowerEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
+    }
+    f_->firstPar()[i] = orig + 2*eps[f_->parIndex() + i];
+    varcoll[i].upperEt2 = correctedEt(Et);
+    varcoll[i].upperError2 = expectedError(varcoll[i].upperEt2);
+    if(computeDeriv) {
+      varcoll[i].upperEtDeriv2 =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
+    }
+    f_->firstPar()[i] = orig - 2*eps[f_->parIndex() + i];
+    varcoll[i].lowerEt2 = correctedEt(Et); 
+    varcoll[i].lowerError2 = expectedError(varcoll[i].lowerEt2);
+    if(computeDeriv) {
+      varcoll[i].lowerEtDeriv2 =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
     f_->firstPar()[i] = orig;
     varcoll[i].parid = f_->parIndex() + i;
@@ -178,6 +206,18 @@ const Parameters::VariationColl& Jet::varyParsDirectly(const double* eps, bool c
     varcoll[j].lowerError = expectedError(varcoll[j].lowerEt);
     if(computeDeriv) {
       varcoll[j].lowerEtDeriv =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
+    }   
+    gf_->firstPar()[i] = orig + 2*eps[gf_->parIndex() + i];
+    varcoll[j].upperEt2 = correctedEt(Et);
+    varcoll[j].upperError2 = expectedError(varcoll[j].upperEt2);
+    if(computeDeriv) {
+      varcoll[j].upperEtDeriv2 =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
+    }
+    gf_->firstPar()[i] = orig - 2*eps[gf_->parIndex() + i];
+    varcoll[j].lowerEt2 = correctedEt(Et); 
+    varcoll[j].lowerError2 = expectedError(varcoll[j].lowerEt2);
+    if(computeDeriv) {
+      varcoll[j].lowerEtDeriv2 =  (correctedEt(Et+deltaE) -  correctedEt(Et-deltaE))/2/deltaE;
     }
     gf_->firstPar()[i] = orig;
     varcoll[j].parid = gf_->parIndex() + i;
@@ -273,7 +313,7 @@ float Jet::expectedEt(float truth, float start, bool fast)
     Measurement::E  = oldE;
     return pt;
   }
-  static const double eps = 1.0e-05;
+  static const double eps = 1.0e-10;
 
   /*
   double x1 = root_;

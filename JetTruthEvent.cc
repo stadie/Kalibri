@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.cc,v 1.23 2010/10/20 11:28:09 stadie Exp $
+//    $Id: JetTruthEvent.cc,v 1.24 2010/11/01 15:47:41 stadie Exp $
 //   
 
 #include "JetTruthEvent.h"
@@ -99,6 +99,8 @@ double JetTruthEvent::chi2_fast_simple_scaled(double * temp_derivative1,
 
 double JetTruthEvent::chi2_fast_scaled(double * temp_derivative1, 
 				       double * temp_derivative2, 
+				       double * temp_derivative3, 
+				       double * temp_derivative4,
 				       const double* epsilon) const
 {
   if(flagged_bad_) return 0;
@@ -135,7 +137,7 @@ double JetTruthEvent::chi2_fast_scaled(double * temp_derivative1,
   if( chi2 / weight_ > 1e04) {
     std::cout << "too large:"<< truth_ << ", " << et << ", " <<  jet_->Et() << ", " << c << ", " << log(err2) << ", " << etprime << ", " << chi2 << '\n';
   }
-  double temp1,temp2;
+  double temp1,temp2,temp3,temp4;
   const Parameters::VariationColl& varcoll = jet_->varyParsDirectly(epsilon);
   for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     temp1 = truth_ - i->lowerEt;
@@ -180,7 +182,55 @@ double JetTruthEvent::chi2_fast_scaled(double * temp_derivative1,
     std::cout << "temp2 too large:" << truth_ << ", " << i->upperEt << ", " <<  jet_->Et() << ", " << c << ", " << log(err2) << ", " <<  i->upperEtDeriv << ", " << temp2 << '\n';
     }
     temp_derivative1[i->parid] += (temp2 - temp1); // for 1st derivative
-    temp_derivative2[i->parid] += (temp2 - 2 * chi2 + temp1); // for 2nd derivative   
+    temp_derivative2[i->parid] += (temp2 - 2 * chi2 + temp1); // for
+							      // 2nd
+							      // derivative  
+    temp3 = truth_ - i->lowerEt2;
+    c = i->lowerEt2 / jet_->Et();
+    //if(c <= 0) c = 1.0;
+    err2 = i->lowerEtDeriv2 * jet_->expectedError(jet_->Et());
+    if((i->lowerEtDeriv2 < 0.1)|| (c <= 0)) {
+      //std::cout << "warning: deriv too low!\n"; 
+      flagged_bad_ = true;
+      ++nflagged_;
+      return 0;
+      //err2 = c * jet_->expectedError(jet_->Et());
+    }
+    err2 *= err2;
+    temp3 *= temp3 / err2; 
+    //temp1 = weight * (log(err2) + temp1);
+    //temp1 = weight_ * Event::scaleResidual(log(err2) + temp1);
+    temp3 = weight_ * Event::scaleResidual(temp3);
+    assert(temp3 == temp3);
+    assert(! std::isinf(temp3));
+    temp4 = truth_ - i->upperEt2;
+    c = i->upperEt2 / jet_->Et();  
+    //if(c <= 0) c = 1.0;
+    err2 = i->upperEtDeriv2 * jet_->expectedError(jet_->Et());
+    if((i->upperEtDeriv2 < 0.1) || (c <= 0)) {
+      //std::cout << "warning: deriv too low!\n";
+      flagged_bad_ = true; 
+      ++nflagged_;
+      return 0;
+      //err2 = c * jet_->expectedError(jet_->Et());
+    }
+    err2 *= err2;
+    temp4 *= temp4 / err2;
+    //temp2 = weight_ * Event::scaleResidual(log(err2) + temp2);
+    temp4 = weight_ * Event::scaleResidual(temp4);
+    assert(temp4 == temp4);
+    assert(! std::isinf(temp2));
+    if( temp3 / weight_ > 1e04) {
+    std::cout << "temp3 too large:" << truth_ << ", " << i->lowerEt2 << ", " <<  jet_->Et() << ", " << c << ", " << log(err2) << ", " << i->lowerEtDeriv2 << ", " << temp3 << '\n';
+    }
+    if( temp4 / weight_ > 1e04) {
+    std::cout << "temp4 too large:" << truth_ << ", " << i->upperEt2 << ", " <<  jet_->Et() << ", " << c << ", " << log(err2) << ", " <<  i->upperEtDeriv2 << ", " << temp4 << '\n';
+    }
+    temp_derivative3[i->parid] += (temp4 - temp3); // for 1st derivative
+    temp_derivative4[i->parid] += (temp4 - 2 * chi2 + temp3); // for
+							      // 2nd
+							      // derivative  
+    
   }
   assert(chi2 == chi2);
   return chi2;
@@ -320,7 +370,9 @@ double JetTruthEvent::chi2_fast_invert(double * temp_derivative1,
 //!  \return Summand of this event to negative log-likelihood
 // ------------------------------------------------------------
 double JetTruthEvent::chi2_log_fast_invert(double * temp_derivative1, 
-					   double * temp_derivative2, 
+					   double * temp_derivative2,
+					   double * temp_derivative3, 
+					   double * temp_derivative4, 
 					   const double* epsilon) const
 {
   if(flagged_bad_) return 0;
@@ -342,7 +394,7 @@ double JetTruthEvent::chi2_log_fast_invert(double * temp_derivative1,
   }
 
   //calculate chi2 for derivatives
-  double temp1,temp2;
+  double temp1,temp2,temp3,temp4;
   const Parameters::VariationColl& varcoll = jet_->varyPars(epsilon,truth_,expectedEt);
   for(Parameters::VariationCollIter i = varcoll.begin() ; i != varcoll.end() ; ++i) {
     if(( i->lowerEt < 0 ) || ( i->upperEt < 0 )) {
@@ -378,7 +430,24 @@ double JetTruthEvent::chi2_log_fast_invert(double * temp_derivative1,
     temp_derivative1[i->parid] += (temp2 - temp1); // for 1st derivative
     temp_derivative2[i->parid] += (temp2 + temp1 - 2 * chi2); // for 2nd derivative
     assert( temp_derivative1[i->parid] ==  temp_derivative1[i->parid] );
-    assert( temp_derivative2[i->parid] ==  temp_derivative2[i->parid] );
+    assert( temp_derivative2[i->parid] ==  temp_derivative2[i->parid] );   
+    
+    temp3 = i->lowerEt2 - jet_->Et();
+    err2 = i->lowerError2;
+    err2 *= err2;
+    temp3 *= temp3 / err2;
+    temp3 = weight_ * Event::scaleResidual(log(err2) + temp3);
+    assert(temp3 == temp3);
+    temp4 = i->upperEt2 - jet_->Et(); 
+    err2 = i->upperError2;
+    err2 *= err2;
+    temp4 *= temp4 / err2;
+    temp4 = weight_ * Event::scaleResidual(log(err2) + temp4);
+    assert(temp4 == temp4);
+    temp_derivative3[i->parid] += (temp4 - temp3); // for 1st derivative
+    temp_derivative4[i->parid] += (temp4 + temp3 - 2 * chi2); // for 2nd derivative
+    assert( temp_derivative3[i->parid] ==  temp_derivative3[i->parid] );
+    assert( temp_derivative4[i->parid] ==  temp_derivative4[i->parid] );
   }
   assert(chi2 == chi2);
   if(chi2/weight_ > 1000) {

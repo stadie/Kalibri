@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.18 2010/11/01 15:47:40 stadie Exp $
+//    $Id: JetTruthEvent.h,v 1.19 2011/05/18 15:58:35 stadie Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -29,20 +29,20 @@ public:
   
   double chi2() const;
   double chi2_plots() const { return chi2plots_; }
-  double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const { 
+  double chi2_fast(double * temp_derivative1, double * temp_derivative2,  double * temp_derivative3, double * temp_derivative4, const double* epsilon) const { 
     if(! binned_) {
-      chi2plots_ = chi2_log_fast_invert(temp_derivative1,temp_derivative2,epsilon);
+      chi2plots_ = chi2_log_fast_invert(temp_derivative1,temp_derivative2,temp_derivative3,temp_derivative4,epsilon);
     } else {
-      chi2plots_ = chi2_fast_scaled(temp_derivative1,temp_derivative2,epsilon);
+      chi2plots_ = chi2_fast_scaled(temp_derivative1,temp_derivative2,temp_derivative3,temp_derivative4,epsilon);
     }
     return chi2plots_;
   }
   double chi2_fast_blobel(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
-  double chi2_fast_scaled(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
+  double chi2_fast_scaled(double * temp_derivative1, double * temp_derivative2, double * temp_derivative3, double * temp_derivative4, const double* epsilon) const;
   double chi2_fast_simple_scaled(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
   double chi2_fast_simple(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
   double chi2_fast_invert(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
-  double chi2_log_fast_invert(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
+  double chi2_log_fast_invert(double * temp_derivative1, double * temp_derivative2, double * temp_derivative3, double * temp_derivative4, const double* epsilon) const;
   void updateError() {}
   bool flaggedBad() const { return flagged_bad_; }  //!< Status from inversion procedure
 

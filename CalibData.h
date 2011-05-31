@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.86 2011/05/18 15:58:34 stadie Exp $
+// $Id: CalibData.h,v 1.87 2011/05/26 07:42:52 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -28,7 +28,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.86 2011/05/18 15:58:34 stadie Exp $
+//!  $Id: CalibData.h,v 1.87 2011/05/26 07:42:52 mschrode Exp $
 class Measurement
 {
 public:
@@ -67,7 +67,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.86 2011/05/18 15:58:34 stadie Exp $
+//!  $Id: CalibData.h,v 1.87 2011/05/26 07:42:52 mschrode Exp $
 class TTrack : public Measurement
 {
 public:
@@ -124,7 +124,7 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.86 2011/05/18 15:58:34 stadie Exp $
+//! $Id: CalibData.h,v 1.87 2011/05/26 07:42:52 mschrode Exp $
 class Event
 {
 public:
@@ -169,24 +169,21 @@ public:
   //!
   //!  Moreover, the contribution of this event to the 
   //!  first and second derivative ('temp_derivative1',
-  //!  'temp_derivative2') of the global \f$ \chi^{2} \f$
+  //!  'temp_derivative2', 'temp_derivative3', 
+  //!  'temp_derivative4' ) of the global \f$ \chi^{2} \f$
   //!  function is calculated numerically and returned
   //!  by reference, where
   //!  \f[
-  //!   \frac{\partial \chi^{2} }{\partial p}
-  //!   = \sum \frac{\textrm{temp\_derivative1}}{2\epsilon}
-  //!  \f]
-  //!  and
-  //!  \f[
-  //!   \frac{\partial^{2} \chi^{2} }{\partial p^{2}}
-  //!   = \sum \frac{\textrm{temp\_derivative2}}{\epsilon^{2}}
-  //!  \f]
-  //!
+  //!    \textrm{temp\_derivative1} = \chi^{2}(x+h)-\chi^{2}(x-h)
+  //!    \textrm{temp\_derivative2} = \chi^{2}(x+h)+\chi^{2}(x-h) -2\chi^{2}(x) 
+  //!    \textrm{temp\_derivative3} = \chi^{2}(x+2h)-\chi^{2}(x-2h)
+  //!    \textrm{temp\_derivative4} = \chi^{2}(x+2h)+\chi^{2}(x-2h)  -2\chi^{2}(x)
+  //!  ]\f
   //!  \param temp_derivative1 Pointer to first derivative contribution
   //!  \param temp_derivative2 Pointer to second derivative contribution
   //!  \param epsilon Step sizes \f$ \epsilon \f$  for derivative calculation
   //!  \return The normalized, squared residual\f$ z^{2} \f$ of this event
-  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, const double *epsilon) const = 0;
+  virtual double chi2_fast(double * temp_derivative1, double * temp_derivative2, double * temp_derivative3, double * temp_derivative4, const double *epsilon) const = 0;
 
 
   virtual void updateError() = 0;  //!< Update error terms using current corrected energies

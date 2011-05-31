@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.18 2011/05/30 15:58:52 stadie Exp $
+//  $Id: Kalibri.cc,v 1.19 2011/05/31 08:00:23 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -57,6 +57,8 @@ private:
   double chi2_;
   double * td1_;
   double * td2_;
+  double * td3_;
+  double * td4_;
   Parameters *parorig_, *mypar_;
   const double *epsilon_;
   std::vector<Event*> data_;
@@ -83,12 +85,14 @@ private:
       for (int param = 0 ; param < parent_->npar_ ; ++param) {
 	parent_->td1_[param]= 0.0;
 	parent_->td2_[param]= 0.0;
+	parent_->td3_[param]= 0.0;
+	parent_->td4_[param]= 0.0;
 	parent_->mypar_->parameters()[param] = parent_->parorig_->parameters()[param];
       }
       parent_->chi2_ =0.0;   
       for (DataIter it=parent_->data_.begin() ; it != parent_->data_.end() ; ++it) { 
 	//boost::mutex::scoped_lock lock(io_mutex);
-	parent_->chi2_ += (*it)->chi2_fast(parent_->td1_, parent_->td2_, parent_->epsilon_);
+	parent_->chi2_ += (*it)->chi2_fast(parent_->td1_, parent_->td2_, parent_->td3_, parent_->td4_, parent_->epsilon_);
       }
     }
   };
@@ -96,7 +100,7 @@ private:
   friend class calc_chi2_on;
 public:
   ComputeThread(int npar,Parameters *par, const double *epsilon) 
-    : npar_(npar), td1_(new double[npar]), td2_(new double[npar]), parorig_(par),
+    : npar_(npar), td1_(new double[npar]), td2_(new double[npar]), td3_(new double[npar]), td4_(new double[npar]), parorig_(par),
       mypar_(par->clone()), epsilon_(epsilon), data_changed_(false) {
     //std::cout << "threads par array:" << mypar << '\n';
   }
@@ -104,6 +108,8 @@ public:
     clearData();
     delete [] td1_;
     delete [] td2_;
+    delete [] td3_;
+    delete [] td4_;
     Parameters::removeClone(mypar_);
   }
   void addData(Event* d) { 
@@ -125,6 +131,8 @@ public:
   double chi2() const { return chi2_;}
   double tempDeriv1(int i) const { return td1_[i];}
   double tempDeriv2(int i) const { return td2_[i];}
+  double tempDeriv3(int i) const { return td3_[i];}
+  double tempDeriv4(int i) const { return td4_[i];}
 };
 
 
@@ -152,6 +160,8 @@ void Kalibri::run()
       epsilon_ = new double[npar];
       temp_derivative1_ = new double[npar];
       temp_derivative2_ = new double[npar];
+      temp_derivative3_ = new double[npar];
+      temp_derivative4_ = new double[npar];
       
       cout << "\nFitting " << npar << " parameters; \n";
       par_->print();
@@ -194,6 +204,8 @@ void Kalibri::run()
       delete [] epsilon_;
       delete [] temp_derivative1_;
       delete [] temp_derivative2_;
+      delete [] temp_derivative3_;
+      delete [] temp_derivative4_;
     }  
     else {
       if( par_->needsUpdate() ) par_->update();
@@ -220,6 +232,8 @@ lbfgsfloatval_t Kalibri::lbfgs_evaluate(void *instance,
   for (int param=0; param< npar ; ++param) {
     k->temp_derivative1_[param]=0.0;
     k->temp_derivative2_[param]=0.0;
+    k->temp_derivative3_[param]=0.0;
+    k->temp_derivative4_[param]=0.0;
   } 
   //computed step sizes for derivative calculation
   if(k->printParNDeriv_) std::cout << "new par:\n";
@@ -228,9 +242,12 @@ lbfgsfloatval_t Kalibri::lbfgs_evaluate(void *instance,
     if(k->printParNDeriv_)  {
       std::cout << std::setw(5) << param;
       std::cout << std::setw(15) << k->par_->parameters()[param];
-    }
+    } 
     k->epsilon_[param] =  k->derivStep_ * std::abs( k->par_->parameters()[param]);
-    if( k->epsilon_[param] < 1e-06)  k->epsilon_[param] = 1e-06;
+    if( k->epsilon_[param] <= k->derivStep_)  k->epsilon_[param] = k->derivStep_;
+    volatile double temp = k->par_->parameters()[param] + k->epsilon_[param];
+    //volatile double temp2 = k->par_->parameters()[param] + k->epsilon_[param];
+    k->epsilon_[param] = temp - k->par_->parameters()[param];
   }
   if(k->printParNDeriv_) std::cout << std::endl;
   //use zero step for fixed pars
@@ -247,6 +264,8 @@ lbfgsfloatval_t Kalibri::lbfgs_evaluate(void *instance,
 	assert(k->threads_[ithreads]->tempDeriv1(param) == k->threads_[ithreads]->tempDeriv1(param));
 	k->temp_derivative1_[param] += k->threads_[ithreads]->tempDeriv1(param);
 	k->temp_derivative2_[param] += k->threads_[ithreads]->tempDeriv2(param);
+	k->temp_derivative3_[param] += k->threads_[ithreads]->tempDeriv3(param);
+	k->temp_derivative4_[param] += k->threads_[ithreads]->tempDeriv4(param);
       }
     }
   }
@@ -254,6 +273,8 @@ lbfgsfloatval_t Kalibri::lbfgs_evaluate(void *instance,
        iter != k->fixedGlobalJetPars_.end() ; ++ iter) {
     k->temp_derivative1_[*iter] = 0;
     k->temp_derivative2_[*iter] = 0;
+    k->temp_derivative3_[*iter] = 0;
+    k->temp_derivative4_[*iter] = 0;
   }
   fsum *= 0.5;//lvmini uses log likelihood not chi2
   //fast derivative calculation:
@@ -261,7 +282,13 @@ lbfgsfloatval_t Kalibri::lbfgs_evaluate(void *instance,
     //std::cout << "hier:" << step << " " << k->epsilon_[param] << " " 
     //	      << k->temp_derivative1_[param] << '\n';
     if(k->epsilon_[param] > 0) {
-      g[param]      = 0.5 * k->temp_derivative1_[param]/(2.0*k->epsilon_[param]);
+      if(k->temp_derivative3_[param]) { 
+	//f'(x) \approx \frac{-f(x+2 h)+8 f(x+h)-8 f(x-h)+f(x-2h)}{12 h} 
+	g[param] = 0.5*(8*k->temp_derivative1_[param]-
+			k->temp_derivative3_[param])/(12 * k->epsilon_[param]);
+      } else {
+	g[param]      = 0.5 * k->temp_derivative1_[param]/(2.0*k->epsilon_[param]);
+      }
     } else {
       g[param] = 0;
     }
@@ -297,9 +324,10 @@ int Kalibri::lbfgs_progress(void *instance,
 			    const lbfgsfloatval_t step,
 			    int n, int k, int ls)
 {
-  std::cout << std::setw(5) << k << std::setw(15) << fx 
-	    << std::setw(15) << xnorm << std::setw(15) << gnorm
-	    << std::setw(15) << step << '\n';
+  std::cout << std::setw(5) << k << std::setw(15) << std::setprecision(10) 
+	    << fx << std::setw(15) << xnorm << std::setw(15) << gnorm 
+	    << std::setw(20) << step << '\n';
+  std::cout << std::setprecision(5);
   return 0;
 }
 
@@ -371,6 +399,7 @@ void Kalibri::run_lbfgs()
     param.m =  mvec_;//The number of corrections to approximate the inverse hessian matrix. 
     param.epsilon = eps_;//Epsilon for convergence test. 
     param.wolfe = wlf1_;//A coefficient for the Wolfe condition. 
+    param.max_linesearch = 7;//The maximum number of trials for the line search. 
     /* Initialize the parameters for the L-BFGS optimization. */ 
     for(int i = 0 ; i < npar ; ++i) {
       x[i] = par_->parameters()[i];
@@ -384,7 +413,7 @@ void Kalibri::run_lbfgs()
     }
     std::cout << std::setw(5) << "i" << std::setw(15) << "fx" 
 	      << std::setw(15) << "xnorm" << std::setw(15) << "gnorm"
-	      << std::setw(15) << "step" << '\n';
+	      << std::setw(20) << "step" << '\n';
     int ret = lbfgs(npar, x, &fx, lbfgs_evaluate, lbfgs_progress, this, &param);
     /* Report the result. */
     std::cout << "L-BFGS optimization terminated with status code = " << ret
@@ -493,6 +522,8 @@ void Kalibri::run_Lvmini()
       for (int param=0; param< npar ; ++param) {
 	temp_derivative1_[param]=0.0;
 	temp_derivative2_[param]=0.0;
+	temp_derivative3_[param]=0.0;
+	temp_derivative4_[param]=0.0;
       } 
       //computed step sizes for derivative calculation
       if(printParNDeriv_) std::cout << "new par:\n";
@@ -502,7 +533,9 @@ void Kalibri::run_Lvmini()
 	  std::cout << std::setw(15) << par_->parameters()[param];
 	}
 	epsilon_[param] = derivStep_ * std::abs(par_->parameters()[param]);
-	if(epsilon_[param] < 1e-06) epsilon_[param] = 1e-06;
+	if(epsilon_[param] < derivStep_ ) epsilon_[param] = derivStep_;
+	volatile double temp = par_->parameters()[param] + epsilon_[param];
+	epsilon_[param] = temp - par_->parameters()[param];
       }
       if(printParNDeriv_) std::cout << std::endl;
       //use zero step for fixed pars
@@ -519,6 +552,8 @@ void Kalibri::run_Lvmini()
 	    assert(threads_[ithreads]->tempDeriv1(param) == threads_[ithreads]->tempDeriv1(param));
 	    temp_derivative1_[param] += threads_[ithreads]->tempDeriv1(param);
 	    temp_derivative2_[param] += threads_[ithreads]->tempDeriv2(param);
+	    temp_derivative3_[param] += threads_[ithreads]->tempDeriv3(param);
+	    temp_derivative4_[param] += threads_[ithreads]->tempDeriv4(param);
 	  }
 	}
       }
@@ -526,13 +561,24 @@ void Kalibri::run_Lvmini()
 	   iter != fixedGlobalJetPars_.end() ; ++ iter) {
 	temp_derivative1_[*iter] = 0;
 	temp_derivative2_[*iter] = 0;
+	temp_derivative3_[*iter] = 0;
+	temp_derivative4_[*iter] = 0;
       }
       fsum *= 0.5;//lvmini uses log likelihood not chi2
       //fast derivative calculation:
       for( int param = 0 ; param < npar ; ++param ) {
 	if(epsilon_[param] > 0) {
-	aux[param]      = 0.5 * temp_derivative1_[param]/(2.0*epsilon_[param]);
-	aux[param+npar] = 0.5 * temp_derivative2_[param]/(epsilon_[param]*epsilon_[param]);
+	  if(temp_derivative3_[param]) {
+	    //f'(x) \approx \frac{-f(x+2 h)+8 f(x+h)-8 f(x-h)+f(x-2h)}{12 h} 
+	    aux[param] = 0.5*(8*temp_derivative1_[param]-
+			      temp_derivative3_[param])/(12*epsilon_[param]);
+	    aux[param+npar] = 0.5*(16*temp_derivative2_[param]-
+				   temp_derivative4_[param])/
+	      (12*epsilon_[param]*epsilon_[param]);
+	  } else {
+	    aux[param]      = 0.5 * temp_derivative1_[param]/(2.0*epsilon_[param]);
+	    aux[param+npar] = 0.5 * temp_derivative2_[param]/(epsilon_[param]*epsilon_[param]);
+	  }
 	} else {
 	  aux[param] = 0;
 	  aux[param+npar] = 0;

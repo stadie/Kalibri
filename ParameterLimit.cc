@@ -17,6 +17,8 @@ void ParameterLimit::setParameters(Parameters* param)
 
 double ParameterLimit::chi2_fast(double* temp_derivative1, 
 				 double* temp_derivative2, 
+				 double * temp_derivative3, 
+				 double * temp_derivative4, 
 				 const double* epsilon) const
 {
   
