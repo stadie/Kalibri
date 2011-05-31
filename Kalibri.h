@@ -1,4 +1,4 @@
-//  $Id: Kalibri.h,v 1.8 2011/05/30 15:58:52 stadie Exp $
+//  $Id: Kalibri.h,v 1.9 2011/05/31 15:49:04 stadie Exp $
 
 //!  \mainpage
 //!
@@ -37,7 +37,7 @@
 #include <string>
 
 #include "include/lbfgs.h"
-
+#include "Minuit2/FCNBase.h"
 
 class Parameters;
 class Controlplots;
@@ -53,7 +53,7 @@ class ComputeThread;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Kalibri.h,v 1.8 2011/05/30 15:58:52 stadie Exp $
+//!  $Id: Kalibri.h,v 1.9 2011/05/31 15:49:04 stadie Exp $
 // -----------------------------------------------------------------
 class Kalibri {
 public :
@@ -79,7 +79,11 @@ public :
 protected:  
   //internal functions
   void run_Lvmini();  //!< Run the fit
-  void run_lbfgs();   //!< Run the fit 
+  void run_lbfgs();   //!< Run the fit
+  void run_Minimizer();   //!< Run the fit
+
+  double fitfunc(const double *pars);
+
   static lbfgsfloatval_t lbfgs_evaluate(void *instance, 
 					const lbfgsfloatval_t *x,
 					lbfgsfloatval_t *g, const int npar,

@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.19 2011/05/31 08:00:23 stadie Exp $
+//  $Id: Kalibri.cc,v 1.20 2011/05/31 15:49:04 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -29,6 +29,10 @@ boost::mutex io_mutex;
 #include "DiJetEventWeighting.h"
 
 #include <dlfcn.h>
+
+#include "Math/Minimizer.h"
+#include "Math/Factory.h"
+#include "Math/Functor.h"
 
 using namespace std;
 
@@ -155,7 +159,7 @@ void Kalibri::run()
       std::cout << "Warning: No events to perform the fit!\n";
       return;
     } 
-    if((fitMethod_==1) || (fitMethod_==0)) {
+    if((fitMethod_==1) || (fitMethod_==0) || (fitMethod_==-1)) {
       int npar = par_->numberOfParameters();
       epsilon_ = new double[npar];
       temp_derivative1_ = new double[npar];
@@ -166,7 +170,9 @@ void Kalibri::run()
       cout << "\nFitting " << npar << " parameters; \n";
       par_->print();
       if(fitMethod_==1) 
-	cout << " with LVMINI.\n"; 
+	cout << " with LVMINI.\n";
+      else if(fitMethod_==-1) 
+	cout << " with ROOT::Minimizer.\n";
       else 
 	cout << " with lbfgs.\n"; 
       cout << "Using " << data_.size() << " total events and ";
@@ -194,6 +200,10 @@ void Kalibri::run()
 	cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
       } else if(fitMethod_==0) {
 	run_lbfgs();
+	time_t end = time(0);
+	cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
+      } else if(fitMethod_==-1) {
+	run_Minimizer();
 	time_t end = time(0);
 	cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
       }
@@ -331,6 +341,145 @@ int Kalibri::lbfgs_progress(void *instance,
   return 0;
 }
 
+double Kalibri::fitfunc(const double* par)
+{
+  unsigned int npar = par_->numberOfParameters();
+  for(unsigned int i = 0 ; i <  npar; ++i) {
+    par_->parameters()[i] = par[i];
+    epsilon_[i] = 0;
+  }
+  double chi2sum = 0;
+  for (int ithreads=0; ithreads < nThreads_; ++ithreads) threads_[ithreads]->start();
+  for (int ithreads=0; ithreads < nThreads_; ++ithreads){
+    if(threads_[ithreads]->isDone()) {
+      chi2sum += 0.5*threads_[ithreads]->chi2();
+    }
+  }
+  return chi2sum;
+}
+
+
+
+
+void Kalibri::run_Minimizer()
+{
+  // original from http://root.cern.ch/root/html/tutorials/fit/NumericalMinimization.C.html
+  // by L. Moneta Dec 2010
+  //
+  // create minimizer giving a name and a name (optionally) for the specific
+  // algorithm
+  // possible choices are: 
+  //     minName                  algoName
+  // Minuit /Minuit2             Migrad, Simplex,Combined,Scan  (default is Migrad)
+  //  Minuit2                     Fumili2
+  //  Fumili
+  //  GSLMultiMin                ConjugateFR, ConjugatePR, BFGS, 
+  //                              BFGS2, SteepestDescent
+  //  GSLMultiFit
+  //   GSLSimAn
+  //   Genetic
+  std::string minName = "Minuit2";
+  std::string algoName = "";
+  
+  ROOT::Math::Minimizer* min = 
+    ROOT::Math::Factory::CreateMinimizer(minName, algoName);
+
+  // set tolerance , etc...
+  min->SetMaxFunctionCalls(100* nIter_); // for Minuit/Minuit2 
+  min->SetMaxIterations(nIter_);  // for GSL 
+  min->SetTolerance(eps_);
+  min->SetPrintLevel(3);
+  
+  int npar = par_->numberOfParameters();
+
+  for( unsigned int loop = 0; loop < residualScalingScheme_.size() ; ++loop ) {
+    cout<<"Updating Di-Jet Errors"<<endl;
+    for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
+      (*it)->updateError();
+    }
+    if( par_->needsUpdate() ) par_->update();
+    // Setting function to scale residuals in chi2 calculation
+    cout << loop+1 << flush;
+    if(  loop+1 == 1  ) cout << "st" << flush;
+    else if(  loop+1 == 2  ) cout << "nd" << flush;
+    else if(  loop+1 == 3  ) cout << "rd" << flush;
+    else cout << "th" << flush;
+    cout << " of " << residualScalingScheme_.size() <<" iteration(s)" << flush;
+    if( mode_ == 0 ) {
+      if(  residualScalingScheme_.at(loop) == 0  ) {
+	Event::scaleResidual = &Event::scaleNone;	
+	cout << ": no scaling of residuals." << endl;
+	
+	cout << "Rejecting outliers " << flush;
+	DataIter beg = partition(data_.begin(), data_.end(), OutlierRejection(outlierChi2Cut_));
+	for(DataIter i = beg ; i != data_.end() ; ++i) {
+	  delete *i;
+	}
+	data_.erase(beg,data_.end());
+	cout << "and using " << data_.size() << " events." << endl;
+      }
+      else if(  residualScalingScheme_.at(loop) == 1  ) {
+	Event::scaleResidual = &Event::scaleCauchy;	
+	cout << ": scaling of residuals with Cauchy-Function." << endl;
+      }
+      else if(  residualScalingScheme_.at(loop) == 2  ) {
+	Event::scaleResidual = &Event::scaleHuber;	
+	cout << ": scaling of residuals with Huber-Function." << endl;
+      }
+      else if(  residualScalingScheme_.at(loop) == 3  ) {
+	Event::scaleResidual = &Event::scaleTukey;	
+	cout << ": scaling of residuals a la Tukey." << endl;
+      }
+      else {
+	cerr << "ERROR: " << residualScalingScheme_.at(loop) << " is not a valid scheme for resdiual scaling! Breaking iteration!" << endl;
+	break;
+      }
+    } else {
+      std::cout << std::endl;
+    }
+    ROOT::Math::Functor f(this,&Kalibri::fitfunc,npar);
+    /* Initialize the parameters*/ 
+    min->SetFunction(f);
+    
+    // Set the free variables to be minimized!
+    for(int i = 0 ; i < npar ; ++i) {
+      TString spar("par");
+      spar += i;
+      min->SetVariable(i,spar.Data(),par_->parameters()[i], 0.1);
+    } 
+    for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
+	 iter != fixedJetPars_.end() ; ++ iter) {
+      TString spar("par");
+      spar += *iter;
+      min->SetFixedVariable(*iter,spar.Data(),par_->parameters()[*iter]);
+    }
+    for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
+	 iter != fixedGlobalJetPars_.end() ; ++ iter) {
+      TString spar("par");
+      spar += *iter;
+      min->SetFixedVariable(*iter,spar.Data(),par_->parameters()[*iter]);
+    }
+    int n = 0;
+    for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
+      threads_[n]->addData(*it);
+      n++;
+      if(n == nThreads_) n = 0;
+    }
+    min->Minimize(); 
+ 
+    const double *xs = min->X();
+    for(int i = 0 ; i < npar ; ++i) {
+      par_->parameters()[i] = xs[i];
+      if((i > 1) && (i%3 == 0)) std::cout << '\n';
+      std::cout << std::setw(10) << i << std::setw(15) << xs[i];
+    }
+    std::cout << '\n';
+    for (int ithreads=0; ithreads<nThreads_; ++ithreads){
+      threads_[ithreads]->clearData();
+    }  
+  }
+}
+
 void Kalibri::run_lbfgs()
 {
   //please see http://www.chokkan.org/software/liblbfgs/
@@ -431,7 +580,6 @@ void Kalibri::run_lbfgs()
   }
   lbfgs_free(x); 
 }
-
 
 
 // -----------------------------------------------------------------
