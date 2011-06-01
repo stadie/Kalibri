@@ -1,4 +1,4 @@
-// $Id: ControlPlotsResolution.cc,v 1.20 2010/09/24 10:38:15 mschrode Exp $
+// $Id: ControlPlotsResolution.cc,v 1.1 2011/05/26 07:42:52 mschrode Exp $
 
 #include "ControlPlotsResolution.h"
 
@@ -66,8 +66,8 @@ ControlPlotsResolution::ControlPlotsResolution(const std::string& configfile, co
   while( static_cast<int>(scale_.size()) < param_->numberOfParameters() ) scale_.push_back(1.);    
 
   // MC Truth resolution
-  truthPar_ = bag_of<double>(config_->read<string>("plots true resolution parameters",""));
-  std::string formula = config_->read<std::string>("plots true resolution formula","");
+  truthPar_ = bag_of<double>(config_->read<string>("plots true resolution parameters","3.8663  0.728714  0.  0.224013"));
+  std::string formula = config_->read<std::string>("plots true resolution formula","sqrt(((TMath::Sign(1,[0])*sq([0]/x))+(sq([1])*(x^([3]-1))))+sq([2]))");
   truthRes_ = new TF1("ControlPlotsResolution::truthRes",formula.c_str(),0.1,1500.);
   if( truthRes_->GetNpar() != static_cast<int>(truthPar_.size()) ) {
     std::cerr << "ERROR: Number of truth parameters does not match parametrization" << std::endl;
@@ -194,6 +194,8 @@ void ControlPlotsResolution::plotResponse() const
   std::vector<TH2*> hPtJet1vs2(param_->nPtBins());
   std::vector<TH1*> hEta(param_->nPtBins());
   std::vector<TH1*> hDeltaPhi12(param_->nPtBins());
+  std::vector<TH1*> hNumPU(param_->nPtBins());
+  std::vector<TH1*> hWeights(param_->nPtBins());
 
   TH1* hTruthPDFErrStat = 0;      // Truth pdf
   TH1* hPtGenAbs = 0;         // PtGen spectrum
@@ -311,6 +313,7 @@ void ControlPlotsResolution::plotResponse() const
     hPtAveAbsBins[ptBin]->SetMarkerStyle(20);
     hPtAveAbsBins[ptBin]->GetXaxis()->SetNdivisions(505);
     hPtAveAbsBins[ptBin]->SetLineWidth(2);
+    hPtAveAbsBins[ptBin]->Sumw2();
 
     name = "hPtGen_" + toString(ptBin);
     hPtGenBins[ptBin] = static_cast<TH1D*>(hPtGenAbsBins[ptBin]->Clone(name.c_str()));
@@ -411,6 +414,7 @@ void ControlPlotsResolution::plotResponse() const
     hPtJet1[ptBin]->SetMarkerStyle(20);
     hPtJet1[ptBin]->GetXaxis()->SetNdivisions(505);
     hPtJet1[ptBin]->SetLineWidth(2);
+    hPtJet1[ptBin]->Sumw2();
     setColor(hPtJet1[ptBin],2);
 
     name = "hPtJet2_" + toString(ptBin);
@@ -437,12 +441,19 @@ void ControlPlotsResolution::plotResponse() const
     hEta[ptBin] = new TH1D(name.c_str(),titleBins_[ptBin]+";#eta;Jets",101,-5.1,5.1);
 
     name = "hDeltaPhi12_" + toString(ptBin);
-    hDeltaPhi12[ptBin] = new TH1D(name.c_str(),title_[ptBin]+";|#Delta#phi_{12}|;Events",100,0.,3.2);
+    hDeltaPhi12[ptBin] = new TH1D(name.c_str(),titleBins_[ptBin]+";|#Delta#phi_{12}|;Events",100,0.,3.2);
+
+    name = "hNumPU_" + toString(ptBin);
+    hNumPU[ptBin] = new TH1D(name.c_str(),titleBins_[ptBin]+";N(PU Vertices);Events",40,0,40);
+
+    name = "hWeights_" + toString(ptBin);
+    hWeights[ptBin] = new TH1D(name.c_str(),titleBins_[ptBin]+";Weight;Events",1000,0.,50.);
   }
 
 
   hPtGenAbs = new TH1D("hPtGenAbs",title_+";p^{gen}_{T} (GeV);dN / dp^{gen}_{T}  1 / (GeV)",
 		       120,0.8*param_->ptTrueMin(),1.1*param_->ptTrueMax());
+  //500,0.8*param_->ptTrueMin(),1.1*param_->ptTrueMax());
   hPtGenAbs->SetMarkerStyle(20);
   hPtGenAbs->GetXaxis()->SetNdivisions(505);
   hPtGenAbs->SetLineWidth(2);
@@ -526,6 +537,8 @@ void ControlPlotsResolution::plotResponse() const
       hPtJet3Rel[bin]->Fill(dijet->ptJet3()/dijet->ptRef(),weight);
       hDeltaPtJet12[bin]->Fill(0.5*std::abs(dijet->jet1()->pt()-dijet->jet2()->pt()),weight);
       hDeltaPhi12[bin]->Fill(dijet->deltaPhi12(),weight);
+      hNumPU[bin]->Fill(dijet->nPU());
+      hWeights[bin]->Fill(weight);
       
       // Pt asymmetry variables
       const Jet *j1 = dijet->jet1();
@@ -1214,6 +1227,8 @@ void ControlPlotsResolution::plotResponse() const
     rootfile.WriteTObject(hTruthPDF[ptBin]);
     rootfile.WriteTObject(hEta[ptBin]);
     rootfile.WriteTObject(hDeltaPhi12[ptBin]);
+    rootfile.WriteTObject(hWeights[ptBin]);
+    rootfile.WriteTObject(hNumPU[ptBin]);
   }
   rootfile.WriteTObject(hPtGenAbs);
   rootfile.WriteTObject(hPtGen);
@@ -1277,6 +1292,8 @@ void ControlPlotsResolution::plotResponse() const
     delete hTruthPDF[ptBin];
     delete hEta[ptBin];
     delete hDeltaPhi12[ptBin];
+    delete hWeights[ptBin];
+    delete hNumPU[ptBin];
   }
   delete hPtGenAbs;
   delete hPtGen;
@@ -2492,27 +2509,9 @@ void ControlPlotsResolution::plotMeanResponseAndResolution() const {
   // ----- Create histograms -----
 
   // Response vs ptgen
+  // Default binning for MC truth plots
   std::vector<double> bins(35+1);
   equidistLogBins(bins,35,4.,2700.);
-  //  equidistLogBins(bins,35,param_->ptTrueMin(),param_->ptTrueMax());
-//    std::vector<double> bins;
-//    bins.push_back(43);
-//    bins.push_back(55);
-//    bins.push_back(70);
-//    bins.push_back(85);
-//    bins.push_back(100);
-//    bins.push_back(115);
-//    bins.push_back(130);
-//    bins.push_back(150);
-//    bins.push_back(170);
-//    bins.push_back(190);
-//    bins.push_back(220);
-//    bins.push_back(250);
-//    bins.push_back(300);
-//    bins.push_back(350);
-//    bins.push_back(400);
-//    bins.push_back(500);
-//    bins.push_back(1000);
 
   TH2* hRespVsPtGen = new TH2D("MeanResp_hRespVsPtGen",
 			       ";p^{gen}_{T} (GeV);p^{rec}_{T} / p^{gen}_{T}",
