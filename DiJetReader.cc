@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.73 2011/05/26 11:32:04 mschrode Exp $
+//    $Id: DiJetReader.cc,v 1.74 2011/05/26 12:14:40 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1427,8 +1427,8 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 CorFactors* DiJetReader::createCorFactors(int jetid) const 
 {
   return new CorFactors(nJet_->JetCorrL1[jetid], // L1
-			nJet_->JetCorrL2[jetid],  // L2
-			nJet_->JetCorrL2L3[jetid]/nJet_->JetCorrL2[jetid],  // nJet_->JetCorrL3[jetid],  // L3
+			nJet_->JetCorrL2[jetid], // L2
+			nJet_->JetCorrL3[jetid], // L3
 			nJet_->JetCorrL2L3[jetid]/nJet_->JetCorrL1[jetid]/nJet_->JetCorrL2[jetid]/nJet_->JetCorrL3[jetid], // Residual
 			nJet_->JetCorrL4JW[jetid],  // L4
 			1.,                         // L5
