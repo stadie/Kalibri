@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.21 2011/05/31 17:33:46 stadie Exp $
+//  $Id: Kalibri.cc,v 1.22 2011/06/03 12:56:58 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -140,6 +140,123 @@ public:
 };
 
 
+double Kalibri::eval(const double* x, double *f1, double *f2)
+{
+  double fsum = 0.0;
+  const int npar = par_->numberOfParameters();
+
+  for(int param=0; param< npar ; ++param) {
+    temp_derivative1_[param]=0.0;
+    temp_derivative2_[param]=0.0;
+    temp_derivative3_[param]=0.0;
+    temp_derivative4_[param]=0.0;
+    par_->parameters()[param] = x[param]; 
+  }
+  if(f1) {
+    //computed step sizes for derivative calculation
+    if(printParNDeriv_) std::cout << "new par:\n";
+    for(int param = 0 ; param < npar ; ++param) {
+      if(printParNDeriv_)  {
+	std::cout << std::setw(5) << param;
+	std::cout << std::setw(15) << par_->parameters()[param];
+      } 
+      epsilon_[param] =  derivStep_ * std::abs(par_->parameters()[param]);
+      if( epsilon_[param] <= derivStep_ )  epsilon_[param] = derivStep_;
+      volatile double temp = par_->parameters()[param] + epsilon_[param];
+      //volatile double temp2 = k->par_->parameters()[param] + k->epsilon_[param];
+      epsilon_[param] = temp - par_->parameters()[param];
+    }
+    if(printParNDeriv_) std::cout << std::endl;
+  } else {
+    for(int param = 0 ; param < npar ; ++param) {
+      epsilon_[param] = 0;
+    }
+  }
+  //use zero step for fixed pars
+  for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
+       iter != fixedJetPars_.end() ; ++ iter) {
+    epsilon_[*iter] = 0;
+  } 
+  for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
+       iter != fixedGlobalJetPars_.end() ; ++ iter) {
+    epsilon_[*iter] = 0;
+  }
+
+  for (int ithreads=0; ithreads < nThreads_; ++ithreads) threads_[ithreads]->start();
+  for (int ithreads=0; ithreads < nThreads_; ++ithreads){
+    if(threads_[ithreads]->isDone()) {
+      fsum += threads_[ithreads]->chi2();
+      if(f1) {
+	for (int param=0 ; param < npar ; ++param) {
+	  assert(threads_[ithreads]->tempDeriv1(param) == threads_[ithreads]->tempDeriv1(param));
+	  temp_derivative1_[param] += threads_[ithreads]->tempDeriv1(param);
+	  temp_derivative2_[param] += threads_[ithreads]->tempDeriv2(param);
+	  temp_derivative3_[param] += threads_[ithreads]->tempDeriv3(param);
+	  temp_derivative4_[param] += threads_[ithreads]->tempDeriv4(param);
+	}
+      }
+    }
+  }
+  /* might not be necessary????
+  for( std::vector<int>::const_iterator iter = k->fixedGlobalJetPars_.begin();
+       iter != k->fixedGlobalJetPars_.end() ; ++ iter) {
+    temp_derivative1_[*iter] = 0;
+    temp_derivative2_[*iter] = 0;
+    temp_derivative3_[*iter] = 0;
+    temp_derivative4_[*iter] = 0;
+  }
+  */
+  fsum *= 0.5;//lvmini uses log likelihood not chi2
+  if(f1) {
+    //fast derivative calculation:
+    for( int param = 0 ; param < npar ; ++param ) {
+      //std::cout << "hier:" << step << " " << k->epsilon_[param] << " " 
+      //	      << k->temp_derivative1_[param] << '\n';
+      if(epsilon_[param] > 0) {
+	if(temp_derivative3_[param]) { 
+	  //f'(x) \approx \frac{-f(x+2 h)+8 f(x+h)-8 f(x-h)+f(x-2h)}{12 h} 
+	  f1[param] = 0.5*(8*temp_derivative1_[param]-
+			   temp_derivative3_[param])/(12 * epsilon_[param]);
+	} else {
+	  f1[param] = 0.5 * temp_derivative1_[param]/(2.0*epsilon_[param]);
+	}
+	if(f2) {
+	  if(temp_derivative4_[param]) { 
+	    f2[param] = 0.5*(16*temp_derivative2_[param]-temp_derivative4_[param])/(12*epsilon_[param]*epsilon_[param]);
+	  } else {
+	    f2[param] = 0.5 * temp_derivative2_[param]/(epsilon_[param]*epsilon_[param]);
+	  } 
+	}
+      } else {
+	f1[param] = 0;
+	if(f2) f2[param] = 0;
+      }
+      if(f1[param] != f1[param]) {
+	std::cout << "bad derivative: par = " << param << " td = " << temp_derivative1_[param] << " epsilon = " << epsilon_[param] << '\n';
+      }
+      assert(f1[param] == f1[param]);
+    }
+    //print derivatives:
+    if(printParNDeriv_) {
+      std::cout << std::setw(5) << "\npar";
+      std::cout << std::setw(15) << "p";
+      std::cout << std::setw(15) << "dp/dx";
+      std::cout << std::setw(15) << "d^2p/dx^2\n";
+      for( int param = 0 ; param < npar ; ++param ) {
+	std::cout << std::setw(5) << param;
+	std::cout << std::setw(15) << par_->parameters()[param];
+	std::cout << std::setw(15) << f1[param] 
+		  << std::setw(15) << (f2 ? f2[param] : 0) << std::endl;
+      }
+      std::cout << "fsum:" << fsum << std::endl;
+    }
+  }
+  assert( fsum > 0 );
+  return fsum;
+}
+
+
+
 //--------------------------------------------------------------------------------------------
 void Kalibri::run()
 {
@@ -159,7 +276,7 @@ void Kalibri::run()
       std::cout << "Warning: No events to perform the fit!\n";
       return;
     } 
-    if((fitMethod_==1) || (fitMethod_==0) || (fitMethod_==-1)) {
+    if((fitMethod_==1) || (fitMethod_==0) || (fitMethod_==-1) || (fitMethod_==-2)) {
       int npar = par_->numberOfParameters();
       epsilon_ = new double[npar];
       temp_derivative1_ = new double[npar];
@@ -245,96 +362,7 @@ lbfgsfloatval_t Kalibri::lbfgs_evaluate(void *instance,
 {
   Kalibri *k = static_cast<Kalibri*>(instance);
 
-  lbfgsfloatval_t fsum = 0.0;
-   
-  for (int param=0; param< npar ; ++param) {
-    k->temp_derivative1_[param]=0.0;
-    k->temp_derivative2_[param]=0.0;
-    k->temp_derivative3_[param]=0.0;
-    k->temp_derivative4_[param]=0.0;
-  } 
-  //computed step sizes for derivative calculation
-  if(k->printParNDeriv_) std::cout << "new par:\n";
-  for(int param = 0 ; param < npar ; ++param) {
-    k->par_->parameters()[param] = x[param]; 
-    if(k->printParNDeriv_)  {
-      std::cout << std::setw(5) << param;
-      std::cout << std::setw(15) << k->par_->parameters()[param];
-    } 
-    k->epsilon_[param] =  k->derivStep_ * std::abs( k->par_->parameters()[param]);
-    if( k->epsilon_[param] <= k->derivStep_)  k->epsilon_[param] = k->derivStep_;
-    volatile double temp = k->par_->parameters()[param] + k->epsilon_[param];
-    //volatile double temp2 = k->par_->parameters()[param] + k->epsilon_[param];
-    k->epsilon_[param] = temp - k->par_->parameters()[param];
-  }
-  if(k->printParNDeriv_) std::cout << std::endl;
-  //use zero step for fixed pars
-  for( std::vector<int>::const_iterator iter = k->fixedJetPars_.begin();
-       iter != k->fixedJetPars_.end() ; ++ iter) {
-    k->epsilon_[*iter] = 0;
-  } 
-  for( std::vector<int>::const_iterator iter = k->fixedGlobalJetPars_.begin();
-       iter != k->fixedGlobalJetPars_.end() ; ++ iter) {
-    k->epsilon_[*iter] = 0;
-  }
-
-  for (int ithreads=0; ithreads < k->nThreads_; ++ithreads) k->threads_[ithreads]->start();
-  for (int ithreads=0; ithreads < k->nThreads_; ++ithreads){
-    if(k->threads_[ithreads]->isDone()) {
-      fsum += k->threads_[ithreads]->chi2();
-      for (int param=0 ; param < npar ; ++param) {
-	assert(k->threads_[ithreads]->tempDeriv1(param) == k->threads_[ithreads]->tempDeriv1(param));
-	k->temp_derivative1_[param] += k->threads_[ithreads]->tempDeriv1(param);
-	k->temp_derivative2_[param] += k->threads_[ithreads]->tempDeriv2(param);
-	k->temp_derivative3_[param] += k->threads_[ithreads]->tempDeriv3(param);
-	k->temp_derivative4_[param] += k->threads_[ithreads]->tempDeriv4(param);
-      }
-    }
-  }
-  for( std::vector<int>::const_iterator iter = k->fixedGlobalJetPars_.begin();
-       iter != k->fixedGlobalJetPars_.end() ; ++ iter) {
-    k->temp_derivative1_[*iter] = 0;
-    k->temp_derivative2_[*iter] = 0;
-    k->temp_derivative3_[*iter] = 0;
-    k->temp_derivative4_[*iter] = 0;
-  }
-  fsum *= 0.5;//lvmini uses log likelihood not chi2
-  //fast derivative calculation:
-  for( int param = 0 ; param < npar ; ++param ) {
-    //std::cout << "hier:" << step << " " << k->epsilon_[param] << " " 
-    //	      << k->temp_derivative1_[param] << '\n';
-    if(k->epsilon_[param] > 0) {
-      if(k->temp_derivative3_[param]) { 
-	//f'(x) \approx \frac{-f(x+2 h)+8 f(x+h)-8 f(x-h)+f(x-2h)}{12 h} 
-	g[param] = 0.5*(8*k->temp_derivative1_[param]-
-			k->temp_derivative3_[param])/(12 * k->epsilon_[param]);
-      } else {
-	g[param]      = 0.5 * k->temp_derivative1_[param]/(2.0*k->epsilon_[param]);
-      }
-    } else {
-      g[param] = 0;
-    }
-    if(g[param] != g[param]) {
-      std::cout << "bad derivative: par = " << param << " td = " << k->temp_derivative1_[param] << " epsilon = " << k->epsilon_[param] << '\n';
-    }
-    assert(g[param] == g[param]);
-  }
-  //print derivatives:
-  if(k->printParNDeriv_) {
-    std::cout << std::setw(5) << "\npar";
-    std::cout << std::setw(15) << "p";
-    std::cout << std::setw(15) << "dp/dx";
-    std::cout << std::setw(15) << "d^2p/dx^2\n";
-    for( int param = 0 ; param < npar ; ++param ) {
-      std::cout << std::setw(5) << param;
-      std::cout << std::setw(15) << k->par_->parameters()[param];
-      std::cout << std::setw(15) << g[param] 
-		<< std::setw(15) << 0 << std::endl;
-    }
-    std::cout << "fsum:" << fsum << std::endl;
-  }
-  assert( fsum > 0 );
-  return fsum;
+  return k->eval(x,g);
 }
 
 int Kalibri::lbfgs_progress(void *instance,
@@ -351,23 +379,6 @@ int Kalibri::lbfgs_progress(void *instance,
 	    << std::setw(20) << step << '\n';
   std::cout << std::setprecision(5);
   return 0;
-}
-
-double Kalibri::fitfunc(const double* par)
-{
-  unsigned int npar = par_->numberOfParameters();
-  for(unsigned int i = 0 ; i <  npar; ++i) {
-    par_->parameters()[i] = par[i];
-    epsilon_[i] = 0;
-  }
-  double chi2sum = 0;
-  for (int ithreads=0; ithreads < nThreads_; ++ithreads) threads_[ithreads]->start();
-  for (int ithreads=0; ithreads < nThreads_; ++ithreads){
-    if(threads_[ithreads]->isDone()) {
-      chi2sum += 0.5*threads_[ithreads]->chi2();
-    }
-  }
-  return chi2sum;
 }
 
 void Kalibri::stressTest()
@@ -462,79 +473,22 @@ void Kalibri::stressTest()
   //nThreads_ = 2;
   std::cout << "Now with " << nThreads_ << " threads\n";
   int n = 0;
-  double h = derivStep_;
+  const double h = derivStep_;
   for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
     threads_[n]->addData(*it);
     n++;
     if(n == nThreads_) n = 0;
   }
   for(int i  = 0 ; i < 3*N ; ++i) {
-    for(int j = 0 ; j < npar ; ++j) {
-      temp_derivative1_[j]=0.0;
-      temp_derivative2_[j]=0.0;
-      temp_derivative3_[j]=0.0;
-      temp_derivative4_[j]=0.0;
-    }
-    if(i ==  N-1) {
-      h = derivStep_/2;
+    if(i ==  N) {
+      derivStep_ = h/2;
       std::cout << "changing  derivStep from " << derivStep_ << " to " << h << '\n';
-      for(int j = 0 ; j < npar ; ++j) {
-	epsilon_[j] =  h * std::abs(par_->parameters()[j]);
-	if( epsilon_[j] <= h) epsilon_[j] = h;
-	volatile double temp = par_->parameters()[j] + epsilon_[j];
-	//volatile double temp2 = k->par_->parameters()[i] + k->epsilon_[i];
-	epsilon_[j] = temp - par_->parameters()[j]; 
-      }
     } 
-    if(i ==  2*N-1) {
-      h = derivStep_*2;
+    if(i ==  2*N) {
+      derivStep_ = h * 2;
       std::cout << "changing  derivStep from " << derivStep_ << " to " << h << '\n';
-      for(int j = 0 ; j < npar ; ++j) {
-	epsilon_[j] =  h * std::abs(par_->parameters()[j]);
-	if( epsilon_[j] <= h) epsilon_[j] = h;
-	volatile double temp = par_->parameters()[j] + epsilon_[j];
-	//volatile double temp2 = k->par_->parameters()[i] + k->epsilon_[i];
-	epsilon_[j] = temp - par_->parameters()[j]; 
-      }
-    }  
-    for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
-	 iter != fixedJetPars_.end() ; ++ iter) {
-      epsilon_[*iter] = 0;
-    } 
-    for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
-	 iter != fixedGlobalJetPars_.end() ; ++ iter) {
-      epsilon_[*iter] = 0;
-    }
-    tempchi2 = 0;  
-    for (int ithreads=0; ithreads < nThreads_; ++ithreads) threads_[ithreads]->start();
-    for (int ithreads=0; ithreads < nThreads_; ++ithreads){
-      if(threads_[ithreads]->isDone()) {
-	tempchi2 += threads_[ithreads]->chi2();
-	for (int param=0 ; param < npar ; ++param) { 
-	  assert(threads_[ithreads]->tempDeriv1(param) == threads_[ithreads]->tempDeriv1(param));
-	  temp_derivative1_[param] += threads_[ithreads]->tempDeriv1(param);
-	  temp_derivative2_[param] += threads_[ithreads]->tempDeriv2(param);
-	  temp_derivative3_[param] += threads_[ithreads]->tempDeriv3(param);
-	  temp_derivative4_[param] += threads_[ithreads]->tempDeriv4(param);
-	}
-      }
-    }
-    tempchi2 *= 0.5;
-    for(int j = 0 ; j < npar ; ++j) {
-      tempt1[j] = temp_derivative1_[j];
-      if(epsilon_[j] == 0) {
-	tempf1[j] = 0;
-	tempf2[j] = 0;
-	continue;
-      }
-      if( temp_derivative3_[j] ) {
-	tempf1[j] = 0.5*(8*temp_derivative1_[j]-temp_derivative3_[j])/(12*epsilon_[j]);
-	tempf2[j] = 0.5*(16*temp_derivative2_[j]-temp_derivative4_[j])/(12*epsilon_[j]*epsilon_[j]);
-      } else {
-	tempf1[j] = 0.5 * temp_derivative1_[j]/(2.0*epsilon_[j]);
-	tempf2[j] = 0.5 * temp_derivative2_[j]/(epsilon_[j]*epsilon_[j]);
-      } 
-    }
+    }     
+    tempchi2 = eval(par_->parameters(),tempf1,tempf2);
     //compare results
     
     std::cout << " Trial: " << std::setw(4) << i << " chi2 rel. diff:" <<  std::setw(15) << (chi2 - tempchi2)/chi2 << '\n';
@@ -546,6 +500,7 @@ void Kalibri::stressTest()
     }
     std::cout << '\n';
   }
+  derivStep_ = h;
   Parameters::removeClone(par2);
   delete [] f1;
   delete [] f2;
@@ -630,7 +585,7 @@ void Kalibri::run_Minimizer()
     } else {
       std::cout << std::endl;
     }
-    ROOT::Math::Functor f(this,&Kalibri::fitfunc,npar);
+    ROOT::Math::Functor f(this,&Kalibri::eval,npar);
     /* Initialize the parameters*/ 
     min->SetFunction(f);
     
@@ -859,93 +814,7 @@ void Kalibri::run_Lvmini()
       if(n == nThreads_) n = 0;
     }
     do {
-      //set storage for temporary derivative storage to zero
-      for (int param=0; param< npar ; ++param) {
-	temp_derivative1_[param]=0.0;
-	temp_derivative2_[param]=0.0;
-	temp_derivative3_[param]=0.0;
-	temp_derivative4_[param]=0.0;
-      } 
-      //computed step sizes for derivative calculation
-      if(printParNDeriv_) std::cout << "new par:\n";
-      for(int param = 0 ; param < npar ; ++param) {
-	if(printParNDeriv_)  {
-	  std::cout << std::setw(5) << param;
-	  std::cout << std::setw(15) << par_->parameters()[param];
-	}
-	epsilon_[param] = derivStep_ * std::abs(par_->parameters()[param]);
-	if(epsilon_[param] < derivStep_ ) epsilon_[param] = derivStep_;
-	volatile double temp = par_->parameters()[param] + epsilon_[param];
-	epsilon_[param] = temp - par_->parameters()[param];
-      }
-      if(printParNDeriv_) std::cout << std::endl;
-      //use zero step for fixed pars
-      for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
-	   iter != fixedJetPars_.end() ; ++ iter) {
-	epsilon_[*iter] = 0;
-      }
-      fsum = 0;
-      for (int ithreads=0; ithreads<nThreads_; ++ithreads) threads_[ithreads]->start();
-      for (int ithreads=0; ithreads<nThreads_; ++ithreads){
-	if(threads_[ithreads]->isDone()) {
-	  fsum += threads_[ithreads]->chi2();
-	  for (int param=0 ; param < npar ; ++param) {
-	    assert(threads_[ithreads]->tempDeriv1(param) == threads_[ithreads]->tempDeriv1(param));
-	    temp_derivative1_[param] += threads_[ithreads]->tempDeriv1(param);
-	    temp_derivative2_[param] += threads_[ithreads]->tempDeriv2(param);
-	    temp_derivative3_[param] += threads_[ithreads]->tempDeriv3(param);
-	    temp_derivative4_[param] += threads_[ithreads]->tempDeriv4(param);
-	  }
-	}
-      }
-      for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
-	   iter != fixedGlobalJetPars_.end() ; ++ iter) {
-	temp_derivative1_[*iter] = 0;
-	temp_derivative2_[*iter] = 0;
-	temp_derivative3_[*iter] = 0;
-	temp_derivative4_[*iter] = 0;
-      }
-      fsum *= 0.5;//lvmini uses log likelihood not chi2
-      //fast derivative calculation:
-      for( int param = 0 ; param < npar ; ++param ) {
-	if(epsilon_[param] > 0) {
-	  if(temp_derivative3_[param]) {
-	    //f'(x) \approx \frac{-f(x+2 h)+8 f(x+h)-8 f(x-h)+f(x-2h)}{12 h} 
-	    aux[param] = 0.5*(8*temp_derivative1_[param]-
-			      temp_derivative3_[param])/(12*epsilon_[param]);
-	    aux[param+npar] = 0.5*(16*temp_derivative2_[param]-
-				   temp_derivative4_[param])/
-	      (12*epsilon_[param]*epsilon_[param]);
-	  } else {
-	    aux[param]      = 0.5 * temp_derivative1_[param]/(2.0*epsilon_[param]);
-	    aux[param+npar] = 0.5 * temp_derivative2_[param]/(epsilon_[param]*epsilon_[param]);
-	  }
-	} else {
-	  aux[param] = 0;
-	  aux[param+npar] = 0;
-	}
-	if(aux[param] != aux[param]) {
-	  std::cout << "bad derivative: par = " << param << " td = " << temp_derivative1_[param] << " epsilon_ = " << epsilon_[param] << '\n';
-	}
- 	assert(aux[param] == aux[param]);
- 	assert(aux[param+npar] == aux[param+npar]);
-      }
-      //lvmout_(npar,mvec_,aux);
-      //print derivatives:
-      if(printParNDeriv_) {
-	std::cout << std::setw(5) << "\npar";
-	std::cout << std::setw(15) << "p";
-	std::cout << std::setw(15) << "dp/dx";
-	std::cout << std::setw(15) << "d^2p/dx^2\n";
-	for( int param = 0 ; param < npar ; ++param ) {
-	  std::cout << std::setw(5) << param;
-	  std::cout << std::setw(15) << par_->parameters()[param];
-	  std::cout << std::setw(15) << aux[param];
-	  std::cout << std::setw(15) << aux[param+npar] << std::endl;
-	}
-	std::cout << "fsum:" << fsum << std::endl;
-      }
-      assert( fsum > 0 );
+      fsum = eval(par_->parameters(),aux,aux+npar);
       lvmfun_(par_->parameters(),fsum,iret,aux);
       //lvmout_(npar,mvec_,aux);
     } while (iret<0); 
