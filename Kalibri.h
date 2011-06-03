@@ -1,4 +1,4 @@
-//  $Id: Kalibri.h,v 1.9 2011/05/31 15:49:04 stadie Exp $
+//  $Id: Kalibri.h,v 1.10 2011/05/31 17:33:46 stadie Exp $
 
 //!  \mainpage
 //!
@@ -53,7 +53,7 @@ class ComputeThread;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Kalibri.h,v 1.9 2011/05/31 15:49:04 stadie Exp $
+//!  $Id: Kalibri.h,v 1.10 2011/05/31 17:33:46 stadie Exp $
 // -----------------------------------------------------------------
 class Kalibri {
 public :
@@ -81,6 +81,7 @@ protected:
   void run_Lvmini();  //!< Run the fit
   void run_lbfgs();   //!< Run the fit
   void run_Minimizer();   //!< Run the fit
+  void stressTest(); //!< Check the math
 
   double fitfunc(const double *pars);
 

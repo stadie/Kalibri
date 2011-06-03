@@ -17,8 +17,8 @@ Mode = 0
 
 
 #---------------------------------------------------------------------------------
-#Fit method: lbfgs = 0, LVMini=1, use existing calibration=2, write start values=3
-Fit method = 1
+#Fit method: Stresstest = 0, Minuit = -2, lbfgs = -1, LVMini=1, use existing calibration=2, write start values=3
+Fit method = 0
 #Parametrization
 Parametrization Class = L2L3JetParametrization
 
@@ -35,7 +35,7 @@ global jet start values =  0.981669 4.16531 3.03254 2.0096
 Residual Scaling Scheme    = 111 #   221 : default
 Outlier Cut on Chi2        = 1000.0 # Applied before each iteration with no scaling
 
-BFGS derivative step     = 5.2e-06
+BFGS derivative step     = 1e-02 #5.2e-06
 BFGS mvec                = 12
 BFGS niter               = 1000
 BFGS eps                 = 1e-04

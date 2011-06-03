@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.20 2011/05/31 15:49:04 stadie Exp $
+//  $Id: Kalibri.cc,v 1.21 2011/05/31 17:33:46 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -80,20 +80,20 @@ private:
       	//std::cout << "start Thread for " << parent_ << "  " 
 	//	  << parent_->data_changed_ << " " << parent_->mypar_->parameters() << std::endl;
       }   
-      if(parent_->data_changed_) {
-	for (DataIter it=parent_->data_.begin() ; it!= parent_->data_.end() ; ++it) {
-	  (*it)->setParameters(parent_->mypar_);
-	} 
-	parent_->data_changed_ = false;
-      }
-      for (int param = 0 ; param < parent_->npar_ ; ++param) {
+      for(int param = 0 ; param < parent_->npar_ ; ++param) {
 	parent_->td1_[param]= 0.0;
 	parent_->td2_[param]= 0.0;
 	parent_->td3_[param]= 0.0;
 	parent_->td4_[param]= 0.0;
 	parent_->mypar_->parameters()[param] = parent_->parorig_->parameters()[param];
       }
-      parent_->chi2_ =0.0;   
+      if(parent_->data_changed_) {
+	for (DataIter it=parent_->data_.begin() ; it!= parent_->data_.end() ; ++it) {
+	  (*it)->setParameters(parent_->mypar_);
+	} 
+	parent_->data_changed_ = false;
+      }
+      parent_->chi2_ = 0;   
       for (DataIter it=parent_->data_.begin() ; it != parent_->data_.end() ; ++it) { 
 	//boost::mutex::scoped_lock lock(io_mutex);
 	parent_->chi2_ += (*it)->chi2_fast(parent_->td1_, parent_->td2_, parent_->td3_, parent_->td4_, parent_->epsilon_);
@@ -172,9 +172,13 @@ void Kalibri::run()
       if(fitMethod_==1) 
 	cout << " with LVMINI.\n";
       else if(fitMethod_==-1) 
+	cout << " with lbfgs.\n";
+      else if(fitMethod_==0) 
+	cout << " stressTest.\n";
+      else if(fitMethod_==-2) 
 	cout << " with ROOT::Minimizer.\n";
       else 
-	cout << " with lbfgs.\n"; 
+	cout << "\n"; 
       cout << "Using " << data_.size() << " total events and ";
       cout << nThreads_ << " threads.\n";
       
@@ -199,10 +203,14 @@ void Kalibri::run()
 	time_t end = time(0);
 	cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
       } else if(fitMethod_==0) {
-	run_lbfgs();
+	stressTest();
 	time_t end = time(0);
 	cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
       } else if(fitMethod_==-1) {
+	run_lbfgs();
+	time_t end = time(0);
+	cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
+      } else if(fitMethod_==-2) {
 	run_Minimizer();
 	time_t end = time(0);
 	cout << "Done, fitted " << par_->numberOfParameters() << " parameters in " << difftime(end,start) << " sec." << endl;
@@ -263,6 +271,10 @@ lbfgsfloatval_t Kalibri::lbfgs_evaluate(void *instance,
   //use zero step for fixed pars
   for( std::vector<int>::const_iterator iter = k->fixedJetPars_.begin();
        iter != k->fixedJetPars_.end() ; ++ iter) {
+    k->epsilon_[*iter] = 0;
+  } 
+  for( std::vector<int>::const_iterator iter = k->fixedGlobalJetPars_.begin();
+       iter != k->fixedGlobalJetPars_.end() ; ++ iter) {
     k->epsilon_[*iter] = 0;
   }
 
@@ -358,7 +370,188 @@ double Kalibri::fitfunc(const double* par)
   return chi2sum;
 }
 
+void Kalibri::stressTest()
+{
+  const int N = 2;
+  
+  double chi2 = 0, tempchi2 = 0;
+  const int npar = par_->numberOfParameters();
+  double *f1 = new double[npar];
+  double *f2 = new double[npar];
+  double *tempf1 = new double[npar];
+  double *tempf2 = new double[npar];
+  double *t1 = new double[npar];
+  double *tempt1 = new double[npar];
+  //second parameter object
+  Parameters* par2=par_->clone();
 
+  //set epsilons
+  for(int i = 0 ; i < npar ; ++i) {
+    epsilon_[i] =  derivStep_ * std::abs(par_->parameters()[i]);
+    if( epsilon_[i] <= derivStep_) epsilon_[i] = derivStep_;
+    volatile double temp = par_->parameters()[i] + epsilon_[i];
+    //volatile double temp2 = k->par_->parameters()[i] + k->epsilon_[i];
+    epsilon_[i] = temp - par_->parameters()[i]; 
+    par2->parameters()[i] = par_->parameters()[i];
+  };
+  for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
+       iter != fixedJetPars_.end() ; ++ iter) {
+    epsilon_[*iter] = 0;
+  } 
+  for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
+       iter != fixedGlobalJetPars_.end() ; ++ iter) {
+    epsilon_[*iter] = 0;
+  }
+  for (DataIter it=data_.begin() ; it != data_.end() ; ++it) { 
+    (*it)->setParameters(par_);
+  }
+  // no threads
+  for(int i  = 0 ; i < 2*N ; ++i) {
+    if(i == N/2) {
+      std::cout << "changing parameter object:\n";
+      for (DataIter it=data_.begin() ; it != data_.end() ; ++it) { 
+	(*it)->setParameters(par2);
+      }
+    }
+    for(int j = 0 ; j < npar ; ++j) {
+       temp_derivative1_[j]=0.0;
+       temp_derivative2_[j]=0.0;
+       temp_derivative3_[j]=0.0;
+       temp_derivative4_[j]=0.0;
+    }
+    tempchi2 = 0;
+    for (DataIter it=data_.begin() ; it != data_.end() ; ++it) { 
+      tempchi2 += (*it)->chi2_fast(temp_derivative1_, temp_derivative2_, temp_derivative3_, temp_derivative4_, epsilon_);
+    }
+    tempchi2 *= 0.5;
+    for(int j = 0 ; j < npar ; ++j) {
+      tempt1[j] = temp_derivative1_[j];
+      if(epsilon_[j] == 0) {
+	tempf1[j] = 0;
+	tempf2[j] = 0;
+	continue;
+      }
+      if( temp_derivative3_[j] ) {
+	tempf1[j] = 0.5*(8*temp_derivative1_[j]-temp_derivative3_[j])/(12*epsilon_[j]);
+	tempf2[j] = 0.5*(16*temp_derivative2_[j]-temp_derivative4_[j])/(12*epsilon_[j]*epsilon_[j]);
+      } else {
+	tempf1[j] = 0.5 * temp_derivative1_[j]/(2.0*epsilon_[j]);
+	tempf2[j] = 0.5 * temp_derivative2_[j]/(epsilon_[j]*epsilon_[j]);
+      } 
+    }
+    if(i == 0) {
+      chi2 = tempchi2;
+      for(int j = 0 ; j < npar ; ++j) {
+	f1[j] = tempf1[j];
+	f2[j] = tempf2[j];
+	t1[j] = tempt1[j];
+      }
+    }
+    //compare results
+    
+    std::cout << " Trial: " << std::setw(4) << i << " chi2 rel. diff:" <<  std::setw(15) << (chi2 - tempchi2)/chi2 << '\n';
+    for(int j = 0 ; j < npar ; ++j) {
+      std::cout << "   " << std::setw(4) << j << " f1 rel. diff:" << std::setw(15) << (f1[j] ? (f1[j] - tempf1[j])/f1[j] : tempf1[j])
+		<< " f2 rel. diff:" << std::setw(15) << (f2[j] ? (f2[j] - tempf2[j])/f2[j] : tempf2[j])
+		<< " t1 rel. diff:" << std::setw(15) << (t1[j] ? (t1[j] - tempt1[j])/t1[j] : tempt1[j])
+		<< '\n';
+    }
+    std::cout << '\n';
+  }
+  //with threads
+  //nThreads_ = 2;
+  std::cout << "Now with " << nThreads_ << " threads\n";
+  int n = 0;
+  double h = derivStep_;
+  for(DataIter it = data_.begin()  ; it < data_.end() ; ++it) {
+    threads_[n]->addData(*it);
+    n++;
+    if(n == nThreads_) n = 0;
+  }
+  for(int i  = 0 ; i < 3*N ; ++i) {
+    for(int j = 0 ; j < npar ; ++j) {
+      temp_derivative1_[j]=0.0;
+      temp_derivative2_[j]=0.0;
+      temp_derivative3_[j]=0.0;
+      temp_derivative4_[j]=0.0;
+    }
+    if(i ==  N-1) {
+      h = derivStep_/2;
+      std::cout << "changing  derivStep from " << derivStep_ << " to " << h << '\n';
+      for(int j = 0 ; j < npar ; ++j) {
+	epsilon_[j] =  h * std::abs(par_->parameters()[j]);
+	if( epsilon_[j] <= h) epsilon_[j] = h;
+	volatile double temp = par_->parameters()[j] + epsilon_[j];
+	//volatile double temp2 = k->par_->parameters()[i] + k->epsilon_[i];
+	epsilon_[j] = temp - par_->parameters()[j]; 
+      }
+    } 
+    if(i ==  2*N-1) {
+      h = derivStep_*2;
+      std::cout << "changing  derivStep from " << derivStep_ << " to " << h << '\n';
+      for(int j = 0 ; j < npar ; ++j) {
+	epsilon_[j] =  h * std::abs(par_->parameters()[j]);
+	if( epsilon_[j] <= h) epsilon_[j] = h;
+	volatile double temp = par_->parameters()[j] + epsilon_[j];
+	//volatile double temp2 = k->par_->parameters()[i] + k->epsilon_[i];
+	epsilon_[j] = temp - par_->parameters()[j]; 
+      }
+    }  
+    for( std::vector<int>::const_iterator iter = fixedJetPars_.begin();
+	 iter != fixedJetPars_.end() ; ++ iter) {
+      epsilon_[*iter] = 0;
+    } 
+    for( std::vector<int>::const_iterator iter = fixedGlobalJetPars_.begin();
+	 iter != fixedGlobalJetPars_.end() ; ++ iter) {
+      epsilon_[*iter] = 0;
+    }
+    tempchi2 = 0;  
+    for (int ithreads=0; ithreads < nThreads_; ++ithreads) threads_[ithreads]->start();
+    for (int ithreads=0; ithreads < nThreads_; ++ithreads){
+      if(threads_[ithreads]->isDone()) {
+	tempchi2 += threads_[ithreads]->chi2();
+	for (int param=0 ; param < npar ; ++param) { 
+	  assert(threads_[ithreads]->tempDeriv1(param) == threads_[ithreads]->tempDeriv1(param));
+	  temp_derivative1_[param] += threads_[ithreads]->tempDeriv1(param);
+	  temp_derivative2_[param] += threads_[ithreads]->tempDeriv2(param);
+	  temp_derivative3_[param] += threads_[ithreads]->tempDeriv3(param);
+	  temp_derivative4_[param] += threads_[ithreads]->tempDeriv4(param);
+	}
+      }
+    }
+    tempchi2 *= 0.5;
+    for(int j = 0 ; j < npar ; ++j) {
+      tempt1[j] = temp_derivative1_[j];
+      if(epsilon_[j] == 0) {
+	tempf1[j] = 0;
+	tempf2[j] = 0;
+	continue;
+      }
+      if( temp_derivative3_[j] ) {
+	tempf1[j] = 0.5*(8*temp_derivative1_[j]-temp_derivative3_[j])/(12*epsilon_[j]);
+	tempf2[j] = 0.5*(16*temp_derivative2_[j]-temp_derivative4_[j])/(12*epsilon_[j]*epsilon_[j]);
+      } else {
+	tempf1[j] = 0.5 * temp_derivative1_[j]/(2.0*epsilon_[j]);
+	tempf2[j] = 0.5 * temp_derivative2_[j]/(epsilon_[j]*epsilon_[j]);
+      } 
+    }
+    //compare results
+    
+    std::cout << " Trial: " << std::setw(4) << i << " chi2 rel. diff:" <<  std::setw(15) << (chi2 - tempchi2)/chi2 << '\n';
+    for(int j = 0 ; j < npar ; ++j) {
+      std::cout << "   " << std::setw(4) << j << " f1 rel. diff:" << std::setw(15) << (f1[j] ? (f1[j] - tempf1[j])/f1[j] :  tempf1[j])
+		<< " f2 rel. diff:" << std::setw(15) << (f2[j] ? (f2[j] - tempf2[j])/f2[j] : tempf2[j])
+		<< " t1 rel. diff:" << std::setw(15) << (t1[j] ? (t1[j] - tempt1[j])/t1[j] : tempt1[j])
+		<< '\n';
+    }
+    std::cout << '\n';
+  }
+  Parameters::removeClone(par2);
+  delete [] f1;
+  delete [] f2;
+  delete [] tempf1;
+  delete [] tempf2;
+}
 
 
 void Kalibri::run_Minimizer()
