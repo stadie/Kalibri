@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.23 2011/06/03 15:53:55 stadie Exp $
+//  $Id: Kalibri.cc,v 1.24 2011/06/06 14:58:58 mschrode Exp $
 
 #include "Kalibri.h"
 
@@ -54,6 +54,11 @@ struct OutlierRejection {
 };
 
 
+
+unsigned int Kalibri::Funct::NDim() const 
+{
+  return k_->par_->numberOfParameters();
+}
 
 // -----------------------------------------------------------------
 class ComputeThread {
@@ -295,7 +300,8 @@ void Kalibri::run()
       else if(fitMethod_==0) 
 	cout << " stressTest.\n";
       else if(fitMethod_==-2) 
-	cout << " with ROOT::Minimizer.\n";
+	cout << " with ROOT::Minimizer using " << minName_ << " and " 
+	     <<  algoName_ << ".\n";
       else 
 	cout << "\n"; 
       cout << "Using " << data_.size() << " total events and ";
@@ -528,16 +534,18 @@ void Kalibri::run_Minimizer()
   //  GSLMultiFit
   //   GSLSimAn
   //   Genetic
-  std::string minName = "Minuit2";
-  std::string algoName = "";
-  
   ROOT::Math::Minimizer* min = 
-    ROOT::Math::Factory::CreateMinimizer(minName, algoName);
+    ROOT::Math::Factory::CreateMinimizer(minName_, algoName_);
+
+  if(! min) {
+    std::cerr << "ERROR: failed to create minimizer " << minName_ << ":" << algoName_ << '\n';
+    return;
+  }
 
   // set tolerance , etc...
   min->SetMaxFunctionCalls(100* nIter_); // for Minuit/Minuit2 
   min->SetMaxIterations(nIter_);  // for GSL 
-  min->SetTolerance(eps_);
+  min->SetTolerance(eps_); 
   min->SetPrintLevel(3);
   
   int npar = par_->numberOfParameters();
@@ -587,10 +595,10 @@ void Kalibri::run_Minimizer()
     } else {
       std::cout << std::endl;
     }
-    ROOT::Math::Functor f(this,&Kalibri::eval,npar);
-    /* Initialize the parameters*/ 
+    //ROOT::Math::Functor f(this,&Kalibri::eval,npar);
+    /* Initialize the parameters*/
+    Funct f(this);
     min->SetFunction(f);
-    
     // Set the free variables to be minimized!
     for(int i = 0 ; i < npar ; ++i) {
       TString spar("par");
@@ -955,7 +963,12 @@ void Kalibri::init()
   //--------------------------------------------------------------------------
   //read config file
   mode_ = config.read<int>("Mode",0);
-  fitMethod_ = config.read<int>("Fit method",1);
+  fitMethod_ = config.read<int>("Fit method",1); 
+  std::vector<std::string> strvec = bag_of_string(config.read<std::string>("Minimizer","Minuit2"));
+  minName_ = strvec.at(0);
+  if(strvec.size()>1) {
+    algoName_ = strvec[1];
+  }
   nThreads_ = config.read<int>("Number of Threads",1);
   
   // Residual scaling

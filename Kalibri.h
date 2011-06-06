@@ -1,4 +1,4 @@
-//  $Id: Kalibri.h,v 1.11 2011/06/03 12:56:58 stadie Exp $
+//  $Id: Kalibri.h,v 1.12 2011/06/03 15:53:55 stadie Exp $
 
 //!  \mainpage
 //!
@@ -37,7 +37,8 @@
 #include <string>
 
 #include "include/lbfgs.h"
-#include "Minuit2/FCNBase.h"
+#include "Math/IFunction.h"
+#include <iostream>
 
 class Parameters;
 class Controlplots;
@@ -53,7 +54,7 @@ class ComputeThread;
 //!         LD_PRELOAD=./gprof-helper.so ./junk
 //!  \authors Christian Autermann, Hartmut Stadie, Matthias Schroeder
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Kalibri.h,v 1.11 2011/06/03 12:56:58 stadie Exp $
+//!  $Id: Kalibri.h,v 1.12 2011/06/03 15:53:55 stadie Exp $
 // -----------------------------------------------------------------
 class Kalibri {
 public :
@@ -61,7 +62,8 @@ public :
   //!  \param f Name of the configuration file
   // -----------------------------------------------------------------
   Kalibri(const std::string& f)
-    : configFile_(f), par_(0), fitMethod_(1), nThreads_(1), nGammajetEvents_(0),
+    : configFile_(f), par_(0), fitMethod_(1), minName_("Minuit2"),
+      algoName_(""), nThreads_(1), nGammajetEvents_(0),
       nDijetEvents_(0), nTrijetEvents_(0), nTrackClusterEvents_(0),
       nZjetEvents_(0), nTopEvents_(0), printParNDeriv_(false), 
       derivStep_(1e-03), mvec_(6), nIter_(100), eps_(1e-02), wlf1_(1e-04),
@@ -84,6 +86,38 @@ protected:
   void stressTest(); //!< Check the math
 
   double eval(const double *x, double *f1 = 0, double *f2=0);
+  class Funct : public ROOT::Math::IGradientFunctionMultiDim {
+  public:
+    Funct(Kalibri *k) : ROOT::Math::IGradientFunctionMultiDim(), k_(k) {}
+    
+    void FdF(const double* x, double& f, double* df) const {
+      f = k_->eval(x,df,0);
+    }
+    ROOT::Math::IBaseFunctionMultiDim* Clone() const {
+      return new Funct(k_);
+    }
+    void Gradient(const double *x, double * grad) const { 
+      //std::cerr << "Kalibri::Funct::Gradient called. though it is inefficient!\n";
+      k_->eval(x,grad,0);
+    }
+    unsigned int NDim() const; 
+    
+  private:
+    Kalibri* const k_; 
+    double DoEval(const double*x) const {
+      return k_->eval(x,0,0); 
+    }
+    double DoDerivative(const double* x, unsigned int i) const {
+      std::cerr << "Kalibri::Funct::DoDerivative called, but very slow\n";
+      double *df = new double[NDim()];
+      k_->eval(x,df,0);
+      double res = df[i];
+      delete [] df;
+      return res;
+    }
+  };
+  
+
 
   static lbfgsfloatval_t lbfgs_evaluate(void *instance, 
 					const lbfgsfloatval_t *x,
@@ -101,6 +135,7 @@ private:
   std::string outputFile_;         //!< The output file name
   Parameters * par_;              //!< Fit parameters, depend on number of bins & geometry
   int fitMethod_;                  //!< Running mode
+  std::string  minName_,algoName_; //!< ROOT::Minimizer name and algo
   int nThreads_;                   //!< Number of threads
   std::vector<Event*> data_;       //!< The data
   std::vector<Event*> control_[2]; //!< control samples

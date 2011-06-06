@@ -14,7 +14,7 @@ endif
 SPECIALFLAGS= -fpic -g -Wall -O2 #-O1 #-pg# -O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
-ROOTLIBS=$(shell root-config --libs) -lMinuit
+ROOTLIBS=$(shell root-config --libs) -lMinuit2
 LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS) -lgsl -lgslcblas -lm
 BOOSTLINKFLAGS=-lboost_thread -lpthread
 # change path for MacPort or fink@MacOS
@@ -57,7 +57,7 @@ clean:
 	@rm -rf ti_files tmp lib bin share
 	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#*
 
-libs: lib lib/libKalibri.so lib/liblbfgs.so
+libs: lib include/lbfgs.h lib/libKalibri.so lib/liblbfgs.so
 
 bins: bin bin/junk bin/caliber
 
@@ -66,7 +66,7 @@ plugins: lib lib/libJetMETCor.so
 lbfgs.o: lbfgs.F
 	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
 
-lib/libKalibri.so: $(OBJS) lbfgs.o include/lbfgs.h
+lib/libKalibri.so: $(OBJS) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
 
