@@ -29,6 +29,7 @@ PUEventWeightProcessor::PUEventWeightProcessor(const std::string& configfile, Pa
       h->SetDirectory(0);
     } else {
       std::cerr << "ERROR in PUEventWeightProcessor: Histogram 'pileup' does not exist in file '" << histFileName << "'\n.";
+      std::cerr << "See https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisCalibration#Pile_Up_Reweighting for available input distributions." << std::endl;
       exit(1);
     }
     file.Close();
