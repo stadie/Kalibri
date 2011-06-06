@@ -5,9 +5,11 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventProcessor.cc,v 1.7 2010/11/01 15:47:43 stadie Exp $
+//    $Id: EventProcessor.cc,v 1.8 2010/12/13 10:55:09 stadie Exp $
 //   
 #include "EventProcessor.h"
+
+#include "Parameters.h"
 
 
 

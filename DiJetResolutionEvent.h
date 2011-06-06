@@ -1,4 +1,4 @@
-// $Id: DiJetResolutionEvent.h,v 1.1 2011/05/26 07:42:52 mschrode Exp $
+// $Id: DiJetResolutionEvent.h,v 1.2 2011/05/31 15:49:04 stadie Exp $
 
 #ifndef DIJET_RESOLUTION_EVENT_H
 #define DIJET_RESOLUTION_EVENT_H
@@ -10,13 +10,13 @@
 //!  \brief A dijet event for resolution measurement
 //!  \author Matthias Schroeder
 //!  \date Tue Jun  9 15:24:49 CEST 2009
-//!  $Id: DiJetResolutionEvent.h,v 1.1 2011/05/26 07:42:52 mschrode Exp $
+//!  $Id: DiJetResolutionEvent.h,v 1.2 2011/05/31 15:49:04 stadie Exp $
 // --------------------------------------------------
 class DiJetResolutionEvent : public Event {
 public:
   DiJetResolutionEvent(Jet* jet1, Jet* jet2, double deltaPhi12, double pPhi,
 		       double ptJet3, double ptJet4, double pJ3, double pSJ, double ptRef,
-		       double ptHat, double weight, const ResolutionFunction& pdf,
+		       double ptHat, short nPU, double weight, const ResolutionFunction& pdf,
 		       double min, double max, double eps, int niter);
   ~DiJetResolutionEvent();
 

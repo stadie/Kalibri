@@ -1,4 +1,4 @@
-// $Id: DiJetResolutionEvent.cc,v 1.1 2011/05/26 07:42:52 mschrode Exp $
+// $Id: DiJetResolutionEvent.cc,v 1.2 2011/05/31 15:50:23 stadie Exp $
 
 #include "DiJetResolutionEvent.h"
 
@@ -8,9 +8,9 @@
 // --------------------------------------------------
 DiJetResolutionEvent::DiJetResolutionEvent(Jet* jet1, Jet* jet2, double deltaPhi12, double pPhi,
 					   double ptJet3, double ptJet4, double pJ3, double pSJ, double ptRef,
-					   double ptHat, double weight, const ResolutionFunction& pdf,
+					   double ptHat, short nPU, double weight, const ResolutionFunction& pdf,
 					   double min, double max, double eps, int niter)
-  : Event(weight,ptHat,0),
+  : Event(weight,ptHat,nPU),
     pdf_(&pdf), jet1_(jet1), jet2_(jet2),
     deltaPhi12_(deltaPhi12), pPhi_(pPhi),
     ptRef_(ptRef), ptJet3_(ptJet3), ptJet4_(ptJet4), pJ3_(pJ3), pSJ_(pSJ),
