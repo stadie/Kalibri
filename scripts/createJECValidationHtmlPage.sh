@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.9 2010/11/23 15:42:23 stadie Exp $
+# $Id: createJECValidationHtmlPage.sh,v 1.10 2011/05/18 16:00:58 stadie Exp $
 #
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -203,7 +203,13 @@ until [[ ${CORRECT_INPUT} -eq 1 ]]; do
 	JET_TYPE="PF"
     elif [[ ${JET_TYPE} == "track" ]]; then
 	CORRECT_INPUT=1
-	JET_TYPE="Track"
+	JET_TYPE="Track" 
+    elif [[ ${JET_TYPE} == "fastcalo" ]]; then
+	CORRECT_INPUT=1
+	JET_TYPE="CaloFastjet"
+    elif [[ ${JET_TYPE} == "fastpf" ]]; then
+	CORRECT_INPUT=1
+	JET_TYPE="PFFastjet"
     else	
 	echo -n "Enter jet type ('calo','jpt','pf','track'): "
 	read JET_TYPE

@@ -59,7 +59,7 @@ Et cut on n+1 Jet          = 0.0
 Eta max cut on jet         = 6.0
 Relative Rest Jet Cut      = 0.2      #NonLeadingJetsEt / PhotonEt
 Min had fraction           = -0.05    #Default: 0.07
-Max had fraction           = 1.05    #Default: 0.95
+Max had fraction           = 9999    #Default: 0.95
 Et genJet min              = 0.0
 Et genJet max              = 7000.0
 DeltaR cut on jet matching = 0.25
@@ -92,7 +92,7 @@ Top tree               = TopTree
 use Gamma-Jet events     = 0
 use Track-Tower events   = 0
 use Track-Cluster events = 0
-use Di-Jet events        = -1
+use Di-Jet events        = 100
 use Tri-Jet events       = 0
 use Z-Jet events         = 0
 use Top events           = 0
@@ -203,14 +203,15 @@ MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L1L2L3
 
 #jettypes = ["Calo","PF","JPT","Track"]
 #jettypes = ["ak5PF","ak7PF","ic5PF","kt4PF","kt6PF","ak5Calo","ak7Calo","ic5Calo","kt4Calo","kt6Calo","ak5JPT"]
-jettypes = ["ak5Calo", "ak5PF"]
-datadir = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6_Summer11-PU_S3_START42_V11-v2/job*/"
+#jettypes = ["ak5Calo", "ak5PF","ak5JPT","ak5FastPF","ak5FastCalo"]
+jettypes = ["ak5PF"]
+datadir = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6_Summer11-PU_S3_START42_V11-v2/merged/"
 #datadir  = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1Amerged"
 jecname = "JEC11_V1"
 datasetname="/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6/Summer11-PU_S3_START42_V11-v2/AODSIM"
 #datasetname="/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1/AODSIM"
 correctJets=False
-CutAwayPU=True
+CutAwayPU=False
 
 
 for jettype in jettypes:
@@ -236,11 +237,12 @@ for jettype in jettypes:
         fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"\n");
         #fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"NoOffset\n");
     if CutAwayPU:
-        fcfg.write("MAX n PU from MC = 0\n");
-        fcfg.write("correct jets L1 = false\n");
-        jec = jecname+'NoPU';
+        fcfg.write("MAX n PU from MC = 8\n");
+        fcfg.write("correct jets L1 = false\n")
+        jec = jecname+'NoPU'
     else:
-        fcfg.write("correct jets L1 = true\n");
+        fcfg.write("correct jets L1 = true\n")
+        jec = jecname
     fcfg.close()
     
     kalibricmd = "./junk valid.cfg"
