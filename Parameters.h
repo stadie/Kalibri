@@ -1,7 +1,7 @@
 //
 // Original Authors:  Christian Autermann, Hartmut Stadie
 //         Created:  Wed Jul 18 13:54:50 CEST 2007
-// $Id: Parameters.h,v 1.66 2011/05/26 07:42:52 mschrode Exp $
+// $Id: Parameters.h,v 1.67 2011/05/31 15:49:04 stadie Exp $
 //
 #ifndef Parameters_h
 #define Parameters_h
@@ -31,7 +31,7 @@ class TH1;
 //!         interface to response and error parametrizations
 //!  \author Christian Autermann, Hartmut Stadie
 //!  \date   Wed Jul 18 13:54:50 CEST 2007
-//!  $Id: Parameters.h,v 1.66 2011/05/26 07:42:52 mschrode Exp $
+//!  $Id: Parameters.h,v 1.67 2011/05/31 15:49:04 stadie Exp $
 // -----------------------------------------------------------------
 class Parameters {  
  public:
@@ -338,7 +338,7 @@ class Parameters {
   void readCalibrationJetMET(const std::vector<std::string>& inputFileNames);
   void readCalibrationJetMETL2(const std::string& inputFileName);
   void readCalibrationJetMETL3(const std::string& inputFileName);
-  
+  void readCalibrationJetMETLRes(const std::string& inputFileName);
   //static const Parametrization* parametrization() { return instance->p;}
   
   Parameters* clone() const;

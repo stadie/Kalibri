@@ -1,5 +1,5 @@
 //
-//  $Id: Parametrization.h,v 1.74 2011/04/06 13:31:15 kirschen Exp $
+//  $Id: Parametrization.h,v 1.75 2011/05/26 07:42:52 mschrode Exp $
 //
 #ifndef CALIBCORE_PARAMETRIZATION_H
 #define CALIBCORE_PARAMETRIZATION_H
@@ -22,7 +22,7 @@
 //!  to correct a tower or jet measurement.
 //!  \author Hartmut Stadie
 //!  \date Thu Apr 03 17:09:50 CEST 2008
-//!  $Id: Parametrization.h,v 1.74 2011/04/06 13:31:15 kirschen Exp $
+//!  $Id: Parametrization.h,v 1.75 2011/05/26 07:42:52 mschrode Exp $
 // -----------------------------------------------------------------
 class Parametrization 
 {
@@ -1759,7 +1759,7 @@ public:
 // -----------------------------------------------------------------
 class ResidualJetParametrization: public Parametrization {
 public:
-  ResidualJetParametrization() : Parametrization(0,3,0,0) {}
+  ResidualJetParametrization() : Parametrization(0,1,0,0) {}
   const char* name() const { return "ResidualParametrization";}
     
   double correctedTowerEt(const Measurement *x,const double *par) const {
@@ -1769,8 +1769,9 @@ public:
   double correctedJetEt(const Measurement *x,const double *par) const {
     //{ 1 JetEta 1 JetPt [0]-TMath::Abs([1])*TMath::ATan(log10(x/[2])) Correction L2Relative}
     double pt = (x->pt < 4.0) ? 4.0 : x->pt;
-    double c = par[0] - std::abs(0.01 * par[1]) * atan(log10(pt/std::abs(100*par[2])));
-       
+    //double c = par[0] - std::abs(0.01 * par[1]) * atan(log10(pt/std::abs(100*par[2])));
+    double c = par[0];
+ 
     if(c != c) {
       std::cout << "ResidualJetParametrization:correctedJetEt:" << c << ", " 
 		<< pt << ", " << par[1] << ", " << par[2] << '\n'; 

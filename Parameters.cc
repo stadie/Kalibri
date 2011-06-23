@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.61 2011/04/06 13:31:15 kirschen Exp $
+// $Id: Parameters.cc,v 1.62 2011/05/26 07:42:53 mschrode Exp $
 
 #include <fstream>
 #include <cassert>
@@ -831,11 +831,14 @@ void Parameters::readCalibrationCfi(std::string const& configFile)
 void Parameters::readCalibrationJetMET(const std::vector<std::string>& inputFileNames) {
   std::string corrL2FileName;
   std::string corrL3FileName;
+  std::string corrLResFileName;
   for(size_t i = 0; i < inputFileNames.size(); i++) {
-    if( inputFileNames.at(i).find("L2") != std::string::npos ) 
+    if( inputFileNames.at(i).find("L2Relative") != std::string::npos ) 
       corrL2FileName = inputFileNames.at(i);
-    else if( inputFileNames.at(i).find("L3") != std::string::npos ) 
+    else if( inputFileNames.at(i).find("L3Absolute") != std::string::npos ) 
       corrL3FileName = inputFileNames.at(i);
+    else if( inputFileNames.at(i).find("L2L3Residual") != std::string::npos ) 
+      corrLResFileName = inputFileNames.at(i);
   }
 
   if( !corrL2FileName.empty() ) {
@@ -845,6 +848,10 @@ void Parameters::readCalibrationJetMET(const std::vector<std::string>& inputFile
   if( !corrL3FileName.empty() ) {
     std::cout << "  L3: " << corrL3FileName << std::endl;
     readCalibrationJetMETL3(corrL3FileName);
+  }  
+  if( !corrLResFileName.empty() ) {
+    std::cout << "  LRes: " << corrLResFileName << std::endl;
+    readCalibrationJetMETLRes(corrLResFileName);
   }
 }
 
@@ -1012,6 +1019,65 @@ void Parameters::readCalibrationJetMETL3(const std::string& inputFileName) {
   }
 }
 
+//!  \brief Read Lres correction factors in CondDB format
+//!
+//!  Read parameters of Lres correction from
+//!  txt file in CondDB format i.e.
+//!  <tt>etaMin etaMax nPar EtMin EtMax Par1</tt>.
+//!
+//!  The pt ranges of validity are not considered.
+//!
+// -----------------------------------------------------------------
+void Parameters::readCalibrationJetMETLRes(const std::string& inputFileName) {
+  std::vector<double> parLres;
+
+  std::ifstream file;
+  file.open(inputFileName.c_str());
+
+  for(int etaBin = -41; etaBin <= 41; ++etaBin) {
+    if(etaBin == 0 ) etaBin++;
+    for(int phiBin = 1; phiBin <= 72; ++phiBin) {
+      int jetIdx = jetBin(jetEtaBin(etaBin),jetPhiBin(phiBin));
+      if( jetIdx<0 ) continue;
+      k_[numberOfTowerParameters() + jetIdx*numberOfJetParametersPerBin()] = 1.0;
+    }
+  }
+  if(! file.is_open() ) return;
+  std::string header;
+  std::getline(file,header);
+  while(!file.eof()) {
+    float  etaMin = 0.;
+    float  etaMax = 0.;
+    file >> etaMin;                      // Eta min
+    file >> etaMax;                      // Eta max
+    float val = 0.;
+    file >> val;                         // Number of values following
+    if( val != 0 ) {                     // Avoid reading of empty last line
+      file >> val;                       // Et min
+      file >> val;                       // Et max
+      file >> val;                       // cor factor
+      std::cout << etaMin << ", " << etaMax << ", " << val << '\n';
+      for(int etaBin = -41; etaBin <= 41; ++etaBin) {
+	if(etaBin == 0 ) etaBin++;
+	//std::cout << etaLowerEdge(etaBin) << ", " << etaUpperEdge(etaBin) << ":" <<
+	// ((etaLowerEdge(etaBin) >= etaMin) && (etaUpperEdge(etaBin) <= etaMax)) << '\n';
+	if((etaLowerEdge(etaBin) >= etaMin) && (etaUpperEdge(etaBin) <= etaMax)) {    
+	  for(int phiBin = 1; phiBin <= 72; ++phiBin) {
+	    int jetIdx = jetBin(jetEtaBin(etaBin),jetPhiBin(phiBin));
+	    if( jetIdx<0 ) continue;
+	    k_[numberOfTowerParameters() + jetIdx*numberOfJetParametersPerBin()] = val;
+	  }
+	}
+      }
+    }
+  }
+  file.close();
+  for(int etaBin = -41; etaBin <= 41; ++etaBin) {
+    if(etaBin == 0 ) etaBin++;
+    int jetIdx = jetBin(jetEtaBin(etaBin),jetPhiBin(1));
+    std::cout << k_[numberOfTowerParameters() + jetIdx*numberOfJetParametersPerBin()] << "\n";
+  }
+}
 
 
 //!  \brief Read track efficiency from txt file
@@ -1117,7 +1183,6 @@ int Parameters::etaBin(int eta_id, int etagranu, int phigranu, bool etasym) cons
   //Default value, should never be returned!
   return -4;
 }
-
 
 
 //!  \brief Return upper or lower eta edge
