@@ -2,7 +2,7 @@
 //    Class for jet bins
 //
 //    first version: Hartmut Stadie 2010/05/10
-//    $Id: JetBin.cc,v 1.5 2010/11/01 15:47:43 stadie Exp $
+//    $Id: JetBin.cc,v 1.6 2010/12/13 10:38:28 stadie Exp $
 //   
 
 
@@ -40,6 +40,12 @@ void JetBin::addJet(float Et, float EmEt, float HadEt ,float OutEt, float E,
   sumJPTL2L3_ += corFactors.getJPTL2L3() * Et;
 
   ++njets_;
+}
+
+void JetBin::addJet(const Jet* jet) {
+  addJet(jet->pt(),jet->EmEt(),jet->HadEt(),jet->OutEt(),jet->E(),jet->eta(),
+	 jet->phi(),jet->momentPhiPhi(), jet->momentEtaEta(), jet->genPt(),
+	 jet->dR(), jet->corFactors());
 }
 
 Jet* JetBin::createJet() const {

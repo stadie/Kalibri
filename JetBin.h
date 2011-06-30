@@ -5,7 +5,7 @@
 //!
 //!    \date 2010/05/10
 //!
-//!    $Id: JetBin.h,v 1.5 2010/11/01 15:47:40 stadie Exp $
+//!    $Id: JetBin.h,v 1.6 2010/12/13 10:38:28 stadie Exp $
 #ifndef JETBIN_H
 #define JETBIN_H
 
@@ -31,7 +31,9 @@ class JetBin
   void addJet(float Et, float EmEt, float HadEt ,float OutEt, float E,
 	      float eta,float phi, float phiphi, float etaeta,  
 	      float genPt, float dR, const CorFactors& corFactors);
-  
+  void addJet(const Jet* jet);
+
+
   Jet* jet() const { return createJet(); }
   float genPt() const { return njets_ ? sumGenPt_/njets_ : 0;}
   int nJets() const { return njets_;}
