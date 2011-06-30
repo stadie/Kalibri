@@ -19,7 +19,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/07/22
-//!  $Id: EventWeightProcessor.h,v 1.5 2010/12/13 10:55:09 stadie Exp $
+//!  $Id: EventWeightProcessor.h,v 1.6 2010/12/20 11:08:13 stadie Exp $
 // -----------------------------------------------------------------
 
 #ifndef EVENT_WEIGHT_PROCESSOR_H
@@ -39,6 +39,7 @@ class EventWeightProcessor : public EventProcessor
   EventWeightProcessor(const std::string& configfile, Parameters* param);
   ~EventWeightProcessor();
 
+protected:
   virtual int preprocess(std::vector<Event*>& data,
 			 std::vector<Event*>& control1,
 			 std::vector<Event*>& control2);

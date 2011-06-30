@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.16 2011/02/15 12:53:14 stadie Exp $
+// $Id: EventReader.h,v 1.17 2011/05/26 07:42:52 mschrode Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -59,6 +59,8 @@ class EventReader
 
   static std::vector<JetConstraintEvent*> constraints_;
   static Binning* binning_;
+  static int nEvents_, counter_;
+  static void reportProgress(int addedEvents);
 };
 
 

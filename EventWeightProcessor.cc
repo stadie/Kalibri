@@ -8,7 +8,7 @@
 //!  \param param The parameters
 // -----------------------------------------------------------------
 EventWeightProcessor::EventWeightProcessor(const std::string& configfile, Parameters* param)
-  : EventProcessor(configfile,param) {
+  : EventProcessor("EventWeightProcessor",configfile,param) {
   
   ConfigFile config(configfile.c_str());
   weightEvents_ = config.read<bool>("weight events",false);

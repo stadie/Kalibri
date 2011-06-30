@@ -16,6 +16,8 @@
 #include "Jet.h"
 #include "JetTruthEvent.h"
 #include "TwoJetsPtBalanceEvent.h"
+#include "progressbar.h"
+
 
 //!  \brief Constructor
 //! 
@@ -79,24 +81,29 @@ void ControlPlots::createJetTruthEventPlots() const {
   // Fill histograms
   std::cout << "  Filling plots\n";
   for(unsigned int id = 0 ; id < samples_.size() ; ++id) {
-    for(DataIt evt = samples_[id]->begin() ; evt != samples_[id]->end() ; ++evt) {
-      JetTruthEvent *jte = dynamic_cast<JetTruthEvent*>(*evt);
+    int l = samples_[id]->size()/100;
+    for(DataIt evt = samples_[id]->begin() ; evt != samples_[id]->end() ; ++evt)  {
+      if((evt-samples_[id]->begin() +1) % 10000 == 0)
+	progressbar((evt-samples_[id]->begin()+1)/l);
+      JetTruthEvent *jte = dynamic_cast<JetTruthEvent*>(*evt); 
       if( jte ) {
-	for(size_t i = 0; i < configs.size(); i++) {
+        for(size_t i = 0; i < configs.size(); i++) {
 	  profiles.at(i)->fill(jte,id);
 	}
       }
     }
-  }
+  std::cout << '\n';
+  }  
 
   // Fitting profiles and writing plots to file
   std::cout << "  Fitting profiles and writing plots to file" << std::endl;
 	  
-  for(size_t i = 0; i < configs.size(); i++) {
+  for(size_t i = 0, l = configs.size(); i < l; i++) {
     profiles.at(i)->fitProfiles();
+    progressbar((i+1)*100/l);
     profiles.at(i)->draw();
   }
-
+  std::cout << '\n';
   // Cleaning up
   for(size_t i = 0; i < configs.size(); i++) {
     delete configs.at(i);
@@ -142,7 +149,10 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
   // Fill histograms
   std::cout << "  Filling plots\n"; 
   for(unsigned int id = 0 ; id < samples_.size() ; ++id) {
-    for( DataIt evt = samples_[id]->begin(); evt != samples_[id]->end(); ++evt ) {
+    int l = samples_[id]->size()/100;
+    for( DataIt evt = samples_[id]->begin(); evt != samples_[id]->end(); ++evt ) { 
+      if((evt-samples_[id]->begin() + 1) % 10000 == 0) 
+	progressbar((evt-samples_[id]->begin())/l);
       TwoJetsPtBalanceEvent *jte = dynamic_cast<TwoJetsPtBalanceEvent*>(*evt);
       if( jte ) {
 	for(size_t i = 0; i < configs.size(); i++) {
@@ -150,16 +160,18 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
 	}
       }
     }
+    std::cout << '\n';
   }
 
   // Fitting profiles and writing plots to file
   std::cout << "  Fitting profiles and writing plots to file" << std::endl;
 	  
-  for(size_t i = 0; i < configs.size(); i++) {
+  for(size_t i = 0,l = configs.size(); i < l; i++) {
     profiles.at(i)->fitProfiles();
+    progressbar((i+1)*100/l);
     profiles.at(i)->draw();
   }
-
+  std::cout << '\n';
   // Cleaning up
   for(size_t i = 0; i < configs.size(); i++) {
     delete configs.at(i);

@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.76 2011/06/01 13:59:10 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.77 2011/06/06 14:58:58 mschrode Exp $
 //   
 #include "DiJetReader.h"
 
@@ -196,7 +196,14 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   
   jetIndices_.resize(20,0);
 
-  //std::cout << "size:" << sizeof(JetTruthEvent) << ", " << sizeof(Jet) << ", " << sizeof(Measurement) << '\n';
+  //std::cout << "size:" << sizeof(JetTruthEvent) << ", " <<
+  //sizeof(Jet) << ", " << sizeof(Measurement) << '\n';
+  if(weights_eq_one_ )  {
+    std::cout << "DiJetReader: weights will be set to one... "  << std::endl;
+  } 
+  if(fire_all_dijet_triggers_) {
+    std::cout << "DiJetReader:  trigger bits will be set to one "  << std::endl;
+  }
 }
 
 DiJetReader::~DiJetReader() {
@@ -234,8 +241,10 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
     exit(9);
   }
   std::cout << " (data class " << dataClass_ << "):\n";
-
-  int nev = readEventsFromTree(data);  
+  nEvents_ =  (nDijetEvents_ < 0) ? nJet_->fChain->GetEntries() : nDijetEvents_;
+  counter_ = 0;
+  int nev = readEventsFromTree(data); 
+  std::cout << '\n';
   if(dataClass_ == 21) {
     for(Binning::BinMap::const_iterator ijb = binning_->bins().begin() ; 
 	ijb != binning_->bins().end() ; ++ijb) {
@@ -319,19 +328,14 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 
   //Set weight equal to one if requested
   if(weights_eq_one_){
-    std::cout << "weights will be set to one... "  << std::endl;
     nJet_->fChain->SetBranchStatus("Weight",0);
     nJet_->Weight=1.;
     //    std::cout << "weight of event: "  << nJet_->Weight << std::endl;
-  }
-  else {
-    std::cout << "event weights will be kept "  << std::endl;
   }
 
 
   // Set all triggers to true for MC
   if(fire_all_dijet_triggers_){
-    std::cout << "trigger bits will be set to one "  << std::endl;
     nJet_->fChain->SetBranchStatus("HltDiJetAve15U",0);
     nJet_->fChain->SetBranchStatus("HltDiJetAve30U",0);
     nJet_->fChain->SetBranchStatus("HltDiJetAve50U",0);
@@ -349,9 +353,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     nJet_->HltDiJetAve180U=true;
     nJet_->HltDiJetAve300U=true;
   }
-  else {
-    std::cout << "all trigger bits will be kept "  << std::endl;
-  }
+
 
 
 
@@ -360,7 +362,10 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
   //std::cout << "reading " << nevent << " events...\n";
   for (int i=0 ; i < nevent ; i+= prescale_) {
     //std::cout << "event " << i << " of " << nevent << '\n';
-    if((i+1)%10000==0) std::cout << "  " << i+1 << std::endl;
+    if((i+1)%10000==0) {
+      //std::cout << "  " << i+1 << std::endl;
+      reportProgress(10000);
+    }
     nJet_->fChain->GetEvent(i);
     //    std::cout << "weight of event: "  << nJet_->Weight << std::endl;
     if((nJet_->NobjTow > 10000) || (nJet_->NobjJet > 100)) {
@@ -421,7 +426,8 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     }
     if(nReadEvts_>=nDijetEvents_ && nDijetEvents_>=0 ) break;
     //if( nDijetEvents_>=0 && nGoodEvts_>=nDijetEvents_ ) break;
-  }
+  } 
+  reportProgress(nevent%10000);
   //printCutFlow();
   return nGoodEvts_;
 }

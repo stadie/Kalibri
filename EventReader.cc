@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.19 2011/02/15 12:53:14 stadie Exp $
+// $Id: EventReader.cc,v 1.20 2011/05/26 07:42:52 mschrode Exp $
 //
 #include "EventReader.h"
 
@@ -13,9 +13,16 @@
 #include "ToyMC.h"
 #include "TTree.h"
 
+#include <boost/thread/mutex.hpp>
+#include "progressbar.h"
+
 unsigned int EventReader::numberOfEventReaders_ = 0;
 std::vector<JetConstraintEvent*> EventReader::constraints_;
 Binning* EventReader::binning_ = 0;
+int EventReader::nEvents_ = 0;
+int EventReader::counter_ = 0;
+
+boost::mutex EventReader_mutex;
 
 EventReader::EventReader(const std::string& configfile, Parameters* param) 
   : config_(0),par_(param),corFactorsFactory_(0),cp_(new ConstParametrization())
@@ -203,4 +210,10 @@ int EventReader::addConstraints(std::vector<Event*>& data) {
   }
   constraints_.clear();
   return n;
+}
+
+void EventReader::reportProgress(int addedEvents) {
+  boost::mutex::scoped_lock lock(EventReader_mutex);
+  counter_ += addedEvents;
+  progressbar(counter_*100/nEvents_);
 }

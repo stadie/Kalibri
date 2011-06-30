@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.10 2011/05/26 07:42:53 mschrode Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.11 2011/05/26 11:32:04 mschrode Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -95,7 +95,9 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
   nMinGenJetEt_       = 0;
   nMaxGenJetEt_       = 0;
 
-TChain* chain = dynamic_cast<TChain*>(tree_);
+  TChain* chain = dynamic_cast<TChain*>(tree_);
+  nEvents_ = chain->GetEntries();
+  counter_ = 0;
   unsigned int id = 0;
   std::vector<TFile*> files;
   if(! chain) { 
@@ -127,8 +129,8 @@ TChain* chain = dynamic_cast<TChain*>(tree_);
 	  //std::cout << "waiting for reader " << i - readers_.begin() << '\n';
 	  if((*i)->isDone()) {
 	    DiJetReader* djr = (*i)->reader();
-	    std::cout << "adding from reader " << i - readers_.begin() 
-		      << " " <<  djr->nReadEvts_ << " events.\n";
+	    //std::cout << "adding from reader " << i - readers_.begin() 
+	    //	      << " " <<  djr->nReadEvts_ << " events.\n";
 	    nReadEvts_          += djr->nReadEvts_;
 	    nDiJetCut_          += djr->nDiJetCut_;
 	    nHlt_               += djr->nHlt_;
@@ -169,11 +171,11 @@ TChain* chain = dynamic_cast<TChain*>(tree_);
     }
   }
   for(unsigned int  i = 0 ; i < id ; ++i) { 
-    std::cout << "waiting for reader " << i  << '\n';
+    //std::cout << "waiting for reader " << i  << '\n';
     if(readers_[i]->isDone()) {
       DiJetReader* djr = readers_[i]->reader();  
-      std::cout << "adding from reader " << i  
-		<< " " <<  djr->nReadEvts_ << " events.\n";
+      //std::cout << "adding from reader " << i  
+      //		<< " " <<  djr->nReadEvts_ << " events.\n";
       nReadEvts_          += djr->nReadEvts_;
       nDiJetCut_          += djr->nDiJetCut_;
       nHlt_               += djr->nHlt_;
@@ -197,6 +199,7 @@ TChain* chain = dynamic_cast<TChain*>(tree_);
       //std::cout << readers_[i] << ":events " << readers_[i]->nEvents() << ";" << djr->nReadEvts_<< '\n';
     }
   }
+  std::cout << '\n';
   std::cout << nReadEvts_ << " events read\n";
     
   for(std::vector<TFile*>::const_iterator f = files.begin() ;

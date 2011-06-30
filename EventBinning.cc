@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: EventBinning.cc,v 1.1 2010/12/13 10:55:09 stadie Exp $
+//    $Id: EventBinning.cc,v 1.2 2010/12/20 11:08:13 stadie Exp $
 //   
 #include "EventBinning.h"
 
@@ -21,7 +21,7 @@
 #include <algorithm>
 
 EventBinning::EventBinning(const std::string& configfile, Parameters* param)
-  : EventProcessor(configfile,param)
+  : EventProcessor("EventBinning",configfile,param)
 {  
   ConfigFile config(configfile.c_str()); 
   binning_ = new Binning(&config);

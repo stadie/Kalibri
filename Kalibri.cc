@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.24 2011/06/06 14:58:58 mschrode Exp $
+//  $Id: Kalibri.cc,v 1.25 2011/06/06 15:53:08 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -28,6 +28,7 @@ boost::mutex io_mutex;
 #include "PUEventWeightProcessor.h"
 #include "EventBinning.h"
 #include "DiJetEventWeighting.h"
+#include "DiJetEventBinning.h"
 
 #include <dlfcn.h>
 
@@ -269,6 +270,7 @@ void Kalibri::run()
   if (fitMethod_!=3){
     time_t start = time(0);
     
+    std::cout << "****Processing events:****\n";
     std::vector<EventProcessor*> processors;
     processors.push_back(new EventWeightProcessor(configFile_,par_));
     processors.push_back(new EventBinning(configFile_,par_));
@@ -276,7 +278,7 @@ void Kalibri::run()
     processors.push_back(new PUEventWeightProcessor(configFile_,par_));
 
     for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
-      (*i)->preprocess(data_,control_[0],control_[1]);
+      (*i)->process(data_,control_[0],control_[1]);
     } 
 
     if(! data_.size()) {
@@ -291,7 +293,7 @@ void Kalibri::run()
       temp_derivative3_ = new double[npar];
       temp_derivative4_ = new double[npar];
       
-      cout << "\nFitting " << npar << " parameters; \n";
+      cout << "****Fitting " << npar << " parameters:****\n";
       par_->print();
       if(fitMethod_==1) 
 	cout << " with LVMINI.\n";
@@ -354,7 +356,7 @@ void Kalibri::run()
       if( par_->needsUpdate() ) par_->update();
     } 
     for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
-      (*i)->postprocess(data_,control_[0],control_[1]);
+      (*i)->revert(data_,control_[0],control_[1]);
       delete *i;
     } 
   } 
@@ -886,7 +888,7 @@ void Kalibri::run_Lvmini()
 //--------------------------------------------------------------------------------------------
 void Kalibri::done()
 {
-  std::cout << "Kalibri::done()\n";
+  std::cout << "****Kalibri::done()****\n";
   if( par_->needsUpdate() ) par_->update();
   
   ConfigFile config( configFile_.c_str() );
@@ -918,6 +920,7 @@ void Kalibri::done()
 
   // Make control plots
   if( config.read<bool>("create plots",0) ) {
+    std::cout << "****Plotting:****\n";
     if( mode_ == 0 ) {  // Control plots for calibration
       std::vector<std::vector<Event*>* > samples;
       samples.push_back(&data_);
@@ -934,7 +937,7 @@ void Kalibri::done()
   }
   
   // Clean-up
-  cout << endl << "Cleaning up... " << flush;
+  cout << endl << "****Cleaning up..." << flush;
   for(DataIter i = data_.begin() ; i != data_.end() ; ++i) {
     delete *i;
   }
@@ -947,7 +950,7 @@ void Kalibri::done()
     delete *i;
   }
   control_[1].clear();
-  cout << "Done" << endl;
+  cout << "Done****" << endl;
 }
 
 
@@ -1109,6 +1112,7 @@ void Kalibri::init()
   readers.push_back(new ZJetReader(configFile_,par_));
   readers.push_back(new TopReader(configFile_,par_));
   readers.push_back(new ParameterLimitsReader(configFile_,par_));
+  std::cout << "****Reading events:****\n";
   for(std::vector<EventReader*>::iterator i = readers.begin() ; 
       i != readers.end() ; ++i) {
     (*i)->readEvents(data_);

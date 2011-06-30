@@ -1,5 +1,5 @@
 //
-// $Id: EventBinning.h,v 1.1 2010/12/13 10:55:09 stadie Exp $
+// $Id: EventBinning.h,v 1.2 2010/12/20 11:08:13 stadie Exp $
 //
 #ifndef EVENTBINNING_H
 #define EVENTBINNING_H
@@ -20,6 +20,7 @@ class EventBinning : public EventProcessor
  public:
   EventBinning(const std::string& configfile, Parameters* param);
   virtual ~EventBinning();
+protected:
   virtual int preprocess(std::vector<Event*>& data,
 			 std::vector<Event*>& control1,
 			 std::vector<Event*>& control2);

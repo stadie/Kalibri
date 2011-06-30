@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: DiJetEventWeighting.cc,v 1.1 2010/12/20 11:08:13 stadie Exp $
+//    $Id: DiJetEventWeighting.cc,v 1.2 2011/01/19 15:05:21 stadie Exp $
 //   
 #include "DiJetEventWeighting.h"
 
@@ -18,7 +18,7 @@
 #include <iostream>
 
 DiJetEventWeighting::DiJetEventWeighting(const std::string& configfile, Parameters* param)
-  : EventProcessor(configfile,param)
+  : EventProcessor("DiJetEventWeighting",configfile,param)
 {  
   ConfigFile config(configfile.c_str()); 
     

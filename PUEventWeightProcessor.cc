@@ -11,11 +11,11 @@
 
 // -----------------------------------------------------------------
 PUEventWeightProcessor::PUEventWeightProcessor(const std::string& configfile, Parameters* param)
-  : EventProcessor(configfile,param), weightEvents_(false) {
+  : EventProcessor("PU weighting",configfile,param), weightEvents_(false) {
 
   ConfigFile config(configfile.c_str());
 
-  std::string histFileName  = config.read<string>("PU weighting histogram","");
+  std::string histFileName  = config.read<string>(name()+" histogram","");
 
   if( histFileName != "" ) {
     weightEvents_ = true;
