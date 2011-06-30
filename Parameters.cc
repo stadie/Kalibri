@@ -1,4 +1,4 @@
-// $Id: Parameters.cc,v 1.62 2011/05/26 07:42:53 mschrode Exp $
+// $Id: Parameters.cc,v 1.63 2011/06/23 07:53:36 stadie Exp $
 
 #include <fstream>
 #include <cassert>
@@ -1056,7 +1056,7 @@ void Parameters::readCalibrationJetMETLRes(const std::string& inputFileName) {
       file >> val;                       // Et min
       file >> val;                       // Et max
       file >> val;                       // cor factor
-      std::cout << etaMin << ", " << etaMax << ", " << val << '\n';
+      //std::cout << etaMin << ", " << etaMax << ", " << val << '\n';
       for(int etaBin = -41; etaBin <= 41; ++etaBin) {
 	if(etaBin == 0 ) etaBin++;
 	//std::cout << etaLowerEdge(etaBin) << ", " << etaUpperEdge(etaBin) << ":" <<
@@ -1072,11 +1072,13 @@ void Parameters::readCalibrationJetMETLRes(const std::string& inputFileName) {
     }
   }
   file.close();
+  /*
   for(int etaBin = -41; etaBin <= 41; ++etaBin) {
     if(etaBin == 0 ) etaBin++;
     int jetIdx = jetBin(jetEtaBin(etaBin),jetPhiBin(1));
     std::cout << k_[numberOfTowerParameters() + jetIdx*numberOfJetParametersPerBin()] << "\n";
   }
+  */
 }
 
 
@@ -1193,7 +1195,7 @@ int Parameters::etaBin(int eta_id, int etagranu, int phigranu, bool etasym) cons
 // -----------------------------------------------------------------
 float Parameters::etaEdge(int const etaBin, bool lowerEdge)
 {
-  // return eta bin - eta edge mappting
+  // return eta bin - eta edge mapping
   switch(etaBin){
   case -41: return (lowerEdge ? -5.191 : -4.889); break;
   case -40: return (lowerEdge ? -4.889 : -4.716); break;
