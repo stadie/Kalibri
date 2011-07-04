@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: DiJetEventWeighting.cc,v 1.2 2011/01/19 15:05:21 stadie Exp $
+//    $Id: DiJetEventWeighting.cc,v 1.3 2011/06/30 14:27:15 stadie Exp $
 //   
 #include "DiJetEventWeighting.h"
 
@@ -56,9 +56,20 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
     --it;
     it->second += tje->weight();
   }
-  for(std::vector<Event*>::const_iterator i = control1.begin() ; i != control1.end() ; ++i) {
+  for(std::vector<Event*>::iterator i = control1.begin() ; i != control1.end() ; ++i) {
     if((*i)->type() != PtBalance) continue;
     TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(*i);
+    Jet * j1 = tje->getJet1();
+    double res1 = j1->pt()/j1->genPt();
+    Jet * j2 = tje->getJet2();
+    double res2 = j2->pt()/j2->genPt();
+    if((res1 < 0.2) || (res1 > 2.0) || (res2 < 0.2) || (res2 > 2.0)) {
+      std::cout << "strange response: " << res1 << ", " <<  res2 << " pt:" <<  j1->pt() << ", " << j2->pt() << '\n';
+      --i;
+      delete tje;
+      control1.erase(i+1);
+      continue;
+    }
     std::map<double,double>::iterator it = ncontrol_.lower_bound(tje->ptDijetCorrL2L3());
     if(it == ncontrol_.begin()) continue;
     --it;
