@@ -1,6 +1,6 @@
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: JetMETCorFactorsFactory.h,v 1.7 2011/02/15 12:53:14 stadie Exp $
+//    $Id: JetMETCorFactorsFactory.h,v 1.8 2011/04/01 10:23:50 kirschen Exp $
 //   
 #ifndef JETMETCORFACTORSFACTORY_H
 #define JETMETCORFACTORSFACTORY_H
@@ -19,7 +19,7 @@ class JetMETCorFactorsFactory : public CorFactorsFactory
   JetMETCorFactorsFactory(const std::string& name, const std::string& files,Levels type);
   ~JetMETCorFactorsFactory();
 
-  CorFactors* create(const Jet* j, int nPV = 1);
+  CorFactors* create(const Jet* j, int nPV = 1, double rho=-9999., double jetA=0.);
   CorFactorsFactory* clone() const {
     return new JetMETCorFactorsFactory(*this);
   }

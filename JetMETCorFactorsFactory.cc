@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.19 2011/02/25 09:29:32 kirschen Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.20 2011/04/01 10:23:50 kirschen Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -36,7 +36,7 @@ JetMETCorFactorsFactory::~JetMETCorFactorsFactory()
 }
 
 
-CorFactors* JetMETCorFactorsFactory::create(const Jet* j,int nPV)
+CorFactors* JetMETCorFactorsFactory::create(const Jet* j,int nPV, double rho, double jetA)
 {
   boost::mutex::scoped_lock l(mutex_);
   if(nPV < 1) nPV = 1;
@@ -48,6 +48,8 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j,int nPV)
   cor_->setJetEtaEtaMoment(j->momentEtaEta());
   cor_->setJetPhiPhiMoment(j->momentPhiPhi());
   cor_->setNPV(nPV);
+  cor_->setRho(rho);
+  cor_->setJetA(jetA);
 
   std::vector<float> levels = cor_->getSubCorrections();
 
@@ -113,16 +115,34 @@ JetMETCorFactorsFactory::Register::Register()
   //  create("Spring10_AK5PFData","JetMETObjects/data/Spring10_L2Relative_AK5PF.txt:JetMETObjects/data/Spring10_L3Absolute_AK5PF.txt:JetMETObjects/data/Spring10DataV2_L2L3Residual_AK5PF.txt",L2L3res); 
   //  create("Spring10_AK5JPTData","JetMETObjects/data/Spring10_L2Relative_AK5JPT.txt:JetMETObjects/data/Spring10_L3Absolute_AK5JPT.txt:JetMETObjects/data/Spring10DataV2_L2L3Residual_AK5JPT.txt",L2L3res);
   //  create("Spring10_AK5CaloJW","JetMETObjects/data/Spring10_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring10_L3Absolute_AK5Calo.txt:JetMETObjects/data/L4JW_AK5Calo.txt",L2L3L4);  
+  create("Spring11_AK5Calo","JetMETObjects/data/Fall10_L1Offset_AK5Calo.txt:JetMETObjects/data/Spring11_L2Relative_AK5Calo.txt:JetMETObjects/data/Spring11_L3Absolute_AK5Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5Calo.txt",L1L2L3res);
+  create("Spring11_AK5PF","JetMETObjects/data/Fall10_L1Offset_AK5PF.txt:JetMETObjects/data/Spring11_L2Relative_AK5PF.txt:JetMETObjects/data/Spring11_L3Absolute_AK5PF.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5PF.txt",L1L2L3res);
+
+  create("Fall10_Henning_AK5Calo","JetMETObjects/data/Fall10_L1Offset_AK5Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK5Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Fall10_1015absTuneZ2_L2L3Residual_AK5Calo.txt",L1L2L3res);
+  create("Fall10_Henning_AK5PF","JetMETObjects/data/Fall10_L1Offset_AK5PF.txt:JetMETObjects/data/Fall10_L2Relative_AK5PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK5PF.txt:JetMETObjects/data/Fall10_1015absTuneZ2_L2L3Residual_AK5PF.txt",L1L2L3res);
+
+  create("Fall10_HenningJER_AK5Calo","JetMETObjects/data/Fall10_L1Offset_AK5Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK5Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK5Calo.txt:JetMETObjects/data/ConstSmear1015absTuneZ2_L2L3Residual_AK5Calo.txt",L1L2L3res);
+  create("Fall10_HenningJER_AK5PF","JetMETObjects/data/Fall10_L1Offset_AK5PF.txt:JetMETObjects/data/Fall10_L2Relative_AK5PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK5PF.txt:JetMETObjects/data/ConstSmear1015absTuneZ2_L2L3Residual_AK5PF.txt",L1L2L3res);
+  create("Fall10_HenningJER_AK5JPT","JetMETObjects/data/Fall10_L2Relative_AK5JPT.txt:JetMETObjects/data/Fall10_L3Absolute_AK5JPT.txt:JetMETObjects/data/ConstSmear1015absTuneZ2_L2L3Residual_AK5JPT.txt",L2L3res);
+
   create("Fall10_L4JW_AK5Calo","JetMETObjects/data/Fall10_L1Offset_AK5Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK5Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5Calo.txt:JetMETObjects/data/L4JW_AK5Calo.txt",L1L2L3resL4);
   create("Fall10_AK5Calo","JetMETObjects/data/Fall10_L1Offset_AK5Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK5Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5Calo.txt",L1L2L3res);
-  create("Fall10_AK7Calo","JetMETObjects/data/Fall10_L1Offset_AK7Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK7Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK7Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK7Calo.txt",L1L2L3res);
+  create("Fall10_AK7Calo","JetMETObjects/data/Fall10_L1Offset_AK7Calo.txt:JetMETObjects/data/Fall10_L2Relative_AK7Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK7Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5Calo.txt",L1L2L3res);
   create("Fall10_AK5PF","JetMETObjects/data/Fall10_L1Offset_AK5PF.txt:JetMETObjects/data/Fall10_L2Relative_AK5PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK5PF.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5PF.txt",L1L2L3res);
-  create("Fall10_AK7PF","JetMETObjects/data/Fall10_L1Offset_AK7PF.txt:JetMETObjects/data/Fall10_L2Relative_AK7PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK7PF.txt:JetMETObjects/data/Fall10_L2L3Residual_AK7PF.txt",L1L2L3res); 
+  create("Fall10_AK7PF","JetMETObjects/data/Fall10_L1Offset_AK7PF.txt:JetMETObjects/data/Fall10_L2Relative_AK7PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK7PF.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5PF.txt",L1L2L3res); 
   create("Fall10_AK5CaloNoOffset","JetMETObjects/data/Fall10_L2Relative_AK5Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK5Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5Calo.txt",L2L3res);
   create("Fall10_AK5PFNoOffset","JetMETObjects/data/Fall10_L2Relative_AK5PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK5PF.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5PF.txt",L2L3res);
   create("Fall10_AK7CaloNoOffset","JetMETObjects/data/Fall10_L2Relative_AK7Calo.txt:JetMETObjects/data/Fall10_L3Absolute_AK7Calo.txt:JetMETObjects/data/Fall10_L2L3Residual_AK7Calo.txt",L2L3res);
   create("Fall10_AK7PFNoOffset","JetMETObjects/data/Fall10_L2Relative_AK7PF.txt:JetMETObjects/data/Fall10_L3Absolute_AK7PF.txt:JetMETObjects/data/Fall10_L2L3Residual_AK7PF.txt",L2L3res);
   create("Fall10_AK5JPT","JetMETObjects/data/Fall10_L2Relative_AK5JPT.txt:JetMETObjects/data/Fall10_L3Absolute_AK5JPT.txt:JetMETObjects/data/Fall10_L2L3Residual_AK5JPT.txt",L2L3res);
+  create("Su11_He_AK5Calo","JetMETObjects/data/GR_R_42_V12_AK5Calo_L1Offset.txt:JetMETObjects/data/GR_R_42_V12_AK5Calo_L2Relative.txt:JetMETObjects/data/GR_R_42_V12_AK5Calo_L3Absolute.txt:JetMETObjects/data/11dcomb_Su11MCZ2_HF_L2L3Residual_AK5Calo.txt",L1L2L3res);
+  create("Su11_He_AK5JPT","JetMETObjects/data/GR_R_42_V12_AK5JPT_L1Offset.txt:JetMETObjects/data/GR_R_42_V12_AK5JPT_L2Relative.txt:JetMETObjects/data/GR_R_42_V12_AK5JPT_L3Absolute.txt:JetMETObjects/data/11dcomb_Su11MCZ2_HF_L2L3Residual_AK5JPT.txt",L1L2L3res);
+  create("Su11_He_AK5PF","JetMETObjects/data/GR_R_42_V12_AK5PF_L1FastJet.txt:JetMETObjects/data/GR_R_42_V12_AK5PF_L2Relative.txt:JetMETObjects/data/GR_R_42_V12_AK5PF_L3Absolute.txt:JetMETObjects/data/11dcomb_Su11MCZ2_HF_L2L3Residual_AK5PF.txt",L1L2L3res);
+  //  create("Su11_He_AK5JPT","JetMETObjects/data/GR_R_42_V12_AK5JPT_L1Offset.txt:JetMETObjects/data/GR_R_42_V12_L2Relative_AK5JPT.txt:JetMETObjects/data/GR_R_42_V12_L3Absolute_AK5JPT.txt:JetMETObjects/data/11dcomb_Su11MC_HF_L2L3Residual_AK5JPT.txt",L1L2L3res);
+  //  create("Su11_He_AK5PF","JetMETObjects/data/GR_R_42_V12_AK5PF_L1FastJet.txt:JetMETObjects/data/GR_R_42_V12_L2Relative_AK5PF.txt:JetMETObjects/data/GR_R_42_V12_L3Absolute_AK5PF.txt:JetMETObjects/data/11dcomb_Su11MC_HF_L2L3Residual_AK5PF.txt",L1L2L3res);
+
+
+
 }
 
 JetMETCorFactorsFactory* JetMETCorFactorsFactory::Register::create(const std::string& name, const std::string& files, Levels type) const
