@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.20 2011/04/28 16:05:34 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.21 2011/05/18 15:59:58 stadie Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -604,62 +604,64 @@ int ControlPlotsProfile::Bin::fitProfiles() {
       h->SetYTitle("Number of jets");
       h->SetLineColor(config_->color(corrIt->first));	   
       hYDistributions_[corrIt->first].at(xBin-1) = h;  
-      double mean = htemp->GetMean(); 
-      double meanerror = htemp->GetMeanError();
-      double width = htemp->GetRMS();
-      if(width < 0.1) width = 0.1;
-      if(htemp->GetSumOfWeights() <= 0) {
-	continue; 
-      } else {
-	htemp->Fit("gaus","QNI","", mean - 3 * width,mean + 3 * width);
-	TF1 *f = (TF1*)gROOT->GetFunction("gaus")->Clone();
-	mean = f->GetParameter(1);
-	meanerror = f->GetParError(1);
-	width = f->GetParameter(2);
-	if(width < 0.05) width = 0.05;
-	if( (htemp->Fit(f,"QNI","goff",mean - 1.5 * width, mean + 1.5 * width) == 0) ) {
+      if(htemp->GetEntries()>100){
+	double mean = htemp->GetMean(); 
+	double meanerror = htemp->GetMeanError();
+	double width = htemp->GetRMS();
+	if(width < 0.1) width = 0.1;
+	if(htemp->GetSumOfWeights() <= 0) {
+	  continue; 
+	} else {
+	  htemp->Fit("gaus","QNI","", mean - 3 * width,mean + 3 * width);
+	  TF1 *f = (TF1*)gROOT->GetFunction("gaus")->Clone();
 	  mean = f->GetParameter(1);
 	  meanerror = f->GetParError(1);
 	  width = f->GetParameter(2);
-	  
-	  hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->SetBinContent(xBin,mean);
-	  hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->SetBinError(xBin,meanerror);
-	  if( isResponse ) {
-	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinContent(xBin,width/mean);
-	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinError(xBin,f->GetParError(2)/mean);
-	  } else {
-	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinContent(xBin,width);
-	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinError(xBin,f->GetParError(2));
+	  if(width < 0.05) width = 0.05;
+	  if( (htemp->Fit(f,"QNI","goff",mean - 1.5 * width, mean + 1.5 * width) == 0) ) {
+	    mean = f->GetParameter(1);
+	    meanerror = f->GetParError(1);
+	    width = f->GetParameter(2);
+	    
+	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->SetBinContent(xBin,mean);
+	    hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->SetBinError(xBin,meanerror);
+	    if( isResponse ) {
+	      hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinContent(xBin,width/mean);
+	      hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinError(xBin,f->GetParError(2)/mean);
+	    } else {
+	      hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinContent(xBin,width);
+	      hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitWidth]->SetBinError(xBin,f->GetParError(2));
+	    }
+	    hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
+	    hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
 	  }
-	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
-	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Chi2]->SetBinContent(xBin, f->GetChisquare() / f->GetNumberFreeParameters());
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Chi2]->SetBinError(xBin, 0.01);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Probability]->SetBinContent(xBin, f->GetProb());
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Probability]->SetBinError(xBin, 0.01);
+	  mean = htemp->GetMean();
+	  meanerror = htemp->GetMeanError();
+	  width = htemp->GetRMS();
+	  
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinContent(xBin,mean);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinError(xBin,meanerror);
+	  if( isResponse) {
+	    hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinContent(xBin,width/mean); 
+	    hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinError(xBin,htemp->GetRMSError()/mean);
+	  } else {
+	    hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinContent(xBin,width); 
+	    hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinError(xBin,htemp->GetRMSError());
+	  } 
+	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
+	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
+	  htemp->GetQuantiles(nq,yq,xq);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetBinContent(xBin,yq[0]);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetBinError(xBin,0.0001);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->SetBinContent(xBin,yq[1]/yq[0]-1);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->SetBinError(xBin,0.0001);
+	  delete f;
 	}
-	hXProfile_[corrIt->first][ControlPlotsConfig::Chi2]->SetBinContent(xBin, f->GetChisquare() / f->GetNumberFreeParameters());
-	hXProfile_[corrIt->first][ControlPlotsConfig::Chi2]->SetBinError(xBin, 0.01);
-	hXProfile_[corrIt->first][ControlPlotsConfig::Probability]->SetBinContent(xBin, f->GetProb());
-	hXProfile_[corrIt->first][ControlPlotsConfig::Probability]->SetBinError(xBin, 0.01);
-	mean = htemp->GetMean();
-	meanerror = htemp->GetMeanError();
-	width = htemp->GetRMS();
-
-	hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinContent(xBin,mean);
-	hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinError(xBin,meanerror);
-	if( isResponse) {
-	  hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinContent(xBin,width/mean); 
-	hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinError(xBin,htemp->GetRMSError()/mean);
-	} else {
-	  hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinContent(xBin,width); 
-	  hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetBinError(xBin,htemp->GetRMSError());
-	} 
-	hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
-	hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
-	htemp->GetQuantiles(nq,yq,xq);
-	hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetBinContent(xBin,yq[0]);
-	hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetBinError(xBin,0.0001);
-	hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->SetBinContent(xBin,yq[1]/yq[0]-1);
-	hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->SetBinError(xBin,0.0001);
-	delete f;
-      }
+      } // do fits only if more than 100 entries
     } // End of loop over x bins
     delete htemp;
     hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->GetEffectiveEntries());
