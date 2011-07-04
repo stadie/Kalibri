@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.12 2011/06/30 14:27:14 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.13 2011/07/04 14:46:55 kirschen Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -158,7 +158,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 	    //std::cout << *i << ":events " << (*i)->nEvents() << ";" << djr->nReadEvts_<< '\n';
 	  }
 	}
-	std::cout << nReadEvts_ << " events read\n";
+	//std::cout << nReadEvts_ << " events read\n";
 	id = 0;
 	if((nDijetEvents_ > 0) && (nReadEvts_ >= nDijetEvents_)) break; 
 	for(std::vector<TFile*>::const_iterator f = files.begin() ;

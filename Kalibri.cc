@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.25 2011/06/06 15:53:08 stadie Exp $
+//  $Id: Kalibri.cc,v 1.26 2011/06/30 14:27:14 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -273,9 +273,10 @@ void Kalibri::run()
     std::cout << "****Processing events:****\n";
     std::vector<EventProcessor*> processors;
     processors.push_back(new EventWeightProcessor(configFile_,par_));
-    processors.push_back(new EventBinning(configFile_,par_));
     processors.push_back(new DiJetEventWeighting(configFile_,par_));
     processors.push_back(new PUEventWeightProcessor(configFile_,par_));
+    processors.push_back(new EventBinning(configFile_,par_));
+    processors.push_back(new DiJetEventBinning(configFile_,par_));
 
     for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
       (*i)->process(data_,control_[0],control_[1]);

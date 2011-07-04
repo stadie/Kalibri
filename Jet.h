@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.46 2011/04/28 16:05:34 stadie Exp $
+//!    $Id: Jet.h,v 1.47 2011/05/26 07:42:52 mschrode Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -172,7 +172,8 @@ class Jet : public Measurement
 
   const Function* f() const { return f_;}
   const Function* gf() const { return gf_;}
-
+  float (*errFunc())(const float *x, const Measurement *xorig, float err) {
+    return errf_;}
  protected:
   virtual float expectedEt(float truth, float start, bool fast = false);
   Jet(const Jet&j); //!< disallow copies!

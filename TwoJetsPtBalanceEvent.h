@@ -13,21 +13,16 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.12 2010/11/01 15:47:40 stadie Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.13 2011/05/31 15:49:04 stadie Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
   TwoJetsPtBalanceEvent(Jet *j1, Jet *j2, Jet *j3, double ptHat, double w) 
-    : Event(w,ptHat),
-    jet1_(j1),
-    jet2_(j2),
-    jet3_(j3),
-    residual_(0),
-    varresidual_(0),
-    flaggedBad_(false),
-    chi2Plots_(1000.) {
-    error1_ = jet1_->error();
-    error2_ = jet2_->error();
+    : Event(w,ptHat), jet1_(j1), jet2_(j2), jet3_(j3), residual_(0), 
+      varresidual_(0), flaggedBad_(false), chi2Plots_(1000.)
+  {
+    error1_ = jet1_ ? jet1_->error() : 0;
+    error2_ = jet2_ ? jet2_->error() : 0;
   }
   virtual ~TwoJetsPtBalanceEvent() { delete jet1_; delete jet2_; if( hasJet3() ) delete jet3_; }
 
@@ -43,7 +38,10 @@ class TwoJetsPtBalanceEvent : public Event {
   Jet *getJet1() const { return jet1_; }
   Jet *getJet2() const { return jet2_; }
   Jet *getJet3() const { return jet3_; }
-
+  Jet *jet1() const { return jet1_; }
+  Jet *jet2() const { return jet2_; }
+  Jet *jet3() const { return jet3_; }
+  
   bool hasJet3() const { return jet3_ != 0 ? true : false; }
 
   virtual void setParameters(Parameters* param) {
@@ -84,17 +82,18 @@ class TwoJetsPtBalanceEvent : public Event {
   double ptSumAbsGen() const;
   double ptSumAbsCorrL2L3() const;
 
-  double relPtJet3() const { return hasJet3() ? jet3_->pt() / ptDijet() : 0.; }
+  virtual double relPtJet3() const { return hasJet3() ? jet3_->pt() / ptDijet() : 0.; }
 
   bool flaggedBad() const { return flaggedBad_; }  //!< Status
 
+protected:
+  Jet *jet1_;
+  Jet *jet2_;
+  Jet *jet3_;
 
  private:
   double error1_;		//!< Store jet1_ error during major iteration
   double error2_;		//!< Store jet2_ error during major iteration
-  Jet *jet1_;
-  Jet *jet2_;
-  Jet *jet3_;
   double residual_;
   double varresidual_;
 
