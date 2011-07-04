@@ -3,7 +3,7 @@
 import os
 
 def writeCfg(filename):
-    config="""
+    config_1="""
 #
 # Configuration File for the Calibration Program
 # Hamburg, 2007/08/15
@@ -76,21 +76,17 @@ Et cut on n+1 Jet          = 9999.0
 Min Delta Phi              = 2.7
 Eta max cut on jet         = 5.2  
 Relative Rest Jet Cut      = 0.2      #NonLeadingJetsEt / PhotonEt
-Min had fraction           = -0.05    #Default: 0.07
+Min had fraction           = -1.05    #Default: 0.07
 Max had fraction           = 1.05    #Default: 0.95
 Et genJet min              = 0.0
 Et genJet max              = 7000.0
 DeltaR cut on jet matching = 9999
 Max cut on relative n+1 Jet Et = 200.0 # was 0.4
 Max cut on relative Soft Jet Et = 200.0
-
 #---------------------------------------------------------------------------------
 #   Input / Output
 #---------------------------------------------------------------------------------
 
-#jet correction source = JetMETCor
-#jet correction name   = Spring10_AK5TRK
-#jet correction source = JetMETCor
 #now later in config-file...  jet correction name   = Spring11_AK5Calo
 Default Tree Name      = CalibTree
 
@@ -139,12 +135,96 @@ plots only to root-file = true
 create JetTruthEvent plots    =  false
 create TwoJetsPtBalanceEvent plots = true
 
-TwoJetsPtBalanceEvent plots names =   AsymmetryVsPt20_all_eta;AsymmetryVsEta;AsymmetryVsPt40;AsymmetryVsPt35;AsymmetryVsPt30;AsymmetryVsPt25;AsymmetryVsPt20;AsymmetryVsPt15;AsymmetryVsPt10;AsymmetryVsPt05;AsymmetryVsTJF;AbsAsymmetryVsPt40;AbsAsymmetryVsPt35;AbsAsymmetryVsPt30;AbsAsymmetryVsPt25;AbsAsymmetryVsPt20;AbsAsymmetryVsPt15;AbsAsymmetryVsPt10;AbsAsymmetryVsPt05;AbsAsymmetryVsTJF;OneBinAsymmetryVsPt40;OneBinAsymmetryVsPt35;OneBinAsymmetryVsPt30;OneBinAsymmetryVsPt25;OneBinAsymmetryVsPt20;OneBinAsymmetryVsPt15;OneBinAsymmetryVsPt10;OneBinAsymmetryVsPt05;OneBinAbsAsymmetryVsPt40;OneBinAbsAsymmetryVsPt35;OneBinAbsAsymmetryVsPt30;OneBinAbsAsymmetryVsPt25;OneBinAbsAsymmetryVsPt20;OneBinAbsAsymmetryVsPt15;OneBinAbsAsymmetryVsPt10;OneBinAbsAsymmetryVsPt05
+
+"""
+
+    fcfg = open(filename, "w")
+    fcfg.write(config_1)
+
+    if(BINNING=="kostas"):
+        binning_values = "-5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191"
+        abs_binning_values = "0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191"
+    if(BINNING=="k_HFfix"):
+        binning_values = "-5.191 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 5.191"
+        abs_binning_values = "0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 5.191"
+
+
+    plot_list=['AsymmetryVsPt','AbsAsymmetryVsPt','OneBinAsymmetryVsPt','OneBinAbsAsymmetryVsPt']
+    cut_list=['40','30','20','10']
+    cut_no_list=['.40','.30','.20','.10']
+#    cut_list=['40','35','30','25','20','15','10','05']
+#    cut_no_list=['.40','.35','.30','.25','.20','.15','.10','.05']
+        
+    fcfg.write("TwoJetsPtBalanceEvent plots names =   ")
+    for index_cut, cut in enumerate(cut_list):
+        fcfg.write(plot_list[0] + cut + ";")
+        fcfg.write(plot_list[1] + cut + ";")
+        fcfg.write(plot_list[2] + cut + ";")
+        fcfg.write(plot_list[3] + cut + ";")
+    fcfg.write("AsymmetryVsPt20_all_eta;AsymmetryVsEta;AsymmetryVsTJF;AbsAsymmetryVsTJF")
+    fcfg.write("\n")
+##    for index_samples, samples in enumerate(samples_all):
+    for index_cut, cut in enumerate(cut_list):
+        #    print "prepare " + samples
+        fcfg.write(plot_list[0] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[0] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[0] + cut + " y variable        =  Asymmetry\n")
+        fcfg.write(plot_list[0] + cut + " y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+        fcfg.write(plot_list[0] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[0] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[0] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[0] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[0] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[0] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+        fcfg.write(plot_list[0] + cut + " input samples     =  0:data;1:MC\n\n")
+
+        fcfg.write(plot_list[1] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[1] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[1] + cut + " y variable        =  Asymmetry\n")
+        fcfg.write(plot_list[1] + cut + " y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+        fcfg.write(plot_list[1] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[1] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[1] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[1] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[1] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[1] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[1] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+        fcfg.write(plot_list[1] + cut + " input samples     =  0:data;1:MC\n\n")
+
+        fcfg.write(plot_list[2] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[2] + cut + " x edges           =  1 20 2000\n")
+        fcfg.write(plot_list[2] + cut + " y variable        =  Asymmetry\n")
+        fcfg.write(plot_list[2] + cut + " y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+        fcfg.write(plot_list[2] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[2] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[2] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[2] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[2] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[2] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[2] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+        fcfg.write(plot_list[2] + cut + " input samples     =  0:data;1:MC\n\n")
+
+        fcfg.write(plot_list[3] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[3] + cut + " x edges           =  1 20 2000\n")
+        fcfg.write(plot_list[3] + cut + " y variable        =  Asymmetry\n")
+        fcfg.write(plot_list[3] + cut + " y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+        fcfg.write(plot_list[3] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[3] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[3] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[3] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[3] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[3] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[3] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+        fcfg.write(plot_list[3] + cut + " input samples     =  0:data;1:MC\n\n")
+
+
+        config_2="""
 
 AsymmetryVsPt20_all_eta x variable        =  MeanPt; log
-AsymmetryVsPt20_all_eta x edges           =  30 20 2000
+AsymmetryVsPt20_all_eta x edges           =  15 20 2000
 AsymmetryVsPt20_all_eta y variable        =  Asymmetry
-AsymmetryVsPt20_all_eta y edges           =  51 -0.85 0.85 -0.5 0.5
+AsymmetryVsPt20_all_eta y edges           =  51 -0.30 0.30 -0.5 0.5
 AsymmetryVsPt20_all_eta cut variable      =  ThirdJetFractionPlain
 AsymmetryVsPt20_all_eta cut edges         =  0.0 0.2
 AsymmetryVsPt20_all_eta correction types  =  L2L3; L2L3Res
@@ -155,7 +235,7 @@ AsymmetryVsPt20_all_eta input samples     =  0:data;1:MC
 AsymmetryVsEta x variable        =  Eta
 AsymmetryVsEta x edges           =  26 -5.2 5.2
 AsymmetryVsEta y variable        =  Asymmetry
-AsymmetryVsEta y edges           =  51 -0.85 0.85 -0.5 0.8 -0.5 0.8 0.7 1.3 0.7 1.3
+AsymmetryVsEta y edges           =  51 -0.30 0.30 -0.5 0.8 -0.5 0.8 0.7 1.3 0.7 1.3
 AsymmetryVsEta bin variable      =  MeanPt
 AsymmetryVsEta bin edges         =  20 30 50 80 120 200 360 500 900 7000
 AsymmetryVsEta cut variable      =  ThirdJetFractionPlain
@@ -166,536 +246,58 @@ AsymmetryVsEta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGau
 #AsymmetryVsEta legend label      =  L2L3:CMS default
 AsymmetryVsEta input samples     =  0:data;1:MC
 
-AsymmetryVsPt40 x variable        =  MeanPt; log
-AsymmetryVsPt40 x edges           =  30 20 2000
-AsymmetryVsPt40 y variable        =  Asymmetry
-AsymmetryVsPt40 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AsymmetryVsPt40 bin variable      =  Eta
-#AsymmetryVsPt40 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsPt40 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-#AsymmetryVsPt40 bin edges         =  -6.0 -4.0 -3.5 -3.2 -3.0 -2.8 -2.6 -2.4 -2.2 -2.0 -1.8 -1.5 -1.4 -1.3 -1.2 -1.1 -0.9 -0.6 -0.3 0.0 0.3 0.6 0.9 1.1 1.2 1.3 1.4 1.5 1.8 2.0 2.2 2.4 2.6 2.8 3.0 3.2 3.5 4.0 6.0 
-#AsymmetryVsPt40 bin edges         = -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-AsymmetryVsPt40 cut variable      =  ThirdJetFractionPlain
-AsymmetryVsPt40 cut edges         =  0.0 0.40
-AsymmetryVsPt40 correction types  =  L2L3; L2L3Res
-AsymmetryVsPt40 1 correction types  =  L2L3
-AsymmetryVsPt40 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsPt40 legend label      =  L2L3:CMS default
-AsymmetryVsPt40 input samples     =  0:data;1:MC
-
-AsymmetryVsPt35 x variable        =  MeanPt; log
-AsymmetryVsPt35 x edges           =  30 20 2000
-AsymmetryVsPt35 y variable        =  Asymmetry
-AsymmetryVsPt35 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AsymmetryVsPt35 bin variable      =  Eta
-#AsymmetryVsPt35 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsPt35 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-AsymmetryVsPt35 cut variable      =  ThirdJetFractionPlain
-AsymmetryVsPt35 cut edges         =  0.0 0.35
-AsymmetryVsPt35 correction types  =  L2L3; L2L3Res
-AsymmetryVsPt35 1 correction types  =  L2L3
-AsymmetryVsPt35 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsPt35 legend label      =  L2L3:CMS default
-AsymmetryVsPt35 input samples     =  0:data;1:MC
-
-AsymmetryVsPt30 x variable        =  MeanPt; log
-AsymmetryVsPt30 x edges           =  30 20 2000
-AsymmetryVsPt30 y variable        =  Asymmetry
-AsymmetryVsPt30 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AsymmetryVsPt30 bin variable      =  Eta
-#AsymmetryVsPt30 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsPt30 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-AsymmetryVsPt30 cut variable      =  ThirdJetFractionPlain
-AsymmetryVsPt30 cut edges         =  0.0 0.30
-AsymmetryVsPt30 correction types  =  L2L3; L2L3Res
-AsymmetryVsPt30 1 correction types  =  L2L3
-AsymmetryVsPt30 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsPt30 legend label      =  L2L3:CMS default
-AsymmetryVsPt30 input samples     =  0:data;1:MC
-
-AsymmetryVsPt25 x variable        =  MeanPt; log
-AsymmetryVsPt25 x edges           =  30 20 2000
-AsymmetryVsPt25 y variable        =  Asymmetry
-AsymmetryVsPt25 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AsymmetryVsPt25 bin variable      =  Eta
-#AsymmetryVsPt25 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsPt25 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-AsymmetryVsPt25 cut variable      =  ThirdJetFractionPlain
-AsymmetryVsPt25 cut edges         =  0.0 0.25
-AsymmetryVsPt25 correction types  =  L2L3; L2L3Res
-AsymmetryVsPt25 1 correction types  =  L2L3
-AsymmetryVsPt25 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsPt25 legend label      =  L2L3:CMS default
-AsymmetryVsPt25 input samples     =  0:data;1:MC
-
-AsymmetryVsPt20 x variable        =  MeanPt; log
-AsymmetryVsPt20 x edges           =  30 20 2000
-AsymmetryVsPt20 y variable        =  Asymmetry
-AsymmetryVsPt20 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AsymmetryVsPt20 bin variable      =  Eta
-#AsymmetryVsPt20 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsPt20 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-AsymmetryVsPt20 cut variable      =  ThirdJetFractionPlain
-AsymmetryVsPt20 cut edges         =  0.0 0.2
-AsymmetryVsPt20 correction types  =  L2L3; L2L3Res
-AsymmetryVsPt20 1 correction types  =  L2L3
-AsymmetryVsPt20 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsPt20 legend label      =  L2L3:CMS default
-AsymmetryVsPt20 input samples     =  0:data;1:MC
-
-AsymmetryVsPt15 x variable        =  MeanPt; log
-AsymmetryVsPt15 x edges           =  30 20 2000
-AsymmetryVsPt15 y variable        =  Asymmetry
-AsymmetryVsPt15 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AsymmetryVsPt15 bin variable      =  Eta
-#AsymmetryVsPt15 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsPt15 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-AsymmetryVsPt15 cut variable      =  ThirdJetFractionPlain
-AsymmetryVsPt15 cut edges         =  0.0 0.15
-AsymmetryVsPt15 correction types  =  L2L3; L2L3Res
-AsymmetryVsPt15 1 correction types  =  L2L3
-AsymmetryVsPt15 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsPt15 legend label      =  L2L3:CMS default
-AsymmetryVsPt15 input samples     =  0:data;1:MC
-
-AsymmetryVsPt10 x variable        =  MeanPt; log
-AsymmetryVsPt10 x edges           =  30 20 2000
-AsymmetryVsPt10 y variable        =  Asymmetry
-AsymmetryVsPt10 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AsymmetryVsPt10 bin variable      =  Eta
-#AsymmetryVsPt10 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsPt10 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-AsymmetryVsPt10 cut variable      =  ThirdJetFractionPlain
-AsymmetryVsPt10 cut edges         =  0.0 0.1
-AsymmetryVsPt10 correction types  =  L2L3; L2L3Res
-AsymmetryVsPt10 1 correction types  =  L2L3
-AsymmetryVsPt10 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsPt10 legend label      =  L2L3:CMS default
-AsymmetryVsPt10 input samples     =  0:data;1:MC
-
-AsymmetryVsPt05 x variable        =  MeanPt; log
-AsymmetryVsPt05 x edges           =  30 20 2000
-AsymmetryVsPt05 y variable        =  Asymmetry
-AsymmetryVsPt05 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AsymmetryVsPt05 bin variable      =  Eta
-#AsymmetryVsPt05 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AsymmetryVsPt05 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-AsymmetryVsPt05 cut variable      =  ThirdJetFractionPlain
-AsymmetryVsPt05 cut edges         =  0.0 0.05
-AsymmetryVsPt05 correction types  =  L2L3; L2L3Res
-AsymmetryVsPt05 1 correction types  =  L2L3
-AsymmetryVsPt05 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVsPt05 legend label      =  L2L3:CMS default
-AsymmetryVsPt05 input samples     =  0:data;1:MC
-
-AsymmetryVsTJF x variable        =  ThirdJetFractionPlain
-AsymmetryVsTJF x edges           =  8 0.00 0.40
-AsymmetryVsTJF y variable        =  Asymmetry
-AsymmetryVsTJF y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AsymmetryVsTJF bin variable      =  Eta
-AsymmetryVsTJF bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191 
-AsymmetryVsTJF correction types  =  L2L3; L2L3Res
-AsymmetryVsTJF 1 correction types  =  L2L3
-AsymmetryVsTJF profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVTJF legend label      =  L2L3:CMS default
-AsymmetryVsTJF input samples     =  0:data;1:MC
-
-
-AbsAsymmetryVsPt40 x variable        =  MeanPt; log
-AbsAsymmetryVsPt40 x edges           =  30 20 2000
-AbsAsymmetryVsPt40 y variable        =  Asymmetry
-AbsAsymmetryVsPt40 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AbsAsymmetryVsPt40 bin variable      =  AbsEta
-#AbsAsymmetryVsPt40 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AbsAsymmetryVsPt40 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-#AbsAsymmetryVsPt40 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-AbsAsymmetryVsPt40 cut variable      =  ThirdJetFractionPlain
-AbsAsymmetryVsPt40 cut edges         =  0.0 0.40
-AbsAsymmetryVsPt40 correction types  =  L2L3; L2L3Res
-AbsAsymmetryVsPt40 1 correction types  =  L2L3
-AbsAsymmetryVsPt40 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AbsAsymmetryVsPt40 legend label      =  L2L3:CMS default
-AbsAsymmetryVsPt40 input samples     =  0:data;1:MC
-
-AbsAsymmetryVsPt35 x variable        =  MeanPt; log
-AbsAsymmetryVsPt35 x edges           =  30 20 2000
-AbsAsymmetryVsPt35 y variable        =  Asymmetry
-AbsAsymmetryVsPt35 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AbsAsymmetryVsPt35 bin variable      =  AbsEta
-#AbsAsymmetryVsPt35 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AbsAsymmetryVsPt35 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-AbsAsymmetryVsPt35 cut variable      =  ThirdJetFractionPlain
-AbsAsymmetryVsPt35 cut edges         =  0.0 0.35
-AbsAsymmetryVsPt35 correction types  =  L2L3; L2L3Res
-AbsAsymmetryVsPt35 1 correction types  =  L2L3
-AbsAsymmetryVsPt35 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AbsAsymmetryVsPt35 legend label      =  L2L3:CMS default
-AbsAsymmetryVsPt35 input samples     =  0:data;1:MC
-
-AbsAsymmetryVsPt30 x variable        =  MeanPt; log
-AbsAsymmetryVsPt30 x edges           =  30 20 2000
-AbsAsymmetryVsPt30 y variable        =  Asymmetry
-AbsAsymmetryVsPt30 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AbsAsymmetryVsPt30 bin variable      =  AbsEta
-#AbsAsymmetryVsPt30 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AbsAsymmetryVsPt30 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-AbsAsymmetryVsPt30 cut variable      =  ThirdJetFractionPlain
-AbsAsymmetryVsPt30 cut edges         =  0.0 0.30
-AbsAsymmetryVsPt30 correction types  =  L2L3; L2L3Res
-AbsAsymmetryVsPt30 1 correction types  =  L2L3
-AbsAsymmetryVsPt30 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AbsAsymmetryVsPt30 legend label      =  L2L3:CMS default
-AbsAsymmetryVsPt30 input samples     =  0:data;1:MC
-
-AbsAsymmetryVsPt25 x variable        =  MeanPt; log
-AbsAsymmetryVsPt25 x edges           =  30 20 2000
-AbsAsymmetryVsPt25 y variable        =  Asymmetry
-AbsAsymmetryVsPt25 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AbsAsymmetryVsPt25 bin variable      =  AbsEta
-#AbsAsymmetryVsPt25 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AbsAsymmetryVsPt25 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-AbsAsymmetryVsPt25 cut variable      =  ThirdJetFractionPlain
-AbsAsymmetryVsPt25 cut edges         =  0.0 0.25
-AbsAsymmetryVsPt25 correction types  =  L2L3; L2L3Res
-AbsAsymmetryVsPt25 1 correction types  =  L2L3
-AbsAsymmetryVsPt25 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AbsAsymmetryVsPt25 legend label      =  L2L3:CMS default
-AbsAsymmetryVsPt25 input samples     =  0:data;1:MC
-
-AbsAsymmetryVsPt20 x variable        =  MeanPt; log
-AbsAsymmetryVsPt20 x edges           =  30 20 2000
-AbsAsymmetryVsPt20 y variable        =  Asymmetry
-AbsAsymmetryVsPt20 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AbsAsymmetryVsPt20 bin variable      =  AbsEta
-#AbsAsymmetryVsPt20 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AbsAsymmetryVsPt20 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-AbsAsymmetryVsPt20 cut variable      =  ThirdJetFractionPlain
-AbsAsymmetryVsPt20 cut edges         =  0.0 0.2
-AbsAsymmetryVsPt20 correction types  =  L2L3; L2L3Res
-AbsAsymmetryVsPt20 1 correction types  =  L2L3
-AbsAsymmetryVsPt20 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AbsAsymmetryVsPt20 legend label      =  L2L3:CMS default
-AbsAsymmetryVsPt20 input samples     =  0:data;1:MC
-
-AbsAsymmetryVsPt15 x variable        =  MeanPt; log
-AbsAsymmetryVsPt15 x edges           =  30 20 2000
-AbsAsymmetryVsPt15 y variable        =  Asymmetry
-AbsAsymmetryVsPt15 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AbsAsymmetryVsPt15 bin variable      =  AbsEta
-#AbsAsymmetryVsPt15 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AbsAsymmetryVsPt15 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-AbsAsymmetryVsPt15 cut variable      =  ThirdJetFractionPlain
-AbsAsymmetryVsPt15 cut edges         =  0.0 0.15
-AbsAsymmetryVsPt15 correction types  =  L2L3; L2L3Res
-AbsAsymmetryVsPt15 1 correction types  =  L2L3
-AbsAsymmetryVsPt15 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AbsAsymmetryVsPt15 legend label      =  L2L3:CMS default
-AbsAsymmetryVsPt15 input samples     =  0:data;1:MC
-
-AbsAsymmetryVsPt10 x variable        =  MeanPt; log
-AbsAsymmetryVsPt10 x edges           =  30 20 2000
-AbsAsymmetryVsPt10 y variable        =  Asymmetry
-AbsAsymmetryVsPt10 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AbsAsymmetryVsPt10 bin variable      =  AbsEta
-#AbsAsymmetryVsPt10 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AbsAsymmetryVsPt10 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-AbsAsymmetryVsPt10 cut variable      =  ThirdJetFractionPlain
-AbsAsymmetryVsPt10 cut edges         =  0.0 0.1
-AbsAsymmetryVsPt10 correction types  =  L2L3; L2L3Res
-AbsAsymmetryVsPt10 1 correction types  =  L2L3
-AbsAsymmetryVsPt10 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AbsAsymmetryVsPt10 legend label      =  L2L3:CMS default
-AbsAsymmetryVsPt10 input samples     =  0:data;1:MC
-
-AbsAsymmetryVsPt05 x variable        =  MeanPt; log
-AbsAsymmetryVsPt05 x edges           =  30 20 2000
-AbsAsymmetryVsPt05 y variable        =  Asymmetry
-AbsAsymmetryVsPt05 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AbsAsymmetryVsPt05 bin variable      =  AbsEta
-#AbsAsymmetryVsPt05 bin edges        =  0.0 1.3 2.6 3.0 5.2
-AbsAsymmetryVsPt05 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-AbsAsymmetryVsPt05 cut variable      =  ThirdJetFractionPlain
-AbsAsymmetryVsPt05 cut edges         =  0.0 0.05
-AbsAsymmetryVsPt05 correction types  =  L2L3; L2L3Res
-AbsAsymmetryVsPt05 1 correction types  =  L2L3
-AbsAsymmetryVsPt05 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AbsAsymmetryVsPt05 legend label      =  L2L3:CMS default
-AbsAsymmetryVsPt05 input samples     =  0:data;1:MC
-
-AbsAsymmetryVsTJF x variable        =  ThirdJetFractionPlain
-AbsAsymmetryVsTJF x edges           =  8 0.00 0.40
-AbsAsymmetryVsTJF y variable        =  Asymmetry
-AbsAsymmetryVsTJF y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-AbsAsymmetryVsTJF bin variable      =  AbsEta
-AbsAsymmetryVsTJF bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-AbsAsymmetryVsTJF correction types  =  L2L3; L2L3Res
-AbsAsymmetryVsTJF 1 correction types  =  L2L3
-AbsAsymmetryVsTJF profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#AsymmetryVTJF legend label      =  L2L3:CMS default
-AbsAsymmetryVsTJF input samples     =  0:data;1:MC
-
-
-
-
-
-
-
-OneBinAsymmetryVsPt40 x variable        =  MeanPt; log
-OneBinAsymmetryVsPt40 x edges           =  1 20 2000
-OneBinAsymmetryVsPt40 y variable        =  Asymmetry
-OneBinAsymmetryVsPt40 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAsymmetryVsPt40 bin variable      =  Eta
-#OneBinAsymmetryVsPt40 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAsymmetryVsPt40 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191  
-#OneBinAsymmetryVsPt40 bin edges         = -6.0 -4.0 -3.5 -2.7 -2.4 -2.1 -1.8 -1.5 -1.3 -1.1 -0.9 -0.6 -0.3 0.0 0.3 0.6 0.9 1.1 1.3 1.5 1.8 2.1 2.4 2.7 3.0 3.5 4.0 6.0 
-OneBinAsymmetryVsPt40 cut variable      =  ThirdJetFractionPlain
-OneBinAsymmetryVsPt40 cut edges         =  0.0 0.40
-OneBinAsymmetryVsPt40 correction types  =  L2L3; L2L3Res
-OneBinAsymmetryVsPt40 1 correction types  =  L2L3
-OneBinAsymmetryVsPt40 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAsymmetryVsPt40 legend label      =  L2L3:CMS default
-OneBinAsymmetryVsPt40 input samples     =  0:data;1:MC
-
-OneBinAsymmetryVsPt35 x variable        =  MeanPt; log
-OneBinAsymmetryVsPt35 x edges           =  1 20 2000
-OneBinAsymmetryVsPt35 y variable        =  Asymmetry
-OneBinAsymmetryVsPt35 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAsymmetryVsPt35 bin variable      =  Eta
-#OneBinAsymmetryVsPt35 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAsymmetryVsPt35 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191  
-OneBinAsymmetryVsPt35 cut variable      =  ThirdJetFractionPlain
-OneBinAsymmetryVsPt35 cut edges         =  0.0 0.35
-OneBinAsymmetryVsPt35 correction types  =  L2L3; L2L3Res
-OneBinAsymmetryVsPt35 1 correction types  =  L2L3
-OneBinAsymmetryVsPt35 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAsymmetryVsPt35 legend label      =  L2L3:CMS default
-OneBinAsymmetryVsPt35 input samples     =  0:data;1:MC
-
-OneBinAsymmetryVsPt30 x variable        =  MeanPt; log
-OneBinAsymmetryVsPt30 x edges           =  1 20 2000
-OneBinAsymmetryVsPt30 y variable        =  Asymmetry
-OneBinAsymmetryVsPt30 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAsymmetryVsPt30 bin variable      =  Eta
-#OneBinAsymmetryVsPt30 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAsymmetryVsPt30 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191  
-OneBinAsymmetryVsPt30 cut variable      =  ThirdJetFractionPlain
-OneBinAsymmetryVsPt30 cut edges         =  0.0 0.30
-OneBinAsymmetryVsPt30 correction types  =  L2L3; L2L3Res
-OneBinAsymmetryVsPt30 1 correction types  =  L2L3
-OneBinAsymmetryVsPt30 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAsymmetryVsPt30 legend label      =  L2L3:CMS default
-OneBinAsymmetryVsPt30 input samples     =  0:data;1:MC
-
-OneBinAsymmetryVsPt25 x variable        =  MeanPt; log
-OneBinAsymmetryVsPt25 x edges           =  1 20 2000
-OneBinAsymmetryVsPt25 y variable        =  Asymmetry
-OneBinAsymmetryVsPt25 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAsymmetryVsPt25 bin variable      =  Eta
-#OneBinAsymmetryVsPt25 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAsymmetryVsPt25 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191  
-OneBinAsymmetryVsPt25 cut variable      =  ThirdJetFractionPlain
-OneBinAsymmetryVsPt25 cut edges         =  0.0 0.25
-OneBinAsymmetryVsPt25 correction types  =  L2L3; L2L3Res
-OneBinAsymmetryVsPt25 1 correction types  =  L2L3
-OneBinAsymmetryVsPt25 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAsymmetryVsPt25 legend label      =  L2L3:CMS default
-OneBinAsymmetryVsPt25 input samples     =  0:data;1:MC
-
-OneBinAsymmetryVsPt20 x variable        =  MeanPt; log
-OneBinAsymmetryVsPt20 x edges           =  1 20 2000
-OneBinAsymmetryVsPt20 y variable        =  Asymmetry
-OneBinAsymmetryVsPt20 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAsymmetryVsPt20 bin variable      =  Eta
-#OneBinAsymmetryVsPt20 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAsymmetryVsPt20 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191  
-OneBinAsymmetryVsPt20 cut variable      =  ThirdJetFractionPlain
-OneBinAsymmetryVsPt20 cut edges         =  0.0 0.2
-OneBinAsymmetryVsPt20 correction types  =  L2L3; L2L3Res
-OneBinAsymmetryVsPt20 1 correction types  =  L2L3
-OneBinAsymmetryVsPt20 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAsymmetryVsPt20 legend label      =  L2L3:CMS default
-OneBinAsymmetryVsPt20 input samples     =  0:data;1:MC
-
-OneBinAsymmetryVsPt15 x variable        =  MeanPt; log
-OneBinAsymmetryVsPt15 x edges           =  1 20 2000
-OneBinAsymmetryVsPt15 y variable        =  Asymmetry
-OneBinAsymmetryVsPt15 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAsymmetryVsPt15 bin variable      =  Eta
-#OneBinAsymmetryVsPt15 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAsymmetryVsPt15 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191  
-OneBinAsymmetryVsPt15 cut variable      =  ThirdJetFractionPlain
-OneBinAsymmetryVsPt15 cut edges         =  0.0 0.15
-OneBinAsymmetryVsPt15 correction types  =  L2L3; L2L3Res
-OneBinAsymmetryVsPt15 1 correction types  =  L2L3
-OneBinAsymmetryVsPt15 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAsymmetryVsPt15 legend label      =  L2L3:CMS default
-OneBinAsymmetryVsPt15 input samples     =  0:data;1:MC
-
-OneBinAsymmetryVsPt10 x variable        =  MeanPt; log
-OneBinAsymmetryVsPt10 x edges           =  1 20 2000
-OneBinAsymmetryVsPt10 y variable        =  Asymmetry
-OneBinAsymmetryVsPt10 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAsymmetryVsPt10 bin variable      =  Eta
-#OneBinAsymmetryVsPt10 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAsymmetryVsPt10 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191  
-OneBinAsymmetryVsPt10 cut variable      =  ThirdJetFractionPlain
-OneBinAsymmetryVsPt10 cut edges         =  0.0 0.1
-OneBinAsymmetryVsPt10 correction types  =  L2L3; L2L3Res
-OneBinAsymmetryVsPt10 1 correction types  =  L2L3
-OneBinAsymmetryVsPt10 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAsymmetryVsPt10 legend label      =  L2L3:CMS default
-OneBinAsymmetryVsPt10 input samples     =  0:data;1:MC
-
-OneBinAsymmetryVsPt05 x variable        =  MeanPt; log
-OneBinAsymmetryVsPt05 x edges           =  1 20 2000
-OneBinAsymmetryVsPt05 y variable        =  Asymmetry
-OneBinAsymmetryVsPt05 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAsymmetryVsPt05 bin variable      =  Eta
-#OneBinAsymmetryVsPt05 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAsymmetryVsPt05 bin edges         =  -5.191 -3.489 -3.139 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 -1.131 -0.957 -0.783 -0.522 -0.261 0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191  
-OneBinAsymmetryVsPt05 cut variable      =  ThirdJetFractionPlain
-OneBinAsymmetryVsPt05 cut edges         =  0.0 0.05
-OneBinAsymmetryVsPt05 correction types  =  L2L3; L2L3Res
-OneBinAsymmetryVsPt05 1 correction types  =  L2L3
-OneBinAsymmetryVsPt05 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAsymmetryVsPt05 legend label      =  L2L3:CMS default
-OneBinAsymmetryVsPt05 input samples     =  0:data;1:MC
-
-
-OneBinAbsAsymmetryVsPt40 x variable        =  MeanPt; log
-OneBinAbsAsymmetryVsPt40 x edges           =  1 20 2000
-OneBinAbsAsymmetryVsPt40 y variable        =  Asymmetry
-OneBinAbsAsymmetryVsPt40 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAbsAsymmetryVsPt40 bin variable      =  AbsEta
-#OneBinAbsAsymmetryVsPt40 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAbsAsymmetryVsPt40 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-#OneBinAbsAsymmetryVsPt40 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-OneBinAbsAsymmetryVsPt40 cut variable      =  ThirdJetFractionPlain
-OneBinAbsAsymmetryVsPt40 cut edges         =  0.0 0.40
-OneBinAbsAsymmetryVsPt40 correction types  =  L2L3; L2L3Res
-OneBinAbsAsymmetryVsPt40 1 correction types  =  L2L3
-OneBinAbsAsymmetryVsPt40 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAbsAsymmetryVsPt40 legend label      =  L2L3:CMS default
-OneBinAbsAsymmetryVsPt40 input samples     =  0:data;1:MC
-
-OneBinAbsAsymmetryVsPt35 x variable        =  MeanPt; log
-OneBinAbsAsymmetryVsPt35 x edges           =  1 20 2000
-OneBinAbsAsymmetryVsPt35 y variable        =  Asymmetry
-OneBinAbsAsymmetryVsPt35 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAbsAsymmetryVsPt35 bin variable      =  AbsEta
-#OneBinAbsAsymmetryVsPt35 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAbsAsymmetryVsPt35 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-OneBinAbsAsymmetryVsPt35 cut variable      =  ThirdJetFractionPlain
-OneBinAbsAsymmetryVsPt35 cut edges         =  0.0 0.35
-OneBinAbsAsymmetryVsPt35 correction types  =  L2L3; L2L3Res
-OneBinAbsAsymmetryVsPt35 1 correction types  =  L2L3
-OneBinAbsAsymmetryVsPt35 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAbsAsymmetryVsPt35 legend label      =  L2L3:CMS default
-OneBinAbsAsymmetryVsPt35 input samples     =  0:data;1:MC
-
-OneBinAbsAsymmetryVsPt30 x variable        =  MeanPt; log
-OneBinAbsAsymmetryVsPt30 x edges           =  1 20 2000
-OneBinAbsAsymmetryVsPt30 y variable        =  Asymmetry
-OneBinAbsAsymmetryVsPt30 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAbsAsymmetryVsPt30 bin variable      =  AbsEta
-#OneBinAbsAsymmetryVsPt30 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAbsAsymmetryVsPt30 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-OneBinAbsAsymmetryVsPt30 cut variable      =  ThirdJetFractionPlain
-OneBinAbsAsymmetryVsPt30 cut edges         =  0.0 0.30
-OneBinAbsAsymmetryVsPt30 correction types  =  L2L3; L2L3Res
-OneBinAbsAsymmetryVsPt30 1 correction types  =  L2L3
-OneBinAbsAsymmetryVsPt30 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAbsAsymmetryVsPt30 legend label      =  L2L3:CMS default
-OneBinAbsAsymmetryVsPt30 input samples     =  0:data;1:MC
-
-OneBinAbsAsymmetryVsPt25 x variable        =  MeanPt; log
-OneBinAbsAsymmetryVsPt25 x edges           =  1 20 2000
-OneBinAbsAsymmetryVsPt25 y variable        =  Asymmetry
-OneBinAbsAsymmetryVsPt25 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAbsAsymmetryVsPt25 bin variable      =  AbsEta
-#OneBinAbsAsymmetryVsPt25 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAbsAsymmetryVsPt25 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-OneBinAbsAsymmetryVsPt25 cut variable      =  ThirdJetFractionPlain
-OneBinAbsAsymmetryVsPt25 cut edges         =  0.0 0.25
-OneBinAbsAsymmetryVsPt25 correction types  =  L2L3; L2L3Res
-OneBinAbsAsymmetryVsPt25 1 correction types  =  L2L3
-OneBinAbsAsymmetryVsPt25 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAbsAsymmetryVsPt25 legend label      =  L2L3:CMS default
-OneBinAbsAsymmetryVsPt25 input samples     =  0:data;1:MC
-
-OneBinAbsAsymmetryVsPt20 x variable        =  MeanPt; log
-OneBinAbsAsymmetryVsPt20 x edges           =  1 20 2000
-OneBinAbsAsymmetryVsPt20 y variable        =  Asymmetry
-OneBinAbsAsymmetryVsPt20 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAbsAsymmetryVsPt20 bin variable      =  AbsEta
-#OneBinAbsAsymmetryVsPt20 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAbsAsymmetryVsPt20 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-OneBinAbsAsymmetryVsPt20 cut variable      =  ThirdJetFractionPlain
-OneBinAbsAsymmetryVsPt20 cut edges         =  0.0 0.2
-OneBinAbsAsymmetryVsPt20 correction types  =  L2L3; L2L3Res
-OneBinAbsAsymmetryVsPt20 1 correction types  =  L2L3
-OneBinAbsAsymmetryVsPt20 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAbsAsymmetryVsPt20 legend label      =  L2L3:CMS default
-OneBinAbsAsymmetryVsPt20 input samples     =  0:data;1:MC
-
-OneBinAbsAsymmetryVsPt15 x variable        =  MeanPt; log
-OneBinAbsAsymmetryVsPt15 x edges           =  1 20 2000
-OneBinAbsAsymmetryVsPt15 y variable        =  Asymmetry
-OneBinAbsAsymmetryVsPt15 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAbsAsymmetryVsPt15 bin variable      =  AbsEta
-#OneBinAbsAsymmetryVsPt15 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAbsAsymmetryVsPt15 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-OneBinAbsAsymmetryVsPt15 cut variable      =  ThirdJetFractionPlain
-OneBinAbsAsymmetryVsPt15 cut edges         =  0.0 0.15
-OneBinAbsAsymmetryVsPt15 correction types  =  L2L3; L2L3Res
-OneBinAbsAsymmetryVsPt15 1 correction types  =  L2L3
-OneBinAbsAsymmetryVsPt15 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAbsAsymmetryVsPt15 legend label      =  L2L3:CMS default
-OneBinAbsAsymmetryVsPt15 input samples     =  0:data;1:MC
-
-OneBinAbsAsymmetryVsPt10 x variable        =  MeanPt; log
-OneBinAbsAsymmetryVsPt10 x edges           =  1 20 2000
-OneBinAbsAsymmetryVsPt10 y variable        =  Asymmetry
-OneBinAbsAsymmetryVsPt10 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAbsAsymmetryVsPt10 bin variable      =  AbsEta
-#OneBinAbsAsymmetryVsPt10 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAbsAsymmetryVsPt10 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-OneBinAbsAsymmetryVsPt10 cut variable      =  ThirdJetFractionPlain
-OneBinAbsAsymmetryVsPt10 cut edges         =  0.0 0.1
-OneBinAbsAsymmetryVsPt10 correction types  =  L2L3; L2L3Res
-OneBinAbsAsymmetryVsPt10 1 correction types  =  L2L3
-OneBinAbsAsymmetryVsPt10 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAbsAsymmetryVsPt10 legend label      =  L2L3:CMS default
-OneBinAbsAsymmetryVsPt10 input samples     =  0:data;1:MC
-
-OneBinAbsAsymmetryVsPt05 x variable        =  MeanPt; log
-OneBinAbsAsymmetryVsPt05 x edges           =  1 20 2000
-OneBinAbsAsymmetryVsPt05 y variable        =  Asymmetry
-OneBinAbsAsymmetryVsPt05 y edges           =  51 -0.85 0.85 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3
-OneBinAbsAsymmetryVsPt05 bin variable      =  AbsEta
-#OneBinAbsAsymmetryVsPt05 bin edges        =  0.0 1.3 2.6 3.0 5.2
-OneBinAbsAsymmetryVsPt05 bin edges         =  0.0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 3.139 3.489 5.191
-OneBinAbsAsymmetryVsPt05 cut variable      =  ThirdJetFractionPlain
-OneBinAbsAsymmetryVsPt05 cut edges         =  0.0 0.05
-OneBinAbsAsymmetryVsPt05 correction types  =  L2L3; L2L3Res
-OneBinAbsAsymmetryVsPt05 1 correction types  =  L2L3
-OneBinAbsAsymmetryVsPt05 profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
-#OneBinAbsAsymmetryVsPt05 legend label      =  L2L3:CMS default
-OneBinAbsAsymmetryVsPt05 input samples     =  0:data;1:MC
-
-
 
 """
-    fcfg = open(filename, "w")
-    fcfg.write(config)
-    fcfg.write("jet correction source = JetMETCor\n")
-    fcfg.write("jet correction name   = "+CORRECTIONS+"\n")
+
+    fcfg.write(config_2)
+
+
+    fcfg.write("AsymmetryVsTJF x variable        =  ThirdJetFractionPlain\n")
+    fcfg.write("AsymmetryVsTJF x edges           =  8 0.00 0.40\n")
+    fcfg.write("AsymmetryVsTJF y variable        =  Asymmetry\n")
+    fcfg.write("AsymmetryVsTJF y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+    fcfg.write("AsymmetryVsTJF bin variable      =  Eta\n")
+    fcfg.write("AsymmetryVsTJF bin edges         =  " + binning_values + "\n")
+    fcfg.write("AsymmetryVsTJF correction types  =  L2L3; L2L3Res\n")
+    fcfg.write("AsymmetryVsTJF 1 correction types  =  L2L3\n")
+    fcfg.write("AsymmetryVsTJF profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+    fcfg.write("#AsymmetryVTJF legend label      =  L2L3:CMS default\n")
+    fcfg.write("AsymmetryVsTJF input samples     =  0:data;1:MC\n")
+    fcfg.write("\n\n")
+
+
+    fcfg.write("AbsAsymmetryVsTJF x variable        =  ThirdJetFractionPlain\n")
+    fcfg.write("AbsAsymmetryVsTJF x edges           =  8 0.00 0.40\n")
+    fcfg.write("AbsAsymmetryVsTJF y variable        =  Asymmetry\n")
+    fcfg.write("AbsAsymmetryVsTJF y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+    fcfg.write("AbsAsymmetryVsTJF bin variable      =  AbsEta\n")
+    fcfg.write("AbsAsymmetryVsTJF bin edges         =  " + abs_binning_values + "\n")
+    fcfg.write("AbsAsymmetryVsTJF correction types  =  L2L3; L2L3Res\n")
+    fcfg.write("AbsAsymmetryVsTJF 1 correction types  =  L2L3\n")
+    fcfg.write("AbsAsymmetryVsTJF profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+    fcfg.write("#AsymmetryVTJF legend label      =  L2L3:CMS default\n")
+    fcfg.write("AbsAsymmetryVsTJF input samples     =  0:data;1:MC\n")
+    fcfg.write("\n\n")
+
+
+
+
+
+
+    if(CORRECTION!="ntuple"):
+        fcfg.write("jet correction source = JetMETCor\n")
+        fcfg.write("jet correction name   = "+CORRECTIONS+"\n")
     fcfg.write("Di-Jet input file = dijetlist\n")
     fcfg.write("Di-Jet Control1 input file = mcdijetlist\n")
     fcfg.write("Output file       = "+output+"\n");
     fcfg.write("Number of Threads = "+str(nthreads)+"\n")
 #    fcfg.write("Number of IO Threads = 5\n")
     fcfg.write("Number of IO Threads = "+str(niothreads)+"\n")
+    fcfg.write("Min cut on run number = "+ str(MinRunNumber) +"\n")
+    fcfg.write("Max cut on run number = "+ str(MaxRunNumber) +"\n")
+
+
+
     if(useconstraint):
         fcfg.write("jet constraints =  5.0 10.0 0.0 1.2 1 10.0 15.0 0.0 1.2 1 15.0 20.0 0 1.2 1 20.0 25.0 0 1.2 1 25.0 30.0 0 1.2 1 30.0 40.0 0 1.2 1 40.0 50.0 0 1.2  1 50.0 60.0 0 1.2 1 60.0 70.0 0 1.2  1 70.0 80 0 1.2 1  80.0 90.0 0 1.2 1 90.0 100.0 0 1.2 1 100.0 120. 0 1.2 1 120 150 0 1.2 1 150 200 0 1.2 1 200 280 0 1.2 1 280 350 0 1.2 1 350 500 0 1.2 1 500 800 0 1.2 1 800 1400 0 1.2 1 1400 7000 0 1.2 1\n")
     else:
@@ -710,19 +312,57 @@ OneBinAbsAsymmetryVsPt05 input samples     =  0:data;1:MC
 
     fcfg.write("use Di-Jet events = "+str(nevents)+"\n")
     fcfg.write("use Di-Jet Control1 events = "+str(nevents)+"\n")
-    fcfg.write("Di-Jet trigger names = HLT_DiJetAve15U;HLT_DiJetAve30U;HLT_DiJetAve50U;HLT_DiJetAve70U;HLT_DiJetAve100U;HLT_DiJetAve140U\n")
-    if(jettype == "ak5Calo"):
-        fcfg.write("Di-Jet trigger thresholds = 38 59 86 111 147 196\n")
-    if(jettype == "ak5PF"):
-        fcfg.write("Di-Jet trigger thresholds = 43 70 100 127 168 214\n")
-    if(jettype == "ak5JPT"):
-        fcfg.write("Di-Jet trigger thresholds = 43 66 96 124 165 220\n") # CMS AN-2010/371
-    if(jettype == "ak7JPT"):
-        fcfg.write("Di-Jet trigger thresholds = 46 74 107 138 187 245\n") # CMS AN-2010/371
-    if(jettype == "ak7PF"):
-        fcfg.write("Di-Jet trigger thresholds = 47 79 111 140 187 240\n") # CMS AN-2010/371
-    if(jettype == "ak7Calo"):
-        fcfg.write("Di-Jet trigger thresholds = 42 47 97 127 168 223\n") # CMS AN-2010/371
+
+    if(DATAYEAR == "2011"):
+        if(DATAYEAR == "2011" and DATATYPE=="PrRe62pb" or DATATYPE=="42X_corr" or DATATYPE=="42X_PrRe" or DATATYPE=="42X_combPrRe_ReRe"):
+            fcfg.write("Di-Jet trigger names = HLT_DiJetAve30;HLT_DiJetAve60;HLT_DiJetAve80;HLT_DiJetAve110;HLT_DiJetAve150;HLT_DiJetAve190;HLT_DiJetAve240;HLT_DiJetAve300;HLT_DiJetAve370\n")
+#conservative thresholds....
+#            if(jettype == "ak5Calo"):
+#                fcfg.write("Di-Jet trigger thresholds = 45 85 105 130 175 220 270 335 405\n") #Matthias preliminary
+#            if(jettype == "ak5PF"):
+#                fcfg.write("Di-Jet trigger thresholds = 45 85 105 130 175 220 270 335 405\n") #Matthias preliminary
+
+#new default thresholds....
+            if(jettype == "ak5Calo"):
+                fcfg.write("Di-Jet trigger thresholds = 35 69 89 120 163 204 256 318 390\n") #Matthias preliminary
+            if(jettype == "ak5PF"):
+                fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
+            if(jettype == "ak5JPT"):
+                fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
+
+##aggressive thresholds old
+#            if(jettype == "ak5Calo"):
+#                fcfg.write("Di-Jet trigger thresholds = 31 62 81 111 156 199 251 313 385\n") #Matthias preliminary
+#            if(jettype == "ak5PF"):
+#                fcfg.write("Di-Jet trigger thresholds = 40 80 104 130 172 216 269 333 405 \n") #Matthias preliminary
+        else:
+            fcfg.write("Di-Jet trigger names = HLT_DiJetAve15U;HLT_DiJetAve30U;HLT_DiJetAve50U;HLT_DiJetAve70U;HLT_DiJetAve100U;HLT_DiJetAve140U;HLT_DiJetAve180U;HLT_DiJetAve300U\n")
+            if(jettype == "ak5Calo"):
+                fcfg.write("Di-Jet trigger thresholds = 38 59 86 111 147 196 249 389\n") #Matthias
+            if(jettype == "ak5PF"):
+                fcfg.write("Di-Jet trigger thresholds = 43 70 100 127 168 214 279 423 \n") #Matthias
+            if(jettype == "ak5JPT"):
+                fcfg.write("Di-Jet trigger thresholds = 43 66 96 124 165 220 285 430 \n") #Extrapolation from PF  for last two bins Matthias
+            if(jettype == "ak7PF"):
+                fcfg.write("Di-Jet trigger thresholds = 47 79 111 140 187 240\n") # CMS AN-2010/371 not updated for 2011
+            if(jettype == "ak7Calo"):
+                fcfg.write("Di-Jet trigger thresholds = 42 47 97 127 168 223\n") # CMS AN-2010/371 not updated for 2011
+    else:
+        fcfg.write("Di-Jet trigger names = HLT_DiJetAve15U;HLT_DiJetAve30U;HLT_DiJetAve50U;HLT_DiJetAve70U;HLT_DiJetAve100U;HLT_DiJetAve140U\n")
+        if(jettype == "ak5Calo"):
+            fcfg.write("Di-Jet trigger thresholds = 38 59 86 111 147 196 \n")
+        if(jettype == "ak5PF"):
+            fcfg.write("Di-Jet trigger thresholds = 43 70 100 127 168 214 \n")
+        if(jettype == "ak5JPT"):
+           fcfg.write("Di-Jet trigger thresholds = 43 66 96 124 165 220\n") # CMS AN-2010/371
+        if(jettype == "ak7JPT"):
+            fcfg.write("Di-Jet trigger thresholds = 46 74 107 138 187 245\n") # CMS AN-2010/371
+        if(jettype == "ak7PF"):
+            fcfg.write("Di-Jet trigger thresholds = 47 79 111 140 187 240\n") # CMS AN-2010/371 
+        if(jettype == "ak7Calo"):
+            fcfg.write("Di-Jet trigger thresholds = 42 47 97 127 168 223\n") # CMS AN-2010/371 
+
+        
     if(input != ""):
         fcfg.write("input calibration = Kalibri; "+input+"\n");
 
@@ -731,66 +371,121 @@ OneBinAbsAsymmetryVsPt05 input samples     =  0:data;1:MC
     fcfg.close()
     return
 
+#kostas binning:
+#0: 0.0 1: 0.261 2: 0.522 3: 0.783 4: 0.957 5: 1.131 6: 1.305 7: 1.479
+#8: 1.93 9: 2.322 10: 2.411 11: 2.5 12: 2.853 13: 2.964 14: 3.139 15: 3.489 5.191
 
 #main program starts here!!!
 #change these variables to steer the fit
-DIR_JETALGO="/afs/naf.desy.de/user/k/kirschen/scratch/2011_02_Fall10_residuals_kostas_validation/NEW_after_JetMET_10_corr_10_MC_10skim_data_AK5"
-CORRECTIONS="Fall10_AK5Calo"
+DIR_JETALGO="AK5_entriescut_asymm_hardcut"
 jetalgo="ak5"
-PF_CALO_JPT="Calo"
+PF_CALO_JPT="JPT"
+CORRECTION="Su11_He_AK5"
+#CORRECTION="Fall10_HenningJER_AK5"
+#CORRECTION="ntuple"
+#CORRECTION="ntuple"change other stuff...
+#42x no corrs CORRECTIONS=CORRECTION+PF_CALO_JPT
+CORRECTIONS=CORRECTION+PF_CALO_JPT
 jettype = jetalgo+PF_CALO_JPT
+jettype_import=jettype
+DATAYEAR="2011"
+DATATYPE="42X_combPrRe_ReRe"
+MC="Su11"
+MC_type="Z2wPU"
 MC_fire_all_triggers="false"
-#datadir = "/scratch/hh/current/cms/user/stadie/QCDFlat_Pt15to3000Spring10-START3X_V26_S09-v1C"
-#datadir = "/scratch/hh/current/cms/user/stadie/JetMET_Run2010A-PromptReco-v4_DCSONLY"
-#datadir = "/scratch/hh/current/cms/user/stadie/Spring10QCDDiJetPt*"
-#sollte C sein.. Hartmut sagen...
-#datadir = "/scratch/hh/current/cms/user/stadie/DiJetNov4ReReco_v1C/merged"
-#calib skim 2010
-datadir = "/scratch/hh/current/cms/user/stadie/DiJetNov4Skim_v1A/merged"
-#datadir = "/scratch/hh/current/cms/user/stadie/DiJetNov4Skim_v1B"
+#MinRunNumber=-1
+MinRunNumber=163337
+MaxRunNumber=1000000000
+BINNING="k_HFfix"
+#BINNING="kostas"
 
-#2011-Daten
-#good
-#datadir = "/scratch/hh/current/cms/user/stadie/JetRun2011APromptRecoB/merged"
-#bad
-#datadir = "/scratch/hh/current/cms/user/stadie/JetRun2011APromptRecoA/merged"
 
-#PU-sample Z2PU
-#datadirmc="/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1Amerged" 
-#Z2 smeared
-#datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1Dsmeared"
-#Z2 smeared const term (Mikko)
-#datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1Dsmeared3"
-#Z2 smeared
-datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1Dmerged"
-#datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1D"
-#D6T
-#datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneD6T_Flat_7TeV_pythia6_Fall10-START38_V12-v1Amerged"
-#Herwig++
-#datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt-15To3000_Tune23_Flat_7TeV-herwigpp_Fall10-START38_V12-v1Amerged"
+if(DATAYEAR == "2010"):
+    if(DATATYPE=="ReReco"):
+        datadir = "/scratch/hh/current/cms/user/stadie/DiJetNov4ReReco_v1C/merged"
+#    if(DATATYPE=="Skim"):
+#        datadir = "/scratch/hh/current/cms/user/stadie/DiJetNov4Skim_v1B"
+    if(DATATYPE=="Skim"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2010/DiJetNov4Skim_v1C/merged"
+if(DATAYEAR == "2011"):
+    if(DATATYPE=="PrReco"):
+        datadir = "/scratch/hh/current/cms/user/stadie/JetRun2011APromptRecoD/merged"
+    if(DATATYPE=="PrRe42pb"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/JetRun2011APromptReco/Cert_160404-163369/merged"
+    if(DATATYPE=="PrRe62pb"):
+        datadir = "/afs/naf.desy.de/user/m/mschrode/lustre/data/Jet_Run2011A-PromptReco-v2_163337-163757"
+    if(DATATYPE=="42X_corr"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/Jet2011AMay10ReReco_Cert_160404-163869/merged"
+    if(DATATYPE=="42X_uncorr"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/Jet2011AMay10ReReco_Cert_160404-163869/merged"
+    if(DATATYPE=="42X_PrRe"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/Jet2011APromptRecoV4_Cert_160404-165970/merged"
+    if(DATATYPE=="42X_combPrRe_ReRe"):
+#        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combination_42XRereco_p_PrReco"
+        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_and_166861"
 
-# Z2 Spring11
-#datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Spring11-PU_S1_START311_V1G1-v1Amerged"
-#older sample by Matthias datadirmc = "/scratch/hh/current/cms/user/mschrode/mc/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6-Spring11-PU_S1_START311_V1G1-v1"
+##/scratch/hh/current/cms/user/stadie/JetRun2011APromptRecoD/merged
+
+
+
+if(MC == "Su11"):
+    if(MC_type=="D6TwPU"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6_Summer11-PU_S3_START42_V11-v2/v4"
+    if(MC_type=="Z2wPU"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Summer11-PU_S3_START42_V11-v2/v4"
+
+if(MC == "S11"):
+    if(MC_type=="wPU"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Spring11-PU_S1_START311_V1G1-v1Amerged"
+    if(MC_type=="wPU_SmConst"):
+        datadirmc = "/scratch/hh/current/cms/user/kirschen/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Spring11-PU_S1_START311_V1G1-v1Amerged_smeared3"
+    if(MC_type=="wPU_n"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Spring11-PU_S1_START311_V1G1-v1/B/merged"
+    if(MC_type=="wPU_v2"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Spring11-PU_S2_START311_V2-v2_AODSIM/A/merged"
+
+if(MC == "F10"):
+    if(MC_type=="Z2wPU"):
+        datadirmc="/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1Amerged" 
+    if(MC_type=="Z2"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2010/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1E/merged"
+    if(MC_type=="Z2_SmConst"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2010/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1E/smeared3"
+#    if(MC_type=="Z2wPU"):
+
+
+
 
 
 nthreads = 2
-niothreads = 3
+niothreads = 2
 nevents =  -1
-dirname = DIR_JETALGO+"/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_kostas"
+MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
 doBinnedFit = False
 doUnbinnedFit = True
+
+if(DATATYPE=="42X_corr" or DATATYPE=="42X_uncorr"  or DATATYPE=="42X_PrRe" or DATATYPE=="42X_combPrRe_ReRe"):
+    if(PF_CALO_JPT=="PF"):
+        jettype_import=jetalgo+"Fast"+PF_CALO_JPT
+
+
+if not os.path.exists(MAIN_dirname):
+    os.system("mkdir "+MAIN_dirname)
+
+if os.path.exists(dirname):
+    os.system("rm -rf "+dirname+"/*")
+else:
+    os.system("mkdir "+dirname)
+
 
 
 #write configs and run the fit
 print "producing validation plots for "+jettype+" using "+datadir+" and "+datadirmc+" as MC sample\n"
 
 
-if not os.path.exists(DIR_JETALGO):
-    os.system("mkdir "+DIR_JETALGO)
-    
 if os.path.exists(dirname):
     os.system("rm -rf "+dirname+"/*")
 else:
@@ -801,8 +496,8 @@ os.system("ln -s $PWD/kalibriLogoSmall.gif "+dirname+"/")
 os.system("ln -s $PWD/L4JWfit.txt "+dirname+"/")
 os.system("ln -s $PWD/lib "+dirname+"/")
 os.system("ln -s $PWD/JetMETObjects "+dirname+"/")
-os.system("ls "+datadir+"/*"+jettype+"*.root > "+dirname+"/dijetlist");
-os.system("ls "+datadirmc+"/*"+jettype+"*.root > "+dirname+"/mcdijetlist");
+os.system("ls "+datadir+"/*"+jettype_import+"*.root > "+dirname+"/dijetlist");
+os.system("ls "+datadirmc+"/*"+jettype_import+"*.root > "+dirname+"/mcdijetlist");
 
 binned= True
 output="Kalibri.txt"
