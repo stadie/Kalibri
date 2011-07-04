@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.11 2011/05/26 11:32:04 mschrode Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.12 2011/06/30 14:27:14 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -94,6 +94,8 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
   nMaxJetEta_         = 0;
   nMinGenJetEt_       = 0;
   nMaxGenJetEt_       = 0;
+  nCutOnMinRunNumber_ = 0;
+  nCutOnMaxRunNumber_ = 0;
 
   TChain* chain = dynamic_cast<TChain*>(tree_);
   nEvents_ = chain->GetEntries();
@@ -150,6 +152,8 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 	    nMinJetHadFraction_ += djr->nMinJetHadFraction_;    
 	    nMaxJetHadFraction_ += djr->nMaxJetHadFraction_;    
 	    nMinDeltaPhi_       += djr->nMinDeltaPhi_; 
+	    nCutOnMinRunNumber_ += djr->nCutOnMinRunNumber_; 
+	    nCutOnMaxRunNumber_ += djr->nCutOnMaxRunNumber_; 
 	    nJetIDCut_          += djr->nJetIDCut_;
 	    //std::cout << *i << ":events " << (*i)->nEvents() << ";" << djr->nReadEvts_<< '\n';
 	  }
