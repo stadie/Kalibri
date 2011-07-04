@@ -1,6 +1,6 @@
 //!  \brief   Container class for jet correction factors
 //
-//    $Id: CorFactorsFactory.h,v 1.2 2010/10/14 17:26:55 stadie Exp $
+//    $Id: CorFactorsFactory.h,v 1.3 2011/02/15 12:53:14 stadie Exp $
 //   
 #ifndef CORFACTORSFACTORY_H
 #define CORFACTORSFACTORY_H
@@ -16,7 +16,7 @@ class CorFactorsFactory
  public:
   CorFactorsFactory(const std::string& name);
   virtual ~CorFactorsFactory();
-  virtual CorFactors* create(const Jet* j,int nPV = 1) = 0;
+  virtual CorFactors* create(const Jet* j,int nPV = 1, double rho=-9999., double jetA=0.) = 0;
   virtual CorFactorsFactory* clone() const = 0;
 
   static CorFactorsFactory* get(std::string name) {
