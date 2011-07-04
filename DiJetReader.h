@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.32 2011/05/19 14:13:10 stadie Exp $
+//!  $Id: DiJetReader.h,v 1.33 2011/05/26 07:42:52 mschrode Exp $
 // ----------------------------------------------------------------   
 
 
@@ -104,6 +104,8 @@ class DiJetReader : public EventReader{
   double minGenJetEt_;          //!< Minimum pt of genJets of dijets
   double maxGenJetEt_;          //!< Maximum pt of genJets of dijets
   double maxDeltaR_;            //!< Maximum DeltaR
+  double minRunNumber_;         //!< Minimum run number allowed for selection
+  double maxRunNumber_;         //!< Maximum run number allowed for selection
   std::vector<std::string> hltChainANDOR_;
 
   int    nReadEvts_;            //!< Number of read events
@@ -126,6 +128,8 @@ class DiJetReader : public EventReader{
   int    nMinJetHadFraction_;   //!< Number of events rejected by minJetHadFraction_ cut
   int    nMaxJetHadFraction_;   //!< Number of events rejected by maxJetHadFraction_ cut
   int    nMaxDeltaR_;           //!< Number of events rejected by maxDeltaR_ cut
+  int    nCutOnMinRunNumber_;   //!< Number of events rejected by minRunNumber_ cut
+  int    nCutOnMaxRunNumber_;   //!< Number of events rejected by maxRunNumber_ cut
   int    nTriggerSel_;          //!< Number of events not passing the trigger selection
   int    nMaxMCPU_;             //!< Max number of mixed-in PU events
   int    maxNIter_;             //!< Max number of iterations in integration
@@ -147,6 +151,7 @@ class DiJetReader : public EventReader{
 
   //for DiJetAve trigger
   bool hltdijetave15incl_,hltdijetave30incl_,hltdijetave50incl_,hltdijetave70incl_,hltdijetave100incl_,hltdijetave140incl_,hltdijetave180incl_,hltdijetave300incl_;
+  bool hltdijetavec30incl_,hltdijetavec60incl_,hltdijetavec80incl_,hltdijetavec110incl_,hltdijetavec150incl_,hltdijetavec190incl_,hltdijetavec240incl_,hltdijetavec300incl_,hltdijetavec370incl_;
   std::map<double,bool*> trigmap_;
   std::map<double,double> mcweightmap_[2];
   bool requireTrigger_, mcweightmapid_;
