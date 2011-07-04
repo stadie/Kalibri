@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.18 2011/04/01 10:23:49 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.19 2011/05/18 15:59:58 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -273,7 +273,7 @@ double ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction(const Event *
   double pJ3 = tjpbe->getJet3()->corFactors().getL2L3() * tjpbe->getJet3()->pt() * cos(TVector2::Phi_mpi_pi(pPhi-tjpbe->getJet3()->phi()));
 
   if(tjpbe->getJet1()->pt() < 8) return 0;
-  if(pJ3 < 6) return 0;
+  if(pJ3 < 3) pJ3=3.;
   return pJ3/tjpbe->ptDijetCorrL2L3();
 }
 
@@ -287,7 +287,7 @@ double ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFractionPlain(const Ev
   if (! tjpbe->hasJet3()) return 0;
   if(tjpbe->getJet1()->pt() < 8) return 0;
   double pJ3 = tjpbe->getJet3()->corFactors().getL2L3() * tjpbe->getJet3()->pt();
-  if(pJ3 < 3) return 0;
+  if(pJ3 < 3) pJ3=3.;
   return pJ3/tjpbe->ptDijetCorrL2L3();
 }
 
