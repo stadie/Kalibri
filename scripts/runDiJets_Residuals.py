@@ -161,7 +161,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[1] + cut + ";")
         fcfg.write(plot_list[2] + cut + ";")
         fcfg.write(plot_list[3] + cut + ";")
-    fcfg.write("AsymmetryVsPt20_all_eta;AsymmetryVsEta;AsymmetryVsTJF;AbsAsymmetryVsTJF")
+    fcfg.write("AsymmetryVsPt20_all_eta;AsymmetryVsEta;AsymmetryVsTJF;AbsAsymmetryVsTJF;AsymmetryVsNPV;AbsAsymmetryVsNPV")
     fcfg.write("\n")
 ##    for index_samples, samples in enumerate(samples_all):
     for index_cut, cut in enumerate(cut_list):
@@ -281,6 +281,37 @@ AsymmetryVsEta input samples     =  0:data;1:MC
 
 
 
+    fcfg.write("AsymmetryVsNPV x variable        =  VtxN\n")
+    fcfg.write("AsymmetryVsNPV x edges           =  4 0.0 16.0\n")
+    fcfg.write("AsymmetryVsNPV y variable        =  Asymmetry\n")
+    fcfg.write("AsymmetryVsNPV y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+    fcfg.write("AsymmetryVsNPV bin variable      =  Eta\n")
+    fcfg.write("AsymmetryVsNPV bin edges         =  " + binning_values + "\n")
+    fcfg.write("AsymmetryVsNPV cut variable      =  ThirdJetFractionPlain\n")
+    fcfg.write("AsymmetryVsNPV cut edges         =  0.0 0.20\n")
+    fcfg.write("AsymmetryVsNPV correction types  =  L2L3; L2L3Res\n")
+    fcfg.write("AsymmetryVsNPV 1 correction types  =  L2L3\n")
+    fcfg.write("AsymmetryVsNPV profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+    fcfg.write("#AsymmetryVNPV legend label      =  L2L3:CMS default\n")
+    fcfg.write("AsymmetryVsNPV input samples     =  0:data;1:MC\n")
+    fcfg.write("\n\n")
+
+    fcfg.write("AbsAsymmetryVsNPV x variable        =  VtxN\n")
+    fcfg.write("AbsAsymmetryVsNPV x edges           =  4 0.0 16.0\n")
+    fcfg.write("AbsAsymmetryVsNPV y variable        =  Asymmetry\n")
+    fcfg.write("AbsAsymmetryVsNPV y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+    fcfg.write("AbsAsymmetryVsNPV bin variable      =  AbsEta\n")
+    fcfg.write("AbsAsymmetryVsNPV bin edges         =  " + binning_values + "\n")
+    fcfg.write("AbsAsymmetryVsNPV cut variable      =  ThirdJetFractionPlain\n")
+    fcfg.write("AbsAsymmetryVsNPV cut edges         =  0.0 0.20\n")
+    fcfg.write("AbsAsymmetryVsNPV correction types  =  L2L3; L2L3Res\n")
+    fcfg.write("AbsAsymmetryVsNPV 1 correction types  =  L2L3\n")
+    fcfg.write("AbsAsymmetryVsNPV profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+    fcfg.write("#AbsAsymmetryVNPV legend label      =  L2L3:CMS default\n")
+    fcfg.write("AbsAsymmetryVsNPV input samples     =  0:data;1:MC\n")
+    fcfg.write("\n\n")
+
+
 
 
 
@@ -368,6 +399,11 @@ AsymmetryVsEta input samples     =  0:data;1:MC
 
     fcfg.write("correct jets L1 = true\n");
     fcfg.write("fire all triggers = " + MC_fire_all_triggers +"\n");
+    fcfg.write("EventWeightProcessor = true\n");
+    fcfg.write("EventBinning = false\n");
+    fcfg.write("DiJetEventWeighting = true\n");
+    fcfg.write("PU weighting = true\n");
+    fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n");
     fcfg.close()
     return
 
@@ -377,9 +413,9 @@ AsymmetryVsEta input samples     =  0:data;1:MC
 
 #main program starts here!!!
 #change these variables to steer the fit
-DIR_JETALGO="AK5_entriescut_asymm_hardcut"
+DIR_JETALGO="AK5_tests"
 jetalgo="ak5"
-PF_CALO_JPT="JPT"
+PF_CALO_JPT="PF"
 CORRECTION="Su11_He_AK5"
 #CORRECTION="Fall10_HenningJER_AK5"
 #CORRECTION="ntuple"
