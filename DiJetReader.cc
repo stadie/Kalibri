@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.78 2011/06/30 14:27:14 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.79 2011/07/04 14:43:36 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -446,7 +446,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 	if(std::abs(td->getJet1()->eta()) < 1.3) {
 	  data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
 						   td->getJet3() ? td->getJet3()->clone():0,
-						   td->ptHat(),td->weight()));
+						   td->ptHat(),td->weight(),td->nPU(),td->nVtx()));
 	  ++nGoodEvts_;
 	}
 	if(std::abs(td->getJet2()->eta()) < 1.3) {
@@ -1399,7 +1399,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
   }
   //loose jet id 
    
-  if(! (nJet_->JetIDLoose[0] && nJet_->JetIDLoose[1])) {
+  if(! (nJet_->JetIDLoose[0] && nJet_->JetIDLoose[1] && nJet_->JetIDLoose[2])) {
     nMaxJetHadFraction_++;
     return 0;
   }
@@ -1528,7 +1528,8 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 
   // Create TwoJetsInvMassEvent
   TwoJetsPtBalanceEvent * evt
-    = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight) ;
+    = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight,static_cast<short int>(nJet_->PUMCNumVtx),static_cast<short int>(nJet_->VtxN));
+
   return evt;
 }
 

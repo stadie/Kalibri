@@ -51,17 +51,27 @@ int PUEventWeightProcessor::preprocess(std::vector<Event*>& data,
   if( !weightEvents_ ) return data.size();
   
   int nProcEvts = 0; // Number of processed events
-  std::vector<Event*>::iterator evt = data.begin();
-  for(; evt != data.end(); ++evt, ++nProcEvts) {
-    if( (*evt)->type() == ParLimit ) continue;
-    short int npu = (*evt)->nPU();
+  std::vector<Event*>::iterator evt1 = control1.begin();
+  for(; evt1 != control1.end(); ++evt1, ++nProcEvts) {
+    if( (*evt1)->type() == ParLimit ) continue;
+    short int npu = (*evt1)->nPU();
     if( npu < static_cast<short int>(weights_.size()) ) {
-      (*evt)->setWeight( weights_.at(npu) * ((*evt)->weight()) );
+      (*evt1)->setWeight( weights_.at(npu) * ((*evt1)->weight()) );
     } else {
       std::cerr << "WARNING in PUEventWeightProcessor::preprocess: Number of PU vertices = " << npu << " out of histogram binning." << std::endl;
     }
   }
-  std::cout << "  Applied weights for " << nProcEvts << " events\n";
+  std::vector<Event*>::iterator evt2 = control2.begin();
+  for(; evt2 != control2.end(); ++evt2, ++nProcEvts) {
+    if( (*evt2)->type() == ParLimit ) continue;
+    short int npu = (*evt2)->nPU();
+    if( npu < static_cast<short int>(weights_.size()) ) {
+      (*evt2)->setWeight( weights_.at(npu) * ((*evt2)->weight()) );
+    } else {
+      std::cerr << "WARNING in PUEventWeightProcessor::preprocess: Number of PU vertices = " << npu << " out of histogram binning." << std::endl;
+    }
+  }
+  std::cout << "  Applied weights for " << nProcEvts << " events in control1 and control2. \n";
   
   return nProcEvts;
 }

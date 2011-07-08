@@ -252,6 +252,8 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi; 
   if( varName == "meanMoment" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment;
+  if( varName == "VtxN" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventVtxN;
   if( varName == "ThirdJetFraction" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction;
   if( varName == "ThirdJetFractionPlain" )

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.19 2011/05/18 15:59:58 stadie Exp $
+// $Id: ControlPlotsFunction.cc,v 1.20 2011/07/04 14:18:02 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -257,6 +257,20 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta(const Event *evt) co
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   return std::abs(jte->getJet1()->eta());
 }
+
+
+//!  \brief Returns number of reconstructed vertices 
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventVtxN(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return tjpbe->nVtx();
+}
+
+
+
 
 //!  \brief Returns fraction of momentum of third jet projected to dijet axis 
 //!

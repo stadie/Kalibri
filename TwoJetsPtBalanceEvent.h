@@ -13,17 +13,23 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.13 2011/05/31 15:49:04 stadie Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.14 2011/07/04 17:19:35 stadie Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
-  TwoJetsPtBalanceEvent(Jet *j1, Jet *j2, Jet *j3, double ptHat, double w) 
-    : Event(w,ptHat), jet1_(j1), jet2_(j2), jet3_(j3), residual_(0), 
-      varresidual_(0), flaggedBad_(false), chi2Plots_(1000.)
-  {
+  TwoJetsPtBalanceEvent(Jet *j1, Jet *j2, Jet *j3, double ptHat, double w, short npu, short nvtx)
+    : Event(w,ptHat,npu,nvtx),
+    jet1_(j1),
+    jet2_(j2),
+    jet3_(j3),
+    residual_(0),
+    varresidual_(0),
+    flaggedBad_(false),
+    chi2Plots_(1000.) {
     error1_ = jet1_ ? jet1_->error() : 0;
     error2_ = jet2_ ? jet2_->error() : 0;
   }
+
   virtual ~TwoJetsPtBalanceEvent() { delete jet1_; delete jet2_; if( hasJet3() ) delete jet3_; }
 
   virtual Measurement *mess() const { return jet1_; }
