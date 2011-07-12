@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.79 2011/07/04 14:43:36 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.80 2011/07/08 14:56:52 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -345,16 +345,19 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     nJet_->fChain->SetBranchStatus("Track*",0);
     nJet_->fChain->SetBranchStatus("Tow*",0);
     nJet_->fChain->SetBranchStatus("Vtx*",0);
+    nJet_->fChain->SetBranchStatus("VtxN",1);
     nJet_->fChain->SetBranchStatus("GenPart*",0);
     nJet_->fChain->SetBranchStatus("GenPartId*",1);
   } else if(dataClass_ == 12) {
     nJet_->fChain->SetBranchStatus("Track*",0);  
     nJet_->fChain->SetBranchStatus("Vtx*",0);
+    nJet_->fChain->SetBranchStatus("VtxN",1);
     nJet_->fChain->SetBranchStatus("GenPart*",0);
     nJet_->fChain->SetBranchStatus("GenPartId*",1);
   } else if(dataClass_ == 5) {
     nJet_->fChain->SetBranchStatus("Track*",0); 
     nJet_->fChain->SetBranchStatus("Vtx*",0);
+    nJet_->fChain->SetBranchStatus("VtxN",1);
     nJet_->fChain->SetBranchStatus("GenPart*",0);
   }
 
@@ -506,9 +509,9 @@ void DiJetReader::printCutFlow()
     std::cout << " dijet events passing trigger \n"; 
     std::cout << "  " << (nReadEvts_-=(nMinJetEta_+nMaxJetEta_)) << std::flush;
     std::cout << " dijet events with " << minJetEta_ << " < |eta| < " << maxJetEta_ << "\n";
-    std::cout << "  " << (nReadEvts_-=nJetIDCut_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMinJetHadFraction_) << std::flush;
     std::cout << " dijet events with hadronic fraction > " << minJetHadFraction_ << "\n";
-    std::cout << "  " << (nReadEvts_-=nJetIDCut_) << std::flush;
+    std::cout << "  " << (nReadEvts_-=nMaxJetHadFraction_) << std::flush;
     std::cout << " dijet events with jet id and hadronic fraction < " << maxJetHadFraction_ << "\n";   
     std::cout << "  " << (nReadEvts_-=nCutOnSoftJets_) << std::flush;
     std::cout << " dijet events with " << minRel3rdJetEt_ << " < pt(jet3) / ptAve < " << maxRel3rdJetEt_ << "\n";
@@ -1307,6 +1310,11 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 {
   // Number of jets in the event
   int nJets = nJet_->NobjJet;
+
+
+  //  if(nJet_->VtxN>6||nJet_->VtxN<5) std::cout << "number of vertices:" << nJet_->VtxN << " number of PU vertices:" << nJet_->PUMCNumVtx  <<std::endl;
+
+
 
   // There should be at least two jets
   // and at the most three jets

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.20 2011/07/04 14:18:02 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.21 2011/07/08 14:56:52 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -270,6 +270,15 @@ double ControlPlotsFunction::twoJetsPtBalanceEventVtxN(const Event *evt) const {
 }
 
 
+//!  \brief Returns number of MC PU vertices 
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMCNPUVtx(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return tjpbe->nPU();
+}
 
 
 //!  \brief Returns fraction of momentum of third jet projected to dijet axis 
