@@ -4,7 +4,7 @@
 //    This class reads events according fo the ZJetSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ZJetReader.cc,v 1.28 2010/12/13 10:38:28 stadie Exp $
+//    $Id: ZJetReader.cc,v 1.29 2011/05/26 07:42:53 mschrode Exp $
 //   
 #include "ZJetReader.h"
 
@@ -56,6 +56,8 @@ ZJetReader::~ZJetReader()
 //calculates from Z energy a truth value for one calo tower of the jet.
 int ZJetReader::readEvents(std::vector<Event*>& data)
 {
+  return 0;
+  /*
   if(n_zjet_events == 0) return 0;
   //Run Z-Jet stuff  
   int nevent = zjet->fChain->GetEntries();
@@ -96,10 +98,13 @@ int ZJetReader::readEvents(std::vector<Event*>& data)
     }
   }
   return nevents_added;
+  */
 }
 
 Event* ZJetReader::createJetTruthEvent()
 {
+  return 0;
+  /*
   double em = 0;
   double had = 0;
   double out = 0;
@@ -224,10 +229,13 @@ Event* ZJetReader::createJetTruthEvent()
   JetTruthEvent* jte = new JetTruthEvent(j,zjet->JetGenEt,1.0);//zjet->EventWeight);
   delete [] terr;
   return jte;
+  */
 }
 
 CorFactors* ZJetReader::createCorFactors(int jetid) const
 {
+  return 0;
+  /*
   return new CorFactors(zjet->JetCorrZSP, // L1
 			zjet->JetCorrL2,  // L2
 			zjet->JetCorrL3,  // L3
@@ -236,4 +244,5 @@ CorFactors* ZJetReader::createCorFactors(int jetid) const
 			1.,              // L5
 			zjet->JetCorrJPT,
 			zjet->JetCorrL2L3JPT);
+  */
 }
