@@ -1,5 +1,5 @@
 //
-// $Id: $
+// $Id: PUEventWeightProcessor.h,v 1.1 2011/06/06 14:58:58 mschrode Exp $
 //
 #ifndef PU_EVENT_WEIGHT_PROCESSOR_H
 #define PU_EVENT_WEIGHT_PROCESSOR_H
@@ -39,6 +39,7 @@ private:
   std::vector<double> weights_;
 
   std::vector<double> generate_flat10_weights(const TH1* data_npu_estimated) const;
+  std::vector<double> generate_fall11_weights(const TH1* data_npu_estimated) const;
 };
 
 #endif
