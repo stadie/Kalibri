@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.33 2011/05/26 07:42:52 mschrode Exp $
+//!  $Id: DiJetReader.h,v 1.34 2011/07/04 14:43:36 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -132,6 +132,8 @@ class DiJetReader : public EventReader{
   int    nCutOnMaxRunNumber_;   //!< Number of events rejected by maxRunNumber_ cut
   int    nTriggerSel_;          //!< Number of events not passing the trigger selection
   int    nMaxMCPU_;             //!< Max number of mixed-in PU events
+  int    nMaxVtxN_;             //!< Max number of reconstructed vertices (easy PU-cut)
+  int    nMinVtxN_;             //!< Min number of reconstructed vertices (easy PU-cut)
   int    maxNIter_;             //!< Max number of iterations in integration
   double eps_;                  //!< Integration precision for convergence
   double truthSpecExp_;         //!< Exponent of truth spectrum

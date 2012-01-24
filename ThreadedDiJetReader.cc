@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.13 2011/07/04 14:46:55 kirschen Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.14 2011/07/04 17:19:35 stadie Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -99,6 +99,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 
   TChain* chain = dynamic_cast<TChain*>(tree_);
   nEvents_ = chain->GetEntries();
+  std::cout << "nEvents_: " << nEvents_ << std::endl;
   counter_ = 0;
   unsigned int id = 0;
   std::vector<TFile*> files;
@@ -117,7 +118,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
       TTree* tree = (TTree*)f->Get(chain->GetName());
       if(! tree) continue;
       //tree->GetEntriesFast();
-      //std::cout << "adding " << f->GetName() << " with " <<  tree->GetEntriesFast() << " entries\n";
+      std::cout << "adding " << f->GetName() << " with " <<  tree->GetEntriesFast() << " entries\n";
       readers_[id]->reader()->nJet_->Init(tree);
       readers_[id]->reader()->nJet_->GetEntry(0);
       ++id;
@@ -155,7 +156,7 @@ int ThreadedDiJetReader::readEvents(std::vector<Event*>& data)
 	    nCutOnMinRunNumber_ += djr->nCutOnMinRunNumber_; 
 	    nCutOnMaxRunNumber_ += djr->nCutOnMaxRunNumber_; 
 	    nJetIDCut_          += djr->nJetIDCut_;
-	    //std::cout << *i << ":events " << (*i)->nEvents() << ";" << djr->nReadEvts_<< '\n';
+	    std::cout << *i << ":events " << (*i)->nEvents() << ";" << djr->nReadEvts_<< '\n';
 	  }
 	}
 	//std::cout << nReadEvts_ << " events read\n";
@@ -260,6 +261,9 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
 	    i != readers_.end() ; ++i) {
     (*i)->reader()->requireTrigger_ = false;
+  //hack: just set weights of data equal to one.
+    (*i)->reader()->weights_eq_one_=false;
+
   }
   if(nDijetEvents_ == 0) return 0;
   tree_ = createTree(name.str());

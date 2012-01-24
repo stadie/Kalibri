@@ -6,6 +6,7 @@
 #include "CalibData.h"
 #include "Jet.h"
 #include "CorFactors.h"
+#include "TMath.h"
 
 //!
 //!  \brief Class for relative calibration in pseudorapidity
@@ -13,12 +14,12 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.14 2011/07/04 17:19:35 stadie Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.15 2011/07/08 14:56:51 kirschen Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
-  TwoJetsPtBalanceEvent(Jet *j1, Jet *j2, Jet *j3, double ptHat, double w, short npu, short nvtx)
-    : Event(w,ptHat,npu,nvtx),
+ TwoJetsPtBalanceEvent(Jet *j1, Jet *j2, Jet *j3, double ptHat, double w, short npu, short nvtx, double met, double metphi,int runNumber)
+   : Event(w,ptHat,npu,nvtx,met,metphi,runNumber),
     jet1_(j1),
     jet2_(j2),
     jet3_(j3),
@@ -75,7 +76,11 @@ class TwoJetsPtBalanceEvent : public Event {
   double ptDijet() const { return 0.5*(jet1_->pt()+jet2_->pt()); }
   double ptDijetGen() const { return 0.5*(jet1_->genPt()+jet2_->genPt()); }
   double ptDijetCorr() const { return 0.5*(parametrizedMess()+parametrizedMess2()); }
-  double ptDijetCorrL2L3() const { return 0.5*( jet1_->corFactors().getL2L3() * jet1_->pt() + jet2_->corFactors().getL2L3() * jet2_->pt() ); }
+  double ptDijetCorrL2L3() const { 
+   if(TMath::IsNaN(0.5*( jet1_->corFactors().getL2L3() * jet1_->pt() + jet2_->corFactors().getL2L3() * jet2_->pt()))){
+      std::cout << "L2L3corr: " <<jet1_->corFactors().getL2L3() << " L1-corrected jetpt: " << jet1_->pt() << " jeteta: " << jet1_->eta() << " Jet2...: "  << jet2_->corFactors().getL2L3() << " " << jet2_->pt()  << " " << jet2_->eta() << std::endl;
+       }
+       return 0.5*( jet1_->corFactors().getL2L3() * jet1_->pt() + jet2_->corFactors().getL2L3() * jet2_->pt() ); }
 
   double ptBalance() const { return (jet1_->pt() - jet2_->pt()) / ptDijet(); }
   double ptBalanceGen() const { return (jet1_->genPt()-jet2_->genPt()) / ptDijetGen(); }

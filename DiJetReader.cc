@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.80 2011/07/08 14:56:52 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.81 2011/07/12 14:55:04 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -80,6 +80,8 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   maxDeltaR_         = config_->read<double>("DeltaR cut on jet matching",10.);
   hltChainANDOR_     = bag_of_string(config_->read<std::string>("Hlt trigger chain AND/OR",""));
   nMaxMCPU_  =  config_->read<int>("MAX n PU from MC",10000);
+  nMaxVtxN_  =  config_->read<int>("MAX n reco Vtx",10000);
+  nMinVtxN_  =  config_->read<int>("MIN n reco Vtx",0);
 
 
   //read trigger map
@@ -273,6 +275,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
   }
   std::cout << " (data class " << dataClass_ << "):\n";
   nEvents_ =  (nDijetEvents_ < 0) ? nJet_->fChain->GetEntries() : nDijetEvents_;
+  std::cout << "nEvents_: " << nEvents_ << std::endl;
   counter_ = 0;
   int nev = readEventsFromTree(data); 
   std::cout << '\n';
@@ -361,12 +364,15 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     nJet_->fChain->SetBranchStatus("GenPart*",0);
   }
 
-
+  std::cout << "Weights eq. to one activated or not:" << weights_eq_one_ << std::endl;
   //Set weight equal to one if requested
   if(weights_eq_one_){
     nJet_->fChain->SetBranchStatus("Weight",0);
     nJet_->Weight=1.;
     //    std::cout << "weight of event: "  << nJet_->Weight << std::endl;
+  }
+  else{
+    nJet_->fChain->SetBranchStatus("Weight",1);
   }
 
 
@@ -415,6 +421,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
   // Read the events
   //std::cout << "reading " << nevent << " events...\n";
   for (int i=0 ; i < nevent ; i+= prescale_) {
+    //   if((i+1)%10==0)    std::cout << "Event " << i  << " read events: " << nReadEvts_ << std::endl;
     //std::cout << "event " << i << " of " << nevent << '\n';
     if((i+1)%10000==0) {
       //std::cout << "  " << i+1 << std::endl;
@@ -428,6 +435,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
       exit(9);
     }
 
+    //   if((i+1)%10==0)    std::cout << "Event " << i  << " read events: " << nReadEvts_ << std::endl;
 //     if( nJet_->GenJetColPt[1] > nJet_->GenJetColPt[0] 
 // 	|| nJet_->GenJetColPt[2] > nJet_->GenJetColPt[1] ) {
 //     std::cout << "\nEvent " << i << std::endl;
@@ -440,6 +448,8 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 //     }
     //cut on PU
     if(nJet_->PUMCNumVtx + nJet_->PUMCNumVtxOOT > nMaxMCPU_) continue;
+    if(nJet_->VtxN > nMaxVtxN_) continue;
+    if(nMinVtxN_!=0 && nJet_->VtxN < nMinVtxN_) continue;
 
     if(dataClass_ == 1) {
       nReadEvts_++;
@@ -449,7 +459,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 	if(std::abs(td->getJet1()->eta()) < 1.3) {
 	  data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
 						   td->getJet3() ? td->getJet3()->clone():0,
-						   td->ptHat(),td->weight(),td->nPU(),td->nVtx()));
+						   td->ptHat(),td->weight(),td->nPU(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
 	  ++nGoodEvts_;
 	}
 	if(std::abs(td->getJet2()->eta()) < 1.3) {
@@ -602,7 +612,11 @@ int DiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   delete corFactorsFactory_;
   corFactorsFactory_ = 0;
   nJet_->Init(tree);
+  //hack: just set weights of data equal to one.
+  weights_eq_one_=false;
+  std::cout << "Weights eq. to one activated or not:" << weights_eq_one_ << std::endl;
   int nev = readEventsFromTree(control);
+  std::cout << "Weights eq. to one activated or not:" << weights_eq_one_ << std::endl;
   printCutFlow();
   std::cout << "Stored " << nev << " dijet events for control plots.\n";
   delete nJet_->fChain;
@@ -1383,11 +1397,11 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     
     --it;
     if(! *(it->second)) {
-      //std::cout << "failing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
+      //      std::cout << "failing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
       nTriggerSel_++;
       return 0;
     } 
-    //std::cout << "passing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
+    //        std::cout << "passing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
   }
 
 
@@ -1395,6 +1409,10 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetEta_++;
     return 0;
   }
+
+  //  std::cout << "here before... the event still exists" <<std::endl;
+
+  //  if(nJet_->JetEMF[0]!=-1){
   if(1 - nJet_->JetEMF[0] < minJetHadFraction_ || 
 	  1 - nJet_->JetEMF[1] < minJetHadFraction_ ) {
     nMinJetHadFraction_++;
@@ -1405,10 +1423,12 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetHadFraction_++;
     return 0;
   }
+  //  }
   //loose jet id 
    
   if(! (nJet_->JetIDLoose[0] && nJet_->JetIDLoose[1] && nJet_->JetIDLoose[2])) {
     nMaxJetHadFraction_++;
+    //    std::cout << "DID NOT PASS LOOSE JET ID!!" << std::endl;
     return 0;
   }
 
@@ -1447,10 +1467,11 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     }
     //double pUCE = 0.;
     
-    if( std::abs(pJ3) > maxRel3rdJetEt_*ptAve ) {
-      nCutOn3rdJet_++;
-      return 0;
-    }
+    //moved to the end to take care of on-the-fly JEC
+    //    if( std::abs(pJ3) > maxRel3rdJetEt_*ptAve ) {
+    //      nCutOn3rdJet_++;
+    //      return 0;
+    //    }
     if( pSJ > maxRelSoftJetEt_*ptAve ) {
       nCutOnSoftJets_++;
       return 0;
@@ -1485,6 +1506,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     double drJetGenjet  = sqrt( deta*deta + dphi*dphi );
     
     // Create jet
+    if(nJet_->JetEMF[calJetIdx[i]] < 0)  nJet_->JetEMF[calJetIdx[i]] = 0;
     Jet * jet = new Jet(nJet_->JetPt[calJetIdx[i]],
 			nJet_->JetPt[calJetIdx[i]] * nJet_->JetEMF[calJetIdx[i]],
 			nJet_->JetPt[calJetIdx[i]] * (1.0 - nJet_->JetEMF[calJetIdx[i]]),
@@ -1515,6 +1537,9 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     jet1->updateCorFactors(corFactorsFactory_->create(jet1,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[calJetIdx[0]]));
     jet2->updateCorFactors(corFactorsFactory_->create(jet2,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[calJetIdx[1]]));
     if(jet3) jet3->updateCorFactors(corFactorsFactory_->create(jet3,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[calJetIdx[2]]));    
+//    jet1->updateCorFactors(corFactorsFactory_->create(jet1,nJet_->VtxN,nJet_->Rho,0.1));
+//    jet2->updateCorFactors(corFactorsFactory_->create(jet2,nJet_->VtxN,nJet_->Rho,0.1));
+//    if(jet3) jet3->updateCorFactors(corFactorsFactory_->create(jet3,nJet_->VtxN,nJet_->Rho,0.1));    
   }
   if(correctL1_) {
     jet1->correctL1();
@@ -1534,9 +1559,19 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     if(jet3) jet3->correctL2L3();
   }
 
+  //  std::cout << "Event weight: " << nJet_->Weight << std::endl;
+
   // Create TwoJetsInvMassEvent
   TwoJetsPtBalanceEvent * evt
-    = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight,static_cast<short int>(nJet_->PUMCNumVtx),static_cast<short int>(nJet_->VtxN));
+    = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight,static_cast<short int>(nJet_->PUMCNumVtx),static_cast<short int>(nJet_->VtxN),nJet_->Met,nJet_->MetPhi,nJet_->RunNumber);
+
+   if(evt->hasJet3()  && std::abs(evt->getJet3()->corFactors().getL2L3() * evt->getJet3()->pt()) > maxRel3rdJetEt_*evt->ptDijetCorrL2L3() ) {
+     //    std::cout << "test "<< std::abs(evt->getJet3()->corFactors().getL2L3() * evt->getJet3()->pt()) << " and " << maxRel3rdJetEt_*evt->ptDijetCorrL2L3() << std::endl;
+    nCutOn3rdJet_++;
+    delete evt;
+    return 0;
+  }
+  
 
   return evt;
 }
