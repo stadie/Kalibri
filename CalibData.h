@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.88 2011/05/31 15:49:04 stadie Exp $
+// $Id: CalibData.h,v 1.89 2011/07/08 13:25:45 mschrode Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -28,7 +28,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.88 2011/05/31 15:49:04 stadie Exp $
+//!  $Id: CalibData.h,v 1.89 2011/07/08 13:25:45 mschrode Exp $
 class Measurement
 {
 public:
@@ -67,7 +67,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.88 2011/05/31 15:49:04 stadie Exp $
+//!  $Id: CalibData.h,v 1.89 2011/07/08 13:25:45 mschrode Exp $
 class TTrack : public Measurement
 {
 public:
@@ -124,12 +124,12 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.88 2011/05/31 15:49:04 stadie Exp $
+//! $Id: CalibData.h,v 1.89 2011/07/08 13:25:45 mschrode Exp $
 class Event
 {
 public:
-  Event(double w = 0, double pthat = 0, short npu = 0, short nvtx=0)
-    : weight_(w),ptHat_(pthat),nPU_(npu),nVtx_(nvtx) {}
+ Event(double w = 0, double pthat = 0, short npu = 0, short nvtx=0, double met=0, double metphi=0, int runNumber=0)
+   : weight_(w),ptHat_(pthat),nPU_(npu),nVtx_(nvtx),MET_(met),METphi_(metphi),runNumber_(runNumber) {}
   virtual ~Event() {}
   virtual Measurement *mess() const = 0;                           //!< Get Measurement object
   virtual double truth() const = 0;                                 //!< Get truth of measurement
@@ -141,6 +141,9 @@ public:
   double ptHat() const { return ptHat_; }                              //!< Get event scale
   short nPU() const { return nPU_; } //!< Number of generated PU interactions
   short nVtx() const { return nVtx_; } //!< Number of reconstructed vertices
+  double MET() const { return MET_; } //!< Missing transverse energy
+  double METphi() const { return METphi_; } //!< Azimuthal angle of missing transverse energy
+  int runNumber() const { return runNumber_; } //!< Number of CMS run
 
   //!  \brief Get the normalized, squared residual \f$ z^{2} \f$ of this event
   //!
@@ -233,6 +236,9 @@ public:
   double ptHat_;
   short nPU_;
   short nVtx_;
+  double MET_;
+  double METphi_;
+  int runNumber_;
 };
 
 
