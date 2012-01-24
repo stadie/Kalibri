@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: DiJetEventWeighting.cc,v 1.3 2011/06/30 14:27:15 stadie Exp $
+//    $Id: DiJetEventWeighting.cc,v 1.4 2011/07/04 14:27:36 kirschen Exp $
 //   
 #include "DiJetEventWeighting.h"
 
@@ -46,7 +46,7 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
     TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(*i);
     std::map<double,double>::iterator it = ndata_.lower_bound(tje->ptDijetCorrL2L3());
     if(it == ndata_.begin()) {
-      std::cout << "bad event " << tje->ptDijetCorrL2L3() << " " << it->first << '\n';
+      std::cout << "bad event ptDijetCorrL2L3: " << tje->ptDijetCorrL2L3() << " ptDijet(): " << tje->ptDijet() << " ptDijetGen: " << tje->ptDijetGen() <<  " lowest threshold: " <<it->first << '\n';
       --i;
       delete tje;
       data.erase(i+1);
@@ -61,10 +61,16 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
     TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(*i);
     Jet * j1 = tje->getJet1();
     double res1 = j1->pt()/j1->genPt();
+    double dr1 = j1->dR();
     Jet * j2 = tje->getJet2();
     double res2 = j2->pt()/j2->genPt();
-    if((res1 < 0.2) || (res1 > 2.0) || (res2 < 0.2) || (res2 > 2.0)) {
-      std::cout << "strange response: " << res1 << ", " <<  res2 << " pt:" <<  j1->pt() << ", " << j2->pt() << '\n';
+    double dr2 = j2->dR();
+    //    if(((res1 < 0.2) || (res1 > 2.0) || (res2 < 0.2) || (res2 > 2.0)) && (j1->pt()> 2.0 * tje->ptHat()) ){
+      //cut on pthat introduced according to JES-mail by Mikko 11 Aug 2011
+      //NOW: Introduce additional deltaR-matching cut...
+
+	if(!( (res1 > 0.2) && (res1 < 2.0) && (res2 > 0.2) && (res2 < 2.0) && (j1->pt()< 2.0 * tje->ptHat())  && (j2->pt()< 2.0 * tje->ptHat())&& (dr1<0.25) && (dr2 <0.25) )){
+      std::cout << "strange response: " << res1 << ", " <<  res2 << " pt:" <<  j1->pt() << ", " << j2->pt() << ", pthat: "  << tje->ptHat() << '\n';
       --i;
       delete tje;
       control1.erase(i+1);
