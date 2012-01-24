@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 import os
+import sys
 
 def writeCfg(filename):
     config_1="""
@@ -74,14 +75,14 @@ Et cut on cluster          = 0.0
 Et cut on track            = 0.0
 Et cut on n+1 Jet          = 9999.0
 Min Delta Phi              = 2.7
-Eta max cut on jet         = 5.2  
+Eta max cut on jet         = 4.7 # was 5.2
 Relative Rest Jet Cut      = 0.2      #NonLeadingJetsEt / PhotonEt
 Min had fraction           = -1.05    #Default: 0.07
-Max had fraction           = 1.05    #Default: 0.95
+Max had fraction           = 2.05    #1.05    #Default: 0.95
 Et genJet min              = 0.0
 Et genJet max              = 7000.0
 DeltaR cut on jet matching = 9999
-Max cut on relative n+1 Jet Et = 200.0 # was 0.4
+Max cut on relative n+1 Jet Et = 0.4 # was 0.4
 Max cut on relative Soft Jet Et = 200.0
 #---------------------------------------------------------------------------------
 #   Input / Output
@@ -129,11 +130,15 @@ correct jets L2L3 = false
 create plots                     = true
 plots output directory           = plots
 #plots format                      = pdf
-plots only to root-file = true
+plots only to root-file = false
+#export all XY projections = true
+#plots only to root-file = true
+export all XY projections = false
 
 # JetTruthEvent plots
 create JetTruthEvent plots    =  false
 create TwoJetsPtBalanceEvent plots = true
+#create TwoJetsPtBalanceEvent PU weighting plots = true
 
 
 """
@@ -149,7 +154,8 @@ create TwoJetsPtBalanceEvent plots = true
         abs_binning_values = "0 0.261 0.522 0.783 0.957 1.131 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 5.191"
 
 
-    plot_list=['AsymmetryVsPt','AbsAsymmetryVsPt','OneBinAsymmetryVsPt','OneBinAbsAsymmetryVsPt']
+
+    plot_list=['AsymmetryVsPt','AbsAsymmetryVsPt','OneBinAsymmetryVsPt','OneBinAbsAsymmetryVsPt','MPFVsPt','AbsMPFVsPt','OneBinMPFVsPt','OneBinAbsMPFVsPt']
     cut_list=['40','30','20','10']
     cut_no_list=['.40','.30','.20','.10']
 #    cut_list=['40','35','30','25','20','15','10','05']
@@ -157,11 +163,9 @@ create TwoJetsPtBalanceEvent plots = true
         
     fcfg.write("TwoJetsPtBalanceEvent plots names =   ")
     for index_cut, cut in enumerate(cut_list):
-        fcfg.write(plot_list[0] + cut + ";")
-        fcfg.write(plot_list[1] + cut + ";")
-        fcfg.write(plot_list[2] + cut + ";")
-        fcfg.write(plot_list[3] + cut + ";")
-    fcfg.write("AsymmetryVsPt20_all_eta;AsymmetryVsEta;AsymmetryVsTJF;AbsAsymmetryVsTJF;AsymmetryVsNPV;AbsAsymmetryVsNPV")
+        for index_plot, plot in enumerate(plot_list):
+            fcfg.write(plot + cut + ";")
+    fcfg.write("AsymmetryVsPt20_all_eta;AsymmetryVsEta;AsymmetryVsEta_all_pt;MPFVsEta_all_pt;AsymmetryVsNPV20_all_eta;AsymmetryVsMCNPUVtx20_all_eta;AsymmetryVsNPV20_pt_bin_all_eta;AsymmetryVsMCNPUVtx20_pt_bin_all_eta;AsymmetryVsTJF;AbsAsymmetryVsTJF;AsymmetryVsNPV;AbsAsymmetryVsNPV")
     fcfg.write("\n")
 ##    for index_samples, samples in enumerate(samples_all):
     for index_cut, cut in enumerate(cut_list):
@@ -169,54 +173,108 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[0] + cut + " x variable        =   MeanPt; log\n")
         fcfg.write(plot_list[0] + cut + " x edges           =  15 20 2000\n")
         fcfg.write(plot_list[0] + cut + " y variable        =  Asymmetry\n")
-        fcfg.write(plot_list[0] + cut + " y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+        fcfg.write(plot_list[0] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[0] + cut + " bin variable      =  Eta\n")
         fcfg.write(plot_list[0] + cut + " bin edges         =  " + binning_values + "\n")
         fcfg.write(plot_list[0] + cut + " cut variable      =  ThirdJetFractionPlain\n")
         fcfg.write(plot_list[0] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
         fcfg.write(plot_list[0] + cut + " correction types  =  L2L3; L2L3Res\n")
         fcfg.write(plot_list[0] + cut + " 1 correction types  =  L2L3\n")
-        fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+        fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
         fcfg.write(plot_list[0] + cut + " input samples     =  0:data;1:MC\n\n")
 
         fcfg.write(plot_list[1] + cut + " x variable        =   MeanPt; log\n")
         fcfg.write(plot_list[1] + cut + " x edges           =  15 20 2000\n")
         fcfg.write(plot_list[1] + cut + " y variable        =  Asymmetry\n")
-        fcfg.write(plot_list[1] + cut + " y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+        fcfg.write(plot_list[1] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3 0.0 0.5 0.0 0.5\n")
         fcfg.write(plot_list[1] + cut + " bin variable      =  AbsEta\n")
         fcfg.write(plot_list[1] + cut + " bin edges         =  " + abs_binning_values + "\n")
         fcfg.write(plot_list[1] + cut + " cut variable      =  ThirdJetFractionPlain\n")
         fcfg.write(plot_list[1] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
         fcfg.write(plot_list[1] + cut + " correction types  =  L2L3; L2L3Res\n")
         fcfg.write(plot_list[1] + cut + " 1 correction types  =  L2L3\n")
-        fcfg.write(plot_list[1] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+        fcfg.write(plot_list[1] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans; StandardDeviation; GaussFitWidth\n")
         fcfg.write(plot_list[1] + cut + " input samples     =  0:data;1:MC\n\n")
 
         fcfg.write(plot_list[2] + cut + " x variable        =   MeanPt; log\n")
         fcfg.write(plot_list[2] + cut + " x edges           =  1 20 2000\n")
         fcfg.write(plot_list[2] + cut + " y variable        =  Asymmetry\n")
-        fcfg.write(plot_list[2] + cut + " y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+        fcfg.write(plot_list[2] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[2] + cut + " bin variable      =  Eta\n")
         fcfg.write(plot_list[2] + cut + " bin edges         =  " + binning_values + "\n")
         fcfg.write(plot_list[2] + cut + " cut variable      =  ThirdJetFractionPlain\n")
         fcfg.write(plot_list[2] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
         fcfg.write(plot_list[2] + cut + " correction types  =  L2L3; L2L3Res\n")
         fcfg.write(plot_list[2] + cut + " 1 correction types  =  L2L3\n")
-        fcfg.write(plot_list[2] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+        fcfg.write(plot_list[2] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
         fcfg.write(plot_list[2] + cut + " input samples     =  0:data;1:MC\n\n")
 
         fcfg.write(plot_list[3] + cut + " x variable        =   MeanPt; log\n")
         fcfg.write(plot_list[3] + cut + " x edges           =  1 20 2000\n")
         fcfg.write(plot_list[3] + cut + " y variable        =  Asymmetry\n")
-        fcfg.write(plot_list[3] + cut + " y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+        fcfg.write(plot_list[3] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[3] + cut + " bin variable      =  AbsEta\n")
         fcfg.write(plot_list[3] + cut + " bin edges         =  " + abs_binning_values + "\n")
         fcfg.write(plot_list[3] + cut + " cut variable      =  ThirdJetFractionPlain\n")
         fcfg.write(plot_list[3] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
         fcfg.write(plot_list[3] + cut + " correction types  =  L2L3; L2L3Res\n")
         fcfg.write(plot_list[3] + cut + " 1 correction types  =  L2L3\n")
-        fcfg.write(plot_list[3] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+        fcfg.write(plot_list[3] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
         fcfg.write(plot_list[3] + cut + " input samples     =  0:data;1:MC\n\n")
+
+###############new plots for MPFresponse
+        
+        fcfg.write(plot_list[4] + cut + " x variable        =   Jet2Pt; log\n")
+        fcfg.write(plot_list[4] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[4] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[4] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[4] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[4] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[4] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[4] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[4] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[4] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[4] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[4] + cut + " input samples     =  0:data;1:MC\n\n")
+
+        fcfg.write(plot_list[5] + cut + " x variable        =   Jet2Pt; log\n")
+        fcfg.write(plot_list[5] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[5] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[5] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[5] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[5] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[5] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[5] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[5] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[5] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[5] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[5] + cut + " input samples     =  0:data;1:MC\n\n")
+
+        fcfg.write(plot_list[6] + cut + " x variable        =   Jet2Pt; log\n")
+        fcfg.write(plot_list[6] + cut + " x edges           =  1 20 2000\n")
+        fcfg.write(plot_list[6] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[6] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[6] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[6] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[6] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[6] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[6] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[6] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[6] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[6] + cut + " input samples     =  0:data;1:MC\n\n")
+
+        fcfg.write(plot_list[7] + cut + " x variable        =   Jet2Pt; log\n")
+        fcfg.write(plot_list[7] + cut + " x edges           =  1 20 2000\n")
+        fcfg.write(plot_list[7] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[7] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[7] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[7] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[7] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[7] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[7] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[7] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[7] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[7] + cut + " input samples     =  0:data;1:MC\n\n")
 
 
         config_2="""
@@ -225,6 +283,8 @@ AsymmetryVsPt20_all_eta x variable        =  MeanPt; log
 AsymmetryVsPt20_all_eta x edges           =  15 20 2000
 AsymmetryVsPt20_all_eta y variable        =  Asymmetry
 AsymmetryVsPt20_all_eta y edges           =  51 -0.30 0.30 -0.5 0.5
+AsymmetryVsPt20_all_eta bin variable      =  Eta
+AsymmetryVsPt20_all_eta bin edges         =  -5.192 5.192
 AsymmetryVsPt20_all_eta cut variable      =  ThirdJetFractionPlain
 AsymmetryVsPt20_all_eta cut edges         =  0.0 0.2
 AsymmetryVsPt20_all_eta correction types  =  L2L3; L2L3Res
@@ -235,16 +295,98 @@ AsymmetryVsPt20_all_eta input samples     =  0:data;1:MC
 AsymmetryVsEta x variable        =  Eta
 AsymmetryVsEta x edges           =  26 -5.2 5.2
 AsymmetryVsEta y variable        =  Asymmetry
-AsymmetryVsEta y edges           =  51 -0.30 0.30 -0.5 0.8 -0.5 0.8 0.7 1.3 0.7 1.3
+AsymmetryVsEta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
 AsymmetryVsEta bin variable      =  MeanPt
 AsymmetryVsEta bin edges         =  20 30 50 80 120 200 360 500 900 7000
 AsymmetryVsEta cut variable      =  ThirdJetFractionPlain
 AsymmetryVsEta cut edges         =  0.0 0.20
 AsymmetryVsEta correction types  =  L2L3; L2L3Res
 AsymmetryVsEta 1 correction types  =  L2L3
-AsymmetryVsEta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans
+AsymmetryVsEta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
 #AsymmetryVsEta legend label      =  L2L3:CMS default
 AsymmetryVsEta input samples     =  0:data;1:MC
+
+AsymmetryVsEta_all_pt x variable        =  Eta
+AsymmetryVsEta_all_pt x edges           =  26 -5.2 5.2
+AsymmetryVsEta_all_pt y variable        =  Asymmetry
+AsymmetryVsEta_all_pt y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
+AsymmetryVsEta_all_pt bin variable      =  MeanPt
+AsymmetryVsEta_all_pt bin edges         =  20 7000
+AsymmetryVsEta_all_pt cut variable      =  ThirdJetFractionPlain
+AsymmetryVsEta_all_pt cut edges         =  0.0 0.20
+AsymmetryVsEta_all_pt correction types  =  L2L3; L2L3Res
+AsymmetryVsEta_all_pt 1 correction types  =  L2L3
+AsymmetryVsEta_all_pt profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
+AsymmetryVsEta_all_pt input samples     =  0:data;1:MC
+
+
+MPFVsEta_all_pt x variable        =  Eta
+MPFVsEta_all_pt x edges           =  26 -5.2 5.2
+MPFVsEta_all_pt y variable        =  MPFResponse
+MPFVsEta_all_pt y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5
+MPFVsEta_all_pt bin variable      =  Jet2Pt
+MPFVsEta_all_pt bin edges         =  20 7000
+MPFVsEta_all_pt cut variable      =  ThirdJetFractionPlain
+MPFVsEta_all_pt cut edges         =  0.0 0.20
+MPFVsEta_all_pt correction types  =  L2L3; L2L3Res
+MPFVsEta_all_pt 1 correction types  =  L2L3
+MPFVsEta_all_pt profile types     =  Mean; GaussFitMean; IQMean
+MPFVsEta_all_pt input samples     =  0:data;1:MC
+
+AsymmetryVsNPV20_all_eta x variable        =  VtxN
+AsymmetryVsNPV20_all_eta x edges           =  16 0.0 16.0
+AsymmetryVsNPV20_all_eta y variable        =  Asymmetry
+AsymmetryVsNPV20_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
+AsymmetryVsNPV20_all_eta bin variable      =  Eta
+AsymmetryVsNPV20_all_eta bin edges         =  -5.192 5.192
+AsymmetryVsNPV20_all_eta cut variable      =  ThirdJetFractionPlain
+AsymmetryVsNPV20_all_eta cut edges         =  0.0 0.2
+AsymmetryVsNPV20_all_eta correction types  =  L2L3; L2L3Res
+AsymmetryVsNPV20_all_eta 1 correction types  =  L2L3
+AsymmetryVsNPV20_all_eta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
+AsymmetryVsNPV20_all_eta input samples     =  0:data;1:MC
+
+
+AsymmetryVsMCNPUVtx20_all_eta x variable        =  MCNPUVtx
+AsymmetryVsMCNPUVtx20_all_eta x edges           =  16 0.0 16.0
+AsymmetryVsMCNPUVtx20_all_eta y variable        =  Asymmetry
+AsymmetryVsMCNPUVtx20_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
+AsymmetryVsMCNPUVtx20_all_eta bin variable      =  Eta
+AsymmetryVsMCNPUVtx20_all_eta bin edges         =  -5.192 5.192
+AsymmetryVsMCNPUVtx20_all_eta cut variable      =  ThirdJetFractionPlain
+AsymmetryVsMCNPUVtx20_all_eta cut edges         =  0.0 0.2
+AsymmetryVsMCNPUVtx20_all_eta correction types  =  L2L3; L2L3Res
+AsymmetryVsMCNPUVtx20_all_eta 1 correction types  =  L2L3
+AsymmetryVsMCNPUVtx20_all_eta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
+AsymmetryVsMCNPUVtx20_all_eta input samples     =  0:data;1:MC
+
+
+AsymmetryVsNPV20_pt_bin_all_eta x variable        =  VtxN
+AsymmetryVsNPV20_pt_bin_all_eta x edges           =  16 0.0 16.0
+AsymmetryVsNPV20_pt_bin_all_eta y variable        =  Asymmetry
+AsymmetryVsNPV20_pt_bin_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
+AsymmetryVsNPV20_pt_bin_all_eta bin variable      =  MeanPt
+AsymmetryVsNPV20_pt_bin_all_eta bin edges         =  20 30 50 80 120 200 360 500 900 7000
+AsymmetryVsNPV20_pt_bin_all_eta cut variable      =  ThirdJetFractionPlain
+AsymmetryVsNPV20_pt_bin_all_eta cut edges         =  0.0 0.2
+AsymmetryVsNPV20_pt_bin_all_eta correction types  =  L2L3; L2L3Res
+AsymmetryVsNPV20_pt_bin_all_eta 1 correction types  =  L2L3
+AsymmetryVsNPV20_pt_bin_all_eta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
+AsymmetryVsNPV20_pt_bin_all_eta input samples     =  0:data;1:MC
+
+
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta x variable        =  MCNPUVtx
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta x edges           =  16 0.0 16.0
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta y variable        =  Asymmetry
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta bin variable      =  MeanPt
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta bin edges         =  20 30 50 80 120 200 360 500 900 7000
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta cut variable      =  ThirdJetFractionPlain
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta cut edges         =  0.0 0.2
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta correction types  =  L2L3; L2L3Res
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta 1 correction types  =  L2L3
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
 
 
 """
@@ -255,12 +397,12 @@ AsymmetryVsEta input samples     =  0:data;1:MC
     fcfg.write("AsymmetryVsTJF x variable        =  ThirdJetFractionPlain\n")
     fcfg.write("AsymmetryVsTJF x edges           =  8 0.00 0.40\n")
     fcfg.write("AsymmetryVsTJF y variable        =  Asymmetry\n")
-    fcfg.write("AsymmetryVsTJF y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+    fcfg.write("AsymmetryVsTJF y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
     fcfg.write("AsymmetryVsTJF bin variable      =  Eta\n")
     fcfg.write("AsymmetryVsTJF bin edges         =  " + binning_values + "\n")
     fcfg.write("AsymmetryVsTJF correction types  =  L2L3; L2L3Res\n")
     fcfg.write("AsymmetryVsTJF 1 correction types  =  L2L3\n")
-    fcfg.write("AsymmetryVsTJF profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+    fcfg.write("AsymmetryVsTJF profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
     fcfg.write("#AsymmetryVTJF legend label      =  L2L3:CMS default\n")
     fcfg.write("AsymmetryVsTJF input samples     =  0:data;1:MC\n")
     fcfg.write("\n\n")
@@ -269,12 +411,12 @@ AsymmetryVsEta input samples     =  0:data;1:MC
     fcfg.write("AbsAsymmetryVsTJF x variable        =  ThirdJetFractionPlain\n")
     fcfg.write("AbsAsymmetryVsTJF x edges           =  8 0.00 0.40\n")
     fcfg.write("AbsAsymmetryVsTJF y variable        =  Asymmetry\n")
-    fcfg.write("AbsAsymmetryVsTJF y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+    fcfg.write("AbsAsymmetryVsTJF y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
     fcfg.write("AbsAsymmetryVsTJF bin variable      =  AbsEta\n")
     fcfg.write("AbsAsymmetryVsTJF bin edges         =  " + abs_binning_values + "\n")
     fcfg.write("AbsAsymmetryVsTJF correction types  =  L2L3; L2L3Res\n")
     fcfg.write("AbsAsymmetryVsTJF 1 correction types  =  L2L3\n")
-    fcfg.write("AbsAsymmetryVsTJF profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+    fcfg.write("AbsAsymmetryVsTJF profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
     fcfg.write("#AsymmetryVTJF legend label      =  L2L3:CMS default\n")
     fcfg.write("AbsAsymmetryVsTJF input samples     =  0:data;1:MC\n")
     fcfg.write("\n\n")
@@ -282,31 +424,31 @@ AsymmetryVsEta input samples     =  0:data;1:MC
 
 
     fcfg.write("AsymmetryVsNPV x variable        =  VtxN\n")
-    fcfg.write("AsymmetryVsNPV x edges           =  4 0.0 16.0\n")
+    fcfg.write("AsymmetryVsNPV x edges           =  6 0.0 12.0\n")
     fcfg.write("AsymmetryVsNPV y variable        =  Asymmetry\n")
-    fcfg.write("AsymmetryVsNPV y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+    fcfg.write("AsymmetryVsNPV y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
     fcfg.write("AsymmetryVsNPV bin variable      =  Eta\n")
     fcfg.write("AsymmetryVsNPV bin edges         =  " + binning_values + "\n")
     fcfg.write("AsymmetryVsNPV cut variable      =  ThirdJetFractionPlain\n")
     fcfg.write("AsymmetryVsNPV cut edges         =  0.0 0.20\n")
     fcfg.write("AsymmetryVsNPV correction types  =  L2L3; L2L3Res\n")
     fcfg.write("AsymmetryVsNPV 1 correction types  =  L2L3\n")
-    fcfg.write("AsymmetryVsNPV profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+    fcfg.write("AsymmetryVsNPV profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
     fcfg.write("#AsymmetryVNPV legend label      =  L2L3:CMS default\n")
     fcfg.write("AsymmetryVsNPV input samples     =  0:data;1:MC\n")
     fcfg.write("\n\n")
 
     fcfg.write("AbsAsymmetryVsNPV x variable        =  VtxN\n")
-    fcfg.write("AbsAsymmetryVsNPV x edges           =  4 0.0 16.0\n")
+    fcfg.write("AbsAsymmetryVsNPV x edges           =  6 0.0 12.0\n")
     fcfg.write("AbsAsymmetryVsNPV y variable        =  Asymmetry\n")
-    fcfg.write("AbsAsymmetryVsNPV y edges           =  51 -0.30 0.30 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3\n")
+    fcfg.write("AbsAsymmetryVsNPV y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
     fcfg.write("AbsAsymmetryVsNPV bin variable      =  AbsEta\n")
-    fcfg.write("AbsAsymmetryVsNPV bin edges         =  " + binning_values + "\n")
+    fcfg.write("AbsAsymmetryVsNPV bin edges         =  " + abs_binning_values + "\n")
     fcfg.write("AbsAsymmetryVsNPV cut variable      =  ThirdJetFractionPlain\n")
     fcfg.write("AbsAsymmetryVsNPV cut edges         =  0.0 0.20\n")
     fcfg.write("AbsAsymmetryVsNPV correction types  =  L2L3; L2L3Res\n")
     fcfg.write("AbsAsymmetryVsNPV 1 correction types  =  L2L3\n")
-    fcfg.write("AbsAsymmetryVsNPV profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans\n")
+    fcfg.write("AbsAsymmetryVsNPV profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
     fcfg.write("#AbsAsymmetryVNPV legend label      =  L2L3:CMS default\n")
     fcfg.write("AbsAsymmetryVsNPV input samples     =  0:data;1:MC\n")
     fcfg.write("\n\n")
@@ -345,20 +487,27 @@ AsymmetryVsEta input samples     =  0:data;1:MC
     fcfg.write("use Di-Jet Control1 events = "+str(nevents)+"\n")
 
     if(DATAYEAR == "2011"):
-        if(DATAYEAR == "2011" and DATATYPE=="PrRe62pb" or DATATYPE=="42X_corr" or DATATYPE=="42X_PrRe" or DATATYPE=="42X_combPrRe_ReRe"):
+        if(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF):
             fcfg.write("Di-Jet trigger names = HLT_DiJetAve30;HLT_DiJetAve60;HLT_DiJetAve80;HLT_DiJetAve110;HLT_DiJetAve150;HLT_DiJetAve190;HLT_DiJetAve240;HLT_DiJetAve300;HLT_DiJetAve370\n")
-#conservative thresholds....
+#            #####conservative thresholds....
 #            if(jettype == "ak5Calo"):
 #                fcfg.write("Di-Jet trigger thresholds = 45 85 105 130 175 220 270 335 405\n") #Matthias preliminary
 #            if(jettype == "ak5PF"):
 #                fcfg.write("Di-Jet trigger thresholds = 45 85 105 130 175 220 270 335 405\n") #Matthias preliminary
-
+#
 #new default thresholds....
             if(jettype == "ak5Calo"):
                 fcfg.write("Di-Jet trigger thresholds = 35 69 89 120 163 204 256 318 390\n") #Matthias preliminary
             if(jettype == "ak5PF"):
                 fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
             if(jettype == "ak5JPT"):
+                fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
+
+            if(jettype == "ak7Calo"):
+                fcfg.write("Di-Jet trigger thresholds = 35 69 89 120 163 204 256 318 390\n") #Matthias preliminary
+            if(jettype == "ak7PF"):
+                fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
+            if(jettype == "ak7JPT"):
                 fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
 
 ##aggressive thresholds old
@@ -397,43 +546,123 @@ AsymmetryVsEta input samples     =  0:data;1:MC
     if(input != ""):
         fcfg.write("input calibration = Kalibri; "+input+"\n");
 
-    fcfg.write("correct jets L1 = true\n");
+    fcfg.write("correct jets L1 = "+ CORRECT_JETS_L1 + "\n");
     fcfg.write("fire all triggers = " + MC_fire_all_triggers +"\n");
     fcfg.write("EventWeightProcessor = true\n");
     fcfg.write("EventBinning = false\n");
     fcfg.write("DiJetEventWeighting = true\n");
-    fcfg.write("PU weighting = true\n");
-    fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n");
+    fcfg.write("PU weighting = true   \n");
+    if(DATATYPE=="May10"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/Cert_160404-163869_7TeV_May10ReReco_Collisions11_JSON_v3.pileup_v2.root \n");
+    elif(DATATYPE=="PrReV4"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/Cert_165088-167913_7TeV_PromptReco_JSON.pileup_v2.root \n");
+    elif(DATATYPE=="Aug05"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/Cert_170249-172619_7TeV_ReReco5Aug_Collisions11_JSON_v2.pileup_v2.root \n");
+    elif(DATATYPE=="PrReV6"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/Cert_172620-173692_PromptReco_JSON.pileup_v2.root \n");
+    elif(DATATYPE=="11BPrV1"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/2011B_V1_merged_last_three_files.root \n");
+    elif(DATATYPE=="Full2011"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/alltogether.root \n");
+    #elif(DATATYPE=="Full2011"):
+    #    fcfg.write("PU weighting era = Flat10\n");
+    #    fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/alltogether.root \n");
+    elif(DATATYPE=="Z2wPUsmeared_DMC"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/EXPORT_shifted_PU-hiust.root \n");
+    else:
+        fcfg.write("PU weighting era = Flat10\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n");
+    fcfg.write("MAX n reco Vtx             = " + str(nMaxRecoVtx) +"\n");
+    fcfg.write("MIN n reco Vtx             = " + str(nMinRecoVtx) +"\n");
+    fcfg.write("set weights to one         = " + str(weights_eq_one) +"\n\n\n");
     fcfg.close()
     return
 
 #kostas binning:
 #0: 0.0 1: 0.261 2: 0.522 3: 0.783 4: 0.957 5: 1.131 6: 1.305 7: 1.479
 #8: 1.93 9: 2.322 10: 2.411 11: 2.5 12: 2.853 13: 2.964 14: 3.139 15: 3.489 5.191
+DO_MC_ONLY_STUDY="true"
+
 
 #main program starts here!!!
 #change these variables to steer the fit
-DIR_JETALGO="AK5_tests"
+DIR_JETALGO="AK5"
+#weights_eq_one="true"!!!!!!!!!!!!!!!!!
+weights_eq_one="false"
+nMaxRecoVtx =500000
+if(nMaxRecoVtx < 50):
+    DIR_JETALGO = DIR_JETALGO + "_PU_" + str(nMaxRecoVtx) 
+nMinRecoVtx =0
+if(nMinRecoVtx > 0):
+    DIR_JETALGO = DIR_JETALGO + "_PUmin_" + str(nMinRecoVtx) 
 jetalgo="ak5"
 PF_CALO_JPT="PF"
-CORRECTION="Su11_He_AK5"
-#CORRECTION="Fall10_HenningJER_AK5"
-#CORRECTION="ntuple"
-#CORRECTION="ntuple"change other stuff...
-#42x no corrs CORRECTIONS=CORRECTION+PF_CALO_JPT
-CORRECTIONS=CORRECTION+PF_CALO_JPT
-jettype = jetalgo+PF_CALO_JPT
-jettype_import=jettype
+CORRECTION="F11DB_He_AK5"
+#CORRECTION="ntuple" #use n-tuple corrections
+#DATAYEAR="2010"
+#DATATYPE="Skim"
 DATAYEAR="2011"
-DATATYPE="42X_combPrRe_ReRe"
-MC="Su11"
-MC_type="Z2wPU"
+DATATYPE="Full2011"
+MC="F11"
+#MC_type="Z2wPU"
+MC_type="Z2wPUsm_Y_f"
+#MC_type="Hppsmeared"
 MC_fire_all_triggers="false"
+CORRECT_JETS_L1="true"
 #MinRunNumber=-1
 MinRunNumber=163337
 MaxRunNumber=1000000000
-BINNING="k_HFfix"
-#BINNING="kostas"
+#BINNING="k_HFfix"
+BINNING="kostas"
+
+
+if(DO_MC_ONLY_STUDY=="true"):
+    MinRunNumber=-1
+    #    MC_fire_all_triggers="true"
+    DATATYPE="Z2wPU_DMC"
+
+    
+
+USE_NEW_TRIGGERS_AND_FASTPF=0
+
+DATATYPES_NEW_TRIGGER=["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC"]
+
+for new_trigger in DATATYPES_NEW_TRIGGER:
+    if(DATATYPE==new_trigger):
+        USE_NEW_TRIGGERS_AND_FASTPF=1
+
+
+if len(sys.argv) > 1:
+    print "there are", len(sys.argv)-1, "arguments:"
+    for arg in sys.argv[1:]:
+        print arg
+else:
+    print "there are no arguments!"
+
+
+if (len(sys.argv) > 7):
+    print "redefine parameters from cmdline-options... "
+    DIR_JETALGO=sys.argv[1]
+    PF_CALO_JPT=sys.argv[2]
+    MC=sys.argv[3]
+    MC_type=sys.argv[4]
+    BINNING=sys.argv[5]
+    DATATYPE=sys.argv[7]
+    CORRECT_JETS_L1=sys.argv[8]
+    print "DIR_JETALGO="+ DIR_JETALGO + " PF_CALO_JPT="+PF_CALO_JPT+ " MC="+MC+" MC-type=" + MC_type+" BINNING="+BINNING+" DATATYPE="+DATATYPE+" CORRECT_JETS_L1="+CORRECT_JETS_L1
+    print "... done."
+#   datadirmc=sys.argv[6]
+
+CORRECTIONS=CORRECTION+PF_CALO_JPT
+jettype = jetalgo+PF_CALO_JPT
+jettype_import=jettype
 
 
 if(DATAYEAR == "2010"):
@@ -444,6 +673,8 @@ if(DATAYEAR == "2010"):
     if(DATATYPE=="Skim"):
         datadir = "/scratch/hh/current/cms/user/stadie/2010/DiJetNov4Skim_v1C/merged"
 if(DATAYEAR == "2011"):
+    if(DATATYPE=="Hpp"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/v6/QCD_Pt-15to3000_Tune23_Flat_7TeV_herwigpp_Summer11-PU_S3_START42_V11-v2/merged"
     if(DATATYPE=="PrReco"):
         datadir = "/scratch/hh/current/cms/user/stadie/JetRun2011APromptRecoD/merged"
     if(DATATYPE=="PrRe42pb"):
@@ -458,17 +689,59 @@ if(DATAYEAR == "2011"):
         datadir = "/scratch/hh/current/cms/user/stadie/2011/Jet2011APromptRecoV4_Cert_160404-165970/merged"
     if(DATATYPE=="42X_combPrRe_ReRe"):
 #        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combination_42XRereco_p_PrReco"
-        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_and_166861"
+#        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_and_166861"
+#        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_and_167913"
+        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_and_170307"
+    if(DATATYPE=="2fb_ReRe_PrRe"):
+        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_05Aug_v4_v6_160404-173692"
+    if(DATATYPE=="May10_pl_v4"):
+        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_v4_160404-173692"
+    if(DATATYPE=="Aug05_pl_v6"):
+        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_05Aug_v6_160404-173692"
+    if(DATATYPE=="May10"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/Jet2011AMay10ReReco_Cert_160404-163869v2/merged"
+    if(DATATYPE=="PrReV4"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/Jet2011APromptRecoV4_Cert_160404-173692/merged"
+    if(DATATYPE=="Aug05"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/Jet2011A05Aug2011V1_Cert_160404-173692/merged"
+    if(DATATYPE=="PrReV6"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/v8/Jet2011APromptRecoV6_Cert_160404-177515/merged"
+    if(DATATYPE=="11BPrV1"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/v8/Jet2011BPromptRecoV1_Cert_160404-180252/merged"
+    if(DATATYPE=="Full2011"):
+        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_05Aug_v4_v6_2011BV1_160404-180252"
+    if(DATATYPE=="Z2wPUsmeared_DMC"):
+        #outdated#datadir = "/scratch/hh/current/cms/user/kirschen/v8_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1_with_METcorr_nominal"
+        datadir = "/scratch/hh/current/cms/user/kirschen/YOSSOF_JETMET_FIGURES_v8_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1_with_METcorr_nominal"
+    if(DATATYPE=="Z2wPU_DMC"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/v8/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1/merged"
+    if(DATATYPE=="Z2wPUSu11_DMC"):
+        datadir = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Summer11-PU_S3_START42_V11-v2/merged"
 
-##/scratch/hh/current/cms/user/stadie/JetRun2011APromptRecoD/merged
 
 
+if(MC == "F11"):
+    if(MC_type=="Z2wPU"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/v8/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1/merged"
+    if(MC_type=="Z2wPUsmeared"):
+        datadirmc = "/scratch/hh/current/cms/user/kirschen/v8_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1_with_METcorr_nominal"
+    if(MC_type=="Z2wPUsm_Y"):
+        datadirmc = "/scratch/hh/current/cms/user/kirschen/YOSSOF_v8_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1_with_METcorr_nominal"
+    if(MC_type=="Z2wPUsm_Y_ip"):
+        datadirmc = "/scratch/hh/current/cms/user/kirschen/YOSSOF_FIXHF_and_thresholds_INTERPOLATION_v8_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1_with_METcorr_nominal"
+    if(MC_type=="Z2wPUsm_Y_f"):
+        datadirmc = "/scratch/hh/current/cms/user/kirschen/YOSSOF_JETMET_FIGURES_v8_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1_with_METcorr_nominal"
 
 if(MC == "Su11"):
     if(MC_type=="D6TwPU"):
-        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6_Summer11-PU_S3_START42_V11-v2/v4"
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6_Summer11-PU_S3_START42_V11-v2/v5"
     if(MC_type=="Z2wPU"):
-        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Summer11-PU_S3_START42_V11-v2/v4"
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Summer11-PU_S3_START42_V11-v2/merged"
+    if(MC_type=="Hpp"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_Tune23_Flat_7TeV_herwigpp_Summer11-PU_S3_START42_V11-v2/merged"
+    if(MC_type=="Z2wPUsmeared"):
+        #changed to with METcor 7.11.11: datadirmc = "/scratch/hh/current/cms/user/kirschen/v6_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Summer11-PU_S3_START42_V11-v2_smeared_Matthias_no_METcorr_nominal"
+        datadirmc = "/scratch/hh/current/cms/user/kirschen/v6_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Summer11-PU_S3_START42_V11-v2_smeared_Matthias_with_METcorr_nominal"
 
 if(MC == "S11"):
     if(MC_type=="wPU"):
@@ -487,8 +760,16 @@ if(MC == "F10"):
         datadirmc = "/scratch/hh/current/cms/user/stadie/2010/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1E/merged"
     if(MC_type=="Z2_SmConst"):
         datadirmc = "/scratch/hh/current/cms/user/stadie/2010/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-START38_V12-v1E/smeared3"
+    if(MC_type=="Hpp"):
+        datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt-15To3000_Tune23_Flat_7TeV-herwigpp_Fall10-START38_V12-v1Amerged"
 #    if(MC_type=="Z2wPU"):
 
+
+if (len(sys.argv) > 6):
+    print "even override datadirmc from cmdline-options... "
+    datadirmc=sys.argv[6]
+    print "datadirmc="+ datadirmc 
+    print "... done."
 
 
 
@@ -496,6 +777,9 @@ if(MC == "F10"):
 nthreads = 2
 niothreads = 2
 nevents =  -1
+#nthreads = 1
+#niothreads = 1
+#nevents =  10000
 MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
@@ -503,9 +787,11 @@ batch = False
 doBinnedFit = False
 doUnbinnedFit = True
 
-if(DATATYPE=="42X_corr" or DATATYPE=="42X_uncorr"  or DATATYPE=="42X_PrRe" or DATATYPE=="42X_combPrRe_ReRe"):
+if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
     if(PF_CALO_JPT=="PF"):
         jettype_import=jetalgo+"Fast"+PF_CALO_JPT
+#    jettype_import=jetalgo+"Fast"+PF_CALO_JPT
+
 
 
 if not os.path.exists(MAIN_dirname):
