@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.9 2011/02/18 15:58:08 kirschen Exp $
+// $Id: ControlPlotsConfig.h,v 1.10 2011/04/01 10:23:49 kirschen Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -47,6 +47,7 @@ class ConfigFile;
 //!  - GaussFitMean
 //!  - GaussFitWidth
 //!  - Median
+//!  - IQMean
 //!  - Chi2
 //!  - Probability
 //!  - Quantiles
@@ -55,7 +56,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.9 2011/02/18 15:58:08 kirschen Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.10 2011/04/01 10:23:49 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -66,15 +67,21 @@ class ControlPlotsConfig {
   typedef std::vector<InputTag>::const_iterator InputTagsIterator;  
 
   //! Number of defined profile types
-  static const int nProfileTypes = 10;
+  static const int nProfileTypes = 12;
   //! Different types of profile histograms
-  enum ProfileType { Mean=0, StandardDeviation, GaussFitMean, GaussFitWidth, Median, Chi2, Probability, Quantiles, RatioOfMeans, RatioOfGaussFitMeans};
+  enum ProfileType { Mean=0, StandardDeviation, GaussFitMean, GaussFitWidth, Median, IQMean, Chi2, Probability, Quantiles, RatioOfMeans, RatioOfGaussFitMeans, RatioOfIQMeans};
   typedef std::vector<ProfileType>::const_iterator ProfileTypeIt;
 
   ControlPlotsConfig(const ConfigFile *configFile, const std::string &name);
 
   //! Returns the profile's name
   std::string name() const { return name_; }
+
+  //! Return name of root file for export
+  std::string outRootFileName() const {return outRootFileName_; }
+
+  //! Set name of root file for export
+  void setOutRootFileName(std::string outRootFileName);// const{ outRootFileName_=outRootFileName;}
 
   //! Returns the bin edges of the binning variable
   const std::vector<double> *binEdges() const { return &binEdges_; }
@@ -190,6 +197,8 @@ class ControlPlotsConfig {
   std::string outFileType() const { return outFileType_; }
   //! Specifies whether the plots are only saved in a root-file.
   bool outOnlyRoot() const { return outOnlyRoot_; }
+  //! Specifies whether X and Y projections of all 2D-histos are created and written out.
+  bool outXYProjections() const { return outXYProjections_; }
   //! Writes a \p obj to ROOT file 
   void toRootFile(TObject *obj) const;
 
@@ -221,9 +230,11 @@ class ControlPlotsConfig {
   std::vector<InputTag> inputTagsDistributions_;
   std::vector<ProfileType> profTypes_;
 
+  std::string outRootFileName_;
   std::string outDirName_;
   std::string outFileType_;
   bool outOnlyRoot_;
+  bool outXYProjections_;
 
   std::map<InputTag,int> colors_;
   std::map<InputTag,int> markerStyles_;

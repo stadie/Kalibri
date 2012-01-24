@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.20 2011/04/01 10:23:49 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.21 2011/05/18 15:59:58 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -130,6 +130,8 @@ std::string ControlPlotsConfig::yProfileTitle(ProfileType type) const {
   }
   else if( type == Median )
     title = "Median " + yTitle();
+  else if( type == IQMean )
+    title = "IQ Mean " + yTitle();
   else if( type == Chi2 )
     title = "#chi^{2} / ndof " + yTitle();
   else if( type == Probability )
@@ -144,6 +146,10 @@ std::string ControlPlotsConfig::yProfileTitle(ProfileType type) const {
     //title = "GaussFit (1 + <" + yTitle() + ">)/(1 - <" + yTitle() + ">)";
     title = "GaussFit Relative Response";
   }  
+  else if( type == RatioOfIQMeans ) {
+    //title = "(1 + <" + yTitle() + ">)/(1 - <" + yTitle() + ">)";
+    title = "IQMean Relative Response";
+  } 
   else
     std::cerr << "WARNING: Undefined ProfileType '" << type << "'\n";    
 
@@ -262,6 +268,7 @@ std::string  ControlPlotsConfig::sampleName(int sample) const
 //! - "GaussFitMean": \p ProfileType::GaussFitMean
 //! - "GaussFitWidth": \p ProfileType::GaussFitWidth
 //! - "Median": \p ProfileType::Median
+//! - "IQMean": \p ProfileType::IQMean - Interquartile mean
 //! - "Chi2": \p ProfileType::Chi2
 //! - "Probability": \p ProfileType::Probability
 //! - "Quantiles": \p ProfileType::Quantiles
@@ -281,6 +288,8 @@ ControlPlotsConfig::ProfileType ControlPlotsConfig::profileType(const std::strin
     type = GaussFitWidth;
   else if( typeName == "Median" )
     type = Median;
+  else if( typeName == "IQMean" )
+    type = IQMean;
   else if( typeName == "Chi2" )
     type = Chi2;
   else if( typeName == "Probability" )
@@ -291,6 +300,8 @@ ControlPlotsConfig::ProfileType ControlPlotsConfig::profileType(const std::strin
     type = RatioOfMeans;
   else if( typeName == "RatioOfGaussFitMeans" )
     type = RatioOfGaussFitMeans;
+  else if( typeName == "RatioOfIQMeans" )
+    type = RatioOfIQMeans;
   else
     std::cerr << "WARNING: Undefined ProfileType '" << typeName << "'\n";
 
@@ -305,10 +316,12 @@ ControlPlotsConfig::ProfileType ControlPlotsConfig::profileType(const std::strin
 //! - \p ProfileType::GaussFitMean: "GaussFitMean" 
 //! - \p ProfileType::GaussFitWidth: "GaussFitWidth" 
 //! - \p ProfileType::Median: "Median" 
+//! - \p ProfileType::IQMean: "IQMean" Interquartile mean 
 //! - \p ProfileType::Chi2: "Chi2" 
 //! - \p ProfileType::Probability: "Probability" 
 //! - \p ProfileType::Quantiles: "Quantiles" 
 //! - \p ProfileType::RatioOfMeans: "RatioOfMeans" 
+//! - \p ProfileType::RatioOfIQMeans: "RatioOfIQMeans" 
 //! - \p ProfileType::RatioOfGaussFitMeans: "RatioOfGaussFitMeans" 
 // --------------------------------------------------
 std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
@@ -324,6 +337,8 @@ std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
     name = "GaussFitWidth";
   else if( profType == Median )
     name = "Median";
+  else if( profType == IQMean )
+    name = "IQMean";
   else if( profType == Chi2 )
     name = "Chi2";
   else if( profType == Probability )
@@ -334,6 +349,8 @@ std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
     name = "RatioOfMeans";
   else if( profType == RatioOfGaussFitMeans )
     name = "RatioOfGaussFitMeans";
+  else if( profType == RatioOfIQMeans )
+    name = "RatioOfIQMeans";
   else
     std::cerr << "WARNING: Undefined ProfileType '" << profType << "'\n";    
 
@@ -349,7 +366,7 @@ std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
 //---------------------------------------------------------------
 void ControlPlotsConfig::toRootFile(TObject *obj) const {
   // Create / open ROOT file for output
-  TFile *outFile = new TFile((outDirName()+"/KalibriPlots.root").c_str()
+  TFile *outFile = new TFile((outDirName()+"/KalibriPlots"+outRootFileName_+".root").c_str()
 			     ,"UPDATE","Kalibri control plots");
 
   std::string directory = outFile->GetName();
@@ -524,6 +541,12 @@ void ControlPlotsConfig::init() {
 
   // Store whether plots are only exported to root-file
   outOnlyRoot_= config_->read<bool>("plots only to root-file",0);
+
+  //Initialize root-file suffix for export
+  outRootFileName_="";
+
+  // Store whether XY projections of all 2D histos are exported as .eps (or other plots format)
+  outXYProjections_= config_->read<bool>("export all XY projections",0);
  
   outFileType_ = config_->read<std::string>("plots format","eps");
   // Define style for different correction types
@@ -633,8 +656,11 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "p_{T} [GeV]";
   else if( varName == "Pt" )
     title = "p_{T} [GeV]";
+  else if( varName == "Jet2Pt" )
+    title = "barrel jet p_{T}^ [GeV]";
   else if( varName == "MeanPt" )
-    title = "#bar p_{T} [GeV]";
+    //   title = "barrel jet p_{T}^ [GeV]";
+     title = "#bar p_{T} [GeV]";
   else if( varName == "momentPhiPhi" ) 
     title = "#sigma_{#phi#phi}";
   else if( varName == "scaledPhiPhi" ) 
@@ -656,12 +682,19 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "p_{T} / p^{gen}_{T}";
   else if( varName == "Asymmetry") 
     title = "(p_{T,1} - p_{T,2})/(p_{T,1} + p_{T,2})";
+  else if( varName == "MPFResponse") 
+    title = "MPF response";
   else if( varName == "ThirdJetFraction") 
     title = "p_{3}^{proj.}/#bar p_{T}";
   else if( varName == "ThirdJetFractionPlain") 
     title = "p_{3}/#bar p_{T}";
   else if( varName == "NPU")
     title = "n_{PU}^{MC}";
+  else if( varName == "MCNPUVtx")
+    title = "n_{PU}^{MC}";
+  else if( varName == "VtxN")
+    title = "Reconstructed vertices";
+
   return title;
 }
 
@@ -671,4 +704,11 @@ template <class T> std::string ControlPlotsConfig::toString(const T& t) const {
   std::stringstream ss;
   ss << t;
   return ss.str();
+}
+
+
+// --------------------------------------------------
+//std::string ControlPlotsConfig::unitTitle(const std::string &varName) const {
+void ControlPlotsConfig::setOutRootFileName(std::string outRootFileName) {
+  outRootFileName_=outRootFileName;
 }

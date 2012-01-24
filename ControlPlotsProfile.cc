@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.21 2011/05/18 15:59:58 stadie Exp $
+// $Id: ControlPlotsProfile.cc,v 1.22 2011/07/04 14:19:42 kirschen Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -96,15 +96,35 @@ void ControlPlotsProfile::draw() {
   std::string fileName;
 
   Bool_t only_to_root = config_->outOnlyRoot();
+  Bool_t export_XY_projections = config_->outXYProjections();
   //  std::cout << "only to root: " << only_to_root << std::endl; 
+
+  TLegend *leg = bins_.front()->createLegend();
 
   // Draw 2D histograms
   for(std::vector<Bin*>::iterator binIt = bins_.begin();
       binIt != bins_.end(); binIt++) {
+    std::vector<TH1D*> X_projections_;
+    std::vector<TH1D*> Y_projections_;
     for(ControlPlotsConfig::InputTagsIterator it = config_->inputTagsBegin() ; 
 	it != config_->inputTagsEnd(); ++it) {
       c1->Clear();
       TH2D *h = (*binIt)->hYvsX(*it);
+      if(export_XY_projections){
+	X_projections_.push_back(h->ProjectionX());
+	Y_projections_.push_back(h->ProjectionY());
+	X_projections_.back()->SetMarkerStyle(config_->markerStyle(*it));
+	//	std::cout << "markerstyle set to: " << config_->markerStyle(*it) << " and name is: "<< (*binIt)->hist2DFileName(*it) << std::endl;
+	X_projections_.back()->SetMarkerColor(config_->color(*it));
+	X_projections_.back()->SetLineColor(config_->color(*it));
+	Y_projections_.back()->SetMarkerStyle(config_->markerStyle(*it));
+	Y_projections_.back()->SetMarkerColor(config_->color(*it));
+	Y_projections_.back()->SetLineColor(config_->color(*it));
+
+	X_projections_.back()->SetName((*binIt)->hist2DFileName(*it)+(TString)"_X");
+	Y_projections_.back()->SetName((*binIt)->hist2DFileName(*it)+(TString)"_Y");
+
+      }	
       h->Draw("COLZ");
       if( config_->logX() ) c1->SetLogx(1);
       c1->RedrawAxis();      
@@ -114,10 +134,97 @@ void ControlPlotsProfile::draw() {
       fileName += (*binIt)->hist2DFileName(*it) + "." + config_->outFileType();
       if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
-  }
+
+    if(export_XY_projections){
+      c1->Clear();
+      c1->cd();
+      bool firstHist = true;
+      for (unsigned int X_i=0 ; X_i < X_projections_.size(); X_i++ ){
+	//	cout << " " << *it;
+	X_projections_.at(X_i)->SetYTitle("Number of Events");
+	X_projections_.at(X_i)->GetYaxis()->SetRangeUser(0,X_projections_.at(X_i)->GetMaximum()*2);
+	TH1D* h=X_projections_.at(X_i);
+	if( config_->logX() ) c1->SetLogx(1);
+
+	if( firstHist ) {
+	  //	if(X_i==0){
+	  if(h->GetMarkerStyle() < 0) {
+	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	    h->Draw("HIST");
+	  } else {
+	    h->Draw("PE1X0");
+	    //	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
+	  }
+	  firstHist = false;
+	} else { 
+	  if(h->GetMarkerStyle() < 0) {
+	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	    h->Draw("HISTSAME");
+	  } else {
+	    h->Draw("PE1X0same"); 
+	    //	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
+	  }
+	}
+	//	delete h;
+      }
+      p1->DrawClone();
+      leg->Draw("same");
+      fileName = config_->outDirName() + "/";
+      fileName += X_projections_.at(0)->GetName() + (TString)"." + config_->outFileType();
+      if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
+
+
+      c1->Clear();
+      c1->cd();
+      c1->SetLogx(0);
+      firstHist = true;
+      for (unsigned int Y_i=0 ; Y_i < Y_projections_.size(); Y_i++ ){
+	//	cout << " " << *it;
+	Y_projections_.at(Y_i)->SetYTitle("Number of Events");
+	Y_projections_.at(Y_i)->GetYaxis()->SetRangeUser(0,Y_projections_.at(Y_i)->GetMaximum()*2);
+	TH1D* h=Y_projections_.at(Y_i);
+
+	if( firstHist ) {
+	  //	if(Y_i==0){
+	  if(h->GetMarkerStyle() < 0) {
+	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	    h->Draw("HIST");
+	  } else {
+	    h->Draw("PE1X0");
+	    //	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
+	  }
+	  firstHist = false;
+	} else { 
+	  if(h->GetMarkerStyle() < 0) {
+	    h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	    h->Draw("HISTSAME");
+	  } else {
+	    h->Draw("PE1X0same"); 
+	    //	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
+	  }
+	}
+	//	delete h;
+      }
+      p1->DrawClone();
+      leg->Draw("same");
+      fileName = config_->outDirName() + "/";
+      fileName += Y_projections_.at(0)->GetName() + (TString)"." + config_->outFileType();
+      if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
+    }
+
+
+    //ASK HARTMUT... DO I HAVE TO DELETE THESE?
+    for (unsigned int Y_i=0 ; Y_i < Y_projections_.size(); Y_i++ ){
+      delete Y_projections_.at(Y_i);
+      delete X_projections_.at(Y_i);
+    }
+    
+    
+  }//end bin loop
+  
+  
 
   // Draw profile histograms
-  TLegend *leg = bins_.front()->createLegend();
   TLine *hLine = bins_.front()->createHorizontalLine(); 
   TLine *hLine2 = new TLine(config_->xMin(),1.0,config_->xMax(),1.0);
   hLine2->SetLineStyle(2);
@@ -156,7 +263,7 @@ void ControlPlotsProfile::draw() {
 	config_->toRootFile(h);
       } 
       if( *profTypeIt == ControlPlotsConfig::RatioOfMeans 
-	  || *profTypeIt == ControlPlotsConfig::RatioOfGaussFitMeans ) hLine2->Draw("same");
+	  || *profTypeIt == ControlPlotsConfig::RatioOfGaussFitMeans || *profTypeIt == ControlPlotsConfig::RatioOfIQMeans) hLine2->Draw("same");
       else if( *profTypeIt == ControlPlotsConfig::Mean
 	       || *profTypeIt == ControlPlotsConfig::GaussFitMean  ) hLine->Draw("same");
       leg->Draw("same");
@@ -202,7 +309,7 @@ void ControlPlotsProfile::draw() {
 	}
       }  
       if( *profTypeIt == ControlPlotsConfig::RatioOfMeans 
-	  || *profTypeIt == ControlPlotsConfig::RatioOfGaussFitMeans ) hLine2->Draw("same"); 
+	  || *profTypeIt == ControlPlotsConfig::RatioOfGaussFitMeans || *profTypeIt == ControlPlotsConfig::RatioOfIQMeans) hLine2->Draw("same"); 
       else if( *profTypeIt == ControlPlotsConfig::Mean
 	       || *profTypeIt == ControlPlotsConfig::GaussFitMean  ) hLine->Draw("same");
       leg->Draw("same");
@@ -293,7 +400,7 @@ void ControlPlotsProfile::draw() {
 	p2->DrawClone();
 	config_->toRootFile(h);
 	fileName = config_->outDirName() + "/";
-	fileName += (*binIt)->distributionFileName(n,*tagsIt) + "." + config_->outFileType();
+	fileName += (*binIt)->distributionFileName(n,*tagsIt) + "_TEST_DISTRIBUTION_DELETE." + config_->outFileType();
 	if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
       }
     }
@@ -307,7 +414,7 @@ void ControlPlotsProfile::draw() {
   hXSpectrum_[0]->GetXaxis()->SetNoExponent();
   if(hXSpectrum_[1]) hXSpectrum_[1]->Draw("HISTSAME");
   if(hXSpectrum_[2]) hXSpectrum_[2]->Draw("HISTSAME");
-  c1->SetLogx(1);
+  if( config_->logX() )c1->SetLogx(1);
   c1->SetLogy(1);
   p2->DrawClone();
   fileName = config_->outDirName() + "/";
@@ -515,11 +622,13 @@ int ControlPlotsProfile::Bin::fill(double x, double y, double w,const ControlPlo
 //!  - GaussFitMean
 //!  - GaussFitWidth
 //!  - Median
+//!  - IQMean  - Interquartile Mean
 //!  - Chi2
 //!  - Probability
 //!  - Quantiles
 //!  - RatioOfMeans
 //!  - RatioOfGaussFitMeans
+//!  - RatioOfIQMeans
 //---------------------------------------------------------------
 int ControlPlotsProfile::Bin::fitProfiles() {
   nCallsFitProfiles_++;
@@ -586,6 +695,9 @@ int ControlPlotsProfile::Bin::fitProfiles() {
     double yq[2],xq[2];
     xq[0] = 0.5;
     xq[1] = 0.90;
+    double yq_IQM[2],xq_IQM[2];
+    xq_IQM[0] = 0.25;
+    xq_IQM[1] = 0.75;
     // Loop over x bins
     for(int xBin = 1; xBin <= corrIt->second->GetNbinsX(); xBin++) {
       htemp->Reset();
@@ -595,6 +707,8 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	htemp->SetBinError(yBin,corrIt->second->GetCellError(xBin,yBin));
       }
       htemp->SetEntries(htemp->GetEffectiveEntries());
+      htemp->GetXaxis()->SetRange(0,-1);
+
       // Store distribution
       char name[100];
       sprintf(name,"%s_Distribution_%i",corrIt->second->GetName(),xBin);
@@ -642,7 +756,7 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	  mean = htemp->GetMean();
 	  meanerror = htemp->GetMeanError();
 	  width = htemp->GetRMS();
-	  
+	  //	  std::cout << "Mean: " << mean << " MeanError: "<< meanerror << std::endl;
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinContent(xBin,mean);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetBinError(xBin,meanerror);
 	  if( isResponse) {
@@ -654,11 +768,31 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	  } 
 	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
 	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
+	  htemp->ComputeIntegral(); //needed for TH1::GetQuantiles() according to documentation
 	  htemp->GetQuantiles(nq,yq,xq);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetBinContent(xBin,yq[0]);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetBinError(xBin,0.0001);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->SetBinContent(xBin,yq[1]/yq[0]-1);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->SetBinError(xBin,0.0001);
+	  htemp->GetQuantiles(nq,yq_IQM,xq_IQM);
+	  Int_t IQ_low_bin_i = htemp->FindBin(yq_IQM[0]);
+	  Int_t IQ_hig_bin_i = htemp->FindBin(yq_IQM[1]);
+	  htemp->GetXaxis()->SetRange(IQ_low_bin_i,IQ_hig_bin_i);
+	  mean = htemp->GetMean();
+	  meanerror = htemp->GetMeanError();
+	  //	  std::cout << "IQMean: " << mean << " IQMeanError: "<< meanerror << std::endl;
+	  hXProfile_[corrIt->first][ControlPlotsConfig::IQMean]->SetBinContent(xBin,mean);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::IQMean]->SetBinError(xBin,meanerror);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfIQMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
+	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfIQMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
+	  //	  std::cout << "Mean, Error, GaussMean, GaussError, IQMean, IQError: " << std::endl;
+	  //	  std::cout << hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->GetBinContent(xBin) << ", " << hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->GetBinError(xBin) << ", " 
+	  //	       << hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->GetBinContent(xBin) << ", " << hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->GetBinError(xBin) << ", " 
+	  //	       << hXProfile_[corrIt->first][ControlPlotsConfig::IQMean]->GetBinContent(xBin) << ", " << hXProfile_[corrIt->first][ControlPlotsConfig::IQMean]->GetBinError(xBin) << ", " 
+	  //		    <<std::endl;
+	  //	  std::cout << IQ_low_bin_i << " high bin i" << IQ_hig_bin_i << std::endl;
+
+	  // <<  "Mean, Error, GaussMean, GaussError, IQMean, IQError: " << endl;
 	  delete f;
 	}
       } // do fits only if more than 100 entries
@@ -673,6 +807,8 @@ int ControlPlotsProfile::Bin::fitProfiles() {
     hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->GetEffectiveEntries());
     hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::StandardDeviation]->GetEffectiveEntries());
     hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::Median]->GetEffectiveEntries());
+    hXProfile_[corrIt->first][ControlPlotsConfig::IQMean]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::IQMean]->GetEffectiveEntries());
+    hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfIQMeans]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfIQMeans]->GetEffectiveEntries());
     hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->GetEffectiveEntries());
 
   } // End of loop over CorrectionTypes
