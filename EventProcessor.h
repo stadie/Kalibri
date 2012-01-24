@@ -1,11 +1,12 @@
 //
-// $Id: EventProcessor.h,v 1.8 2011/04/28 16:05:34 stadie Exp $
+// $Id: EventProcessor.h,v 1.9 2011/06/30 14:27:14 stadie Exp $
 //
 #ifndef EVENTPROCESSOR_H
 #define EVENTPROCESSOR_H
 
 #include <vector>
 #include <string>
+#include "ConfigFile.h"
 
 class Event;
 class Parameters;
@@ -30,7 +31,7 @@ class EventProcessor
     return data.size();
   }
   const std::string& name() const { return name_;}
-  
+  void produceControlPlots(const std::vector<std::vector<Event*>* >& samples);
   
 protected:
   virtual int preprocess(std::vector<Event*>& data,
@@ -44,6 +45,7 @@ protected:
   Parameters* par_;
   const std::string name_;
   bool active_;
+  ConfigFile config_;
 };
 
 

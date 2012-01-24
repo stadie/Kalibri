@@ -24,8 +24,8 @@
 //!  \param configFile  Configuration file
 //!  \param data        Plotted data
 // -------------------------------------------------------------
-ControlPlots::ControlPlots(const ConfigFile *configFile, const std::vector<std::vector<Event*>* >& samples)
-  : config_(configFile), samples_(samples) {
+ControlPlots::ControlPlots(const ConfigFile *configFile, const std::vector<std::vector<Event*>* >& samples, const EventProcessor* eventProcessor)
+  : config_(configFile), samples_(samples), eventProcessor_(eventProcessor){
   gErrorIgnoreLevel = 1001;
   setGStyle();
 }
@@ -49,6 +49,7 @@ void ControlPlots::makePlots() const {
 void ControlPlots::createJetTruthEventPlots() const {
   std::cout << "Creating JetTruthEvent plots\n";
     
+
   // Read different control plot names
   std::vector<std::string> names = bag_of_string(config_->read<std::string>("JetTruthEvent plots names",""));
   // Loop over names
@@ -116,9 +117,28 @@ void ControlPlots::createJetTruthEventPlots() const {
 // -------------------------------------------------------------
 void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
   std::cout << "Creating TwoJetsPtBalanceEvent plots\n";
-    
+  
+  
+   // Read different control plot names
+  std::vector<std::string> names;
+  std::string root_filename_suffix="";  
+
+  //  
+  if(eventProcessor_!=0) {
+
+    std::cout << "plots done before event processor execution... "<< eventProcessor_->name()<< std::endl;
+    //    std::cout << "JFGIJHFGIJHFGI COTEIOJTJIRG CONFIG " << eventProcessor_->name()<< std::endl;
+    names = bag_of_string(config_->read<std::string>("TwoJetsPtBalanceEvent " +eventProcessor_->name()+" plots names",""));
+    if(eventProcessor_->name()=="EventWeightProcessor")root_filename_suffix="_EW";
+    else if(eventProcessor_->name()=="DiJetEventWeighting")root_filename_suffix="_DJ";
+    else if(eventProcessor_->name()=="PU weighting")root_filename_suffix="_PU";
+    else if(eventProcessor_->name()=="Event binning")root_filename_suffix="_EB";
+  }
+  else
+    {
   // Read different control plot names
-  std::vector<std::string> names = bag_of_string(config_->read<std::string>("TwoJetsPtBalanceEvent plots names",""));
+  names = bag_of_string(config_->read<std::string>("TwoJetsPtBalanceEvent plots names",""));
+    }
   // Loop over names
   std::vector<ControlPlotsConfig*> configs(names.size());
   std::vector<ControlPlotsFunction*> functions(names.size());
@@ -129,7 +149,8 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
     // Create ControlPlotsConfig    
     ControlPlotsConfig *pConfig = new ControlPlotsConfig(config_,names.at(i));
     configs.at(i) = pConfig;
-
+    pConfig->setOutRootFileName("KalibriPlots"+root_filename_suffix+".root");
+    //    std::cout << pConfig->outRootFileName()  << std::endl;
     // Create functions
     ControlPlotsFunction *func = new ControlPlotsFunction();
     func->setBinFunction(findTwoJetsPtBalanceEventFunction(pConfig->binVariable()));
@@ -242,7 +263,16 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta;
   if( varName == "Pt" )
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt; 
-  if( varName == "MeanPt" )
+  if( varName == "Jet2Pt" && type == ControlPlotsConfig::Uncorrected  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2Pt; 
+  if( varName == "Jet2Pt" && type == ControlPlotsConfig::L2L3  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
+  if( varName == "Jet2Pt" && type == ControlPlotsConfig::L2L3Res  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3ResCorrected; 
+//  if( varName == "MeanPt")
+//   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
+//  //    return  &ControlPlotsFunction::twoJetsPtBalanceEventMeanPt;
+  if( varName == "MeanPt")
     return  &ControlPlotsFunction::twoJetsPtBalanceEventMeanPt;
   if( varName == "EMF" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEMF;
@@ -284,6 +314,12 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3L4Corrected;
   if( varName == "B" && type == ControlPlotsConfig::L2L3ResL4 )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3ResL4Corrected;
+  if( varName == "MPFResponse" && type == ControlPlotsConfig::Uncorrected )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponse;
+  if( varName == "MPFResponse" && type == ControlPlotsConfig::L2L3 )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3Corrected;
+  if( varName == "MPFResponse" && type == ControlPlotsConfig::L2L3Res )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3ResCorrected;
   if( varName == "") {
     return 0;
   }

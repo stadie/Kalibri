@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.26 2011/06/30 14:27:14 stadie Exp $
+//  $Id: Kalibri.cc,v 1.27 2011/07/04 17:19:35 stadie Exp $
 
 #include "Kalibri.h"
 
@@ -10,11 +10,11 @@
 #include <boost/thread/mutex.hpp>
 boost::mutex io_mutex;
 // User
+#include "CalibMath.h"
 #include "ConfigFile.h"
 #include "Parameters.h"
 #include "ControlPlots.h"
 #include "ControlPlotsResolution.h"
-#include "CalibMath.h"
 #include "external.h"
 #include "ToyMC.h"
 #include "PhotonJetReader.h"
@@ -279,7 +279,19 @@ void Kalibri::run()
     processors.push_back(new DiJetEventBinning(configFile_,par_));
 
     for(std::vector<EventProcessor*>::iterator i = processors.begin() ; i != processors.end() ; ++i) {
+
+      ConfigFile config( configFile_.c_str() );
+      //test      std:: cout << "create TwoJetsPtBalanceEvent " +(*i)->name()+" plots" << std::endl;
+      if( config.read<bool>("create TwoJetsPtBalanceEvent " +(*i)->name()+" plots",0) ){
+	std:: cout << "creating TwoJetsPtBalanceEvent " +(*i)->name()+" plots before "+(*i)->name()+" is executed" << std::endl;
+	std::vector<std::vector<Event*>* > samples;
+	samples.push_back(&data_);
+	samples.push_back(&control_[0]);
+	samples.push_back(&control_[1]);      
+	(*i)->produceControlPlots(samples);
+      }
       (*i)->process(data_,control_[0],control_[1]);
+      
     } 
 
     if(! data_.size()) {

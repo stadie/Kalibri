@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "EventProcessor.h"
 #include "ControlPlotsConfig.h"
 #include "ControlPlotsFunction.h"
 
@@ -18,13 +19,13 @@ class Event;
 //!  The attributes of the control plots are  specified via 
 //!  the configuration file.
 //!
-//!  $Id: ControlPlots.h,v 1.35 2010/06/09 22:30:53 stadie Exp $
+//!  $Id: ControlPlots.h,v 1.36 2010/10/12 08:40:53 stadie Exp $
 // -------------------------------------------------------------
 class ControlPlots {
  public:
   typedef std::vector<Event*>::const_iterator DataIt;
 
-  ControlPlots(const ConfigFile *configFile, const std::vector<std::vector<Event*>* >& samples);
+  ControlPlots(const ConfigFile *configFile, const std::vector<std::vector<Event*>* >& samples, const EventProcessor *eventProcessor=0);
   ~ControlPlots() {};
 
   void makePlots() const;
@@ -32,6 +33,7 @@ class ControlPlots {
  private:
   const ConfigFile *config_; //!< The configuration file
   const std::vector<std::vector<Event*>* >& samples_; //!< The plotted data
+  const EventProcessor* eventProcessor_;
 
   void createJetTruthEventPlots() const;
   void createTwoJetsPtBalanceEventPlots() const;
