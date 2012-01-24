@@ -1,9 +1,14 @@
+#ifndef CalibMath_h
+#define CalibMath_h
+
+#include <TMath.h>
+
 
 template <class T> 
 T deltaPhi (T phi1, T phi2) { 
   T result = phi1 - phi2;
-  while (result > M_PI) result -= 2*M_PI;
-  while (result <= -M_PI) result += 2*M_PI;
+  while (result > TMath::Pi()) result -= 2*M_PI;
+  while (result <= -TMath::Pi()) result += 2*M_PI;
   return result;
 }
 
@@ -29,3 +34,5 @@ double deltaR( const T1 & t1, const T2 & t2 ) {
   return deltaR( t1.eta(), t1.phi(), t2.eta(), t2.phi() );
 } 
 
+
+#endif 
