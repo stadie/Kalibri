@@ -286,6 +286,16 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventVtxN;
   if( varName == "MCNPUVtx" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventMCNPUVtx;
+  if( varName == "PF_CH_Fraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_CH_Fraction;
+  if( varName == "PF_NH_Fraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_NH_Fraction;
+  if( varName == "PF_PH_Fraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_PH_Fraction;
+  if( varName == "PF_EL_Fraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_EL_Fraction;
+  if( varName == "Flavor" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventJetFlavor;
   if( varName == "ThirdJetFraction" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction;
   if( varName == "ThirdJetFractionPlain" )

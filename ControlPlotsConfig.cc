@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.21 2011/05/18 15:59:58 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.22 2012/01/24 16:26:37 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -366,7 +366,7 @@ std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
 //---------------------------------------------------------------
 void ControlPlotsConfig::toRootFile(TObject *obj) const {
   // Create / open ROOT file for output
-  TFile *outFile = new TFile((outDirName()+"/KalibriPlots"+outRootFileName_+".root").c_str()
+  TFile *outFile = new TFile((outDirName()+"/"+outRootFileName_).c_str()
 			     ,"UPDATE","Kalibri control plots");
 
   std::string directory = outFile->GetName();

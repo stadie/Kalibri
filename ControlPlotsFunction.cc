@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.22 2011/07/12 14:55:04 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.23 2012/01/24 16:26:37 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -280,6 +280,75 @@ double ControlPlotsFunction::twoJetsPtBalanceEventMCNPUVtx(const Event *evt) con
   const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   return tjpbe->nPU();
 }
+
+
+//!  \brief Returns the PF Charged hadron fraction (of jet1)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  PF Charged hadron fraction (of jet1) is returned
+//!  PF_CH_Fraction
+//!  
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventPF_CH_Fraction(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  return jet1->fCH();
+}
+
+
+//!  \brief Returns the PF neutral hadron fraction (of jet1)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  PF neutral hadron fraction (of jet1) is returned
+//!  PF_NH_Fraction
+//!  
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventPF_NH_Fraction(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  return jet1->fNH();
+}
+
+
+//!  \brief Returns the PF photon fraction (of jet1)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  PF photon fraction (of jet1) is returned
+//!  PF_PH_Fraction
+//!  
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventPF_PH_Fraction(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  return jet1->fPH();
+}
+
+
+//!  \brief Returns the PF electron fraction (of jet1)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  PF electron fraction (of jet1) is returned
+//!  PF_EL_Fraction
+//!  
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventPF_EL_Fraction(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  return jet1->fEL();
+}
+
+//!  \brief Returns flavor of jet
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetFlavor(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return jte->getJet1()->flavor();
+}
+
+
+
 
 
 //!  \brief Returns fraction of momentum of third jet projected to dijet axis 
