@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.47 2011/05/26 07:42:52 mschrode Exp $
+//!    $Id: Jet.h,v 1.48 2011/07/04 17:19:35 stadie Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -78,6 +78,7 @@ class Jet : public Measurement
  public:
   Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
       float eta,float phi, float phiphi, float etaeta, Flavor flavor, 
+      float fCH, float fNH, float fPH, float fEL, 
       float genPt, float dR, CorFactors* corFactors, const Function& f,
       float (*errfunc)(const float *x, const Measurement *xorig, float err), 
       const Function& gf); 
@@ -96,6 +97,10 @@ class Jet : public Measurement
   float momentPhiPhi() const {return Measurement::phiphi;}  //!< Return phi-phi moment (width of jet in phi)
   float momentEtaEta() const {return Measurement::etaeta;}  //!< Return eta-eta moment (width of jet in eta)
   float meanMoment() const {return 0.5 * (Measurement::phiphi + Measurement::etaeta);}  //!< Return mean moment (width of jet)
+  float fCH()    const {return fCH_;}    //!< Return charged hadron fraction
+  float fNH()    const {return fNH_;}    //!< Return neutral hadron fraction
+  float fPH()    const {return fPH_;}    //!< Return photon fraction
+  float fEL()    const {return fEL_;}    //!< Return electron fraction
   Flavor flavor() const {return flavor_;}       //!< Return jet flavor
   float genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
   float dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet
@@ -180,6 +185,11 @@ class Jet : public Measurement
 
  private: 
   Flavor flavor_;           //!< The jet's Flavor
+  float fCH_;               //!< Fraction of charged hadrons 
+  float fNH_;		    //!< Fraction of neutral hadrons
+  float fPH_;		    //!< Fraction of photons
+  float fEL_;               //!< Fraction of electrons
+
   float genPt_;            //!< The genjet pt
   float dR_;               //!< \f$ \Delta R \f$ between jet and genjet 
   float error_;                //!< Stores error for constant error mode

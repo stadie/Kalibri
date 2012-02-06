@@ -4,7 +4,7 @@
 //    This class reads events according fo the TopSel
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: TopReader.cc,v 1.26 2010/12/13 10:38:28 stadie Exp $
+//    $Id: TopReader.cc,v 1.27 2011/05/26 07:42:53 mschrode Exp $
 //   
 #include "TopReader.h"
 
@@ -181,7 +181,9 @@ Event* TopReader::createTwoJetsInvMassEvents()
 			  top_->JetEta[i], top_->JetPhi[i],
 			  tower.phiphi,
 			  tower.etaeta,
-			  Jet::uds, top_->GenJetPt[i], 0.,
+			  Jet::uds, 
+			  0,0,0,0,//PF-fractions not implemented, yet
+			  top_->GenJetPt[i], 0.,
 			  corFactors,
 			  par_->jet_function(top_->TowId_eta[closestTower],
 					     top_->TowId_phi[closestTower]),
@@ -205,7 +207,9 @@ Event* TopReader::createTwoJetsInvMassEvents()
 		     top_->JetE[i],
 		     top_->JetEta[i], top_->JetPhi[i],
 		     tower.phiphi,tower.etaeta,
-		     Jet::uds, top_->GenJetPt[i], 0.,
+		     Jet::uds, 
+		     0,0,0,0,//PF-fractions not implemented, yet
+		     top_->GenJetPt[i], 0.,
 		     corFactors,
 		     par_->jet_function(top_->TowId_eta[closestTower],
 					top_->TowId_phi[closestTower]),

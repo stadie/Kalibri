@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.51 2011/05/26 07:42:53 mschrode Exp $
+//    $Id: Jet.cc,v 1.52 2011/05/31 15:50:23 stadie Exp $
 //   
 #include "Jet.h"  
 
@@ -14,10 +14,12 @@
 
 Jet::Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
          float eta,float phi, float phiphi, float etaeta, Flavor flavor, 
+	 float fCH, float fNH, float fPH, float fEL, 
 	 float genPt, float dR, CorFactors* corFactors, const Function& f, 
 	 float (*errfunc)(const float *x, const Measurement *xorig, float err), 
 	 const Function& gf) 
   : Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi,phiphi,etaeta),flavor_(flavor), 
+    fCH_(fCH), fNH_(fNH), fPH_(fPH), fEL_(fEL),
     genPt_(genPt),dR_(dR),corFactors_(corFactors),f_(&f),gf_(&gf),
     errf_(errfunc),parameters_(0)
 {
@@ -25,7 +27,9 @@ Jet::Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
 }
 
 Jet::Jet(const Jet& j) 
-  : Measurement(j), flavor_(j.flavor_), genPt_(j.genPt_),dR_(j.dR_), 
+  : Measurement(j), flavor_(j.flavor_), 
+    fCH_(j.fCH_), fNH_(j.fNH_), fPH_(j.fPH_), fEL_(j.fEL_),
+    genPt_(j.genPt_),dR_(j.dR_), 
     corFactors_(new CorFactors(*(j.corFactors_))),f_(j.f_),
     gf_(j.gf_),errf_(j.errf_),parameters_(0)
 {

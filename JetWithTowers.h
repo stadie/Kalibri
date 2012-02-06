@@ -12,14 +12,16 @@
 //!
 //!    \author Hartmut Stadie
 //!    \date 2008/12/25
-//!    $Id: JetWithTowers.h,v 1.24 2010/10/20 11:28:19 stadie Exp $
+//!    $Id: JetWithTowers.h,v 1.25 2010/11/01 15:47:40 stadie Exp $
 // ----------------------------------------------------------------   
 class JetWithTowers : public Jet
 {
  public:
   JetWithTowers(float Et, float EmEt, float HadEt ,float OutEt, float E,
 		float eta,float phi, float phiphi, float etaeta, 
-		Flavor flavor, float genPt, float dR, CorFactors* corFactors,
+		Flavor flavor, 
+		float fCH, float fNH, float fPH, float fEL, 
+		float genPt, float dR, CorFactors* corFactors,
 		const Function& f,
 		float (*errfunc)(const float *x, const Measurement *xorig, float err), 
 		const Function& gf); 
