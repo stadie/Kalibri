@@ -1,5 +1,5 @@
 //
-// $Id: EventProcessor.h,v 1.9 2011/06/30 14:27:14 stadie Exp $
+// $Id: EventProcessor.h,v 1.10 2012/01/24 16:25:33 kirschen Exp $
 //
 #ifndef EVENTPROCESSOR_H
 #define EVENTPROCESSOR_H
@@ -31,6 +31,7 @@ class EventProcessor
     return data.size();
   }
   const std::string& name() const { return name_;}
+  const std::string& configName() const { return configName_;}
   void produceControlPlots(const std::vector<std::vector<Event*>* >& samples);
   
 protected:
@@ -44,6 +45,7 @@ protected:
  private:
   Parameters* par_;
   const std::string name_;
+  const std::string configName_;
   bool active_;
   ConfigFile config_;
 };

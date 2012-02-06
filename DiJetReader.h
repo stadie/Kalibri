@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.34 2011/07/04 14:43:36 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.35 2012/01/24 16:27:29 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -154,6 +154,10 @@ class DiJetReader : public EventReader{
   //for DiJetAve trigger
   bool hltdijetave15incl_,hltdijetave30incl_,hltdijetave50incl_,hltdijetave70incl_,hltdijetave100incl_,hltdijetave140incl_,hltdijetave180incl_,hltdijetave300incl_;
   bool hltdijetavec30incl_,hltdijetavec60incl_,hltdijetavec80incl_,hltdijetavec110incl_,hltdijetavec150incl_,hltdijetavec190incl_,hltdijetavec240incl_,hltdijetavec300incl_,hltdijetavec370incl_;
+
+  //for SingleJet trigger
+  bool useSingleJetTriggers_;
+  bool hltjetc30incl_,hltjetc60incl_,hltjetc80incl_,hltjetc110incl_,hltjetc150incl_,hltjetc190incl_,hltjetc240incl_,hltjetc300incl_,hltjetc370incl_;
   std::map<double,bool*> trigmap_;
   std::map<double,double> mcweightmap_[2];
   bool requireTrigger_, mcweightmapid_;
