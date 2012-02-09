@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.h,v 1.21 2012/01/24 16:26:37 kirschen Exp $
+// $Id: ControlPlotsFunction.h,v 1.22 2012/02/06 22:14:47 kirschen Exp $
 
 #ifndef CONTROLPLOTS_FUNCTION_H
 #define CONTROLPLOTS_FUNCTION_H
@@ -24,7 +24,7 @@ class Event;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsFunction.h,v 1.21 2012/01/24 16:26:37 kirschen Exp $
+//!  $Id: ControlPlotsFunction.h,v 1.22 2012/02/06 22:14:47 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsFunction {
  public:
@@ -82,6 +82,8 @@ class ControlPlotsFunction {
   double twoJetsPtBalanceEventJetEta(const Event *evt) const; 
   double twoJetsPtBalanceEventJetAbsEta(const Event *evt) const;
   double twoJetsPtBalanceEventJetPt(const Event *evt) const;
+  double twoJetsPtBalanceEventJetPtL2L3Corrected(const Event *evt) const;
+  double twoJetsPtBalanceEventJetPtL2L3ResCorrected(const Event *evt) const;
   double twoJetsPtBalanceEventJet2Pt(const Event *evt) const;
   double twoJetsPtBalanceEventJet2PtL2L3Corrected(const Event *evt) const;
   double twoJetsPtBalanceEventJet2PtL2L3ResCorrected(const Event *evt) const;
@@ -96,9 +98,11 @@ class ControlPlotsFunction {
   double twoJetsPtBalanceEventJetFlavor(const Event *evt) const;
   double twoJetsPtBalanceEventThirdJetFraction(const Event *evt) const;
   double twoJetsPtBalanceEventThirdJetFractionPlain(const Event *evt) const;
+  double twoJetsPtBalanceEventThirdJetPt(const Event *evt) const;
   double twoJetsPtBalanceEventJetMomentPhiPhi(const Event *evt) const;
   double twoJetsPtBalanceEventJetMomentEtaEta(const Event *evt) const; 
   double twoJetsPtBalanceEventJetMeanMoment(const Event *evt) const;
+  double twoJetsPtBalanceEventDeltaPhi(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetry(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetryKalibriCorrected(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetryL2L3Corrected(const Event * evt) const;

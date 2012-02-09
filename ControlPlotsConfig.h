@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.10 2011/04/01 10:23:49 kirschen Exp $
+// $Id: ControlPlotsConfig.h,v 1.11 2012/01/24 16:26:37 kirschen Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -56,7 +56,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.10 2011/04/01 10:23:49 kirschen Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.11 2012/01/24 16:26:37 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -82,6 +82,12 @@ class ControlPlotsConfig {
 
   //! Set name of root file for export
   void setOutRootFileName(std::string outRootFileName);// const{ outRootFileName_=outRootFileName;}
+
+  //! Set plots suffix used for each eventprocessor
+  void setOutPlotSuffix(std::string outPlotSuffix);
+  std::string outPlotSuffix() const {return outPlotSuffix_; }
+  void determineOutPlotSuffix(std::string name);
+
 
   //! Returns the bin edges of the binning variable
   const std::vector<double> *binEdges() const { return &binEdges_; }
@@ -231,6 +237,7 @@ class ControlPlotsConfig {
   std::vector<ProfileType> profTypes_;
 
   std::string outRootFileName_;
+  std::string outPlotSuffix_;
   std::string outDirName_;
   std::string outFileType_;
   bool outOnlyRoot_;

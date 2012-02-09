@@ -129,10 +129,7 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
     std::cout << "plots done before event processor execution... "<< eventProcessor_->name()<< std::endl;
     //    std::cout << "JFGIJHFGIJHFGI COTEIOJTJIRG CONFIG " << eventProcessor_->name()<< std::endl;
     names = bag_of_string(config_->read<std::string>("TwoJetsPtBalanceEvent " +eventProcessor_->name()+" plots names",""));
-    if(eventProcessor_->name()=="EventWeightProcessor")root_filename_suffix="_EW";
-    else if(eventProcessor_->name()=="DiJetEventWeighting")root_filename_suffix="_DJ";
-    else if(eventProcessor_->name()=="PU weighting")root_filename_suffix="_PU";
-    else if(eventProcessor_->name()=="Event binning")root_filename_suffix="_EB";
+
   }
   else
     {
@@ -149,7 +146,12 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
     // Create ControlPlotsConfig    
     ControlPlotsConfig *pConfig = new ControlPlotsConfig(config_,names.at(i));
     configs.at(i) = pConfig;
-    pConfig->setOutRootFileName("KalibriPlots"+root_filename_suffix+".root");
+    if(eventProcessor_!=0) {
+      pConfig->determineOutPlotSuffix(eventProcessor_->name());
+    }
+    else pConfig->setOutPlotSuffix("");
+    //    pConfig->setOutPlotSuffix(root_filename_suffix);
+    pConfig->setOutRootFileName("KalibriPlots"+pConfig->outPlotSuffix()+".root");
     //    std::cout << pConfig->outRootFileName()  << std::endl;
     // Create functions
     ControlPlotsFunction *func = new ControlPlotsFunction();
@@ -261,8 +263,12 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
   if( varName == "AbsEta" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta;
-  if( varName == "Pt" )
+  if( varName == "Pt" && type == ControlPlotsConfig::Uncorrected )
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt; 
+  if( varName == "Pt" && type == ControlPlotsConfig::L2L3  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPtL2L3Corrected; 
+  if( varName == "Pt" && type == ControlPlotsConfig::L2L3Res  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPtL2L3ResCorrected; 
   if( varName == "Jet2Pt" && type == ControlPlotsConfig::Uncorrected  )
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2Pt; 
   if( varName == "Jet2Pt" && type == ControlPlotsConfig::L2L3  )
@@ -296,10 +302,14 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventPF_EL_Fraction;
   if( varName == "Flavor" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetFlavor;
+  if( varName == "DeltaPhi" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventDeltaPhi;
   if( varName == "ThirdJetFraction" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction;
   if( varName == "ThirdJetFractionPlain" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFractionPlain;
+  if( varName == "ThirdJetPt" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetPt;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::Uncorrected )
     return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetry;
   if( varName == "Asymmetry" && type == ControlPlotsConfig::Kalibri )

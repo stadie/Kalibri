@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.23 2012/01/24 16:26:37 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.24 2012/02/06 22:14:47 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -384,6 +384,17 @@ double ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFractionPlain(const Ev
   return pJ3/tjpbe->ptDijetCorrL2L3();
 }
 
+//!  \brief Returns momentum of third jet  
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventThirdJetPt(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  if (! tjpbe->hasJet3()) return 0;
+  return tjpbe->getJet3()->corFactors().getL2L3() * tjpbe->getJet3()->pt();
+}
+
 //!  \brief Returns mean p_{T} of the first two jets
 //!
 //!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
@@ -405,7 +416,28 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetPt(const Event *evt) const 
   return jte->getJet1()->pt();
 }
 
-//!  \brief Returns p_{T} of the second jet
+
+//!  \brief Returns p_{T} of the jet (L2L3-corrected)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetPtL2L3Corrected(const Event *evt) const {
+  const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3() ;
+}
+
+//!  \brief Returns p_{T} of the jet (L2L3Res-corrected)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetPtL2L3ResCorrected(const Event *evt) const {
+  const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3Res() ;
+}
+
+//!  \brief Returns p_{T} of the jet
 //!
 //!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
 //!  Implements \p Function.
@@ -476,6 +508,22 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment(const Event *evt
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   return 0.5 * (jte->getJet1()->momentEtaEta() + jte->getJet1()->momentPhiPhi());
 }
+
+//!  \brief Returns the jet deltaphi
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The deltaphi is defined as
+//!  \f[  p^{jet}_{T} / p^{true}_{T}\f].
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventDeltaPhi(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  return (std::abs(TVector2::Phi_mpi_pi(jet1->phi() - jet2->phi())) );
+}
+
+
 
 //!  \brief Returns the jet asymmetry
 //!

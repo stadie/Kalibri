@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.22 2011/07/04 14:19:42 kirschen Exp $
+// $Id: ControlPlotsProfile.cc,v 1.23 2012/01/24 16:26:37 kirschen Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -130,11 +130,11 @@ void ControlPlotsProfile::draw() {
       c1->RedrawAxis();      
       p1->DrawClone();
       config_->toRootFile(h);
-      fileName = config_->outDirName() + "/";
+      fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
       fileName += (*binIt)->hist2DFileName(*it) + "." + config_->outFileType();
       if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
-
+    //config_->outPlotSuffix()
     if(export_XY_projections){
       c1->Clear();
       c1->cd();
@@ -169,7 +169,7 @@ void ControlPlotsProfile::draw() {
       }
       p1->DrawClone();
       leg->Draw("same");
-      fileName = config_->outDirName() + "/";
+      fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
       fileName += X_projections_.at(0)->GetName() + (TString)"." + config_->outFileType();
       if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
 
@@ -207,7 +207,7 @@ void ControlPlotsProfile::draw() {
       }
       p1->DrawClone();
       leg->Draw("same");
-      fileName = config_->outDirName() + "/";
+      fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
       fileName += Y_projections_.at(0)->GetName() + (TString)"." + config_->outFileType();
       if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
@@ -271,7 +271,7 @@ void ControlPlotsProfile::draw() {
       if( config_->logX() ) c1->SetLogx(1);
       c1->RedrawAxis();
       p2->DrawClone();
-      fileName = config_->outDirName() + "/";
+      fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
       fileName += (*binIt)->profileFileName(*profTypeIt) + "." + config_->outFileType();
       if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
@@ -317,7 +317,7 @@ void ControlPlotsProfile::draw() {
       if( config_->logX() ) c1->SetLogx(1);
       c1->RedrawAxis();
       p2->DrawClone();
-      fileName = config_->outDirName() + "/";
+      fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
       fileName += (*binIt)->profileFileName(*profTypeIt) + "_zoom." + config_->outFileType();
       if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     }
@@ -381,7 +381,7 @@ void ControlPlotsProfile::draw() {
     if( config_->logX() ) c1->SetLogx(1);
     c1->RedrawAxis();
     p2->DrawClone();
-    fileName = config_->outDirName() + "/";
+    fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
     fileName += config_->name() +"_Special_"+config_->binName((*binIt)->id())+ "_zoom." + config_->outFileType();
     if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
     delete leg;
@@ -399,7 +399,7 @@ void ControlPlotsProfile::draw() {
 	c1->RedrawAxis();
 	p2->DrawClone();
 	config_->toRootFile(h);
-	fileName = config_->outDirName() + "/";
+	fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
 	fileName += (*binIt)->distributionFileName(n,*tagsIt) + "_TEST_DISTRIBUTION_DELETE." + config_->outFileType();
 	if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
       }
@@ -417,7 +417,7 @@ void ControlPlotsProfile::draw() {
   if( config_->logX() )c1->SetLogx(1);
   c1->SetLogy(1);
   p2->DrawClone();
-  fileName = config_->outDirName() + "/";
+  fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
   fileName += hXSpectrum_[0]->GetName();
   fileName += "." + config_->outFileType();
   if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
@@ -631,6 +631,7 @@ int ControlPlotsProfile::Bin::fill(double x, double y, double w,const ControlPlo
 //!  - RatioOfIQMeans
 //---------------------------------------------------------------
 int ControlPlotsProfile::Bin::fitProfiles() {
+  std::cout << "Fitting profiles for " << config_->name() << std::endl;
   nCallsFitProfiles_++;
   if( nCallsFitProfiles_ > 1 ) {
     std::cerr << "WARNING: FitProfiles has been called already\n";

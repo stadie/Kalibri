@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.22 2012/01/24 16:26:37 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.23 2012/02/06 22:14:47 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -694,6 +694,16 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "n_{PU}^{MC}";
   else if( varName == "VtxN")
     title = "Reconstructed vertices";
+  else if( varName == "PF_CH_Fraction")
+    title = "PF charged hadron fraction";
+  else if( varName == "PF_NH_Fraction")
+    title = "PF neutral hadron fraction";
+  else if( varName == "PF_PH_Fraction")
+    title = "PF photon fraction";
+  else if( varName == "PF_EL_Fraction")
+    title = "PF electron fraction";
+  else if( varName == "DeltaPhi")
+    title = "#Delta #varphi_{1,2}";
 
   return title;
 }
@@ -708,7 +718,24 @@ template <class T> std::string ControlPlotsConfig::toString(const T& t) const {
 
 
 // --------------------------------------------------
-//std::string ControlPlotsConfig::unitTitle(const std::string &varName) const {
 void ControlPlotsConfig::setOutRootFileName(std::string outRootFileName) {
   outRootFileName_=outRootFileName;
+}
+
+
+// --------------------------------------------------
+void ControlPlotsConfig::setOutPlotSuffix(std::string outPlotSuffix) {
+  outPlotSuffix_=outPlotSuffix;
+}
+
+
+// --------------------------------------------------
+void ControlPlotsConfig::determineOutPlotSuffix(std::string name) {
+  std::string outPlotSuffix;
+  if(name=="EventWeightProcessor")outPlotSuffix="_EW";
+  else if(name=="DiJetEventWeighting")outPlotSuffix="_DJ";
+  else if(name=="PU weighting")outPlotSuffix="_PU";
+  else if(name=="Event binning")outPlotSuffix="_EB";
+  else if(name=="DiJetEventCuts")outPlotSuffix="_CU";
+  this->setOutPlotSuffix(outPlotSuffix);
 }
