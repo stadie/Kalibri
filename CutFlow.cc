@@ -11,8 +11,8 @@ CutFlow::CutFlow(const std::string& configfile){
   nEvents_=0;
   nMaxEtaCut_=0;
   config_ = new ConfigFile(configfile.c_str());
-
-
+  //  std::cout <<"initializing events..."<< std::endl;
+  //
 }
 
 
@@ -33,12 +33,14 @@ void CutFlow::setAllSuppDiJetCuts(){
   minDeltaPhi_       = config_->read<double>(cutPrefix+"Min Delta Phi",2.5);
   minRel3rdJetEt_    = config_->read<double>(cutPrefix+"Min cut on relative n+1 Jet Et",0.);
   maxRel3rdJetEt_    = config_->read<double>(cutPrefix+"Max cut on relative n+1 Jet Et",1.);
+  nEvents_=0;
   nMinDeltaPhi_=0;
   nMinCutOn3rdJet_=0;
   nMaxCutOn3rdJet_=0;
   useMinDeltaPhi_=true;
   useMinRel3rdJetEt_=true;
   useMaxRel3rdJetEt_=true;
+  //  printCutFlow();
 }
 
 
@@ -52,17 +54,22 @@ bool CutFlow::doAllSuppDiJetCuts(){
     nMinDeltaPhi_++;
     eventSurvives=false;
   }
-  if(diJetEvent_->hasJet3()  && std::abs(j3->corFactors().getL2L3() * j3->pt()) < minRel3rdJetEt_*diJetEvent_->ptDijetCorrL2L3() ) {
+  else if(diJetEvent_->hasJet3()  && std::abs(j3->corFactors().getL2L3() * j3->pt()) < minRel3rdJetEt_*diJetEvent_->ptDijetCorrL2L3() ) {
     nMinCutOn3rdJet_++;
     eventSurvives=false;
   }
-  if(diJetEvent_->hasJet3()  && std::abs(j3->corFactors().getL2L3() * j3->pt()) > maxRel3rdJetEt_*diJetEvent_->ptDijetCorrL2L3() ) {
+  else if(diJetEvent_->hasJet3()  && std::abs(j3->corFactors().getL2L3() * j3->pt()) > maxRel3rdJetEt_*diJetEvent_->ptDijetCorrL2L3() ) {
     nMaxCutOn3rdJet_++;
     eventSurvives=false;
   }
   return eventSurvives;
 }
 
+bool CutFlow::survivesAllSuppDiJetCuts(Event* event){
+  if((*event).type() != PtBalance) std::cout<< "WARNING: event is no PtBalance-event. Will break..." << std::endl;
+  setDiJetEvent(event);
+  return doAllSuppDiJetCuts();
+}
 
 bool CutFlow::doMaxEtaCut(){
     Jet * j1 = diJetEvent_->getJet1();

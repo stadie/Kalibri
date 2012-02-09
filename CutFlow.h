@@ -3,6 +3,7 @@
 
 #include "ConfigFile.h"
 #include "TwoJetsPtBalanceEvent.h"
+#include "progressbar.h"
 
 class Event;
 
@@ -24,10 +25,19 @@ class CutFlow{
   void setDiJetEvent(Event* event);
   bool doMaxEtaCut();
   bool doAllSuppDiJetCuts();
+  bool survivesAllSuppDiJetCuts(Event* event);
+  void setNExpectedEvents(int nExpectedEvents) {nExpectedEvents_=nExpectedEvents;}
   void setAllSuppDiJetCuts();
   void printCutFlow();
+  bool operator() (Event* event)
+    {
+      //      if(nExpectedEvents_-nEvents_ % 10 == 0)progressbar(nEvents_*100/nExpectedEvents_);
+      return survivesAllSuppDiJetCuts(event);
+    }
+
  private:
   const ConfigFile *config_;
+  int nExpectedEvents_;
   int nEvents_;
   int nMaxEtaCut_;
   Event* event_;
@@ -45,7 +55,17 @@ class CutFlow{
 };
 
 
-
+class CheckDiJetCuts{
+public:
+  CheckDiJetCuts(CutFlow* cutflowptr) : cutflowptr_(cutflowptr){};
+  bool operator() (Event* event)
+  {
+    return (*cutflowptr_)(event);
+  }
+private:
+  CutFlow* cutflowptr_;
+  
+};
 
 
 
