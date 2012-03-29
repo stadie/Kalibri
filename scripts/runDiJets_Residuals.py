@@ -74,15 +74,17 @@ Et cut on tower            = 0.0
 Et cut on cluster          = 0.0
 Et cut on track            = 0.0
 Et cut on n+1 Jet          = 9999.0
-Min Delta Phi              = 2.7
-Eta max cut on jet         = 4.7 # was 5.2
+Min Delta Phi              = 0.0
+SuppDiJet Min Delta Phi    = 2.7
+Eta max cut on jet         = 5.2 # 4.7 for old JEC# was 5.2
 Relative Rest Jet Cut      = 0.2      #NonLeadingJetsEt / PhotonEt
 Min had fraction           = -1.05    #Default: 0.07
 Max had fraction           = 2.05    #1.05    #Default: 0.95
 Et genJet min              = 0.0
 Et genJet max              = 7000.0
 DeltaR cut on jet matching = 9999
-Max cut on relative n+1 Jet Et = 0.4 # was 0.4
+Max cut on relative n+1 Jet Et = 1.0 # was 0.4
+SuppDiJet Max cut on relative n+1 Jet Et = 0.4 # was 0.4
 Max cut on relative Soft Jet Et = 200.0
 #---------------------------------------------------------------------------------
 #   Input / Output
@@ -130,9 +132,9 @@ correct jets L2L3 = false
 create plots                     = true
 plots output directory           = plots
 #plots format                      = pdf
-plots only to root-file = false
+#plots only to root-file = false
 #export all XY projections = true
-#plots only to root-file = true
+plots only to root-file = true
 export all XY projections = false
 
 # JetTruthEvent plots
@@ -160,7 +162,20 @@ create TwoJetsPtBalanceEvent plots = true
     cut_no_list=['.40','.30','.20','.10']
 #    cut_list=['40','35','30','25','20','15','10','05']
 #    cut_no_list=['.40','.35','.30','.25','.20','.15','.10','.05']
+
+    fcfg.write("TwoJetsPtBalanceEvent plots cut_list =   ")
+    for index_cut, cut in enumerate(cut_list):
+        fcfg.write(cut + " ")
+    fcfg.write("\n")
+
+    fcfg.write("TwoJetsPtBalanceEvent plots cut_no_list =   ")
+    for index_cut, cut in enumerate(cut_no_list):
+        fcfg.write(cut + " ")
         
+    fcfg.write("\n")
+        
+    
+
     fcfg.write("TwoJetsPtBalanceEvent plots names =   ")
     for index_cut, cut in enumerate(cut_list):
         for index_plot, plot in enumerate(plot_list):
@@ -487,22 +502,31 @@ AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
     fcfg.write("use Di-Jet Control1 events = "+str(nevents)+"\n")
 
     if(DATAYEAR == "2011"):
-        if(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF):
-            fcfg.write("Di-Jet trigger names = HLT_DiJetAve30;HLT_DiJetAve60;HLT_DiJetAve80;HLT_DiJetAve110;HLT_DiJetAve150;HLT_DiJetAve190;HLT_DiJetAve240;HLT_DiJetAve300;HLT_DiJetAve370\n")
-#            #####conservative thresholds....
-#            if(jettype == "ak5Calo"):
-#                fcfg.write("Di-Jet trigger thresholds = 45 85 105 130 175 220 270 335 405\n") #Matthias preliminary
-#            if(jettype == "ak5PF"):
-#                fcfg.write("Di-Jet trigger thresholds = 45 85 105 130 175 220 270 335 405\n") #Matthias preliminary
-#
-#new default thresholds....
+        if(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF and SINGLEJET):
+            fcfg.write("Use single jet triggers = true\n")
+            fcfg.write("Di-Jet trigger names = HLT_Jet30;HLT_Jet60;HLT_Jet80;HLT_Jet110;HLT_Jet150;HLT_Jet190;HLT_Jet240;HLT_Jet300;HLT_Jet370\n")
+#determined from full statistics 03/02/2012
             if(jettype == "ak5Calo"):
-                fcfg.write("Di-Jet trigger thresholds = 35 69 89 120 163 204 256 318 390\n") #Matthias preliminary
+                fcfg.write("Di-Jet trigger thresholds = 35 65 89 124 165 205 260 325 400\n") 
             if(jettype == "ak5PF"):
-                fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
+                fcfg.write("Di-Jet trigger thresholds = 45 80 110 140 185 230 285 350 430 \n") 
             if(jettype == "ak5JPT"):
-                fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
-
+                fcfg.write("Di-Jet trigger thresholds = 40 80 100 135 178 224 280 343 420 \n") 
+        elif(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF):
+            fcfg.write("Di-Jet trigger names = HLT_DiJetAve30;HLT_DiJetAve60;HLT_DiJetAve80;HLT_DiJetAve110;HLT_DiJetAve150;HLT_DiJetAve190;HLT_DiJetAve240;HLT_DiJetAve300;HLT_DiJetAve370\n")
+            #            #####conservative thresholds....
+            #            if(jettype == "ak5Calo"):
+            #                fcfg.write("Di-Jet trigger thresholds = 45 85 105 130 175 220 270 335 405\n") #Matthias preliminary
+            #            if(jettype == "ak5PF"):
+            #                fcfg.write("Di-Jet trigger thresholds = 45 85 105 130 175 220 270 335 405\n") #Matthias preliminary
+            #
+            #default thresholds used until 2012_02....
+            #            if(jettype == "ak5Calo"):
+            #                fcfg.write("Di-Jet trigger thresholds = 35 69 89 120 163 204 256 318 390\n") #Matthias preliminary
+            #            if(jettype == "ak5PF"):
+            #                fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
+            #            if(jettype == "ak5JPT"):
+            #                fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
             if(jettype == "ak7Calo"):
                 fcfg.write("Di-Jet trigger thresholds = 35 69 89 120 163 204 256 318 390\n") #Matthias preliminary
             if(jettype == "ak7PF"):
@@ -510,11 +534,21 @@ AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
             if(jettype == "ak7JPT"):
                 fcfg.write("Di-Jet trigger thresholds = 40 75 100 135 175 220 273 335 405 \n") #Matthias preliminary
 
-##aggressive thresholds old
-#            if(jettype == "ak5Calo"):
-#                fcfg.write("Di-Jet trigger thresholds = 31 62 81 111 156 199 251 313 385\n") #Matthias preliminary
-#            if(jettype == "ak5PF"):
-#                fcfg.write("Di-Jet trigger thresholds = 40 80 104 130 172 216 269 333 405 \n") #Matthias preliminary
+
+            #new default thresholds... on full stats 02/03/2012
+            if(jettype == "ak5Calo"):
+                fcfg.write("Di-Jet trigger thresholds = 37 65 89 120 165 205 260 320 395\n") 
+            if(jettype == "ak5PF"):
+                fcfg.write("Di-Jet trigger thresholds = 42 78 103 135 180 225 280 345 420 \n") 
+            if(jettype == "ak5JPT"):
+                fcfg.write("Di-Jet trigger thresholds = 42 75 95 130 175 220 275 340 415 \n") 
+
+
+            ##aggressive thresholds old
+            #            if(jettype == "ak5Calo"):
+            #                fcfg.write("Di-Jet trigger thresholds = 31 62 81 111 156 199 251 313 385\n") #Matthias preliminary
+            #            if(jettype == "ak5PF"):
+            #                fcfg.write("Di-Jet trigger thresholds = 40 80 104 130 172 216 269 333 405 \n") #Matthias preliminary
         else:
             fcfg.write("Di-Jet trigger names = HLT_DiJetAve15U;HLT_DiJetAve30U;HLT_DiJetAve50U;HLT_DiJetAve70U;HLT_DiJetAve100U;HLT_DiJetAve140U;HLT_DiJetAve180U;HLT_DiJetAve300U\n")
             if(jettype == "ak5Calo"):
@@ -548,6 +582,7 @@ AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
 
     fcfg.write("correct jets L1 = "+ CORRECT_JETS_L1 + "\n");
     fcfg.write("fire all triggers = " + MC_fire_all_triggers +"\n");
+    fcfg.write("DiJetEventCuts = true\n");
     fcfg.write("EventWeightProcessor = true\n");
     fcfg.write("EventBinning = false\n");
     fcfg.write("DiJetEventWeighting = true\n");
@@ -564,10 +599,19 @@ AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
     elif(DATATYPE=="PrReV6"):
         fcfg.write("PU weighting era = Fall11\n");
         fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/Cert_172620-173692_PromptReco_JSON.pileup_v2.root \n");
+    elif(DATATYPE=="11AReRe"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/work/PU_2011A.root \n");
     elif(DATATYPE=="11BPrV1"):
         fcfg.write("PU weighting era = Fall11\n");
         fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/2011B_V1_merged_last_three_files.root \n");
+    elif(DATATYPE=="11BReRe"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/2011B_V1_merged_last_three_files.root \n");
     elif(DATATYPE=="Full2011"):
+        fcfg.write("PU weighting era = Fall11\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/alltogether.root \n");
+    elif(DATATYPE=="42XFull2011"):
         fcfg.write("PU weighting era = Fall11\n");
         fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/alltogether.root \n");
     #elif(DATATYPE=="Full2011"):
@@ -582,18 +626,21 @@ AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
     fcfg.write("MAX n reco Vtx             = " + str(nMaxRecoVtx) +"\n");
     fcfg.write("MIN n reco Vtx             = " + str(nMinRecoVtx) +"\n");
     fcfg.write("set weights to one         = " + str(weights_eq_one) +"\n\n\n");
+
+    fcfg.write("output dir name         = " + dirname +"\n");
+
     fcfg.close()
     return
 
 #kostas binning:
 #0: 0.0 1: 0.261 2: 0.522 3: 0.783 4: 0.957 5: 1.131 6: 1.305 7: 1.479
 #8: 1.93 9: 2.322 10: 2.411 11: 2.5 12: 2.853 13: 2.964 14: 3.139 15: 3.489 5.191
-DO_MC_ONLY_STUDY="true"
+DO_MC_ONLY_STUDY="false"
 
 
 #main program starts here!!!
 #change these variables to steer the fit
-DIR_JETALGO="AK5"
+DIR_JETALGO="SINGLEJET_AK5"
 #weights_eq_one="true"!!!!!!!!!!!!!!!!!
 weights_eq_one="false"
 nMaxRecoVtx =500000
@@ -621,6 +668,7 @@ MinRunNumber=163337
 MaxRunNumber=1000000000
 #BINNING="k_HFfix"
 BINNING="kostas"
+SINGLEJET=1
 
 
 if(DO_MC_ONLY_STUDY=="true"):
@@ -632,7 +680,7 @@ if(DO_MC_ONLY_STUDY=="true"):
 
 USE_NEW_TRIGGERS_AND_FASTPF=0
 
-DATATYPES_NEW_TRIGGER=["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC"]
+DATATYPES_NEW_TRIGGER=["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe"]
 
 for new_trigger in DATATYPES_NEW_TRIGGER:
     if(DATATYPE==new_trigger):
@@ -647,7 +695,7 @@ else:
     print "there are no arguments!"
 
 
-if (len(sys.argv) > 7):
+if (len(sys.argv) > 8):
     print "redefine parameters from cmdline-options... "
     DIR_JETALGO=sys.argv[1]
     PF_CALO_JPT=sys.argv[2]
@@ -656,7 +704,8 @@ if (len(sys.argv) > 7):
     BINNING=sys.argv[5]
     DATATYPE=sys.argv[7]
     CORRECT_JETS_L1=sys.argv[8]
-    print "DIR_JETALGO="+ DIR_JETALGO + " PF_CALO_JPT="+PF_CALO_JPT+ " MC="+MC+" MC-type=" + MC_type+" BINNING="+BINNING+" DATATYPE="+DATATYPE+" CORRECT_JETS_L1="+CORRECT_JETS_L1
+    SINGLEJET=sys.argv[9]
+    print "DIR_JETALGO="+ DIR_JETALGO + " PF_CALO_JPT="+PF_CALO_JPT+ " MC="+MC+" MC-type=" + MC_type+" BINNING="+BINNING+" DATATYPE="+DATATYPE+" CORRECT_JETS_L1="+CORRECT_JETS_L1+" SINGLEJET="+str(SINGLEJET)
     print "... done."
 #   datadirmc=sys.argv[6]
 
@@ -708,8 +757,16 @@ if(DATAYEAR == "2011"):
         datadir = "/scratch/hh/current/cms/user/stadie/2011/v8/Jet2011APromptRecoV6_Cert_160404-177515/merged"
     if(DATATYPE=="11BPrV1"):
         datadir = "/scratch/hh/current/cms/user/stadie/2011/v8/Jet2011BPromptRecoV1_Cert_160404-180252/merged"
+    if(DATATYPE=="11AReRe"):
+        datadir = "/scratch/hh/current/cms/user/kirschen/2011_Jets_v9/Jet2011A08NovReRecoV1_Cert_Nov08_160404-180252/merged"
+    if(DATATYPE=="11BReRe"):
+        datadir = "/scratch/hh/current/cms/user/kirschen/2011_Jets_v9/Jet2011BReRecoV1_Cert_Nov08_160404-180252/merged"
     if(DATATYPE=="Full2011"):
-        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_05Aug_v4_v6_2011BV1_160404-180252"
+#        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_05Aug_v4_v6_2011BV1_160404-180252"
+#        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/combine_May10ReReco_05Aug_v4_v6_2011B_160404_180252"
+        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/combine_ReReco2011A_2011B_160404_180252"
+    if(DATATYPE=="42XFull2011"):
+        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/combine_May10ReReco_05Aug_v4_v6_2011B_160404_180252"
     if(DATATYPE=="Z2wPUsmeared_DMC"):
         #outdated#datadir = "/scratch/hh/current/cms/user/kirschen/v8_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1_with_METcorr_nominal"
         datadir = "/scratch/hh/current/cms/user/kirschen/YOSSOF_JETMET_FIGURES_v8_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1_with_METcorr_nominal"
@@ -780,7 +837,7 @@ nevents =  -1
 #nthreads = 1
 #niothreads = 1
 #nevents =  10000
-MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
