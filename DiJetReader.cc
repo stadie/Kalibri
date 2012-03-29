@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.82 2012/01/24 16:27:29 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.83 2012/02/06 22:41:55 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -57,6 +57,8 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   eventWeight_          = config_->read<double>("Di-Jet weight",-1.);
   weights_eq_one_       = config_->read<bool>("set weights to one",false);
   fire_all_dijet_triggers_    = config_->read<bool>("fire all triggers",false);
+
+  useSingleJetTriggers_ = config_->read<bool>("Use single jet triggers",false);
 
   // Cuts
   minJetEt_          = config_->read<double>("Et min cut on jet",0.0);
@@ -148,7 +150,6 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
     }
     else if(trignames[i] == "HLT_Jet30") {
       trigvar = &hltjetc30incl_;
-      useSingleJetTriggers_=true;
     }
     else if(trignames[i] == "HLT_Jet60") {
       trigvar = &hltjetc60incl_;
@@ -1469,7 +1470,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     hltjetc370incl_ = hltjetc300incl_ || nJet_->HltJet370;
     double diJetPtAve = 0.5 * (nJet_->JetCorrL2[CorrJetIdx[0]] * nJet_->JetCorrL3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]]+ nJet_->JetCorrL2[CorrJetIdx[1]] * nJet_->JetCorrL3[CorrJetIdx[1]] * nJet_->JetPt[CorrJetIdx[1]]);
     double triggerPt = diJetPtAve;
-    //    if(useSingleJetTriggers_)triggerPt = nJet_->JetCorrL2[CorrJetIdx[0]] * nJet_->JetCorrL3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]];
+    if(useSingleJetTriggers_)triggerPt = nJet_->JetCorrL2[CorrJetIdx[0]] * nJet_->JetCorrL3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]];
     std::map<double,bool*>::iterator it = trigmap_.lower_bound(triggerPt);
     if(it == trigmap_.begin()) {
       //std::cout << "below all trigger thresholds:" << triggerPt << '\n';

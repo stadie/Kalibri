@@ -1,5 +1,5 @@
 //
-// $Id: DiJetEventWeighting.h,v 1.2 2011/06/30 14:27:14 stadie Exp $
+// $Id: DiJetEventWeighting.h,v 1.3 2012/02/09 16:45:58 kirschen Exp $
 //
 #ifndef DIJETEVENTWEIGHTING_H
 #define DIJETEVENTWEIGHTING_H
@@ -22,6 +22,7 @@ class DiJetEventWeighting : public EventProcessor
   bool passCheckBadEventDiJetEventWeighting(Event* event);
   bool passCheckStrangeEventDiJetEventWeighting(Event* event);
   bool passSetWeightDiJetEventWeighting(Event* event);
+  double TriggerPtVariable(Event* event);
 
 protected:
   virtual int preprocess(std::vector<Event*>& data,
@@ -34,6 +35,7 @@ protected:
  private:
   std::map<double,double> ndata_,ncontrol_;
   std::map<double,double> weights_;
+  bool useSingleJetTriggers_;
 };
 
 class CheckBadEventDiJetEventWeighting{
