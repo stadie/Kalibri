@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.24 2012/02/06 22:14:47 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.25 2012/02/09 16:41:51 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -236,6 +236,17 @@ double ControlPlotsFunction::jetTruthEventResponseL2L3ResL4Corrected(const Event
   Jet * jet = static_cast<Jet*>(jte->mess());
 
   return jet->corFactors().getL2L3Res() * jet->corFactors().getL4() * jet->pt() / jte->truth();
+}
+
+
+//!  \brief Returns run number uf the Event
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventRunNumber(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return jte->runNumber();
 }
 
 

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.23 2012/02/06 22:14:47 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.24 2012/02/09 16:41:51 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -41,7 +41,7 @@ std::string ControlPlotsConfig::binName(int binIdx) const {
 //! This is used for the profile histogram title
 //! and consists of "min < varTitle(binning) < max (unit)".
 // --------------------------------------------------
-std::string ControlPlotsConfig::binTitle(double min, double max) const {
+std::string ControlPlotsConfig::binTitle(double min, double max, bool showCut) const {
   std::string title = toString(min);
   title += " #leq ";
   title += varTitle(binVariable());
@@ -53,16 +53,18 @@ std::string ControlPlotsConfig::binTitle(double min, double max) const {
     title += " " + unit;
   }
 
-  if(cutVariable() != "") {
-    title += "  and  ";
-    title += toString(cutMin());
-    title += " #leq ";
-    title += varTitle(cutVariable());
-    title += " < ";
-    title += toString(cutMax());
-    std::string unit = unitTitle(cutVariable());
-    if( unit != "" ) {
-      title += " " + unit;
+  if(showCut){
+    if(cutVariable() != "") {
+      title += "  and  ";
+      title += toString(cutMin());
+      title += " #leq ";
+      title += varTitle(cutVariable());
+      title += " < ";
+      title += toString(cutMax());
+      std::string unit = unitTitle(cutVariable());
+      if( unit != "" ) {
+	title += " " + unit;
+      }
     }
   }
   
@@ -89,8 +91,8 @@ std::string ControlPlotsConfig::xBinName(int xBinIdx) const {
 //! It is drawn on the histogram and consists of
 //! "min < varTitle() < max (unit), xBinMin < varTitle(x) < xBinMax (unit)"
 // --------------------------------------------------
-std::string ControlPlotsConfig::xBinTitle(int xBinIdx, double binMin, double binMax) const {
-  std::string title = binTitle(binMin,binMax);
+std::string ControlPlotsConfig::xBinTitle(int xBinIdx, double binMin, double binMax, bool showCut) const {
+  std::string title = binTitle(binMin,binMax,showCut);
   if( xBinIdx >= 0 && xBinIdx < nXBins() ) {
     title += ",  ";
     title += toString(round(xBinEdges_.at(xBinIdx)));
@@ -409,6 +411,7 @@ void ControlPlotsConfig::init() {
       logX_ = true;
     }
   }
+  bool useDirectBinEdges=false;
   double min = 20.;
   double max = 100.;
   std::vector<double> var = bag_of<double>(config_->read<std::string>(name_+" x edges","15 10 1000"));
@@ -418,20 +421,30 @@ void ControlPlotsConfig::init() {
     max = var.at(2);
   } else {
     std::cerr << "WARNING: Wrong number of arguments in config line '" << name_ << " x edges'\n";
-    nXBins_ = 5;
-  }
-  xBinEdges_ = std::vector<double>(nXBins_+1);
-  if( logX_ ) {
-    if( !equidistLogBins(xBinEdges_,nXBins_,min,max) )
-      std::cerr << "ERROR creating equidistant logarithmic binning.\n";
-  } else {
-    double width = (max - min) / nXBins_;
-    for(int i = 0; i < nXBins_+1; i++) {
-      xBinEdges_.at(i) = min + width*i;
+    std::cerr << "         Trying to take arguments as bin edges, instead.\n";
+    xBinEdges_ = bag_of<double>(config_->read<std::string>(name_+" x edges","0. 1."));
+    assert( xBinEdges_.size() > 1 );
+    for(size_t i = 1; i < xBinEdges_.size(); i++) {
+      assert( xBinEdges_.at(i) > xBinEdges_.at(i-1) );
     }
+    nXBins_ = static_cast<int>(xBinEdges_.size())-1;
+    if(nXBins_>2)useDirectBinEdges=true;
+    else nXBins_ = 5;
   }
-  for(int i = 0; i < nXBins_; i++) {
-    assert( xBinEdges_.at(i) < xBinEdges_.at(i+1) );
+  if(!useDirectBinEdges){
+    xBinEdges_ = std::vector<double>(nXBins_+1);
+    if( logX_ ) {
+      if( !equidistLogBins(xBinEdges_,nXBins_,min,max) )
+	std::cerr << "ERROR creating equidistant logarithmic binning.\n";
+    } else {
+      double width = (max - min) / nXBins_;
+      for(int i = 0; i < nXBins_+1; i++) {
+	xBinEdges_.at(i) = min + width*i;
+      }
+    }
+    for(int i = 0; i < nXBins_; i++) {
+      assert( xBinEdges_.at(i) < xBinEdges_.at(i+1) );
+    }
   }
 
   cutVar_ = config_->read<std::string>(name_+" cut variable","");
@@ -477,9 +490,14 @@ void ControlPlotsConfig::init() {
     }
   }
   yBinEdges_ = std::vector<double>(nYBins_+1);
-  double width = (max - min) / nYBins_;
-  for(int i = 0; i < nYBins_+1; i++) {
-    yBinEdges_.at(i) = min + width*i;
+  if( logY_ ) {
+    if( !equidistLogBins(yBinEdges_,nYBins_,min,max) )
+      std::cerr << "ERROR creating equidistant logarithmic binning.\n";
+  } else {
+    double width = (max - min) / nXBins_;
+    for(int i = 0; i < nXBins_+1; i++) {
+      xBinEdges_.at(i) = min + width*i;
+    }
   }
   for(int i = 0; i < nYBins_; i++) {
     assert( yBinEdges_.at(i) < yBinEdges_.at(i+1) );
@@ -695,13 +713,17 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
   else if( varName == "VtxN")
     title = "Reconstructed vertices";
   else if( varName == "PF_CH_Fraction")
-    title = "PF charged hadron fraction";
+    title = "Charged hadrons";
+  //    title = "PF charged hadron fraction";
   else if( varName == "PF_NH_Fraction")
-    title = "PF neutral hadron fraction";
+    title = "Neutral hadrons";
+  //    title = "PF neutral hadron fraction";
   else if( varName == "PF_PH_Fraction")
-    title = "PF photon fraction";
+    title = "Photons";
+  ///    title = "PF photon fraction";
   else if( varName == "PF_EL_Fraction")
-    title = "PF electron fraction";
+    title = "Electrons";
+  //    title = "PF electron fraction";
   else if( varName == "DeltaPhi")
     title = "#Delta #varphi_{1,2}";
 

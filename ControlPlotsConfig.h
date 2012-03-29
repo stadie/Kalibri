@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.11 2012/01/24 16:26:37 kirschen Exp $
+// $Id: ControlPlotsConfig.h,v 1.12 2012/02/09 16:41:51 kirschen Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -56,7 +56,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.11 2012/01/24 16:26:37 kirschen Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.12 2012/02/09 16:41:51 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -102,13 +102,17 @@ class ControlPlotsConfig {
   //! Returns the name of the bin
   std::string binName(int binIdx) const;
   //! Returns the title of the bin
-  std::string binTitle(double min, double max) const;
+  std::string binTitle(double min, double max, bool showCut=true) const;
+  //! Returns the title of the bin used for axis
+  std::string binAxisTitle() const { return axisTitle(binVariable()); }
   //! Returns the name of the cut variable
   std::string cutVariable() const { return cutVar_; }
   //! Returns the minimum of the cut range
   double cutMin() const { return cutEdges_.first; }
   //! Returns the maximum of the cut range
   double cutMax() const { return cutEdges_.second; }
+  //! Returns the title of the cut used for axis
+  std::string cutAxisTitle() const { return axisTitle(cutVariable()); }
   
   //! Returns the bin edges of the x variable
   const std::vector<double> *xBinEdges() const { return &xBinEdges_; }
@@ -125,9 +129,11 @@ class ControlPlotsConfig {
   //! Returns the name of the x bin
   std::string xBinName(int xBinIdx) const;
   //! Returns the title of the x bin
-  std::string xBinTitle(int xBinIdx, double binMin, double binMax) const;
+  std::string xBinTitle(int xBinIdx, double binMin, double binMax, bool showCut=true) const;
   //! Specifies whether there is logarithmic binning of the x axis
   bool logX() const { return logX_; }
+  //! Specifies whether there is logarithmic binning of the y axis. Beware: often does not make sense for profiles
+  bool logY() const { return logY_; }
 
   //! Returns the bin edges of the y variable
   const std::vector<double> *yBinEdges() const { return &yBinEdges_; }
@@ -221,6 +227,7 @@ class ControlPlotsConfig {
   std::vector<double> xBinEdges_;
   int nXBins_;
   bool logX_;
+  bool logY_;
 
   std::string cutVar_;
   std::pair<double,double> cutEdges_;
