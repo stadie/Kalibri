@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.24 2012/02/09 16:41:51 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.25 2012/03/29 11:50:34 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -466,6 +466,12 @@ void ControlPlotsConfig::init() {
   // Read y axis
   strVar = bag_of_string(config_->read<std::string>(name_+" y variable","GenJetResponse"));
   yVar_ = strVar[0];
+  logY_ = false;
+  if( strVar.size() == 2 ) {
+    if( strVar.at(1) == "log" ) {
+      logY_ = true;
+    }
+  }
 
   min = 0.;
   max = 2.;
@@ -494,9 +500,9 @@ void ControlPlotsConfig::init() {
     if( !equidistLogBins(yBinEdges_,nYBins_,min,max) )
       std::cerr << "ERROR creating equidistant logarithmic binning.\n";
   } else {
-    double width = (max - min) / nXBins_;
-    for(int i = 0; i < nXBins_+1; i++) {
-      xBinEdges_.at(i) = min + width*i;
+    double width = (max - min) / nYBins_;
+    for(int i = 0; i < nYBins_+1; i++) {
+      yBinEdges_.at(i) = min + width*i;
     }
   }
   for(int i = 0; i < nYBins_; i++) {
@@ -710,6 +716,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "n_{PU}^{MC}";
   else if( varName == "MCNPUVtx")
     title = "n_{PU}^{MC}";
+  else if( varName == "MCNPUTruth")
+    title = "n_{PU, true}^{MC}";
   else if( varName == "VtxN")
     title = "Reconstructed vertices";
   else if( varName == "PF_CH_Fraction")
@@ -756,6 +764,7 @@ void ControlPlotsConfig::determineOutPlotSuffix(std::string name) {
   std::string outPlotSuffix;
   if(name=="EventWeightProcessor")outPlotSuffix="_EW";
   else if(name=="DiJetEventWeighting")outPlotSuffix="_DJ";
+  else if(name=="TruthPileUpReweighting")outPlotSuffix="_TruthPU";
   else if(name=="PU weighting")outPlotSuffix="_PU";
   else if(name=="Event binning")outPlotSuffix="_EB";
   else if(name=="DiJetEventCuts")outPlotSuffix="_CU";

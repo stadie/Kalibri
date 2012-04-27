@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.25 2012/02/09 16:41:51 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.26 2012/03/29 11:50:34 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -292,6 +292,16 @@ double ControlPlotsFunction::twoJetsPtBalanceEventMCNPUVtx(const Event *evt) con
   return tjpbe->nPU();
 }
 
+//!  \brief Returns number of true MC PU vertices 
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMCNPUTruth(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return tjpbe->nPUTruth();
+}
+
 
 //!  \brief Returns the PF Charged hadron fraction (of jet1)
 //!
@@ -346,6 +356,32 @@ double ControlPlotsFunction::twoJetsPtBalanceEventPF_EL_Fraction(const Event * e
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet1 = jte->getJet1();
   return jet1->fEL();
+}
+
+//!  \brief Returns the PF HFHad fraction (of jet1)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  PF Charged hadron fraction (of jet1) is returned
+//!  PF_CH_Fraction
+//!  
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventPF_HFHad_Fraction(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  return jet1->fHFHad();
+}
+
+//!  \brief Returns the PF HFEm fraction (of jet1)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  PF Charged hadron fraction (of jet1) is returned
+//!  PF_CH_Fraction
+//!  
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventPF_HFEm_Fraction(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  return jet1->fHFEm();
 }
 
 //!  \brief Returns flavor of jet
@@ -757,7 +793,7 @@ double ControlPlotsFunction::twoJetsPtBalanceEventBL2L3ResCorrected(const Event 
 double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponse(const Event * evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet2 = jte->getJet2();
-  return (1 + jte->MET()*cos(deltaPhi(jte->METphi(), static_cast<double>(jet2->phi()))) / jet2->pt());
+  return (1 + jte->MET()*cos(deltaPhi(jte->METphi(), jet2->phi())) / jet2->pt());
 }
 
 
@@ -774,7 +810,7 @@ double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponse(const Event * evt)
 double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3Corrected(const Event * evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet2 = jte->getJet2();
-  return (1 + jte->MET()*cos(deltaPhi(jte->METphi(), static_cast<double>(jet2->phi()))) / (jet2->corFactors().getL2L3() *jet2->pt()));
+  return (1 + jte->MET()*cos(deltaPhi(jte->METphi(), jet2->phi())) / (jet2->corFactors().getL2L3() *jet2->pt()));
 }
 
 //!  \brief Returns the corrected jet MPF response
@@ -789,6 +825,6 @@ double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3Corrected(const
 double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3ResCorrected(const Event * evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet2 = jte->getJet2();
-  return (1 + jte->MET()*cos(deltaPhi(jte->METphi(), static_cast<double>(jet2->phi()))) / (jet2->corFactors().getL2L3Res() *jet2->pt()));
+  return (1 + jte->MET()*cos(deltaPhi(jte->METphi(), jet2->phi())) / (jet2->corFactors().getL2L3Res() *jet2->pt()));
 }
 
