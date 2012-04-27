@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.83 2012/02/06 22:41:55 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.84 2012/03/29 11:54:06 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -174,6 +174,48 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
     }
     else if(trignames[i] == "HLT_Jet370") {
       trigvar = &hltjetc370incl_;
+    }
+    else if(trignames[i] == "HLT_DiPFJetAve40") {
+      trigvar = &hltdiPFjetc40incl_;
+    }
+    else if(trignames[i] == "HLT_DiPFJetAve80") {
+      trigvar = &hltdiPFjetc80incl_;
+    }
+    else if(trignames[i] == "HLT_DiPFJetAve140") {
+      trigvar = &hltdiPFjetc140incl_;
+    }
+    else if(trignames[i] == "HLT_DiPFJetAve200") {
+      trigvar = &hltdiPFjetc200incl_;
+    }
+    else if(trignames[i] == "HLT_DiPFJetAve260") {
+      trigvar = &hltdiPFjetc260incl_;
+    }
+    else if(trignames[i] == "HLT_DiPFJetAve320") {
+      trigvar = &hltdiPFjetc320incl_;
+    }
+    else if(trignames[i] == "HLT_DiPFJetAve400") {
+      trigvar = &hltdiPFjetc400incl_;
+    }
+    else if(trignames[i] == "HLT_PFJet40") {
+      trigvar = &hltPFjetc40incl_;
+    }
+    else if(trignames[i] == "HLT_PFJet80") {
+      trigvar = &hltPFjetc80incl_;
+    }
+    else if(trignames[i] == "HLT_PFJet140") {
+      trigvar = &hltPFjetc140incl_;
+    }
+    else if(trignames[i] == "HLT_PFJet200") {
+      trigvar = &hltPFjetc200incl_;
+    }
+    else if(trignames[i] == "HLT_PFJet260") {
+      trigvar = &hltPFjetc260incl_;
+    }
+    else if(trignames[i] == "HLT_PFJet320") {
+      trigvar = &hltPFjetc320incl_;
+    }
+    else if(trignames[i] == "HLT_PFJet400") {
+      trigvar = &hltPFjetc400incl_;
     }
     else {
       std::cerr << "DiJetReader: unknown trigger name:" 
@@ -488,7 +530,8 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 	if(std::abs(td->getJet1()->eta()) < 1.3) {
 	  data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
 						   td->getJet3() ? td->getJet3()->clone():0,
-						   td->ptHat(),td->weight(),td->nPU(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
+						   td->ptHat(),td->weight(),td->nPU(),
+						   td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
 	  ++nGoodEvts_;
 	}
 	if(std::abs(td->getJet2()->eta()) < 1.3) {
@@ -794,6 +837,8 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 			  nJet_->JetFNeutralHadrons[calJetIdx],
 			  nJet_->JetFPhotons[calJetIdx],
 			  nJet_->JetFElectrons[calJetIdx],
+			  nJet_->JetFHFEm[calJetIdx],
+			  nJet_->JetFHFHad[calJetIdx],
 			  nJet_->GenJetColPt[genJetIdx],drJetGenjet,
 			  createCorFactors(calJetIdx),
 			  par_->jet_function(nJet_->JetIEta[calJetIdx],
@@ -821,6 +866,8 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 		    nJet_->JetFNeutralHadrons[calJetIdx],
 		    nJet_->JetFPhotons[calJetIdx],
 		    nJet_->JetFElectrons[calJetIdx],
+		    nJet_->JetFHFEm[calJetIdx],
+		    nJet_->JetFHFHad[calJetIdx],
 		    nJet_->GenJetColPt[genJetIdx],drJetGenjet,
 		    createCorFactors(calJetIdx),
 		    par_->jet_function(nJet_->JetIEta[calJetIdx],nJet_->JetIPhi[calJetIdx]),
@@ -1009,6 +1056,8 @@ Event* DiJetReader::createDiJetResolutionEventRecoOrdered()
 			       nJet_->JetFNeutralHadrons[jetIndices_[i]->idx_],
 			       nJet_->JetFPhotons[jetIndices_[i]->idx_],
 			       nJet_->JetFElectrons[jetIndices_[i]->idx_],
+			       nJet_->JetFHFEm[jetIndices_[i]->idx_],
+			       nJet_->JetFHFHad[jetIndices_[i]->idx_],
 			       nJet_->GenJetPt[jetIndices_[i]->idx_],
 			       drJetGenjet,
 			       createCorFactors(jetIndices_[i]->idx_),
@@ -1169,6 +1218,8 @@ Event* DiJetReader::createDiJetResolutionEventGenOrdered() {
 			       nJet_->JetFNeutralHadrons[nJet_->GenJetColJetIdx[i]],
 			       nJet_->JetFPhotons[nJet_->GenJetColJetIdx[i]],
 			       nJet_->JetFElectrons[nJet_->GenJetColJetIdx[i]],
+			       nJet_->JetFHFEm[nJet_->GenJetColJetIdx[i]],
+			       nJet_->JetFHFHad[nJet_->GenJetColJetIdx[i]],
 			       nJet_->GenJetColPt[i],
  			       drJetGenjet,
  			       createCorFactors(nJet_->GenJetColJetIdx[i]),
@@ -1314,6 +1365,8 @@ Event* DiJetReader::createDiJetResolutionEventFromSkim() {
 			     nJet_->JetFNeutralHadrons[idx],
 			     nJet_->JetFPhotons[idx],
 			     nJet_->JetFElectrons[idx],
+			     nJet_->JetFHFEm[idx],
+			     nJet_->JetFHFHad[idx],
  			     nJet_->GenJetPt[idx],
  			     deltaR(nJet_->JetEta[idx],nJet_->GenJetEta[idx],
 				    nJet_->JetPhi[idx],nJet_->GenJetPhi[idx]),
@@ -1457,7 +1510,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     hltdijetavec150incl_ = hltdijetavec110incl_ || nJet_->HltDiJetAve150;
     hltdijetavec190incl_ = hltdijetavec150incl_ || nJet_->HltDiJetAve190;
     hltdijetavec240incl_ = hltdijetavec190incl_ || nJet_->HltDiJetAve240;
-    hltdijetavec300incl_ = hltdijetavec190incl_ || nJet_->HltDiJetAve300;
+    hltdijetavec300incl_ = hltdijetavec240incl_ || nJet_->HltDiJetAve300;
     hltdijetavec370incl_ = hltdijetavec300incl_ || nJet_->HltDiJetAve370;
     hltjetc30incl_ = nJet_->HltJet30;
     hltjetc60incl_ = hltjetc30incl_ || nJet_->HltJet60;
@@ -1466,8 +1519,25 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     hltjetc150incl_ = hltjetc110incl_ || nJet_->HltJet150;
     hltjetc190incl_ = hltjetc150incl_ || nJet_->HltJet190;
     hltjetc240incl_ = hltjetc190incl_ || nJet_->HltJet240;
-    hltjetc300incl_ = hltjetc190incl_ || nJet_->HltJet300;
+    hltjetc300incl_ = hltjetc240incl_ || nJet_->HltJet300;
     hltjetc370incl_ = hltjetc300incl_ || nJet_->HltJet370;
+
+    hltPFjetc40incl_ = nJet_->HltPFJet40;
+    hltPFjetc80incl_ = hltPFjetc40incl_ || nJet_->HltPFJet80;
+    hltPFjetc140incl_ = hltPFjetc80incl_ || nJet_->HltPFJet140;
+    hltPFjetc200incl_ = hltPFjetc140incl_ || nJet_->HltPFJet200;
+    hltPFjetc260incl_ = hltPFjetc200incl_ || nJet_->HltPFJet260;
+    hltPFjetc320incl_ = hltPFjetc260incl_ || nJet_->HltPFJet320;
+    hltPFjetc400incl_ = hltPFjetc320incl_ || nJet_->HltPFJet400;
+    hltdiPFjetc40incl_ = nJet_->HltDiPFJetAve40;
+    hltdiPFjetc80incl_ = hltdiPFjetc40incl_ || nJet_->HltDiPFJetAve80;
+    hltdiPFjetc140incl_ = hltdiPFjetc80incl_ || nJet_->HltDiPFJetAve140;
+    hltdiPFjetc200incl_ = hltdiPFjetc140incl_ || nJet_->HltDiPFJetAve200;
+    hltdiPFjetc260incl_ = hltdiPFjetc200incl_ || nJet_->HltDiPFJetAve260;
+    hltdiPFjetc320incl_ = hltdiPFjetc260incl_ || nJet_->HltDiPFJetAve320;
+    hltdiPFjetc400incl_ = hltdiPFjetc320incl_ || nJet_->HltDiPFJetAve400;
+
+
     double diJetPtAve = 0.5 * (nJet_->JetCorrL2[CorrJetIdx[0]] * nJet_->JetCorrL3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]]+ nJet_->JetCorrL2[CorrJetIdx[1]] * nJet_->JetCorrL3[CorrJetIdx[1]] * nJet_->JetPt[CorrJetIdx[1]]);
     double triggerPt = diJetPtAve;
     if(useSingleJetTriggers_)triggerPt = nJet_->JetCorrL2[CorrJetIdx[0]] * nJet_->JetCorrL3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]];
@@ -1601,6 +1671,8 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 			nJet_->JetFNeutralHadrons[CorrJetIdx[i]],
 			nJet_->JetFPhotons[CorrJetIdx[i]],
 			nJet_->JetFElectrons[CorrJetIdx[i]],
+			nJet_->JetFHFEm[CorrJetIdx[i]],
+			nJet_->JetFHFHad[CorrJetIdx[i]],
  			nJet_->GenJetPt[CorrJetIdx[i]],
 			drJetGenjet,createCorFactors(CorrJetIdx[i]),
 			par_->jet_function(nJet_->JetIEta[CorrJetIdx[i]],
@@ -1647,7 +1719,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 
   // Create TwoJetsInvMassEvent
   TwoJetsPtBalanceEvent * evt
-    = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight,static_cast<short int>(nJet_->PUMCNumVtx),static_cast<short int>(nJet_->VtxN),nJet_->Met,nJet_->MetPhi,nJet_->RunNumber);
+    = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight,static_cast<short int>(nJet_->PUMCNumVtx),nJet_->PUMCNumTruth,static_cast<short int>(nJet_->VtxN),nJet_->Met,nJet_->MetPhi,nJet_->RunNumber);
 
    if(evt->hasJet3()  && std::abs(evt->getJet3()->corFactors().getL2L3() * evt->getJet3()->pt()) > maxRel3rdJetEt_*evt->ptDijetCorrL2L3() ) {
      //    std::cout << "test "<< std::abs(evt->getJet3()->corFactors().getL2L3() * evt->getJet3()->pt()) << " and " << maxRel3rdJetEt_*evt->ptDijetCorrL2L3() << std::endl;
