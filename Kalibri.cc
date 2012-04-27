@@ -1,4 +1,4 @@
-//  $Id: Kalibri.cc,v 1.28 2012/01/24 16:25:34 kirschen Exp $
+//  $Id: Kalibri.cc,v 1.29 2012/02/06 22:41:55 kirschen Exp $
 
 #include "Kalibri.h"
 
@@ -26,6 +26,7 @@ boost::mutex io_mutex;
 #include "EventProcessor.h"
 #include "DiJetEventCuts.h"
 #include "EventWeightProcessor.h"
+#include "PUTruthReweighting.h"
 #include "PUEventWeightProcessor.h"
 #include "EventBinning.h"
 #include "DiJetEventWeighting.h"
@@ -275,6 +276,7 @@ void Kalibri::run()
     std::vector<EventProcessor*> processors;
     processors.push_back(new DiJetEventCuts(configFile_,par_));
     processors.push_back(new EventWeightProcessor(configFile_,par_));
+    processors.push_back(new PUTruthReweighting(configFile_,par_));
     processors.push_back(new DiJetEventWeighting(configFile_,par_));
     processors.push_back(new PUEventWeightProcessor(configFile_,par_));
     processors.push_back(new EventBinning(configFile_,par_));
