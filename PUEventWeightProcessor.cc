@@ -40,6 +40,10 @@ PUEventWeightProcessor::PUEventWeightProcessor(const std::string& configfile, Pa
       weights_ = generate_fall11_weights(h);
       std::cout << "using Fall11 distribution" << std::endl;
     }
+    else if(PU_mixing_era=="Summer12"){
+      weights_ = generate_summer12_weights(h);
+      std::cout << "using Summer12 distribution" << std::endl;
+    }
     else {
       weights_ = generate_flat10_weights(h);
       std::cout << "using Flat10 distribution" << std::endl;
@@ -128,6 +132,26 @@ Double_t npu_probs_Fall2011[50] = {
   }
   // normalize weights such that the total sum of weights over the whole sample is 1.0, i.e., sum_i  result[i] * npu_probs_Fall2011[i] should be 1.0 (!)
   for(int npu=0; npu<50; ++npu) {
+    result[npu] /= s;
+  }
+  return result;
+
+
+}
+std::vector<double> PUEventWeightProcessor::generate_summer12_weights(const TH1* data_npu_estimated) const {
+  //Distribution extracted from QCD_Pt-15to3000_Tune23_Flat_7TeV_herwigpp_Fall11-PU_S6_START44_V9B-v1
+Double_t npu_probs_Summer2012[60] = 
+  {3.31414e-05,7.21901e-05,0.000163905,0.000310388,0.000518547,0.000830137,0.00121311,0.00177762,0.00253647,0.00354002,0.00489291,0.00660114,0.00860995,0.0110814,0.0138752,0.0168897,0.02018,0.0234687,0.0268086,0.0300392,0.033068,0.0357128,0.0380327,0.039777,0.0412705,0.0423629,0.0429243,0.0430274,0.0425976,0.0418433,0.0408154,0.0391155,0.0375611,0.0355296,0.0332208,0.030871,0.0282428,0.0256578,0.0231456,0.0206244,0.0181904,0.0159587,0.0137418,0.011751,0.0100118,0.00834922,0.00698552,0.00567559,0.00459524,0.00374077,0.0029594,0.00235304,0.00185121,0.00139865,0.00109377,0.000829436,0.000619373,0.00045647,0.000343128,0.000252716};
+
+  std::vector<double> result(60);
+  double s = 0.0;
+  for(int npu=0; npu<60; ++npu) {
+    double npu_estimated = data_npu_estimated->GetBinContent(data_npu_estimated->GetXaxis()->FindBin(npu));                              
+    result[npu] = npu_estimated / npu_probs_Summer2012[npu];
+    s += npu_estimated;
+  }
+  // normalize weights such that the total sum of weights over the whole sample is 1.0, i.e., sum_i  result[i] * npu_probs_Summer2012[i] should be 1.0 (!)
+  for(int npu=0; npu<60; ++npu) {
     result[npu] /= s;
   }
   return result;
