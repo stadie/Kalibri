@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.52 2011/05/31 15:50:23 stadie Exp $
+//    $Id: Jet.cc,v 1.53 2012/02/06 22:29:37 kirschen Exp $
 //   
 #include "Jet.h"  
 
@@ -14,12 +14,12 @@
 
 Jet::Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
          float eta,float phi, float phiphi, float etaeta, Flavor flavor, 
-	 float fCH, float fNH, float fPH, float fEL, 
+	 float fCH, float fNH, float fPH, float fEL, float fHFEm, float fHFHad, 
 	 float genPt, float dR, CorFactors* corFactors, const Function& f, 
 	 float (*errfunc)(const float *x, const Measurement *xorig, float err), 
 	 const Function& gf) 
   : Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi,phiphi,etaeta),flavor_(flavor), 
-    fCH_(fCH), fNH_(fNH), fPH_(fPH), fEL_(fEL),
+    fCH_(fCH), fNH_(fNH), fPH_(fPH), fEL_(fEL), fHFEm_(fHFEm), fHFHad_(fHFHad),
     genPt_(genPt),dR_(dR),corFactors_(corFactors),f_(&f),gf_(&gf),
     errf_(errfunc),parameters_(0)
 {

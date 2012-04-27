@@ -1,5 +1,5 @@
 //
-//  $Id: PhotonJetReader.cc,v 1.34 2011/05/26 07:42:53 mschrode Exp $
+//  $Id: PhotonJetReader.cc,v 1.35 2012/02/06 22:29:36 kirschen Exp $
 //
 #include "PhotonJetReader.h"
 
@@ -256,7 +256,7 @@ Event* PhotonJetReader::createJetTruthEvent()
       new JetWithTowers(gammaJet_->JetCalEt,em * factor,had * factor,
 			out * factor,gammaJet_->JetCalE,gammaJet_->JetCalEta,
 			gammaJet_->JetCalPhi,phiphi,etaeta,Jet::uds,
-			0,0,0,0,//PF-fractions not implemented, yet
+			0,0,0,0,0,0,//PF-fractions not implemented, yet
 			gammaJet_->JetGenEt,
 			LJet.DeltaR(LGenJet),createCorFactors(0),
 			par_->jet_function(gammaJet_->TowId_eta[closestTower],
@@ -276,7 +276,7 @@ Event* PhotonJetReader::createJetTruthEvent()
     j = new Jet(gammaJet_->JetCalEt,em * factor,had * factor,out * factor,
 		gammaJet_->JetCalE,gammaJet_->JetCalEta,gammaJet_->JetCalPhi,
 		phiphi,etaeta,Jet::uds,
-		0,0,0,0,//PF-fractions not implemented, yet
+		0,0,0,0,0,0,//PF-fractions not implemented, yet
 		gammaJet_->JetGenEt,LJet.DeltaR(LGenJet),
 		createCorFactors(0),
 		par_->jet_function(gammaJet_->TowId_eta[closestTower],

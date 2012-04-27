@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.48 2011/07/04 17:19:35 stadie Exp $
+//!    $Id: Jet.h,v 1.49 2012/02/06 22:29:37 kirschen Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -78,7 +78,7 @@ class Jet : public Measurement
  public:
   Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
       float eta,float phi, float phiphi, float etaeta, Flavor flavor, 
-      float fCH, float fNH, float fPH, float fEL, 
+      float fCH, float fNH, float fPH, float fEL, float fHFEm, float fHFHad, 
       float genPt, float dR, CorFactors* corFactors, const Function& f,
       float (*errfunc)(const float *x, const Measurement *xorig, float err), 
       const Function& gf); 
@@ -97,10 +97,12 @@ class Jet : public Measurement
   float momentPhiPhi() const {return Measurement::phiphi;}  //!< Return phi-phi moment (width of jet in phi)
   float momentEtaEta() const {return Measurement::etaeta;}  //!< Return eta-eta moment (width of jet in eta)
   float meanMoment() const {return 0.5 * (Measurement::phiphi + Measurement::etaeta);}  //!< Return mean moment (width of jet)
-  float fCH()    const {return fCH_;}    //!< Return charged hadron fraction
-  float fNH()    const {return fNH_;}    //!< Return neutral hadron fraction
-  float fPH()    const {return fPH_;}    //!< Return photon fraction
-  float fEL()    const {return fEL_;}    //!< Return electron fraction
+  float fCH()    const {return fCH_;}                //!< Return charged hadron fraction
+  float fNH()    const {return fNH_;}                //!< Return neutral hadron fraction
+  float fPH()    const {return fPH_;}                //!< Return photon fraction
+  float fEL()    const {return fEL_;}                //!< Return electron fraction
+  float fHFEm()  const {return fHFEm_;}              //!< Return fraction of HF em
+  float fHFHad() const {return fHFHad_;}	     //!< Return fraction of HF had
   Flavor flavor() const {return flavor_;}       //!< Return jet flavor
   float genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
   float dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet
@@ -189,6 +191,8 @@ class Jet : public Measurement
   float fNH_;		    //!< Fraction of neutral hadrons
   float fPH_;		    //!< Fraction of photons
   float fEL_;               //!< Fraction of electrons
+  float fHFEm_;             //!< Fraction of HF em
+  float fHFHad_;	    //!< Fraction of HF had
 
   float genPt_;            //!< The genjet pt
   float dR_;               //!< \f$ \Delta R \f$ between jet and genjet 

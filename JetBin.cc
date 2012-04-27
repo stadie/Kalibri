@@ -2,7 +2,7 @@
 //    Class for jet bins
 //
 //    first version: Hartmut Stadie 2010/05/10
-//    $Id: JetBin.cc,v 1.7 2011/06/30 14:30:54 stadie Exp $
+//    $Id: JetBin.cc,v 1.8 2012/02/06 22:29:37 kirschen Exp $
 //   
 
 
@@ -57,7 +57,7 @@ Jet* JetBin::createJet() const {
 		   sumMess_.OutF*w, sumMess_.E*w,
 		   sumMess_.eta*w, sumMess_.phi*w, sumMess_.phiphi*w, 
 		   sumMess_.etaeta*w, Jet::unknown,
-		   0,0,0,0, //PF-fractions not filled, yet...
+		   0,0,0,0,0,0, //PF-fractions not filled, yet...
 		   sumGenPt_*w, sumdR_*w, 
 		   new CorFactors(sumL1_*w,sumL2_/sumMess_.pt,sumL3_/sumL2_,sumLres_/sumL3_,
 				  sumL4_/sumLres_,sumL5_/sumL4_,sumJPT_/sumMess_.pt,
