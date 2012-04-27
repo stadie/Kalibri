@@ -49,6 +49,20 @@ public :
    Bool_t          HltJet240;
    Bool_t          HltJet300;
    Bool_t          HltJet370;
+   Bool_t          HltDiPFJetAve40;
+   Bool_t          HltDiPFJetAve80;
+   Bool_t          HltDiPFJetAve140;
+   Bool_t          HltDiPFJetAve200;
+   Bool_t          HltDiPFJetAve260;
+   Bool_t          HltDiPFJetAve320;
+   Bool_t          HltDiPFJetAve400;
+   Bool_t          HltPFJet40;
+   Bool_t          HltPFJet80;
+   Bool_t          HltPFJet140;
+   Bool_t          HltPFJet200;
+   Bool_t          HltPFJet260;
+   Bool_t          HltPFJet320;
+   Bool_t          HltPFJet400;
    Int_t           VtxN;
    Int_t           VtxNTracks;
    Float_t         VtxPosX;
@@ -59,6 +73,7 @@ public :
    Bool_t          VtxIsFake;
    Int_t           PUMCNumVtx;
    Int_t           PUMCNumVtxOOT;
+   Float_t         PUMCNumTruth;
    Float_t         Rho;
    Int_t           NobjTow;
    Int_t           TowId[1000];   //[NobjTow]
@@ -122,6 +137,8 @@ public :
    Float_t         JetFNeutralHadrons[100];   //[NobjJet]
    Float_t         JetFPhotons[100];   //[NobjJet]
    Float_t         JetFElectrons[100];   //[NobjJet]
+   Float_t         JetFHFEm[100];   //[NobjJet]
+   Float_t         JetFHFHad[100];   //[NobjJet]
    Bool_t          JetIDLoose[100];   //[NobjJet]
    Bool_t          JetIDTight[100];   //[NobjJet]
    Float_t         JetEtWeightedSigmaPhi[100];   //[NobjJet]
@@ -209,6 +226,20 @@ public :
    TBranch        *b_HltJet240;   //!
    TBranch        *b_HltJet300;   //!
    TBranch        *b_HltJet370;   //!
+   TBranch        *b_HltDiPFJetAve40;   //!
+   TBranch        *b_HltDiPFJetAve80;   //!
+   TBranch        *b_HltDiPFJetAve140;   //!
+   TBranch        *b_HltDiPFJetAve200;   //!
+   TBranch        *b_HltDiPFJetAve260;   //!
+   TBranch        *b_HltDiPFJetAve320;   //!
+   TBranch        *b_HltDiPFJetAve400;   //!
+   TBranch        *b_HltPFJet40;   //!
+   TBranch        *b_HltPFJet80;   //!
+   TBranch        *b_HltPFJet140;   //!
+   TBranch        *b_HltPFJet200;   //!
+   TBranch        *b_HltPFJet260;   //!
+   TBranch        *b_HltPFJet320;   //!
+   TBranch        *b_HltPFJet400;   //!
    TBranch        *b_VtxN;   //!
    TBranch        *b_VtxNTracks;   //!
    TBranch        *b_VtxPosX;   //!
@@ -219,6 +250,7 @@ public :
    TBranch        *b_VtxIsFake;   //!
    TBranch        *b_PUMCNumVtx;   //!
    TBranch        *b_PUMCNumVtxOOT;   //!
+   TBranch        *b_PUMCNumTruth;   //!
    TBranch        *b_Rho;   //!
    TBranch        *b_NobjTow;   //!
    TBranch        *b_TowId;   //!
@@ -282,6 +314,8 @@ public :
    TBranch        *b_JetFNeutralHadrons;   //!
    TBranch        *b_JetFPhotons;   //!
    TBranch        *b_JetFElectrons;   //!
+   TBranch        *b_JetFHFEm;   //!
+   TBranch        *b_JetFHFHad;   //!
    TBranch        *b_JetIDLoose;   //!
    TBranch        *b_JetIDTight;   //!   
    TBranch        *b_JetEtWeightedSigmaPhi;   //!
@@ -407,6 +441,20 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("HltJet240", &HltJet240, &b_HltJet240);
    fChain->SetBranchAddress("HltJet300", &HltJet300, &b_HltJet300);
    fChain->SetBranchAddress("HltJet370", &HltJet370, &b_HltJet370);
+   fChain->SetBranchAddress("HltDiPFJetAve40", &HltDiPFJetAve40, &b_HltDiPFJetAve40);
+   fChain->SetBranchAddress("HltDiPFJetAve80", &HltDiPFJetAve80, &b_HltDiPFJetAve80);
+   fChain->SetBranchAddress("HltDiPFJetAve140", &HltDiPFJetAve140, &b_HltDiPFJetAve140);
+   fChain->SetBranchAddress("HltDiPFJetAve200", &HltDiPFJetAve200, &b_HltDiPFJetAve200);
+   fChain->SetBranchAddress("HltDiPFJetAve260", &HltDiPFJetAve260, &b_HltDiPFJetAve260);
+   fChain->SetBranchAddress("HltDiPFJetAve320", &HltDiPFJetAve320, &b_HltDiPFJetAve320);
+   fChain->SetBranchAddress("HltDiPFJetAve400", &HltDiPFJetAve400, &b_HltDiPFJetAve400);
+   fChain->SetBranchAddress("HltPFJet40", &HltPFJet40, &b_HltPFJet40);
+   fChain->SetBranchAddress("HltPFJet80", &HltPFJet80, &b_HltPFJet80);
+   fChain->SetBranchAddress("HltPFJet140", &HltPFJet140, &b_HltPFJet140);
+   fChain->SetBranchAddress("HltPFJet200", &HltPFJet200, &b_HltPFJet200);
+   fChain->SetBranchAddress("HltPFJet260", &HltPFJet260, &b_HltPFJet260);
+   fChain->SetBranchAddress("HltPFJet320", &HltPFJet320, &b_HltPFJet320);
+   fChain->SetBranchAddress("HltPFJet400", &HltPFJet400, &b_HltPFJet400);
    fChain->SetBranchAddress("VtxN", &VtxN, &b_VtxN);
    fChain->SetBranchAddress("VtxNTracks", &VtxNTracks, &b_VtxNTracks);
    fChain->SetBranchAddress("VtxPosX", &VtxPosX, &b_VtxPosX);
@@ -417,6 +465,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("VtxIsFake", &VtxIsFake, &b_VtxIsFake);
    fChain->SetBranchAddress("PUMCNumVtx", &PUMCNumVtx, &b_PUMCNumVtx);
    fChain->SetBranchAddress("PUMCNumVtxOOT", &PUMCNumVtxOOT, &b_PUMCNumVtxOOT);
+   fChain->SetBranchAddress("PUMCNumTruth", &PUMCNumTruth, &b_PUMCNumTruth);
    fChain->SetBranchAddress("Rho", &Rho, &b_Rho);
    fChain->SetBranchAddress("NobjTow", &NobjTow, &b_NobjTow);
    fChain->SetBranchAddress("TowId", TowId, &b_TowId);
@@ -476,10 +525,14 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetEMF", JetEMF, &b_JetEMF);
    fChain->SetBranchAddress("JetFHPD", JetFHPD, &b_JetFHPD);
    fChain->SetBranchAddress("JetFRBX", JetFRBX, &b_JetFRBX);
-   fChain->SetBranchAddress("JetFChargedHadron", JetFChargedHadrons, &b_JetFChargedHadrons);
-   fChain->SetBranchAddress("JetNeutralHadrons", JetFNeutralHadrons, &b_JetFNeutralHadrons);
+   fChain->SetBranchAddress("JetFChargedHadrons", JetFChargedHadrons, &b_JetFChargedHadrons);
+   fChain->SetBranchAddress("JetFNeutralHadrons", JetFNeutralHadrons, &b_JetFNeutralHadrons);
+//   fChain->SetBranchAddress("JetFChargedHadron", JetFChargedHadrons, &b_JetFChargedHadrons);
+//   fChain->SetBranchAddress("JetNeutralHadrons", JetFNeutralHadrons, &b_JetFNeutralHadrons);
    fChain->SetBranchAddress("JetFPhotons", JetFPhotons, &b_JetFPhotons);
    fChain->SetBranchAddress("JetFElectrons", JetFElectrons, &b_JetFElectrons);
+   fChain->SetBranchAddress("JetFHFEm", JetFHFEm, &b_JetFHFEm);
+   fChain->SetBranchAddress("JetFHFHad", JetFHFHad, &b_JetFHFHad);
    fChain->SetBranchAddress("JetIDLoose", JetIDLoose, &b_JetIDLoose);
    fChain->SetBranchAddress("JetIDTight", JetIDTight, &b_JetIDTight);
    fChain->SetBranchAddress("JetEtWeightedSigmaPhi", JetEtWeightedSigmaPhi, &b_JetEtWeightedSigmaPhi);
