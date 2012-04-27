@@ -61,7 +61,7 @@ libs: lib include/lbfgs.h lib/libKalibri.so lib/liblbfgs.so
 
 bins: bin bin/junk bin/caliber
 
-plugins: lib lib/libJetMETCor.so
+plugins: lib PUReweighting lib/libJetMETCor.so 
 
 lbfgs.o: lbfgs.F
 	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
