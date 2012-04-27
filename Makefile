@@ -111,6 +111,9 @@ JetMETObjects:
 	patch -p0 < JetMETObjects.patch
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
+PUReweighting:
+	@cvs -d :pserver:anonymous@cmscvs.cern.ch:/cvs_server/repositories/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
+
 #rules
 .cc.o:
 	$(CC) $(RCXX) -MMD -c -o $@ $<
