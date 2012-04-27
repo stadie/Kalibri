@@ -2,10 +2,14 @@
 #include "TROOT.h"
 #include "TLatex.h"
 
+#ifndef tdrstyle_mod_h
+#define tdrstyle_mod_h
+
+
 // tdrGrid: Turns the grid lines on (true) or off (false)
 
 void tdrGrid(bool gridOn) {
-  TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); assert(tdrStyle);
+  TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); //assert(tdrStyle);
   tdrStyle->SetPadGridX(gridOn);
   tdrStyle->SetPadGridY(gridOn);
 }
@@ -17,6 +21,7 @@ void fixOverlay() {
 
 void setTDRStyle() {
   TStyle *tdrStyle = new TStyle("tdrStyle","Style for P-TDR");
+  gStyle->SetPalette(1);
 
 // For the canvas:
   tdrStyle->SetCanvasBorderMode(0);
@@ -170,12 +175,13 @@ void cmsPrel(double intLumi=-1, bool wide = false) {
   latex->SetTextSize(0.045);
   
   latex->SetTextAlign(31); // align right
-  latex->DrawLatex(wide ? 0.98 : 0.95, 0.96, "#sqrt{s} = 7 TeV");
+  latex->DrawLatex(wide ? 0.98 : 0.95, 0.96, "#sqrt{s} = 8 TeV");
   if (intLumi > 0.) {
     latex->SetTextAlign(11); // align left
     //latex->DrawLatex(0.15,0.96,Form("CMS preliminary, %.2g nb^{-1}",intLumi));
     latex->DrawLatex(wide ? 0.06 : 0.15, 0.96,
-		     Form("CMS, %.2g pb^{-1}",intLumi));
+    Form(" ",intLumi));
+    //		     Form("CMS, %.2g pb^{-1}",intLumi));
     //was		     Form("CMS preliminary, %.2g pb^{-1}",intLumi));
   }
   else if (intLumi==0) { // simulation
@@ -184,9 +190,16 @@ void cmsPrel(double intLumi=-1, bool wide = false) {
   }
   else {
     latex->SetTextAlign(11); // align left
-    latex->DrawLatex(0.15,0.96,"CMS preliminary 2011");
+    //    latex->DrawLatex(0.15,0.96,"CMS preliminary 2012");
+    latex->DrawLatex(0.15,0.96,"CMS work in progress");
   }
 } // cmsPrel
 
+
+
+
 //cmsPrel(); // to print just CMS and \sqrt{s}
 //cmsPrel(400);  // to print also the integrated luminosity.
+
+
+#endif
