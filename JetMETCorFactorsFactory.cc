@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.21 2011/07/04 14:51:16 kirschen Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.22 2012/01/24 16:27:32 kirschen Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -164,6 +164,23 @@ JetMETCorFactorsFactory::Register::Register()
   create("F11DB_He_AK7PF","JetMETObjects/data/Jec11_V11_sqlfile_AK5PF_L1FastJet.txt:JetMETObjects/data/Jec11_V11_sqlfile_AK7PF_L2Relative.txt:JetMETObjects/data/Jec11_V11_sqlfile_AK7PF_L3Absolute.txt:JetMETObjects/data/Jec11_V11_sqlfile_AK5PF_L2L3Residual.txt",L1L2L3res);
   create("F11DB_He_AK7Calo","JetMETObjects/data/Jec11_V11_sqlfile_AK5Calo_L1FastJet.txt:JetMETObjects/data/Jec11_V11_sqlfile_AK7Calo_L2Relative.txt:JetMETObjects/data/Jec11_V11_sqlfile_AK7Calo_L3Absolute.txt:JetMETObjects/data/Jec11_V11_sqlfile_AK5Calo_L2L3Residual.txt",L1L2L3res);
 
+  //updated 29/03/2012
+  create("Final2011_AK5Calo","JetMETObjects/data/GR_R_44_V14_AK5Calo_L1Offset.txt:JetMETObjects/data/GR_R_44_V14_AK5Calo_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK5Calo_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK5Calo_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK5JPT","JetMETObjects/data/GR_R_44_V14_AK5JPT_L1Offset.txt:JetMETObjects/data/GR_R_44_V14_AK5JPT_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK5JPT_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK5JPT_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK5PF","JetMETObjects/data/GR_R_44_V14_AK5PF_L1Offset.txt:JetMETObjects/data/GR_R_44_V14_AK5PF_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK5PF_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK5PF_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK5PFchs","JetMETObjects/data/GR_R_44_V14_AK5PFchs_L1Offset.txt:JetMETObjects/data/GR_R_44_V14_AK5PFchs_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK5PFchs_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK5PFchs_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK7Calo","JetMETObjects/data/GR_R_44_V14_AK7Calo_L1Offset.txt:JetMETObjects/data/GR_R_44_V14_AK7Calo_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK7Calo_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK7Calo_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK7JPT","JetMETObjects/data/GR_R_44_V14_AK7JPT_L1Offset.txt:JetMETObjects/data/GR_R_44_V14_AK7JPT_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK7JPT_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK7JPT_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK7PF","JetMETObjects/data/GR_R_44_V14_AK7PF_L1Offset.txt:JetMETObjects/data/GR_R_44_V14_AK7PF_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK7PF_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK7PF_L2L3Residual.txt",L1L2L3res);
+
+
+  create("Final2011_AK5FastCalo","JetMETObjects/data/GR_R_44_V14_AK5Calo_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK5Calo_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK5Calo_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK5Calo_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK5FastJPT","JetMETObjects/data/GR_R_44_V14_AK5JPT_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK5JPT_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK5JPT_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK5JPT_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK5FastPF","JetMETObjects/data/GR_R_44_V14_AK5PF_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK5PF_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK5PF_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK5PF_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK5FastPFchs","JetMETObjects/data/GR_R_44_V14_AK5PFchs_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK5PFchs_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK5PFchs_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK5PFchs_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK7FastCalo","JetMETObjects/data/GR_R_44_V14_AK7Calo_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK7Calo_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK7Calo_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK7Calo_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK7FastJPT","JetMETObjects/data/GR_R_44_V14_AK7JPT_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK7JPT_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK7JPT_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK7JPT_L2L3Residual.txt",L1L2L3res);
+  create("Final2011_AK7FastPF","JetMETObjects/data/GR_R_44_V14_AK7PF_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK7PF_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK7PF_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK7PF_L2L3Residual.txt",L1L2L3res);
 
 }
 
