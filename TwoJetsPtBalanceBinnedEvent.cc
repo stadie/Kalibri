@@ -1,4 +1,4 @@
-// $Id: TwoJetsPtBalanceBinnedEvent.cc,v 1.2 2011/11/24 16:12:25 stadie Exp $
+// $Id: TwoJetsPtBalanceBinnedEvent.cc,v 1.3 2012/01/24 16:27:29 kirschen Exp $
 
 #include "TwoJetsPtBalanceBinnedEvent.h"
 #include "JetBin.h"
@@ -7,7 +7,7 @@
 #include <functional>
 
 TwoJetsPtBalanceBinnedEvent::TwoJetsPtBalanceBinnedEvent(double maxAlpha) :  
-  TwoJetsPtBalanceEvent(0,0,0,0,0,0,0,0,0,0), maxAlpha_(maxAlpha)
+  TwoJetsPtBalanceEvent(0,0,0,0,0,0,0,0,0,0,0), maxAlpha_(maxAlpha)
 {
 }
 
