@@ -171,7 +171,7 @@ void BasePlotExtractor::refreshRatiosDataMC(){
   }
   //save to class instance
   AllRatiosDataMC_ = AllRatiosDataMC;
-  std::cout << "done with refreshing ratio-plots" << conf_i<<std::endl;
+  std::cout << "done with refreshing ratio-plots" <<std::endl;
 }
 
 //! Fits const and loglin function to DataMC-ratios (added to list of functions of ratio histogram)
