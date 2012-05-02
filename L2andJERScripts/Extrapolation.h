@@ -37,7 +37,7 @@ class Extrapolation :public BasePlotExtractor{
     ExtrapolateBin(Extrapolation* Outer);
     void addMCHisto(TH1D* MCHisto);
     void addDataHisto(TH1D* DataHisto);
-    void createTGraphErrors(Int_t xBin_i);
+    void createExtrapolationTGraphErrors(Int_t xBin_i);
     void plotExtrapol(Int_t xBin_i, Int_t bin_i);
     void produceExtrapolatedRes();
     TH1D* ExtrapolatedResMC() const {return ExtrapolatedResMC_;}

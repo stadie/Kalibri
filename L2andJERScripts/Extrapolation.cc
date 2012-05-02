@@ -1,25 +1,38 @@
 #include "Extrapolation.h"
 
-//Default constructor
-Extrapolation::Extrapolation(TString plotsnames,TString kalibriPlotsPath) : BasePlotExtractor(plotsnames,kalibriPlotsPath){
-  //init config_file;
 
-  //  init("GaussFitWidth");
-  init(profileType_);
-  //  if(plotsnames=="RelResponseVsPt")  init("RatioOfMeans");
-  //  else init("StandardDeviation");
+//! Default constructor, see BasePlotExtractor constructor
+//! for more information and initialization.
+//!
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
+Extrapolation::Extrapolation(TString plotsnames,TString kalibriPlotsPath) : BasePlotExtractor(plotsnames,kalibriPlotsPath){
+  init(profileType_); //baseplotextracotr method to read in plots
   extrapolInit();
 }
 
+//! Reads in extra information for extrapolation
+//! As of now: read in the cuts on pt3rel to read in the correct
+//! histograms
+//!
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void Extrapolation::extrapolInit() {
   
   cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("TwoJetsPtBalanceEvent plots cut_list",""));
-cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("TwoJetsPtBalanceEvent plots cut_no_list",""));
+  cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("TwoJetsPtBalanceEvent plots cut_no_list",""));
 
 }
 
 
 
+//! Plot and save all the histograms
+//!
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void Extrapolation::Plot() {
   MakeDateDir();
   if(chdir("Extrapol") != 0){ 
@@ -39,98 +52,77 @@ void Extrapolation::Plot() {
   //  for(int bin_i=0;bin_i<pConfig->nBins();bin_i++){
   for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
     int nEntries =2;//names_.size();
-  TLegend *leg = new TLegend(0.2,0.9-nEntries*0.07,0.4,0.9);
-  leg->SetBorderSize(0);
-  leg->SetFillColor(0);
-  leg->SetFillStyle(0);
-  leg->SetTextFont(42);
-  leg->SetTextSize(0.04);
-  
+    TLegend *leg = new TLegend(0.2,0.9-nEntries*0.07,0.4,0.9);
+    leg->SetBorderSize(0);
+    leg->SetFillColor(0);
+    leg->SetFillStyle(0);
+    leg->SetTextFont(42);
+    leg->SetTextSize(0.04);
+    
     for(int conf_i=0;conf_i<configs_.size();conf_i++){
       for(int j=0;j<2;j++){
-	//	if(j==0){
-	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetLineColor(style.getColor(0));
-	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetMarkerColor(style.getColor(0));
-	  //	}
-	  //	else {
-	  //	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetLineColor(1);
-	  //	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetMarkerColor(1);
-	  //	  
-	  //	}
-	//	AllPlots_.at(conf_i).at(bin_i).at(j)->SetFillColor(style.getColor(conf_i));
-	  //	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetFillStyle(3001);
-	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetMarkerStyle(style.getMarker(0));
+	AllPlots_.at(conf_i).at(bin_i).at(j)->SetLineColor(style.getColor(0));
+	AllPlots_.at(conf_i).at(bin_i).at(j)->SetMarkerColor(style.getColor(0));
+	AllPlots_.at(conf_i).at(bin_i).at(j)->SetMarkerStyle(style.getMarker(0));
       }
     }
     leg->AddEntry(AllPlots_.at(0).at(bin_i).at(0),(/*configs_.at(0)->yTitle()+*/" Data")/*.c_str()*/,"P");
-      leg->AddEntry(AllPlots_.at(0).at(bin_i).at(1),(/*configs_.at(0)->yTitle()+*/" MC")/*.c_str()*/,"L");
+    leg->AddEntry(AllPlots_.at(0).at(bin_i).at(1),(/*configs_.at(0)->yTitle()+*/" MC")/*.c_str()*/,"L");
+    
+    
 
-
-
-  for(int i=0;i<configs_.size();i++){
-    //Draw res in data and MC
-
-    AllPlots_.at(i).at(bin_i).at(1)->Draw("hist");
-    AllPlots_.at(i).at(bin_i).at(1)->GetYaxis()->SetRangeUser(yProfileMinMax().at(0),yProfileMinMax().at(1));
-    AllPlots_.at(i).at(bin_i).at(1)->GetYaxis()->SetTitle(yProfileTitle());
-    TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
-    AllPlots_.at(i).at(bin_i).at(1)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
-    AllPlots_.at(i).at(bin_i).at(1)->GetXaxis()->SetRangeUser(configs_.at(0)->xMin(),configs_.at(0)->xMax());
- 
-    AllPlots_.at(i).at(bin_i).at(0)->Draw("same");
-
-    AllPlots_.at(i).at(bin_i).at(1)->Draw("hist same");
-    leg->SetHeader((configs_.at(i)->binTitle(configs_.at(i)->binEdges()->at(bin_i),
-					     configs_.at(i)->binEdges()->at(bin_i+1))).c_str());
-    leg->Draw();
-    cmsPrel();
-    TString outname = "ResolutionPlots_"+plotsnames_+"_"+cutNames_.at(i)+"_"+configs_.at(0)->binName(bin_i);
-    //  outname+=bin_i;
-    outname+=".eps";
-    c->SaveAs(outname);
-
-    //Draw DataMC-ratios
-    std::cout << AllRatiosDataMC_.size() << " and " << std::endl;
-    AllRatiosDataMC_.at(i).at(bin_i)->Draw();
-    drawConfidenceIntervals(AllRatiosDataMC_.at(i).at(bin_i));
-    AllRatiosDataMC_.at(i).at(bin_i)->Draw("same");
-    AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetRangeUser(yRatioMinMax().at(0),yRatioMinMax().at(1));
-    AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetTitle(yRatioTitle());
-    //    AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetRangeUser(0.5,1.5);
-    //    AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetTitle("Resolution ratio");
-    AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
-    AllRatiosDataMC_.at(i).at(bin_i)->GetXaxis()->SetRangeUser(configs_.at(0)->xMin(),configs_.at(0)->xMax());
-
-
-  TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.5);
-  label->AddText(jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
-  label->AddText((configs_.at(i)->binTitle(configs_.at(i)->binEdges()->at(bin_i),
-					   configs_.at(i)->binEdges()->at(bin_i+1))).c_str());//(configs_.at(0)->BinTitle(xBin_i,configs_.at(0)->binEdges()->at(bin_i),configs_.at(0)->binEdges()->at(bin_i+1),0)).c_str()/*+(TString)" and "*/);
-  TLegend* leg1 = util::LabelFactory::createLegendWithOffset(2,0.6);
-  addFunctionLabelsToLegend( AllRatiosDataMC_.at(i).at(bin_i),leg1);
-  //  leg1->AddEntry(MCExtrapols_.at(xBin_i),"Extrapolation (MC)","LP");
-  //  leg1->AddEntry(DataExtrapols_.at(xBin_i),"Extrapolation (data)","LP");
-  label->Draw("same");
-  leg1->Draw();
-  cmsPrel();
-
-
-
-
-
-     cmsPrel();
-    outname = "ResolutionPlots_"+plotsnames_+"_ratio"+cutNames_.at(i)+"_"+configs_.at(0)->binName(bin_i);
-    //  outname+=bin_i;
-    outname+=".eps";
-    c->SaveAs(outname);
-
+    for(int i=0;i<configs_.size();i++){
+      //Draw res in data and MC
+      
+      AllPlots_.at(i).at(bin_i).at(1)->Draw("hist");
+      AllPlots_.at(i).at(bin_i).at(1)->GetYaxis()->SetRangeUser(yProfileMinMax().at(0),yProfileMinMax().at(1));
+      AllPlots_.at(i).at(bin_i).at(1)->GetYaxis()->SetTitle(yProfileTitle());
+      TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
+      AllPlots_.at(i).at(bin_i).at(1)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
+      AllPlots_.at(i).at(bin_i).at(1)->GetXaxis()->SetRangeUser(configs_.at(0)->xMin(),configs_.at(0)->xMax());
+      
+      AllPlots_.at(i).at(bin_i).at(0)->Draw("same");
+      
+      AllPlots_.at(i).at(bin_i).at(1)->Draw("hist same");
+      leg->SetHeader((configs_.at(i)->binTitle(configs_.at(i)->binEdges()->at(bin_i),
+					       configs_.at(i)->binEdges()->at(bin_i+1))).c_str());
+      leg->Draw();
+      cmsPrel();
+      TString outname = "ResolutionPlots_"+plotsnames_+"_"+cutNames_.at(i)+"_"+configs_.at(0)->binName(bin_i);
+      //  outname+=bin_i;
+      outname+=".eps";
+      c->SaveAs(outname);
+      
+      //Draw DataMC-ratios
+      std::cout << AllRatiosDataMC_.size() << " and " << std::endl;
+      AllRatiosDataMC_.at(i).at(bin_i)->Draw();
+      drawConfidenceIntervals(AllRatiosDataMC_.at(i).at(bin_i));
+      AllRatiosDataMC_.at(i).at(bin_i)->Draw("same");
+      AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetRangeUser(yRatioMinMax().at(0),yRatioMinMax().at(1));
+      AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetTitle(yRatioTitle());
+      //    AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetRangeUser(0.5,1.5);
+      //    AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetTitle("Resolution ratio");
+      AllRatiosDataMC_.at(i).at(bin_i)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
+      AllRatiosDataMC_.at(i).at(bin_i)->GetXaxis()->SetRangeUser(configs_.at(0)->xMin(),configs_.at(0)->xMax());
+      TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.5);
+      label->AddText(jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
+      label->AddText((configs_.at(i)->binTitle(configs_.at(i)->binEdges()->at(bin_i),
+					       configs_.at(i)->binEdges()->at(bin_i+1))).c_str());//(configs_.at(0)->BinTitle(xBin_i,configs_.at(0)->binEdges()->at(bin_i),configs_.at(0)->binEdges()->at(bin_i+1),0)).c_str()/*+(TString)" and "*/);
+      TLegend* leg1 = util::LabelFactory::createLegendWithOffset(2,0.6);
+      addFunctionLabelsToLegend( AllRatiosDataMC_.at(i).at(bin_i),leg1);
+      //  leg1->AddEntry(MCExtrapols_.at(xBin_i),"Extrapolation (MC)","LP");
+      //  leg1->AddEntry(DataExtrapols_.at(xBin_i),"Extrapolation (data)","LP");
+      label->Draw("same");
+      leg1->Draw();
+      cmsPrel();
+      outname = "ResolutionPlots_"+plotsnames_+"_ratio"+cutNames_.at(i)+"_"+configs_.at(0)->binName(bin_i);
+      //  outname+=bin_i;
+      outname+=".eps";
+      c->SaveAs(outname);
+    }
   }
   
-  
-
-
-  }
-
+  //Save RatioVsBinVar plots
   for(int conf_i=0;conf_i<configs_.size();conf_i++){
   c->SetLogx(0);
   //  RatioVsBinVarHistos_.at(conf_i)
@@ -158,29 +150,44 @@ void Extrapolation::Plot() {
 }
 
 
+//! Do the radiation extrapolation in each bin (for resolutions mainly bins in eta (and then xbins in pt)
+//! Then save the reult of the extrapolation and refresh all previous plots (e.g. Data/MC-ratios)
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void Extrapolation::createPtRelExtrapol() {
 
 
   VecOfTH1vec_t AllExtrapolatedRes;
+  //loop over all bins (e.g. eta)
   for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
+    //create instance of helper class ExtrapolateBin that actually does the extrapolation
     ExtrapolateBin ExtrapolationBin(this);
     
+    //add all MC and Data histos, i.e. loop over the cuts and then add a MC and data histo for each cut
     for(int conf_i=0;conf_i<configs_.size();conf_i++){
       ExtrapolationBin.addMCHisto(AllPlots_.at(conf_i).at(bin_i).at(1));
       ExtrapolationBin.addDataHisto(AllPlots_.at(conf_i).at(bin_i).at(0));
     }
+    // now create extrapolation tgrapherrors for each xbin (e.g. pt)
+    // and plot this extrapolation plot
     for(Int_t xbin_i=0;xbin_i<configs_.at(0)->nXBins();xbin_i++){
-      ExtrapolationBin.createTGraphErrors(xbin_i);
+      ExtrapolationBin.createExtrapolationTGraphErrors(xbin_i);
       ExtrapolationBin.plotExtrapol(xbin_i,bin_i);
     }
+    //create extrapolated histograms (e.g. resolution vs pt) for that bin
     ExtrapolationBin.produceExtrapolatedRes();
+    //collect those extrapolated histos
     TH1vec_t CollectExtrapolatedRes;
     CollectExtrapolatedRes.push_back(ExtrapolationBin.ExtrapolatedResData());
     CollectExtrapolatedRes.push_back(ExtrapolationBin.ExtrapolatedResMC());
     AllExtrapolatedRes.push_back(CollectExtrapolatedRes);
-
   }
 
+  // Append these extrapolated histograms as if they were read in right from the start,
+  // add the corresponding "virtual" cut of 0.0 to the cutlist and repeat the same "appending"
+  // for all other vectors in question
   AllPlots_.push_back(AllExtrapolatedRes);
   cutNumbers_.push_back(0.0);
   cutNames_.push_back("00");
@@ -188,11 +195,19 @@ void Extrapolation::createPtRelExtrapol() {
   functions_.push_back(functions_.at(0));
   profiles_.push_back(profiles_.at(0));
   names_.push_back(names_.at(0)+"_Extrapol");
+  //redo the calculation of data/MC-ratios to propagate the additional extrapolated histograms (defined in BasePlotExtractor)
   refreshRatiosDataMC();
+  // fits const and loglin function to dataMC-ratio and produces RatioVsBinVar-plots (e.g. Data/MC-ratio of resolution vs. eta) (defined in BasePlotExtractor)
   makeRatioVsBinVarHistos();
 }
 
 
+//! Default constructor taking a pointer to the encapsulating object 
+//! (in order to access all information saved there)
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 Extrapolation::ExtrapolateBin::ExtrapolateBin(Extrapolation* Outer) {
   Outer_=Outer;
 
@@ -208,14 +223,17 @@ void Extrapolation::ExtrapolateBin::addDataHisto(TH1D* DataHisto){
   DataHistos_.push_back(DataHisto);
 }
 
-void Extrapolation::ExtrapolateBin::createTGraphErrors(Int_t xBin_i){
-  //  std::cout << Outer_->cutNumbers_.at(1) << std::endl;
-  
-  
-  //  std::cout << Outer_->configs_.at(0)->xBinEdges()->at(xBin_i) << std::endl;
+//! create extrapolation tgrapherrors for a xbin
+//! 
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
+void Extrapolation::ExtrapolateBin::createExtrapolationTGraphErrors(Int_t xBin_i){
+
   std::vector<double> x,x_e,MCy,MCy_e,Datay,Datay_e;
 
-  //  for()
+  //  loop over cuts and fill vectors
   for (Int_t cut_i =0;cut_i<Outer_->cutNumbers_.size();cut_i++){
     x.push_back(Outer_->cutNumbers_.at(cut_i));
     x_e.push_back(0.);
@@ -225,12 +243,11 @@ void Extrapolation::ExtrapolateBin::createTGraphErrors(Int_t xBin_i){
     Datay_e.push_back(DataHistos_.at(cut_i)->GetBinError(xBin_i));
 
        std::cout << Outer_->cutNumbers_.at(cut_i) << std::endl;
-    
-    
        std::cout<< MCy.back() << " and error: " << MCy_e.back() << std::endl;
   }
 
   
+  //create TGraphErrors from previously defined vectors
   TGraphErrors *extrapol_MC = new TGraphErrors(Outer_->cutNumbers_.size(),&x[0],&MCy[0],&x_e[0],&MCy_e[0]);
   TGraphErrors *extrapol_Data = new TGraphErrors(Outer_->cutNumbers_.size(),&x[0],&Datay[0],&x_e[0],&Datay_e[0]);
   //  TGraphErrors *gr_res1 = new TGraphErrors(n,&x_ptthree_[0],&y_mean_ratio_res1_[0],&ex_ptthree_[0],&ey_mean_ratio_res1_[0]);
@@ -239,15 +256,23 @@ void Extrapolation::ExtrapolateBin::createTGraphErrors(Int_t xBin_i){
   lin_extrapol->SetParName(0,"ResZero");
   lin_extrapol->SetParName(1,"slope");
   
+  //fit a linear extrapolation function to the TGraphErrors for data and MC
   extrapol_MC->Fit("lin_extrapol","Q","same",0,0.5);
   extrapol_Data->Fit("lin_extrapol","Q","same",0,0.5);
 
+  //collect the extrapolation TGraphErrors
   MCExtrapols_.push_back(extrapol_MC);
   DataExtrapols_.push_back(extrapol_Data);
 
 
 }
 
+//! Helper function to determine min/max values of the TGraphErrors for extrapolation
+//! 
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 std::pair <float,float> Extrapolation::ExtrapolateBin::determineMinMax(TGraphErrors* graph){
   std::pair <float,float> minMaxPair(graph->GetY()[0],graph->GetY()[0]);
   for(Int_t i=0;i<graph->GetN();i++){
@@ -258,6 +283,12 @@ std::pair <float,float> Extrapolation::ExtrapolateBin::determineMinMax(TGraphErr
 }
 
 
+//! Plot and save the Extrapolation TGraphErrors
+//! 
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   //  std::cout << Outer_->cutNumbers_.at(1) << std::endl;
   if(chdir("Resolution") != 0){ 
@@ -329,6 +360,12 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
 
 }
 
+//! Create and save the extrapolated histograms for each bin
+//! (e.g. resolutions)
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void Extrapolation::ExtrapolateBin::produceExtrapolatedRes(){
 
   TH1D* tempExtrapolatedResMC = (TH1D*) MCHistos_.at(0)->Clone();
