@@ -2,22 +2,32 @@
 #include "../scripts/tdrstyle_mod.C"
 #include <string>
 
-//Default constructor
+//! Default constructor, reads in information about the 
+//! plots. These plots have to be defined in config_
+//! and ExternalConfig_ read in here
+//!
+//!
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsPath) {
-  //init config_file;
-  //  config_=ConfigFile("L2L3.cfg");
-  //  plotsnames_=plotsnames;
-  //  init();
   kalibriPlotsPath_=kalibriPlotsPath;
-   config_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/scripts/L2L3AllPlots.cfg");
-  //  config_=ConfigFile("L2L3.cfg");
   plotsnames_=plotsnames;
+  //read in config files in kalibri-style
+  config_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/scripts/L2L3AllPlots.cfg");
   ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/scripts/ExternalConfigs.cfg");
   readInExtraInfo();
   std::cout << "readInExtraInfo(); executed " << yProfileTitle()<< std::endl;
 
 }
 
+//! Manually read in extra information from
+//! ExternalConfig_ to have nice x,y axis titles
+//! and consistent labels (store in class members)
+//!
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void BasePlotExtractor::readInExtraInfo() {
   TString fileNames ="AK5PF";
   jetType_ = util::LabelFactory::jetAlgo(fileNames)+util::LabelFactory::jetType(fileNames);
@@ -35,6 +45,27 @@ void BasePlotExtractor::readInExtraInfo() {
 }
 
 
+
+//! Read in the basic plots for the profile types
+//! and store them in class members
+//!   AllRatiosDataMC_ contains all ratio plots (ratio->Divide(DataMCProfiles.at(0),DataMCProfiles.at(1));)
+//!   AllPlots_        contains all profile plots (best: 2, one Data and one MC, but depends on definition of correction types); 
+//!    - OneBinAsymmetryVsPt30 correction types  =  L2L3###
+//!    - OneBinAsymmetryVsPt30 1 correction types  =  L2L3
+//!    - OneBinAsymmetryVsPt30 input samples     =  0:data;1:MC
+//!    - would be a good definition resulting in DataMCProfiles to have two entries
+//!    - OneBinAsymmetryVsPt30 correction types  =  L2L3 L2L3res
+//!    - would result in three entries
+//!
+//!   Following for Kalibri bookkeeping of plots (can be used later to extract e.g. labels)
+//!   names_	   = names;	
+//!   configs_	   = configs;	
+//!   functions_	   = functions;	
+//!   profiles_        = profiles;    
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void BasePlotExtractor::init(TString profileType) {
   TFile *inf;
   //      inf = new TFile("KalibriPlots_withOldSmear.root");
@@ -43,6 +74,7 @@ void BasePlotExtractor::init(TString profileType) {
   inf = new TFile(kalibriPlotsPath());
   std::vector<std::vector<Event*>* > samples;
   setTDRStyle();
+
 
   std::vector<std::string> names;
   names = bag_of_string(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots names",""));
@@ -78,7 +110,7 @@ void BasePlotExtractor::init(TString profileType) {
     TH1vec_t DataMCRatios; //Vector to contain Data/MC-ratios
     for(int bin_i=0;bin_i<pConfig->nBins();bin_i++){
       //      std::cout << bin_i << " of " << pConfig->nBins() << std::endl;
-      TH1vec_t DataMCFractions;//Vector to contain Data and MC TH1
+      TH1vec_t DataMCProfiles;//Vector to contain Data and MC TH1
       for(ControlPlotsConfig::InputTagsIterator i = pConfig->inputTagsBegin();
 	  i != pConfig->inputTagsEnd(); ++i) {
 	TString name = pConfig->name();
@@ -88,17 +120,18 @@ void BasePlotExtractor::init(TString profileType) {
 	name += "_"+pConfig->correctionTypeName(i->second);
 	name += "_"+pConfig->binName(bin_i);
 	name += "_"+profileType;
-	//	std::cout << name << std::endl;
-	DataMCFractions.push_back((TH1D*) inf->Get(name));
-	std::cout << DataMCFractions.back()->GetName() << std::endl;
+	//Import the profile plots (TH1D) as defined in the config (usually two, depending on number of correction types)
+	DataMCProfiles.push_back((TH1D*) inf->Get(name));
+	std::cout << DataMCProfiles.back()->GetName() << std::endl;
       }
-      TH1D* ratio = (TH1D*) DataMCFractions.at(0)->Clone();
-      ratio->Divide(DataMCFractions.at(0),DataMCFractions.at(1));
+      // Do ratios of first and second (0 should be Data, 1 should be MC, can be checked in output above)
+      TH1D* ratio = (TH1D*) DataMCProfiles.at(0)->Clone();
+      ratio->Divide(DataMCProfiles.at(0),DataMCProfiles.at(1));
       DataMCRatios.push_back(ratio);
-      //      DataMCFractions.at(1)->Draw("hist");
-      //      DataMCFractions.at(0)->Draw("same");
-      //      c->SaveAs(DataMCFractions.back()->GetName()+(TString)".eps");
-      BinsDMCF.push_back(DataMCFractions);
+      //      DataMCProfiles.at(1)->Draw("hist");
+      //      DataMCProfiles.at(0)->Draw("same");
+      //      c->SaveAs(DataMCProfiles.back()->GetName()+(TString)".eps");
+      BinsDMCF.push_back(DataMCProfiles);
     }// (TH1D*)inf->Get("kFSR_vs_Abseta_histo_res1");
     AllPlots.push_back(BinsDMCF);
     AllRatiosDataMC.push_back(DataMCRatios);
@@ -115,6 +148,14 @@ void BasePlotExtractor::init(TString profileType) {
   makeRatioVsBinVarHistos();
 }
 
+//! Refresh DataMCRatios vector after performing e.g. an  
+//! extrapolation (see Extrapolation.cc /.h) 
+//! This is needed to get the ratios and any following plots with the 
+//! (e.g. radiation) extrapolation appplied
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void BasePlotExtractor::refreshRatiosDataMC(){
   VecOfTH1vec_t AllRatiosDataMC;
 
@@ -123,26 +164,26 @@ void BasePlotExtractor::refreshRatiosDataMC(){
     TH1vec_t DataMCRatios; //Vector to contain Data/MC-ratios
     for(int bin_i=0;bin_i<configs_.at(i)->nBins();bin_i++){
       TH1D* ratio = (TH1D*) AllPlots_.at(i).at(bin_i).at(0)->Clone();
-      //      TH1D* ratio = (TH1D*) DataMCFractions.at(0)->Clone();
       ratio->Divide(AllPlots_.at(i).at(bin_i).at(0),AllPlots_.at(i).at(bin_i).at(1));
-      //      ratio->Divide(DataMCFractions.at(0),DataMCFractions.at(1));
       DataMCRatios.push_back(ratio);
-      //      DataMCFractions.at(1)->Draw("hist");
-      //      DataMCFractions.at(0)->Draw("same");
-      //      c->SaveAs(DataMCFractions.back()->GetName()+(TString)".eps");
-      //      BinsDMCF.push_back(DataMCFractions);
-    }// (TH1D*)inf->Get("kFSR_vs_Abseta_histo_res1");
-    //    AllPlots.push_back(BinsDMCF);
+    }
     AllRatiosDataMC.push_back(DataMCRatios);
   }
-
+  //save to class instance
   AllRatiosDataMC_ = AllRatiosDataMC;
+  std::cout << "done with refreshing ratio-plots" << conf_i<<std::endl;
 }
 
+//! Fits const and loglin function to DataMC-ratios (added to list of functions of ratio histogram)
+//! then creates a RatioVsBinVarHisto using the const fit
+//! All these histos are saved to RatioVsBinVarHistos_
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void BasePlotExtractor::makeRatioVsBinVarHistos(){
   TH1vec_t RatioVsBinVarHistos;
   for(int conf_i=0;conf_i<configs_.size();conf_i++){
-    std::cout << "done with refreshing ratio-plots" << conf_i<<std::endl;
     std::cout << names_.size() << std::endl;
     std::cout << names_.at(conf_i) << std::endl;
     TH1D* RatioVsBinVar = new TH1D(("RatioVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
@@ -158,45 +199,35 @@ void BasePlotExtractor::makeRatioVsBinVarHistos(){
   fit_loglin->SetParName(0,"const");
   fit_loglin->SetParName(1,"slope");
 
-     std::cout << names_.at(conf_i) << "test4" << std::endl;
-      //    hXSpectrum_[id] = new TH1D(name.c_str(),"",
-      //			       config_->nXBins(),&(config_->xBinEdges()->front()));
-
-    for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
-      //      std::cout << names_.at(conf_i) << "test5"<< std::endl;
-      AllRatiosDataMC_.at(conf_i).at(bin_i)->Fit("fit_const","EMQ","same");
-      AllRatiosDataMC_.at(conf_i).at(bin_i)->Fit("fit_loglin","EMQ+","same");
-      //      std::cout << names_.at(conf_i) << "test5"<< std::endl;
-      if(AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")){
-	//      TList *lfits = AllRatiosDataMC_.at(conf_i).at(bin_i)->GetListOfFunctions();
-	//      lfits->ls();
-	//      std::cout << AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")->GetParameter(0) << std::endl;
-	RatioVsBinVar->SetBinContent(bin_i+1,AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")->GetParameter(0));
-	//      std::cout << names_.at(conf_i) << "test5"<< std::endl;
-	RatioVsBinVar->SetBinError(bin_i+1,AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")->GetParError(0));
-
-      }
-      else {
-	std::cout << names_.at(conf_i) << "WARNING: NO FIT FUNCTIONS ADDED... SETTING TO ZERO BIN: " << bin_i<< std::endl;
-	RatioVsBinVar->SetBinContent(bin_i+1,0.);
-	RatioVsBinVar->SetBinError(bin_i+1,0.);
-      }
-      std::cout << names_.at(conf_i) << "test6"<< std::endl;
-      
-    }
-        for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
-	  std::cout << RatioVsBinVar->GetBinContent(bin_i+1) << ", " << std::endl;
-    }
-
-    RatioVsBinVarHistos.push_back(RatioVsBinVar);
-
-    std::cout << "done with refreshing ratio-plots" << conf_i<<std::endl;
-  }
-
+  std::cout << names_.at(conf_i) << "test4" << std::endl;
   
+  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
+    AllRatiosDataMC_.at(conf_i).at(bin_i)->Fit("fit_const","EMQ","same");
+    AllRatiosDataMC_.at(conf_i).at(bin_i)->Fit("fit_loglin","EMQ+","same");
+    if(AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")){
+      RatioVsBinVar->SetBinContent(bin_i+1,AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")->GetParameter(0));
+      RatioVsBinVar->SetBinError(bin_i+1,AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")->GetParError(0));
+    }
+    else {
+      std::cout << names_.at(conf_i) << "WARNING: NO FIT FUNCTIONS ADDED... SETTING BIN TO ZERO: " << bin_i<< std::endl;
+      RatioVsBinVar->SetBinContent(bin_i+1,0.);
+      RatioVsBinVar->SetBinError(bin_i+1,0.);
+    }
+  }
+  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
+    std::cout << RatioVsBinVar->GetBinContent(bin_i+1) << ", " << std::endl;
+  }
+  RatioVsBinVarHistos.push_back(RatioVsBinVar);
+  }
   RatioVsBinVarHistos_=RatioVsBinVarHistos;
 }
 
+//! Fills legend with information from ExternalConfig_, 
+//! also adds chi^2/ndf to labels
+//!
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void BasePlotExtractor::addFunctionLabelsToLegend(TH1D* histo, TLegend* leg){
   DefaultStyles style;
   style.setStyle("Confidence");
@@ -213,20 +244,14 @@ void BasePlotExtractor::addFunctionLabelsToLegend(TH1D* histo, TLegend* leg){
     Double_t chisquared1;
     unsigned int ndf1;
     char buffer [50];
-
-//    import_kFSR_vs_Abseta_histo_res1_Dir1->Fit(kFSR_fit,"N 0  S E");
-//    TMatrixDSym cov = r->GetCovarianceMatrix();  //  to access the covariance matrix
     chisquared1= r->Chi2();
     ndf1= r->Ndf();
 
-
-    //    histo->Fit(temp_tf1->GetName(),"NS");
     sprintf (buffer, " (#chi^{2}/ndf = %.1f / %u )", chisquared1, ndf1);
     std::cout << buffer << std::endl;
 
     std::string legendName = ExternalConfig_.read<std::string>(temp_tf1->GetName()+(std::string) " legend label","DUMMYlabel");
     //      yProfileTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile yTitle","DUMMYResolution");
-
     leg->AddEntry(temp_tf1,(legendName+buffer).c_str(),"F");
     i++;
   }
@@ -234,6 +259,13 @@ void BasePlotExtractor::addFunctionLabelsToLegend(TH1D* histo, TLegend* leg){
 }
 
 
+//! Draws confidence intervals for all functions in
+//! the listoffunctions of the histogram
+//! For this, it repeats the fit and then extracts the band
+//!
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
 void BasePlotExtractor::drawConfidenceIntervals(TH1D* histo){
   DefaultStyles style;
   style.setStyle("Confidence");
@@ -267,13 +299,13 @@ void BasePlotExtractor::drawConfidenceIntervals(TH1D* histo){
       //    }
     i++;
     hint->Draw("e4 same");
-    //	     hint->Print("all"); 
   }
   
 }
 
 //!  \brief Helper method for \p createTwoJetsPtBalanceEventPlots()
 //!
+//!  A copy from CalibCore, needs to be updated manually
 //!  Returns the \p ControlPlotsFunction::Function for a variable
 //!  with name \p varName and a \p ControlPlotsConfig::CorrectionType
 //!  \p type.
