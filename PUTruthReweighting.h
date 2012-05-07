@@ -28,8 +28,10 @@ protected:
 			  std::vector<Event*>& control2) { return data.size();}
   
  private:
-  std::map<double,double> ndata_,ncontrol_;
-  std::map<double,double> weights_;
+  std::string TruthWeightingDir_;
+  std::string TruthWeightingMCDistribution_;
+  std::map<double,int> controlTrigger_;
+  //  std::map<double,double> weights_;
   bool useSingleJetTriggers_;
   std::vector<std::string> trignames_;
   std::vector<double> trigthresholds_;
