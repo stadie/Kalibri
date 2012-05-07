@@ -2,6 +2,7 @@
 
 import os
 import sys
+import ConfigParser
 
 def writeCfg(filename):
     config_1="""
@@ -180,9 +181,9 @@ create TwoJetsPtBalanceEvent plots = true
     for index_cut, cut in enumerate(cut_list):
         for index_plot, plot in enumerate(plot_list):
             fcfg.write(plot + cut + ";")
-    fcfg.write("AsymmetryVsPt20_all_eta;AsymmetryVsEta;AsymmetryVsEta_all_pt;MPFVsEta_all_pt;AsymmetryVsNPV20_all_eta;AsymmetryVsMCNPUVtx20_all_eta;AsymmetryVsNPV20_pt_bin_all_eta;AsymmetryVsMCNPUVtx20_pt_bin_all_eta;AsymmetryVsTJF;AbsAsymmetryVsTJF;AsymmetryVsNPV;AbsAsymmetryVsNPV")
+    fcfg.write("AsymmetryVsMCNPUTruth20_all_eta;AsymmetryVsNPV20_all_eta;AsymmetryVsPt20_all_eta;AsymmetryVsEta;AsymmetryVsEta_all_pt;MPFVsEta_all_pt;AsymmetryVsMCNPUVtx20_all_eta;AsymmetryVsNPV20_pt_bin_all_eta;AsymmetryVsMCNPUVtx20_pt_bin_all_eta;AsymmetryVsMCNPUTruth20_pt_bin_all_eta;AsymmetryVsTJF;AbsAsymmetryVsTJF;AsymmetryVsNPV;AbsAsymmetryVsNPV")
     fcfg.write("\n")
-##    for index_samples, samples in enumerate(samples_all):
+#    for index_samples, samples in enumerate(samples_all):
     for index_cut, cut in enumerate(cut_list):
         #    print "prepare " + samples
         fcfg.write(plot_list[0] + cut + " x variable        =   MeanPt; log\n")
@@ -291,8 +292,10 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[7] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
         fcfg.write(plot_list[7] + cut + " input samples     =  0:data;1:MC\n\n")
 
-
+#    fcfg.write("\n")
+#    config_2="""
         config_2="""
+
 
 AsymmetryVsPt20_all_eta x variable        =  MeanPt; log
 AsymmetryVsPt20_all_eta x edges           =  15 20 2000
@@ -349,7 +352,7 @@ MPFVsEta_all_pt profile types     =  Mean; GaussFitMean; IQMean
 MPFVsEta_all_pt input samples     =  0:data;1:MC
 
 AsymmetryVsNPV20_all_eta x variable        =  VtxN
-AsymmetryVsNPV20_all_eta x edges           =  16 0.0 16.0
+AsymmetryVsNPV20_all_eta x edges           =  44 0.0 44.0
 AsymmetryVsNPV20_all_eta y variable        =  Asymmetry
 AsymmetryVsNPV20_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
 AsymmetryVsNPV20_all_eta bin variable      =  Eta
@@ -363,7 +366,7 @@ AsymmetryVsNPV20_all_eta input samples     =  0:data;1:MC
 
 
 AsymmetryVsMCNPUVtx20_all_eta x variable        =  MCNPUVtx
-AsymmetryVsMCNPUVtx20_all_eta x edges           =  16 0.0 16.0
+AsymmetryVsMCNPUVtx20_all_eta x edges           =  44 0.0 44.0
 AsymmetryVsMCNPUVtx20_all_eta y variable        =  Asymmetry
 AsymmetryVsMCNPUVtx20_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
 AsymmetryVsMCNPUVtx20_all_eta bin variable      =  Eta
@@ -375,13 +378,27 @@ AsymmetryVsMCNPUVtx20_all_eta 1 correction types  =  L2L3
 AsymmetryVsMCNPUVtx20_all_eta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
 AsymmetryVsMCNPUVtx20_all_eta input samples     =  0:data;1:MC
 
+AsymmetryVsMCNPUTruth20_all_eta x variable        =  MCNPUTruth
+AsymmetryVsMCNPUTruth20_all_eta x edges           =  44 0.0 44.0
+AsymmetryVsMCNPUTruth20_all_eta y variable        =  Asymmetry
+AsymmetryVsMCNPUTruth20_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
+AsymmetryVsMCNPUTruth20_all_eta bin variable      =  Eta
+AsymmetryVsMCNPUTruth20_all_eta bin edges         =  -5.192 5.192
+AsymmetryVsMCNPUTruth20_all_eta cut variable      =  ThirdJetFractionPlain
+AsymmetryVsMCNPUTruth20_all_eta cut edges         =  0.0 0.2
+AsymmetryVsMCNPUTruth20_all_eta correction types  =  L2L3; L2L3Res
+AsymmetryVsMCNPUTruth20_all_eta 1 correction types  =  L2L3
+AsymmetryVsMCNPUTruth20_all_eta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
+AsymmetryVsMCNPUTruth20_all_eta input samples     =  0:data;1:MC
+
 
 AsymmetryVsNPV20_pt_bin_all_eta x variable        =  VtxN
-AsymmetryVsNPV20_pt_bin_all_eta x edges           =  16 0.0 16.0
+AsymmetryVsNPV20_pt_bin_all_eta x edges           =  44 0.0 44.0
 AsymmetryVsNPV20_pt_bin_all_eta y variable        =  Asymmetry
 AsymmetryVsNPV20_pt_bin_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
 AsymmetryVsNPV20_pt_bin_all_eta bin variable      =  MeanPt
-AsymmetryVsNPV20_pt_bin_all_eta bin edges         =  20 30 50 80 120 200 360 500 900 7000
+#AsymmetryVsNPV20_pt_bin_all_eta bin edges         =  20 30 50 80 120 200 360 500 900 7000
+AsymmetryVsNPV20_pt_bin_all_eta bin edges         =  45 90 150 210 270 340 420 900 7000
 AsymmetryVsNPV20_pt_bin_all_eta cut variable      =  ThirdJetFractionPlain
 AsymmetryVsNPV20_pt_bin_all_eta cut edges         =  0.0 0.2
 AsymmetryVsNPV20_pt_bin_all_eta correction types  =  L2L3; L2L3Res
@@ -391,17 +408,32 @@ AsymmetryVsNPV20_pt_bin_all_eta input samples     =  0:data;1:MC
 
 
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta x variable        =  MCNPUVtx
-AsymmetryVsMCNPUVtx20_pt_bin_all_eta x edges           =  16 0.0 16.0
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta x edges           =  44 0.0 44.0
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta y variable        =  Asymmetry
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta bin variable      =  MeanPt
-AsymmetryVsMCNPUVtx20_pt_bin_all_eta bin edges         =  20 30 50 80 120 200 360 500 900 7000
+#AsymmetryVsMCNPUVtx20_pt_bin_all_eta bin edges         =  20 30 50 80 120 200 360 500 900 7000
+AsymmetryVsMCNPUVtx20_pt_bin_all_eta bin edges         =  45 90 150 210 270 340 420 900 7000
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta cut variable      =  ThirdJetFractionPlain
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta cut edges         =  0.0 0.2
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta correction types  =  L2L3; L2L3Res
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta 1 correction types  =  L2L3
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
 AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
+
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta x variable        =  MCNPUTruth
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta x edges           =  44 0.0 44.0
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta y variable        =  Asymmetry
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta bin variable      =  MeanPt
+#AsymmetryVsMCNPUTruth20_pt_bin_all_eta bin edges         =  20 30 50 80 120 200 360 500 900 7000
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta bin edges         =  45 90 150 210 270 340 420 900 7000
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta cut variable      =  ThirdJetFractionPlain
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta cut edges         =  0.0 0.2
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta correction types  =  L2L3; L2L3Res
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta 1 correction types  =  L2L3
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans
+AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
 
 
 """
@@ -501,11 +533,36 @@ AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
     fcfg.write("use Di-Jet events = "+str(nevents)+"\n")
     fcfg.write("use Di-Jet Control1 events = "+str(nevents)+"\n")
 
-    if(DATAYEAR == "2011"):
+    if(DATAYEAR == "2012"):
+        if(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF and SINGLEJET):
+            fcfg.write("Use single jet triggers = true\n")
+            fcfg.write("Di-Jet trigger names = HLT_PFJet40;HLT_PFJet80;HLT_PFJet140;HLT_PFJet200;HLT_PFJet260;HLT_PFJet320;HLT_PFJet400\n")
+#ad-hoc values...
+            if(jettype == "ak5PF"):
+                fcfg.write("Di-Jet trigger thresholds = 45 90 150 210 270 340 420 \n") 
+        elif(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF):
+            fcfg.write("Di-Jet trigger names = HLT_DiPFJetAve40;HLT_DiPFJetAve80;HLT_DiPFJetAve140;HLT_DiPFJetAve200;HLT_DiPFJetAve260;HLT_DiPFJetAve320;HLT_DiPFJetAve400\n")
+            #WARNING: ad-hoc values...
+            #WARNING: ad-hoc values...
+            #WARNING: ad-hoc values...
+            if(jettype == "ak5PF"):
+                fcfg.write("Di-Jet trigger thresholds = 45 90 150 210 270 340 420 \n") 
+            if(jettype == "ak5Calo"):
+                fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
+            if(jettype == "ak5JPT"):
+                fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
+#            fcfg.write("Di-Jet trigger names = HLT_DiPFJetAve320;HLT_DiPFJetAve400\n")
+#            #ad-hoc values...
+#            if(jettype == "ak5PF"):
+#                fcfg.write("Di-Jet trigger thresholds = 340 420 \n") 
+
+
+
+    elif(DATAYEAR == "2011"):
         if(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF and SINGLEJET):
             fcfg.write("Use single jet triggers = true\n")
             fcfg.write("Di-Jet trigger names = HLT_Jet30;HLT_Jet60;HLT_Jet80;HLT_Jet110;HLT_Jet150;HLT_Jet190;HLT_Jet240;HLT_Jet300;HLT_Jet370\n")
-#determined from full statistics 03/02/2012
+            #determined from full statistics 03/02/2012
             if(jettype == "ak5Calo"):
                 fcfg.write("Di-Jet trigger thresholds = 35 65 89 124 165 205 260 325 400\n") 
             if(jettype == "ak5PF"):
@@ -586,7 +643,8 @@ AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
     fcfg.write("EventWeightProcessor = true\n");
     fcfg.write("EventBinning = false\n");
     fcfg.write("DiJetEventWeighting = true\n");
-    fcfg.write("PU weighting = true   \n");
+    fcfg.write("PUTruthReweighting = true\n");
+    fcfg.write("PU weighting = false   \n");
     if(DATATYPE=="May10"):
         fcfg.write("PU weighting era = Fall11\n");
         fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/Cert_160404-163869_7TeV_May10ReReco_Collisions11_JSON_v3.pileup_v2.root \n");
@@ -620,6 +678,11 @@ AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
     elif(DATATYPE=="Z2wPUsmeared_DMC"):
         fcfg.write("PU weighting era = Fall11\n");
         fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/EXPORT_shifted_PU-hiust.root \n");
+    elif(DATATYPE=="TEST"):
+        fcfg.write("PU TruthWeighting = Cert_2012_190456-191859 \n");
+        fcfg.write("PU TruthWeighting MC distribution = TrueSummer12 \n");
+        fcfg.write("PU weighting era = Summer12\n");
+        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2012_03_PUperHLT/CMSSW_5_2_3_patch4/src/MyDataPileupHistogramObservedAllHLT.root \n");
     else:
         fcfg.write("PU weighting era = Flat10\n");
         fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n");
@@ -632,43 +695,152 @@ AsymmetryVsMCNPUVtx20_pt_bin_all_eta input samples     =  0:data;1:MC
     fcfg.close()
     return
 
+
+
+
 #kostas binning:
 #0: 0.0 1: 0.261 2: 0.522 3: 0.783 4: 0.957 5: 1.131 6: 1.305 7: 1.479
 #8: 1.93 9: 2.322 10: 2.411 11: 2.5 12: 2.853 13: 2.964 14: 3.139 15: 3.489 5.191
-DO_MC_ONLY_STUDY="false"
 
 
-#main program starts here!!!
-#change these variables to steer the fit
-DIR_JETALGO="SINGLEJET_AK5"
-#weights_eq_one="true"!!!!!!!!!!!!!!!!!
+
+
+
+
+
+##################################
+## one suggestion would be to replace all those configs set here and modified by cmd-line options to "real" config-files
+## an example is created by writeconfigs.py and called SampleConfigRunDiJets.cfg. It could be expanded and adapted to any needs.
+##################################
+
+config = ConfigParser.SafeConfigParser()
+config.read('SampleConfigRunDiJets.cfg')
+
+if len(sys.argv) > 1:
+    print "there are", len(sys.argv)-1, "arguments:"
+    for arg in sys.argv[1:]:
+        print arg
+else:
+    print "there are no arguments!"
+
+MAINSECTIONTOREAD="DEFAULT"
+EXTRASECTIONTOREAD="PFJets"
+if len(sys.argv) > 3:
+    MAINSECTIONTOREAD=sys.argv[1]
+    EXTRASECTIONTOREAD=sys.argv[2]
+
+#deactivated in order not to interfere with below config
+
+#MC                     = config.get(SECTIONTOREAD, 'MC')
+#DO_MC_ONLY_STUDY       = config.get(MAINSECTIONTOREAD, 'DO_MC_ONLY_STUDY')
+DO_MC_ONLY_STUDY       = "false"
+#PF_CALO_JPT       = config.get(EXTRAMAINSECTIONTOREAD, 'PF_CALO_JPT')
+##################################
+## end of dummy part as suggestion
+##################################
+
+
+
+##################################
+##################################
+##################################
+# main program starts here!!!
+# change these variables to steer the process
+# start in CalibCore root folder
+# with ./scripts/runDiJets_Residuals.py
+# or using starter script for batch-processing like
+# run_batch_dijetresiduals.py
+##################################
+##################################
+##################################
+
+##################################
+## is a suffix to the output folder name (can be used for extra information)
+##################################
+DIR_JETALGO="DefaultAK5"
+##################################
+## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
+##################################
+PF_CALO_JPT="PF"
+##################################
+## chooses the jet algorithm - used to pick the corresponding n-tupel .root-files (ak5 is default)
+##################################
+jetalgo="ak5"
+##################################
+## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
+##################################
+CORRECTION="Final2011_AK5"
+##################################
+## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
+##################################
+CORRECT_JETS_L1="true"
+##################################
+## DATAYEAR variable used to determine trigger thresholds, datasets, ...
+##################################
+DATAYEAR = "2012"
+##################################
+## Detailled datasample, similar influence as above
+##################################
+DATATYPE = "TEST"
+##################################
+## choose binning in eta, currently only "kostas" and "k_HFfix" are properly defined here
+##################################
+BINNING="kostas"
+##################################
+## Use single jet triggers if =1 (influences trigger thresholds and trigger pt variables in runtime, look for useSingleJetTriggers_ in code)
+##################################
+SINGLEJET=0
+##################################
+## Choose MC-generation 
+##################################
+MC = "Su12"
+##################################
+## Choose specific MC-type, determines where to look for n-tupels to read in
+##################################
+MC_type="Z2Star"
+##################################
+## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
+##################################
+MinRunNumber=-1
+##################################
+## Choose maximum run number
+##################################
+MaxRunNumber=1000000000
+##################################
+## Use with care - was used to compare MC with MC that had inconsistent weights, sets weights of "data" equal to 1 if set to true
+##################################
 weights_eq_one="false"
+##################################
+## Use with care - was used to compare MC with MC that had inconsistent trigger information, currently only implemented for dijetavetriggers (corrected and uncorrected triggers), would need update in DiJetReader.cc
+##################################
+MC_fire_all_triggers="false"
+##################################
+## allows to cut on number of reconstructed vertices (e.g. in order to compare a low and high PU sample)
+##################################
 nMaxRecoVtx =500000
-if(nMaxRecoVtx < 50):
+if(nMaxRecoVtx < 100):
     DIR_JETALGO = DIR_JETALGO + "_PU_" + str(nMaxRecoVtx) 
+##################################
+## same as above, but cut on min number
+##################################
 nMinRecoVtx =0
 if(nMinRecoVtx > 0):
     DIR_JETALGO = DIR_JETALGO + "_PUmin_" + str(nMinRecoVtx) 
-jetalgo="ak5"
-PF_CALO_JPT="PF"
-CORRECTION="F11DB_He_AK5"
-#CORRECTION="ntuple" #use n-tuple corrections
-#DATAYEAR="2010"
-#DATATYPE="Skim"
-DATAYEAR="2011"
-DATATYPE="Full2011"
-MC="F11"
-#MC_type="Z2wPU"
-MC_type="Z2wPUsm_Y_f"
-#MC_type="Hppsmeared"
-MC_fire_all_triggers="false"
-CORRECT_JETS_L1="true"
-#MinRunNumber=-1
-MinRunNumber=163337
-MaxRunNumber=1000000000
-#BINNING="k_HFfix"
-BINNING="kostas"
-SINGLEJET=1
+
+
+##################################
+#more things to edit/influence:
+#
+# - whether to save plots in eps as well
+# - whether to save x/y-projections of each 2D-histo
+# - plot_list and cut_list 
+# - whether eventprocessors are active or not
+# - whether plots are created at the intermediate (eventprocessor steps)
+# - nevents to e.g. run over only a few events
+# - MAIN_dirname as it is hardcoded "root-dir" of plotting and exporting
+# - DATATYPES_NEW_TRIGGER - right now needs to add datatypes here for reading in ak5FastPF-files...
+# ...much more
+##################################
 
 
 if(DO_MC_ONLY_STUDY=="true"):
@@ -680,12 +852,14 @@ if(DO_MC_ONLY_STUDY=="true"):
 
 USE_NEW_TRIGGERS_AND_FASTPF=0
 
-DATATYPES_NEW_TRIGGER=["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe"]
+DATATYPES_NEW_TRIGGER=["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST"]
 
 for new_trigger in DATATYPES_NEW_TRIGGER:
     if(DATATYPE==new_trigger):
         USE_NEW_TRIGGERS_AND_FASTPF=1
 
+
+#keep following cmd-line option part for compatibility
 
 if len(sys.argv) > 1:
     print "there are", len(sys.argv)-1, "arguments:"
@@ -707,7 +881,8 @@ if (len(sys.argv) > 8):
     SINGLEJET=sys.argv[9]
     print "DIR_JETALGO="+ DIR_JETALGO + " PF_CALO_JPT="+PF_CALO_JPT+ " MC="+MC+" MC-type=" + MC_type+" BINNING="+BINNING+" DATATYPE="+DATATYPE+" CORRECT_JETS_L1="+CORRECT_JETS_L1+" SINGLEJET="+str(SINGLEJET)
     print "... done."
-#   datadirmc=sys.argv[6]
+#   datadirmc=sys.argv[6] #is done below
+
 
 CORRECTIONS=CORRECTION+PF_CALO_JPT
 jettype = jetalgo+PF_CALO_JPT
@@ -776,6 +951,15 @@ if(DATAYEAR == "2011"):
         datadir = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Summer11-PU_S3_START42_V11-v2/merged"
 
 
+if(DATAYEAR == "2012"):
+    if(DATATYPE=="TEST"):
+#        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/Jet2012APromptRecoV1_Cert_2012_190456-191276/merged"
+        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-191859/merged"
+
+if(MC == "Su12"):
+    if(MC_type=="Z2Star"):
+        datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START50_V15-v1/merged"
+
 
 if(MC == "F11"):
     if(MC_type=="Z2wPU"):
@@ -833,11 +1017,11 @@ if (len(sys.argv) > 6):
 
 nthreads = 2
 niothreads = 2
-nevents =  -1
+#nevents =  -1
 #nthreads = 1
 #niothreads = 1
-#nevents =  10000
-MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+nevents =  100
+MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
