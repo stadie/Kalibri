@@ -714,7 +714,7 @@ AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
 ##################################
 
 config = ConfigParser.SafeConfigParser()
-config.read('SampleConfigRunDiJets.cfg')
+config.read('/afs/naf.desy.de/user/k/kirschen/public/SampleConfigRunDiJets.cfg')
 
 if len(sys.argv) > 1:
     print "there are", len(sys.argv)-1, "arguments:"
