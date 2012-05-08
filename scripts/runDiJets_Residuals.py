@@ -130,7 +130,7 @@ correct jets L2L3 = false
 #  Control plots
 #-----------------------------------------------------------------
 #  General parameters
-create plots                     = true
+create plots                     = false #true
 plots output directory           = plots
 #plots format                      = pdf
 #plots only to root-file = false
@@ -140,7 +140,7 @@ export all XY projections = false
 
 # JetTruthEvent plots
 create JetTruthEvent plots    =  false
-create TwoJetsPtBalanceEvent plots = true
+create TwoJetsPtBalanceEvent plots = false #true
 #create TwoJetsPtBalanceEvent PU weighting plots = true
 
 
@@ -534,13 +534,18 @@ AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
     fcfg.write("use Di-Jet Control1 events = "+str(nevents)+"\n")
 
     if(DATAYEAR == "2012"):
-        if(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF and SINGLEJET):
+        if(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF==1 and SINGLEJET==1):
+            print "Using single jet triggers now... " + str(SINGLEJET) + " " + str(USE_NEW_TRIGGERS_AND_FASTPF) + " " + str(DATAYEAR)
             fcfg.write("Use single jet triggers = true\n")
             fcfg.write("Di-Jet trigger names = HLT_PFJet40;HLT_PFJet80;HLT_PFJet140;HLT_PFJet200;HLT_PFJet260;HLT_PFJet320;HLT_PFJet400\n")
-#ad-hoc values...
+            #ad-hoc values...
             if(jettype == "ak5PF"):
                 fcfg.write("Di-Jet trigger thresholds = 45 90 150 210 270 340 420 \n") 
-        elif(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF):
+            if(jettype == "ak5Calo"):
+                fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
+            if(jettype == "ak5JPT"):
+                fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
+        elif(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF==1):
             fcfg.write("Di-Jet trigger names = HLT_DiPFJetAve40;HLT_DiPFJetAve80;HLT_DiPFJetAve140;HLT_DiPFJetAve200;HLT_DiPFJetAve260;HLT_DiPFJetAve320;HLT_DiPFJetAve400\n")
             #WARNING: ad-hoc values...
             #WARNING: ad-hoc values...
@@ -559,7 +564,7 @@ AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
 
 
     elif(DATAYEAR == "2011"):
-        if(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF and SINGLEJET):
+        if(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF==1 and SINGLEJET==1):
             fcfg.write("Use single jet triggers = true\n")
             fcfg.write("Di-Jet trigger names = HLT_Jet30;HLT_Jet60;HLT_Jet80;HLT_Jet110;HLT_Jet150;HLT_Jet190;HLT_Jet240;HLT_Jet300;HLT_Jet370\n")
             #determined from full statistics 03/02/2012
@@ -569,7 +574,7 @@ AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
                 fcfg.write("Di-Jet trigger thresholds = 45 80 110 140 185 230 285 350 430 \n") 
             if(jettype == "ak5JPT"):
                 fcfg.write("Di-Jet trigger thresholds = 40 80 100 135 178 224 280 343 420 \n") 
-        elif(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF):
+        elif(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF ==1):
             fcfg.write("Di-Jet trigger names = HLT_DiJetAve30;HLT_DiJetAve60;HLT_DiJetAve80;HLT_DiJetAve110;HLT_DiJetAve150;HLT_DiJetAve190;HLT_DiJetAve240;HLT_DiJetAve300;HLT_DiJetAve370\n")
             #            #####conservative thresholds....
             #            if(jettype == "ak5Calo"):
@@ -959,6 +964,8 @@ if(DATAYEAR == "2012"):
 if(MC == "Su12"):
     if(MC_type=="Z2Star"):
         datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START50_V15-v1/merged"
+    if(MC_type=="Z2Star52"):
+        datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1/merged"
 
 
 if(MC == "F11"):
