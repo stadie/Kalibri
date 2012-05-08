@@ -28,7 +28,7 @@
 #include <TMath.h>
 #include <TAxis.h>
 #include <TLatex.h>
-#include "../scripts/tdrstyle_mod.C"
+#include "tdrstyle_mod.C"
 #include <TList.h>
 #include "TVirtualFitter.h"
 

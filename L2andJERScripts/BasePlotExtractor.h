@@ -62,6 +62,8 @@ class BasePlotExtractor {
   TString yProfileTitle() {return yProfileTitle_;};
   std::vector<double> yRatioMinMax() {return yRatioMinMax_;};
   TString yRatioTitle() {return yRatioTitle_;};
+  std::vector<double> yDifferenceMinMax() {return yDifferenceMinMax_;};
+  TString yDifferenceTitle() {return yDifferenceTitle_;};
 
   //  void Plot();
   // private:
@@ -77,16 +79,20 @@ class BasePlotExtractor {
   std::vector<ControlPlotsProfile*> profiles_;
   VecOfVecOfTH1vec_t AllPlots_;
   VecOfTH1vec_t AllRatiosDataMC_;
+  VecOfTH1vec_t AllDifferencesDataMC_;
   TH1vec_t RatioVsBinVarHistos_;
   TString kalibriPlotsPath_;
   TString plotsnames_;
   TString jetType_;
   TString jetLabel_;
   TString profileType_;
+  TString binningSelection_;
   std::vector<double> yProfileMinMax_;
   TString yProfileTitle_;
   std::vector<double> yRatioMinMax_;
   TString yRatioTitle_;
+  std::vector<double> yDifferenceMinMax_;
+  TString yDifferenceTitle_;
 };
 
 #endif 

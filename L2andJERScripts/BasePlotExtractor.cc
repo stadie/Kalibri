@@ -14,10 +14,12 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsPath
   kalibriPlotsPath_=kalibriPlotsPath;
   plotsnames_=plotsnames;
   //read in config files in kalibri-style
-  config_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/scripts/L2L3AllPlots.cfg");
   ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/scripts/ExternalConfigs.cfg");
   readInExtraInfo();
   std::cout << "readInExtraInfo(); executed " << yProfileTitle()<< std::endl;
+
+
+  config_=ConfigFile(("/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/scripts/L2L3AllPlots_"+binningSelection_+".cfg").Data());
 
 }
 
@@ -39,8 +41,13 @@ void BasePlotExtractor::readInExtraInfo() {
   yRatioMinMax_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots ratio yMinMax","0.5 1.5"));
   assert(yRatioMinMax_.size()==2);
   yRatioTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots ratio yTitle","DUMMY Ratio");
+  yDifferenceMinMax_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots difference yMinMax","-15 10"));
+  assert(yDifferenceMinMax_.size()==2);
+  yDifferenceTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots difference yTitle","DUMMY Difference");
   profileType_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile type","Mean");
-
+  //  binningSelection_ = ExternalConfig_.read<std::string>("binning selection","kostas");
+  if(kalibriPlotsPath_.find("kostas"))binningSelection_ = "kostas";
+  else if(kalibriPlotsPath_.find("k_HFfix"))binningSelection_ = "k_HFfix";
 
 }
 
@@ -49,6 +56,7 @@ void BasePlotExtractor::readInExtraInfo() {
 //! Read in the basic plots for the profile types
 //! and store them in class members
 //!   AllRatiosDataMC_ contains all ratio plots (ratio->Divide(DataMCProfiles.at(0),DataMCProfiles.at(1));)
+//!   AllDifferencesDataMC_ contains differences between Data and MC as histo, scaled to some %-scale ( 100 * DataMCProfiles.at(0) - 100 * DataMCProfiles.at(1));)
 //!   AllPlots_        contains all profile plots (best: 2, one Data and one MC, but depends on definition of correction types); 
 //!    - OneBinAsymmetryVsPt30 correction types  =  L2L3###
 //!    - OneBinAsymmetryVsPt30 1 correction types  =  L2L3
@@ -83,6 +91,7 @@ void BasePlotExtractor::init(TString profileType) {
   std::vector<ControlPlotsProfile*> profiles(names.size());
   VecOfVecOfTH1vec_t AllPlots;
   VecOfTH1vec_t AllRatiosDataMC;
+  VecOfTH1vec_t AllDifferencesDataMC;
 
   // Read different control plot names
   for(size_t i = 0; i < names.size(); i++) {
@@ -108,6 +117,7 @@ void BasePlotExtractor::init(TString profileType) {
     //    std::cout << pConfig->nBins()<< std::endl;
     VecOfTH1vec_t BinsDMCF;
     TH1vec_t DataMCRatios; //Vector to contain Data/MC-ratios
+    TH1vec_t DataMCDifferences; //Vector to contain Data-MC differences
     for(int bin_i=0;bin_i<pConfig->nBins();bin_i++){
       //      std::cout << bin_i << " of " << pConfig->nBins() << std::endl;
       TH1vec_t DataMCProfiles;//Vector to contain Data and MC TH1
@@ -124,10 +134,15 @@ void BasePlotExtractor::init(TString profileType) {
 	DataMCProfiles.push_back((TH1D*) inf->Get(name));
 	std::cout << DataMCProfiles.back()->GetName() << std::endl;
       }
+      DataMCProfiles.at(0)->Sumw2();
+      DataMCProfiles.at(1)->Sumw2();
       // Do ratios of first and second (0 should be Data, 1 should be MC, can be checked in output above)
       TH1D* ratio = (TH1D*) DataMCProfiles.at(0)->Clone();
       ratio->Divide(DataMCProfiles.at(0),DataMCProfiles.at(1));
       DataMCRatios.push_back(ratio);
+      TH1D* difference = (TH1D*) DataMCProfiles.at(0)->Clone();
+      difference->Add(difference, DataMCProfiles.at(1), 100, -100);
+      DataMCDifferences.push_back(difference);
       //      DataMCProfiles.at(1)->Draw("hist");
       //      DataMCProfiles.at(0)->Draw("same");
       //      c->SaveAs(DataMCProfiles.back()->GetName()+(TString)".eps");
@@ -135,15 +150,17 @@ void BasePlotExtractor::init(TString profileType) {
     }// (TH1D*)inf->Get("kFSR_vs_Abseta_histo_res1");
     AllPlots.push_back(BinsDMCF);
     AllRatiosDataMC.push_back(DataMCRatios);
+    AllDifferencesDataMC.push_back(DataMCDifferences);
   }
 
 
-  AllRatiosDataMC_ = AllRatiosDataMC;
-  AllPlots_        = AllPlots;
-  names_	   = names;	
-  configs_	   = configs;	
-  functions_	   = functions;	
-  profiles_        = profiles;    
+  AllRatiosDataMC_        = AllRatiosDataMC;
+  AllDifferencesDataMC_   = AllDifferencesDataMC;
+  AllPlots_               = AllPlots;
+  names_	          = names;	
+  configs_	          = configs;	
+  functions_	          = functions;	
+  profiles_               = profiles;    
   
   makeRatioVsBinVarHistos();
 }
