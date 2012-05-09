@@ -17,9 +17,10 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsPath
   ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/public/ExternalConfigs.cfg");
   readInExtraInfo();
   std::cout << "readInExtraInfo(); executed " << yProfileTitle()<< std::endl;
+  std::cout << "readInExtraInfo(); executed " << binningSelection_<< std::endl;
 
 
-  config_=ConfigFile(("/afs/naf.desy.de/user/k/kirschen/scratch/public/L2L3AllPlots_"+binningSelection_+".cfg").Data());
+  config_=ConfigFile(("/afs/naf.desy.de/user/k/kirschen/public/L2L3AllPlots_"+binningSelection_+".cfg").Data());
 
 }
 

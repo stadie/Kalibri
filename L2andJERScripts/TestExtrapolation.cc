@@ -2,16 +2,16 @@
 
 void TestExtrapolation(){
   //2011 resolutions with smearing
-  //    Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2011withJERcorr_KalibriPlots.root");
+  //    Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2011withJERcorr_kostas_KalibriPlots.root");
   //  test.Plot();
 
 
   //2011 resolutions without JER smearing
-  //    Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2011_KalibriPlots.root");
+  //    Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2011_kostas_KalibriPlots.root");
   //  test.Plot();
 
   //2012 resolutions
-  Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2012_KalibriPlots.root");
+  Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2012_kostas_KalibriPlots.root");
   test.Plot();
 
 
