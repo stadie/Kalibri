@@ -4,6 +4,63 @@ import os
 import sys
 import ConfigParser
 
+
+Usage="""
+##############################################################################################
+##############################################################################################
+####  This is the steering script to create appropriate Kalibri-style config files for    ####
+####  the dijet L2Residual analysis and run Kalibri (the junk executable) on these        ####
+####  config-files.                                                                       ####
+####                                                                                      ####
+####  In order to allow easy batch execution of multiple Kalibri instances defined in     ####
+####  this way, there are a number of command line parameters, that can be used           ####
+####                                                                                      ####
+####  Usage:                                                                              ####
+####    ./scripts/runDiJets_Residuals.py ro run the script                                ####
+####                                                                                      ####
+####  Cmd-line options (8 arguments need to be supplied if used):                         ####
+####    DIR_JETALGO       : is a suffix to the output folder name (can be used for        ####
+####                        extra information)                                            ####
+####    PF_CALO_JPT       : chooses the jet type (for PF, akFastPF-files are read         ####
+####                        in, see below - does not make a difference when JEC           ####
+####                        is overridden)                                                ####
+####    MC                : Choose MC-generation                                          ####
+####    MC_type           : Choose specific MC-type, here the path to the n-tupels        ####
+####                        is overridden by the following datadirmc option               ####
+####    BINNING           : choose binning in eta, currently only ""kostas"" and          ####
+####                        ""k_HFfix"" are properly defined herekostas                   ####
+####    datadirmc         : path to the MC/MC_type n-tupels                               ####
+####    DATATYPE          : label for the dataset used to determine the path to the       ####
+####                        data n-tupels                                                 ####
+####    CORRECT_JETS_L1   : switch to decide whether L1-corrections should be applied     ####
+####                        before TwoJetsPtBalanceEvents are created                     ####
+####    SINGLEJET         : switch to decide whether single jet triggers/turn-ons         ####
+####                        and pt-variables are used.                                    ####
+##############################################################################################
+##############################################################################################
+
+
+Example for use of Cmd-line options (8 arguments need to be supplied if used):
+  DIR_JETALGO       : 52MC_AK5                                                                                                                              
+  PF_CALO_JPT       : JPT                                                                                                                                   
+  MC                : Su12                                                                                                                                  
+  MC_type           : Z2star52                                                                                                                              
+  BINNING           : kostas                                                                                                                                
+  datadirmc         : /scratch/hh/current/cms/user/kirschen/2012_Jets_v3/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1/merged   
+  DATATYPE          : TEST                                                                                                                                  
+  CORRECT_JETS_L1   : true                                                                                                                                  
+  SINGLEJET         : 0                                                                                                                                     
+
+The line for execution would read:
+./scripts/runDiJets_Residuals.py 52MC_AK5 JPT Su12 Z2star52 kostas /scratch/hh/current/cms/user/kirschen/2012_Jets_v3/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1/merged TEST true 0                                                                                                                                  
+
+##############################################################################################
+##############################################################################################
+
+"""
+print Usage
+
+
 def writeCfg(filename):
     config_1="""
 #
