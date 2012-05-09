@@ -14,12 +14,12 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsPath
   kalibriPlotsPath_=kalibriPlotsPath;
   plotsnames_=plotsnames;
   //read in config files in kalibri-style
-  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/scripts/ExternalConfigs.cfg");
+  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/public/ExternalConfigs.cfg");
   readInExtraInfo();
   std::cout << "readInExtraInfo(); executed " << yProfileTitle()<< std::endl;
 
 
-  config_=ConfigFile(("/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/scripts/L2L3AllPlots_"+binningSelection_+".cfg").Data());
+  config_=ConfigFile(("/afs/naf.desy.de/user/k/kirschen/scratch/public/L2L3AllPlots_"+binningSelection_+".cfg").Data());
 
 }
 
@@ -46,8 +46,8 @@ void BasePlotExtractor::readInExtraInfo() {
   yDifferenceTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots difference yTitle","DUMMY Difference");
   profileType_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile type","Mean");
   //  binningSelection_ = ExternalConfig_.read<std::string>("binning selection","kostas");
-  if(kalibriPlotsPath_.find("kostas"))binningSelection_ = "kostas";
-  else if(kalibriPlotsPath_.find("k_HFfix"))binningSelection_ = "k_HFfix";
+  if(kalibriPlotsPath_.Contains("kostas"))binningSelection_ = "kostas";
+  else if(kalibriPlotsPath_.Contains("k_HFfix"))binningSelection_ = "k_HFfix";
 
 }
 

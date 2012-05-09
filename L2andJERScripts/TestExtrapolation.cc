@@ -1,14 +1,18 @@
 #include "Extrapolation.cc"
 
 void TestExtrapolation(){
-  //2011 resolutions
-  //  Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/2011Full2011_CORRF11DB_He_AK5_MC_F11Z2wPUsm_Y_f_kostas_AK5/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_kostas/plots/KalibriPlots.root");
+  //2011 resolutions with smearing
+  //    Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2011withJERcorr_KalibriPlots.root");
+  //  test.Plot();
+
+
+  //2011 resolutions without JER smearing
+  //    Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2011_KalibriPlots.root");
   //  test.Plot();
 
   //2012 resolutions
-  Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/2012TEST_CORRFinal2011_AK5_MC_Su12Z2Star_kostas_TrueReweighting_AK5/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_kostas/plots/KalibriPlots.root");
+  Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2012_KalibriPlots.root");
   test.Plot();
-
 
 
   //plots for pt-dependent krad-correction and resulting residuals
