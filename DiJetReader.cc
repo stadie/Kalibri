@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.85 2012/04/27 12:37:13 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.86 2012/05/14 17:16:27 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -534,33 +534,37 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     if(dataClass_ == 1) {
       nReadEvts_++;
       TwoJetsPtBalanceEvent* td = createTwoJetsPtBalanceEvent(); 
-      // quick and dirty code for JER
-      if(td) {
-	itjet1=JEREtaMap.lower_bound(std::abs(td->getJet1()->eta()));
-	itjet2=JEREtaMap.lower_bound(std::abs(td->getJet2()->eta()));
-	if(itjet1==itjet2){
-	  data.push_back(td); 
-	  ++nGoodEvts_;
-	}
-	//To do: Should the combination jet2,jet1 also be read in to be symmetric?
-	//Would be similar to previous twojetsptbalance stuff...
-      } 
-//      if(td) {
-//	//second jet should be central...
-//	if(std::abs(td->getJet1()->eta()) < 1.3) {
-//	  data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
-//						   td->getJet3() ? td->getJet3()->clone():0,
-//						   td->ptHat(),td->weight(),td->nPU(),
-//						   td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
-//	  ++nGoodEvts_;
-//	}
-//	if(std::abs(td->getJet2()->eta()) < 1.3) {
-//	  data.push_back(td); 
-//	  ++nGoodEvts_;
-//	} else {
-//	  delete td;
-//	}
-//      } 
+      if(JERReadInJ1J2SameEtaBin_){
+	// quick and dirty code for JER
+	if(td) {
+	  itjet1=JEREtaMap.lower_bound(std::abs(td->getJet1()->eta()));
+	  itjet2=JEREtaMap.lower_bound(std::abs(td->getJet2()->eta()));
+	  if(itjet1==itjet2){
+	    data.push_back(td); 
+	    ++nGoodEvts_;
+	  }
+	  //To do: Should the combination jet2,jet1 also be read in to be symmetric?
+	  //Would correspond to previous readin-definition (see following "else")...
+	} 
+      }
+      else{
+	if(td) {
+	  //second jet should be central...
+	  if(std::abs(td->getJet1()->eta()) < 1.3) {
+	    data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
+						     td->getJet3() ? td->getJet3()->clone():0,
+						     td->ptHat(),td->weight(),td->nPU(),
+						     td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
+	    ++nGoodEvts_;
+	  }
+	  if(std::abs(td->getJet2()->eta()) < 1.3) {
+	    data.push_back(td); 
+	    ++nGoodEvts_;
+	  } else {
+	    delete td;
+	  }
+	} 
+      }
     } else if((dataClass_ == 11)  || (dataClass_ == 12) || (dataClass_ == 21) || (dataClass_ == 31)) {
       nReadEvts_++;
       int nAddedJets = createJetTruthEvents(data);
