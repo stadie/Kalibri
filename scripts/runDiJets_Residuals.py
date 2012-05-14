@@ -187,7 +187,8 @@ correct jets L2L3 = false
 #  Control plots
 #-----------------------------------------------------------------
 #  General parameters
-create plots                     = false #true
+JER - Assert J1J2 In Same Eta Bin = false
+create plots                     = true
 plots output directory           = plots
 #plots format                      = pdf
 #plots only to root-file = false
@@ -197,7 +198,7 @@ export all XY projections = false
 
 # JetTruthEvent plots
 create JetTruthEvent plots    =  false
-create TwoJetsPtBalanceEvent plots = false #true
+create TwoJetsPtBalanceEvent plots = true
 #create TwoJetsPtBalanceEvent PU weighting plots = true
 
 
@@ -595,20 +596,22 @@ AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
             print "Using single jet triggers now... " + str(SINGLEJET) + " " + str(USE_NEW_TRIGGERS_AND_FASTPF) + " " + str(DATAYEAR)
             fcfg.write("Use single jet triggers = true\n")
             fcfg.write("Di-Jet trigger names = HLT_PFJet40;HLT_PFJet80;HLT_PFJet140;HLT_PFJet200;HLT_PFJet260;HLT_PFJet320;HLT_PFJet400\n")
-            #ad-hoc values...
+            #Denis May 2011
             if(jettype == "ak5PF"):
-                fcfg.write("Di-Jet trigger thresholds = 45 90 150 210 270 340 420 \n") 
+                fcfg.write("Di-Jet trigger thresholds = 72 112 186 255 318 388 472 \n") 
+            #ad-hoc values...
             if(jettype == "ak5Calo"):
                 fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
             if(jettype == "ak5JPT"):
                 fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
         elif(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF==1):
             fcfg.write("Di-Jet trigger names = HLT_DiPFJetAve40;HLT_DiPFJetAve80;HLT_DiPFJetAve140;HLT_DiPFJetAve200;HLT_DiPFJetAve260;HLT_DiPFJetAve320;HLT_DiPFJetAve400\n")
-            #WARNING: ad-hoc values...
-            #WARNING: ad-hoc values...
-            #WARNING: ad-hoc values...
+            #Denis May 2011
             if(jettype == "ak5PF"):
-                fcfg.write("Di-Jet trigger thresholds = 45 90 150 210 270 340 420 \n") 
+                fcfg.write("Di-Jet trigger thresholds = 64 107 178 247 313 381 469 \n") 
+            #WARNING: ad-hoc values...
+            #WARNING: ad-hoc values...
+            #WARNING: ad-hoc values...
             if(jettype == "ak5Calo"):
                 fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
             if(jettype == "ak5JPT"):
@@ -744,7 +747,7 @@ AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
         fcfg.write("PU TruthWeighting = Cert_2012_190456-191859 \n");
         fcfg.write("PU TruthWeighting MC distribution = TrueSummer12 \n");
         fcfg.write("PU weighting era = Summer12\n");
-        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2012_03_PUperHLT/CMSSW_5_2_3_patch4/src/MyDataPileupHistogramObservedAllHLT.root \n");
+        fcfg.write("PU weighting histogram = /scratch/hh/current/cms/user/kirschen/PUDistributions/Inclusive/MyDataPileupHistogramObservedAllHLT.root \n");
     else:
         fcfg.write("PU weighting era = Flat10\n");
         fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n");

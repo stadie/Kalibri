@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.84 2012/03/29 11:54:06 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.85 2012/04/27 12:37:13 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -57,6 +57,8 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   eventWeight_          = config_->read<double>("Di-Jet weight",-1.);
   weights_eq_one_       = config_->read<bool>("set weights to one",false);
   fire_all_dijet_triggers_    = config_->read<bool>("fire all triggers",false);
+  JERReadInJ1J2SameEtaBin_    = config_->read<bool>("JER - Assert J1J2 In Same Eta Bin",false);
+  std::cout << "JER - Assert J1J2 In Same Eta Bin set to: " << JERReadInJ1J2SameEtaBin_<<std::endl;
 
   useSingleJetTriggers_ = config_->read<bool>("Use single jet triggers",false);
 
@@ -485,8 +487,15 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     nJet_->HltDiJetAve370=true;
   }
 
-
-
+  std::map<float,int> JEREtaMap;
+  std::map<float,int>::iterator itjet1,itjet2;
+  JEREtaMap[0.0]=0;
+  JEREtaMap[0.5]=1;
+  JEREtaMap[1.0]=2;
+  JEREtaMap[1.5]=3;
+  JEREtaMap[2.0]=4;
+  JEREtaMap[3.0]=5;
+  JEREtaMap[5.2]=6;
 
 
   // Read the events
@@ -525,22 +534,33 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     if(dataClass_ == 1) {
       nReadEvts_++;
       TwoJetsPtBalanceEvent* td = createTwoJetsPtBalanceEvent(); 
+      // quick and dirty code for JER
       if(td) {
-	//second jet should be central...
-	if(std::abs(td->getJet1()->eta()) < 1.3) {
-	  data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
-						   td->getJet3() ? td->getJet3()->clone():0,
-						   td->ptHat(),td->weight(),td->nPU(),
-						   td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
-	  ++nGoodEvts_;
-	}
-	if(std::abs(td->getJet2()->eta()) < 1.3) {
+	itjet1=JEREtaMap.lower_bound(std::abs(td->getJet1()->eta()));
+	itjet2=JEREtaMap.lower_bound(std::abs(td->getJet2()->eta()));
+	if(itjet1==itjet2){
 	  data.push_back(td); 
 	  ++nGoodEvts_;
-	} else {
-	  delete td;
 	}
+	//To do: Should the combination jet2,jet1 also be read in to be symmetric?
+	//Would be similar to previous twojetsptbalance stuff...
       } 
+//      if(td) {
+//	//second jet should be central...
+//	if(std::abs(td->getJet1()->eta()) < 1.3) {
+//	  data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
+//						   td->getJet3() ? td->getJet3()->clone():0,
+//						   td->ptHat(),td->weight(),td->nPU(),
+//						   td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
+//	  ++nGoodEvts_;
+//	}
+//	if(std::abs(td->getJet2()->eta()) < 1.3) {
+//	  data.push_back(td); 
+//	  ++nGoodEvts_;
+//	} else {
+//	  delete td;
+//	}
+//      } 
     } else if((dataClass_ == 11)  || (dataClass_ == 12) || (dataClass_ == 21) || (dataClass_ == 31)) {
       nReadEvts_++;
       int nAddedJets = createJetTruthEvents(data);
