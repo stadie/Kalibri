@@ -364,7 +364,7 @@ create TwoJetsPtBalanceEvent plots = true
     fcfg.write("PUTruthReweighting = true\n");
     fcfg.write("PU weighting = false   \n");
     if(DATATYPE=="TEST"):
-        fcfg.write("PU TruthWeighting = Cert_2012_190456-191859 \n");
+        fcfg.write("PU TruthWeighting = Cert_2012_190456-193336 \n");
         fcfg.write("PU TruthWeighting MC distribution = TrueSummer12 \n");
         fcfg.write("PU weighting era = Summer12\n");
         fcfg.write("PU weighting histogram = /scratch/hh/current/cms/user/kirschen/PUDistributions/Inclusive/MyDataPileupHistogramObservedAllHLT.root \n");
@@ -580,7 +580,8 @@ CORRECTIONS=CORRECTION+CORRECTIONSUFFIX
 if(DATAYEAR == "2012"):
     if(DATATYPE=="TEST"):
 #        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/Jet2012APromptRecoV1_Cert_2012_190456-191276/merged"
-        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-191859/merged"
+#        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-191859/merged"
+        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-193336/merged"
 
 if(MC == "Su12"):
     if(MC_type=="Z2Star"):
