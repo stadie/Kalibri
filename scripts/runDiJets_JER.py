@@ -209,7 +209,7 @@ create TwoJetsPtBalanceEvent plots = true
 
     if(BINNING=="JER"):
         binning_values = "-5.2 -3.0 -2.0 -1.5 -1.0 -0.5 0 0.5 1.0 1.5 2.0 3.0 5.2"
-        abs_binning_values = "0 0.5 1.0 1.5 2.0 3.0 5.0"
+        abs_binning_values = "0 0.5 1.0 1.5 2.0 3.0 5.2"
 
 
 
@@ -601,11 +601,11 @@ if (len(sys.argv) > 6):
 
 nthreads = 2
 niothreads = 2
-nevents =  -1
+#nevents =  -1
 #nthreads = 1
 #niothreads = 1
-#nevents =  100000
-MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+nevents =  10000
+MAIN_dirname = "/afs/naf.desy.de/user/k/kriheine/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
