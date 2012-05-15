@@ -265,6 +265,10 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
   if( varName == "AbsEta" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta;
+  if( varName == "Jet2Eta")
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2Eta; 
+  if( varName == "Jet2AbsEta")
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2AbsEta; 
   if( varName == "Pt" && type == ControlPlotsConfig::Uncorrected )
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt; 
   if( varName == "Pt" && type == ControlPlotsConfig::L2L3  )

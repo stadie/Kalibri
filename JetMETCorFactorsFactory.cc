@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.22 2012/01/24 16:27:32 kirschen Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.23 2012/04/27 12:41:19 kirschen Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -181,6 +181,10 @@ JetMETCorFactorsFactory::Register::Register()
   create("Final2011_AK7FastCalo","JetMETObjects/data/GR_R_44_V14_AK7Calo_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK7Calo_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK7Calo_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK7Calo_L2L3Residual.txt",L1L2L3res);
   create("Final2011_AK7FastJPT","JetMETObjects/data/GR_R_44_V14_AK7JPT_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK7JPT_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK7JPT_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK7JPT_L2L3Residual.txt",L1L2L3res);
   create("Final2011_AK7FastPF","JetMETObjects/data/GR_R_44_V14_AK7PF_L1FastJet.txt:JetMETObjects/data/GR_R_44_V14_AK7PF_L2Relative.txt:JetMETObjects/data/GR_R_44_V14_AK7PF_L3Absolute.txt:JetMETObjects/data/GR_R_44_V14_AK7PF_L2L3Residual.txt",L1L2L3res);
+
+
+
+  create("2012V7_AK5FastPF","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Jec12_V7_AK5PFLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Jec12_V7_AK5PFLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Jec12_V7_AK5PFLocal_L3Absolute.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/2012_Abseta_L2L3Residual_AK5PF.txt",L1L2L3res);
 
 }
 

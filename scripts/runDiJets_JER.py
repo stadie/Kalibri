@@ -236,7 +236,7 @@ create TwoJetsPtBalanceEvent plots = true
     for index_cut, cut in enumerate(cut_list):
         for index_plot, plot in enumerate(plot_list):
             fcfg.write(plot + cut + ";")
-    fcfg.write("AbsAsymmetryVsNPV")
+    fcfg.write("AbsAsymmetryVsNPV;JetEta1VsJetEta2")
     fcfg.write("\n")
 #    for index_samples, samples in enumerate(samples_all):
     for index_cut, cut in enumerate(cut_list):
@@ -272,6 +272,21 @@ create TwoJetsPtBalanceEvent plots = true
     fcfg.write("AbsAsymmetryVsNPV input samples     =  0:data;1:MC\n")
     fcfg.write("\n\n")
 
+
+    fcfg.write("JetEta1VsJetEta2 x variable        =  Jet2Eta\n")
+    fcfg.write("JetEta1VsJetEta2 x edges           =  31 -5.2 5.2\n")
+    fcfg.write("JetEta1VsJetEta2 y variable        =  Eta\n")
+    fcfg.write("JetEta1VsJetEta2 y edges           =  31 -5.2 5.2 -5.2 5.2 \n")
+    fcfg.write("JetEta1VsJetEta2 bin variable      =  MeanPt \n")
+    fcfg.write("JetEta1VsJetEta2 bin edges         =  20 30 50 80 120 200 360 500 900 7000 \n")
+    fcfg.write("JetEta1VsJetEta2 cut variable      =  ThirdJetFractionPlain\n")
+    fcfg.write("JetEta1VsJetEta2 cut edges         =  0.0 0.20\n")
+    fcfg.write("JetEta1VsJetEta2 correction types  =  L2L3; L2L3Res\n")
+    fcfg.write("JetEta1VsJetEta2 1 correction types  =  L2L3\n")
+    fcfg.write("JetEta1VsJetEta2 profile types     =  Mean\n")
+    fcfg.write("#JetEta1VsJetEta2 legend label      =  L2L3:CMS default\n")
+    fcfg.write("JetEta1VsJetEta2 input samples     =  0:data;1:MC\n")
+    fcfg.write("\n\n")
 
 
 
@@ -419,7 +434,7 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="DefaultAK5"
+DIR_JETALGO="DefaultTest"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
@@ -431,7 +446,7 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="Final2011_AK5"
+CORRECTION="2012V7_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -546,9 +561,18 @@ if (len(sys.argv) > 8):
 #   datadirmc=sys.argv[6] #is done below
 
 
-CORRECTIONS=CORRECTION+PF_CALO_JPT
 jettype = jetalgo+PF_CALO_JPT
 jettype_import=jettype
+CORRECTIONSUFFIX=PF_CALO_JPT
+if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
+    if(PF_CALO_JPT=="PF"):
+        jettype_import=jetalgo+"Fast"+PF_CALO_JPT
+        CORRECTIONSUFFIX="Fast"+PF_CALO_JPT
+#    jettype_import=jetalgo+"Fast"+PF_CALO_JPT
+
+
+CORRECTIONS=CORRECTION+CORRECTIONSUFFIX
+
 
 
 
@@ -586,11 +610,6 @@ useconstraint = False
 batch = False
 doBinnedFit = False
 doUnbinnedFit = True
-
-if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
-    if(PF_CALO_JPT=="PF"):
-        jettype_import=jetalgo+"Fast"+PF_CALO_JPT
-#    jettype_import=jetalgo+"Fast"+PF_CALO_JPT
 
 
 

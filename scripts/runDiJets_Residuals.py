@@ -949,9 +949,18 @@ if (len(sys.argv) > 8):
 #   datadirmc=sys.argv[6] #is done below
 
 
-CORRECTIONS=CORRECTION+PF_CALO_JPT
 jettype = jetalgo+PF_CALO_JPT
 jettype_import=jettype
+CORRECTIONSUFFIX=PF_CALO_JPT
+if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
+    if(PF_CALO_JPT=="PF"):
+        jettype_import=jetalgo+"Fast"+PF_CALO_JPT
+        CORRECTIONSUFFIX="Fast"+PF_CALO_JPT
+#    jettype_import=jetalgo+"Fast"+PF_CALO_JPT
+
+
+CORRECTIONS=CORRECTION+CORRECTIONSUFFIX
+
 
 
 if(DATAYEAR == "2010"):
@@ -1095,10 +1104,6 @@ batch = False
 doBinnedFit = False
 doUnbinnedFit = True
 
-if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
-    if(PF_CALO_JPT=="PF"):
-        jettype_import=jetalgo+"Fast"+PF_CALO_JPT
-#    jettype_import=jetalgo+"Fast"+PF_CALO_JPT
 
 
 
