@@ -54,8 +54,10 @@ tmp:
 	@mkdir -p tmp
 
 clean:
-	@rm -rf ti_files tmp lib bin share
-	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#*
+	@rm -rf ti_files tmp lib bin share  
+	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#* 
+	@cd liblbfgs-1.10 && $(MAKE) clean
+	@rm -f liblbfgs-1.10/lib/lbfgs.lo
 
 libs: lib include/lbfgs.h lib/libKalibri.so lib/liblbfgs.so
 
@@ -71,13 +73,16 @@ lib/libKalibri.so: $(OBJS) lbfgs.o
 	@echo '-> Kalibri library created.'
 
 include/lbfgs.h lib/liblbfgs.a lib/liblbfgs.so: liblbfgs-1.10
-	cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
+	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
 	@echo '-> shared library lib/liblbfgs-1.10.so created.'
 
-liblbfgs-1.10:
-	wget --no-check-certificate https://github.com/downloads/chokkan/liblbfgs/liblbfgs-1.10.tar.gz
-	tar zxvf liblbfgs-1.10.tar.gz
-	cd liblbfgs-1.10 && ./configure --prefix=$(KALIBRIDIR)
+liblbfgs-1.10: liblbfgs-1.10.tar.gz
+	@tar zxvf liblbfgs-1.10.tar.gz
+	@cd liblbfgs-1.10 && ./configure --prefix=$(KALIBRIDIR)
+
+liblbfgs-1.10.tar.gz:
+	@wget --no-check-certificate https://github.com/downloads/chokkan/liblbfgs/liblbfgs-1.10.tar.gz
+
 
 bin/junk: $(OBJS) lbfgs.o caliber.o lib/liblbfgs.a
 	$(LD) $^ $(RLXX) lib/liblbfgs.a -o bin/junk
@@ -107,12 +112,12 @@ lib/libJetMETObjects.so: bin lib tmp JetMETObjects
 	cd JetMETObjects && $(MAKE) STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX}' lib
 
 JetMETObjects:
-	@cvs -d :gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-02-02 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
+	@cvs -d :pserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-02-02 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 	patch -p0 < JetMETObjects.patch
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
 PUReweighting:
-	@cvs -d :gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
+	@cvs -d :pserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
 
 #rules
