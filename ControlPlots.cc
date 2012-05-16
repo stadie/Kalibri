@@ -61,6 +61,13 @@ void ControlPlots::createJetTruthEventPlots() const {
   
     // Create ControlPlotsConfig    
     ControlPlotsConfig *pConfig = new ControlPlotsConfig(config_,names.at(i));
+    
+    if(eventProcessor_!=0) {
+      pConfig->determineOutPlotSuffix(eventProcessor_->name());
+    }
+    else pConfig->setOutPlotSuffix("");
+    //    pConfig->setOutPlotSuffix(root_filename_suffix);
+    pConfig->setOutRootFileName("KalibriPlots"+pConfig->outPlotSuffix()+".root");
     configs.at(i) = pConfig;
 
     // Create functions
