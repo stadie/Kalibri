@@ -207,10 +207,8 @@ create TwoJetsPtBalanceEvent plots = true
     fcfg = open(filename, "w")
     fcfg.write(config_1)
 
-    if(BINNING=="JER"):
-        binning_values = "-5.2 -3.0 -2.0 -1.5 -1.0 -0.5 0 0.5 1.0 1.5 2.0 3.0 5.2"
-        abs_binning_values = "0 0.5 1.0 1.5 2.0 3.0 5.2"
-
+    binning_values=BinningValues(BINNING,False)
+    abs_binning_values=BinningValues(BINNING,True)
 
 
     plot_list=['AbsAsymmetryVsPt']
@@ -319,37 +317,13 @@ create TwoJetsPtBalanceEvent plots = true
     fcfg.write("use Di-Jet events = "+str(nevents)+"\n")
     fcfg.write("use Di-Jet Control1 events = "+str(nevents)+"\n")
 
-    if(DATAYEAR == "2012"):
-        if(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF==1 and SINGLEJET==1):
-            print "Using single jet triggers now... " + str(SINGLEJET) + " " + str(USE_NEW_TRIGGERS_AND_FASTPF) + " " + str(DATAYEAR)
-            fcfg.write("Use single jet triggers = true\n")
-            fcfg.write("Di-Jet trigger names = HLT_PFJet40;HLT_PFJet80;HLT_PFJet140;HLT_PFJet200;HLT_PFJet260;HLT_PFJet320;HLT_PFJet400\n")
-            #Denis May 2011
-            if(jettype == "ak5PF"):
-                fcfg.write("Di-Jet trigger thresholds = 72 112 186 255 318 388 472 \n") 
-            #ad-hoc values...
-            if(jettype == "ak5Calo"):
-                fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
-            if(jettype == "ak5JPT"):
-                fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
-        elif(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF==1):
-            fcfg.write("Di-Jet trigger names = HLT_DiPFJetAve40;HLT_DiPFJetAve80;HLT_DiPFJetAve140;HLT_DiPFJetAve200;HLT_DiPFJetAve260;HLT_DiPFJetAve320;HLT_DiPFJetAve400\n")
-            #Denis May 2011
-            if(jettype == "ak5PF"):
-                fcfg.write("Di-Jet trigger thresholds = 64 107 178 247 313 381 469 \n") 
-            #WARNING: ad-hoc values...
-            #WARNING: ad-hoc values...
-            #WARNING: ad-hoc values...
-            if(jettype == "ak5Calo"):
-                fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
-            if(jettype == "ak5JPT"):
-                fcfg.write("Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n") 
-#            fcfg.write("Di-Jet trigger names = HLT_DiPFJetAve320;HLT_DiPFJetAve400\n")
-#            #ad-hoc values...
-#            if(jettype == "ak5PF"):
-#                fcfg.write("Di-Jet trigger thresholds = 340 420 \n") 
-
-
+    if(SINGLEJET==1):
+        fcfg.write("Use single jet triggers = true\n")
+    trigger_names = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"names")
+    fcfg.write(trigger_names)
+    trigger_thresholds = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"thresholds")
+    fcfg.write(trigger_thresholds)
+        
 
         
     if(input != ""):
@@ -363,14 +337,10 @@ create TwoJetsPtBalanceEvent plots = true
     fcfg.write("DiJetEventWeighting = true\n");
     fcfg.write("PUTruthReweighting = true\n");
     fcfg.write("PU weighting = false   \n");
-    if(DATATYPE=="TEST"):
-        fcfg.write("PU TruthWeighting = Cert_2012_190456-193336 \n");
-        fcfg.write("PU TruthWeighting MC distribution = TrueSummer12 \n");
-        fcfg.write("PU weighting era = Summer12\n");
-        fcfg.write("PU weighting histogram = /scratch/hh/current/cms/user/kirschen/PUDistributions/Inclusive/MyDataPileupHistogramObservedAllHLT.root \n");
-    else:
-        fcfg.write("PU weighting era = Flat10\n");
-        fcfg.write("PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n");
+
+    PU_weighting_info = PUWeightingInfo(DATATYPE)
+    fcfg.write(PU_weighting_info);
+
     fcfg.write("MAX n reco Vtx             = " + str(nMaxRecoVtx) +"\n");
     fcfg.write("MIN n reco Vtx             = " + str(nMinRecoVtx) +"\n");
     fcfg.write("set weights to one         = " + str(weights_eq_one) +"\n\n\n");
@@ -574,21 +544,8 @@ if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
 CORRECTIONS=CORRECTION+CORRECTIONSUFFIX
 
 
-
-
-
-if(DATAYEAR == "2012"):
-    if(DATATYPE=="TEST"):
-#        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/Jet2012APromptRecoV1_Cert_2012_190456-191276/merged"
-#        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-191859/merged"
-        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-193336/merged"
-
-if(MC == "Su12"):
-    if(MC_type=="Z2Star"):
-        datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START50_V15-v1/merged"
-    if(MC_type=="Z2Star52"):
-        datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1/merged"
-
+datadir   = determineDataDir(DATAYEAR,DATATYPE)
+datadirmc = determineDataDirMC(MC,MC_type)
 
 if (len(sys.argv) > 6):
     print "even override datadirmc from cmdline-options... "
