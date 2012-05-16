@@ -3,6 +3,7 @@
 import os
 import sys
 import ConfigParser
+from runDiJets_CommonConfigs import BinningValues, TriggerNamesThresholds, PUWeightingInfo, determineDataDir, determineDataDirMC
 
 
 Usage="""
