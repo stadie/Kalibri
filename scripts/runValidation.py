@@ -92,7 +92,7 @@ Top tree               = TopTree
 use Gamma-Jet events     = 0
 use Track-Tower events   = 0
 use Track-Cluster events = 0
-use Di-Jet events        = 100
+use Di-Jet events        = 100000
 use Tri-Jet events       = 0
 use Z-Jet events         = 0
 use Top events           = 0
@@ -144,7 +144,7 @@ MCTruthResponsePU x edges            =  40 -5 5
 MCTruthResponsePU y variable         =  GenJetResponse
 MCTruthResponsePU y edges            =  51 0 2.0 0.9 1.1
 MCTruthResponsePU bin variable       =  NPU
-MCTruthResponsePU bin edges          =  0 1 4 8 20
+MCTruthResponsePU bin edges          =  0 1 10 20 30
 MCTruthResponsePU cut variable       =  GenJetPt
 MCTruthResponsePU cut edges          =  50 100
 MCTruthResponsePU correction types   =  Uncorrected; L2L3
@@ -158,7 +158,7 @@ MCTruthResolPU x edges           =  25 10 3000
 MCTruthResolPU y variable        =  GenJetResponse
 MCTruthResolPU y edges           =  51 0 1.0 0 0.5
 MCTruthResolPU bin variable      =  NPU
-MCTruthResolPU bin edges         =  0 1 4 8 20
+MCTruthResolPU bin edges         =  0 1 10 20 30
 MCTruthResolPU cut variable   =  Eta
 MCTruthResolPU cut edges      =  -1.3 1.3
 MCTruthResolPU correction types  =  Uncorrected; L2L3
@@ -204,14 +204,14 @@ MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L1L2L3
 #jettypes = ["Calo","PF","JPT","Track"]
 #jettypes = ["ak5PF","ak7PF","ic5PF","kt4PF","kt6PF","ak5Calo","ak7Calo","ic5Calo","kt4Calo","kt6Calo","ak5JPT"]
 #jettypes = ["ak5Calo", "ak5PF","ak5JPT","ak5FastPF","ak5FastCalo"]
-jettypes = ["ak5PF"]
-datadir = "/scratch/hh/current/cms/user/stadie/2011/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6_Summer11-PU_S3_START42_V11-v2/merged/"
+jettypes = ["ak5FastPF", "ak5PFCHS", "ak5PFCHSNew"]
+datadir = "/scratch/hh/dust/naf/cms/user/stadie/2012/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v5/merged"
 #datadir  = "/scratch/hh/current/cms/user/stadie/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6_Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1Amerged"
-jecname = "JEC11_V1"
-datasetname="/QCD_Pt-15to3000_TuneD6T_Flat_7TeV-pythia6/Summer11-PU_S3_START42_V11-v2/AODSIM"
+jecname = "Fall11"
+datasetname="/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6/Summer12-PU_S7_START52_V9-v5/AODSIM"
 #datasetname="/QCD_Pt_15to3000_TuneZ2_Flat_7TeV_pythia6/Fall10-E7TeV_ProbDist_2010Data_BX156_START38_V12-v1/AODSIM"
 correctJets=False
-CutAwayPU=False
+CutAwayPU=True
 
 
 for jettype in jettypes:
@@ -221,7 +221,7 @@ for jettype in jettypes:
     if os.path.exists("tempplots"):
         os.system("rm tempplots/*")
 
-    os.system("ls "+datadir+"/*"+jettype+"*.root > tempdijetlist");
+    os.system("ls "+datadir+"/*"+jettype+"_*.root > tempdijetlist");
     fcfg = open("valid.cfg", "w")
     #change labels
     if CutAwayPU:
@@ -237,7 +237,7 @@ for jettype in jettypes:
         fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"\n");
         #fcfg.write("jet correction name   = "+jecname+"_"+jetalgo.upper()+jettype[3:len(jettype)]+"NoOffset\n");
     if CutAwayPU:
-        fcfg.write("MAX n PU from MC = 8\n");
+        #fcfg.write("MAX n PU from MC = 8\n");
         fcfg.write("correct jets L1 = false\n")
         jec = jecname+'NoPU'
     else:
@@ -249,7 +249,7 @@ for jettype in jettypes:
     print "running "+kalibricmd
     os.system(kalibricmd)
     tarball=jec+"plots"+jettype+".tar"
-    tarcmd = "cd tempplots; tar cf ../"+tarball+" *Eta[0-9].eps *Pt[0-9].eps *Eta[0-9]_zoom.eps *Pt[0-9]_zoom.eps *Flavor[0-9].eps *Flavor[0-9]_zoom.eps *NPU[0-9].eps *NPU[0-9]_zoom.eps; cd -"
+    tarcmd = "cd tempplots; tar cf ../"+tarball+" *Eta[0-9].eps *Pt[0-9].eps *Eta[0-9]_zoom.eps *Pt[0-9]_zoom.eps *Flavor[0-9].eps *Flavor[0-9]_zoom.eps *NPU[0-9].eps *NPU[0-9]_zoom.eps *.root; cd -"
     print "running "+tarcmd
     os.system(tarcmd)
 

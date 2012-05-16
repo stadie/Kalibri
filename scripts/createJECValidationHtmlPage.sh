@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.10 2011/05/18 16:00:58 stadie Exp $
+# $Id: createJECValidationHtmlPage.sh,v 1.11 2011/06/23 07:55:25 stadie Exp $
 #
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -58,6 +58,8 @@
 #    - 'calo' for calorimeter jets
 #    - 'jpt' for jet-plus-track jets
 #    - 'pf' for particle-flow jets
+#    - 'pfchs' for particle-flow chs jets
+#    - 'pfchsnew' for particle-flow chs new version jets
 #    - 'track' track jets
 #
 #   Author: Matthias Schroeder
@@ -200,7 +202,13 @@ until [[ ${CORRECT_INPUT} -eq 1 ]]; do
 	JET_TYPE="JPT"
     elif [[ ${JET_TYPE} == "pf" ]]; then
 	CORRECT_INPUT=1
-	JET_TYPE="PF"
+	JET_TYPE="PF"  
+    elif [[ ${JET_TYPE} == "pfchs" ]]; then
+	CORRECT_INPUT=1
+	JET_TYPE="PFCHS"
+    elif [[ ${JET_TYPE} == "pfchsnew" ]]; then
+	CORRECT_INPUT=1
+	JET_TYPE="PFCHSNEW"
     elif [[ ${JET_TYPE} == "track" ]]; then
 	CORRECT_INPUT=1
 	JET_TYPE="Track" 
@@ -211,7 +219,7 @@ until [[ ${CORRECT_INPUT} -eq 1 ]]; do
 	CORRECT_INPUT=1
 	JET_TYPE="PFFastjet"
     else	
-	echo -n "Enter jet type ('calo','jpt','pf','track'): "
+	echo -n "Enter jet type ('calo','jpt','pf','pfchs','pfchsnew','track'): "
 	read JET_TYPE
     fi
 done    
