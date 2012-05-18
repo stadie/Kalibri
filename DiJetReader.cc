@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.88 2012/05/15 09:05:41 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.89 2012/05/18 18:14:36 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1522,6 +1522,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetEt_++;
     return 0;
   }
+  double diJetPtAve = 0.5 * (nJet_->JetCorrL1[CorrJetIdx[0]] * nJet_->JetCorrL2L3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]]+ nJet_->JetCorrL1[CorrJetIdx[1]] * nJet_->JetCorrL2L3[CorrJetIdx[1]] * nJet_->JetPt[CorrJetIdx[1]]);
   //trigger cuts
   if(requireTrigger_ && trigmap_.size()) {
     hltdijetave15incl_ = nJet_->HltDiJetAve15U;
@@ -1568,7 +1569,6 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 
 
     //    double diJetPtAve = 0.5 * (nJet_->JetCorrL2[CorrJetIdx[0]] * nJet_->JetCorrL3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]]+ nJet_->JetCorrL2[CorrJetIdx[1]] * nJet_->JetCorrL3[CorrJetIdx[1]] * nJet_->JetPt[CorrJetIdx[1]]);
-    double diJetPtAve = 0.5 * (nJet_->JetCorrL1[CorrJetIdx[0]] * nJet_->JetCorrL2L3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]]+ nJet_->JetCorrL1[CorrJetIdx[1]] * nJet_->JetCorrL2L3[CorrJetIdx[1]] * nJet_->JetPt[CorrJetIdx[1]]);
     double triggerPt = diJetPtAve;
     //    if(useSingleJetTriggers_)triggerPt = nJet_->JetCorrL2[CorrJetIdx[0]] * nJet_->JetCorrL3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]];
     if(useSingleJetTriggers_)triggerPt = nJet_->JetCorrL1[CorrJetIdx[0]] * nJet_->JetCorrL2L3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]];
