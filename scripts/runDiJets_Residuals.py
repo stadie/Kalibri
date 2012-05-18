@@ -3,7 +3,7 @@
 import os
 import sys
 import ConfigParser
-from runDiJets_CommonConfigs import BinningValues, TriggerNamesThresholds, PUWeightingInfo, determineDataDir, determineDataDirMC
+from runDiJets_CommonConfigs import BinningValues, TriggerNamesThresholds, PUWeightingInfo, determineDataDir, determineDataDirMC, importDatatypesNewTrigger
 
 Usage="""
 ##############################################################################################
@@ -191,10 +191,10 @@ JER - Assert J1J2 In Same Eta Bin = false
 create plots                     = true
 plots output directory           = plots
 #plots format                      = pdf
-#plots only to root-file = false
-#export all XY projections = true
-plots only to root-file = true
-export all XY projections = false
+plots only to root-file = false
+export all XY projections = true
+#plots only to root-file = true
+#export all XY projections = false
 
 # JetTruthEvent plots
 create JetTruthEvent plots    =  false
@@ -605,7 +605,7 @@ AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
     fcfg.write("PUTruthReweighting = true\n");
     fcfg.write("PU weighting = false   \n");
 
-    PU_weighting_info = PUWeightingInfo(DATATYPE)
+    PU_weighting_info = PUWeightingInfo(DATATYPE,MC_type)
     fcfg.write(PU_weighting_info);
     
     fcfg.write("MAX n reco Vtx             = " + str(nMaxRecoVtx) +"\n");
@@ -703,7 +703,7 @@ DATAYEAR = "2012"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "TEST"
+DATATYPE = "2012_193336"
 ##################################
 ## choose binning in eta, currently only "kostas" and "k_HFfix" are properly defined here
 ##################################
@@ -719,7 +719,7 @@ MC = "Su12"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-MC_type="Z2Star"
+MC_type="Z2Star_PUS6S7"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
@@ -774,7 +774,7 @@ if(DO_MC_ONLY_STUDY=="true"):
 
 USE_NEW_TRIGGERS_AND_FASTPF=0
 
-DATATYPES_NEW_TRIGGER=["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST"]
+DATATYPES_NEW_TRIGGER=importDatatypesNewTrigger()
 
 for new_trigger in DATATYPES_NEW_TRIGGER:
     if(DATATYPE==new_trigger):
@@ -834,11 +834,11 @@ if (len(sys.argv) > 6):
 
 nthreads = 2
 niothreads = 2
-#nevents =  -1
+nevents =  -1
 #nthreads = 1
 #niothreads = 1
-nevents =  100
-MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+#nevents =  100
+MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri2/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
