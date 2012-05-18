@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.25 2012/03/29 11:50:34 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.26 2012/04/27 12:34:27 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -764,7 +764,7 @@ void ControlPlotsConfig::determineOutPlotSuffix(std::string name) {
   std::string outPlotSuffix;
   if(name=="EventWeightProcessor")outPlotSuffix="_EW";
   else if(name=="DiJetEventWeighting")outPlotSuffix="_DJ";
-  else if(name=="TruthPileUpReweighting")outPlotSuffix="_TruthPU";
+  else if(name=="PUTruthReweighting")outPlotSuffix="_TruthPU";
   else if(name=="PU weighting")outPlotSuffix="_PU";
   else if(name=="Event binning")outPlotSuffix="_EB";
   else if(name=="DiJetEventCuts")outPlotSuffix="_CU";
