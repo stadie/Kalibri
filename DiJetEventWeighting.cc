@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: DiJetEventWeighting.cc,v 1.6 2012/02/09 16:45:58 kirschen Exp $
+//    $Id: DiJetEventWeighting.cc,v 1.7 2012/03/29 11:54:06 kirschen Exp $
 //   
 #include "DiJetEventWeighting.h"
 
@@ -95,7 +95,8 @@ bool DiJetEventWeighting::passCheckBadEventDiJetEventWeighting(Event* event)
   if(!(it == ndata_.begin())){
     assert(it != ndata_.begin());
     --it;
-    it->second += tje->weight();
+    if(tje->relPtJet3CorrL2L3()<0.2)it->second += tje->weight();
+    //it->second += tje->weight();
     return true;
   }
   else {
@@ -124,7 +125,8 @@ bool DiJetEventWeighting::passCheckStrangeEventDiJetEventWeighting(Event* event)
   if(!(it == ncontrol_.begin())){
     assert(it != ncontrol_.begin());
     --it;
-    it->second += tje->weight();
+    if(tje->relPtJet3CorrL2L3()<0.2)it->second += tje->weight();
+    //it->second += tje->weight();
   }
   return true;
 }
