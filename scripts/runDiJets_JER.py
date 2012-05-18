@@ -3,7 +3,7 @@
 import os
 import sys
 import ConfigParser
-from runDiJets_CommonConfigs import BinningValues, TriggerNamesThresholds, PUWeightingInfo, determineDataDir, determineDataDirMC
+from runDiJets_CommonConfigs import BinningValues, TriggerNamesThresholds, PUWeightingInfo, determineDataDir, determineDataDirMC, importDatatypesNewTrigger
 
 
 Usage="""
@@ -201,6 +201,9 @@ export all XY projections = true
 create JetTruthEvent plots    =  false
 create TwoJetsPtBalanceEvent plots = true
 #create TwoJetsPtBalanceEvent PU weighting plots = true
+create TwoJetsPtBalanceEvent DiJetEventCuts plots = true 
+create TwoJetsPtBalanceEvent DiJetEventWeighting plots = true 
+create TwoJetsPtBalanceEvent PUTruthReweighting plots = true 
 
 
 """
@@ -212,7 +215,7 @@ create TwoJetsPtBalanceEvent plots = true
     abs_binning_values=BinningValues(BINNING,True)
 
 
-    plot_list=['AbsAsymmetryVsPt']
+    plot_list=['AbsAsymmetryVsPt','NPVVsPt']
     cut_list=['40','30','20','10']
     cut_no_list=['.40','.30','.20','.10']
 #    cut_list=['40','35','30','25','20','15','10','05']
@@ -229,14 +232,23 @@ create TwoJetsPtBalanceEvent plots = true
         
     fcfg.write("\n")
         
-    
-
     fcfg.write("TwoJetsPtBalanceEvent plots names =   ")
     for index_cut, cut in enumerate(cut_list):
         for index_plot, plot in enumerate(plot_list):
             fcfg.write(plot + cut + ";")
-    fcfg.write("AbsAsymmetryVsNPV;JetEta1VsJetEta2")
+    fcfg.write("AbsAsymmetryVsNPV;JetEta1VsJetEta2;AsymmetryVsNPV20_pt_bin_all_eta")
     fcfg.write("\n")
+
+    additionalplottinglist = ['DiJetEventCuts','DiJetEventWeighting','PUTruthReweighting']
+    for additionalplots in additionalplottinglist:
+        fcfg.write("TwoJetsPtBalanceEvent "+additionalplots+" plots names =   ")
+        for index_cut, cut in enumerate(cut_list):
+            for index_plot, plot in enumerate(plot_list):
+                fcfg.write(plot + cut + ";")
+        fcfg.write("AbsAsymmetryVsNPV;JetEta1VsJetEta2;AsymmetryVsNPV20_pt_bin_all_eta")
+        fcfg.write("\n")
+        
+
 #    for index_samples, samples in enumerate(samples_all):
     for index_cut, cut in enumerate(cut_list):
         #    print "prepare " + samples
@@ -253,6 +265,19 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[0] + cut + " 1 correction types  =  L2L3\n")
         fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; StandardDeviation; GaussFitWidth\n")
         fcfg.write(plot_list[0] + cut + " input samples     =  0:data;1:MC\n\n")
+
+        fcfg.write(plot_list[1] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[1] + cut + " x edges           =  100 20 2000\n")
+        fcfg.write(plot_list[1] + cut + " y variable        =  VtxN\n")
+        fcfg.write(plot_list[1] + cut + " y edges           =  44 0.0 44.0 0.0 44.0 \n")
+        fcfg.write(plot_list[1] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[1] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[1] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[1] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[1] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[1] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[1] + cut + " profile types     =  Mean\n")
+        fcfg.write(plot_list[1] + cut + " input samples     =  0:data;1:MC\n\n")
 
     fcfg.write("\n\n")
 
@@ -285,6 +310,21 @@ create TwoJetsPtBalanceEvent plots = true
     fcfg.write("JetEta1VsJetEta2 profile types     =  Mean\n")
     fcfg.write("#JetEta1VsJetEta2 legend label      =  L2L3:CMS default\n")
     fcfg.write("JetEta1VsJetEta2 input samples     =  0:data;1:MC\n")
+    fcfg.write("\n\n")
+
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta x variable        =  VtxN\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta x edges           =  44 0.0 44.0\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta y variable        =  Asymmetry\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta bin variable      =  MeanPt\n")
+    fcfg.write("#AsymmetryVsNPV20_pt_bin_all_eta bin edges         =  20 30 50 80 120 200 360 500 900 7000\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta bin edges         =  45 90 150 210 270 340 420 900 7000\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta cut variable      =  ThirdJetFractionPlain\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta cut edges         =  0.0 0.2\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta correction types  =  L2L3; L2L3Res\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta 1 correction types  =  L2L3\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta input samples     =  0:data;1:MC\n")
     fcfg.write("\n\n")
 
 
@@ -339,7 +379,7 @@ create TwoJetsPtBalanceEvent plots = true
     fcfg.write("PUTruthReweighting = true\n");
     fcfg.write("PU weighting = false   \n");
 
-    PU_weighting_info = PUWeightingInfo(DATATYPE)
+    PU_weighting_info = PUWeightingInfo(DATATYPE,MC_type)
     fcfg.write(PU_weighting_info);
 
     fcfg.write("MAX n reco Vtx             = " + str(nMaxRecoVtx) +"\n");
@@ -429,7 +469,7 @@ DATAYEAR = "2012"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "TEST"
+DATATYPE = "2012_193336"
 ##################################
 ## choose binning in eta, currently only "JER" is properly defined here
 ##################################
@@ -445,7 +485,7 @@ MC = "Su12"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-MC_type="Z2Star"
+MC_type="Z2Star_PUS6S7"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
@@ -500,7 +540,7 @@ if(DO_MC_ONLY_STUDY=="true"):
 
 USE_NEW_TRIGGERS_AND_FASTPF=0
 
-DATATYPES_NEW_TRIGGER=["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST"]
+DATATYPES_NEW_TRIGGER=importDatatypesNewTrigger()
 
 for new_trigger in DATATYPES_NEW_TRIGGER:
     if(DATATYPE==new_trigger):
@@ -562,8 +602,8 @@ niothreads = 2
 #nevents =  -1
 #nthreads = 1
 #niothreads = 1
-nevents =  10000
-MAIN_dirname = "/afs/naf.desy.de/user/k/kriheine/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+nevents =  100
+MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
