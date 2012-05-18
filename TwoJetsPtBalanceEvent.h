@@ -14,7 +14,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.16 2012/01/24 16:27:29 kirschen Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.17 2012/04/27 12:56:05 kirschen Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
@@ -93,7 +93,10 @@ class TwoJetsPtBalanceEvent : public Event {
   double ptSumAbsGen() const;
   double ptSumAbsCorrL2L3() const;
 
-  virtual double relPtJet3() const { return hasJet3() ? jet3_->pt() / ptDijet() : 0.; }
+  virtual double relPtJet3() const ;
+  virtual double relPtJet3CorrL2L3() const ;
+  virtual double relPtJet3Projection() const ;
+  virtual double relPtJet3ProjectionCorrL2L3() const ;
 
   bool flaggedBad() const { return flaggedBad_; }  //!< Status
 
@@ -119,6 +122,8 @@ protected:
   double chi2_fast_balance_res(double pt1, double pt2) const;
   double chi2_fast_balance_dRes2(double pt1, double pt2) const;  
   double chi2_relative(double * temp_derivative1, double * temp_derivative2, const double* epsilon) const;
+  static const float lowThresholdJet1_;
+  static const float lowThresholdJet3_;
 };
 
 #endif

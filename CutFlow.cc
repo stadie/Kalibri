@@ -48,17 +48,19 @@ bool CutFlow::doAllSuppDiJetCuts(){
   bool eventSurvives=true;
   Jet * j1 = diJetEvent_->getJet1();
   Jet * j2 = diJetEvent_->getJet2();
-  Jet * j3 = diJetEvent_->getJet3();
 
-  if( std::abs(TVector2::Phi_mpi_pi(j1->phi() - j2->phi())) < minDeltaPhi_ ) {
+ 
+  if(useMinDeltaPhi_&& std::abs(TVector2::Phi_mpi_pi(j1->phi() - j2->phi())) < minDeltaPhi_ ) {
     nMinDeltaPhi_++;
     eventSurvives=false;
   }
-  else if(diJetEvent_->hasJet3()  && std::abs(j3->corFactors().getL2L3() * j3->pt()) < minRel3rdJetEt_*diJetEvent_->ptDijetCorrL2L3() ) {
+  else if(useMinRel3rdJetEt_ && diJetEvent_->relPtJet3CorrL2L3() < minRel3rdJetEt_) {
+    //    std::cout << diJetEvent_->relPtJet3CorrL2L3() << " and " << minRel3rdJetEt_ << std::endl;
     nMinCutOn3rdJet_++;
     eventSurvives=false;
   }
-  else if(diJetEvent_->hasJet3()  && std::abs(j3->corFactors().getL2L3() * j3->pt()) > maxRel3rdJetEt_*diJetEvent_->ptDijetCorrL2L3() ) {
+  else if(useMaxRel3rdJetEt_ && diJetEvent_->relPtJet3CorrL2L3() > maxRel3rdJetEt_) {
+    //    std::cout << diJetEvent_->relPtJet3CorrL2L3() << " and " << maxRel3rdJetEt_ << std::endl;
     nMaxCutOn3rdJet_++;
     eventSurvives=false;
   }

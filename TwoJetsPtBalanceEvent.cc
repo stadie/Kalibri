@@ -1,6 +1,7 @@
-// $Id: TwoJetsPtBalanceEvent.cc,v 1.9 2010/10/20 11:28:15 stadie Exp $
+// $Id: TwoJetsPtBalanceEvent.cc,v 1.10 2010/11/01 15:47:40 stadie Exp $
 
 #include "TwoJetsPtBalanceEvent.h"
+#include "TVector2.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -417,3 +418,68 @@ double TwoJetsPtBalanceEvent::chi2_relative(double * temp_derivative1,
   } 
   return chi2;
 }
+
+
+//!  \brief Define low thresholds for Jet1 Pt used to calculate relPtJet3*
+//!
+// --------------------------------------------------
+const float TwoJetsPtBalanceEvent::lowThresholdJet1_=10;
+
+//!  \brief Define low thresholds for Jet3 Pt used to calculate relPtJet3*
+//!
+// --------------------------------------------------
+const float TwoJetsPtBalanceEvent::lowThresholdJet3_=5;
+
+
+//!  \brief Returns fraction of momentum of third jet and average dijet momentum  
+//!
+// --------------------------------------------------
+double TwoJetsPtBalanceEvent::relPtJet3() const {
+  if (!  hasJet3()) return 0;
+  if( getJet1()->pt() < lowThresholdJet1_) return 0;
+  double pJ3 =  getJet3()->pt();
+  if(pJ3 < lowThresholdJet3_) pJ3=lowThresholdJet3_;
+  return pJ3/ ptDijet();
+}
+
+//!  \brief Returns fraction of momentum of third jet and average dijet momentum (L2L3Corr)
+//!
+// --------------------------------------------------
+double TwoJetsPtBalanceEvent::relPtJet3CorrL2L3() const {
+  if (!  hasJet3()) return 0;
+  if( getJet1()->pt() < lowThresholdJet1_) return 0;
+  double pJ3 =  getJet3()->corFactors().getL2L3() *  getJet3()->pt();
+  if(pJ3 < lowThresholdJet3_) pJ3=lowThresholdJet3_;
+  return pJ3/ ptDijetCorrL2L3();
+}
+
+
+
+//!  \brief Returns fraction of momentum of third jet projected to dijet axis 
+//!
+// --------------------------------------------------
+double TwoJetsPtBalanceEvent::relPtJet3Projection() const {
+  if (! hasJet3()) return 0;
+  if(getJet1()->pt() < lowThresholdJet1_) return 0;
+  // Phi of dijet axis
+  double pPhi = TVector2::Phi_mpi_pi(0.5*(getJet1()->phi() + getJet2()->phi()) + M_PI/2.);
+  double pJ3 =  getJet3()->pt() * cos(TVector2::Phi_mpi_pi(pPhi-getJet3()->phi()));
+  if(pJ3 < lowThresholdJet3_) pJ3=lowThresholdJet3_;
+  return pJ3/ptDijet();
+}
+
+
+
+//!  \brief Returns fraction of momentum of third jet projected to dijet axis (L2L3Corr)
+//!
+// --------------------------------------------------
+double TwoJetsPtBalanceEvent::relPtJet3ProjectionCorrL2L3() const {
+  if (! hasJet3()) return 0;
+  if(getJet1()->pt() < lowThresholdJet1_) return 0;
+  // Phi of dijet axis
+  double pPhi = TVector2::Phi_mpi_pi(0.5*(getJet1()->phi() + getJet2()->phi()) + M_PI/2.);
+  double pJ3 = getJet3()->corFactors().getL2L3() * getJet3()->pt() * cos(TVector2::Phi_mpi_pi(pPhi-getJet3()->phi()));
+  if(pJ3 < lowThresholdJet3_) pJ3=lowThresholdJet3_;
+  return pJ3/ptDijetCorrL2L3();
+}
+
