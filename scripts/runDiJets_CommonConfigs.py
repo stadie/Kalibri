@@ -110,7 +110,7 @@ def TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettyp
         print "Defining trigger thresholds failed"
 
 
-def PUWeightingInfo(DATATYPE):
+def PUWeightingInfo(DATATYPE,MC_type):
     
     if(DATATYPE=="May10"):
         PU_weighting_info = "PU weighting era = Fall11\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/Cert_160404-163869_7TeV_May10ReReco_Collisions11_JSON_v3.pileup_v2.root \n"
@@ -134,6 +134,8 @@ def PUWeightingInfo(DATATYPE):
         PU_weighting_info = "PU weighting era = Fall11\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/EXPORT_shifted_PU-hiust.root \n"
     elif(DATATYPE=="TEST"):
         PU_weighting_info = "PU weighting era = Summer12\n PU weighting histogram = /scratch/hh/current/cms/user/kirschen/PUDistributions/Inclusive/MyDataPileupHistogramObservedAllHLT.root \n PU TruthWeighting = Cert_2012_190456-193336 \n PU TruthWeighting MC distribution = TrueSummer12 \n"
+    elif(DATATYPE=="2012_193336" and MC_type=="Z2Star_PUS6S7"):
+        PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-193336 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     else:
         print "Defining PU reweighting paths failed"
         PU_weighting_info = "PU weighting era = Flat10\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n"
@@ -209,6 +211,8 @@ def determineDataDir(DATAYEAR,DATATYPE):
     #        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/Jet2012APromptRecoV1_Cert_2012_190456-191276/merged"
     #        datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-191859/merged"
             datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-193336/merged"
+        if(DATATYPE=="2012_193336"):
+            datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-193336/merged"
 
     return datadir
 
@@ -216,6 +220,8 @@ def determineDataDir(DATAYEAR,DATATYPE):
 def determineDataDirMC(MC,MC_type):
     
     if(MC == "Su12"):
+        if(MC_type=="Z2Star_PUS6S7"):
+            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1"
         if(MC_type=="Z2Star"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START50_V15-v1/merged"
         if(MC_type=="Z2Star52"):
@@ -266,3 +272,8 @@ def determineDataDirMC(MC,MC_type):
             datadirmc = "/scratch/hh/current/cms/user/stadie/QCD_Pt-15To3000_Tune23_Flat_7TeV-herwigpp_Fall10-START38_V12-v1Amerged"
     #    if(MC_type=="Z2wPU"):
     return datadirmc
+
+
+
+def importDatatypesNewTrigger():
+    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST","2012_193336"]
