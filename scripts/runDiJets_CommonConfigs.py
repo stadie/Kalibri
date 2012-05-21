@@ -136,6 +136,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = "PU weighting era = Summer12\n PU weighting histogram = /scratch/hh/current/cms/user/kirschen/PUDistributions/Inclusive/MyDataPileupHistogramObservedAllHLT.root \n PU TruthWeighting = Cert_2012_190456-193336 \n PU TruthWeighting MC distribution = TrueSummer12 \n"
     elif(DATATYPE=="2012_193336" and MC_type=="Z2Star_PUS6S7"):
         PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-193336 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
+    elif(DATATYPE=="2012A_194076" and MC_type=="Z2Star_PUS6S7"):
+        PU_weighting_info = "PU TruthWeighting = Cert_2012AOnly_190456-194076 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     else:
         print "Defining PU reweighting paths failed"
         PU_weighting_info = "PU weighting era = Flat10\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n"
@@ -213,6 +215,8 @@ def determineDataDir(DATAYEAR,DATATYPE):
             datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-193336/merged"
         if(DATATYPE=="2012_193336"):
             datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-193336/merged"
+        if(DATATYPE=="2012A_194076"):
+            datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v4/Jet2012APromptRecoV1_Cert_2012_190456-194076/merged"
 
     return datadir
 
