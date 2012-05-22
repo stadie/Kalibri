@@ -220,6 +220,8 @@ def determineDataDir(DATAYEAR,DATATYPE):
             datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Jet2012APromptRecoV1_Cert_2012_190456-193336/merged"
         if(DATATYPE=="2012A_194076"):
             datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v4/Jet2012APromptRecoV1_Cert_2012_190456-194076/merged"
+        if(DATATYPE=="2012AB_194076"):
+            datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v4/Merged_2012AJet_2012BJetMon_2012BJetHT_Cert_2012_190456-194076"
 
     return datadir
 
@@ -283,4 +285,4 @@ def determineDataDirMC(MC,MC_type):
 
 
 def importDatatypesNewTrigger():
-    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST","2012_193336","2012A_194076"]
+    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076"]
