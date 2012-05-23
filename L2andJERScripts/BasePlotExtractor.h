@@ -55,6 +55,7 @@ class BasePlotExtractor {
   void refreshRatiosDataMC();
   void drawConfidenceIntervals(TH1D* histo);
   void addFunctionLabelsToLegend(TH1D* histo, TLegend* leg);
+  void outputTable(TString label, TH1D* histo);
   void readInExtraInfo();
   TString kalibriPlotsPath() {return kalibriPlotsPath_;};
   TString profileType() {return profileType_;};

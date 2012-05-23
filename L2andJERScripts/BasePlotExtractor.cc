@@ -1,6 +1,7 @@
 #include "BasePlotExtractor.h"
 #include "../scripts/tdrstyle_mod.C"
 #include <string>
+#include <fstream>
 
 //! Default constructor, reads in information about the 
 //! plots. These plots have to be defined in config_
@@ -20,7 +21,7 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsPath
   std::cout << "readInExtraInfo(); executed " << binningSelection_<< std::endl;
 
 
-  config_=ConfigFile(("/afs/naf.desy.de/user/k/kirschen/public/L2L3AllPlots_"+binningSelection_+".cfg").Data());
+  config_=ConfigFile("/afs/naf.desy.de/user/k/kriheine/scratch/Kalibri/L2andJERScripts/JERPlots_L2L3.cfg");
 
 }
 
@@ -139,9 +140,11 @@ void BasePlotExtractor::init(TString profileType) {
       DataMCProfiles.at(1)->Sumw2();
       // Do ratios of first and second (0 should be Data, 1 should be MC, can be checked in output above)
       TH1D* ratio = (TH1D*) DataMCProfiles.at(0)->Clone();
+      ratio->Sumw2();
       ratio->Divide(DataMCProfiles.at(0),DataMCProfiles.at(1));
       DataMCRatios.push_back(ratio);
       TH1D* difference = (TH1D*) DataMCProfiles.at(0)->Clone();
+      difference->Sumw2();
       difference->Add(difference, DataMCProfiles.at(1), 100, -100);
       DataMCDifferences.push_back(difference);
       //      DataMCProfiles.at(1)->Draw("hist");
@@ -182,6 +185,7 @@ void BasePlotExtractor::refreshRatiosDataMC(){
     TH1vec_t DataMCRatios; //Vector to contain Data/MC-ratios
     for(int bin_i=0;bin_i<configs_.at(i)->nBins();bin_i++){
       TH1D* ratio = (TH1D*) AllPlots_.at(i).at(bin_i).at(0)->Clone();
+      ratio->Sumw2();
       ratio->Divide(AllPlots_.at(i).at(bin_i).at(0),AllPlots_.at(i).at(bin_i).at(1));
       DataMCRatios.push_back(ratio);
     }
@@ -206,6 +210,7 @@ void BasePlotExtractor::makeRatioVsBinVarHistos(){
     std::cout << names_.at(conf_i) << std::endl;
     TH1D* RatioVsBinVar = new TH1D(("RatioVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
     std::cout << names_.at(conf_i) << std::endl;
+    RatioVsBinVar->Sumw2();
     RatioVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
     RatioVsBinVar->GetYaxis()->SetTitle("Data/MC ratio (const fit)");
   TF1 *fit_const = new TF1("fit_const","[0]",RatioVsBinVar->GetXaxis()->GetXmin(),RatioVsBinVar->GetXaxis()->GetXmax()); //was used before...
@@ -239,6 +244,24 @@ void BasePlotExtractor::makeRatioVsBinVarHistos(){
   }
   RatioVsBinVarHistos_=RatioVsBinVarHistos;
 }
+
+
+//!  Get JER values from histos
+//! 
+//!  \author Kristin Heine/Henning Kirschenmann
+//!  \date 2012/05/23
+// ----------------------------------------------------------------
+void BasePlotExtractor::outputTable(TString label, TH1D* histo){
+
+   ofstream myfile;
+   myfile.open("JER_results_"+label+".txt");
+
+   for(int i = 1; i < histo->GetNbinsX()+1; i++) {
+      myfile << "Eta Bin: " << i-1 << " : " << "JER: " << histo->GetBinContent(i) << "+-" << histo->GetBinError(i) << "\n"; 
+   }
+   myfile.close();
+}
+
 
 //! Fills legend with information from ExternalConfig_, 
 //! also adds chi^2/ndf to labels
@@ -300,6 +323,7 @@ void BasePlotExtractor::drawConfidenceIntervals(TH1D* histo){
     histo->Fit(temp_tf1->GetName(),"NEMQ");
     //Create a histogram to hold the confidence intervals
     TH1D *hint = new TH1D("hint","Fitted gaussian with .95 conf.band", 100, histo->GetXaxis()->GetXmin(), histo->GetXaxis()->GetXmax());
+    hint->Sumw2();
     (TVirtualFitter::GetFitter())->GetConfidenceIntervals(hint);
     //Now the "hint" histogram has the fitted function values as the 
     //bin contents and the confidence intervals as bin errors

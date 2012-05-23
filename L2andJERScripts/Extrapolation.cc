@@ -149,7 +149,6 @@ void Extrapolation::Plot() {
 
 }
 
-
 //! Do the radiation extrapolation in each bin (for resolutions mainly bins in eta (and then xbins in pt)
 //! Then save the reult of the extrapolation and refresh all previous plots (e.g. Data/MC-ratios)
 //! 
@@ -200,6 +199,25 @@ void Extrapolation::createPtRelExtrapol() {
   // fits const and loglin function to dataMC-ratio and produces RatioVsBinVar-plots (e.g. Data/MC-ratio of resolution vs. eta) (defined in BasePlotExtractor)
   makeRatioVsBinVarHistos();
 }
+
+//!  Put JER values into table
+//! 
+//!  \author Kristin Heine/Henning Kirschenmann
+//!  \date 2012/05/23
+// ----------------------------------------------------------------   
+void Extrapolation::ExportTables() {
+   MakeDateDir();
+   if(chdir("JER_tables") != 0){ 
+      mkdir("JER_tables", S_IRWXU|S_IRWXG|S_IRWXO); 
+      chdir("JER_tables"); 
+  } 
+
+   for(int conf_i=0;conf_i<configs_.size();conf_i++){
+      TString outname = "ResolutionPlots_"+plotsnames_+"_RatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i);
+      outputTable(outname,RatioVsBinVarHistos_.at(conf_i));
+   }
+   chdir("../../."); 
+} 
 
 
 //! Default constructor taking a pointer to the encapsulating object 
@@ -300,7 +318,8 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   DefaultStyles style;
   style.setStyle();
   TCanvas* c = new TCanvas("c","",600,600);
-  std::pair <float,float> minMaxPair = determineMinMax(MCExtrapols_.at(xBin_i));
+  //  std::pair <float,float> minMaxPair = determineMinMax(MCExtrapols_.at(xBin_i));
+  std::pair <float,float> minMaxPair = std::make_pair(-0.1,0.2);
   c->DrawFrame(0,minMaxPair.first*0.5-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.2,(";"+Outer_->configs_.at(0)->cutAxisTitle()+";"+Outer_->yProfileTitle()/*"#sqrt{2} #sigma"*/)/*.c_str()*/);
   MCExtrapols_.at(xBin_i)->Draw("P");
   MCExtrapols_.at(xBin_i)->SetLineColor(style.getColor(0));

@@ -25,6 +25,7 @@ class Extrapolation :public BasePlotExtractor{
  public :
   Extrapolation(TString plotsnames="ResolutionVsPt",TString kalibriPlotsPath="KalibriPlots.root");
   void Plot();
+  void ExportTables();
  private:
   void extrapolInit();
   void createPtRelExtrapol();
