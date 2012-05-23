@@ -8,18 +8,19 @@ algo_types_all = ['ak5Calo_','ak5FastCalo_','ak5FastPF_','ak5JPT_','ak7PF_','ak7
 length=len(sys.argv)
 samplelist=[]
 
-
-print "Use this script to set links to n-tuple files from multiple samples in a common targetdir."
-print "Usage: ./setlinks.py sample1 sample2 ... targetdir"
-print "------------------------------------------------------------------------------------------"
-print "number of arguments: " + str(length-1) + "; will set links to " + str(length-2) + " samples in targetdir"
-print "Warning: targetdir " + targetdir + "will be deleted before setting new links"
-
 for i in range(1,length):
 #	print str(i) + ": " + sys.argv[i]
 	samplelist.append(sys.argv[i])
 
 targetdir=samplelist[length-2]
+
+
+print "Use this script to set links to n-tuple files from multiple samples in a common targetdir."
+print "Usage: ./setlinks.py sample1 sample2 ... targetdir"
+print "------------------------------------------------------------------------------------------"
+print "number of arguments: " + str(length-1) + "; will set links to " + str(length-2) + " samples in targetdir"
+print "Warning: targetdir " + targetdir + " will be deleted before setting new links"
+
 
 if len(sys.argv)<3:
 	print "error occured..."
