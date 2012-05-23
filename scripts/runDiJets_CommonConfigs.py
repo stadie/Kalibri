@@ -11,6 +11,9 @@ def BinningValues(BINNING,AbsEta):
     elif(BINNING=="JER"):
         binning_values = "-5.2 -3.0 -2.0 -1.5 -1.0 -0.5 0 0.5 1.0 1.5 2.0 3.0 5.2"
         abs_binning_values = "0 0.5 1.0 1.5 2.0 3.0 5.2"
+    elif(BINNING=="JER_common"):
+        binning_values = "-5.2 -3.0 -2.5 -2.0 -1.5 -1.0 -0.5 0 0.5 1.0 1.5 2.0 2.5 3.0 5.2"
+        abs_binning_values = "0 0.5 1.0 1.5 2.0 2.5 3.0 5.2"
     else:
         print "Defining eta bins failed"
 
@@ -128,6 +131,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = "PU weighting era = Fall11\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/2011B_V1_merged_last_three_files.root \n"
     elif(DATATYPE=="11BReRe"):
         PU_weighting_info = "PU weighting era = Fall11\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/2011B_V1_merged_last_three_files.root \n"
+    elif(DATATYPE=="Full2011" and MC_type=="44Z2wPU"):
+        PU_weighting_info = "PU TruthWeighting = Cert_44Full2011_160404-180252 \n PU TruthWeighting MC distribution = TrueFall11 \n"
     elif(DATATYPE=="Full2011"):
         PU_weighting_info = "PU weighting era = Fall11\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/PUDistributions/alltogether.root \n"
     elif(DATATYPE=="42XFull2011"):
@@ -198,9 +203,10 @@ def determineDataDir(DATAYEAR,DATATYPE):
         if(DATATYPE=="11BReRe"):
             datadir = "/scratch/hh/current/cms/user/kirschen/2011_Jets_v9/Jet2011BReRecoV1_Cert_Nov08_160404-180252/merged"
         if(DATATYPE=="Full2011"):
-    #        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_05Aug_v4_v6_2011BV1_160404-180252"
-    #        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/combine_May10ReReco_05Aug_v4_v6_2011B_160404_180252"
-            datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/combine_ReReco2011A_2011B_160404_180252"
+            #        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/combine_May10ReReco_05Aug_v4_v6_2011BV1_160404-180252"
+            #        datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/combine_May10ReReco_05Aug_v4_v6_2011B_160404_180252"
+            #            datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/combine_ReReco2011A_2011B_160404_180252"
+            datadir = "/scratch/hh/current/cms/user/kirschen/2011_Jets_v10/44X_Final/combine_ReReco2011A_2011B_160404_180252"
         if(DATATYPE=="42XFull2011"):
             datadir = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_01_L2L3Residuals/combine_May10ReReco_05Aug_v4_v6_2011B_160404_180252"
         if(DATATYPE=="Z2wPUsmeared_DMC"):
@@ -241,6 +247,8 @@ def determineDataDirMC(MC,MC_type):
     if(MC == "F11"):
         if(MC_type=="Z2wPU"):
             datadirmc = "/scratch/hh/current/cms/user/stadie/2011/v8/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1/merged"
+        if(MC_type=="44Z2wPU"):
+            datadirmc = "/scratch/hh/current/cms/user/kirschen/2011_Jets_v10/44X_Final/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START44_V9B-v1/merged"
         if(MC_type=="Z2wPUsmeared"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/v8_QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1_with_METcorr_nominal"
         if(MC_type=="Z2wPUsm_Y"):

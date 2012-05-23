@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.89 2012/05/18 18:14:36 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.90 2012/05/18 19:49:20 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -57,7 +57,7 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   eventWeight_          = config_->read<double>("Di-Jet weight",-1.);
   weights_eq_one_       = config_->read<bool>("set weights to one",false);
   fire_all_dijet_triggers_    = config_->read<bool>("fire all triggers",false);
-  JERReadInJ1J2SameEtaBin_    = config_->read<bool>("JER- Assert J1J2 In Same Eta Bin",false);
+  JERReadInJ1J2SameEtaBin_    = config_->read<bool>("JER - Assert J1J2 In Same Eta Bin",false);
   std::cout << "JER - Assert J1J2 In Same Eta Bin set to: " << JERReadInJ1J2SameEtaBin_<<std::endl;
 
   useSingleJetTriggers_ = config_->read<bool>("Use single jet triggers",false);

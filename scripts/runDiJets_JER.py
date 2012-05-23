@@ -239,7 +239,8 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
     fcfg.write("AbsAsymmetryVsNPV;JetEta1VsJetEta2;AsymmetryVsNPV20_pt_bin_all_eta")
     fcfg.write("\n")
 
-    additionalplottinglist = ['DiJetEventCuts','DiJetEventWeighting','PUTruthReweighting']
+#    additionalplottinglist = ['DiJetEventCuts','DiJetEventWeighting','PUTruthReweighting']
+    additionalplottinglist = []
     for additionalplots in additionalplottinglist:
         fcfg.write("TwoJetsPtBalanceEvent "+additionalplots+" plots names =   ")
         for index_cut, cut in enumerate(cut_list):
@@ -445,7 +446,7 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="DefaultTest"
+DIR_JETALGO="DefaultTestTEst"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
@@ -457,7 +458,7 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2012V7_AK5"
+CORRECTION="Final2011_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -465,15 +466,15 @@ CORRECT_JETS_L1="true"
 ##################################
 ## DATAYEAR variable used to determine trigger thresholds, datasets, ...
 ##################################
-DATAYEAR = "2012"
+DATAYEAR = "2011"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "2012_193336"
+DATATYPE = "Full2011"
 ##################################
 ## choose binning in eta, currently only "JER" is properly defined here
 ##################################
-BINNING="JER"
+BINNING="JER_common"
 ##################################
 ## Use single jet triggers if =1 (influences trigger thresholds and trigger pt variables in runtime, look for useSingleJetTriggers_ in code)
 ##################################
@@ -481,15 +482,15 @@ SINGLEJET=0
 ##################################
 ## Choose MC-generation 
 ##################################
-MC = "Su12"
+MC = "F11"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-MC_type="Z2Star_PUS6S7"
+MC_type="44Z2wPU"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
-MinRunNumber=-1
+MinRunNumber=163337
 ##################################
 ## Choose maximum run number
 ##################################
@@ -602,7 +603,7 @@ niothreads = 2
 #nevents =  -1
 #nthreads = 1
 #niothreads = 1
-nevents =  100
+nevents =  1000
 MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
