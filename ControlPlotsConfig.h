@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.12 2012/02/09 16:41:51 kirschen Exp $
+// $Id: ControlPlotsConfig.h,v 1.13 2012/03/29 11:50:34 kirschen Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -56,7 +56,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.12 2012/02/09 16:41:51 kirschen Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.13 2012/03/29 11:50:34 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -211,6 +211,8 @@ class ControlPlotsConfig {
   bool outOnlyRoot() const { return outOnlyRoot_; }
   //! Specifies whether X and Y projections of all 2D-histos are created and written out.
   bool outXYProjections() const { return outXYProjections_; }
+  //! Specifies whether all Y projections of all 2D-histos are created, plotted with the Gauss Fits and written out.
+  bool outAllGaussFitsforProfiles() const { return outAllGaussFitsforProfiles_; }
   //! Writes a \p obj to ROOT file 
   void toRootFile(TObject *obj) const;
 
@@ -249,6 +251,7 @@ class ControlPlotsConfig {
   std::string outFileType_;
   bool outOnlyRoot_;
   bool outXYProjections_;
+  bool outAllGaussFitsforProfiles_;
 
   std::map<InputTag,int> colors_;
   std::map<InputTag,int> markerStyles_;

@@ -194,6 +194,7 @@ plots output directory           = plots
 #plots format                      = pdf
 plots only to root-file = false
 export all XY projections = true
+export all fitProfileHistos = true
 #plots only to root-file = true
 #export all XY projections = false
 
@@ -215,7 +216,7 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
     abs_binning_values=BinningValues(BINNING,True)
 
 
-    plot_list=['AbsAsymmetryVsPt','NPVVsPt']
+    plot_list=['AbsAsymmetryVsPt']#,'NPVVsPt']
     cut_list=['40','30','20','10']
     cut_no_list=['.40','.30','.20','.10']
 #    cut_list=['40','35','30','25','20','15','10','05']
@@ -262,23 +263,25 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
         fcfg.write(plot_list[0] + cut + " bin edges         =  " + abs_binning_values + "\n")
         fcfg.write(plot_list[0] + cut + " cut variable      =  ThirdJetFractionPlain\n")
         fcfg.write(plot_list[0] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[0] + cut + " distributions     =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[0] + cut + " 1 distributions     =  L2L3\n")
         fcfg.write(plot_list[0] + cut + " correction types  =  L2L3; L2L3Res\n")
         fcfg.write(plot_list[0] + cut + " 1 correction types  =  L2L3\n")
         fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; StandardDeviation; GaussFitWidth\n")
         fcfg.write(plot_list[0] + cut + " input samples     =  0:data;1:MC\n\n")
 
-        fcfg.write(plot_list[1] + cut + " x variable        =   MeanPt; log\n")
-        fcfg.write(plot_list[1] + cut + " x edges           =  100 20 2000\n")
-        fcfg.write(plot_list[1] + cut + " y variable        =  VtxN\n")
-        fcfg.write(plot_list[1] + cut + " y edges           =  44 0.0 44.0 0.0 44.0 \n")
-        fcfg.write(plot_list[1] + cut + " bin variable      =  AbsEta\n")
-        fcfg.write(plot_list[1] + cut + " bin edges         =  " + abs_binning_values + "\n")
-        fcfg.write(plot_list[1] + cut + " cut variable      =  ThirdJetFractionPlain\n")
-        fcfg.write(plot_list[1] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
-        fcfg.write(plot_list[1] + cut + " correction types  =  L2L3; L2L3Res\n")
-        fcfg.write(plot_list[1] + cut + " 1 correction types  =  L2L3\n")
-        fcfg.write(plot_list[1] + cut + " profile types     =  Mean\n")
-        fcfg.write(plot_list[1] + cut + " input samples     =  0:data;1:MC\n\n")
+#        fcfg.write(plot_list[1] + cut + " x variable        =   MeanPt; log\n")
+#        fcfg.write(plot_list[1] + cut + " x edges           =  100 20 2000\n")
+#        fcfg.write(plot_list[1] + cut + " y variable        =  VtxN\n")
+#        fcfg.write(plot_list[1] + cut + " y edges           =  44 0.0 44.0 0.0 44.0 \n")
+#        fcfg.write(plot_list[1] + cut + " bin variable      =  AbsEta\n")
+#        fcfg.write(plot_list[1] + cut + " bin edges         =  " + abs_binning_values + "\n")
+#        fcfg.write(plot_list[1] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+#        fcfg.write(plot_list[1] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+#        fcfg.write(plot_list[1] + cut + " correction types  =  L2L3; L2L3Res\n")
+#        fcfg.write(plot_list[1] + cut + " 1 correction types  =  L2L3\n")
+#        fcfg.write(plot_list[1] + cut + " profile types     =  Mean\n")
+#        fcfg.write(plot_list[1] + cut + " input samples     =  0:data;1:MC\n\n")
 
     fcfg.write("\n\n")
 
@@ -306,6 +309,8 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
     fcfg.write("JetEta1VsJetEta2 bin edges         =  20 30 50 80 120 200 360 500 900 7000 \n")
     fcfg.write("JetEta1VsJetEta2 cut variable      =  ThirdJetFractionPlain\n")
     fcfg.write("JetEta1VsJetEta2 cut edges         =  0.0 0.20\n")
+#    fcfg.write("JetEta1VsJetEta2 distributions     =  L2L3; L2L3Res\n")
+#    fcfg.write("JetEta1VsJetEta2 1 distributions     =  L2L3\n")
     fcfg.write("JetEta1VsJetEta2 correction types  =  L2L3; L2L3Res\n")
     fcfg.write("JetEta1VsJetEta2 1 correction types  =  L2L3\n")
     fcfg.write("JetEta1VsJetEta2 profile types     =  Mean\n")
@@ -319,7 +324,7 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
     fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
     fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta bin variable      =  MeanPt\n")
     fcfg.write("#AsymmetryVsNPV20_pt_bin_all_eta bin edges         =  20 30 50 80 120 200 360 500 900 7000\n")
-    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta bin edges         =  45 90 150 210 270 340 420 900 7000\n")
+    fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta bin edges         =  72 112 186 255 318 388 472 900 7000\n") #slightly adapted to new trigger thresholds by Denis, should be automated in the future
     fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta cut variable      =  ThirdJetFractionPlain\n")
     fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta cut edges         =  0.0 0.2\n")
     fcfg.write("AsymmetryVsNPV20_pt_bin_all_eta correction types  =  L2L3; L2L3Res\n")
@@ -446,7 +451,7 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="DefaultTestTEst"
+DIR_JETALGO="DefaultTestTEstTest"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
@@ -603,7 +608,7 @@ niothreads = 2
 #nevents =  -1
 #nthreads = 1
 #niothreads = 1
-nevents =  1000
+nevents =  1000000
 MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False

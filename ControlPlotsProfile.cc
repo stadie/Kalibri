@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.23 2012/01/24 16:26:37 kirschen Exp $
+// $Id: ControlPlotsProfile.cc,v 1.24 2012/02/09 16:41:51 kirschen Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -97,6 +97,7 @@ void ControlPlotsProfile::draw() {
 
   Bool_t only_to_root = config_->outOnlyRoot();
   Bool_t export_XY_projections = config_->outXYProjections();
+  Bool_t outAllGaussFitsforProfiles = config_->outAllGaussFitsforProfiles();
   //  std::cout << "only to root: " << only_to_root << std::endl; 
 
   TLegend *leg = bins_.front()->createLegend();
@@ -387,20 +388,65 @@ void ControlPlotsProfile::draw() {
     delete leg;
   }  
 
+
+
+
+
+
+
+
+
+
+  leg = bins_.front()->createLegend();
+
+  std::cout << "outAllGaussFitsforProfiles: " << outAllGaussFitsforProfiles << std::endl; 
   // Draw distributions
-  for(std::vector<Bin*>::iterator binIt = bins_.begin();
-      binIt != bins_.end(); binIt++) {
-    for( ControlPlotsConfig::InputTagsIterator tagsIt = config_->distributionInputTagsBegin() ;  tagsIt != config_->distributionInputTagsEnd(); ++tagsIt) {
+  if(outAllGaussFitsforProfiles){
+    for(std::vector<Bin*>::iterator binIt = bins_.begin();
+	binIt != bins_.end(); binIt++) {
       for(int n = 0; n < (*binIt)->nDistributions(); n++) {
 	c1->Clear();
-	TH1D *h = (*binIt)->hYDistribution(n,*tagsIt);
-	h->Draw("HIST");
-	c1->SetLogx(0);
+	c1->cd();
+	bool firstHist = true;
+	
+	for( ControlPlotsConfig::InputTagsIterator tagsIt = config_->distributionInputTagsBegin() ;  tagsIt != config_->distributionInputTagsEnd(); ++tagsIt) {
+	  TH1D *h = (*binIt)->hYDistribution(n,*tagsIt);
+	  h->SetMarkerStyle(config_->markerStyle(*tagsIt));
+	  h->SetMarkerColor(config_->color(*tagsIt));
+	  h->SetLineColor(config_->color(*tagsIt));
+
+	  h->GetXaxis()->SetRange(0,-1);
+	  h->GetYaxis()->SetRangeUser(0,h->GetMaximum()*2);
+
+	  //	  h->Dump();
+	  if( firstHist ) {
+	    //	if(X_i==0){
+	    if(h->GetMarkerStyle() < 0) {
+	      h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	      h->Draw("HIST");
+	      std::cout << "should draw something" << std::endl;
+	    } else {
+	      h->Draw("PE1X0");
+	      //	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
+	    }
+	    firstHist = false;
+	  } else { 
+	    if(h->GetMarkerStyle() < 0) {
+	      h->SetLineStyle(std::abs(h->GetMarkerStyle()));
+	      h->Draw("HISTSAME");
+	    } else {
+	      h->Draw("PE1X0same"); 
+	      //	    if(TGraph* g = makeGraph(h)) g->Draw("LSAME");
+	    }
+	  }
+	  config_->toRootFile(h);
+	  fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
+	  fileName += (*binIt)->distributionFileName(n,*tagsIt) + "_Distribution." + config_->outFileType();
+	}
+ 	c1->SetLogx(0);
 	c1->RedrawAxis();
+	leg->Draw();
 	p2->DrawClone();
-	config_->toRootFile(h);
-	fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
-	fileName += (*binIt)->distributionFileName(n,*tagsIt) + "_TEST_DISTRIBUTION_DELETE." + config_->outFileType();
 	if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
       }
     }
@@ -713,12 +759,12 @@ int ControlPlotsProfile::Bin::fitProfiles() {
       // Store distribution
       char name[100];
       sprintf(name,"%s_Distribution_%i",corrIt->second->GetName(),xBin);
-      TH1D *h = static_cast<TH1D*>(htemp->Clone(name));
-      h->SetTitle((config_->xBinTitle(xBin-1,min(),max())).c_str());
-      h->SetXTitle((config_->yTitle()).c_str());
-      h->SetYTitle("Number of jets");
-      h->SetLineColor(config_->color(corrIt->first));	   
-      hYDistributions_[corrIt->first].at(xBin-1) = h;  
+      //      std::cout<< name << std::endl;
+      htemp->SetName(name);
+      htemp->SetTitle((config_->xBinTitle(xBin-1,min(),max())).c_str());
+      htemp->SetXTitle((config_->yTitle()).c_str());
+      htemp->SetYTitle("Number of jets");
+      htemp->SetLineColor(config_->color(corrIt->first));
       if(htemp->GetEntries()>100){
 	double mean = htemp->GetMean(); 
 	double meanerror = htemp->GetMeanError();
@@ -727,7 +773,7 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	if(htemp->GetSumOfWeights() <= 0) {
 	  continue; 
 	} else {
-	  htemp->Fit("gaus","QNI","", mean - 3 * width,mean + 3 * width);
+	  htemp->Fit("gaus","QI","", mean - 3 * width,mean + 3 * width); //removed N option to store GaussFit with histogram
 	  TF1 *f = (TF1*)gROOT->GetFunction("gaus")->Clone();
 	  mean = f->GetParameter(1);
 	  meanerror = f->GetParError(1);
@@ -749,6 +795,7 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	    }
 	    hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
 	    hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfGaussFitMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
+
 	  }
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Chi2]->SetBinContent(xBin, f->GetChisquare() / f->GetNumberFreeParameters());
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Chi2]->SetBinError(xBin, 0.01);
@@ -797,6 +844,8 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	  delete f;
 	}
       } // do fits only if more than 100 entries
+    TH1D *h = static_cast<TH1D*>(htemp->Clone(name));
+    hYDistributions_[corrIt->first].at(xBin-1) = h;  
     } // End of loop over x bins
     delete htemp;
     hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->GetEffectiveEntries());
@@ -816,7 +865,6 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 
   return status;
 }
-
 
 
 // ----------------------------------------------------------------   

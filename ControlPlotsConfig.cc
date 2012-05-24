@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.26 2012/04/27 12:34:27 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.27 2012/05/18 17:56:25 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -551,10 +551,15 @@ void ControlPlotsConfig::init() {
   
   // Store which input tags are to be drawn
   // in the distributions
-  std::vector<std::string> corrTypesStr2 = bag_of_string(config_->read<std::string>(name_+" distributions",";")); 
+  std::vector<std::string> corrTypesStr2[3];
+  std::string corstrs2 = config_->read<std::string>(name_+" distributions",";");
+  corrTypesStr2[0] = bag_of_string(corstrs2);
+  corrTypesStr2[1] = bag_of_string(config_->read<std::string>(name_+" 1 distributions",corstrs2));
+  corrTypesStr2[2] = bag_of_string(config_->read<std::string>(name_+" 2 distributions",corstrs2));
+  //  std::vector<std::string> corrTypesStr2 = bag_of_string(config_->read<std::string>(name_+" distributions",";")); 
   for(std::vector<int>::const_iterator samplesIt = sampleIds.begin() ;
       samplesIt != sampleIds.end() ; samplesIt++) {
-    for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr2.begin(); corrTypesIt != corrTypesStr2.end(); corrTypesIt++) {
+    for(std::vector<std::string>::const_iterator corrTypesIt = corrTypesStr2[*samplesIt].begin(); corrTypesIt != corrTypesStr2[*samplesIt].end(); corrTypesIt++) {
       inputTagsDistributions_.push_back(std::make_pair(*samplesIt,correctionType(*corrTypesIt)));
     }
   }
@@ -571,6 +576,9 @@ void ControlPlotsConfig::init() {
 
   // Store whether XY projections of all 2D histos are exported as .eps (or other plots format)
   outXYProjections_= config_->read<bool>("export all XY projections",0);
+ 
+  // Store whether all Y projections of all 2D-histos are created, plotted with the Gauss Fits and written out.
+  outAllGaussFitsforProfiles_= config_->read<bool>("export all fitProfileHistos",0);
  
   outFileType_ = config_->read<std::string>("plots format","eps");
   // Define style for different correction types
