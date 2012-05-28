@@ -147,6 +147,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = "PU TruthWeighting = Cert_2012AOnly_190456-194076 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     elif(DATATYPE=="2012AB_194076" and MC_type=="Z2Star_PUS6S7"):
         PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-194076 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
+    elif(DATATYPE=="2012AB_194479" and MC_type=="Z2Star_PUS6S7"):
+        PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-194479 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     else:
         print "Defining PU reweighting paths failed"
         PU_weighting_info = "PU weighting era = Flat10\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n"
@@ -229,6 +231,8 @@ def determineDataDir(DATAYEAR,DATATYPE):
             datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v4/Jet2012APromptRecoV1_Cert_2012_190456-194076/merged"
         if(DATATYPE=="2012AB_194076"):
             datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v4/Merged_2012AJet_2012BJetMon_2012BJetHT_Cert_2012_190456-194076"
+        if(DATATYPE=="2012AB_194479"):
+            datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v5/combine_2012A_2012BJetMonJetHT_190456-194479"
 
     return datadir
 
@@ -294,4 +298,4 @@ def determineDataDirMC(MC,MC_type):
 
 
 def importDatatypesNewTrigger():
-    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076"]
+    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479"]
