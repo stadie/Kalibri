@@ -12,12 +12,10 @@ for i in range(1,length):
 #	print str(i) + ": " + sys.argv[i]
 	samplelist.append(sys.argv[i])
 
-targetdir=samplelist[length-2]
-
-
 print "Use this script to set links to n-tuple files from multiple samples in a common targetdir."
 print "Usage: ./setlinks.py sample1 sample2 ... targetdir"
 print "------------------------------------------------------------------------------------------"
+targetdir=samplelist[length-2]
 print "number of arguments: " + str(length-1) + "; will set links to " + str(length-2) + " samples in targetdir"
 print "Warning: targetdir " + targetdir + " will be deleted before setting new links"
 
