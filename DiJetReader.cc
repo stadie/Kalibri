@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.91 2012/05/23 10:04:56 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.92 2012/05/29 07:58:21 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -711,7 +711,7 @@ int DiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   TTree* tree = createTree(name.str());
   if(tree->GetEntries() == 0) return 0;  
   delete corFactorsFactory_;
-  std::string jcn = config_->read<string>("MC jet correction name","");
+  std::string jcn = config_->read<string>("MC jet correction name",config_->read<string>("jet correction name",""));//use jet correction name as default for MC jet correction name for downward compatibility
   updateCorFactorsFactory(jcn);
   nJet_->Init(tree);
   //hack: just set weights of data equal to one.
