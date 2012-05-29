@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.14 2011/07/04 17:19:35 stadie Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.15 2012/01/24 16:27:29 kirschen Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -269,7 +269,8 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   tree_ = createTree(name.str());
   if(tree_->GetEntries() == 0) return 0;
   delete corFactorsFactory_;
-  corFactorsFactory_ = 0;
+  std::string jcn = config_->read<string>("MC jet correction name","");
+  updateCorFactorsFactory(jcn);
   int nev = readEvents(control);
   std::cout << "Will use events for control plots.\n";
   return nev;

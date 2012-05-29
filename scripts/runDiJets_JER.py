@@ -338,6 +338,7 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
     if(CORRECTION!="ntuple"):
         fcfg.write("jet correction source = JetMETCor\n")
         fcfg.write("jet correction name   = "+CORRECTIONS+"\n")
+        fcfg.write("MC jet correction name   = "+CORRECTIONS+"_MC \n")
     fcfg.write("Di-Jet input file = dijetlist\n")
     fcfg.write("Di-Jet Control1 input file = mcdijetlist\n")
     fcfg.write("Output file       = "+output+"\n");
@@ -463,7 +464,7 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="Final2011_AK5"
+CORRECTION="2012V8_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -471,11 +472,11 @@ CORRECT_JETS_L1="true"
 ##################################
 ## DATAYEAR variable used to determine trigger thresholds, datasets, ...
 ##################################
-DATAYEAR = "2011"
+DATAYEAR = "2012"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "Full2011"
+DATATYPE = "2012AB_194479"
 ##################################
 ## choose binning in eta, currently only "JER" is properly defined here
 ##################################
@@ -487,15 +488,15 @@ SINGLEJET=0
 ##################################
 ## Choose MC-generation 
 ##################################
-MC = "F11"
+MC = "Su12"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-MC_type="44Z2wPU"
+MC_type="Z2Star_PUS6S7"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
-MinRunNumber=163337
+MinRunNumber=-1
 ##################################
 ## Choose maximum run number
 ##################################
@@ -608,7 +609,7 @@ niothreads = 2
 #nevents =  -1
 #nthreads = 1
 #niothreads = 1
-nevents =  1000000
+nevents =  100
 MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False

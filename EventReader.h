@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.h,v 1.17 2011/05/26 07:42:52 mschrode Exp $
+// $Id: EventReader.h,v 1.18 2011/06/30 14:27:14 stadie Exp $
 //
 #ifndef EVENTREADER_H
 #define EVENTREADER_H
@@ -49,6 +49,8 @@ class EventReader
   bool correctL2L3_; 
   //! Correct jets with L1 correction
   bool correctL1_;
+  //! update CorFactorsFactory with "name"
+  void updateCorFactorsFactory(std::string jcn);
   double weightRelToNtuple_;
   double eventWeight_;
 

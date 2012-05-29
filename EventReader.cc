@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.20 2011/05/26 07:42:52 mschrode Exp $
+// $Id: EventReader.cc,v 1.21 2011/06/30 14:27:14 stadie Exp $
 //
 #include "EventReader.h"
 
@@ -76,15 +76,7 @@ EventReader::EventReader(const std::string& configfile, Parameters* param)
 
   
   std::string jcn = config_->read<string>("jet correction name","");
-  
-  corFactorsFactory_ = CorFactorsFactory::get(jcn);
-  if(jcn !="" && (! corFactorsFactory_)) {
-    std::cerr << "Failed to apply correction " << jcn << std::endl;
-    exit(-1);
-  } 
-  if(corFactorsFactory_) {
-    std::cout << "Jet corrections will be overwritten with " << jcn << std::endl; 
-  }
+  updateCorFactorsFactory(jcn);
   correctToL3_ = config_->read<bool>("correct jets to L3",false);
   correctL2L3_ = config_->read<bool>("correct jets L2L3",false);
   if( correctToL3_ && correctL2L3_ ) {
@@ -216,4 +208,15 @@ void EventReader::reportProgress(int addedEvents) {
   boost::mutex::scoped_lock lock(EventReader_mutex);
   counter_ += addedEvents;
   progressbar(counter_*100/nEvents_);
+}
+
+void EventReader::updateCorFactorsFactory(std::string jcn){
+  corFactorsFactory_ = CorFactorsFactory::get(jcn);
+  if(jcn !="" && (! corFactorsFactory_)) {
+    std::cerr << "Failed to apply correction " << jcn << std::endl;
+    exit(-1);
+  } 
+  if(corFactorsFactory_) {
+    std::cout << "Jet corrections will be overwritten with " << jcn << std::endl; 
+  }
 }
