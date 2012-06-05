@@ -810,9 +810,10 @@ jettype = jetalgo+PF_CALO_JPT
 jettype_import=jettype
 CORRECTIONSUFFIX=PF_CALO_JPT
 if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
-    if(PF_CALO_JPT=="PF"):
-        jettype_import=jetalgo+"Fast"+PF_CALO_JPT
+    if(PF_CALO_JPT=="PF" or PF_CALO_JPT=="PFCHS"):
         CORRECTIONSUFFIX="Fast"+PF_CALO_JPT
+        if(PF_CALO_JPT=="PF"):
+            jettype_import=jetalgo+"Fast"+PF_CALO_JPT
 #    jettype_import=jetalgo+"Fast"+PF_CALO_JPT
 
 
