@@ -456,7 +456,7 @@ DIR_JETALGO="DefaultTestTEstTest"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
-PF_CALO_JPT="PF"
+PF_CALO_JPT="PFCHS"
 ##################################
 ## chooses the jet algorithm - used to pick the corresponding n-tupel .root-files (ak5 is default)
 ##################################
@@ -464,7 +464,7 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2012V8_AK5"
+CORRECTION="2012SQLV3_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -583,9 +583,10 @@ jettype = jetalgo+PF_CALO_JPT
 jettype_import=jettype
 CORRECTIONSUFFIX=PF_CALO_JPT
 if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
-    if(PF_CALO_JPT=="PF"):
-        jettype_import=jetalgo+"Fast"+PF_CALO_JPT
+    if(PF_CALO_JPT=="PF" or PF_CALO_JPT=="PFCHS"):
         CORRECTIONSUFFIX="Fast"+PF_CALO_JPT
+        if(PF_CALO_JPT=="PF"):
+            jettype_import=jetalgo+"Fast"+PF_CALO_JPT
 #    jettype_import=jetalgo+"Fast"+PF_CALO_JPT
 
 
