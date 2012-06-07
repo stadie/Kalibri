@@ -2033,14 +2033,14 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
 
    ofstream myfile;
   myfile.open (fine_coarse+"_"+ generatorone+"_L2L3Residual_AK5"+jet_type+".txt");
-  myfile << "{ 1 JetEta 1 JetPt [0] Correction L2Relative}\n";
+  myfile << "{ 1 JetEta 1 JetPt [0] Correction L2L3Residual}\n";
   //  Double_t L3_abs_offset=1.010;
   Double_t L3_abs_offset=1.025;
   //  myfile << L3_abs_offset  << "\n";
 
   for(Int_t eta_i=0;eta_i<no_eta;eta_i++){
 
-    myfile << setw(15) << eta_binning[eta_i] << "   " << setw(15)  << eta_binning[eta_i+1] << "    3     3     3500    "  << setw(15) << Residual_eta_correction_histo_res1->GetBinContent(eta_i+1)*L3_abs_offset << "\n";
+    myfile << setw(15) << eta_binning[eta_i] << "   \t" << setw(10)  << eta_binning[eta_i+1] << "    3     3     3500    \t"  << setw(10) << Residual_eta_correction_histo_res1->GetBinContent(eta_i+1)*L3_abs_offset << "\n";
 
 
     //      TH1D* Residual_eta_correction_histo_res1=new TH1D("Residual_eta_correction_histo_res1", "Residual_eta_correction_histo_res1", no_eta , &eta_binning[0]);
@@ -2055,7 +2055,7 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
 
 
   myfile.open (fine_coarse+"_"+ generatorone+"_L2L3Residual_AK5"+jet_type+"_PTDEP.txt");
-  myfile << "{ 1 JetEta 1 JetPt [0]*([1]+[2]*TMath::Log(x)) Correction L2Relative}\n";
+  myfile << "{ 1 JetEta 1 JetPt [0]*([1]+[2]*TMath::Log(x)) Correction L2L3Residual}\n";
   //  myfile << L3_abs_offset  << "\n";
 
   Int_t cut_20=20;
@@ -2071,7 +2071,7 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
     cout << Abseta_i << endl;
     Double_t kFSR_value = kFSR_vs_Abseta_histo_res1->GetBinContent(kFSR_vs_Abseta_histo_res1->FindBin( std::abs( (eta_binning[eta_i]+ eta_binning[eta_i+1])/2 )));
     
-    myfile << setw(15) << eta_binning[eta_i] << "   " << setw(15)  << eta_binning[eta_i+1] << "    5     "  << setw(15)  <<  all_ptthree_all_Abseta_res1_ptreach_.at(cut_20).at(Abseta_i).first << setw(15) <<all_ptthree_all_Abseta_res1_ptreach_.at(cut_20).at(Abseta_i).second << setw(15) << kFSR_value*L3_abs_offset << setw(15) << Residual_const_slope_eta_correction_histo_res1->GetBinContent(eta_i+1) << setw(15) << Residual_slope_eta_correction_histo_res1->GetBinContent(eta_i+1) << "\n";
+    myfile << setw(15) << eta_binning[eta_i] << "   \t" << setw(10)  << eta_binning[eta_i+1] << "    5     \t"  << setw(10)  <<  all_ptthree_all_Abseta_res1_ptreach_.at(cut_20).at(Abseta_i).first << setw(15) <<all_ptthree_all_Abseta_res1_ptreach_.at(cut_20).at(Abseta_i).second << setw(15) << kFSR_value*L3_abs_offset << setw(15) << Residual_const_slope_eta_correction_histo_res1->GetBinContent(eta_i+1) << setw(15) << Residual_slope_eta_correction_histo_res1->GetBinContent(eta_i+1) << "\n";
 
     //      TH1D* Residual_eta_correction_histo_res1=new TH1D("Residual_eta_correction_histo_res1", "Residual_eta_correction_histo_res1", no_eta , &eta_binning[0]);
 
@@ -2084,11 +2084,11 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
   myfile.close();
  
   myfile.open (fine_coarse+"_"+ generatorone+"_Abseta_L2L3Residual_AK5"+jet_type+".txt");
-  myfile << "{ 1 JetEta 1 JetPt [0] Correction L2Relative}\n";
+  myfile << "{ 1 JetEta 1 JetPt [0] Correction L2L3Residual}\n";
 
   for(Int_t eta_i=0;eta_i<no_eta;eta_i++){
     Int_t Abseta_i=TMath::Abs(TMath::Abs(eta_i-zero_eta+0.75));
-    myfile << setw(15) << eta_binning[eta_i] << "   " << setw(15)  << eta_binning[eta_i+1] << "    3     3     3500    "  << setw(15) << Residual_Abseta_correction_histo_res1->GetBinContent(kFSR_vs_Abseta_histo_res1->FindBin( std::abs( (eta_binning[eta_i]+ eta_binning[eta_i+1])/2 )))*L3_abs_offset << "\n";
+    myfile << setw(15) << eta_binning[eta_i] << "   \t" << setw(10)  << eta_binning[eta_i+1] << "    3     3     3500    \t"  << setw(10) << Residual_Abseta_correction_histo_res1->GetBinContent(kFSR_vs_Abseta_histo_res1->FindBin( std::abs( (eta_binning[eta_i]+ eta_binning[eta_i+1])/2 )))*L3_abs_offset << "\n";
 
 
   }
