@@ -1751,6 +1751,8 @@ TH1D* MCtwo_pt_spectrum_data =  (TH1D*)ftwo->Get("AsymmetryVsPt20/AsymmetryVsPt2
   TGraphErrors* Residual_Abseta_correction_existing;
   if(jet_type=="PF")Residual_Abseta_correction_existing = new
     TGraphErrors(trad_x_Abseta_.size(),&trad_x_Abseta_[0],&residual_pf[0],&trad_ex_Abseta_[0],&e_residuals_existing[0]);
+  if(jet_type=="PFCHS")Residual_Abseta_correction_existing = new
+    TGraphErrors(trad_x_Abseta_.size(),&trad_x_Abseta_[0],&residual_pf[0],&trad_ex_Abseta_[0],&e_residuals_existing[0]);
   if(jet_type=="Calo")Residual_Abseta_correction_existing = new
     TGraphErrors(trad_x_Abseta_.size(),&trad_x_Abseta_[0],&residual_calo[0],&trad_ex_Abseta_[0],&e_residuals_existing[0]);
   if(jet_type=="JPT")Residual_Abseta_correction_existing = new
