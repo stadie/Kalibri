@@ -2035,7 +2035,7 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
 
    ofstream myfile;
   myfile.open (fine_coarse+"_"+ generatorone+"_L2L3Residual_AK5"+jet_type+".txt");
-  myfile << "{ 1 JetEta 1 JetPt [0] Correction L2L3Residual}\n";
+  myfile << "{ 1 JetEta 1 JetPt [0] Correction L2Relative}\n";
   //  Double_t L3_abs_offset=1.010;
   Double_t L3_abs_offset=1.025;
   //  myfile << L3_abs_offset  << "\n";
@@ -2057,7 +2057,7 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
 
 
   myfile.open (fine_coarse+"_"+ generatorone+"_L2L3Residual_AK5"+jet_type+"_PTDEP.txt");
-  myfile << "{ 1 JetEta 1 JetPt [0]*([1]+[2]*TMath::Log(x)) Correction L2L3Residual}\n";
+  myfile << "{ 1 JetEta 1 JetPt [0]*([1]+[2]*TMath::Log(x)) Correction L2Relative}\n";
   //  myfile << L3_abs_offset  << "\n";
 
   Int_t cut_20=20;
@@ -2086,7 +2086,7 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
   myfile.close();
  
   myfile.open (fine_coarse+"_"+ generatorone+"_Abseta_L2L3Residual_AK5"+jet_type+".txt");
-  myfile << "{ 1 JetEta 1 JetPt [0] Correction L2L3Residual}\n";
+  myfile << "{ 1 JetEta 1 JetPt [0] Correction L2Relative}\n";
 
   for(Int_t eta_i=0;eta_i<no_eta;eta_i++){
     Int_t Abseta_i=TMath::Abs(TMath::Abs(eta_i-zero_eta+0.75));
