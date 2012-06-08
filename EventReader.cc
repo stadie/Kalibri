@@ -1,5 +1,5 @@
 //
-// $Id: EventReader.cc,v 1.23 2012/05/29 08:15:18 kirschen Exp $
+// $Id: EventReader.cc,v 1.24 2012/05/31 08:08:16 kirschen Exp $
 //
 #include "EventReader.h"
 
@@ -211,6 +211,7 @@ void EventReader::reportProgress(int addedEvents) {
 }
 
 void EventReader::updateCorFactorsFactory(std::string jcn){
+  std::cout << "trying to update corrections" << CorFactorsFactory::get(jcn) << std::endl;
   corFactorsFactory_ = CorFactorsFactory::get(jcn);
   if(jcn =="")std::cerr << "WARNING: No jet-correction name defined; \n    will probably use n-tupel values\n    check that this is consistent between data and MC" << std::endl;
   if(jcn !="" && (! corFactorsFactory_)) {

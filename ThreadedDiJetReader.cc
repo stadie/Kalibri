@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.16 2012/05/29 07:58:21 kirschen Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.17 2012/05/29 10:01:57 kirschen Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -268,7 +268,7 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   if(nDijetEvents_ == 0) return 0;
   tree_ = createTree(name.str());
   if(tree_->GetEntries() == 0) return 0;
-  delete corFactorsFactory_;
+  //  delete corFactorsFactory_;
   std::string jcn = config_->read<string>("MC jet correction name",config_->read<string>("jet correction name",""));//use jet correction name as default for MC jet correction name for downward compatibility
   updateCorFactorsFactory(jcn);
   int nev = readEvents(control);

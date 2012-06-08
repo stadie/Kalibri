@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.92 2012/05/29 07:58:21 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.93 2012/05/29 10:01:57 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -710,7 +710,7 @@ int DiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   if(nDijetEvents_ == 0) return 0;
   TTree* tree = createTree(name.str());
   if(tree->GetEntries() == 0) return 0;  
-  delete corFactorsFactory_;
+  //  delete corFactorsFactory_;
   std::string jcn = config_->read<string>("MC jet correction name",config_->read<string>("jet correction name",""));//use jet correction name as default for MC jet correction name for downward compatibility
   updateCorFactorsFactory(jcn);
   nJet_->Init(tree);
