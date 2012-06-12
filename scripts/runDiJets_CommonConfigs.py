@@ -31,28 +31,26 @@ def TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettyp
             print "Using single jet triggers now... " + str(SINGLEJET) + " " + str(USE_NEW_TRIGGERS_AND_FASTPF) + " " + str(DATAYEAR)
 #            fcfg.write("Use single jet triggers = true\n")
             trigger_names = "Di-Jet trigger names = HLT_PFJet40;HLT_PFJet80;HLT_PFJet140;HLT_PFJet200;HLT_PFJet260;HLT_PFJet320;HLT_PFJet400\n"
-            #Denis May 2011
+            #Denis June 2012
             if(jettype == "ak5PF"):
-                trigger_thresholds = "Di-Jet trigger thresholds = 72 112 186 255 318 388 472 \n"
-            #ad-hoc values...
+                trigger_thresholds = "Di-Jet trigger thresholds = 68 111 184 249 319 389 473 \n"
             if(jettype == "ak5PFCHS"):
-                trigger_thresholds = "Di-Jet trigger thresholds = 72 112 186 255 318 388 472 \n"
+                trigger_thresholds = "Di-Jet trigger thresholds = 68 111 184 249 319 389 473 \n"
             if(jettype == "ak5Calo"):
-                trigger_thresholds = "Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n"
+                trigger_thresholds = "Di-Jet trigger thresholds = 74 117 196 271 345 419 502 \n"
             if(jettype == "ak5JPT"):
-                trigger_thresholds = "Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n"
+                trigger_thresholds = "Di-Jet trigger thresholds = 71 113 189 259 329 401 484 \n"
         elif(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF==1):
             trigger_names = "Di-Jet trigger names = HLT_DiPFJetAve40;HLT_DiPFJetAve80;HLT_DiPFJetAve140;HLT_DiPFJetAve200;HLT_DiPFJetAve260;HLT_DiPFJetAve320;HLT_DiPFJetAve400\n"
-            #Denis May 2011
+            #Denis June 2012
             if(jettype == "ak5PF"):
-                trigger_thresholds = "Di-Jet trigger thresholds = 64 107 178 247 313 381 469 \n"
-            #WARNING: ad-hoc values...
+                trigger_thresholds = "Di-Jet trigger thresholds = 60 105 174 242 311 380 468 \n"
             if(jettype == "ak5PFCHS"):
-                trigger_thresholds = "Di-Jet trigger thresholds = 64 107 178 247 313 381 469 \n"
+                trigger_thresholds = "Di-Jet trigger thresholds = 60 105 174 242 311 380 468 \n"		
             if(jettype == "ak5Calo"):
-                trigger_thresholds = "Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n"
+                trigger_thresholds = "Di-Jet trigger thresholds = 65 108 183 253 324 395 482 \n"
             if(jettype == "ak5JPT"):
-                trigger_thresholds = "Di-Jet trigger thresholds = 50 95 155 220 280 350 430 \n"
+                trigger_thresholds = "Di-Jet trigger thresholds = 61 105 177 245 315 384 471 \n"
 
 
 
