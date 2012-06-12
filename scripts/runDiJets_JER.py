@@ -464,7 +464,7 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2012SQLV3_AK5"
+CORRECTION="2012SQLV7_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -476,7 +476,7 @@ DATAYEAR = "2012"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "2012AB_194479"
+DATATYPE = "2012AB_195396"
 ##################################
 ## choose binning in eta, currently only "JER" is properly defined here
 ##################################
