@@ -59,6 +59,9 @@ public :
   std::vector <Double_t> k_HFfix_eta_binning;
   Int_t  k_HFfix_no_eta, k_HFfix_zero_eta;
 
+  std::vector <Double_t> JEC_Mikko_eta_binning;
+  Int_t  JEC_Mikko_no_eta, JEC_Mikko_zero_eta;
+
   std::vector <Double_t> eta_binning;
   Int_t  no_eta, zero_eta;
 
@@ -96,7 +99,11 @@ void do_flex_extrapol::import_plots(){
     else if(fine_coarse.Contains("kostas")){
 
       //use corresponding PF kFSR
-            inf = new TFile("../"+corr_generation+"/kostas_use_easy_mean_TuneZ2_TuneZ2_PF_kFSR_histos.root","OPEN");
+            inf = new TFile("../"+corr_generation+"/kostas_use_easy_mean_TuneZ2_TuneZ2_PF_kFSR_histos.root","OPEN");}
+    else if(fine_coarse.Contains("JEC_Mikko")){
+
+      //use corresponding PF kFSR
+            inf = new TFile("../"+corr_generation+"/JEC_Mikko_use_easy_mean_TuneZ2_TuneZ2_PF_kFSR_histos.root","OPEN");    
 
       //use individual kRad for each algorithm
       //      inf = new TFile("../"+corr_generation+"/kostas_use_easy_mean_TuneZ2_TuneZ2_"+ jet_type +"_kFSR_histos.root","OPEN");
@@ -215,6 +222,14 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
   k_HFfix_no_eta =28;
   k_HFfix_zero_eta =14;
 
+  Double_t JEC_Mikko_eta_binning_[]={-5.191,-2.964,-2.5,-1.93,-1.305,-0.783,0.0,0.783,1.305,1.93,2.5,2.964,5.191};
+  //
+  int size_JM = sizeof(JEC_Mikko_eta_binning_)/sizeof(JEC_Mikko_eta_binning_[0]);
+  vector<Double_t> vec_JM(JEC_Mikko_eta_binning_, &JEC_Mikko_eta_binning_[ size_JM] );
+  JEC_Mikko_eta_binning = vec_JM;
+  JEC_Mikko_no_eta =12;
+  JEC_Mikko_zero_eta =6;
+
   Double_t eta_binning_[]={-6.0,-4.0,-3.5,-3.2,-3.0,-2.8,-2.6,-2.4,-2.2,-2.0,-1.8,-1.5,-1.4,-1.3,-1.2,-1.1,-0.9,-0.6,-0.3,0.0,0.3,0.6,0.9,1.1,1.2,1.3,1.4,1.5,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.5,4.0,6.0};
   //39
   int size = sizeof(eta_binning_)/sizeof(eta_binning_[0]);
@@ -259,6 +274,14 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
     zero_eta=k_HFfix_zero_eta;
   for(Int_t eta_i=0;eta_i<=no_eta;eta_i++){
     eta_binning[eta_i]=k_HFfix_eta_binning[eta_i];
+    cout << eta_binning[eta_i] << " ";
+  }
+  }
+  else if(fine_coarse.Contains("JEC_Mikko")){
+    no_eta=JEC_Mikko_no_eta;
+    zero_eta=JEC_Mikko_zero_eta;
+  for(Int_t eta_i=0;eta_i<=no_eta;eta_i++){
+    eta_binning[eta_i]=JEC_Mikko_eta_binning[eta_i];
     cout << eta_binning[eta_i] << " ";
   }
   }
