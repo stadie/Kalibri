@@ -156,6 +156,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-194479 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     elif(DATATYPE=="2012AB_195396" and MC_type=="Z2Star_PUS6S7"):
         PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-195396 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
+    elif(DATATYPE=="2012AB_195396" and MC_type=="Z2Star_PU1mioS610mioS7"):
+        PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-195396 \n PU TruthWeighting MC distribution = TruePU_1mioS6Plus10mioS7 \n"
     else:
         print "Defining PU reweighting paths failed"
         PU_weighting_info = "PU weighting era = Flat10\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n"
@@ -251,6 +253,8 @@ def determineDataDirMC(MC,MC_type):
     if(MC == "Su12"):
         if(MC_type=="Z2Star_PUS6S7"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1"
+        if(MC_type=="Z2Star_PU1mioS610mioS7"):
+            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6Z2star1mio_PUS7Z210mio_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1"
         if(MC_type=="Z2Star"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START50_V15-v1/merged"
         if(MC_type=="Z2Star52"):

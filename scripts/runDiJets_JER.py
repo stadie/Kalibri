@@ -492,7 +492,7 @@ MC = "Su12"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-MC_type="Z2Star_PUS6S7"
+MC_type="Z2Star_PU1mioS610mioS7"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
