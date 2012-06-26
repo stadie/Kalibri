@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.27 2012/06/05 15:25:03 kirschen Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.28 2012/06/08 15:22:20 kirschen Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -188,6 +188,23 @@ JetMETCorFactorsFactory::Register::Register()
 
   create("2012V8_AK5FastPF","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5PFLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5PFLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5PFLocal_L3Absolute.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5PFLocal_L2L3Residual.txt",L1L2L3res);
   create("2012V8_AK5FastPF_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5PFLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5PFLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5PFLocal_L3Absolute.txt",L1L2L3);
+ 
+create("2012V8_AK5PFCHS","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5PFchsLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5PFchsLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5PFchsLocal_L3Absolute.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5PFchsLocal_L2L3Residual.txt",L1L2L3res);
+ 
+create("2012V8_AK5PFCHS_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5PFchsLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5PFchsLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5PFchsLocal_L3Absolute.txt",L1L2L3);
+
+
+  create("2012V8_AK5FastCalo","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5CaloLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5CaloLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5CaloLocal_L3Absolute.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5CaloLocal_L2L3Residual.txt",L1L2L3res);
+  create("2012V8_AK5FastCalo_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5CaloLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5CaloLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5CaloLocal_L3Absolute.txt",L1L2L3);
+  create("2012V8_AK5Calo","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5CaloLocal_L1Offset.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5CaloLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5CaloLocal_L3Absolute.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5CaloLocal_L2L3Residual.txt",L1L2L3res);
+  create("2012V8_AK5Calo_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5CaloLocal_L1Offset.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5CaloLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5CaloLocal_L3Absolute.txt",L1L2L3);
+
+
+  create("2012V8_AK5FastJPT","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5JPTLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5JPTLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5JPTLocal_L3Absolute.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5JPTLocal_L2L3Residual.txt",L1L2L3res);
+  create("2012V8_AK5FastJPT_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5JPTLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5JPTLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5JPTLocal_L3Absolute.txt",L1L2L3);
+  create("2012V8_AK5JPT","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5JPTLocal_L1Offset.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5JPTLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5JPTLocal_L3Absolute.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_DATA_AK5JPTLocal_L2L3Residual.txt",L1L2L3res);
+  create("2012V8_AK5JPT_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5JPTLocal_L1Offset.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5JPTLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V1/Summer12_V1_MC_AK5JPTLocal_L3Absolute.txt",L1L2L3);
+
 
 
   create("2012SQLV3_AK5FastPF","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V3/Summer12_V3_DATA_AK5PFLocal_L1FastJet.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V3/Summer12_V3_DATA_AK5PFLocal_L2Relative.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V3/Summer12_V3_DATA_AK5PFLocal_L3Absolute.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V3/Summer12_V3_DATA_AK5PFLocal_L2L3Residual.txt",L1L2L3res);
@@ -203,8 +220,11 @@ JetMETCorFactorsFactory::Register::Register()
   create("2012SQLV7_AK5FastPFCHS","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L1FastJet_AK5PFchs.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2Relative_AK5PFchs.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L3Absolute_AK5PFchs.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2L3Residual_AK5PFchs.txt",L1L2L3res);
   create("2012SQLV7_AK5FastPFCHS_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L1FastJet_AK5PFchs.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L2Relative_AK5PFchs.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L3Absolute_AK5PFchs.txt",L1L2L3);
 
+  create("2012SQLV7_AK5Calo","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L1Offset_AK5Calo.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2Relative_AK5Calo.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L3Absolute_AK5Calo.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2L3Residual_AK5Calo.txt",L1L2L3res);
+  create("2012SQLV7_AK5Calo_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L1Offset_AK5Calo.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L2Relative_AK5Calo.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L3Absolute_AK5Calo.txt",L1L2L3);
 
-
+  create("2012SQLV7_AK5JPT","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L1FastJet_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2Relative_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L3Absolute_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2L3Residual_AK5JPT.txt",L1L2L3res);
+  create("2012SQLV7_AK5JPT_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L1FastJet_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L2Relative_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L3Absolute_AK5JPT.txt",L1L2L3);
 }
 
 JetMETCorFactorsFactory* JetMETCorFactorsFactory::Register::create(const std::string& name, const std::string& files, Levels type) const
