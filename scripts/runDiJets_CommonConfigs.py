@@ -34,7 +34,7 @@ def TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettyp
             print "Using single jet triggers now... " + str(SINGLEJET) + " " + str(USE_NEW_TRIGGERS_AND_FASTPF) + " " + str(DATAYEAR)
 #            fcfg.write("Use single jet triggers = true\n")
             trigger_names = "Di-Jet trigger names = HLT_PFJet40;HLT_PFJet80;HLT_PFJet140;HLT_PFJet200;HLT_PFJet260;HLT_PFJet320;HLT_PFJet400\n"
-            #Denis June 2012
+            #Denis June 2012 on 3fb^-1 @8TeV
             if(jettype == "ak5PF"):
                 trigger_thresholds = "Di-Jet trigger thresholds = 68 111 184 249 319 389 473 \n"
             if(jettype == "ak5PFCHS"):
@@ -45,7 +45,7 @@ def TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettyp
                 trigger_thresholds = "Di-Jet trigger thresholds = 71 113 189 259 329 401 484 \n"
         elif(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF==1):
             trigger_names = "Di-Jet trigger names = HLT_DiPFJetAve40;HLT_DiPFJetAve80;HLT_DiPFJetAve140;HLT_DiPFJetAve200;HLT_DiPFJetAve260;HLT_DiPFJetAve320;HLT_DiPFJetAve400\n"
-            #Denis June 2012
+            #Denis June 2012 on 3fb^-1 @8TeV
             if(jettype == "ak5PF"):
                 trigger_thresholds = "Di-Jet trigger thresholds = 60 105 174 242 311 380 468 \n"
             if(jettype == "ak5PFCHS"):
@@ -147,17 +147,19 @@ def PUWeightingInfo(DATATYPE,MC_type):
     elif(DATATYPE=="TEST"):
         PU_weighting_info = "PU weighting era = Summer12\n PU weighting histogram = /scratch/hh/current/cms/user/kirschen/PUDistributions/Inclusive/MyDataPileupHistogramObservedAllHLT.root \n PU TruthWeighting = Cert_2012_190456-193336 \n PU TruthWeighting MC distribution = TrueSummer12 \n"
     elif(DATATYPE=="2012_193336" and MC_type=="Z2Star_PUS6S7"):
-        PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-193336 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
+        PU_weighting_info = "PU TruthWeighting = kirschen/PUDistributions/Cert_2012_190456-193336 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     elif(DATATYPE=="2012A_194076" and MC_type=="Z2Star_PUS6S7"):
-        PU_weighting_info = "PU TruthWeighting = Cert_2012AOnly_190456-194076 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
+        PU_weighting_info = "PU TruthWeighting = kirschen/PUDistributions/Cert_2012AOnly_190456-194076 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     elif(DATATYPE=="2012AB_194076" and MC_type=="Z2Star_PUS6S7"):
-        PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-194076 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
+        PU_weighting_info = "PU TruthWeighting = kirschen/PUDistributions/Cert_2012_190456-194076 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     elif(DATATYPE=="2012AB_194479" and MC_type=="Z2Star_PUS6S7"):
-        PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-194479 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
+        PU_weighting_info = "PU TruthWeighting = kirschen/PUDistributions/Cert_2012_190456-194479 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     elif(DATATYPE=="2012AB_195396" and MC_type=="Z2Star_PUS6S7"):
-        PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-195396 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
+        PU_weighting_info = "PU TruthWeighting = kirschen/PUDistributions/Cert_2012_190456-195396 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     elif(DATATYPE=="2012AB_195396" and MC_type=="Z2Star_PU1mioS610mioS7"):
-        PU_weighting_info = "PU TruthWeighting = Cert_2012_190456-195396 \n PU TruthWeighting MC distribution = TruePU_1mioS6Plus10mioS7 \n"
+        PU_weighting_info = "PU TruthWeighting = kirschen/PUDistributions/Cert_2012_190456-195396 \n PU TruthWeighting MC distribution = TruePU_1mioS6Plus10mioS7 \n"
+    elif(DATATYPE=="2012AB_196531" and MC_type=="Z2Star_PUS6S7"):
+        PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-196531 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     else:
         print "Defining PU reweighting paths failed"
         PU_weighting_info = "PU weighting era = Flat10\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n"
@@ -244,6 +246,8 @@ def determineDataDir(DATAYEAR,DATATYPE):
             datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v5/combine_2012A_2012BJetMonJetHT_190456-194479"
         if(DATATYPE=="2012AB_195396"):
             datadir = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v5/combine_2012A_2012BJetMonJetHT_190456-195396"
+        if(DATATYPE=="2012AB_196531"):
+            datadir = "/scratch/hh/current/cms/user/rathjd/Calibration/2012_Jets_v5/combine_2012A_2012BJetMonJetHT_190456-196531"
 
     return datadir
 
@@ -311,4 +315,4 @@ def determineDataDirMC(MC,MC_type):
 
 
 def importDatatypesNewTrigger():
-    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396"]
+    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396","2012AB_196531"]
