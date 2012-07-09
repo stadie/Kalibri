@@ -186,7 +186,7 @@ void     do_flex_extrapol::define_cosmetics_and_cuts(){
 
   //  ptthreecuts_Double_.push_back(0.05);
     ptthreecuts_Double_.push_back(0.10);
-  //  ptthreecuts_Double_.push_back(0.15);
+   // ptthreecuts_Double_.push_back(0.15);
     ptthreecuts_Double_.push_back(0.20);
   //  ptthreecuts_Double_.push_back(0.25);
     ptthreecuts_Double_.push_back(0.30);
@@ -222,7 +222,7 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
   k_HFfix_no_eta =28;
   k_HFfix_zero_eta =14;
 
-  Double_t JEC_Mikko_eta_binning_[]={-5.191,-2.964,-2.5,-1.93,-1.305,-0.783,0.0,0.783,1.305,1.93,2.5,2.964,5.191};
+  Double_t JEC_Mikko_eta_binning_[]={-5.191,-3.2,-2.964,-2.5,-1.93,-1.305,-0.783,0.0,0.783,1.305,1.93,2.5,2.964,3.2,5.191};
   //
   int size_JM = sizeof(JEC_Mikko_eta_binning_)/sizeof(JEC_Mikko_eta_binning_[0]);
   vector<Double_t> vec_JM(JEC_Mikko_eta_binning_, &JEC_Mikko_eta_binning_[ size_JM] );

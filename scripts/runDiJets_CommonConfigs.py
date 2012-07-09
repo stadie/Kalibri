@@ -15,8 +15,8 @@ def BinningValues(BINNING,AbsEta):
         binning_values = "-5.2 -3.0 -2.5 -2.0 -1.5 -1.0 -0.5 0 0.5 1.0 1.5 2.0 2.5 3.0 5.2"
         abs_binning_values = "0 0.5 1.0 1.5 2.0 2.5 3.0 5.2"
     elif(BINNING=="JEC_Mikko"):
-        binning_values = "-5.191 -2.964 -2.5 -1.93 -1.305 -0.783 0 0.783 1.305 1.93 2.5 2.964 5.191"
-        abs_binning_values = "0 0.783 1.305 1.93 2.5 2.964 5.191"
+        binning_values = "-5.191 -3.2 -2.964 -2.5 -1.93 -1.305 -0.783 0 0.783 1.305 1.93 2.5 2.964 3.2 5.191"
+        abs_binning_values = "0 0.783 1.305 1.93 2.5 2.964 3.2 5.191"
     else:
         print "Defining eta bins failed"
 
