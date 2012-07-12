@@ -560,6 +560,7 @@ AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
     if(CORRECTION!="ntuple"):
         fcfg.write("jet correction source = JetMETCor\n")
         fcfg.write("jet correction name   = "+CORRECTIONS+"\n")
+        fcfg.write("MC jet correction name   = "+CORRECTIONS+"_MC \n")
     fcfg.write("Di-Jet input file = dijetlist\n")
     fcfg.write("Di-Jet Control1 input file = mcdijetlist\n")
     fcfg.write("Output file       = "+output+"\n");
@@ -679,7 +680,7 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="DefaultAK5"
+DIR_JETALGO="DefaultSJAK5"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
@@ -691,7 +692,7 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2012V7_AK5"
+CORRECTION="2012SQLV7_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -703,15 +704,15 @@ DATAYEAR = "2012"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "2012_193336"
+DATATYPE = "2012AB_194479"
 ##################################
 ## choose binning in eta, currently only "kostas" and "k_HFfix" are properly defined here
 ##################################
-BINNING="JER"
+BINNING="k_HFfix"
 ##################################
 ## Use single jet triggers if =1 (influences trigger thresholds and trigger pt variables in runtime, look for useSingleJetTriggers_ in code)
 ##################################
-SINGLEJET=0
+SINGLEJET=1
 ##################################
 ## Choose MC-generation 
 ##################################
@@ -767,6 +768,7 @@ if(nMinRecoVtx > 0):
 
 if(DO_MC_ONLY_STUDY=="true"):
     MinRunNumber=-1
+
     #    MC_fire_all_triggers="true"
     DATATYPE="Z2wPU_DMC"
 
@@ -800,7 +802,7 @@ if (len(sys.argv) > 8):
     BINNING=sys.argv[5]
     DATATYPE=sys.argv[7]
     CORRECT_JETS_L1=sys.argv[8]
-    SINGLEJET=sys.argv[9]
+    SINGLEJET=int(sys.argv[9])
     print "DIR_JETALGO="+ DIR_JETALGO + " PF_CALO_JPT="+PF_CALO_JPT+ " MC="+MC+" MC-type=" + MC_type+" BINNING="+BINNING+" DATATYPE="+DATATYPE+" CORRECT_JETS_L1="+CORRECT_JETS_L1+" SINGLEJET="+str(SINGLEJET)
     print "... done."
 #   datadirmc=sys.argv[6] #is done below

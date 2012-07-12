@@ -573,7 +573,7 @@ if (len(sys.argv) > 8):
     BINNING=sys.argv[5]
     DATATYPE=sys.argv[7]
     CORRECT_JETS_L1=sys.argv[8]
-    SINGLEJET=sys.argv[9]
+    SINGLEJET=int(sys.argv[9])
     print "DIR_JETALGO="+ DIR_JETALGO + " PF_CALO_JPT="+PF_CALO_JPT+ " MC="+MC+" MC-type=" + MC_type+" BINNING="+BINNING+" DATATYPE="+DATATYPE+" CORRECT_JETS_L1="+CORRECT_JETS_L1+" SINGLEJET="+str(SINGLEJET)
     print "... done."
 #   datadirmc=sys.argv[6] #is done below
