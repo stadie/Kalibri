@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.24 2012/02/09 16:41:51 kirschen Exp $
+// $Id: ControlPlotsProfile.cc,v 1.25 2012/05/24 21:46:28 kirschen Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -773,13 +773,13 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	if(htemp->GetSumOfWeights() <= 0) {
 	  continue; 
 	} else {
-	  htemp->Fit("gaus","QI","", mean - 3 * width,mean + 3 * width); //removed N option to store GaussFit with histogram
+	  htemp->Fit("gaus","QNI","", mean - 3 * width,mean + 3 * width);
 	  TF1 *f = (TF1*)gROOT->GetFunction("gaus")->Clone();
 	  mean = f->GetParameter(1);
 	  meanerror = f->GetParError(1);
 	  width = f->GetParameter(2);
 	  if(width < 0.05) width = 0.05;
-	  if( (htemp->Fit(f,"QNI","goff",mean - 1.5 * width, mean + 1.5 * width) == 0) ) {
+	  if( (htemp->Fit(f,"QI","goff",mean - 1.5 * width, mean + 1.5 * width) == 0) ) { //removed N option to store GaussFit with histogram
 	    mean = f->GetParameter(1);
 	    meanerror = f->GetParError(1);
 	    width = f->GetParameter(2);
