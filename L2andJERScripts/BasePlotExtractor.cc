@@ -13,6 +13,10 @@
 // ----------------------------------------------------------------   
 BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsPath) {
   kalibriPlotsPath_=kalibriPlotsPath;
+  outputPathROOT_=gSystem->pwd()+(TString)"/"+MakeDateDir()+"/Output_"+plotsnames+".root";
+  std::cout << outputPathROOT_ << std::endl;
+  chdir("..");
+
   plotsnames_=plotsnames;
   //read in config files in kalibri-style
   ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/public/ExternalConfigs.cfg");
@@ -21,7 +25,7 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsPath
   std::cout << "readInExtraInfo(); executed " << binningSelection_<< std::endl;
 
 
-  config_=ConfigFile("/afs/naf.desy.de/user/k/kriheine/scratch/Kalibri/L2andJERScripts/JERPlots_L2L3.cfg");
+  config_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/AllPlots_L2L3.cfg");
 
 }
 
@@ -206,43 +210,77 @@ void BasePlotExtractor::refreshRatiosDataMC(){
 void BasePlotExtractor::makeRatioVsBinVarHistos(){
   TH1vec_t RatioVsBinVarHistos;
   for(int conf_i=0;conf_i<configs_.size();conf_i++){
-    std::cout << names_.size() << std::endl;
-    std::cout << names_.at(conf_i) << std::endl;
+    //    std::cout << names_.size() << std::endl;
+    //    std::cout << names_.at(conf_i) << std::endl;
     TH1D* RatioVsBinVar = new TH1D(("RatioVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
-    std::cout << names_.at(conf_i) << std::endl;
+    //    std::cout << names_.at(conf_i) << std::endl;
     RatioVsBinVar->Sumw2();
     RatioVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
     RatioVsBinVar->GetYaxis()->SetTitle("Data/MC ratio (const fit)");
-  TF1 *fit_const = new TF1("fit_const","[0]",RatioVsBinVar->GetXaxis()->GetXmin(),RatioVsBinVar->GetXaxis()->GetXmax()); //was used before...
-  fit_const->SetParameters(1,1);
-  fit_const->SetParName(0,"const");
-  
-  TF1 *fit_loglin = new TF1("fit_loglin","[0]+[1]*TMath::Log(x)",RatioVsBinVar->GetXaxis()->GetXmin(),RatioVsBinVar->GetXaxis()->GetXmax()); //was used before...
-  fit_loglin->SetParameters(1,1);
-  fit_loglin->SetParName(0,"const");
-  fit_loglin->SetParName(1,"slope");
+    //    std::cout << "TEMPTESTING:" << RatioVsBinVar->GetXaxis()->GetXmin() << " and " << RatioVsBinVar->GetXaxis()->GetXmax() <<std::endl;
+    //    std::cout << "TEMPTESTING:" << configs_.at(conf_i)->xMin() << " and " << configs_.at(conf_i)->xMax() <<std::endl;
 
-  std::cout << names_.at(conf_i) << "test4" << std::endl;
-  
-  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
-    AllRatiosDataMC_.at(conf_i).at(bin_i)->Fit("fit_const","EMQ","same");
-    AllRatiosDataMC_.at(conf_i).at(bin_i)->Fit("fit_loglin","EMQ+","same");
-    if(AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")){
-      RatioVsBinVar->SetBinContent(bin_i+1,AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")->GetParameter(0));
-      RatioVsBinVar->SetBinError(bin_i+1,AllRatiosDataMC_.at(conf_i).at(bin_i)->GetFunction("fit_const")->GetParError(0));
-    }
-    else {
-      std::cout << names_.at(conf_i) << "WARNING: NO FIT FUNCTIONS ADDED... SETTING BIN TO ZERO: " << bin_i<< std::endl;
-      RatioVsBinVar->SetBinContent(bin_i+1,0.);
-      RatioVsBinVar->SetBinError(bin_i+1,0.);
-    }
+    //  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
+  for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
+    fitFunctionsToRatioPlot(AllRatiosDataMC_.at(conf_i).at(bin_i));
+    fillRatioVsBinVarPlot(RatioVsBinVar,AllRatiosDataMC_.at(conf_i).at(bin_i),bin_i,"fit_const");
   }
-  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
-    std::cout << RatioVsBinVar->GetBinContent(bin_i+1) << ", " << std::endl;
-  }
+//  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
+//    std::cout << RatioVsBinVar->GetBinContent(bin_i+1) << ", " << std::endl;
+//  }
   RatioVsBinVarHistos.push_back(RatioVsBinVar);
   }
   RatioVsBinVarHistos_=RatioVsBinVarHistos;
+}
+
+
+//! Fit functions to ratio plot
+//! 
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/07/11
+// ----------------------------------------------------------------   
+void BasePlotExtractor::fitFunctionsToRatioPlot(TH1D* histo){
+  TF1 *fit_const = new TF1("fit_const","[0]",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
+  fit_const->SetParameters(1,1);
+  fit_const->SetParName(0,"const");
+  histo->Fit("fit_const","EMQ","same");
+
+  if(plotsnames_.Contains("VsPt")){
+    TF1 *fit_loglin = new TF1("fit_loglin","[0]+[1]*TMath::Log(x)",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
+    fit_loglin->SetParameters(1,1);
+    fit_loglin->SetParName(0,"const");
+    fit_loglin->SetParName(1,"slope");
+    histo->Fit("fit_loglin","EMQ+","same");
+  }
+  else{
+    TF1 *fit_lin = new TF1("fit_lin","[0]+[1]*x",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
+    fit_lin->SetParameters(1,1);
+    fit_lin->SetParName(0,"const");
+    fit_lin->SetParName(1,"slope");
+    histo->Fit("fit_lin","EMQ+","same");
+  }
+}
+
+//! Fill RatioVsBinVarPlotWith fit results
+//! 
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/07/11
+// ----------------------------------------------------------------   
+void BasePlotExtractor::fillRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* HistoOfBin_i, Int_t bin_i, TString func_name){
+  if(HistoOfBin_i->GetFunction(func_name)){
+    RatioVsBinVarHisto->SetBinContent(bin_i+1,HistoOfBin_i->GetFunction(func_name)->GetParameter(0));
+    RatioVsBinVarHisto->SetBinError(bin_i+1,HistoOfBin_i->GetFunction(func_name)->GetParError(0));
+    //    std::cout <<RatioVsBinVarHisto->GetBinContent(bin_i+1)<<std::endl;
+  }
+  else {
+    std::cout << RatioVsBinVarHisto->GetName() << "WARNING: NO FIT FUNCTIONS ADDED... SETTING BIN TO ZERO: " << bin_i<< std::endl;
+    RatioVsBinVarHisto->SetBinContent(bin_i+1,0.);
+    RatioVsBinVarHisto->SetBinError(bin_i+1,0.);
+  }
+
+
 }
 
 
@@ -311,7 +349,7 @@ void BasePlotExtractor::drawConfidenceIntervals(TH1D* histo){
   DefaultStyles style;
   style.setStyle("Confidence");
   
-  std::cout << "List of functions: " << std::endl;
+  //  std::cout << "List of functions: " << std::endl;
   //	   histo->GetListOfFunctions()->Print();
   TIter next(histo->GetListOfFunctions());
   TObject *obj;
@@ -322,7 +360,7 @@ void BasePlotExtractor::drawConfidenceIntervals(TH1D* histo){
 
     histo->Fit(temp_tf1->GetName(),"NEMQ");
     //Create a histogram to hold the confidence intervals
-    TH1D *hint = new TH1D("hint","Fitted gaussian with .95 conf.band", 100, histo->GetXaxis()->GetXmin(), histo->GetXaxis()->GetXmax());
+    TH1D *hint = new TH1D("hint","Fitted function with .95 conf.band", 100, histo->GetXaxis()->GetXmin(), histo->GetXaxis()->GetXmax());
     hint->Sumw2();
     (TVirtualFitter::GetFitter())->GetConfidenceIntervals(hint);
     //Now the "hint" histogram has the fitted function values as the 
@@ -341,9 +379,58 @@ void BasePlotExtractor::drawConfidenceIntervals(TH1D* histo){
       //    }
     i++;
     hint->Draw("e4 same");
+    //    hint->Delete();
   }
   
 }
+
+
+//! Draws confidence intervals for all functions in
+//! the listoffunctions of the histogram
+//! For this, it repeats the fit and then extracts the band
+//!
+//!  \author Henning Kirschenmann
+//!  \date 2012/03/07
+// ----------------------------------------------------------------   
+void BasePlotExtractor::drawConfidenceIntervals(TGraphErrors* histo){
+  DefaultStyles style;
+  style.setStyle("Confidence");
+  
+  //  std::cout << "List of functions: " << std::endl;
+  //	   histo->GetListOfFunctions()->Print();
+  TIter next(histo->GetListOfFunctions());
+  TObject *obj;
+  Int_t i=0;
+  while ((obj = next())){
+    //    obj->Print();//Draw(next.GetOption());
+    TF1* temp_tf1 = (TF1*) obj;
+
+    histo->Fit(temp_tf1->GetName(),"NEMQ");
+    //Create a histogram to hold the confidence intervals
+    TH1D *hint = new TH1D("hint","Fitted function with .95 conf.band", 100, histo->GetXaxis()->GetXmin(), histo->GetXaxis()->GetXmax());
+    hint->Sumw2();
+    (TVirtualFitter::GetFitter())->GetConfidenceIntervals(hint);
+    //Now the "hint" histogram has the fitted function values as the 
+    //bin contents and the confidence intervals as bin errors
+    hint->SetStats(kFALSE);
+    hint->SetMarkerStyle(1);
+    //    if(i<fill_colors_.size()){
+      hint->SetMarkerColor(style.getColor(i));
+      hint->SetFillColor(style.getColor(i));
+      temp_tf1->SetLineColor(style.getColor(i));
+      temp_tf1->SetFillColor(style.getColor(i));
+      //    }
+      //    else{
+      //      hint->SetMarkerColor(38);
+      //      hint->SetFillColor(38);
+      //    }
+    i++;
+    hint->Draw("e4 same");
+    //    hint->Delete();
+  }
+  
+}
+
 
 //!  \brief Helper method for \p createTwoJetsPtBalanceEventPlots()
 //!
@@ -353,10 +440,16 @@ void BasePlotExtractor::drawConfidenceIntervals(TH1D* histo){
 //!  \p type.
 // -------------------------------------------------------------
 ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type) const {
+  if( varName == "RunNumber" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventRunNumber;
   if( varName == "Eta" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
   if( varName == "AbsEta" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta;
+  if( varName == "Jet2Eta")
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2Eta; 
+  if( varName == "Jet2AbsEta")
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2AbsEta; 
   if( varName == "Pt" && type == ControlPlotsConfig::Uncorrected )
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt; 
   if( varName == "Pt" && type == ControlPlotsConfig::L2L3  )
@@ -386,6 +479,8 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
     return &ControlPlotsFunction::twoJetsPtBalanceEventVtxN;
   if( varName == "MCNPUVtx" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventMCNPUVtx;
+  if( varName == "MCNPUTruth" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMCNPUTruth;
   if( varName == "PF_CH_Fraction" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventPF_CH_Fraction;
   if( varName == "PF_NH_Fraction" )
@@ -394,6 +489,10 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
     return &ControlPlotsFunction::twoJetsPtBalanceEventPF_PH_Fraction;
   if( varName == "PF_EL_Fraction" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventPF_EL_Fraction;
+  if( varName == "PF_HFHad_Fraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFHad_Fraction;
+  if( varName == "PF_HFEm_Fraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFEm_Fraction;
   if( varName == "Flavor" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetFlavor;
   if( varName == "DeltaPhi" )

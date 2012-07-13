@@ -51,13 +51,17 @@ class BasePlotExtractor {
  public :
   BasePlotExtractor(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsPath="KalibriPlots.root");
   void init(TString profileType="Mean");
+  void fitFunctionsToRatioPlot(TH1D* histo);
+  void fillRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* HistoOfBin_i, Int_t bin_i, TString func_name="fit_const");
   void makeRatioVsBinVarHistos();
   void refreshRatiosDataMC();
   void drawConfidenceIntervals(TH1D* histo);
+  void drawConfidenceIntervals(TGraphErrors* histo);
   void addFunctionLabelsToLegend(TH1D* histo, TLegend* leg);
   void outputTable(TString label, TH1D* histo);
   void readInExtraInfo();
   TString kalibriPlotsPath() {return kalibriPlotsPath_;};
+  TString outputPathROOT() {return outputPathROOT_;};
   TString profileType() {return profileType_;};
   std::vector<double> yProfileMinMax() {return yProfileMinMax_;};
   TString yProfileTitle() {return yProfileTitle_;};
@@ -83,6 +87,7 @@ class BasePlotExtractor {
   VecOfTH1vec_t AllDifferencesDataMC_;
   TH1vec_t RatioVsBinVarHistos_;
   TString kalibriPlotsPath_;
+  TString outputPathROOT_;
   TString plotsnames_;
   TString jetType_;
   TString jetLabel_;
