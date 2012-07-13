@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.13 2012/03/29 11:50:34 kirschen Exp $
+// $Id: ControlPlotsConfig.h,v 1.14 2012/05/24 21:46:27 kirschen Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -56,7 +56,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.13 2012/03/29 11:50:34 kirschen Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.14 2012/05/24 21:46:27 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -111,6 +111,8 @@ class ControlPlotsConfig {
   double cutMin() const { return cutEdges_.first; }
   //! Returns the maximum of the cut range
   double cutMax() const { return cutEdges_.second; }
+  //! Set maximum of the cut range
+  void setCutMax(double newCutMax) { cutEdges_.second=newCutMax; }
   //! Returns the title of the cut used for axis
   std::string cutAxisTitle() const { return axisTitle(cutVariable()); }
   
