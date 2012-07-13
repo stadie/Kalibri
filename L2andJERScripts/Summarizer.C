@@ -28,7 +28,7 @@ void Summarizer()
   //define alpha bins  
   if(verbose)std::cout<<"setting binning"<<endl;
   int alphaBin[4]={10, 15, 20, 30};
-  int etaBin[7]={0, 8, 13, 19, 25, 30, 52};
+  int etaBin[8]={0, 8, 13, 19, 25, 30, 32, 52};
   //loading the files  
   if(verbose)std::cout<<"defining files"<<endl;
   TFile *f;				      
@@ -38,12 +38,12 @@ void Summarizer()
       if(verbose)std::cout<<"load type="<<type<<endl;  
       //  if(type==0)f=TFile::Open("../20122012AB_195396_CORR2012SQLV7_AK5_MC_Su12Z2Star_PUS6S7_kostas_SQLV7AlternativeExtrapolAK5/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
       //  else if(type==1)f=TFile::Open("../20122012AB_195396_CORR2012SQLV7_AK5_MC_Su12Z2Star_PUS6S7_kostas_SQLV7AlternativeExtrapolAK5/dijetsFall10_TuneZ2_AK5PFCHS_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
-        if(type==0)f=TFile::Open("../20122012AB_196531_CORR2012SQLV7_AK5_MC_Su12Z2Star_PUS6S7_kostas_196531Tag52V9DAK5/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
-        else if(type==1)f=TFile::Open("../20122012AB_196531_CORR2012SQLV7_AK5_MC_Su12Z2Star_PUS6S7_kostas_196531Tag52V9DAK5/dijetsFall10_TuneZ2_AK5PFCHS_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
+        if(type==0)f=TFile::Open("../20122012AB_196531_CORR2012SQLV7_AK5_MC_Su12Z2Star_PUS6S7_kostas_NewTry/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
+        else if(type==1)f=TFile::Open("../20122012AB_196531_CORR2012SQLV7_AK5_MC_Su12Z2Star_PUS6S7_kostas_NewTry/dijetsFall10_TuneZ2_AK5PFCHS_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
       if(verbose)std::cout<<"generate/update Summary.root"<<endl;   
       //define write-target
-      if(type==0)save=new TFile("JSON196531tag52V9DRatio.root", "recreate", "plots", 1);
-      if(type>0)save=new TFile("JSON196531tag52V9DRatio.root", "update", "plots", 1);
+      if(type==0)save=new TFile("JSON196531tag52V9DSingleJetCorrected.root", "recreate", "plots", 1);
+      if(type>0)save=new TFile("JSON196531tag52V9DSingleJetCorrected.root", "update", "plots", 1);
       //loop over RR/MPF method
       for(int method=0; method<2; method++)
 	{
@@ -53,7 +53,7 @@ void Summarizer()
 	    {
 	      if(verbose)std::cout<<"alpha bin"<<alphaBin[alpha]<<endl; 
 	      //loop over eta bins
-	      for(Int_t eta=0; eta<6; eta++)
+	      for(Int_t eta=0; eta<7; eta++)
 		{
 		  if(verbose)std::cout<<"eta bin"<<etaBin[eta]<<endl; 		  
 		  //readout and write histograms
@@ -85,6 +85,11 @@ void Summarizer()
 			  error=TMath::Sqrt(TMath::Power(ReadData->GetBinError(bin+1)/ReadMC->GetBinContent(bin+1),2)+TMath::Power(ReadMC->GetBinError(bin+1)*ReadData->GetBinContent(bin+1),2)*TMath::Power(ReadMC->GetBinContent(bin+1),-4));
 			  WriteRatio->SetBinContent(bin+1, ratio);
 			  WriteRatio->SetBinError(bin+1, error);
+			}
+		      else
+			{
+			  WriteRatio->SetBinContent(bin+1, 0);
+			  WriteRatio->SetBinError(bin+1, 0);
 			}
 		    }
 		  //write histograms
