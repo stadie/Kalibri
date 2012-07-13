@@ -29,6 +29,16 @@ void do_the_comparison(std::vector <TString> algo_list, TString dir, TString dir
   std::vector < TH1D * > plot_list_abs_;
 
 
+  if (file->IsZombie()){
+       cout << "Error opening file" << endl;
+       //       exit(-1);
+    }
+    else{
+      cout << "ROOT-Datei erfolgreich geladen. " << endl;
+      std::cout << dir_prefix+dir+"/res_corrections_histos.root" << std::endl;
+    }
+
+
   for(unsigned int i=0;i<algo_list.size();i++){
 //    plot_list_.push_back((TH1D*)file->Get(""+binning_select+"_TuneZ2_"+algo_list.at(i)+"_eta_res_hist"));
 //    plot_list_abs_.push_back((TH1D*)file->Get(""+binning_select+"_TuneZ2_"+algo_list.at(i)+"_Abseta_res_hist"));
