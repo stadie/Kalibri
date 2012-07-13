@@ -19,6 +19,8 @@
 #include "TPaveText.h"
 #include "TString.h"
 
+#include "tdrstyle_mod.C"
+
 #define UTILS_AS_HEADER_FILE
 #include "/afs/naf.desy.de/user/k/kirschen/public/util/utils.h"
 #include "/afs/naf.desy.de/user/k/kirschen/public/util/HistOps.h"
@@ -102,77 +104,40 @@ TChain *createTChain(const TString &fileName) {
 
 
 // --------------------------------------------------
-void getTriggerInfo(std::vector<TString> &tagTriggers, std::vector<TString> &probeTriggers, std::vector<double> &probeTriggerVals) {
+void getTriggerInfo(std::vector<TString> &tagTriggers, std::vector<TString> &probeTriggers, std::vector<double> &probeTriggerVals, std::vector<double> &tagTriggerVals) {
+  std::vector<double> NominalPtOfTriggers;
+  NominalPtOfTriggers.push_back(30);
+  NominalPtOfTriggers.push_back(60);
+  NominalPtOfTriggers.push_back(80);
+  NominalPtOfTriggers.push_back(110);
+  NominalPtOfTriggers.push_back(150);
+  NominalPtOfTriggers.push_back(190);
+  NominalPtOfTriggers.push_back(240);
+  NominalPtOfTriggers.push_back(300);
+  NominalPtOfTriggers.push_back(370);
   std::vector<TString> triggers;
   if(TriggerYearLabel=="2011"){
     if(single_dijet=="DiJetAve"||single_dijet=="Jet"){
 
-      //  triggers.push_back("HltJet30"); 
-      triggers.push_back("Hlt"+single_dijet+"30"); 
-      triggers.push_back("Hlt"+single_dijet+"60"); 
-      triggers.push_back("Hlt"+single_dijet+"80"); 
-      triggers.push_back("Hlt"+single_dijet+"110");
-      triggers.push_back("Hlt"+single_dijet+"150");
-      triggers.push_back("Hlt"+single_dijet+"190");
-      triggers.push_back("Hlt"+single_dijet+"240");
-      triggers.push_back("Hlt"+single_dijet+"300");
-      triggers.push_back("Hlt"+single_dijet+"370");
+      for(size_t i =0; i<NominalPtOfTriggers.size();i++){
+	triggers.push_back("Hlt"+single_dijet+util::toTString(NominalPtOfTriggers.at(i))); 
+      }
     }
     else{exit;}
     
     for(size_t i = 0; i < triggers.size()-1; ++i) {
       tagTriggers.push_back(triggers.at(i));
+      tagTriggerVals.push_back(NominalPtOfTriggers.at(i));
       probeTriggers.push_back(triggers.at(i+1));
+      probeTriggerVals.push_back(NominalPtOfTriggers.at(i+1));
     }
-    
-    //  probeTriggerVals.push_back(30); 
-    probeTriggerVals.push_back(60); 
-    probeTriggerVals.push_back(80); 
-    probeTriggerVals.push_back(110);
-    probeTriggerVals.push_back(150);
-    probeTriggerVals.push_back(190);
-    probeTriggerVals.push_back(240);
-    probeTriggerVals.push_back(300);
-    probeTriggerVals.push_back(370);
     
     assert( probeTriggerVals.size() == probeTriggers.size() );
   }
-  else if(TriggerYearLabel=="2012"){
-    if(single_dijet=="DiJetAve"||single_dijet=="Jet"){
-
-      //  triggers.push_back("HltJet30"); 
-      triggers.push_back("Hlt"+single_dijet+"30"); 
-      triggers.push_back("Hlt"+single_dijet+"60"); 
-      triggers.push_back("Hlt"+single_dijet+"80"); 
-      triggers.push_back("Hlt"+single_dijet+"110");
-      triggers.push_back("Hlt"+single_dijet+"150");
-      triggers.push_back("Hlt"+single_dijet+"190");
-      triggers.push_back("Hlt"+single_dijet+"240");
-      triggers.push_back("Hlt"+single_dijet+"300");
-      triggers.push_back("Hlt"+single_dijet+"370");
-    }
-    else{exit;}
-    
-    for(size_t i = 0; i < triggers.size()-1; ++i) {
-      tagTriggers.push_back(triggers.at(i));
-      probeTriggers.push_back(triggers.at(i+1));
-    }
-    
-    //  probeTriggerVals.push_back(30); 
-    probeTriggerVals.push_back(60); 
-    probeTriggerVals.push_back(80); 
-    probeTriggerVals.push_back(110);
-    probeTriggerVals.push_back(150);
-    probeTriggerVals.push_back(190);
-    probeTriggerVals.push_back(240);
-    probeTriggerVals.push_back(300);
-    probeTriggerVals.push_back(370);
-    
-    assert( probeTriggerVals.size() == probeTriggers.size() );
-  }
-
 }
 
+
+//TH1D
 
 // --------------------------------------------------
 void computeTriggerEfficiences(const TString &fileNames, double lumi, int nEvts = -1, double etaMin = 0.) {
@@ -180,7 +145,8 @@ void computeTriggerEfficiences(const TString &fileNames, double lumi, int nEvts 
   std::cout << "Preparing input...\n";
 
   // Style
-  util::StyleSettings::setStyleNoteNoTitle();
+  //  util::StyleSettings::setStyleNote();
+  util::StyleSettings::setStyleJMEPaper();
   TString jetType = util::LabelFactory::jetAlgo(fileNames)+util::LabelFactory::jetType(fileNames);
   TString jetLabel = util::LabelFactory::labelJet(fileNames);
   int nBins = 250;
@@ -192,15 +158,16 @@ void computeTriggerEfficiences(const TString &fileNames, double lumi, int nEvts 
   std::vector<TString> tagTriggers;
   std::vector<TString> probeTriggers;
   std::vector<double> probeTriggerVals;
-  getTriggerInfo(tagTriggers,probeTriggers,probeTriggerVals);
+  std::vector<double> tagTriggerVals;
+  getTriggerInfo(tagTriggers,probeTriggers,probeTriggerVals,tagTriggerVals);
 
   // Fit ranges
   std::vector<double> ptMin;
   std::vector<double> ptMax;
   for(size_t i = 0; i < probeTriggers.size(); ++i) {
-    //    ptMin.push_back(0.7*probeTriggerVals.at(i));
+        ptMin.push_back(0.7*probeTriggerVals.at(i));
     //    ptMax.push_back(std::min(1.5*probeTriggerVals.at(i),histMax));
-    ptMin.push_back(0.5*probeTriggerVals.at(i));
+    //    ptMin.push_back(0.5*probeTriggerVals.at(i));
     ptMax.push_back(std::min(2*probeTriggerVals.at(i),histMax));
   }
 
@@ -329,7 +296,7 @@ void computeTriggerEfficiences(const TString &fileNames, double lumi, int nEvts 
       }
       //      corrJetPt.Print();
 
-      if( std::abs(jetEta[0]) < etaMin || std::abs(jetEta[1]) < etaMin ) continue;
+      if(std::abs(jetEta[0]) < etaMin && std::abs(jetEta[1]) < etaMin ) continue;
       //      if( std::abs(jetEta[0]) > 1.3 || std::abs(jetEta[1]) > 1.3) continue;
 	
       triggerDecisions["HltJet30"] = hltphys; 
@@ -394,13 +361,14 @@ void computeTriggerEfficiences(const TString &fileNames, double lumi, int nEvts 
       hFrame->SetBinContent(bin,plateauVals.at(i));
     }
     
-    TCanvas *canEff = new TCanvas("canEff_"+probeTriggers.at(i)+"_Eta"+util::toTString(etaMin),probeTriggers.at(i)+" efficiency",500,500);
+    TCanvas *canEff = new TCanvas("canEff_"+probeTriggers.at(i)+"_Eta"+util::toTString(etaMin),probeTriggers.at(i)+" efficiency",600,600);
     canEff->cd();
     hFrame->Draw();
     hEff.at(i)->Draw("PE1same");
     fEff.at(i)->Draw("same");
     lPtVar99.at(i)->Draw("same");
     label->Draw("same");
+    cmsPrel();
     canEff->SaveAs(outNamePrefix+"_"+probeTriggers.at(i)+".eps","eps");
   }
 
@@ -409,7 +377,7 @@ void computeTriggerEfficiences(const TString &fileNames, double lumi, int nEvts 
   for(int bin = 1; bin <= hFrame->GetNbinsX(); ++bin) {
     hFrame->SetBinContent(bin,1.);
   }
-  TCanvas *canEff = new TCanvas("canEffAll_Eta"+util::toTString(etaMin),"efficiency",500,500);
+  TCanvas *canEff = new TCanvas("canEffAll_Eta"+util::toTString(etaMin),"efficiency",600,600);
   canEff->cd();
   hFrame->Draw();
   for(int i = static_cast<int>(probeTriggers.size()-1); i >= 0; --i) {
@@ -439,7 +407,31 @@ void computeTriggerEfficiences(const TString &fileNames, double lumi, int nEvts 
   }
   leg1->Draw("same");
   leg2->Draw("same");
+  cmsPrel();
   canEff->SaveAs(outNamePrefix+".eps","eps");
+
+
+  //Trigger threshold linear extrapolation plot
+  TH1 *hExtrapolFrame = util::HistOps::createFrame(histMin,histMax,histMin,1.5*histMax," Nominal trigger threshold (GeV)","99% efficiency threshold (GeV)");
+  TCanvas *canExtrapol = new TCanvas("canExtrapolAll_Eta"+util::toTString(etaMin),"efficiency",600,600);
+  canExtrapol->cd();
+  hExtrapolFrame->Draw();
+
+  TGraphErrors* extrapol = new TGraphErrors(probeTriggerVals.size(),&probeTriggerVals[0],&ptVar99[0]);
+  extrapol->SetMarkerStyle(20);
+  extrapol->SetMarkerSize(1.1);
+  extrapol->Fit("pol1");
+
+  label = util::LabelFactory::createPaveText(3);
+  if( etaMin > 0. ) label->AddText(jetLabel+",  |#eta_{1,2}| > "+util::toTString(etaMin)+",  L = "+util::StyleSettings::luminosity(lumi));
+  else label->AddText(jetLabel+",  L = "+util::StyleSettings::luminosity(lumi));
+  label->AddText("Lowest trigger: "+tagTriggers.at(0));
+  label->AddText("extrapolated "+single_dijet_ptVarLabel+"(#epsilon > 99%) = "+util::toTString(extrapol->GetFunction("pol1")->Eval(tagTriggerVals.at(0)),1)+" GeV");
+  
+  extrapol->Draw("P");
+  label->Draw("same");
+  cmsPrel();
+  canExtrapol->SaveAs(outNamePrefix+"Extrapol.eps","eps");
 
 
   // Print efficiencies
@@ -467,22 +459,13 @@ void computeTriggerEfficiences(const TString &fileNames, double lumi, int nEvts 
 
 // --------------------------------------------------
 void run(int nEvts = -1) {
-  //    TString input = "/afs/naf.desy.de/user/k/kirschen/scratch/Usercode_Matthias/UserCode/scripts/filelist_data_L1Offset_AK5Calo";//#filelist_data_L1FastJet_AK5PF";
-  //    TString input = "/afs/naf.desy.de/user/k/kirschen/scratch/Usercode_Matthias/UserCode/scripts/filelist_May10data_L1FastJet_AK5PF";
-  //        TString input = "/afs/naf.desy.de/user/k/kirschen/scratch/Usercode_Matthias/UserCode/scripts/filelist_Full2011_L1FastJet_AK5PF";
-  //     TString input = "/afs/naf.desy.de/user/k/kirschen/scratch/Usercode_Matthias/UserCode/scripts/filelist_Full2011_L1FastJet_AK5Calo";
-  //    TString input = "/afs/naf.desy.de/user/k/kirschen/scratch/Usercode_Matthias/UserCode/scripts/filelist_Full2011_L1Offset_AK5JPT";
-  //  TString input = "/afs/naf.desy.de/user/k/kirschen/scratch/Usercode_Matthias/UserCode/scripts/filelist_MC_L1Offset_AK5Calo";
-  //	TString input = "/afs/naf.desy.de/user/k/kirschen/scratch/Usercode_Matthias/UserCode/scripts/TriggerEfficiencies_TurnOn_Full2011data_AK5PF_DiJetAve.root";
+  TString input = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri2/L2andJERScripts/filelist_Full2011_L1FastJet_AK5PF";
 
-	TString input = "/afs/naf.desy.de/user/k/kirschen/scratch/2012_04_L2L3ResidualsSummary/L2andJERScripts/filelist_2012Temp_L1FastJet_AK5PF";
-
-  //  double lumi = 838.;
-  double lumi = 300.;
+  double lumi = 4965;
   
   single_dijet="DiJetAve";
   //  single_dijet="Jet";
-  TriggerYearLabel="2012";
+  TriggerYearLabel="2011";
 
   if(single_dijet=="DiJetAve"){
     single_dijet_ptVarLabel = "p^{ave}_{T}";
