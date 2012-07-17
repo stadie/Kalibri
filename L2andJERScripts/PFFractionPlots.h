@@ -18,7 +18,7 @@
 // ----------------------------------------------------------------   
 class PFFractionPlots : public BasePlotExtractor{
  public :
-  PFFractionPlots(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsPath="KalibriPlots.root");
+  PFFractionPlots(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsShortName="KalibriPlots.root");
   void Plot();
 
 };

@@ -23,7 +23,7 @@ typedef std::vector<TGraphErrors*> VecOfTGErrvec_t;
 // ----------------------------------------------------------------   
 class Extrapolation :public BasePlotExtractor{
  public :
-  Extrapolation(TString plotsnames="ResolutionVsPt",TString kalibriPlotsPath="KalibriPlots.root");
+  Extrapolation(TString plotsnames="ResolutionVsPt",TString kalibriPlotsShortName="KalibriPlots.root");
   void Plot();
   void ExportTables();
  private:

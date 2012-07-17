@@ -6,7 +6,7 @@
 //!  \author Henning Kirschenmann
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
-PFFractionPlots::PFFractionPlots(TString plotsnames,TString kalibriPlotsPath) : BasePlotExtractor(plotsnames,kalibriPlotsPath){
+PFFractionPlots::PFFractionPlots(TString plotsnames,TString kalibriPlotsShortName) : BasePlotExtractor(plotsnames,kalibriPlotsShortName){
   //init config_file;
   //  config_=ConfigFile("L2L3.cfg");
   //  plotsnames_=plotsnames;
@@ -25,7 +25,7 @@ void PFFractionPlots::Plot() {
   c->SetLogx(configs_.at(0)->logX());
   DefaultStyles style;
   style.setStyle("PFComp");
-  MakeDateDir();
+  //  MakeDateDir();
   if(chdir("PFComp") != 0){ 
     mkdir("PFComp", S_IRWXU|S_IRWXG|S_IRWXO); 
     chdir("PFComp"); 
@@ -180,7 +180,7 @@ void PFFractionPlots::Plot() {
 
   }
 
- chdir("../../."); 
+  chdir(outputPathROOT()+"/..");
 
 }
 

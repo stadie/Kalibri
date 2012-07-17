@@ -1,28 +1,49 @@
 #include "Extrapolation.cc"
 
 void TestExtrapolation(){
-  //2011 resolutions with smearing
-  //    Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2011withJERcorr_kostas_KalibriPlots.root");
-  //  test.Plot();
 
-
-  //2011 resolutions without JER smearing
-  //    Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kirschen/public/2011_kostas_KalibriPlots.root");
-  //  test.Plot();
-
-  //2012 resolutions
-  Extrapolation test("ResolutionVsPt","/afs/naf.desy.de/user/k/kriheine/scratch/Kalibri/2011Full2011_CORRFinal2011_AK5_MC_F1144Z2wPU_kostas_DefaultTestTEst/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_JER_common/plots/KalibriPlots.root");
+  Extrapolation test("ResolutionVsPt","Resolutions44Z2");
   test.Plot();
-  test.ExportTables();
 
 
-  //plots for pt-dependent krad-correction and resulting residuals
-//  Extrapolation test2("RelResponseVsPt");
-//  test2.Plot();
-//  
-//  Extrapolation test3("MPFResponseVsPt");
-//  test3.Plot();
-  
+  std::vector<TString> samplelist;
+  samplelist.push_back("42Z2");
+  samplelist.push_back("44Z2");
+  samplelist.push_back("44Hpp");
+
+
+  for(size_t i=0;i<samplelist.size();i++){
+    Extrapolation test1("MPFResponseVsRunNumber",samplelist.at(i));
+    test1.Plot();
+
+    Extrapolation test2("MPFResponseVsJetWidth",samplelist.at(i));
+    test2.Plot();
+    
+    Extrapolation test3("MPFResponseVsPF_CH_Fraction",samplelist.at(i));
+    test3.Plot();
+
+    Extrapolation test4("MPFResponseVsJetWidth",samplelist.at(i));
+    test4.Plot();
+    
+    Extrapolation test5("MPFResponseVsNPV",samplelist.at(i));
+    test5.Plot();
+    
+    Extrapolation test6("RelResponseVsNPV",samplelist.at(i));
+    test6.Plot();
+    
+    Extrapolation test7("MPFResponseVsPt",samplelist.at(i));
+    test7.Plot();
+    
+    Extrapolation test8("RelResponseVsPt",samplelist.at(i));
+    test8.Plot();
+    
+    Extrapolation test9("OneBinRelResponseVsPt",samplelist.at(i));
+    test9.Plot();
+    
+//    Extrapolation test10("OneBinMPFVsPt",samplelist.at(i));
+//    test10.Plot();
+  }
+
 
 
 };

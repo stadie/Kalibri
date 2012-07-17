@@ -7,7 +7,7 @@
 //!  \author Henning Kirschenmann
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
-Extrapolation::Extrapolation(TString plotsnames,TString kalibriPlotsPath) : BasePlotExtractor(plotsnames,kalibriPlotsPath){
+Extrapolation::Extrapolation(TString plotsnames,TString kalibriPlotsShortName) : BasePlotExtractor(plotsnames,kalibriPlotsShortName){
   init(profileType_); //baseplotextracotr method to read in plots
   std::cout << "still initializing..." <<std::endl;
   extrapolInit();
@@ -35,7 +35,7 @@ void Extrapolation::extrapolInit() {
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
 void Extrapolation::Plot() {
-  MakeDateDir();
+  //  MakeDateDir();
   if(chdir("Extrapol") != 0){ 
     mkdir("Extrapol", S_IRWXU|S_IRWXG|S_IRWXO); 
     chdir("Extrapol"); 
@@ -191,15 +191,17 @@ void Extrapolation::Plot() {
       leg1->Draw();
 
       TString outname = (TString)"ResolutionPlots_"+plotsnames_+"_ExtrapolatedMCDataRatios_"+MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName()+"_"+configs_.at(0)->binName(bin_i);
+      c->SetName(outname);
       outname+=".eps";
       c->SaveAs(outname);
+      configs_.at(0)->toRootFile(c);
     }
   }      
 
   
-
- chdir("../../."); 
-
+  chdir(outputPathROOT()+"/..");
+  // chdir("../../."); 
+ configs_.at(0)->closeRootFile();
 }
 
 //! Do the radiation extrapolation in each bin (for resolutions mainly bins in eta (and then xbins in pt)
@@ -326,7 +328,7 @@ void Extrapolation::makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos(){
 //!  \date 2012/05/23
 // ----------------------------------------------------------------   
 void Extrapolation::ExportTables() {
-   MakeDateDir();
+  //   MakeDateDir();
    if(chdir("JER_tables") != 0){ 
       mkdir("JER_tables", S_IRWXU|S_IRWXG|S_IRWXO); 
       chdir("JER_tables"); 

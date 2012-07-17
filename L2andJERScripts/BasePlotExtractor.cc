@@ -11,11 +11,19 @@
 //!  \author Henning Kirschenmann
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
-BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsPath) {
-  kalibriPlotsPath_=kalibriPlotsPath;
-  outputPathROOT_=gSystem->pwd()+(TString)"/"+MakeDateDir()+"/Output_"+plotsnames+".root";
+BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsShortName) {
+  kalibriPlotsShortName_=kalibriPlotsShortName;
+  outputPathROOT_=gSystem->pwd()+(TString)"/"+MakeDateDir();//+"/Output_"+plotsnames+".root";
   std::cout << outputPathROOT_ << std::endl;
-  chdir("..");
+  if(chdir(kalibriPlotsShortName) != 0){ 
+    mkdir(kalibriPlotsShortName, S_IRWXU|S_IRWXG|S_IRWXO); 
+    chdir(kalibriPlotsShortName); 
+  } 
+  if(chdir(plotsnames) != 0){ 
+    mkdir(plotsnames, S_IRWXU|S_IRWXG|S_IRWXO); 
+    chdir(plotsnames); 
+  } 
+  //  chdir("..");
 
   plotsnames_=plotsnames;
   //read in config files in kalibri-style
@@ -25,7 +33,7 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsPath
   std::cout << "readInExtraInfo(); executed " << binningSelection_<< std::endl;
 
 
-  config_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/AllPlots_L2L3.cfg");
+  config_=ConfigFile((std::string)pathToConfig_);//"/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/AllPlots_L2L3.cfg");
 
 }
 
@@ -51,6 +59,10 @@ void BasePlotExtractor::readInExtraInfo() {
   assert(yDifferenceMinMax_.size()==2);
   yDifferenceTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots difference yTitle","DUMMY Difference");
   profileType_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile type","Mean");
+
+  kalibriPlotsPath_ = ExternalConfig_.read<std::string>((std::string)kalibriPlotsShortName_+" kalibriPlotsPath","KalibriPlots.root");
+  pathToConfig_ = ExternalConfig_.read<std::string>((std::string)kalibriPlotsShortName_+" pathToConfig","/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/AllPlots_L2L3.cfg");
+
   //  binningSelection_ = ExternalConfig_.read<std::string>("binning selection","kostas");
   if(kalibriPlotsPath_.Contains("kostas"))binningSelection_ = "kostas";
   else if(kalibriPlotsPath_.Contains("k_HFfix"))binningSelection_ = "k_HFfix";
@@ -106,6 +118,9 @@ void BasePlotExtractor::init(TString profileType) {
     // Create ControlPlotsConfig    
     ControlPlotsConfig *pConfig = new ControlPlotsConfig(getConfig(),names.at(i));
     configs.at(i) = pConfig;
+    configs.at(i)->setOutDirName((std::string)outputPathROOT_);
+    configs.at(i)->setOutRootFileName((std::string)("Output"+kalibriPlotsShortName()+".root"));
+    if(i==0)configs.at(i)->openRootFile() ;
     // Create functions
     ControlPlotsFunction *func = new ControlPlotsFunction();
     func->setBinFunction(findTwoJetsPtBalanceEventFunction(pConfig->binVariable()));

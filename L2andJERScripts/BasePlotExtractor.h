@@ -49,7 +49,7 @@ typedef std::vector<VecOfTH1vec_t > VecOfVecOfTH1vec_t;
 // ----------------------------------------------------------------   
 class BasePlotExtractor {
  public :
-  BasePlotExtractor(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsPath="KalibriPlots.root");
+  BasePlotExtractor(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsShortName="DEFAULT");
   void init(TString profileType="Mean");
   void fitFunctionsToRatioPlot(TH1D* histo);
   void fillRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* HistoOfBin_i, Int_t bin_i, TString func_name="fit_const");
@@ -60,6 +60,8 @@ class BasePlotExtractor {
   void addFunctionLabelsToLegend(TH1D* histo, TLegend* leg);
   void outputTable(TString label, TH1D* histo);
   void readInExtraInfo();
+  TString kalibriPlotsShortName() {return kalibriPlotsShortName_;};
+  TString pathToConfig() {return pathToConfig_;};
   TString kalibriPlotsPath() {return kalibriPlotsPath_;};
   TString outputPathROOT() {return outputPathROOT_;};
   TString profileType() {return profileType_;};
@@ -86,7 +88,9 @@ class BasePlotExtractor {
   VecOfTH1vec_t AllRatiosDataMC_;
   VecOfTH1vec_t AllDifferencesDataMC_;
   TH1vec_t RatioVsBinVarHistos_;
+  TString kalibriPlotsShortName_;
   TString kalibriPlotsPath_;
+  TString pathToConfig_;
   TString outputPathROOT_;
   TString plotsnames_;
   TString jetType_;
