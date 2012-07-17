@@ -43,6 +43,8 @@ def TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettyp
                 trigger_thresholds = "Di-Jet trigger thresholds = 74 117 196 271 345 419 502 \n"
             if(jettype == "ak5JPT"):
                 trigger_thresholds = "Di-Jet trigger thresholds = 71 113 189 259 329 401 484 \n"
+	    if(jettype == "ak7PF"):
+                trigger_thresholds = "Di-Jet trigger thresholds = 79 122 199 266 337 408 496 \n"
         elif(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF==1):
             trigger_names = "Di-Jet trigger names = HLT_DiPFJetAve40;HLT_DiPFJetAve80;HLT_DiPFJetAve140;HLT_DiPFJetAve200;HLT_DiPFJetAve260;HLT_DiPFJetAve320;HLT_DiPFJetAve400\n"
             #Denis June 2012 on 3fb^-1 @8TeV
@@ -54,8 +56,8 @@ def TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettyp
                 trigger_thresholds = "Di-Jet trigger thresholds = 65 108 183 253 324 395 482 \n"
             if(jettype == "ak5JPT"):
                 trigger_thresholds = "Di-Jet trigger thresholds = 61 105 177 245 315 384 471 \n"
-
-
+	    if(jettype == "ak7PF"):
+                trigger_thresholds = "Di-Jet trigger thresholds = 71 116 190 261 332 401 494 \n"
 
 
     elif(DATAYEAR == "2011"):

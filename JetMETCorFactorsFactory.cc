@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.28 2012/06/08 15:22:20 kirschen Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.29 2012/06/26 09:56:49 rathjd Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -225,6 +225,12 @@ create("2012V8_AK5PFCHS_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/
 
   create("2012SQLV7_AK5JPT","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L1FastJet_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2Relative_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L3Absolute_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2L3Residual_AK5JPT.txt",L1L2L3res);
   create("2012SQLV7_AK5JPT_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L1FastJet_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L2Relative_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L3Absolute_AK5JPT.txt",L1L2L3);
+
+ 
+create("2012SQLV7_AK7PF","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L1FastJet_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2Relative_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L3Absolute_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2L3Residual_AK7PF.txt",L1L2L3res);
+ 
+create("2012SQLV7_AK7PF_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L1FastJet_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L2Relative_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L3Absolute_AK7PF.txt",L1L2L3);
+
 }
 
 JetMETCorFactorsFactory* JetMETCorFactorsFactory::Register::create(const std::string& name, const std::string& files, Levels type) const
