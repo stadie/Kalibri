@@ -160,6 +160,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = "PU TruthWeighting = kirschen/PUDistributions/Cert_2012_190456-195396 \n PU TruthWeighting MC distribution = TruePU_1mioS6Plus10mioS7 \n"
     elif(DATATYPE=="2012AB_196531" and MC_type=="Z2Star_PUS6S7"):
         PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-196531 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
+    elif(DATATYPE=="2012AB_196531" and MC_type=="Z2Star_PU1mioS610mioS7"):
+        PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-196531 \n PU TruthWeighting MC distribution = TruePU_S6PlusS7 \n"
     else:
         print "Defining PU reweighting paths failed"
         PU_weighting_info = "PU weighting era = Flat10\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n"
