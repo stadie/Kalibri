@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.14 2012/05/24 21:46:27 kirschen Exp $
+// $Id: ControlPlotsConfig.h,v 1.15 2012/07/13 12:09:24 kirschen Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "TObject.h"
+#include "TFile.h"
 
 class ConfigFile;
 
@@ -56,7 +57,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.14 2012/05/24 21:46:27 kirschen Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.15 2012/07/13 12:09:24 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -215,8 +216,14 @@ class ControlPlotsConfig {
   bool outXYProjections() const { return outXYProjections_; }
   //! Specifies whether all Y projections of all 2D-histos are created, plotted with the Gauss Fits and written out.
   bool outAllGaussFitsforProfiles() const { return outAllGaussFitsforProfiles_; }
+  //! Open ROOT file for writing
+  void openRootFile() ;
+  //! Close ROOT file for writing
+  void closeRootFile();
   //! Writes a \p obj to ROOT file 
   void toRootFile(TObject *obj) const;
+  //! Writes a \p obj to ROOT file, can be called without calling open/closeRootFile()-functions beforehand
+  void safelyToRootFile(TObject *obj) const;
 
 
  private:
@@ -247,6 +254,7 @@ class ControlPlotsConfig {
   std::vector<InputTag> inputTagsDistributions_;
   std::vector<ProfileType> profTypes_;
 
+  TFile* outFile_;
   std::string outRootFileName_;
   std::string outPlotSuffix_;
   std::string outDirName_;

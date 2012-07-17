@@ -107,9 +107,13 @@ void ControlPlots::createJetTruthEventPlots() const {
   std::cout << "  Fitting profiles and writing plots to file" << std::endl;
 	  
   for(size_t i = 0, l = configs.size(); i < l; i++) {
+    // Create / open ROOT file for output
+    configs.at(i)->openRootFile();
     profiles.at(i)->fitProfiles();
     progressbar((i+1)*100/l);
     profiles.at(i)->draw();
+    configs.at(i)->closeRootFile();
+
   }
   std::cout << '\n';
   // Cleaning up
@@ -196,16 +200,23 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
   // Fitting profiles and writing plots to file
   std::cout << "  Fitting profiles and writing plots to file" << std::endl;
 	  
-  for(size_t i = 0,l = configs.size(); i < l; i++) {
+  for(size_t i = 0, l = configs.size(); i < l; i++) {
+    // Create / open ROOT file for output
+    configs.at(i)->openRootFile();
     profiles.at(i)->fitProfiles();
     progressbar((i+1)*100/l);
     profiles.at(i)->draw();
+    configs.at(i)->closeRootFile();
+
   }
   std::cout << '\n';
   // Cleaning up
   for(size_t i = 0; i < configs.size(); i++) {
+    //std::cout << 'works\n';
     delete configs.at(i);
+    //std::cout << 'worksfunctions\n';
     delete functions.at(i);
+    //std::cout << 'worksprofiles\n';
     delete profiles.at(i);
   }
 }

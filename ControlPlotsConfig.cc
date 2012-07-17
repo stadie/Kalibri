@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.28 2012/05/24 21:46:27 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.29 2012/07/13 12:07:21 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -360,6 +360,28 @@ std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
 }
 
 
+//!  Open the file \p outFileName_ for writing
+//!  
+//---------------------------------------------------------------
+void ControlPlotsConfig::openRootFile() {
+  // Create / open ROOT file for output
+  TDirectory* old_directory = gDirectory;//store old gdirectory in order not to associate new histograms to the following TFile at creation time (default ROOT-behaviour)
+  outFile_ = new TFile((outDirName()+"/"+outRootFileName_).c_str()
+			     ,"UPDATE","Kalibri control plots");
+  std::cout << "opened ROOT-file for writing: " << (outDirName()+"/"+outRootFileName_).c_str()<< std::endl;
+  old_directory->cd();//->cd(old_directory);
+}
+
+//!  Close the file \p outFileName_ for writing
+//!  
+//---------------------------------------------------------------
+void ControlPlotsConfig::closeRootFile() {
+  // Close ROOT file for output
+  outFile_->Close();
+  delete outFile_;
+  std::cout << "closing file" << std::endl;
+}
+
 
 //!  Write \p obj to the file \p outFileName_ into the
 //!  directory \p outDirName(). Inside the ROOT file,
@@ -367,6 +389,31 @@ std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
 //!  If it does not exist, it is created first.
 //---------------------------------------------------------------
 void ControlPlotsConfig::toRootFile(TObject *obj) const {
+  TDirectory* old_directory = gDirectory;
+  std::string directory = outFile_->GetName();
+  directory += ":";
+  gDirectory->cd(directory.c_str());
+  directory += "/" + name();
+  bool dirExists = gDirectory->GetDirectory(directory.c_str());
+  if( !dirExists ) {
+    gDirectory->mkdir(name().c_str());
+  }
+  gDirectory->cd(directory.c_str());
+  if( !(gDirectory->WriteTObject(obj)) ) {
+    std::cerr << "ERROR writing object '" << obj->GetName() << "' to ROOT file." << std::endl;
+  }
+  old_directory->cd();
+
+}
+
+//!  Write \p obj to the file \p outFile_ into the
+//!  directory \p outDirName(). Inside the ROOT file,
+//!  \p obj is written into the directory \p outFile_:/name().
+//!  If it does not exist, it is created first.
+//!  Can be used at any place but has low performance due to 
+//!  multiple file-operations (open/close for each object)
+//---------------------------------------------------------------
+void ControlPlotsConfig::safelyToRootFile(TObject *obj) const {
   // Create / open ROOT file for output
   TFile *outFile = new TFile((outDirName()+"/"+outRootFileName_).c_str()
 			     ,"UPDATE","Kalibri control plots");
