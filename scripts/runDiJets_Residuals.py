@@ -191,7 +191,7 @@ JER - Assert J1J2 In Same Eta Bin = false
 create plots                     = true
 plots output directory           = plots
 #plots format                      = pdf
-plots only to root-file = false
+plots only to root-file = true
 export all XY projections = true
 #plots only to root-file = true
 #export all XY projections = false
@@ -212,8 +212,16 @@ create TwoJetsPtBalanceEvent plots = true
 
 
     plot_list=['AsymmetryVsPt','AbsAsymmetryVsPt','OneBinAsymmetryVsPt','OneBinAbsAsymmetryVsPt','MPFVsPt','AbsMPFVsPt','OneBinMPFVsPt','OneBinAbsMPFVsPt']
+   # if(BINNING=="JEC_Mikko")
+    #  {
+    #cut_list=['30','20','15','10']
+    #cut_no_list=['.30','.20','.15','.10']
+     # }
+    #else
+    #  {
     cut_list=['40','30','20','10']
     cut_no_list=['.40','.30','.20','.10']
+    #  }
 #    cut_list=['40','35','30','25','20','15','10','05']
 #    cut_no_list=['.40','.35','.30','.25','.20','.15','.10','.05']
 
@@ -680,7 +688,7 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="DefaultSJAK5"
+DIR_JETALGO="53fbSingleJetAK7"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
@@ -688,11 +696,11 @@ PF_CALO_JPT="PF"
 ##################################
 ## chooses the jet algorithm - used to pick the corresponding n-tupel .root-files (ak5 is default)
 ##################################
-jetalgo="ak5"
+jetalgo="ak7"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2012SQLV7_AK5"
+CORRECTION="2012SQLV7_AK7"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -704,11 +712,11 @@ DATAYEAR = "2012"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "2012AB_194479"
+DATATYPE = "2012AB_196531"
 ##################################
 ## choose binning in eta, currently only "kostas" and "k_HFfix" are properly defined here
 ##################################
-BINNING="k_HFfix"
+BINNING="kostas"
 ##################################
 ## Use single jet triggers if =1 (influences trigger thresholds and trigger pt variables in runtime, look for useSingleJetTriggers_ in code)
 ##################################
@@ -813,6 +821,7 @@ jettype_import=jettype
 CORRECTIONSUFFIX=PF_CALO_JPT
 if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
     if(PF_CALO_JPT=="PF" or PF_CALO_JPT=="PFCHS"):
+      if(jetalgo=="ak5"):
         CORRECTIONSUFFIX="Fast"+PF_CALO_JPT
         if(PF_CALO_JPT=="PF"):
             jettype_import=jetalgo+"Fast"+PF_CALO_JPT
@@ -825,7 +834,6 @@ datadir   = determineDataDir(DATAYEAR,DATATYPE)
 datadirmc = determineDataDirMC(MC,MC_type)
 
 
-
 if (len(sys.argv) > 6):
     print "even override datadirmc from cmdline-options... "
     datadirmc=sys.argv[6]
@@ -835,13 +843,12 @@ if (len(sys.argv) > 6):
 
 
 
-nthreads = 2
-niothreads = 2
+nthreads = 24
+niothreads = 24
 nevents =  -1
 #nthreads = 1
 #niothreads = 1
-#nevents =  100
-MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri2/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+MAIN_dirname = "/afs/naf.desy.de/user/r/rathjd/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
