@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.29 2012/07/13 12:07:21 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.30 2012/07/17 12:23:38 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -809,6 +809,10 @@ void ControlPlotsConfig::setOutRootFileName(std::string outRootFileName) {
   outRootFileName_=outRootFileName;
 }
 
+// --------------------------------------------------
+void ControlPlotsConfig::setOutDirName(std::string outDirName) {
+  outDirName_=outDirName;
+}
 
 // --------------------------------------------------
 void ControlPlotsConfig::setOutPlotSuffix(std::string outPlotSuffix) {

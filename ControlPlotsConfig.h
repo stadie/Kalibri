@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.15 2012/07/13 12:09:24 kirschen Exp $
+// $Id: ControlPlotsConfig.h,v 1.16 2012/07/17 12:23:38 kirschen Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -57,7 +57,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.15 2012/07/13 12:09:24 kirschen Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.16 2012/07/17 12:23:38 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -208,6 +208,8 @@ class ControlPlotsConfig {
 
   //! Returns the name of the directory in which the control plots are stored
   std::string outDirName() const { return outDirName_; }
+  //! Set name of dir for export
+  void setOutDirName(std::string outDirName);
   //! Returns the file ending ("eps") of the control plots
   std::string outFileType() const { return outFileType_; }
   //! Specifies whether the plots are only saved in a root-file.
