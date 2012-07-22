@@ -51,24 +51,12 @@ int PUTruthReweighting::preprocess(std::vector<Event*>& data,
   std::cout << "start PUTruthReweighting with:" << std::endl;
   std::cout << "  " << data.size() << " events in data" << std::endl;
   std::cout << "  " << control1.size() << " events in control1" << std::endl;
-  //  std::cout << data.size() << " events in data" << std::endl;
-
-
-//  std::cout <<"initialize reweight::LumiReWeighting LumiWeights_" << std::endl;
-//  //      reweight::LumiReWeighting LumiWeights_= reweight::LumiReWeighting("/afs/naf.desy.de/user/k/kirschen/PUDistributions/TruePU_Distributions2012_04_24.root", "/afs/naf.desy.de/user/k/kirschen/scratch/2012_03_PUperHLT/CMSSW_5_2_3_patch4/src/PUData/2012A/MyDataPileupHistogramTruth_AllHLT.root", "PU_profile_TrueSummer12", "pileup");
-//  //true
-//  reweight::LumiReWeighting LumiWeights_= reweight::LumiReWeighting("/afs/naf.desy.de/user/k/kirschen/PUDistributions/TruePU_Distributions2012_04_25.root", "/afs/naf.desy.de/user/k/kirschen/scratch/2012_03_PUperHLT/CMSSW_5_2_3_patch4/src/MyDataPileupHistogramTrueAllHLT.root", "PU_profile_TrueSummer12", "pileup");
-//  //observed
-//  //      reweight::LumiReWeighting LumiWeights_= reweight::LumiReWeighting("/afs/naf.desy.de/user/k/kirschen/PUDistributions/TruePU_Distributions2012_04_25.root", "/afs/naf.desy.de/user/k/kirschen/scratch/2012_03_PUperHLT/CMSSW_5_2_3_patch4/src/MyDataPileupHistogramObservedAllHLT.root", "PU_profile_ObservedSummer12", "pileup");
-//  //count events in data and control sample
-//  std::cout <<"initialized reweight::LumiReWeighting LumiWeights_ successfully?" << std::endl;
 
   //initializing
   std::cout <<"initialize reweight::LumiReWeighting LumiWeights_" << std::endl;
   std::vector <reweight::LumiReWeighting> LumiWeightsPerTrigger;
   for(int i = 0, l = trigthresholds_.size() ; i < l ; ++i) {
-    //    LumiWeightsPerTrigger.push_back(reweight::LumiReWeighting("/afs/naf.desy.de/user/k/kirschen/PUDistributions/TruePU_Distributions2012_04_25.root",("/afs/naf.desy.de/user/k/kirschen/scratch/2012_03_PUperHLT/CMSSW_5_2_3_patch4/src/PUData/2012AMaxBin60_191859/MyDataPileupHistogram"+(TString)trignames_.at(i)+".root").Data(), "PU_profile_TrueSummer12", "pileup"));
-    LumiWeightsPerTrigger.push_back(reweight::LumiReWeighting("/scratch/hh/current/cms/user/kirschen/PUDistributions/TruePU_Distributions.root",("/scratch/hh/current/cms/user/"+TruthWeightingDir_+"/MyDataPileupHistogram"+(TString)trignames_.at(i)+".root").Data(), ("PU_profile_"+TruthWeightingMCDistribution_).c_str(), "pileup"));
+    LumiWeightsPerTrigger.push_back(reweight::LumiReWeighting(("/scratch/hh/current/cms/user/kirschen/PUDistributions/TrueDistributions/"+TruthWeightingMCDistribution_+"_ObservedMCPUDistributions.root").c_str(),("/scratch/hh/current/cms/user/"+TruthWeightingDir_+"/MyDataPileupHistogram"+(TString)trignames_.at(i)+".root").Data(), "pileup", "pileup"));
     std::cout <<"initialized reweight::LumiReWeighting LumiWeights_ successfully..." << i <<std::endl;
 
   }
