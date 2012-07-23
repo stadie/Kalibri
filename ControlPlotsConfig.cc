@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.30 2012/07/17 12:23:38 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.31 2012/07/18 14:45:45 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -734,9 +734,11 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
   else if( varName == "JetPt" )
     title = "p_{T} [GeV]";
   else if( varName == "Pt" )
-    title = "p_{T} [GeV]";
+    title = "probe jet p_{T} [GeV]";
   else if( varName == "Jet2Pt" )
-    title = "barrel jet p_{T}^ [GeV]";
+    title = "barrel jet p_{T} [GeV]";
+  else if( varName == "ThirdJetPt" )
+    title = "third jet p_{T} [GeV]";
   else if( varName == "MeanPt" )
     //   title = "barrel jet p_{T}^ [GeV]";
      title = "#bar p_{T} [GeV]";
@@ -760,7 +762,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
   else if( varName == "GenJetResponse" )
     title = "p_{T} / p^{gen}_{T}";
   else if( varName == "Asymmetry") 
-    title = "(p_{T,1} - p_{T,2})/(p_{T,1} + p_{T,2})";
+    //    title = "(p_{T,1} - p_{T,2})/(p_{T,1} + p_{T,2})";
+    title = "Asymmetry";
   else if( varName == "MPFResponse") 
     title = "MPF response";
   else if( varName == "ThirdJetFraction") 
@@ -787,6 +790,10 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
   else if( varName == "PF_EL_Fraction")
     title = "Electrons";
   //    title = "PF electron fraction";
+  else if( varName == "PF_HFHad_Fraction")
+    title = "HF Hadronic";
+  else if( varName == "PF_HFEm_Fraction")
+    title = "HF Em";
   else if( varName == "DeltaPhi")
     title = "#Delta #varphi_{1,2}";
   else if( varName == "RunNumber")

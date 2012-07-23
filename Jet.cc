@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.53 2012/02/06 22:29:37 kirschen Exp $
+//    $Id: Jet.cc,v 1.54 2012/04/27 12:39:39 kirschen Exp $
 //   
 #include "Jet.h"  
 
@@ -28,7 +28,7 @@ Jet::Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
 
 Jet::Jet(const Jet& j) 
   : Measurement(j), flavor_(j.flavor_), 
-    fCH_(j.fCH_), fNH_(j.fNH_), fPH_(j.fPH_), fEL_(j.fEL_),
+    fCH_(j.fCH_), fNH_(j.fNH_), fPH_(j.fPH_), fEL_(j.fEL_), fHFEm_(j.fHFEm_), fHFHad_(j.fHFHad_),
     genPt_(j.genPt_),dR_(j.dR_), 
     corFactors_(new CorFactors(*(j.corFactors_))),f_(j.f_),
     gf_(j.gf_),errf_(j.errf_),parameters_(0)
