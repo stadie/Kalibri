@@ -1044,10 +1044,10 @@ TH1D* MCtwo_pt_spectrum_data =  (TH1D*)ftwo->Get("AsymmetryVsPt20/AsymmetryVsPt2
     }
 
 
-     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_Abseta_res1_,"testen_Abseta_res1","tdr","P","no","x0",0.,0.45,0.95,1.05,"#alpha","Normalized residual correction");//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
+    if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_Abseta_res1_,"testen_Abseta_res1","tdr","P","no","x0",0.,0.45,0.95,1.05,"cut on #alpha","Normalized residual correction",true);//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
     // save memory
     //     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_Abseta_res2_,"testen_Abseta_res2","tdr","P","no","x0",0.,0.45,0.95,1.05,"#alpha","Normalized residual correction");//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
-     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_Abseta_val1_,"testen_Abseta_val1","tdr","P","no","x0",0.,0.45,0.95,1.05,"#alpha","Normalized residual correction");//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
+    if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_Abseta_val1_,"testen_Abseta_val1","tdr","P","no","x0",0.,0.45,0.95,1.05,"cut on #alpha","Normalized residual correction",true);//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
     // save memory
     //     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_Abseta_val2_,"testen_Abseta_val2","tdr","P","no","x0",0.,0.45,0.95,1.05,"#alpha","Normalized residual correction");//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
 
@@ -1190,10 +1190,10 @@ TH1D* MCtwo_pt_spectrum_data =  (TH1D*)ftwo->Get("AsymmetryVsPt20/AsymmetryVsPt2
     }
 
 
-     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_eta_res1_,"testen_eta_res1","tdr","P","no","x0",0.,0.45,0.95,1.05,"#alpha","Normalized residual correction");//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
+     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_eta_res1_,"testen_eta_res1","tdr","P","no","x0",0.,0.45,0.95,1.05,"cut on #alpha","Normalized residual correction",true);//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
     // save memory
     //     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_eta_res2_,"testen_eta_res2","tdr","P","no","x0",0.,0.45,0.95,1.05,"#alpha","Normalized residual correction");//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
-     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_eta_val1_,"testen_eta_val1","tdr","P","no","x0",0.,0.45,0.95,1.05,"#alpha","Normalized residual correction");//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
+     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_eta_val1_,"testen_eta_val1","tdr","P","no","x0",0.,0.45,0.95,1.05,"cut on #alpha","Normalized residual correction",true);//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
     // save memory
     //     if(export_all_plots)draw_TGraphErrors_save_PS(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type+"_PS_kFSR_extrapols",image_ext,extrapol_inclusive_eta_val2_,"testen_eta_val2","tdr","P","no","x0",0.,0.45,0.95,1.05,"#alpha","Normalized residual correction");//"#alpha","#frac{<R(MC)/R(data)>_{#alpha}}{<R(MC)/R(data)>_{#alpha=0.2}}");
 
