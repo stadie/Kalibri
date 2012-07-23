@@ -413,3 +413,24 @@ void compare_Systematics(TString dir1, TString dir2, TString dir3, TString dir4,
   dirlabel_list.push_back(label_dir6);
   do_the_comparison(dir_list,dirlabel_list,algo,dir_prefix,binning_select,pub_style);
 }
+
+void compare_Systematics(TString dir1, TString dir2, TString dir3, TString dir4, TString dir5, TString dir6, TString dir7, TString label_dir1, TString label_dir2, TString label_dir3, TString label_dir4, TString label_dir5, TString label_dir6, TString label_dir7, TString algo, TString dir_prefix,TString binning_select, Bool_t pub_style){
+  std::vector <TString> dir_list;
+  dir_list.push_back(dir1);
+  dir_list.push_back(dir2);
+  dir_list.push_back(dir3);
+  dir_list.push_back(dir4);
+  dir_list.push_back(dir5);
+  dir_list.push_back(dir6);
+  dir_list.push_back(dir7);
+  std::vector <TString> dirlabel_list;
+  dirlabel_list.push_back(label_dir1);
+  dirlabel_list.push_back(label_dir2);
+  dirlabel_list.push_back(label_dir3);
+  dirlabel_list.push_back(label_dir4);
+  dirlabel_list.push_back(label_dir5);
+  dirlabel_list.push_back(label_dir6);
+  dirlabel_list.push_back(label_dir7);
+  do_the_comparison(dir_list,dirlabel_list,algo,dir_prefix,binning_select,pub_style);
+}
+
