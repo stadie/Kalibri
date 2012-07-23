@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.25 2012/05/24 21:46:28 kirschen Exp $
+// $Id: ControlPlotsProfile.cc,v 1.26 2012/07/13 12:10:00 kirschen Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -128,6 +128,7 @@ void ControlPlotsProfile::draw() {
       }	
       h->Draw("COLZ");
       if( config_->logX() ) c1->SetLogx(1);
+      if( config_->logY() ) c1->SetLogy(1);
       c1->RedrawAxis();      
       p1->DrawClone();
       config_->toRootFile(h);
@@ -397,8 +398,6 @@ void ControlPlotsProfile::draw() {
 
 
 
-  leg = bins_.front()->createLegend();
-
   std::cout << "outAllGaussFitsforProfiles: " << outAllGaussFitsforProfiles << std::endl; 
   // Draw distributions
   if(outAllGaussFitsforProfiles){
@@ -408,12 +407,19 @@ void ControlPlotsProfile::draw() {
 	c1->Clear();
 	c1->cd();
 	bool firstHist = true;
-	
+	leg = new TLegend(0.3,0.85-2*0.06,0.8,0.85);
+	leg->SetBorderSize(0);
+	leg->SetFillColor(0);
+	leg->SetTextFont(42);
+	leg->SetTextSize(0.04);
+
 	for( ControlPlotsConfig::InputTagsIterator tagsIt = config_->distributionInputTagsBegin() ;  tagsIt != config_->distributionInputTagsEnd(); ++tagsIt) {
 	  TH1D *h = (*binIt)->hYDistribution(n,*tagsIt);
 	  h->SetMarkerStyle(config_->markerStyle(*tagsIt));
 	  h->SetMarkerColor(config_->color(*tagsIt));
 	  h->SetLineColor(config_->color(*tagsIt));
+	  leg->AddEntry(h,(config_->legendLabel(*tagsIt)).c_str(),
+			"PL");
 
 	  h->GetXaxis()->SetRange(0,-1);
 	  h->GetYaxis()->SetRangeUser(0,h->GetMaximum()*2);
