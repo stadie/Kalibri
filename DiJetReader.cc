@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.93 2012/05/29 10:01:57 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.94 2012/06/08 15:29:04 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1491,8 +1491,6 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nJets = 3;
   }
 
-
-
   if( std::abs(TVector2::Phi_mpi_pi(nJet_->JetPhi[CorrJetIdx[0]] - nJet_->JetPhi[CorrJetIdx[1]])) < minDeltaPhi_ ) {
     nMinDeltaPhi_++;
     return 0;
@@ -1523,153 +1521,10 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     nMaxJetEt_++;
     return 0;
   }
-  double diJetPtAve = 0.5 * (nJet_->JetCorrL1[CorrJetIdx[0]] * nJet_->JetCorrL2L3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]]+ nJet_->JetCorrL1[CorrJetIdx[1]] * nJet_->JetCorrL2L3[CorrJetIdx[1]] * nJet_->JetPt[CorrJetIdx[1]]);
-  //trigger cuts
-  if(requireTrigger_ && trigmap_.size()) {
-    hltdijetave15incl_ = nJet_->HltDiJetAve15U;
-    hltdijetave30incl_ = hltdijetave15incl_ || nJet_->HltDiJetAve30U;
-    hltdijetave50incl_ = hltdijetave30incl_ || nJet_->HltDiJetAve50U;
-    hltdijetave70incl_ = hltdijetave50incl_ || nJet_->HltDiJetAve70U;
-    hltdijetave100incl_ = hltdijetave70incl_ || nJet_->HltDiJetAve100U;
-    hltdijetave140incl_ = hltdijetave100incl_ || nJet_->HltDiJetAve140U;
-    hltdijetave180incl_ = hltdijetave140incl_ || nJet_->HltDiJetAve180U;
-    hltdijetave300incl_ = hltdijetave180incl_ || nJet_->HltDiJetAve300U;
-    hltdijetavec30incl_ = nJet_->HltDiJetAve30;
-    hltdijetavec60incl_ = hltdijetavec30incl_ || nJet_->HltDiJetAve60;
-    hltdijetavec80incl_ = hltdijetavec60incl_ || nJet_->HltDiJetAve80;
-    hltdijetavec110incl_ = hltdijetavec80incl_ || nJet_->HltDiJetAve110;
-    hltdijetavec150incl_ = hltdijetavec110incl_ || nJet_->HltDiJetAve150;
-    hltdijetavec190incl_ = hltdijetavec150incl_ || nJet_->HltDiJetAve190;
-    hltdijetavec240incl_ = hltdijetavec190incl_ || nJet_->HltDiJetAve240;
-    hltdijetavec300incl_ = hltdijetavec240incl_ || nJet_->HltDiJetAve300;
-    hltdijetavec370incl_ = hltdijetavec300incl_ || nJet_->HltDiJetAve370;
-    hltjetc30incl_ = nJet_->HltJet30;
-    hltjetc60incl_ = hltjetc30incl_ || nJet_->HltJet60;
-    hltjetc80incl_ = hltjetc60incl_ || nJet_->HltJet80;
-    hltjetc110incl_ = hltjetc80incl_ || nJet_->HltJet110;
-    hltjetc150incl_ = hltjetc110incl_ || nJet_->HltJet150;
-    hltjetc190incl_ = hltjetc150incl_ || nJet_->HltJet190;
-    hltjetc240incl_ = hltjetc190incl_ || nJet_->HltJet240;
-    hltjetc300incl_ = hltjetc240incl_ || nJet_->HltJet300;
-    hltjetc370incl_ = hltjetc300incl_ || nJet_->HltJet370;
-
-    hltPFjetc40incl_ = nJet_->HltPFJet40;
-    hltPFjetc80incl_ = hltPFjetc40incl_ || nJet_->HltPFJet80;
-    hltPFjetc140incl_ = hltPFjetc80incl_ || nJet_->HltPFJet140;
-    hltPFjetc200incl_ = hltPFjetc140incl_ || nJet_->HltPFJet200;
-    hltPFjetc260incl_ = hltPFjetc200incl_ || nJet_->HltPFJet260;
-    hltPFjetc320incl_ = hltPFjetc260incl_ || nJet_->HltPFJet320;
-    hltPFjetc400incl_ = hltPFjetc320incl_ || nJet_->HltPFJet400;
-    hltdiPFjetc40incl_ = nJet_->HltDiPFJetAve40;
-    hltdiPFjetc80incl_ = hltdiPFjetc40incl_ || nJet_->HltDiPFJetAve80;
-    hltdiPFjetc140incl_ = hltdiPFjetc80incl_ || nJet_->HltDiPFJetAve140;
-    hltdiPFjetc200incl_ = hltdiPFjetc140incl_ || nJet_->HltDiPFJetAve200;
-    hltdiPFjetc260incl_ = hltdiPFjetc200incl_ || nJet_->HltDiPFJetAve260;
-    hltdiPFjetc320incl_ = hltdiPFjetc260incl_ || nJet_->HltDiPFJetAve320;
-    hltdiPFjetc400incl_ = hltdiPFjetc320incl_ || nJet_->HltDiPFJetAve400;
 
 
-    //    double diJetPtAve = 0.5 * (nJet_->JetCorrL2[CorrJetIdx[0]] * nJet_->JetCorrL3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]]+ nJet_->JetCorrL2[CorrJetIdx[1]] * nJet_->JetCorrL3[CorrJetIdx[1]] * nJet_->JetPt[CorrJetIdx[1]]);
-    double triggerPt = diJetPtAve;
-    //    if(useSingleJetTriggers_)triggerPt = nJet_->JetCorrL2[CorrJetIdx[0]] * nJet_->JetCorrL3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]];
-    if(useSingleJetTriggers_)triggerPt = nJet_->JetCorrL1[CorrJetIdx[0]] * nJet_->JetCorrL2L3[CorrJetIdx[0]] * nJet_->JetPt[CorrJetIdx[0]];
-    std::map<double,bool*>::iterator it = trigmap_.lower_bound(triggerPt);
-    if(it == trigmap_.begin()) {
-      //      std::cout << "below all trigger thresholds:" << triggerPt << '\n';
-      nTriggerSel_++;
-      return 0;
-    }
-    
-    --it;
-    if(! *(it->second)) {
-      //          std::cout << "failing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
-      nTriggerSel_++;
-      return 0;
-    } 
-    //            std::cout << "passing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
-  }
 
 
-  if( std::abs(nJet_->JetEta[CorrJetIdx[0]]) > maxJetEta_ || std::abs(nJet_->JetEta[CorrJetIdx[1]]) > maxJetEta_ ) {
-    nMaxJetEta_++;
-    return 0;
-  }
-
-  //  std::cout << "here before... the event still exists" <<std::endl;
-
-  //  if(nJet_->JetEMF[CorrJetIdx[0]]!=-1){
-  if(1 - nJet_->JetEMF[CorrJetIdx[0]] < minJetHadFraction_ || 
-	  1 - nJet_->JetEMF[CorrJetIdx[1]] < minJetHadFraction_ ) {
-    nMinJetHadFraction_++;
-    return 0;
-  }
-  if( 1 - nJet_->JetEMF[CorrJetIdx[0]] > maxJetHadFraction_ || 
-	   1 - nJet_->JetEMF[CorrJetIdx[1]] > maxJetHadFraction_ ) {
-    nMaxJetHadFraction_++;
-    return 0;
-  }
-  //  }
-  //loose jet id 
-   
-  if(! (nJet_->JetIDLoose[CorrJetIdx[0]] && nJet_->JetIDLoose[CorrJetIdx[1]] && nJet_->JetIDLoose[CorrJetIdx[2]])) {
-    nMaxJetHadFraction_++;
-    //    std::cout << "DID NOT PASS LOOSE JET ID!!" << std::endl;
-    return 0;
-  }
-
-
-  /*
-  if(((( nJet_->JetEMF[CorrJetIdx[0]] <= 0.01) && (std::abs(nJet_->JetEta[CorrJetIdx[0]]) < 2.6) )) ||
-     (( nJet_->JetEMF[CorrJetIdx[1]] <= 0.01) && (std::abs(nJet_->JetEta[CorrJetIdx[1]]) < 2.6) )) {
-    nMaxJetHadFraction_++;
-    return 0;
-  }  
-  if( nJet_->JetN90Hits[CorrJetIdx[0]] <= 1 || nJet_->JetN90Hits[CorrJetIdx[1]] <= 1) {
-    nMaxJetHadFraction_++;
-    return 0;
-  }
-  if( nJet_->JetFHPD[CorrJetIdx[0]] >= 0.98 || nJet_->JetFHPD[CorrJetIdx[1]] >= 0.98) {
-    nMaxJetHadFraction_++;
-    return 0;
-  }
-  */
-  if( nJets > 2) {
-    //compute dijet kin
-    double deltaPhi12 = TVector2::Phi_mpi_pi(nJet_->JetPhi[CorrJetIdx[0]]-nJet_->JetPhi[CorrJetIdx[1]]);
-    
-    // Phi of dijet axis
-    double pPhi = TVector2::Phi_mpi_pi(nJet_->JetPhi[CorrJetIdx[0]]-0.5*deltaPhi12+M_PI/2.);
-    double pJ3 = 0.;
-    double ptJet3 = 0.;
-    if( nJet_->NobjJet > 2 ) {
-      pJ3 = nJet_->JetCorrL2[CorrJetIdx[2]] * nJet_->JetCorrL3[CorrJetIdx[2]]* nJet_->JetPt[CorrJetIdx[2]]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[CorrJetIdx[2]]));
-      ptJet3 = nJet_->JetCorrL2[CorrJetIdx[2]] * nJet_->JetCorrL3[CorrJetIdx[2]] * nJet_->JetPt[CorrJetIdx[2]];
-    }
-    double pSJ = 0.;
-    for(int i = 3; i < nJet_->NobjJet; ++i) {
-      pSJ += std::abs(nJet_->JetCorrL2[i] * nJet_->JetCorrL3[i] * nJet_->JetPt[i]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[i])));
-    }
-    //double pUCE = 0.;
-    
-    //moved to the end to take care of on-the-fly JEC
-    //    if( std::abs(pJ3) > maxRel3rdJetEt_*diJetPtAve ) {
-    //      nCutOn3rdJet_++;
-    //      return 0;
-    //    }
-    if( pSJ > maxRelSoftJetEt_*diJetPtAve ) {
-      nCutOnSoftJets_++;
-      return 0;
-    }
-    if( nJet_->RunNumber < minRunNumber_ && nJet_->RunNumber!=1) {
-      nCutOnMinRunNumber_++;
-      return 0;
-    }
-    if( nJet_->RunNumber > maxRunNumber_ && nJet_->RunNumber!=1) {
-      nCutOnMaxRunNumber_++;
-      return 0;
-    }
-  }
-  
   // Pointer to the three jets leading in L1L2L3-corrected pt 
   Jet * jet1 = 0;
   Jet * jet2 = 0;
@@ -1724,10 +1579,166 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     jet1->updateCorFactors(corFactorsFactory_->create(jet1,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[CorrJetIdx[0]]));
     jet2->updateCorFactors(corFactorsFactory_->create(jet2,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[CorrJetIdx[1]]));
     if(jet3) jet3->updateCorFactors(corFactorsFactory_->create(jet3,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[CorrJetIdx[2]]));    
-//    jet1->updateCorFactors(corFactorsFactory_->create(jet1,nJet_->VtxN,nJet_->Rho,0.1));
-//    jet2->updateCorFactors(corFactorsFactory_->create(jet2,nJet_->VtxN,nJet_->Rho,0.1));
-//    if(jet3) jet3->updateCorFactors(corFactorsFactory_->create(jet3,nJet_->VtxN,nJet_->Rho,0.1));    
   }
+
+
+
+
+  double diJetPtAve = 0.5 * (jet1->pt() * jet1->corFactors().getL2L3() * jet1->corFactors().getL1() + jet2->pt() * jet2->corFactors().getL2L3() * jet2->corFactors().getL1());
+  //trigger cuts
+  if(requireTrigger_ && trigmap_.size()) {
+    hltdijetave15incl_ = nJet_->HltDiJetAve15U;
+    hltdijetave30incl_ = hltdijetave15incl_ || nJet_->HltDiJetAve30U;
+    hltdijetave50incl_ = hltdijetave30incl_ || nJet_->HltDiJetAve50U;
+    hltdijetave70incl_ = hltdijetave50incl_ || nJet_->HltDiJetAve70U;
+    hltdijetave100incl_ = hltdijetave70incl_ || nJet_->HltDiJetAve100U;
+    hltdijetave140incl_ = hltdijetave100incl_ || nJet_->HltDiJetAve140U;
+    hltdijetave180incl_ = hltdijetave140incl_ || nJet_->HltDiJetAve180U;
+    hltdijetave300incl_ = hltdijetave180incl_ || nJet_->HltDiJetAve300U;
+    hltdijetavec30incl_ = nJet_->HltDiJetAve30;
+    hltdijetavec60incl_ = hltdijetavec30incl_ || nJet_->HltDiJetAve60;
+    hltdijetavec80incl_ = hltdijetavec60incl_ || nJet_->HltDiJetAve80;
+    hltdijetavec110incl_ = hltdijetavec80incl_ || nJet_->HltDiJetAve110;
+    hltdijetavec150incl_ = hltdijetavec110incl_ || nJet_->HltDiJetAve150;
+    hltdijetavec190incl_ = hltdijetavec150incl_ || nJet_->HltDiJetAve190;
+    hltdijetavec240incl_ = hltdijetavec190incl_ || nJet_->HltDiJetAve240;
+    hltdijetavec300incl_ = hltdijetavec240incl_ || nJet_->HltDiJetAve300;
+    hltdijetavec370incl_ = hltdijetavec300incl_ || nJet_->HltDiJetAve370;
+    hltjetc30incl_ = nJet_->HltJet30;
+    hltjetc60incl_ = hltjetc30incl_ || nJet_->HltJet60;
+    hltjetc80incl_ = hltjetc60incl_ || nJet_->HltJet80;
+    hltjetc110incl_ = hltjetc80incl_ || nJet_->HltJet110;
+    hltjetc150incl_ = hltjetc110incl_ || nJet_->HltJet150;
+    hltjetc190incl_ = hltjetc150incl_ || nJet_->HltJet190;
+    hltjetc240incl_ = hltjetc190incl_ || nJet_->HltJet240;
+    hltjetc300incl_ = hltjetc240incl_ || nJet_->HltJet300;
+    hltjetc370incl_ = hltjetc300incl_ || nJet_->HltJet370;
+
+    hltPFjetc40incl_ = nJet_->HltPFJet40;
+    hltPFjetc80incl_ = hltPFjetc40incl_ || nJet_->HltPFJet80;
+    hltPFjetc140incl_ = hltPFjetc80incl_ || nJet_->HltPFJet140;
+    hltPFjetc200incl_ = hltPFjetc140incl_ || nJet_->HltPFJet200;
+    hltPFjetc260incl_ = hltPFjetc200incl_ || nJet_->HltPFJet260;
+    hltPFjetc320incl_ = hltPFjetc260incl_ || nJet_->HltPFJet320;
+    hltPFjetc400incl_ = hltPFjetc320incl_ || nJet_->HltPFJet400;
+    hltdiPFjetc40incl_ = nJet_->HltDiPFJetAve40;
+    hltdiPFjetc80incl_ = hltdiPFjetc40incl_ || nJet_->HltDiPFJetAve80;
+    hltdiPFjetc140incl_ = hltdiPFjetc80incl_ || nJet_->HltDiPFJetAve140;
+    hltdiPFjetc200incl_ = hltdiPFjetc140incl_ || nJet_->HltDiPFJetAve200;
+    hltdiPFjetc260incl_ = hltdiPFjetc200incl_ || nJet_->HltDiPFJetAve260;
+    hltdiPFjetc320incl_ = hltdiPFjetc260incl_ || nJet_->HltDiPFJetAve320;
+    hltdiPFjetc400incl_ = hltdiPFjetc320incl_ || nJet_->HltDiPFJetAve400;
+
+
+    double triggerPt = diJetPtAve;
+    if(useSingleJetTriggers_)triggerPt = jet1->pt() * jet1->corFactors().getL2L3() * jet1->corFactors().getL1();
+    std::map<double,bool*>::iterator it = trigmap_.lower_bound(triggerPt);
+    if(it == trigmap_.begin()) {
+      //      std::cout << "below all trigger thresholds:" << triggerPt << '\n';
+      nTriggerSel_++;
+      delete jet1; delete jet2; delete jet3;
+      return 0;
+    }
+    
+    --it;
+    if(! *(it->second)) {
+      //          std::cout << "failing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
+      nTriggerSel_++;
+      delete jet1; delete jet2; delete jet3;
+      return 0;
+    } 
+    //            std::cout << "passing trigger:" << std::distance(trigmap_.begin(),it) << " ptave:" << diJetPtAve << " trigger = " << *(it->second) << '\n';
+  }
+
+
+  if( std::abs(nJet_->JetEta[CorrJetIdx[0]]) > maxJetEta_ || std::abs(nJet_->JetEta[CorrJetIdx[1]]) > maxJetEta_ ) {
+    nMaxJetEta_++;
+    delete jet1; delete jet2; delete jet3;
+    return 0;
+  }
+
+  //  std::cout << "here before... the event still exists" <<std::endl;
+
+  //  if(nJet_->JetEMF[CorrJetIdx[0]]!=-1){
+  if(1 - nJet_->JetEMF[CorrJetIdx[0]] < minJetHadFraction_ || 
+	  1 - nJet_->JetEMF[CorrJetIdx[1]] < minJetHadFraction_ ) {
+    nMinJetHadFraction_++;
+    delete jet1; delete jet2; delete jet3;
+    return 0;
+  }
+  if( 1 - nJet_->JetEMF[CorrJetIdx[0]] > maxJetHadFraction_ || 
+	   1 - nJet_->JetEMF[CorrJetIdx[1]] > maxJetHadFraction_ ) {
+    nMaxJetHadFraction_++;
+    delete jet1; delete jet2; delete jet3;
+    return 0;
+  }
+  //  }
+  //loose jet id 
+   
+  if(! (nJet_->JetIDLoose[CorrJetIdx[0]] && nJet_->JetIDLoose[CorrJetIdx[1]] && nJet_->JetIDLoose[CorrJetIdx[2]])) {
+    nMaxJetHadFraction_++;
+    //    std::cout << "DID NOT PASS LOOSE JET ID!!" << std::endl;
+    delete jet1; delete jet2; delete jet3;
+    return 0;
+  }
+
+
+  /*
+  if(((( nJet_->JetEMF[CorrJetIdx[0]] <= 0.01) && (std::abs(nJet_->JetEta[CorrJetIdx[0]]) < 2.6) )) ||
+     (( nJet_->JetEMF[CorrJetIdx[1]] <= 0.01) && (std::abs(nJet_->JetEta[CorrJetIdx[1]]) < 2.6) )) {
+    nMaxJetHadFraction_++;
+    return 0;
+  }  
+  if( nJet_->JetN90Hits[CorrJetIdx[0]] <= 1 || nJet_->JetN90Hits[CorrJetIdx[1]] <= 1) {
+    nMaxJetHadFraction_++;
+    return 0;
+  }
+  if( nJet_->JetFHPD[CorrJetIdx[0]] >= 0.98 || nJet_->JetFHPD[CorrJetIdx[1]] >= 0.98) {
+    nMaxJetHadFraction_++;
+    return 0;
+  }
+  */
+  if( nJets > 2) {
+    //compute dijet kin
+    double deltaPhi12 = TVector2::Phi_mpi_pi(nJet_->JetPhi[CorrJetIdx[0]]-nJet_->JetPhi[CorrJetIdx[1]]);
+    
+    // Phi of dijet axis
+    double pPhi = TVector2::Phi_mpi_pi(nJet_->JetPhi[CorrJetIdx[0]]-0.5*deltaPhi12+M_PI/2.);
+    double pJ3 = 0.;
+    double ptJet3 = 0.;
+    if( nJet_->NobjJet > 2 ) {
+      pJ3 = jet3->pt() * jet3->corFactors().getL2L3() * jet3->corFactors().getL1() *cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[CorrJetIdx[2]]));
+      ptJet3 = jet3->pt() * jet3->corFactors().getL2L3() * jet3->corFactors().getL1();
+    }
+    double pSJ = 0.;
+    for(int i = 3; i < nJet_->NobjJet; ++i) {
+      //JEC not updated here...
+      pSJ += std::abs(nJet_->JetCorrL2[i] * nJet_->JetCorrL3[i] * nJet_->JetPt[i]*cos(TVector2::Phi_mpi_pi(pPhi-nJet_->JetPhi[i])));
+    }
+    //double pUCE = 0.;
+    
+    //moved to the end to take care of on-the-fly JEC
+    //    if( std::abs(pJ3) > maxRel3rdJetEt_*diJetPtAve ) {
+    //      nCutOn3rdJet_++;
+    //      return 0;
+    //    }
+    if( pSJ > maxRelSoftJetEt_*diJetPtAve ) {
+      nCutOnSoftJets_++;
+      delete jet1; delete jet2; delete jet3;
+      return 0;
+    }
+    if( nJet_->RunNumber < minRunNumber_ && nJet_->RunNumber!=1) {
+      nCutOnMinRunNumber_++;
+      delete jet1; delete jet2; delete jet3;
+      return 0;
+    }
+    if( nJet_->RunNumber > maxRunNumber_ && nJet_->RunNumber!=1) {
+      nCutOnMaxRunNumber_++;
+      delete jet1; delete jet2; delete jet3;
+      return 0;
+    }
+  }
+  
   if(correctL1_) {
     jet1->correctL1();
     jet2->correctL1();
