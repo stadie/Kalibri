@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.94 2012/06/08 15:29:04 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.95 2012/07/23 17:24:09 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -59,6 +59,8 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   fire_all_dijet_triggers_    = config_->read<bool>("fire all triggers",false);
   JERReadInJ1J2SameEtaBin_    = config_->read<bool>("JER - Assert J1J2 In Same Eta Bin",false);
   std::cout << "JER - Assert J1J2 In Same Eta Bin set to: " << JERReadInJ1J2SameEtaBin_<<std::endl;
+  HFAsReferenceRegion_    = config_->read<bool>("HF - Use HF as reference region for TwoJetsPtBalanceEvent",false);
+  std::cout << "HF - Use HF as reference region for TwoJetsPtBalanceEvent set to: " << HFAsReferenceRegion_<<std::endl;
 
   useSingleJetTriggers_ = config_->read<bool>("Use single jet triggers",false);
 
@@ -550,6 +552,25 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 	  }
 	  //To do: Should the combination jet2,jet1 also be read in to be symmetric?
 	  //Would correspond to previous readin-definition (see following "else")...
+	} 
+      }
+      else if(HFAsReferenceRegion_){ 
+	//!< Use HF as reference region for TwoJetsPtBalanceEvent  (probe jet in eta>3 )
+	if(td) {
+	  //second jet should be in HF...
+	  if(std::abs(td->getJet1()->eta()) > 3.0) {
+	    data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
+						     td->getJet3() ? td->getJet3()->clone():0,
+						     td->ptHat(),td->weight(),td->nPU(),
+						     td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
+	    ++nGoodEvts_;
+	  }
+	  if(std::abs(td->getJet2()->eta()) > 3.0) {
+	    data.push_back(td); 
+	    ++nGoodEvts_;
+	  } else {
+	    delete td;
+	  }
 	} 
       }
       else{

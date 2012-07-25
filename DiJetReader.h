@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.37 2012/04/27 12:37:13 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.38 2012/05/14 17:16:27 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -87,6 +87,7 @@ class DiJetReader : public EventReader{
   bool   weights_eq_one_;       //!< force weight for each event to one
   bool   fire_all_dijet_triggers_;       //!< Set all trigger btis to one (branches need to be revised...)
   bool   JERReadInJ1J2SameEtaBin_;       //!< Read in events in same eta bin (not central + any eta) for JER studies; thresholds defined in JEREtaMap
+  bool   HFAsReferenceRegion_;       //!< Use HF as reference region for TwoJetsPtBalanceEvent  (probe jet in eta>3 )
 
   double minJetEt_;             //!< Minimum pt of jet
   double maxJetEt_;             //!< Maximum pt of jet
