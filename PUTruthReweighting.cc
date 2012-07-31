@@ -56,7 +56,7 @@ int PUTruthReweighting::preprocess(std::vector<Event*>& data,
   std::cout <<"initialize reweight::LumiReWeighting LumiWeights_" << std::endl;
   std::vector <reweight::LumiReWeighting> LumiWeightsPerTrigger;
   for(int i = 0, l = trigthresholds_.size() ; i < l ; ++i) {
-    LumiWeightsPerTrigger.push_back(reweight::LumiReWeighting(("/scratch/hh/current/cms/user/kirschen/PUDistributions/TrueDistributions/"+TruthWeightingMCDistribution_+"_ObservedMCPUDistributions.root").c_str(),("/scratch/hh/current/cms/user/"+TruthWeightingDir_+"/MyDataPileupHistogram"+(TString)trignames_.at(i)+".root").Data(), "pileup", "pileup"));
+    LumiWeightsPerTrigger.push_back(reweight::LumiReWeighting(("/scratch/hh/current/cms/user/kirschen/PUDistributions/TrueDistributions/"+TruthWeightingMCDistribution_+"_TrueMCPUDistributions.root").c_str(),("/scratch/hh/current/cms/user/"+TruthWeightingDir_+"/MyDataPileupHistogram"+(TString)trignames_.at(i)+".root").Data(), "pileup", "pileup"));
     std::cout <<"initialized reweight::LumiReWeighting LumiWeights_ successfully..." << i <<std::endl;
 
   }
