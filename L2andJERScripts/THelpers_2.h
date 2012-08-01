@@ -101,8 +101,8 @@ void printtitle(TString title, bool wide=false) {
   latex->SetTextAlign(31); // align right
   latex->DrawLatex(wide ? 0.98 : 0.95, 0.96, "#sqrt{s} = 7 TeV");
     latex->SetTextAlign(11); // align left
-    //latex->DrawLatex(0.15,0.96,Form("CMS preliminary, %.2g nb^{-1}",intLumi));
-    latex->DrawLatex(wide ? 0.06 : 0.2, 0.86,title);
+    latex->DrawLatex(0.15,0.96,Form("CMS preliminary, %.2g fb^{-1}",4.9));
+        latex->DrawLatex(wide ? 0.06 : 0.2, 0.86,title);
     //		     Form("CMS, %.2g pb^{-1}",intLumi));
     //was		     Form("CMS preliminary, %.2g pb^{-1}",intLumi));
 } // cmsPrel
@@ -603,7 +603,8 @@ draw_options ="ALP", TString resolution_fit = "no", TString
 Logxyz="x0_y0_z0", Double_t ru_xlow=0, Double_t ru_xhig=-1, Double_t
 ru_ylow=0, Double_t ru_yhig=-1, TString img_exp="ENTER_WITH_POINT",
 			       TString SaveTo="PS", TString
-			       x_title="xaxis", TString y_title="yaxis") {
+			       x_title="xaxis", TString y_title="yaxis", 
+			       Bool_t fit_again_and_plot_band=false) {
 
   std::pair <Int_t, Int_t> dimensions = define_Canvas(format);
   TCanvas* temp_canvas = new TCanvas("temp_canvas", "temp_canvas", 1, 1, dimensions.first, dimensions.second);
@@ -614,6 +615,11 @@ ru_ylow=0, Double_t ru_yhig=-1, TString img_exp="ENTER_WITH_POINT",
 
   //temp_canvas->SetGridy(); 
   //temp_canvas->SetGridx();
+
+  std::vector<Int_t> fill_colors_;
+  fill_colors_.push_back(33);
+  fill_colors_.push_back(11);
+  fill_colors_.push_back(46);
 
   TF1 *resolution = new TF1("resolution","TMath::Sqrt(TMath::Power([0]/TMath::Sqrt(x),2)+TMath::Power([1]/x,2)+TMath::Power([2],2))",30,1000); //was used before...
  resolution->SetParName(0,"S");
@@ -635,6 +641,38 @@ ru_ylow=0, Double_t ru_yhig=-1, TString img_exp="ENTER_WITH_POINT",
       histo->Draw(draw_options);
       filename = manipulate_filenames(temp_canvas,histo,filename,SaveTo,draw_options,Logxyz,ru_xlow,ru_xhig,ru_ylow,ru_yhig,x_title,y_title);
       histo->Draw(draw_options);
+      	 if(fit_again_and_plot_band){
+	   std::cout << "List of functions: " << std::endl;
+	   //	   histo->GetListOfFunctions()->Print();
+	   TIter next(histo->GetListOfFunctions());
+	   TObject *obj;
+	   Int_t i=0;
+	   while ((obj = next())){
+	     obj->Print();//Draw(next.GetOption());
+	     TF1* temp_tf1 = (TF1*) obj;
+	     histo->Fit(temp_tf1->GetName(),"N");
+	     //Create a histogram to hold the confidence intervals
+	     TH1D *hint = new TH1D("hint","Fitted gaussian with .95 conf.band", 100, histo->GetXaxis()->GetXmin(), histo->GetXaxis()->GetXmax());
+	     (TVirtualFitter::GetFitter())->GetConfidenceIntervals(hint);
+	     //Now the "hint" histogram has the fitted function values as the 
+	     //bin contents and the confidence intervals as bin errors
+	     hint->SetStats(kFALSE);
+	     hint->SetMarkerStyle(1);
+	     if(i<fill_colors_.size()){
+	       hint->SetMarkerColor(fill_colors_.at(i));
+	       hint->SetFillColor(fill_colors_.at(i));
+	     }
+	     else{
+	     hint->SetMarkerColor(38);
+	     hint->SetFillColor(38);
+	     }
+	     i++;
+	     hint->Draw("e4 same");
+	     //	     hint->Print("all"); 
+	   }
+	 }
+	 histo->Draw(draw_options+"same");
+
       printtitle(histo->GetTitle());
       if(resolution_fit.Contains("yes"))histo->Fit("resolution","EM","same",30,fit_limit);
       if(i_histos==0)      temp_canvas->Print(filename + ".ps[");
@@ -642,16 +680,15 @@ ru_ylow=0, Double_t ru_yhig=-1, TString img_exp="ENTER_WITH_POINT",
       if(img_exp.Contains("."))temp_canvas->Print(histo->GetName() +("_TGraphErr" + Logxyz+  img_exp));
       if(i_histos==histos_.size()-1)      temp_canvas->Print(filename + ".ps]");
       
-
   chdir("..");
   
    }
     temp_canvas->Close();
 }
 
-void draw_TGraphErrors_save_PS( TString img_exp, std::vector < TGraphErrors* > histos_, TString PS_name ="DEFAULT_PS", TString format = "six", TString draw_options ="ALP", TString resolution_fit = "no", TString Logxyz="x0_y0_z0", Double_t ru_xlow=0, Double_t ru_xhig=-1, Double_t ru_ylow=0, Double_t ru_yhig=-1) {
+void draw_TGraphErrors_save_PS( TString img_exp, std::vector < TGraphErrors* > histos_, TString PS_name ="DEFAULT_PS", TString format = "six", TString draw_options ="ALP", TString resolution_fit = "no", TString Logxyz="x0_y0_z0", Double_t ru_xlow=0, Double_t ru_xhig=-1, Double_t ru_ylow=0, Double_t ru_yhig=-1,Bool_t fit_again_and_plot_band=false) {
 
-  draw_TGraphErrors_save_PS(histos_, PS_name ,format, draw_options,  resolution_fit,Logxyz, ru_xlow, ru_xhig, ru_ylow,ru_yhig,img_exp);
+  draw_TGraphErrors_save_PS(histos_, PS_name ,format, draw_options,  resolution_fit,Logxyz, ru_xlow, ru_xhig, ru_ylow,ru_yhig,img_exp,fit_again_and_plot_band);
 }
 
 void draw_TGraphErrors_save_PS(TString SaveTo, TString img_exp,
@@ -660,9 +697,9 @@ TString format = "six", TString draw_options ="ALP", TString
 resolution_fit = "no", TString Logxyz="x0_y0_z0", Double_t ru_xlow=0,
 			       Double_t ru_xhig=-1, Double_t
 			       ru_ylow=0, Double_t ru_yhig=-1,TString
-			       x_title="xaxis",TString y_title="yaxis") {
+			       x_title="xaxis",TString y_title="yaxis",Bool_t fit_again_and_plot_band=false) {
 
-  draw_TGraphErrors_save_PS(histos_, PS_name ,format, draw_options,  resolution_fit,Logxyz, ru_xlow, ru_xhig, ru_ylow,ru_yhig,img_exp,SaveTo,x_title,y_title);
+  draw_TGraphErrors_save_PS(histos_, PS_name ,format, draw_options,  resolution_fit,Logxyz, ru_xlow, ru_xhig, ru_ylow,ru_yhig,img_exp,SaveTo,x_title,y_title,fit_again_and_plot_band);
 }
 
 
