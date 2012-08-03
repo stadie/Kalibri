@@ -27,12 +27,13 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsShor
 
   plotsnames_=plotsnames;
   //read in config files in kalibri-style
+  //  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/ExternalConfigs.cfg");
   ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/public/ExternalConfigs.cfg");
   readInExtraInfo();
   std::cout << "readInExtraInfo(); executed " << yProfileTitle()<< std::endl;
   std::cout << "readInExtraInfo(); executed " << binningSelection_<< std::endl;
-
-
+  std::cout << "opening L2L3.cfg: " << pathToConfig_ << std::endl;
+  std::cout << "opening KalibriPlots.root from: " <<   kalibriPlotsPath_ << std::endl;
   config_=ConfigFile((std::string)pathToConfig_);//"/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/AllPlots_L2L3.cfg");
 
 }
@@ -54,6 +55,8 @@ void BasePlotExtractor::readInExtraInfo() {
   yProfileTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile yTitle","DUMMYResolution");
   yRatioMinMax_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots ratio yMinMax","0.5 1.5"));
   assert(yRatioMinMax_.size()==2);
+  yMCDataRatioMinMax_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots MCData ratio yMinMax","0.5 1.5"));
+  assert(yMCDataRatioMinMax_.size()==2);
   yRatioTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots ratio yTitle","DUMMY Ratio");
   yDifferenceMinMax_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots difference yMinMax","-15 10"));
   assert(yDifferenceMinMax_.size()==2);
@@ -261,19 +264,23 @@ void BasePlotExtractor::fitFunctionsToRatioPlot(TH1D* histo){
   fit_const->SetParName(0,"const");
   histo->Fit("fit_const","EMQ","same");
 
-  if(plotsnames_.Contains("VsPt")){
-    TF1 *fit_loglin = new TF1("fit_loglin","[0]+[1]*TMath::Log(x)",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
-    fit_loglin->SetParameters(1,1);
-    fit_loglin->SetParName(0,"const");
-    fit_loglin->SetParName(1,"slope");
-    histo->Fit("fit_loglin","EMQ+","same");
-  }
-  else{
-    TF1 *fit_lin = new TF1("fit_lin","[0]+[1]*x",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
-    fit_lin->SetParameters(1,1);
-    fit_lin->SetParName(0,"const");
-    fit_lin->SetParName(1,"slope");
-    histo->Fit("fit_lin","EMQ+","same");
+  if(!plotsnames_.Contains("Resolution")){//ignore pt-dependence of
+    //    resolution ratios for my purposes... might change this to a
+    //  config-file option in the future
+    if(plotsnames_.Contains("VsPt")||plotsnames_.Contains("VsMeanPt")){
+      TF1 *fit_loglin = new TF1("fit_loglin","[0]+[1]*TMath::Log(x)",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
+      fit_loglin->SetParameters(1,1);
+      fit_loglin->SetParName(0,"const");
+      fit_loglin->SetParName(1,"slope");
+      histo->Fit("fit_loglin","EMQ+","same");
+    }
+    else{
+      TF1 *fit_lin = new TF1("fit_lin","[0]+[1]*x",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
+      fit_lin->SetParameters(1,1);
+      fit_lin->SetParName(0,"const");
+      fit_lin->SetParName(1,"slope");
+      histo->Fit("fit_lin","EMQ+","same");
+    }
   }
 }
 
@@ -313,6 +320,14 @@ void BasePlotExtractor::outputTable(TString label, TH1D* histo){
       myfile << "Eta Bin: " << i-1 << " : " << "JER: " << histo->GetBinContent(i) << "+-" << histo->GetBinError(i) << "\n"; 
    }
    myfile.close();
+
+   myfile.open("ResidualCorrectionFormat_"+label+".txt");
+   myfile << "{ 1 JetEta 1 JetPt [0] Correction L2Relative} \n";
+   for(int i = 1; i < histo->GetNbinsX()+1; i++) {
+     myfile << histo->GetXaxis()->GetBinLowEdge(i) <<"\t" <<  histo->GetXaxis()->GetBinUpEdge(i) << "\t        3              3           3500      "<< histo->GetBinContent(i) <<"\n";
+   }
+   myfile.close();
+
 }
 
 
@@ -333,6 +348,7 @@ void BasePlotExtractor::addFunctionLabelsToLegend(TH1D* histo, TLegend* leg){
     TF1* temp_tf1 = (TF1*) obj;
     temp_tf1->SetLineColor(style.getColor(i));
     temp_tf1->SetFillColor(style.getColor(i));
+    temp_tf1->SetFillStyle(1);
 
     TFitResultPtr r = histo->Fit(temp_tf1->GetName(),"NSEMQ");
     Double_t chisquared1;
@@ -346,7 +362,7 @@ void BasePlotExtractor::addFunctionLabelsToLegend(TH1D* histo, TLegend* leg){
 
     std::string legendName = ExternalConfig_.read<std::string>(temp_tf1->GetName()+(std::string) " legend label","DUMMYlabel");
     //      yProfileTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile yTitle","DUMMYResolution");
-    leg->AddEntry(temp_tf1,(legendName+buffer).c_str(),"F");
+    leg->AddEntry(temp_tf1,(legendName+buffer).c_str(),"FL");
     i++;
   }
 

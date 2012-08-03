@@ -67,6 +67,7 @@ class BasePlotExtractor {
   TString profileType() {return profileType_;};
   std::vector<double> yProfileMinMax() {return yProfileMinMax_;};
   TString yProfileTitle() {return yProfileTitle_;};
+  std::vector<double> yMCDataRatioMinMax() {return yMCDataRatioMinMax_;};
   std::vector<double> yRatioMinMax() {return yRatioMinMax_;};
   TString yRatioTitle() {return yRatioTitle_;};
   std::vector<double> yDifferenceMinMax() {return yDifferenceMinMax_;};
@@ -100,6 +101,7 @@ class BasePlotExtractor {
   std::vector<double> yProfileMinMax_;
   TString yProfileTitle_;
   std::vector<double> yRatioMinMax_;
+  std::vector<double> yMCDataRatioMinMax_;
   TString yRatioTitle_;
   std::vector<double> yDifferenceMinMax_;
   TString yDifferenceTitle_;

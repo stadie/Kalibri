@@ -21,9 +21,12 @@ Extrapolation::Extrapolation(TString plotsnames,TString kalibriPlotsShortName) :
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
 void Extrapolation::extrapolInit() {
-  
   cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("TwoJetsPtBalanceEvent plots cut_list",""));
   cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("TwoJetsPtBalanceEvent plots cut_no_list",""));
+  if(kalibriPlotsShortName_.Contains("TimePtDependence")){
+  cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("TimePtDependence plots cut_list",""));
+  cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("TimePtDependence plots cut_no_list",""));
+  }
 
 }
 
@@ -129,11 +132,14 @@ void Extrapolation::Plot() {
   for(int conf_i=0;conf_i<configs_.size();conf_i++){
   c->SetLogx(0);
   //  RatioVsBinVarHistos_.at(conf_i)
-    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetRangeUser(0.7,1.3);
+  //    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetRangeUser(0.7,1.3);
+    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetRangeUser(yRatioMinMax().at(0),yRatioMinMax().at(1));
+
     //    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetTitle("Resolution ratio");
     TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
     RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
     RatioVsBinVarHistos_.at(conf_i)->Draw();
+    RatioVsBinVarHistos_.at(conf_i)->Draw("histsame");
     cmsPrel();
     TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.5);
     label->AddText(jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
@@ -151,11 +157,14 @@ void Extrapolation::Plot() {
   //Save RatioVsBinVar plots for MCDataRatioVsBinVarHistos_
   for(size_t ratio_i=0;ratio_i<MCDataRatioVsBinVarHistos_.size();ratio_i++){
     c->SetLogx(0);
+    MCDataRatioVsBinVarHistos_.at(ratio_i)->GetYaxis()->SetRangeUser(yMCDataRatioMinMax().at(0),yMCDataRatioMinMax().at(1));
+    if(TString(MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName()).Contains("Normalized"))MCDataRatioVsBinVarHistos_.at(ratio_i)->GetYaxis()->SetRangeUser(0.9, 1.08);
     //    MCDataRatioVsBinVarHistos_.at(ratio_i)->GetYaxis()->SetRangeUser(0.7,1.3);
     TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
     MCDataRatioVsBinVarHistos_.at(ratio_i)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
     //    MCDataRatioVsBinVarHistos_.at(ratio_i)->Dump();
     MCDataRatioVsBinVarHistos_.at(ratio_i)->Draw();
+    MCDataRatioVsBinVarHistos_.at(ratio_i)->Draw("histsame");
     cmsPrel();
     TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.5);
     label->AddText(jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
@@ -173,7 +182,9 @@ void Extrapolation::Plot() {
   for(size_t ratio_i=0;ratio_i<MCDataRatioVsBinVarHistos_.size();ratio_i++){
     for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
       TH1D* DRAWHISTO = All_CollectExtrapolatedAllMCDataRatios_.at(ratio_i).at(bin_i);
-      DRAWHISTO->GetYaxis()->SetRangeUser(0.7,1.3);
+      DRAWHISTO->GetYaxis()->SetRangeUser(yMCDataRatioMinMax().at(0),yMCDataRatioMinMax().at(1));
+      if(TString(MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName()).Contains("Normalized"))DRAWHISTO->GetYaxis()->SetRangeUser(0.9, 1.08);
+      //      DRAWHISTO->GetYaxis()->SetRangeUser(0.5,1.1);
       DRAWHISTO->GetYaxis()->SetTitle(MCDataRatioVsBinVarHistos_.at(ratio_i)->GetYaxis()->GetTitle());
       TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
       DRAWHISTO->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
@@ -231,9 +242,9 @@ void Extrapolation::createPtRelExtrapol() {
     // and plot this extrapolation plot
     std::cout << "So many bins... " <<  configs_.at(0)->nXBins() << std::endl;
     for(Int_t xbin_i=0;xbin_i<configs_.at(0)->nXBins();xbin_i++){
-      std::cout << "TEST"<< std::endl;
+      std::cout << "TEST "<< xbin_i << " of " << configs_.at(0)->nXBins() <<std::endl;
       ExtrapolationBin.createExtrapolationTGraphErrors(xbin_i+1);
-      //      std::cout << "created extrapolation tgrapherrors for bin " << xbin_i<< std::endl;
+      std::cout << "created extrapolation tgrapherrors for bin " << xbin_i<< std::endl;
       ExtrapolationBin.plotExtrapol(xbin_i,bin_i);
     }
     std::cout << "created extrapolation tgrapherrors for each bin" << std::endl;
@@ -288,7 +299,8 @@ void Extrapolation::makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos(){
   MCDataRatioVsBinVarHistos_.clear();
   MCDataRatioVsBinVarHistos_.push_back(new TH1D("ExtrapolatedMCDataRatioVsBinVar","",configs_.at(0)->nBins(),&(configs_.at(0)->binEdges()->front())));
   MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetTitle("MC/Data ratio (const fit)");
-  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(0.7,1.3);
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(yMCDataRatioMinMax().at(0),yMCDataRatioMinMax().at(1));
+      //  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(0.5,1.1);
   MCDataRatioVsBinVarHistos_.push_back(new TH1D("ExtrapolatedNormalizedMCDataRatioVsBinVar","",configs_.at(0)->nBins(),&(configs_.at(0)->binEdges()->front())));
   MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetTitle("Radiation correction");
   MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(0.9,1.08);
@@ -329,15 +341,22 @@ void Extrapolation::makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos(){
 // ----------------------------------------------------------------   
 void Extrapolation::ExportTables() {
   //   MakeDateDir();
-   if(chdir("JER_tables") != 0){ 
-      mkdir("JER_tables", S_IRWXU|S_IRWXG|S_IRWXO); 
-      chdir("JER_tables"); 
+   if(chdir("TXT_tables") != 0){ 
+      mkdir("TXT_tables", S_IRWXU|S_IRWXG|S_IRWXO); 
+      chdir("TXT_tables"); 
   } 
 
    for(int conf_i=0;conf_i<configs_.size();conf_i++){
       TString outname = "ResolutionPlots_"+plotsnames_+"_RatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i);
       outputTable(outname,RatioVsBinVarHistos_.at(conf_i));
    }
+   for(size_t ratio_i=0;ratio_i<MCDataRatioVsBinVarHistos_.size();ratio_i++){
+     TString outname = (TString)"ResolutionPlots_"+plotsnames_+"_RatioVsBinVar_"+MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName();
+     outputTable(outname,MCDataRatioVsBinVarHistos_.at(ratio_i));
+   }
+
+
+
    chdir("../../."); 
 } 
 
@@ -485,7 +504,7 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   TCanvas* c = new TCanvas("c","",600,600);
     std::pair <float,float> minMaxPair = determineMinMax(DataExtrapols_.at(xBin_i));
   //  std::pair <float,float> minMaxPair = std::make_pair(-0.1,0.2);
-  c->DrawFrame(0,minMaxPair.first*0.5-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.2,(";"+Outer_->configs_.at(0)->cutAxisTitle()+";"+Outer_->yProfileTitle()/*"#sqrt{2} #sigma"*/)/*.c_str()*/);
+  c->DrawFrame(0,minMaxPair.first*0.5-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.2,(";cut on "+Outer_->configs_.at(0)->cutAxisTitle()+";"+Outer_->yProfileTitle()/*"#sqrt{2} #sigma"*/)/*.c_str()*/);
   MCExtrapols_.at(xBin_i)->Draw("P");
   MCExtrapols_.at(xBin_i)->SetLineColor(style.getColor(0));
   MCExtrapols_.at(xBin_i)->SetMarkerColor(style.getColor(0));
@@ -536,7 +555,7 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   TCanvas* c2 = new TCanvas("c2","",600,600);
   minMaxPair = determineMinMax(MCDataRatioExtrapols_.at(xBin_i));
   //  std::pair <float,float> minMaxPair = std::make_pair(-0.1,0.2);
-  c2->DrawFrame(0,minMaxPair.first*0.85-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";"+Outer_->configs_.at(0)->cutAxisTitle()+";MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
+  c2->DrawFrame(0,minMaxPair.first*0.85-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+Outer_->configs_.at(0)->cutAxisTitle()+";MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
   MCDataRatioExtrapols_.at(xBin_i)->Draw("P");
   Outer_->drawConfidenceIntervals(MCDataRatioExtrapols_.at(xBin_i));
   MCDataRatioExtrapols_.at(xBin_i)->Draw("Psame");
@@ -571,7 +590,7 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   TCanvas* c3 = new TCanvas("c3","",600,600);
   minMaxPair = determineMinMax(NormalizedMCDataRatioExtrapols_.at(xBin_i));
   //  std::pair <float,float> minMaxPair = std::make_pair(-0.1,0.2);
-  c3->DrawFrame(0,minMaxPair.first*0.85-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";"+Outer_->configs_.at(0)->cutAxisTitle()+";Normalized MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
+  c3->DrawFrame(0,minMaxPair.first*0.85-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+Outer_->configs_.at(0)->cutAxisTitle()+";Normalized MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
   NormalizedMCDataRatioExtrapols_.at(xBin_i)->Draw("P");
   Outer_->drawConfidenceIntervals(NormalizedMCDataRatioExtrapols_.at(xBin_i));
   NormalizedMCDataRatioExtrapols_.at(xBin_i)->Draw("Psame");
