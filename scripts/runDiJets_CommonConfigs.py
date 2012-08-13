@@ -191,15 +191,17 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = "PU weighting era = Flat10\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n"
 
     if(MC_type=="44Z2wPU" or MC_type=="44Z2wPUsmY0612" or MC_type=="44Z2wPUsmY0612_u" or MC_type=="44Z2wPU_PUUP"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = 44XFall11 \n"
+        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/44XFall11 \n"
     elif(MC_type=="44HppwPU" or MC_type=="44HppwPU_PUUP"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = 44XHerwigFall11 \n"
+        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/44XHerwigFall11 \n"
     elif(MC_type=="42Z2wPU"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = 42XFall11 \n"
+        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/42XFall11 \n"
     elif(MC_type=="Z2Star_PUS6S7"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = Summer12S6PlusS7 \n"
+        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6PlusS7 \n"
     elif(MC_type=="Z2Star_PU1mioS610mioS7"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = Summer12S6Plus10MioS7 \n"
+        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6Plus10MioS7 \n"
+    elif(MC_type=="Z253"):
+        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"	
     else:
         print "No suitable MC-distribtuion for PU-reweighting found."
 
@@ -308,6 +310,9 @@ def determineDataDirMC(MC,MC_type):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1/merged"
         if(MC_type=="Z252"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1/merged"
+       if(MC_type=="Z253"):
+            datadirmc = "/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53"	    
+	    
     if(MC == "F11"):
         if(MC_type=="Z2wPU"):
             datadirmc = "/scratch/hh/current/cms/user/stadie/2011/v8/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6_Fall11-PU_S6_START42_V14B-v1/merged"
