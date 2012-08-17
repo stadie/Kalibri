@@ -688,7 +688,7 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="53fbSingleJetAK7"
+DIR_JETALGO="53fbSingleJetAK5"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
@@ -696,11 +696,11 @@ PF_CALO_JPT="PF"
 ##################################
 ## chooses the jet algorithm - used to pick the corresponding n-tupel .root-files (ak5 is default)
 ##################################
-jetalgo="ak7"
+jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2012SQLV7_AK7"
+CORRECTION="ntuple"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -848,7 +848,7 @@ niothreads = 24
 nevents =  -1
 #nthreads = 1
 #niothreads = 1
-MAIN_dirname = "/afs/naf.desy.de/user/r/rathjd/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+MAIN_dirname = "/afs/cern.ch/user/k/kirschen/scratch0/KaliriTemp/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
