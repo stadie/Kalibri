@@ -20,6 +20,9 @@ def BinningValues(BINNING,AbsEta):
     elif(BINNING=="JEC_Mikko"):
         binning_values = "-5.191 -3.2 -2.964 -2.5 -1.93 -1.305 -0.783 0 0.783 1.305 1.93 2.5 2.964 3.2 5.191"
         abs_binning_values = "0 0.783 1.305 1.93 2.5 2.964 3.2 5.191"
+    elif(BINNING=="k_Bfix"):
+         binning_values = "-5.191 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 0 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 5.191"
+        abs_binning_values = "0 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 5.191"  
     else:
         print "Defining eta bins failed"
 
@@ -186,6 +189,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-199011 \n"
     elif(DATATYPE=="2012ABC_199429"):
         PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-199429 \n"
+    elif(DATATYPE=="2012ABC_200601"):
+        PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-200601_np \n"	
     else:
         print "Defining PU reweighting paths failed"
         PU_weighting_info = "PU weighting era = Flat10\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n"
@@ -294,7 +299,8 @@ def determineDataDir(DATAYEAR,DATATYPE):
             datadir = "/scratch/hh/current/cms/user/rathjd/Calibration/2012_Jets_v6/combine_2012AMay23ReReco_2012BJetMonJetHT_2012CJetMonJetHTv2_190456-199011"
         if(DATATYPE=="2012ABC_199429"):
             datadir = "/scratch/hh/current/cms/user/rathjd/Calibration/2012_Jets_v7/combine_2012AMay23ReReco_2012BJetMon-JetHT13JulyReReco_2012CJetMonJetHTv2_190456-199429"
-
+        if(DATATYPE=="2012ABC_200601"):
+            datadir = "/scratch/hh/current/cms/user/rathjd/Calibration/2012_Jets_v9/combine_2012AMay23ReReco_2012BJetMon-JetHT13JulyReReco_2012CJetMonJetHTv2_190456-200601"
     return datadir
 
 
@@ -373,4 +379,4 @@ def determineDataDirMC(MC,MC_type):
 
 
 def importDatatypesNewTrigger():
-    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396","2012AB_196531","2012ABC_199011","2012ABC_199429"]
+    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396","2012AB_196531","2012ABC_199011","2012ABC_199429","2012ABC_200601"]
