@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.95 2012/07/23 17:24:09 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.96 2012/07/25 10:09:52 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -361,7 +361,7 @@ int DiJetReader::readEvents(std::vector<Event*>& data)
 	Jet *jet = ijb->second->jet();
 	
 	if(corFactorsFactory_) {
-	  jet->updateCorFactors(corFactorsFactory_->create(jet));
+	  jet->updateCorFactors(corFactorsFactory_->create(jet));//warning: vtxN,rho,jetarea not included, yet
 	}
 	if(correctL1_) {
 	  jet->correctL1();
@@ -925,7 +925,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 		    jet_error_param,par_->global_jet_function());    
     }
     if(corFactorsFactory_) {
-      jet->updateCorFactors(corFactorsFactory_->create(jet,nJet_->VtxN));
+      jet->updateCorFactors(corFactorsFactory_->create(jet,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[calJetIdx]));
       //std::cout << jet->pt() << " L2L3:" << jet->corFactors().getL2() << ", " << jet->corFactors().getL3() << '\n';
     }
     //std::cout << jet->pt() << " L1L2L3:" << jet->corFactors().getL1() << ", " << jet->corFactors().getL2() << ", " << jet->corFactors().getL3() << '\n';
@@ -1118,7 +1118,8 @@ Event* DiJetReader::createDiJetResolutionEventRecoOrdered()
 			       par_->global_jet_function()));
 	// Read external correction factors
 	if(corFactorsFactory_) {
-	  jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i]));
+	  jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i],nJet_->VtxN,nJet_->Rho,nJet_->JetArea[jetIndices_[i]->idx_]));
+	
 	}
 	// Correct measurement to L3 (L1*L2*L3)
 	if(correctToL3_) {
@@ -1280,7 +1281,7 @@ Event* DiJetReader::createDiJetResolutionEventGenOrdered() {
  			       par_->global_jet_function()));
  	// Read external correction factors
  	if(corFactorsFactory_) {
- 	  jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i]));
+	  jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i],nJet_->VtxN,nJet_->Rho,nJet_->JetArea[nJet_->GenJetColJetIdx[i]]));
  	}
  	// Correct measurement to L3 (L1*L2*L3)
  	if(correctToL3_) {
@@ -1428,7 +1429,7 @@ Event* DiJetReader::createDiJetResolutionEventFromSkim() {
  			     par_->global_jet_function()));
       // Read external correction factors
       if(corFactorsFactory_) {
-	jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i]));
+	jets[i]->updateCorFactors(corFactorsFactory_->create(jets[i],nJet_->VtxN,nJet_->Rho,nJet_->JetArea[idx]));
       }
       // Correct measurement to L3 (L1*L2*L3)
       if(correctToL3_) {
