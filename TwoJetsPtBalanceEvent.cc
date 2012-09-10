@@ -1,4 +1,4 @@
-// $Id: TwoJetsPtBalanceEvent.cc,v 1.10 2010/11/01 15:47:40 stadie Exp $
+// $Id: TwoJetsPtBalanceEvent.cc,v 1.11 2012/05/18 18:02:53 kirschen Exp $
 
 #include "TwoJetsPtBalanceEvent.h"
 #include "TVector2.h"
@@ -483,3 +483,20 @@ double TwoJetsPtBalanceEvent::relPtJet3ProjectionCorrL2L3() const {
   return pJ3/ptDijetCorrL2L3();
 }
 
+//!  \brief Returns L2L3 corrected trigger pt-variable
+//!
+// --------------------------------------------------
+double TwoJetsPtBalanceEvent::triggerPtVariableL2L3(bool useSingleJetTriggers) const{
+ 
+  if(!useSingleJetTriggers)return ptDijetCorrL2L3();
+  else{
+  double ptcorj1,ptcorj2;
+  ptcorj1 = jet1_->corFactors().getL2L3() * jet1_->pt();
+  ptcorj2 = jet2_->corFactors().getL2L3() * jet2_->pt();
+
+  if(ptcorj1>ptcorj2)return ptcorj1;
+  else return ptcorj2;
+  }
+
+
+}

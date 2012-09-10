@@ -71,12 +71,12 @@ int PUTruthReweighting::preprocess(std::vector<Event*>& data,
     float nputruth = (*evt1)->nPUTruth();
     if( (*evt1)->type() != PtBalance) std::cout << "Warning: No TwoJetsPtBalanceEvent! ";
     TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>((*evt1));
-    std::map<double,int>::iterator it = controlTrigger_.lower_bound(TriggerPtVariable(tje));
+    std::map<double,int>::iterator it = controlTrigger_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_));
    if(!(it == controlTrigger_.begin())){
      assert(it != controlTrigger_.begin());
      --it;
    }
-   //    std::cout << (*it).second <<" pt: " <<TriggerPtVariable(tje)<< std::endl;
+   //    std::cout << (*it).second <<" pt: " <<tje->triggerPtVariableL2L3(useSingleJetTriggers_)<< std::endl;
     //    std::cout << (*controlTrigger_.lower_bound(600.)).second <<" pt: " <<"600"<< std::endl;
    double MyWeight = LumiWeightsPerTrigger.at((*it).second).ITweight3BX( nputruth );
     //    double MyWeight = LumiWeights_.ITweight3BX( nputruth );
@@ -102,22 +102,3 @@ int PUTruthReweighting::preprocess(std::vector<Event*>& data,
   return nProcEvts;
 }
  
-
-double PUTruthReweighting::TriggerPtVariable(Event* event)
-{
-  if(event->type() != PtBalance) std::cout << "Warning: No TwoJetsPtBalanceEvent! ";
-  TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(event);
-  if(!useSingleJetTriggers_)return tje->ptDijetCorrL2L3();
-  else{
-  Jet * j1 = tje->getJet1();
-  Jet * j2 = tje->getJet2();
-
-  double ptcorj1,ptcorj2;
-  ptcorj1 = j1->corFactors().getL2L3() * j1->pt();
-  ptcorj2 = j2->corFactors().getL2L3() * j2->pt();
-
-  if(ptcorj1>ptcorj2)return ptcorj1;
-  else return ptcorj2;
-  }
-
-}

@@ -17,7 +17,6 @@ class PUTruthReweighting : public EventProcessor
  public:
   PUTruthReweighting(const std::string& configfile, Parameters* param);
   virtual ~PUTruthReweighting();
-  double TriggerPtVariable(Event* event);
 
 protected:
   virtual int preprocess(std::vector<Event*>& data,

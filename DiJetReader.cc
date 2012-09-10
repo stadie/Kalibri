@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.96 2012/07/25 10:09:52 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.97 2012/09/06 13:27:35 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1653,7 +1653,12 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 
 
     double triggerPt = diJetPtAve;
-    if(useSingleJetTriggers_)triggerPt = jet1->pt() * jet1->corFactors().getL2L3() * jet1->corFactors().getL1();
+    if(useSingleJetTriggers_){
+      double ptj1= jet1->pt() * jet1->corFactors().getL2L3() * jet1->corFactors().getL1();
+      double ptj2= jet2->pt() * jet2->corFactors().getL2L3() * jet2->corFactors().getL1();
+      triggerPt = ptj1>ptj2 ? ptj1 : ptj2;
+    }
+
     std::map<double,bool*>::iterator it = trigmap_.lower_bound(triggerPt);
     if(it == trigmap_.begin()) {
       //      std::cout << "below all trigger thresholds:" << triggerPt << '\n';

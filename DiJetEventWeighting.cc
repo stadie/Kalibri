@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: DiJetEventWeighting.cc,v 1.7 2012/03/29 11:54:06 kirschen Exp $
+//    $Id: DiJetEventWeighting.cc,v 1.8 2012/05/18 19:01:42 kirschen Exp $
 //   
 #include "DiJetEventWeighting.h"
 
@@ -91,7 +91,7 @@ bool DiJetEventWeighting::passCheckBadEventDiJetEventWeighting(Event* event)
 {
   if(event->type() != PtBalance) std::cout << "Warning: No TwoJetsPtBalanceEvent! ";
   TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(event);
-  std::map<double,double>::iterator it = ndata_.lower_bound(TriggerPtVariable(tje));
+  std::map<double,double>::iterator it = ndata_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_));
   if(!(it == ndata_.begin())){
     assert(it != ndata_.begin());
     --it;
@@ -100,7 +100,7 @@ bool DiJetEventWeighting::passCheckBadEventDiJetEventWeighting(Event* event)
     return true;
   }
   else {
-    //	std::cout << "bad event ptDijetCorrL2L3: " << TriggerPtVariable(tje) << " ptDijet(): " << tje->ptDijet() << " ptDijetGen: " << tje->ptDijetGen() <<  " lowest threshold: " <<it->first << '\n';
+    //	std::cout << "bad event ptDijetCorrL2L3: " << tje->triggerPtVariableL2L3(useSingleJetTriggers_) << " ptDijet(): " << tje->ptDijet() << " ptDijetGen: " << tje->ptDijetGen() <<  " lowest threshold: " <<it->first << '\n';
     return false;
   }
 }
@@ -121,7 +121,7 @@ bool DiJetEventWeighting::passCheckStrangeEventDiJetEventWeighting(Event* event)
     //      std::cout << "strange response: " << res1 << ", " <<  res2 << " pt:" <<  j1->pt() << ", " << j2->pt() << ", pthat: "  << tje->ptHat() << '\n';
     return false;
   }
-  std::map<double,double>::iterator it = ncontrol_.lower_bound(TriggerPtVariable(tje));
+  std::map<double,double>::iterator it = ncontrol_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_));
   if(!(it == ncontrol_.begin())){
     assert(it != ncontrol_.begin());
     --it;
@@ -136,7 +136,7 @@ bool DiJetEventWeighting::passSetWeightDiJetEventWeighting(Event* event)
 {
   if(event->type() != PtBalance) std::cout << "Warning: No TwoJetsPtBalanceEvent! ";
   TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(event);
-  std::map<double,double>::iterator it = weights_.lower_bound(TriggerPtVariable(tje));
+  std::map<double,double>::iterator it = weights_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_));
   if(it == weights_.begin()) {
     return false;
   }
@@ -148,21 +148,3 @@ bool DiJetEventWeighting::passSetWeightDiJetEventWeighting(Event* event)
   
 }
 
-double DiJetEventWeighting::TriggerPtVariable(Event* event)
-{
-  if(event->type() != PtBalance) std::cout << "Warning: No TwoJetsPtBalanceEvent! ";
-  TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(event);
-  if(!useSingleJetTriggers_)return tje->ptDijetCorrL2L3();
-  else{
-  Jet * j1 = tje->getJet1();
-  Jet * j2 = tje->getJet2();
-
-  double ptcorj1,ptcorj2;
-  ptcorj1 = j1->corFactors().getL2L3() * j1->pt();
-  ptcorj2 = j2->corFactors().getL2L3() * j2->pt();
-
-  if(ptcorj1>ptcorj2)return ptcorj1;
-  else return ptcorj2;
-  }
-
-}

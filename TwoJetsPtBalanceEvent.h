@@ -14,7 +14,7 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.17 2012/04/27 12:56:05 kirschen Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.18 2012/05/18 18:02:53 kirschen Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
@@ -86,6 +86,8 @@ class TwoJetsPtBalanceEvent : public Event {
   double ptBalanceGen() const { return (jet1_->genPt()-jet2_->genPt()) / ptDijetGen(); }
   double ptBalanceCorr() const { return (parametrizedMess()-parametrizedMess2()) / ptDijetCorr(); }
   double ptBalanceCorrL2L3() const { return ( jet1_->corFactors().getL2L3() * jet1_->pt() - jet2_->corFactors().getL2L3() * jet2_->pt() ) / ptDijetCorrL2L3(); }
+
+  double triggerPtVariableL2L3(bool useSingleJetTriggers) const;
 
   double ptSumAbs(double pt1, double pt2) const;
   double ptSumAbs() const;
