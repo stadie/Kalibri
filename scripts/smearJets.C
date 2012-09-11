@@ -1,4 +1,4 @@
-// $Id: smearJets.C,v 1.1 2011/04/07 08:04:58 stadie Exp $
+// $Id: smearJets.C,v 1.2 2012/09/11 12:56:19 kirschen Exp $
 
 #include "TChain.h"
 #include "TString.h"
@@ -214,7 +214,7 @@ void smearJets() {
       std::cout << "smearing " << sif << '\n';
       TString sof = sOutPath.at(sample_i) + "_";
       sof += i;
-      sof += "sam0.root";
+      sof += "_sam0.root";
       smearJetsInFile(sif,sof);
     }
   }
