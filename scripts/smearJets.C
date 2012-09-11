@@ -1,4 +1,4 @@
-// $Id: smearJets.C,v 1.2 2012/09/11 12:56:19 kirschen Exp $
+// $Id: smearJets.C,v 1.3 2012/09/11 12:57:39 kirschen Exp $
 
 #include "TChain.h"
 #include "TString.h"
@@ -175,10 +175,6 @@ void smearJets() {
   std::vector<TString> sOutPath;
   std::vector<TString> scaleFactors;
 
-  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5Calo");
-  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/ak5Calo");
-  scaleFactors.push_back("Calo_JME");
-
   sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5FastPF");
   sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/ak5FastPF");
   scaleFactors.push_back("PF_Matthias");
@@ -193,10 +189,14 @@ void smearJets() {
   scaleFactors.push_back("PF_Matthias_u");
   sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5FastPF");
   sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d/ak5FastPF");
-  scaleFactors.push_back("PF_Matthias");
+  scaleFactors.push_back("PF_Matthias_d");
   sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5PFCHS");
   sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d/ak5PFCHS");
-  scaleFactors.push_back("PF_Matthias");
+  scaleFactors.push_back("PF_Matthias_d");
+
+  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5Calo");
+  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/ak5Calo");
+  scaleFactors.push_back("Calo_JME");
 
 
 
