@@ -205,14 +205,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6PlusS7 \n"
     elif(MC_type=="Z2Star_PU1mioS610mioS7"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6Plus10MioS7 \n"
-    elif(MC_type=="Z253"):
+    elif(MC_type=="Z253" or MC_type=="Z253_Smear" or MC_type=="Z253_SmearU" or MC_type=="Z253_SmearD"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"	
-    elif(MC_type=="Z253_Smear"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"
-    elif(MC_type=="Z253_SmearU"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"
-    elif(MC_type=="Z253_SmearD"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"
     else:
         print "No suitable MC-distribtuion for PU-reweighting found."
 
@@ -325,11 +319,12 @@ def determineDataDirMC(MC,MC_type):
         if(MC_type=="Z253"):
             datadirmc = "/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53"	  
         if(MC_type=="Z253_Smear"):
-            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/"
+            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared"
         if(MC_type=="Z253_SmearU"):
-            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_u/"
+            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_u"
         if(MC_type=="Z253_SmearD"):
-            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d/"	  
+            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d"	  
+
 	    
     if(MC == "F11"):
         if(MC_type=="Z2wPU"):
