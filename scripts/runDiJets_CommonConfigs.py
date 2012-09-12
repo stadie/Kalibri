@@ -201,9 +201,9 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/44XHerwigFall11 \n"
     elif(MC_type=="42Z2wPU"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/42XFall11 \n"
-    elif(MC_type=="Z2Star_PUS6S7"):
+    elif(MC_type=="Z2Star_PUS6S7" or MC_type=="Z2Star_PUS6S7_Smear"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6PlusS7 \n"
-    elif(MC_type=="Z2Star_PU1mioS610mioS7"):
+    elif(MC_type=="Z2Star_PU1mioS610mioS7" or MC_type=="Z2Star_PU1mioS610mioS7_Smear"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6Plus10MioS7 \n"
     elif(MC_type=="Z253" or MC_type=="Z253_Smear" or MC_type=="Z253_SmearU" or MC_type=="Z253_SmearD"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"	
@@ -308,8 +308,12 @@ def determineDataDirMC(MC,MC_type):
     if(MC == "Su12"):
         if(MC_type=="Z2Star_PUS6S7"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1"
+        if(MC_type=="Z2Star_PUS6S7_Smear"):
+            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1_Smeared"
         if(MC_type=="Z2Star_PU1mioS610mioS7"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6Z2star1mio_PUS7Z210mio_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1"
+        if(MC_type=="Z2Star_PU1mioS610mioS7_Smear"):
+            datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/Merge_PUS6Z2star1mio_PUS7Z210mio_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1_Smeared"
         if(MC_type=="Z2Star"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v2/QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_Summer12-PU_S7_START50_V15-v1/merged"
         if(MC_type=="Z2Star52"):
