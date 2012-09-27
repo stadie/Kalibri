@@ -45,19 +45,31 @@ void CaloPFMatching(int low, int high)
   if(verbose)std::cout<<"define histograms"<<endl;
   std::vector<TH2F*> Histograms;
   std::vector<TH2F*> HistsBalance;
+  std::vector<TH2F*> HistsBalanceSame;
+  std::vector<TH2F*> HistsBalanceRR;
   for(int number=0; number<7; number++)
     {
       Histograms.push_back(new TH2F(TString::Format("Eta%d",number),TString::Format("Matching %.3f<|#eta_{PF}|<%.3f",etabins[number],etabins[number+1]), 100, -100, 100, 100, 0, 1));
       Histograms[number]->Sumw2();
-      Histograms[number]->GetXaxis()->SetTitle("p_{T}^{PF}-p_{T}^{Calo}");
-      Histograms[number]->GetYaxis()->SetTitle("dR_{PF, Calo}");    
+      Histograms[number]->GetXaxis()->SetTitle("p_{T}^{PF, jet1}-p_{T}^{Calo, jet1}");
+      Histograms[number]->GetYaxis()->SetTitle("dR_{PF, Calo}^{jet1}");    
       Histograms[number]->SetDrawOption("colz");
       if(verbose)std::cout<<"hist "<<number<<" done"<<endl; 
       HistsBalance.push_back(new TH2F(TString::Format("BEta%d",number),TString::Format("Balance %.3f<|#eta_{PF}|<%.3f",etabins[number],etabins[number+1]), 300, 0, 3, 100, 0, 1));
       HistsBalance[number]->Sumw2();
-      HistsBalance[number]->GetXaxis()->SetTitle("p_{T}^{Calo}/p_{T}^{PF}");
-      HistsBalance[number]->GetYaxis()->SetTitle("dR_{PF, Calo}");    
-      HistsBalance[number]->SetDrawOption("colz");     
+      HistsBalance[number]->GetXaxis()->SetTitle("p_{T}^{Calo, jet1}/p_{T}^{PF, jet2}");
+      HistsBalance[number]->GetYaxis()->SetTitle("dR_{PF, Calo}^{jet1}");    
+      HistsBalance[number]->SetDrawOption("colz");
+      HistsBalanceSame.push_back(new TH2F(TString::Format("BEta%dS",number),TString::Format("Balance %.3f<|#eta_{PF}|<%.3f",etabins[number],etabins[number+1]), 300, 0, 3, 100, 0, 1));
+      HistsBalanceSame[number]->Sumw2();
+      HistsBalanceSame[number]->GetXaxis()->SetTitle("p_{T}^{Calo, jet1}/p_{T}^{PF, jet1}");
+      HistsBalanceSame[number]->GetYaxis()->SetTitle("dR_{PF, Calo}^{jet1}");    
+      HistsBalanceSame[number]->SetDrawOption("colz");
+      HistsBalanceRR.push_back(new TH2F(TString::Format("BEta%dRR",number),TString::Format("Balance %.3f<|#eta_{PF}|<%.3f",etabins[number],etabins[number+1]), 300, 0, 3, 100, 0, 1));
+      HistsBalanceRR[number]->Sumw2();
+      HistsBalanceRR[number]->GetXaxis()->SetTitle("2#frac{p_{T}^{Calo, jet1}-p_{T}^{PF, jet2}}{p_{T}^{Calo, jet1}+p_{T}^{PF, jet2}}");
+      HistsBalanceRR[number]->GetYaxis()->SetTitle("dR_{PF, Calo}^{jet1}");    
+      HistsBalanceRR[number]->SetDrawOption("colz");     
     }
   for(Int_t RunRange=low; RunRange<high; RunRange++) //min 0, max 13
     {
@@ -766,11 +778,15 @@ void CaloPFMatching(int low, int high)
 			    {
 			      Histograms[number]->Fill(PFJetVec1[browse]->Pt()-JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet], dR11);
 			      HistsBalance[number]->Fill(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]/PFJetVec2[browse]->Pt(), dR11);
+			      HistsBalanceSame[number]->Fill(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]/PFJetVec1[browse]->Pt(), dR11);
+			      HistsBalanceRR[number]->Fill(2*(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]-PFJetVec2[browse]->Pt())/(PFJetVec1[browse]->Pt()+PFJetVec2[browse]->Pt()), dR11);
 			    }
 			  if(PFJetVec2[browse]->Eta()>=etabins[number] && PFJetVec2[browse]->Eta()<etabins[number+1])
 			    {
 			      Histograms[number]->Fill(PFJetVec2[browse]->Pt()-JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet], dR22);
 			      HistsBalance[number]->Fill(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]/PFJetVec1[browse]->Pt(), dR22);
+			      HistsBalanceSame[number]->Fill(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]/PFJetVec2[browse]->Pt(), dR22);
+			      HistsBalanceRR[number]->Fill(2*(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]-PFJetVec1[browse]->Pt())/(PFJetVec1[browse]->Pt()+PFJetVec2[browse]->Pt()), dR22);			      
 			    }
 			}
 		    }
@@ -783,11 +799,15 @@ void CaloPFMatching(int low, int high)
 			    {
 			      Histograms[number]->Fill(PFJetVec1[browse]->Pt()-JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet], dR12);
 			      HistsBalance[number]->Fill(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]/PFJetVec2[browse]->Pt(), dR12);
+			      HistsBalanceSame[number]->Fill(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]/PFJetVec1[browse]->Pt(), dR12);
+			      HistsBalanceRR[number]->Fill(2*(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]-PFJetVec2[browse]->Pt())/(PFJetVec1[browse]->Pt()+PFJetVec2[browse]->Pt()), dR12);			      
 			    }
 			  if(PFJetVec2[browse]->Eta()>=etabins[number] && PFJetVec2[browse]->Eta()<etabins[number+1])
 			    {
 			      Histograms[number]->Fill(PFJetVec2[browse]->Pt()-JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet], dR21);
 			      HistsBalance[number]->Fill(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]/PFJetVec1[browse]->Pt(), dR21);
+			      HistsBalanceSame[number]->Fill(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]/PFJetVec2[browse]->Pt(), dR21);
+			      HistsBalanceRR[number]->Fill(2*(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]-PFJetVec1[browse]->Pt())/(PFJetVec1[browse]->Pt()+PFJetVec2[browse]->Pt()), dR21);				      
 			    }
 			}
 		    }
@@ -800,11 +820,15 @@ void CaloPFMatching(int low, int high)
 			    {
 			      Histograms[number]->Fill(PFJetVec1[browse]->Pt()-JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet], dR12);
 			      HistsBalance[number]->Fill(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]/PFJetVec2[browse]->Pt(), dR12);
+			      HistsBalanceSame[number]->Fill(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]/PFJetVec1[browse]->Pt(), dR12);
+			      HistsBalanceRR[number]->Fill(2*(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]-PFJetVec2[browse]->Pt())/(PFJetVec1[browse]->Pt()+PFJetVec2[browse]->Pt()), dR12);			      
 			    }
 			  if(PFJetVec2[browse]->Eta()>=etabins[number] && PFJetVec2[browse]->Eta()<etabins[number+1])
 			    {
 			      Histograms[number]->Fill(PFJetVec2[browse]->Pt()-JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet], dR21);
 			      HistsBalance[number]->Fill(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]/PFJetVec1[browse]->Pt(), dR21);
+			      HistsBalanceSame[number]->Fill(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]/PFJetVec2[browse]->Pt(), dR21);
+			      HistsBalanceRR[number]->Fill(2*(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]-PFJetVec1[browse]->Pt())/(PFJetVec1[browse]->Pt()+PFJetVec2[browse]->Pt()), dR21);			      
 			    }
 			}
 		    }
@@ -817,11 +841,15 @@ void CaloPFMatching(int low, int high)
 			    {
 			      Histograms[number]->Fill(PFJetVec1[browse]->Pt()-JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet], dR11);
 			      HistsBalance[number]->Fill(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]/PFJetVec2[browse]->Pt(), dR11);
+			      HistsBalanceSame[number]->Fill(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]/PFJetVec1[browse]->Pt(), dR11);
+			      HistsBalanceRR[number]->Fill(2*(JetPt[firstjet]*JetCorrL2L3[firstjet]*JetCorrL1[firstjet]-PFJetVec2[browse]->Pt())/(PFJetVec1[browse]->Pt()+PFJetVec2[browse]->Pt()), dR11);			      
 			    }
 			  if(PFJetVec2[browse]->Eta()>=etabins[number] && PFJetVec2[browse]->Eta()<etabins[number+1])
 			    {
 			      Histograms[number]->Fill(PFJetVec2[browse]->Pt()-JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet], dR22);
 			      HistsBalance[number]->Fill(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]/PFJetVec1[browse]->Pt(), dR22);
+			      HistsBalanceSame[number]->Fill(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]/PFJetVec2[browse]->Pt(), dR22);
+			      HistsBalanceRR[number]->Fill(2*(JetPt[secondjet]*JetCorrL2L3[secondjet]*JetCorrL1[secondjet]-PFJetVec1[browse]->Pt())/(PFJetVec1[browse]->Pt()+PFJetVec2[browse]->Pt()), dR22);				      
 			    }
 			}
 		    }
@@ -845,11 +873,18 @@ void CaloPFMatching(int low, int high)
   for(size_t number=0; number<7; number++)
     {
       Histograms[number]->Write();
-      //Histograms[number]->Delete();
       HistsBalance[number]->Write();
-      //HistsBalance[number]->Delete();
+      HistsBalanceSame[number]->Write();
+      HistsBalanceRR[number]->Write();
     }
   f->Close(); 
   }//end loop over runranges
+    for(size_t number=0; number<7; number++)
+    {
+      Histograms[number]->Delete();
+      HistsBalance[number]->Delete();
+      HistsBalanceSame[number]->Delete();
+      HistsBalanceRR[number]->Delete();
+    }
 }
 
