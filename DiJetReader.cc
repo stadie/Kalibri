@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.98 2012/09/10 15:44:05 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.99 2012/09/11 10:06:05 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1467,10 +1467,6 @@ Event* DiJetReader::createDiJetResolutionEventFromSkim() {
   return dijet;
 }
 
-typedef std::pair<float,int> Pt_idx_pair;
-bool Pt_idx_comparator ( const Pt_idx_pair& l, const Pt_idx_pair& r)
-   { return l.first > r.first; }
-
 
 //!  \brief Create an event of type \p TwoJetsPtBalanceEvent
 //!
@@ -1480,26 +1476,24 @@ bool Pt_idx_comparator ( const Pt_idx_pair& l, const Pt_idx_pair& r)
 TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 {
   // Number of jets in the event
-  int nJets = nJet_->NobjJet;
+  size_t nJets = nJet_->NobjJet;
 
-  //Preliminary sorting of jets.
-  std::vector < std::pair <float,int> > corrPt_idx(20);
-  for(int i = 0; i < static_cast<int>(corrPt_idx.size()); ++i) {
-    if( i < nJets ) 
-      corrPt_idx.at(i)=std::make_pair(nJet_->JetCorrL1[i] * nJet_->JetCorrL2[i] * nJet_->JetCorrL3[i] *nJet_->JetPt[i],i); 
-    else 
-      corrPt_idx.at(i)=std::make_pair((float)0.1,(int)0); 
-  }
-  std::sort (corrPt_idx.begin(), corrPt_idx.end(), Pt_idx_comparator);  
-//  for(int i = 0; i < static_cast<int>(corrPt_idx.size()); ++i) {
-//    std::cout << "corrpt: " << corrPt_idx.at(i).first << " index: " <<  corrPt_idx.at(i).second <<  " rawpt: " <<  nJet_->JetPt[corrPt_idx.at(i).second]  <<  " JetArea: " <<  nJet_->JetArea[corrPt_idx.at(i).second] << std::endl;
-//  }
+  if( jetIndices_.size() != 20 ) std::cerr << "%%%%%%%%%%%% WARNING %%%%%%%%%%%%%%%%%\n";
 
-  
+  // Find indices of leading corrected reco jets
+  if( jetIndices_.size() < nJets ) nJets = jetIndices_.size();
+  for(size_t i = 0; i < nJets; ++i) {
+    jetIndices_[i] = new Jet::JetIndex(i,nJet_->JetPt[i]*nJet_->JetCorrL1[i]*nJet_->JetCorrL2L3[i]);
+    }
+    std::sort(jetIndices_.begin(),jetIndices_.begin()+nJets,Jet::JetIndex::ptGreaterThan);
+
+
+
+
   int CorrJetIdx[3];
-  CorrJetIdx[0] = corrPt_idx.at(0).second;
-  CorrJetIdx[1] = corrPt_idx.at(1).second;
-  CorrJetIdx[2] = corrPt_idx.at(2).second;
+  CorrJetIdx[0] = jetIndices_[0]->idx_;
+  CorrJetIdx[1] = jetIndices_[1]->idx_;
+  CorrJetIdx[2] = jetIndices_[2]->idx_;
   
 
   //  if(nJet_->VtxN>6||nJet_->VtxN<5) std::cout << "number of vertices:" << nJet_->VtxN << " number of PU vertices:" << nJet_->PUMCNumVtx  <<std::endl;
@@ -1556,7 +1550,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
   // leading in L1L2L3-corrected pt
 
 
-  for(int i = 0; i < nJets; i++) {
+  for(size_t i = 0; i < nJets; i++) {
     // Jet - GenJet matching
     double dphi         = TVector2::Phi_mpi_pi( nJet_->JetPhi[CorrJetIdx[i]] - nJet_->GenJetPhi[CorrJetIdx[i]] );
     double deta         = nJet_->JetEta[CorrJetIdx[i]] - nJet_->GenJetEta[CorrJetIdx[i]];
