@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.99 2012/09/11 10:06:05 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.100 2012/09/27 13:15:16 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1495,6 +1495,9 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
   CorrJetIdx[1] = jetIndices_[1]->idx_;
   CorrJetIdx[2] = jetIndices_[2]->idx_;
   
+  for(size_t i = 0; i < nJets; ++i) {
+    delete jetIndices_[i];
+  }
 
   //  if(nJet_->VtxN>6||nJet_->VtxN<5) std::cout << "number of vertices:" << nJet_->VtxN << " number of PU vertices:" << nJet_->PUMCNumVtx  <<std::endl;
 
