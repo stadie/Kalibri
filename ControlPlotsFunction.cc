@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.28 2012/05/15 08:14:26 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.29 2012/05/18 18:02:53 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -491,7 +491,7 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetPtL2L3ResCorrected(const Ev
   return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3Res() ;
 }
 
-//!  \brief Returns p_{T} of the jet
+//!  \brief Returns p_{T} of the second jet
 //!
 //!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
 //!  Implements \p Function.
@@ -519,6 +519,36 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected(const Even
 double ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3ResCorrected(const Event *evt) const {
   const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3Res() ;
+}
+
+//!  \brief Returns p_{T} of the leading of the two leading jets
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPt(const Event *evt) const {
+  const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return twoJetsPtBalanceEventJet2Pt(jte) >= twoJetsPtBalanceEventJetPt(jte)? twoJetsPtBalanceEventJet2Pt(jte) : twoJetsPtBalanceEventJetPt(jte);
+}
+
+//!  \brief Returns p_{T} of the leading of the two leading  jet (L2L3-corrected)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3Corrected(const Event *evt) const {
+  const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return twoJetsPtBalanceEventJet2PtL2L3Corrected(jte) >= twoJetsPtBalanceEventJetPtL2L3Corrected(jte)? twoJetsPtBalanceEventJet2PtL2L3Corrected(jte) : twoJetsPtBalanceEventJetPtL2L3Corrected(jte);
+}
+
+//!  \brief Returns p_{T} of the leading of the two leading  jet (L2L3Res-corrected)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3ResCorrected(const Event *evt) const {
+  const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return twoJetsPtBalanceEventJet2PtL2L3ResCorrected(jte) >= twoJetsPtBalanceEventJetPtL2L3ResCorrected(jte)? twoJetsPtBalanceEventJet2PtL2L3ResCorrected(jte) : twoJetsPtBalanceEventJetPtL2L3ResCorrected(jte);
 }
 
 //!  \brief Returns ECal fraction of the jet

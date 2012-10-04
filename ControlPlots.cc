@@ -299,6 +299,12 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
   if( varName == "Jet2Pt" && type == ControlPlotsConfig::L2L3Res  )
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3ResCorrected; 
+  if( varName == "JetLeadPt" && type == ControlPlotsConfig::Uncorrected  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPt; 
+  if( varName == "JetLeadPt" && type == ControlPlotsConfig::L2L3  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3Corrected; 
+  if( varName == "JetLeadPt" && type == ControlPlotsConfig::L2L3Res  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3ResCorrected; 
 //  if( varName == "MeanPt")
 //   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
 //  //    return  &ControlPlotsFunction::twoJetsPtBalanceEventMeanPt;
