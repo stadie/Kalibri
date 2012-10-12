@@ -207,8 +207,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6PlusS7 \n"
     elif(MC_type=="Z2Star_PU1mioS610mioS7" or MC_type=="Z2Star_PU1mioS610mioS7_Smear"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6Plus10MioS7 \n"
-    elif(MC_type=="Z253" or MC_type=="Z253_Smear" or MC_type=="Z253_SmearU" or MC_type=="Z253_SmearD"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"	
+    elif(MC_type=="Z253" or MC_type=="Z253_Smear" or MC_type=="Z253_SmearU" or MC_type=="Z253_SmearD" or MC_type=="Z253_V11_T1"):
+        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"
     else:
         print "No suitable MC-distribtuion for PU-reweighting found."
 
@@ -332,7 +332,8 @@ def determineDataDirMC(MC,MC_type):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_u"
         if(MC_type=="Z253_SmearD"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d"	  
-
+        if(MC_type=="Z253_V11_T1"):
+            datadirmc = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/MCSummer12S10DX53V11_typeI"
 	    
     if(MC == "F11"):
         if(MC_type=="Z2wPU"):
@@ -394,4 +395,4 @@ def determineDataDirMC(MC,MC_type):
 
 
 def importDatatypesNewTrigger():
-    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","Z253","Z253_Smear","Z253_SmearU","Z253_SmearD","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396","2012AB_196531","2012ABC_199011","2012ABC_199429","2012ABC_200601","2012ABC_202305"]
+    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","Z253","Z253_Smear","Z253_SmearU","Z253_SmearD","Z253_V11_T1","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396","2012AB_196531","2012ABC_199011","2012ABC_199429","2012ABC_200601","2012ABC_202305"]
