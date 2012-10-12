@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.101 2012/09/27 13:38:24 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.102 2012/10/04 13:34:11 rathjd Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1478,6 +1478,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
   // Number of jets in the event
   size_t nJets = nJet_->NobjJet;
 
+
   if( jetIndices_.size() != 20 ) std::cerr << "%%%%%%%%%%%% WARNING %%%%%%%%%%%%%%%%%\n";
 
   // Find indices of leading corrected reco jets
@@ -1485,30 +1486,28 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
   for(size_t i = 0; i < nJets; ++i) {
     jetIndices_[i] = new Jet::JetIndex(i,nJet_->JetPt[i]*nJet_->JetCorrL1[i]*nJet_->JetCorrL2L3[i]);
     }
-    std::sort(jetIndices_.begin(),jetIndices_.begin()+nJets,Jet::JetIndex::ptGreaterThan);
-
-
-
+  std::sort(jetIndices_.begin(),jetIndices_.begin()+nJets,Jet::JetIndex::ptGreaterThan);
+  //  if(nJets==2)for(size_t i = 0; i < nJets; ++i)std::cout << "idx: " << jetIndices_[i]->idx_ <<" pt: "<< jetIndices_[i]->pt_<< std::endl;
 
   int CorrJetIdx[3];
-  CorrJetIdx[0] = jetIndices_[0]->idx_;
-  CorrJetIdx[1] = jetIndices_[1]->idx_;
-  CorrJetIdx[2] = jetIndices_[2]->idx_;
+  CorrJetIdx[0] = nJets>=1 ? jetIndices_[0]->idx_ : 0;
+  CorrJetIdx[1] = nJets>=2 ? jetIndices_[1]->idx_ : 0;
+  CorrJetIdx[2] = nJets>=3 ? jetIndices_[2]->idx_ : 0;
   
   for(size_t i = 0; i < nJets; ++i) {
     delete jetIndices_[i];
   }
 
-  //  if(nJet_->VtxN>6||nJet_->VtxN<5) std::cout << "number of vertices:" << nJet_->VtxN << " number of PU vertices:" << nJet_->PUMCNumVtx  <<std::endl;
-
   // There should be at least two jets
   // and at the most three jets
   if( nJets < 2 ) {
-  nDiJetCut_++;
+    nDiJetCut_++;
   return 0;
   } else if(nJets > 3) {
     nJets = 3;
   }
+
+  //  if(nJet_->VtxN>6||nJet_->VtxN<5) std::cout << "number of vertices:" << nJet_->VtxN << " number of PU vertices:" << nJet_->PUMCNumVtx  <<std::endl;
 
   if( std::abs(TVector2::Phi_mpi_pi(nJet_->JetPhi[CorrJetIdx[0]] - nJet_->JetPhi[CorrJetIdx[1]])) < minDeltaPhi_ ) {
     nMinDeltaPhi_++;
