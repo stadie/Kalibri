@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.29 2012/06/26 09:56:49 rathjd Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.30 2012/07/17 15:49:21 rathjd Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -227,9 +227,25 @@ create("2012V8_AK5PFCHS_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/
   create("2012SQLV7_AK5JPT_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L1FastJet_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L2Relative_AK5JPT.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L3Absolute_AK5JPT.txt",L1L2L3);
 
  
-create("2012SQLV7_AK7PF","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L1FastJet_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2Relative_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L3Absolute_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_DATA_L2L3Residual_AK7PF.txt",L1L2L3res);
  
-create("2012SQLV7_AK7PF_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L1FastJet_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L2Relative_AK7PF.txt:/scratch/hh/current/cms/user/kirschen/JECTextFiles/Summer12_V7/Summer12_V7_MC_L3Absolute_AK7PF.txt",L1L2L3);
+  create("2012FallV1_AK7PF","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L1FastJet_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2Relative_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L3Absolute_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2L3Residual_AK7PF.txt",L1L2L3res);
+  create("2012FallV1_AK7PF_MC","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L1FastJet_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L2Relative_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L3Absolute_AK7PF.txt",L1L2L3);
+
+  create("2012FallV1_AK5FastPF","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L1FastJet_AK5PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2Relative_AK5PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L3Absolute_AK5PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2L3Residual_AK5PF.txt",L1L2L3res);
+  create("2012FallV1_AK5FastPF_MC","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L1FastJet_AK5PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L2Relative_AK5PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L3Absolute_AK5PF.txt",L1L2L3);
+
+  create("2012FallV1_AK5FastPFCHS","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L1FastJet_AK5PFchs.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2Relative_AK5PFchs.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L3Absolute_AK5PFchs.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2L3Residual_AK5PFchs.txt",L1L2L3res);
+  create("2012FallV1_AK5FastPFCHS_MC","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L1FastJet_AK5PFchs.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L2Relative_AK5PFchs.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L3Absolute_AK5PFchs.txt",L1L2L3);
+
+  create("2012FallV1_AK5Calo","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L1Offset_AK5Calo.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2Relative_AK5Calo.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L3Absolute_AK5Calo.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2L3Residual_AK5Calo.txt",L1L2L3res);
+  create("2012FallV1_AK5Calo_MC","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L1Offset_AK5Calo.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L2Relative_AK5Calo.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L3Absolute_AK5Calo.txt",L1L2L3);
+
+  create("2012FallV1_AK5JPT","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L1FastJet_AK5JPT.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2Relative_AK5JPT.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L3Absolute_AK5JPT.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2L3Residual_AK5JPT.txt",L1L2L3res);
+  create("2012FallV1_AK5JPT_MC","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L1FastJet_AK5JPT.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L2Relative_AK5JPT.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L3Absolute_AK5JPT.txt",L1L2L3);
+ 
+  create("2012FallV1_AK7PF","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L1FastJet_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2Relative_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L3Absolute_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_DATA_L2L3Residual_AK7PF.txt",L1L2L3res); 
+  create("2012FallV1_AK7PF_MC","/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L1FastJet_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L2Relative_AK7PF.txt:/scratch/hh/dust/naf/cms/user/rathjd/Calibration/CorrectionFactors/Fall12_V1/Fall12_V1_MC_L3Absolute_AK7PF.txt",L1L2L3);
+
 
 }
 
