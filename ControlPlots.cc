@@ -279,6 +279,8 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
 ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type) const {
   if( varName == "RunNumber" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventRunNumber;
+  if( varName == "Phi" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPhi;
   if( varName == "Eta" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
   if( varName == "AbsEta" )

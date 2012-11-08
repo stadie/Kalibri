@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.29 2012/05/18 18:02:53 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.30 2012/10/04 14:42:22 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -249,6 +249,16 @@ double ControlPlotsFunction::twoJetsPtBalanceEventRunNumber(const Event *evt) co
   return jte->runNumber();
 }
 
+
+//!  \brief Returns #phi of the jet
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetPhi(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return jte->getJet1()->phi();
+}
 
 //!  \brief Returns #eta of the jet
 //!
