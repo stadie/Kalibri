@@ -1263,7 +1263,7 @@ TH1D* MCtwo_pt_spectrum_data =  (TH1D*)ftwo->Get("AsymmetryVsPt20/AsymmetryVsPt2
 	if(ptthreecuts[cut_j]=="20"){
 	  cut_i=cut_j;}
 	}
-
+std::cout << "cut_i: " << cut_i << "abseta_i" << Abseta_i << std::endl;
       SLOPE_Abseta_.push_back(all_ptthree_all_Abseta_ratio_res1_  .at(cut_i).at(Abseta_i)->GetFunction("fit_loglin")->GetParameter(1));
       eSLOPE_Abseta_.push_back(all_ptthree_all_Abseta_ratio_res1_  .at(cut_i).at(Abseta_i)->GetFunction("fit_loglin")->GetParError(1));
       CONST_SLOPE_Abseta_.push_back(all_ptthree_all_Abseta_ratio_res1_  .at(cut_i).at(Abseta_i)->GetFunction("fit_loglin")->GetParameter(0));
@@ -1417,11 +1417,11 @@ TH1D* MCtwo_pt_spectrum_data =  (TH1D*)ftwo->Get("AsymmetryVsPt20/AsymmetryVsPt2
   TGraphErrors* Residual_Abseta_correction_res1 = new TGraphErrors(n,&x_Abseta_[0],&y_residual_res1_[0],&ex_Abseta_[0],&ey_residual_res1_[0]);
   Residual_Abseta_correction_res1->SetTitle("Residual correction (res1 constants)");
   Residual_Abseta_correction_res1->SetName("Residual_Abseta_correction_res1");
-  TGraphErrorsstyle(Residual_Abseta_correction_res1,line_styles_, colours_, markers_, 1,1,1,"bla");
+  TGraphErrorsstyle(Residual_Abseta_correction_res1,line_styles_, colours_, markers_, 1,1,1,"#eta(+) - #eta(-)");
   TGraphErrors* Residual_Abseta_correction_val1 = new TGraphErrors(n,&x_Abseta_[0],&y_validation_val1_[0],&ex_Abseta_[0],&ey_validation_val1_[0]);
   Residual_Abseta_correction_val1->SetTitle("Residual correction (on top of L2L3res)");
   Residual_Abseta_correction_val1->SetName("Residual_Abseta_correction_val1");
-  TGraphErrorsstyle(Residual_Abseta_correction_val1,line_styles_, colours_, markers_, 0,0,0,"bla");
+  TGraphErrorsstyle(Residual_Abseta_correction_val1,line_styles_, colours_, markers_, 0,0,0,"#eta(+) - #eta(-)");
 
   TH1D* kFSR_vs_Abseta_histo_res1=new TH1D("kFSR_vs_Abseta_histo_res1", "kFSR_vs_Abseta_histo_res1", zero_eta , &eta_binning[zero_eta]);
   TH1D* kFSR_vs_Abseta_histo_res2=new TH1D("kFSR_vs_Abseta_histo_res2", "kFSR_vs_Abseta_histo_res2", zero_eta , &eta_binning[zero_eta]);
@@ -1440,7 +1440,7 @@ TH1D* MCtwo_pt_spectrum_data =  (TH1D*)ftwo->Get("AsymmetryVsPt20/AsymmetryVsPt2
   TGraphErrors* kFSR_vs_Abseta_res1 = new TGraphErrors(n,&x_Abseta_[0],&y_kFSR_res1_[0],&ex_Abseta_[0],&ey_kFSR_res1_[0]);
   kFSR_vs_Abseta_res1->SetTitle("kFSR (res1)");
   kFSR_vs_Abseta_res1->SetName("kFSR_vs_Abseta_res1");
-  TGraphErrorsstyle(kFSR_vs_Abseta_res1,line_styles_, colours_, markers_, 1,1,1,"bla");
+  TGraphErrorsstyle(kFSR_vs_Abseta_res1,line_styles_, colours_, markers_, 1,1,1,"#eta(+) - #eta(-)");
   TGraphErrors* kFSR_vs_Abseta_val1 = new TGraphErrors(n,&x_Abseta_[0],&y_kFSR_val1_[0],&ex_Abseta_[0],&ey_kFSR_val1_[0]);
   kFSR_vs_Abseta_val1->SetTitle("kFSR (val1idation)");
   kFSR_vs_Abseta_val1->SetName("kFSR_vs_Abseta_val1");
@@ -1456,11 +1456,11 @@ TH1D* MCtwo_pt_spectrum_data =  (TH1D*)ftwo->Get("AsymmetryVsPt20/AsymmetryVsPt2
   TGraphErrors* kFSR_vs_Abseta_res2 = new TGraphErrors(n,&x_Abseta_[0],&y_kFSR_res2_[0],&ex_Abseta_[0],&ey_kFSR_res2_[0]);
   kFSR_vs_Abseta_res2->SetTitle("kFSR (res2)");
   kFSR_vs_Abseta_res2->SetName("kFSR_vs_Abseta_res2");
-  TGraphErrorsstyle(kFSR_vs_Abseta_res2,line_styles_, colours_, markers_, 1,1,1,"bla");
+  TGraphErrorsstyle(kFSR_vs_Abseta_res2,line_styles_, colours_, markers_, 1,1,1,"#eta(+) - #eta(-)");
   TGraphErrors* kFSR_vs_Abseta_val2 = new TGraphErrors(n,&x_Abseta_[0],&y_kFSR_val2_[0],&ex_Abseta_[0],&ey_kFSR_val2_[0]);
   kFSR_vs_Abseta_val2->SetTitle("kFSR (val1idation)");
   kFSR_vs_Abseta_val2->SetName("kFSR_vs_Abseta_val2");
-  TGraphErrorsstyle(kFSR_vs_Abseta_val2,line_styles_, colours_, markers_, 0,0,0,"bla");
+  TGraphErrorsstyle(kFSR_vs_Abseta_val2,line_styles_, colours_, markers_, 0,0,0,"#eta(+) - #eta(-)");
 
 
   std::vector <Double_t> SLOPE_eta_;
@@ -2037,12 +2037,13 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
   myfile.open (fine_coarse+"_"+ generatorone+"_L2L3Residual_AK5"+jet_type+".txt");
   myfile << "{ 1 JetEta 1 JetPt [0] Correction L2Relative}\n";
   //  Double_t L3_abs_offset=1.010;
-  Double_t L3_abs_offset=1.025;
+  //Double_t L3_abs_offset=1.025;
+  Double_t L3_abs_offset=1.014;
   //  myfile << L3_abs_offset  << "\n";
 
   for(Int_t eta_i=0;eta_i<no_eta;eta_i++){
 
-    myfile << setw(15) << eta_binning[eta_i] << "   \t" << setw(10)  << eta_binning[eta_i+1] << "    3     3     3500    \t"  << setw(10) << Residual_eta_correction_histo_res1->GetBinContent(eta_i+1)*L3_abs_offset << "\n";
+    myfile << setw(15) << eta_binning[eta_i] << "       " << setw(10)  << eta_binning[eta_i+1] << "    3     3     3500        "  << setw(10) << Residual_eta_correction_histo_res1->GetBinContent(eta_i+1)*L3_abs_offset << "\n";
 
 
     //      TH1D* Residual_eta_correction_histo_res1=new TH1D("Residual_eta_correction_histo_res1", "Residual_eta_correction_histo_res1", no_eta , &eta_binning[0]);
@@ -2073,7 +2074,7 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
     cout << Abseta_i << endl;
     Double_t kFSR_value = kFSR_vs_Abseta_histo_res1->GetBinContent(kFSR_vs_Abseta_histo_res1->FindBin( std::abs( (eta_binning[eta_i]+ eta_binning[eta_i+1])/2 )));
     
-    myfile << setw(15) << eta_binning[eta_i] << "   \t" << setw(10)  << eta_binning[eta_i+1] << "    5     \t"  << setw(10)  <<  all_ptthree_all_Abseta_res1_ptreach_.at(cut_20).at(Abseta_i).first << setw(15) <<all_ptthree_all_Abseta_res1_ptreach_.at(cut_20).at(Abseta_i).second << setw(15) << kFSR_value*L3_abs_offset << setw(15) << Residual_const_slope_eta_correction_histo_res1->GetBinContent(eta_i+1) << setw(15) << Residual_slope_eta_correction_histo_res1->GetBinContent(eta_i+1) << "\n";
+    myfile << setw(15) << eta_binning[eta_i] << "       " << setw(10)  << eta_binning[eta_i+1] << "    5         "  << setw(10)  <<  all_ptthree_all_Abseta_res1_ptreach_.at(cut_20).at(Abseta_i).first << setw(15) <<all_ptthree_all_Abseta_res1_ptreach_.at(cut_20).at(Abseta_i).second << setw(15) << kFSR_value*L3_abs_offset << setw(15) << Residual_const_slope_eta_correction_histo_res1->GetBinContent(eta_i+1) << setw(15) << Residual_slope_eta_correction_histo_res1->GetBinContent(eta_i+1) << "\n";
 
     //      TH1D* Residual_eta_correction_histo_res1=new TH1D("Residual_eta_correction_histo_res1", "Residual_eta_correction_histo_res1", no_eta , &eta_binning[0]);
 
@@ -2090,7 +2091,7 @@ c->Print("Pt_Spectrum_"+ generatortwo+"_overlay"+image_ext);
 
   for(Int_t eta_i=0;eta_i<no_eta;eta_i++){
     Int_t Abseta_i=TMath::Abs(TMath::Abs(eta_i-zero_eta+0.75));
-    myfile << setw(15) << eta_binning[eta_i] << "   \t" << setw(10)  << eta_binning[eta_i+1] << "    3     3     3500    \t"  << setw(10) << Residual_Abseta_correction_histo_res1->GetBinContent(kFSR_vs_Abseta_histo_res1->FindBin( std::abs( (eta_binning[eta_i]+ eta_binning[eta_i+1])/2 )))*L3_abs_offset << "\n";
+    myfile << setw(15) << eta_binning[eta_i] << "       " << setw(10)  << eta_binning[eta_i+1] << "    3     3     3500        "  << setw(10) << Residual_Abseta_correction_histo_res1->GetBinContent(kFSR_vs_Abseta_histo_res1->FindBin( std::abs( (eta_binning[eta_i]+ eta_binning[eta_i+1])/2 )))*L3_abs_offset << "\n";
 
 
   }
