@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.17 2012/05/29 10:01:57 kirschen Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.18 2012/06/08 15:29:04 kirschen Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -257,10 +257,10 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   name << "Di-Jet Control" << id;
   nDijetEvents_ = config_->read<int>("use "+name.str()+" events",0);
   //hack disable trigger
-  requireTrigger_ = false;
+  //  requireTrigger_ = false;
   for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
 	    i != readers_.end() ; ++i) {
-    (*i)->reader()->requireTrigger_ = false;
+    //    (*i)->reader()->requireTrigger_ = false;
   //hack: just set weights of data equal to one.
     (*i)->reader()->weights_eq_one_=false;
 

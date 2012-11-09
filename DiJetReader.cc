@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.102 2012/10/04 13:34:11 rathjd Exp $
+//    $Id: DiJetReader.cc,v 1.103 2012/10/12 06:39:50 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -727,7 +727,7 @@ int DiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   name << "Di-Jet Control" << id;
   nDijetEvents_ = config_->read<int>("use "+name.str()+" events",0); 
   //hack: disable trigger selection after first reading
-  requireTrigger_ = false;
+  //  requireTrigger_ = false;
   if(nDijetEvents_ == 0) return 0;
   TTree* tree = createTree(name.str());
   if(tree->GetEntries() == 0) return 0;  
