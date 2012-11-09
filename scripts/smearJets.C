@@ -1,4 +1,4 @@
-// $Id: smearJets.C,v 1.3 2012/09/11 12:57:39 kirschen Exp $
+// $Id: smearJets.C,v 1.4 2012/09/11 12:58:51 kirschen Exp $
 
 #include "TChain.h"
 #include "TString.h"
@@ -175,28 +175,91 @@ void smearJets() {
   std::vector<TString> sOutPath;
   std::vector<TString> scaleFactors;
 
-  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5FastPF");
-  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/ak5FastPF");
+//  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5FastPF");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/ak5FastPF");
+//  scaleFactors.push_back("PF_Matthias");
+//  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5PFCHS");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/ak5PFCHS");
+//  scaleFactors.push_back("PF_Matthias");
+//  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5FastPF");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_u/ak5FastPF");
+//  scaleFactors.push_back("PF_Matthias_u");
+//  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5PFCHS");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_u/ak5PFCHS");
+//  scaleFactors.push_back("PF_Matthias_u");
+//  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5FastPF");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d/ak5FastPF");
+//  scaleFactors.push_back("PF_Matthias_d");
+//  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5PFCHS");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d/ak5PFCHS");
+//  scaleFactors.push_back("PF_Matthias_d");
+//
+//  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5Calo");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/ak5Calo");
+//  scaleFactors.push_back("Calo_JME");
+
+
+//  sInPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6Z2star1mio_PUS7Z210mio_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1/ak5FastPF");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/Merge_PUS6Z2star1mio_PUS7Z210mio_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1_Smeared/ak5FastPF");
+//  scaleFactors.push_back("PF_Matthias");
+//  sInPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6Z2star1mio_PUS7Z210mio_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1/ak5PFCHS");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/Merge_PUS6Z2star1mio_PUS7Z210mio_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1_Smeared/ak5PFCHS");
+//  scaleFactors.push_back("PF_Matthias");
+//  sInPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6Z2star1mio_PUS7Z210mio_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1/ak5Calo");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/Merge_PUS6Z2star1mio_PUS7Z210mio_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1_Smeared/ak5Calo");
+//  scaleFactors.push_back("Calo_JME");
+
+
+//  sInPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1/ak5FastPF");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1_Smeared/ak5FastPF");
+//  scaleFactors.push_back("PF_Matthias");
+//  sInPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1/ak5PFCHS");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1_Smeared/ak5PFCHS");
+//  scaleFactors.push_back("PF_Matthias");
+//  sInPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v3/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1/ak5Calo");
+//  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/Merge_PUS6_PUS7_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-_START52_V9-v1_Smeared/ak5Calo");
+//  scaleFactors.push_back("Calo_JME");
+
+
+  TString sinprefix="/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged/";
+  TString soutprefix="/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/SmearedNom_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/";
+
+  sInPath.push_back(sinprefix+"ak5FastPF");
+  sOutPath.push_back(soutprefix+"ak5FastPF");
   scaleFactors.push_back("PF_Matthias");
-  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5PFCHS");
-  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/ak5PFCHS");
+
+  sInPath.push_back(sinprefix+"ak5PFCHS");
+  sOutPath.push_back(soutprefix+"ak5PFCHS");
   scaleFactors.push_back("PF_Matthias");
-  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5FastPF");
-  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_u/ak5FastPF");
+
+
+  sInPath.push_back(sinprefix+"ak5Calo");
+  sOutPath.push_back(soutprefix+"ak5Calo");
+  scaleFactors.push_back("Calo_JME");
+
+  sInPath.push_back(sinprefix+"ak5JPT");
+  sOutPath.push_back(soutprefix+"ak5JPT");
+  scaleFactors.push_back("JPT_JME");
+
+
+  soutprefix="/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/SmearedUp_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/";
+  sInPath.push_back(sinprefix+"ak5FastPF");
+  sOutPath.push_back(soutprefix+"ak5FastPF");
   scaleFactors.push_back("PF_Matthias_u");
-  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5PFCHS");
-  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_u/ak5PFCHS");
+
+  sInPath.push_back(sinprefix+"ak5PFCHS");
+  sOutPath.push_back(soutprefix+"ak5PFCHS");
   scaleFactors.push_back("PF_Matthias_u");
-  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5FastPF");
-  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d/ak5FastPF");
-  scaleFactors.push_back("PF_Matthias_d");
-  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5PFCHS");
-  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d/ak5PFCHS");
+
+
+  soutprefix="/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/SmearedDown_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/";
+  sInPath.push_back(sinprefix+"ak5FastPF");
+  sOutPath.push_back(soutprefix+"ak5FastPF");
   scaleFactors.push_back("PF_Matthias_d");
 
-  sInPath.push_back("/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53/ak5Calo");
-  sOutPath.push_back("/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared/ak5Calo");
-  scaleFactors.push_back("Calo_JME");
+  sInPath.push_back(sinprefix+"ak5PFCHS");
+  sOutPath.push_back(soutprefix+"ak5PFCHS");
+  scaleFactors.push_back("PF_Matthias_d");
 
 
 
@@ -210,11 +273,11 @@ void smearJets() {
     for(int i = 0 ; i < 10 ; ++i) {
       TString sif = sInPath.at(sample_i)  + "_";
       sif += i;
-      sif +="_sam0.root";
+      sif +=".root";
       std::cout << "smearing " << sif << '\n';
       TString sof = sOutPath.at(sample_i) + "_";
       sof += i;
-      sof += "_sam0.root";
+      sof += ".root";
       smearJetsInFile(sif,sof);
     }
   }
