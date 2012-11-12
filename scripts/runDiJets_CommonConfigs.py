@@ -212,7 +212,7 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6PlusS7 \n"
     elif(MC_type=="Z2Star_PU1mioS610mioS7" or MC_type=="Z2Star_PU1mioS610mioS7_Smear"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6Plus10MioS7 \n"
-    elif(MC_type=="Z253" or MC_type=="Z253_Smear" or MC_type=="Z253_SmearU" or MC_type=="Z253_SmearD" or MC_type=="Z253_V11_T1" or "Z253_V11_T1T2"):
+    elif(MC_type=="Z253" or MC_type=="Z253_Smear" or MC_type=="Z253_SmearU" or MC_type=="Z253_SmearD" or MC_type=="Z253_V11_T1" or "Z253_V11_T1T2" or "Z253_V11_T1T2Smear" or "Z253_V11_T1T2SmearU" or "Z253_V11_T1T2SmearD"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"
     else:
         print "No suitable MC-distribtuion for PU-reweighting found."
@@ -342,7 +342,13 @@ def determineDataDirMC(MC,MC_type):
         if(MC_type=="Z253_V11_T1"):
             datadirmc = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/MCSummer12S10DX53V11_typeI"
         if(MC_type=="Z253_V11_T1T2"):
-            datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v2/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
+            datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
+        if(MC_type=="Z253_V11_T1T2Smear"): #fastpf, pfchs, calo, jpt
+            datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/SmearedNom_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/"
+        if(MC_type=="Z253_V11_T1T2SmearU"): #fastpf, pfchs
+            datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/SmearedUp_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/"
+        if(MC_type=="Z253_V11_T1T2SmearD"): #fastpf, pfchs
+            datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/SmearedDown_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/"
 	    
     if(MC == "F11"):
         if(MC_type=="Z2wPU"):
