@@ -1,5 +1,5 @@
 //
-//    $Id: JetMETCorFactorsFactory.cc,v 1.32 2012/10/18 14:34:34 rathjd Exp $
+//    $Id: JetMETCorFactorsFactory.cc,v 1.33 2012/11/05 13:07:32 rathjd Exp $
 //   
 #include "JetMETCorFactorsFactory.h"
 #include "CorFactors.h"
@@ -65,7 +65,7 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j,int nPV, double rho, do
 			  1.0,1.0,1.0,0.0,0.0);			
   case L1L2L3:
     return new CorFactors(levels[0],
-!			  levels[1]/levels[0],
+			  levels[1]/levels[0],
 			  levels[2]/levels[1],
 			  1.0,1.0,1.0,0.0,0.0);
   case L2L3res:
