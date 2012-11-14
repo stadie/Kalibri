@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.18 2012/06/08 15:29:04 kirschen Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.19 2012/11/09 09:05:07 kirschen Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -258,19 +258,21 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   nDijetEvents_ = config_->read<int>("use "+name.str()+" events",0);
   //hack disable trigger
   //  requireTrigger_ = false;
+
+  //read in name for updating corrections from config file
+  std::string jcn = config_->read<string>("MC jet correction name",config_->read<string>("jet correction name",""));//use jet correction name as default for MC jet correction name for downward compatibility
+
   for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
 	    i != readers_.end() ; ++i) {
     //    (*i)->reader()->requireTrigger_ = false;
-  //hack: just set weights of data equal to one.
+    //hack: just set weights of data equal to one.
     (*i)->reader()->weights_eq_one_=false;
-
+    (*i)->reader()->updateCorFactorsFactory(jcn); //update corfactors for each individual (daughter) reader
   }
+  updateCorFactorsFactory(jcn);
   if(nDijetEvents_ == 0) return 0;
   tree_ = createTree(name.str());
   if(tree_->GetEntries() == 0) return 0;
-  //  delete corFactorsFactory_;
-  std::string jcn = config_->read<string>("MC jet correction name",config_->read<string>("jet correction name",""));//use jet correction name as default for MC jet correction name for downward compatibility
-  updateCorFactorsFactory(jcn);
   int nev = readEvents(control);
   std::cout << "Will use events for control plots.\n";
   return nev;
