@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: ThreadedDiJetReader.cc,v 1.19 2012/11/09 09:05:07 kirschen Exp $
+//    $Id: ThreadedDiJetReader.cc,v 1.20 2012/11/14 18:20:22 kirschen Exp $
 //   
 #include "ThreadedDiJetReader.h"
 
@@ -262,12 +262,18 @@ int ThreadedDiJetReader::readControlEvents(std::vector<Event*>& control, int id)
   //read in name for updating corrections from config file
   std::string jcn = config_->read<string>("MC jet correction name",config_->read<string>("jet correction name",""));//use jet correction name as default for MC jet correction name for downward compatibility
 
+  //do configurations for mother object (ThreadedDiJetReader) and daughters (readers)
+  weights_eq_one_=false;
+  updateCorFactorsFactory(jcn);
+  readingInControlEvents_=true;
+
   for(std::vector<ReadThread*>::iterator i = readers_.begin() ;
 	    i != readers_.end() ; ++i) {
     //    (*i)->reader()->requireTrigger_ = false;
     //hack: just set weights of data equal to one.
     (*i)->reader()->weights_eq_one_=false;
     (*i)->reader()->updateCorFactorsFactory(jcn); //update corfactors for each individual (daughter) reader
+    (*i)->reader()->readingInControlEvents_=true;
   }
   updateCorFactorsFactory(jcn);
   if(nDijetEvents_ == 0) return 0;
