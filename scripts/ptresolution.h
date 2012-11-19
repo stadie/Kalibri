@@ -6,6 +6,7 @@
 
 #include "TMath.h"
 
+namespace ptResolutionForSmearing {
 
 // Hauke's resolutions
 int _nres = 6;
@@ -83,5 +84,6 @@ double getScaleFactor(float eta){
 }
 
 
+}
 
 #endif // __ptresolution_h__

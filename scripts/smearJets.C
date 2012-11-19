@@ -1,4 +1,4 @@
-// $Id: smearJets.C,v 1.4 2012/09/11 12:58:51 kirschen Exp $
+// $Id: smearJets.C,v 1.5 2012/11/09 13:22:48 kirschen Exp $
 
 #include "TChain.h"
 #include "TString.h"
@@ -108,7 +108,7 @@ void smearJetsInFile(const char* path,const char* outpath) {
       //do not let JetCorrL1 be negative...
       float diff = max(JetCorrL1[id],(Float_t)0.0001) * JetCorrL2L3[id] * JetPtold[id] - GenJetColPt[j];
       float smearfactor = 1.0;
-      smearfactor = getScaleFactor(JetEta[id]);
+      smearfactor = ptResolutionForSmearing::getScaleFactor(JetEta[id]);
       if(TMath::IsNaN(smearfactor)){
 	cout << "DEBUG... GenJetColPt[j]: " << GenJetColPt[j] << " JetEta[id]: " << JetEta[id] <<  endl;
       }
@@ -269,7 +269,7 @@ void smearJets() {
 
 
   for(unsigned int sample_i = 0 ; sample_i < sOutPath.size() ; ++sample_i) {
-    configureSmearfactor(scaleFactors.at(sample_i));
+    ptResolutionForSmearing::configureSmearfactor(scaleFactors.at(sample_i));
     for(int i = 0 ; i < 10 ; ++i) {
       TString sif = sInPath.at(sample_i)  + "_";
       sif += i;
