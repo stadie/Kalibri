@@ -3,7 +3,7 @@
 import os
 import sys
 import ConfigParser
-from runDiJets_CommonConfigs import BinningValues, TriggerNamesThresholds, PUWeightingInfo, determineDataDir, determineDataDirMC, importDatatypesNewTrigger
+from runDiJets_CommonConfigs import BinningValues, TriggerNamesThresholds, PUWeightingInfo, determineDataDir, determineDataDirMC, importDatatypesNewTrigger, configureJERsmearing
 
 Usage="""
 ##############################################################################################
@@ -125,6 +125,7 @@ jet binning emf bins = 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
 #---------------------------------------------------------------------------------
 #   Analyses (GammaJet, TrackTower, ... )
 #---------------------------------------------------------------------------------
+SuppDiJet Max cut on L2L3-corrected asymmetry = 0.7 # was 0.4
 Et cut on jet              = 0.0
 Et cut on gamma            = 0.0
 Et cut on Z                = 20.0
@@ -597,15 +598,17 @@ AsymmetryVsMCNPUTruth20_pt_bin_all_eta input samples     =  0:data;1:MC
 
     if(SINGLEJET==1):
         fcfg.write("Use single jet triggers = true\n")
-    trigger_names = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"names")
+#    trigger_names = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"names")
     fcfg.write(trigger_names)
-    trigger_thresholds = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"thresholds")
+#    trigger_thresholds = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"thresholds")
     fcfg.write(trigger_thresholds)
         
     if(input != ""):
         fcfg.write("input calibration = Kalibri; "+input+"\n");
 
     fcfg.write("correct jets L1 = "+ CORRECT_JETS_L1 + "\n");
+    fcfg.write("correct JEC and scale JER = "+ SMEAR_JER + "\n");
+    fcfg.write("correct JEC and scale JER name = "+ configureJERsmearing(jettype) + "\n");
     fcfg.write("fire all triggers = " + MC_fire_all_triggers +"\n");
     fcfg.write("DiJetEventCuts = true\n");
     fcfg.write("EventWeightProcessor = true\n");
@@ -688,7 +691,7 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="53fbSingleJetAK5"
+DIR_JETALGO="TestAK5"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
@@ -700,11 +703,15 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="ntuple"
+CORRECTION="2012SQLV7_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
 CORRECT_JETS_L1="true"
+##################################
+## Switch to decide whether JER should be smeared in control events (MC)
+##################################
+SMEAR_JER="true"
 ##################################
 ## DATAYEAR variable used to determine trigger thresholds, datasets, ...
 ##################################
@@ -712,7 +719,7 @@ DATAYEAR = "2012"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "2012AB_196531"
+DATATYPE = "2012AB_194076"
 ##################################
 ## choose binning in eta, currently only "kostas" and "k_HFfix" are properly defined here
 ##################################
@@ -720,7 +727,7 @@ BINNING="kostas"
 ##################################
 ## Use single jet triggers if =1 (influences trigger thresholds and trigger pt variables in runtime, look for useSingleJetTriggers_ in code)
 ##################################
-SINGLEJET=1
+SINGLEJET=0
 ##################################
 ## Choose MC-generation 
 ##################################
@@ -728,7 +735,7 @@ MC = "Su12"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-MC_type="Z2Star_PUS6S7"
+MC_type="Z253_Smear"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
@@ -834,6 +841,11 @@ datadir   = determineDataDir(DATAYEAR,DATATYPE)
 datadirmc = determineDataDirMC(MC,MC_type)
 
 
+trigger_thresholds = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"thresholds")
+trigger_names = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"names")
+RawTrigger_thresholds = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"RawThresholds")
+
+
 if (len(sys.argv) > 6):
     print "even override datadirmc from cmdline-options... "
     datadirmc=sys.argv[6]
@@ -843,12 +855,12 @@ if (len(sys.argv) > 6):
 
 
 
-nthreads = 24
-niothreads = 24
+nthreads = 1
+niothreads = 1
 nevents =  -1
 #nthreads = 1
 #niothreads = 1
-MAIN_dirname = "/afs/cern.ch/user/k/kirschen/scratch0/KaliriTemp/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/KalibriTEST/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
