@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.31 2012/11/08 14:47:03 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.32 2012/11/20 14:47:44 rathjd Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -566,7 +566,7 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetLead2Pt(const Event *evt) c
   if(jte->getJet1()->eta()<1.3)
    {
      if(jte->getJet1()->pt() > jte->getJet2()->pt())return jte->getJet1()->pt(); 	 
-     else if(jte->getJet2()->eta()<1.3)return jte->getJet2()->pt());
+     else if(jte->getJet2()->eta()<1.3)return jte->getJet2()->pt();
      else return jte->getJet1()->pt();
    }
   else return jte->getJet2()->pt();
