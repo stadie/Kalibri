@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.104 2012/11/09 09:05:07 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.105 2012/11/19 14:27:09 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -96,6 +96,13 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   nMaxVtxN_  =  config_->read<int>("MAX n reco Vtx",10000);
   nMinVtxN_  =  config_->read<int>("MIN n reco Vtx",0);
 
+  std::vector<double> JEREtaBinning = bag_of<double>(config_->read<std::string>("JER binning in |eta|","0 5.2"));
+  if(JEREtaBinning.size()<=2)std::cout << "WARNING: JER binning in |eta| might not have been set up properly" << std::endl;
+  for(size_t i = 0, l = JEREtaBinning.size() ; i < l ; i++){
+    if(i<l-1&&i>=0)assert(JEREtaBinning.at(i)<JEREtaBinning.at(i+1));
+    JEREtaMap_[JEREtaBinning.at(i)]=i;
+    //    std::cout << "JER Eta Binning: " << JEREtaBinning.at(i) << std::endl;
+  }
 
   //read trigger map
   std::vector<std::string> trignames = bag_of_string(config_->read<std::string>("Di-Jet trigger names",""));
@@ -496,16 +503,6 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     nJet_->HltDiJetAve370=true;
   }
 
-  std::map<float,int> JEREtaMap;
-  std::map<float,int>::iterator itjet1,itjet2;
-  JEREtaMap[0.0]=0;
-  JEREtaMap[0.5]=1;
-  JEREtaMap[1.0]=2;
-  JEREtaMap[1.5]=3;
-  JEREtaMap[2.0]=4;
-  JEREtaMap[3.0]=5;
-  JEREtaMap[5.2]=6;
-
 
   // Read the events
   //std::cout << "reading " << nevent << " events...\n";
@@ -546,8 +543,9 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
       if(JERReadInJ1J2SameEtaBin_){
 	// quick and dirty code for JER
 	if(td) {
-	  itjet1=JEREtaMap.lower_bound(std::abs(td->getJet1()->eta()));
-	  itjet2=JEREtaMap.lower_bound(std::abs(td->getJet2()->eta()));
+	  std::map<float,int>::iterator itjet1,itjet2;
+	  itjet1=JEREtaMap_.lower_bound(std::abs(td->getJet1()->eta()));
+	  itjet2=JEREtaMap_.lower_bound(std::abs(td->getJet2()->eta()));
 	  if(itjet1==itjet2){
 	    data.push_back(td); 
 	    ++nGoodEvts_;

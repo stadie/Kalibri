@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.39 2012/07/25 10:09:53 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.40 2012/11/19 14:27:09 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -87,7 +87,8 @@ class DiJetReader : public EventReader{
   int    prescale_;             //!< only read every nth event
   bool   weights_eq_one_;       //!< force weight for each event to one
   bool   fire_all_dijet_triggers_;       //!< Set all trigger btis to one (branches need to be revised...)
-  bool   JERReadInJ1J2SameEtaBin_;       //!< Read in events in same eta bin (not central + any eta) for JER studies; thresholds defined in JEREtaMap
+  bool   JERReadInJ1J2SameEtaBin_;       //!< Read in events in same eta bin (not central + any eta) for JER studies; thresholds defined in JEREtaMap_
+  std::map<float,int> JEREtaMap_;
   bool   HFAsReferenceRegion_;       //!< Use HF as reference region for TwoJetsPtBalanceEvent  (probe jet in eta>3 )
   bool   correctJECandScaleJER_;     //!< update JEC and scale JER in control events
   bool   readingInControlEvents_;    //!< bool to determine whether this reader is used for reading in cotrol events (default false, altered by readControlEvents(std::vector<Event*>& control, int id))

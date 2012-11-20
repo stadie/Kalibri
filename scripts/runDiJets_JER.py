@@ -302,9 +302,9 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
 
 
     fcfg.write("JetEta1VsJetEta2 x variable        =  Jet2Eta\n")
-    fcfg.write("JetEta1VsJetEta2 x edges           =  31 -5.2 5.2\n")
+    fcfg.write("JetEta1VsJetEta2 x edges           =  51 -5.2 5.2\n")
     fcfg.write("JetEta1VsJetEta2 y variable        =  Eta\n")
-    fcfg.write("JetEta1VsJetEta2 y edges           =  31 -5.2 5.2 -5.2 5.2 \n")
+    fcfg.write("JetEta1VsJetEta2 y edges           =  51 -5.2 5.2 -5.2 5.2 \n")
     fcfg.write("JetEta1VsJetEta2 bin variable      =  MeanPt \n")
     fcfg.write("JetEta1VsJetEta2 bin edges         =  20 30 50 80 120 200 360 500 900 7000 \n")
     fcfg.write("JetEta1VsJetEta2 cut variable      =  ThirdJetFractionPlain\n")
@@ -379,6 +379,7 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
 
     fcfg.write("correct jets L1 = "+ CORRECT_JETS_L1 + "\n");
     fcfg.write("fire all triggers = " + MC_fire_all_triggers +"\n");
+    fcfg.write("JER binning in |eta| = " + abs_binning_values + "\n")
     fcfg.write("DiJetEventCuts = true\n");
     fcfg.write("EventWeightProcessor = true\n");
     fcfg.write("EventBinning = false\n");
@@ -610,7 +611,7 @@ niothreads = 2
 #nevents =  -1
 #nthreads = 1
 #niothreads = 1
-nevents =  100
+nevents =  10000
 MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
