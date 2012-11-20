@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: DiJetEventWeighting.cc,v 1.8 2012/05/18 19:01:42 kirschen Exp $
+//    $Id: DiJetEventWeighting.cc,v 1.9 2012/09/10 15:44:05 kirschen Exp $
 //   
 #include "DiJetEventWeighting.h"
 
@@ -47,11 +47,29 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
   std::cout << "  " << control1.size() << " events in control1" << std::endl;
   //  std::cout << data.size() << " events in data" << std::endl;
 
+
+
+  // do MC-cleaning on "data" as well, in case the data event vector actually contains MC events, test done on first event in data vector
+  
+  if(data.front()->type() != PtBalance) std::cout << "Warning: No TwoJetsPtBalanceEvent! ";
+  TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(data.front());
+  bool dataIsActuallyMC = tje->ptHat() >0 ? true : false;
+
+  std::vector<Event*>::iterator bound;
+  if(dataIsActuallyMC){
+  CheckStrangeEventDiJetEventWeighting MCDATApassCheckStrangeEventDiJetEventWeighting(this);
+  bound= partition(data.begin(),data.end(),MCDATApassCheckStrangeEventDiJetEventWeighting);
+  data.erase(bound,data.end());
+  std::cout << "after checking for strange response in data (which actually is MC):" << std::endl;
+  std::cout << "  " << data.size() << " events in MC labelled as data" << std::endl;
+  }
+
+
+
   //count events in data and control sample
 
   //delete events that do not pass trigger thresholds (after JEC)
   CheckBadEventDiJetEventWeighting passCheckBadEventDiJetEventWeighting(this);
-  std::vector<Event*>::iterator bound;
   bound= partition(data.begin(),data.end(),passCheckBadEventDiJetEventWeighting);
   data.erase(bound,data.end());
 
@@ -81,6 +99,8 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
   std::cout << "end DiJetEventWeighting with:" << std::endl;
   std::cout << "  " << data.size() << " events in data" << std::endl;
   std::cout << "  " << control1.size() << " events in control1" << std::endl;
+
+
 
 
   return ndata_.size();
