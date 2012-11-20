@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.30 2012/10/04 14:42:22 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.31 2012/11/08 14:47:03 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -560,7 +560,51 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3ResCorrected(cons
   const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   return twoJetsPtBalanceEventJet2PtL2L3ResCorrected(jte) >= twoJetsPtBalanceEventJetPtL2L3ResCorrected(jte)? twoJetsPtBalanceEventJet2PtL2L3ResCorrected(jte) : twoJetsPtBalanceEventJetPtL2L3ResCorrected(jte);
 }
+//////////////////////////////////////////////////////////////////////////////////
+double ControlPlotsFunction::twoJetsPtBalanceEventJetLead2Pt(const Event *evt) const {
+  const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  if(jte->getJet1()->eta()<1.3)
+   {
+     if(jte->getJet1()->pt() > jte->getJet2()->pt())return jte->getJet1()->pt(); 	 
+     else if(jte->getJet2()->eta()<1.3)return jte->getJet2()->pt());
+     else return jte->getJet1()->pt();
+   }
+  else return jte->getJet2()->pt();
+}
 
+//!  \brief Returns p_{T} of the leading of the two leading  barrel jets  (L2L3-corrected)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3Corrected(const Event *evt) const {
+  const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  if(jte->getJet1()->eta()<1.3)
+   {
+     if(jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3() > jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3())return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3(); 	 
+     else if(jte->getJet2()->eta()<1.3)return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3();
+     else return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3();
+   }
+  else return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3();
+}
+
+//!  \brief Returns p_{T} of the leading of the two leading barrel jets (L2L3Res-corrected)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3ResCorrected(const Event *evt) const {
+  const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  if(jte->getJet1()->eta()<1.3)
+   {
+     if(jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3Res() > jte->getJet2()->pt() *
+     jte->getJet2()->corFactors().getL2L3Res())return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3Res(); 	 
+     else if(jte->getJet2()->eta()<1.3)return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3Res();
+     else return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3Res();
+   }
+  else return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3Res();
+}
+////////////////////////////////////////////////////////////////////////////////
 //!  \brief Returns ECal fraction of the jet
 //!
 //!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
