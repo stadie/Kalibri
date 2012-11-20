@@ -39,7 +39,25 @@ def TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettyp
     trigger_thresholds   = "dummy"
     trigger_names        = "dummy"
     print "Trying to determine triggernamesthresholds with DATAYEAR " + str(DATAYEAR) + " USE_NEW_TRIGGERS_AND_FASTPF: " + str(USE_NEW_TRIGGERS_AND_FASTPF) + " SINGLEJET: " +str(SINGLEJET) +" jettype: " + str(jettype) + " NamesThresholds: " + str(NamesThresholds)
-    if(DATAYEAR == "2012"):
+    if(DATAYEAR == "MC2012"):
+        if(DATAYEAR == "MC2012" and USE_NEW_TRIGGERS_AND_FASTPF==1 and SINGLEJET==1):
+            print "Using single jet triggers now... " + str(SINGLEJET) + " " + str(USE_NEW_TRIGGERS_AND_FASTPF) + " " + str(DATAYEAR)
+#            fcfg.write("Use single jet triggers = true\n")
+            trigger_names = "Di-Jet trigger names = HLT_PFJet40;HLT_PFJet80;HLT_PFJet140;HLT_PFJet200;HLT_PFJet260;HLT_PFJet320;HLT_PFJet400\n"
+            #Denis June 2012 on 3fb^-1 @8TeV
+            if(jettype == "ak5PF"):
+                trigger_thresholds = "56 99 166 233 299 364 451 \n"
+            if(jettype == "ak5PFCHS"):
+                trigger_thresholds = "55 97 166 233 299 364 452 \n"
+        elif(DATAYEAR == "MC2012" and USE_NEW_TRIGGERS_AND_FASTPF==1):
+            trigger_names = "Di-Jet trigger names = HLT_DiPFJetAve40;HLT_DiPFJetAve80;HLT_DiPFJetAve140;HLT_DiPFJetAve200;HLT_DiPFJetAve260;HLT_DiPFJetAve320;HLT_DiPFJetAve400\n"
+            #Denis June 2012 on 3fb^-1 @8TeV
+            if(jettype == "ak5PF"):
+                trigger_thresholds = "52 96 162 228 297 360 448 \n"
+            if(jettype == "ak5PFCHS"):
+                trigger_thresholds = "52 95 163 229 295 361 449 \n"		
+
+    elif(DATAYEAR == "2012"):
         if(DATAYEAR == "2012" and USE_NEW_TRIGGERS_AND_FASTPF==1 and SINGLEJET==1):
             print "Using single jet triggers now... " + str(SINGLEJET) + " " + str(USE_NEW_TRIGGERS_AND_FASTPF) + " " + str(DATAYEAR)
 #            fcfg.write("Use single jet triggers = true\n")
@@ -314,8 +332,10 @@ def determineDataDir(DATAYEAR,DATATYPE):
             datadir = "/scratch/hh/current/cms/user/rathjd/Calibration/2012_Jets_v10_noLowPu/combine_2012AJet_2012BJetMon-JetHT13JulyReReco_2012CJetMonJetHTv2_190456-202305"
 	if(DATATYPE=="2012ABC_203002"):
             datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Fall2012_Jets_v1"
+    if(DATAYEAR == "MC2012"):
         if(DATATYPE=="Z253_V11_T1T2_DMC"):
             datadir = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
+        
     return datadir
 
 
