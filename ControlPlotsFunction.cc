@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.32 2012/11/20 14:47:44 rathjd Exp $
+// $Id: ControlPlotsFunction.cc,v 1.33 2012/11/20 14:53:58 rathjd Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -236,6 +236,40 @@ double ControlPlotsFunction::jetTruthEventResponseL2L3ResL4Corrected(const Event
   Jet * jet = static_cast<Jet*>(jte->mess());
 
   return jet->corFactors().getL2L3Res() * jet->corFactors().getL4() * jet->pt() / jte->truth();
+}
+
+
+//!  \brief Returns the corrected jet response
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  The response is defined as
+//!  \f[  p^{jet'}_{T} / p^{true}_{T}\f],
+//!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
+//!  the JetMET L1L2L3 JEC.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventResponseL1L2L3Corrected(const Event * evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  Jet * jet = static_cast<Jet*>(jte->mess());
+
+  return jet->corFactors().getL1()*jet->corFactors().getL2L3() * jet->pt() / jte->truth();
+}
+
+
+//!  \brief Returns the corrected jet response
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  The response is defined as
+//!  \f[  p^{jet'}_{T} / p^{true}_{T}\f],
+//!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
+//!  the JetMET L5 JEC.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventResponseL5Corrected(const Event * evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  Jet * jet = static_cast<Jet*>(jte->mess());
+  //  std::cout << "L1:" << jet->corFactors().getL1() << " l2l3:" << jet->corFactors().getL2L3() << " l2:" << jet->corFactors().getL2() << " l3:" << jet->corFactors().getL3() << " L5:" << jet->corFactors().getL5() << std::endl;
+  return jet->corFactors().getL5() * jet->pt() / jte->truth();
 }
 
 

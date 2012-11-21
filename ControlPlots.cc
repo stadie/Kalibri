@@ -262,6 +262,10 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
     return  &ControlPlotsFunction::jetTruthEventResponseL2L3L4Corrected;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3ResL4 )
     return  &ControlPlotsFunction::jetTruthEventResponseL2L3ResL4Corrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L1L2L3 )
+    return  &ControlPlotsFunction::jetTruthEventResponseL1L2L3Corrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L5 )
+    return  &ControlPlotsFunction::jetTruthEventResponseL5Corrected;
   if( varName == "") {
     return 0;
   }

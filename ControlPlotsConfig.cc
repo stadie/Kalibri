@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.34 2012/11/08 14:47:03 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.35 2012/11/20 14:35:33 rathjd Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -200,6 +200,8 @@ std::string ControlPlotsConfig::legendLabel(const InputTag& tag) const {
 //! - "L2L3Res"   : \p CorrectionType::L2L3Res
 //! - "L2L3L4" : \p CorrectionType::L2L3L4
 //! - "L2L3ResL4" : \p CorrectionType::L2L3ResL4
+//! - "L1L2L3" : \p CorrectionType::L1L2L3
+//! - "L5" : \p CorrectionType::L5
 // --------------------------------------------------
 ControlPlotsConfig::CorrectionType ControlPlotsConfig::correctionType(const std::string &typeName) const {
   CorrectionType type = Uncorrected;
@@ -216,6 +218,10 @@ ControlPlotsConfig::CorrectionType ControlPlotsConfig::correctionType(const std:
     type = L2L3L4;
   else if( typeName == "L2L3ResL4" )
     type = L2L3ResL4;
+  else if( typeName == "L1L2L3" )
+    type = L1L2L3;
+  else if( typeName == "L5" )
+    type = L5;
   else
     std::cerr << "WARNING: Undefined CorrectionType '" << typeName << "'\n";
 
@@ -231,6 +237,8 @@ ControlPlotsConfig::CorrectionType ControlPlotsConfig::correctionType(const std:
 //! - \p CorrectionType::L2L3Res   : "L2L3res"
 //! - \p CorrectionType::L2L3L4 : "L2L3L4"
 //! - \p CorrectionType::L2L3ResL4 : "L2L3ResL4"
+//! - \p CorrectionType::L1L2L3   : "L1L2L3"
+//! - \p CorrectionType::L5   : "L5"
 // --------------------------------------------------
 std::string ControlPlotsConfig::correctionTypeName(CorrectionType corrType) const {
   std::string name = "corrTypeName";
@@ -247,6 +255,10 @@ std::string ControlPlotsConfig::correctionTypeName(CorrectionType corrType) cons
     name = "L2L3L4";
   else if( corrType == L2L3ResL4 )
     name = "L2L3ResL4";
+  else if( corrType == L1L2L3 )
+    name = "L1L2L3";
+  else if( corrType == L5 )
+    name = "L5";
   else
     std::cerr << "WARNING: Undefined CorrectionType '" << corrType << "'\n";
 
@@ -638,6 +650,8 @@ void ControlPlotsConfig::init() {
     colors_[std::make_pair(*samplesIt,L2L3Res)] = kBlue+2;
     colors_[std::make_pair(*samplesIt,L2L3L4)] = 8;
     colors_[std::make_pair(*samplesIt,L2L3ResL4)] = 1;
+    colors_[std::make_pair(*samplesIt,L1L2L3)] = 2;
+    colors_[std::make_pair(*samplesIt,L5)] = 8;
     if(samplesIt - sampleIds.begin() == 0) {
       markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = 20;
       markerStyles_[std::make_pair(*samplesIt,Kalibri)] = 21;
@@ -645,6 +659,8 @@ void ControlPlotsConfig::init() {
       markerStyles_[std::make_pair(*samplesIt,L2L3Res)] = 27;
       markerStyles_[std::make_pair(*samplesIt,L2L3L4)] = 28;
       markerStyles_[std::make_pair(*samplesIt,L2L3ResL4)] = 20;
+      markerStyles_[std::make_pair(*samplesIt,L1L2L3)] = 21;
+      markerStyles_[std::make_pair(*samplesIt,L5)] = 28;
     } else {
       int style = -(samplesIt - sampleIds.begin());
       markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = style;
@@ -653,6 +669,8 @@ void ControlPlotsConfig::init() {
       markerStyles_[std::make_pair(*samplesIt,L2L3Res)] = style;
       markerStyles_[std::make_pair(*samplesIt,L2L3L4)] = style;
       markerStyles_[std::make_pair(*samplesIt,L2L3ResL4)] = style;
+      markerStyles_[std::make_pair(*samplesIt,L1L2L3)] = style;
+      markerStyles_[std::make_pair(*samplesIt,L5)] = style;
     }
     // Define default legend labels for the different corrections
     std::string name = sampleName(*samplesIt);
@@ -662,6 +680,8 @@ void ControlPlotsConfig::init() {
     legendLabels_[std::make_pair(*samplesIt,L2L3Res)] = name + " L2L3res";
     legendLabels_[std::make_pair(*samplesIt,L2L3L4)] = name +" L2L3L4";
     legendLabels_[std::make_pair(*samplesIt,L2L3ResL4)] = name +" L2L3ResL4";
+    legendLabels_[std::make_pair(*samplesIt,L1L2L3)] = name + " L1L2L3";
+    legendLabels_[std::make_pair(*samplesIt,L5)] = name + " L5";
 
     // Read optional legend labels
     std::vector<std::string> legLabelStr = bag_of_string(config_->read<std::string>(name_+" legend label",";"));

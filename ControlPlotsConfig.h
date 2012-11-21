@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.16 2012/07/17 12:23:38 kirschen Exp $
+// $Id: ControlPlotsConfig.h,v 1.17 2012/07/18 14:45:45 kirschen Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -57,12 +57,12 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.16 2012/07/17 12:23:38 kirschen Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.17 2012/07/18 14:45:45 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
   //! Different jet energy correction types
-  enum CorrectionType { Uncorrected, Kalibri, L2L3, L2L3Res, L2L3L4, L2L3ResL4 };
+  enum CorrectionType { Uncorrected, Kalibri, L2L3, L2L3Res, L2L3L4, L2L3ResL4, L1L2L3, L5 };
   typedef std::vector<CorrectionType>::const_iterator CorrectionTypeIt;  
   typedef std::pair<int,CorrectionType> InputTag;
   typedef std::vector<InputTag>::const_iterator InputTagsIterator;  
