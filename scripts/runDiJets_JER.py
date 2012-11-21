@@ -3,8 +3,7 @@
 import os
 import sys
 import ConfigParser
-from runDiJets_CommonConfigs import BinningValues, TriggerNamesThresholds, PUWeightingInfo, determineDataDir, determineDataDirMC, importDatatypesNewTrigger
-
+from runDiJets_CommonConfigs import BinningValues, TriggerNamesThresholds, PUWeightingInfo, determineDataDir, determineDataDirMC, importDatatypesNewTrigger, configureJERsmearing
 
 Usage="""
 ##############################################################################################
@@ -258,7 +257,7 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
         fcfg.write(plot_list[0] + cut + " x variable        =   MeanPt; log\n")
         fcfg.write(plot_list[0] + cut + " x edges           =  15 20 2000\n")
         fcfg.write(plot_list[0] + cut + " y variable        =  Asymmetry\n")
-        fcfg.write(plot_list[0] + cut + " y edges           =  51 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 0.0 0.5 0.0 0.5\n")
+        fcfg.write(plot_list[0] + cut + " y edges           =  251 -1.00 1.00 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 0.0 0.5 0.0 0.5\n")
         fcfg.write(plot_list[0] + cut + " bin variable      =  AbsEta\n")
         fcfg.write(plot_list[0] + cut + " bin edges         =  " + abs_binning_values + "\n")
         fcfg.write(plot_list[0] + cut + " cut variable      =  ThirdJetFractionPlain\n")
@@ -367,9 +366,9 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
 
     if(SINGLEJET==1):
         fcfg.write("Use single jet triggers = true\n")
-    trigger_names = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"names")
+#    trigger_names = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"names")
     fcfg.write(trigger_names)
-    trigger_thresholds = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"thresholds")
+#    trigger_thresholds = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"thresholds")
     fcfg.write(trigger_thresholds)
         
 
@@ -378,6 +377,8 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
         fcfg.write("input calibration = Kalibri; "+input+"\n");
 
     fcfg.write("correct jets L1 = "+ CORRECT_JETS_L1 + "\n");
+    fcfg.write("correct JEC and scale JER = "+ SMEAR_JER + "\n");
+    fcfg.write("correct JEC and scale JER name = "+ configureJERsmearing(jettype) + "\n");
     fcfg.write("fire all triggers = " + MC_fire_all_triggers +"\n");
     fcfg.write("JER binning in |eta| = " + abs_binning_values + "\n")
     fcfg.write("DiJetEventCuts = true\n");
@@ -429,7 +430,7 @@ if len(sys.argv) > 3:
 
 #MC                     = config.get(SECTIONTOREAD, 'MC')
 #DO_MC_ONLY_STUDY       = config.get(MAINSECTIONTOREAD, 'DO_MC_ONLY_STUDY')
-DO_MC_ONLY_STUDY       = "false"
+DO_MC_ONLY_STUDY       = "true"
 #PF_CALO_JPT       = config.get(EXTRAMAINSECTIONTOREAD, 'PF_CALO_JPT')
 ##################################
 ## end of dummy part as suggestion
@@ -465,23 +466,28 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2012SQLV7_AK5"
+CORRECTION="2012FallV4_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
 CORRECT_JETS_L1="true"
 ##################################
+## Switch to decide whether JER should be smeared in control events (MC)
+##################################
+SMEAR_JER="true"
+##################################
 ## DATAYEAR variable used to determine trigger thresholds, datasets, ...
 ##################################
-DATAYEAR = "2012"
+DATAYEAR = "MC2012"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "2012AB_195396"
+#DATATYPE = "2012ABC_203002"
+DATATYPE = "Z253_V11_T1T2_DMC"
 ##################################
 ## choose binning in eta, currently only "JER" is properly defined here
 ##################################
-BINNING="JER_common"
+BINNING="JERMatt"
 ##################################
 ## Use single jet triggers if =1 (influences trigger thresholds and trigger pt variables in runtime, look for useSingleJetTriggers_ in code)
 ##################################
@@ -493,7 +499,8 @@ MC = "Su12"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-MC_type="Z2Star_PU1mioS610mioS7"
+#MC_type="Z253_V11_T1T2Smear"
+MC_type="Z253_V11_T1T2"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
@@ -541,8 +548,10 @@ if(nMinRecoVtx > 0):
 
 if(DO_MC_ONLY_STUDY=="true"):
     MinRunNumber=-1
+
     #    MC_fire_all_triggers="true"
-    DATATYPE="Z2wPU_DMC"
+    #    DATATYPE="Z2wPU_DMC"
+    DATATYPE = "Z253_V11_T1T2_DMC"
 
     
 
@@ -585,6 +594,7 @@ jettype_import=jettype
 CORRECTIONSUFFIX=PF_CALO_JPT
 if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
     if(PF_CALO_JPT=="PF" or PF_CALO_JPT=="PFCHS"):
+      if(jetalgo=="ak5"):
         CORRECTIONSUFFIX="Fast"+PF_CALO_JPT
         if(PF_CALO_JPT=="PF"):
             jettype_import=jetalgo+"Fast"+PF_CALO_JPT
@@ -593,9 +603,15 @@ if(USE_NEW_TRIGGERS_AND_FASTPF or DATATYPE=="42X_uncorr"):
 
 CORRECTIONS=CORRECTION+CORRECTIONSUFFIX
 
-
+print DATAYEAR + " and " + DATATYPE 
 datadir   = determineDataDir(DATAYEAR,DATATYPE)
 datadirmc = determineDataDirMC(MC,MC_type)
+
+
+trigger_thresholds = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"thresholds")
+trigger_names = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"names")
+RawTrigger_thresholds = TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettype,"RawThresholds")
+
 
 if (len(sys.argv) > 6):
     print "even override datadirmc from cmdline-options... "
@@ -606,13 +622,13 @@ if (len(sys.argv) > 6):
 
 
 
-nthreads = 2
-niothreads = 2
+nthreads = 4
+niothreads = 4
 #nevents =  -1
 #nthreads = 1
 #niothreads = 1
-nevents =  10000
-MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+nevents =  -1
+MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/KalibriTEST/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
