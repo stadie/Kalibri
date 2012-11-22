@@ -336,7 +336,10 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
 
     if(CORRECTION!="ntuple"):
         fcfg.write("jet correction source = JetMETCor\n")
-        fcfg.write("jet correction name   = "+CORRECTIONS+"\n")
+        if(DO_MC_ONLY_STUDY=="true"):
+            fcfg.write("jet correction name   = "+CORRECTIONS+"_MC\n")
+        else:
+            fcfg.write("jet correction name   = "+CORRECTIONS+"\n")
         fcfg.write("MC jet correction name   = "+CORRECTIONS+"_MC \n")
     fcfg.write("Di-Jet input file = dijetlist\n")
     fcfg.write("Di-Jet Control1 input file = mcdijetlist\n")
@@ -458,7 +461,7 @@ DIR_JETALGO="DefaultTestTEstTest"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
-PF_CALO_JPT="PFCHS"
+PF_CALO_JPT="PF"
 ##################################
 ## chooses the jet algorithm - used to pick the corresponding n-tupel .root-files (ak5 is default)
 ##################################
