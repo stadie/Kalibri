@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.33 2012/11/20 14:53:58 rathjd Exp $
+// $Id: ControlPlotsFunction.cc,v 1.34 2012/11/21 18:50:14 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -952,4 +952,35 @@ double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3ResCorrected(co
   Jet * jet2 = jte->getJet2();
   return (1 + jte->MET()*cos(deltaPhi(jte->METphi(), jet2->phi())) / (jet2->corFactors().getL2L3Res() *jet2->pt()));
 }
+
+
+//!  \brief Returns the jet1 response
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent and "data" and MC must indeed be MC.
+//!  The response is defined as
+//!  \f[  p^{jet}_{T} / p^{true}_{T}\f].
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1Response(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+
+  return jet1->pt() / jet1->genPt();
+}
+
+
+//!  \brief Returns the L2L3-corrected jet1 response
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent and "data" and MC must indeed be MC.
+//!  The response is defined as
+//!  \f[  p^{jet}_{T} / p^{true}_{T}\f].
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+
+  return jet1->corFactors().getL2L3()*jet1->pt() / jet1->genPt();
+}
+
 
