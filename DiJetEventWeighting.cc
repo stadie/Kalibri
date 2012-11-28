@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: DiJetEventWeighting.cc,v 1.9 2012/09/10 15:44:05 kirschen Exp $
+//    $Id: DiJetEventWeighting.cc,v 1.10 2012/11/20 16:33:46 kirschen Exp $
 //   
 #include "DiJetEventWeighting.h"
 
@@ -16,6 +16,7 @@
 
 
 #include <iostream>
+#include <iomanip>
 
 DiJetEventWeighting::DiJetEventWeighting(const std::string& configfile, Parameters* param)
   : EventProcessor("DiJetEventWeighting",configfile,param)
@@ -29,6 +30,8 @@ DiJetEventWeighting::DiJetEventWeighting(const std::string& configfile, Paramete
   for(int i = 0, l = trigthresholds.size() ; i < l ; ++i) {
     ndata_[trigthresholds[i]] = 0;
     ncontrol_[trigthresholds[i]] = 0;
+    nCountsData_[trigthresholds[i]] = 0;
+    nCountsControl_[trigthresholds[i]] = 0;
   }
 }
  
@@ -66,8 +69,6 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
 
 
 
-  //count events in data and control sample
-
   //delete events that do not pass trigger thresholds (after JEC)
   CheckBadEventDiJetEventWeighting passCheckBadEventDiJetEventWeighting(this);
   bound= partition(data.begin(),data.end(),passCheckBadEventDiJetEventWeighting);
@@ -85,13 +86,60 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
   std::cout << "after checking for strange response:" << std::endl;
   std::cout << "  " << control1.size() << " events in control1" << std::endl;
 
+
+
+  ///////////////////////////////////////////////////////
+  ////count events in control sample for reweighting/////
+  ///////////////////////////////////////////////////////
+  for(std::vector<Event*>::iterator i = control1.begin() ; i != control1.end() ; ++i) {
+    if((*i)->type() != PtBalance) continue;
+    TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(*i);
+    std::map<double,double>::iterator it = ncontrol_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_));
+    if(!(it == ncontrol_.begin())){
+      assert(it != ncontrol_.begin());
+      --it;
+      if(tje->relPtJet3CorrL2L3()<0.2){
+	it->second += tje->weight();
+	(--nCountsControl_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_)))->second+=1;
+      }
+    }
+  }
+  ///////////////////////////////////////////////////////
+  ////count events in data sample for reweighting   /////
+  ///////////////////////////////////////////////////////
+  for(std::vector<Event*>::iterator i = data.begin() ; i != data.end() ; ++i) {
+    if((*i)->type() != PtBalance) continue;
+    TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(*i);
+    std::map<double,double>::iterator it = ndata_.lower_bound(tje->ptDijetCorrL2L3());
+    assert(it != ndata_.begin());
+    --it;
+    if(tje->relPtJet3CorrL2L3()<0.2){
+      it->second += tje->weight();
+      (--nCountsData_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_)))->second+=1;
+    }
+  }
+
+
+  std::cout << "------------------------------Summary table of pt-dependent reweighting counts------------------------------" << std::endl;
+  std::cout <<std::setw(5) <<"thres" << " => " <<std::setw(12)<< "Weight sum D" << " => " <<std::setw(8)<< "Counts D" << " => " <<std::setw(12)<<  "Avg. w. data"<< " => " <<std::setw(5) <<"thres" << " => " <<std::setw(12)<< "Weight sum C" << " => " <<std::setw(8)<< "Counts C" << " => " <<std::setw(12)<<  "Avg. w. control"<< std::endl;
+  for(std::map<double,double>::const_iterator it=ndata_.begin(); it != ndata_.end(); ++it ){
+    std::map<double,double>::const_iterator control_it = ncontrol_.find((*it).first);
+    std::map<double,int>::const_iterator CountsD_it = nCountsData_.find((*it).first);
+    std::map<double,int>::const_iterator CountsC_it = nCountsControl_.find((*it).first);
+    std::cout <<std::setw(5) <<(*it).first << " => " <<std::setw(12)<< (*it).second << " => " <<std::setw(8)<< (*CountsD_it).second << " => " <<std::setw(12)<<  (*CountsD_it).second>0 ? (*it).second/(*CountsD_it).second : 0<< " => " 
+	      <<std::setw(5)<< (*control_it).first <<" => " <<std::setw(12)<< (*control_it).second  << " => " <<std::setw(8)<< (*CountsC_it).second << " => " <<std::setw(12)<<  (*CountsD_it).second > 0 ?(*control_it).second/(*CountsD_it).second : 0<<std::endl;
+
+  }
+  std::cout << "------------------------------------------------------------------------------------------------------------" << std::endl;
+
+
   //compute new weight factors
   for(std::map<double,double>::const_iterator i = ndata_.begin() ;
       i != ndata_.end() ; ++i) {
     weights_[i->first] = ncontrol_[i->first] ? i->second/ncontrol_[i->first]: 0.0;
   }
   
-  //set weights and delete events that would be weigthed to zero (due to trigger thresholds)
+  //set weights and delete MC events that would be weigthed to zero (due to trigger thresholds)
   SetWeightDiJetEventWeighting passSetWeightDiJetEventWeighting(this);
   bound= partition(control1.begin(),control1.end(),passSetWeightDiJetEventWeighting);
   control1.erase(bound,control1.end());
@@ -99,8 +147,6 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
   std::cout << "end DiJetEventWeighting with:" << std::endl;
   std::cout << "  " << data.size() << " events in data" << std::endl;
   std::cout << "  " << control1.size() << " events in control1" << std::endl;
-
-
 
 
   return ndata_.size();
@@ -115,12 +161,10 @@ bool DiJetEventWeighting::passCheckBadEventDiJetEventWeighting(Event* event)
   if(!(it == ndata_.begin())){
     assert(it != ndata_.begin());
     --it;
-    if(tje->relPtJet3CorrL2L3()<0.2)it->second += tje->weight();
-    //it->second += tje->weight();
     return true;
   }
   else {
-    //	std::cout << "bad event ptDijetCorrL2L3: " << tje->triggerPtVariableL2L3(useSingleJetTriggers_) << " ptDijet(): " << tje->ptDijet() << " ptDijetGen: " << tje->ptDijetGen() <<  " lowest threshold: " <<it->first << '\n';
+    std::cout << "bad event ptDijetCorrL2L3: " << tje->triggerPtVariableL2L3(useSingleJetTriggers_) << " ptDijet(): " << tje->ptDijet() << " ptDijetGen: " << tje->ptDijetGen() <<  " lowest threshold: " <<it->first << '\n';
     return false;
   }
 }
@@ -145,8 +189,6 @@ bool DiJetEventWeighting::passCheckStrangeEventDiJetEventWeighting(Event* event)
   if(!(it == ncontrol_.begin())){
     assert(it != ncontrol_.begin());
     --it;
-    if(tje->relPtJet3CorrL2L3()<0.2)it->second += tje->weight();
-    //it->second += tje->weight();
   }
   return true;
 }

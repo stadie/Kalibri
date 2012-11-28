@@ -1,5 +1,5 @@
 //
-// $Id: DiJetEventWeighting.h,v 1.4 2012/03/29 11:54:06 kirschen Exp $
+// $Id: DiJetEventWeighting.h,v 1.5 2012/09/10 15:44:05 kirschen Exp $
 //
 #ifndef DIJETEVENTWEIGHTING_H
 #define DIJETEVENTWEIGHTING_H
@@ -33,6 +33,7 @@ protected:
   
  private:
   std::map<double,double> ndata_,ncontrol_;
+  std::map<double,int> nCountsData_,nCountsControl_;
   std::map<double,double> weights_;
   bool useSingleJetTriggers_;
 };
