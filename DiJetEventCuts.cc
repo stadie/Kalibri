@@ -39,7 +39,7 @@ int DiJetEventCuts::preprocess(std::vector<Event*>& data,
   CutFlow CutFlow_DATA(this->configName());
   CutFlow_DATA.setAllSuppDiJetCuts();
   CutFlow_DATA.setNExpectedEvents(data.size());
-  int l = data.size()/100;
+  //  int l = data.size()/100;
 
   std::cout << "start with "  << data.size() << " events... check with cutflow:"<< std::endl;
  

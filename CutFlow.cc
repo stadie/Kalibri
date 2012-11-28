@@ -33,13 +33,16 @@ void CutFlow::setAllSuppDiJetCuts(){
   minDeltaPhi_       = config_->read<double>(cutPrefix+"Min Delta Phi",2.5);
   minRel3rdJetEt_    = config_->read<double>(cutPrefix+"Min cut on relative n+1 Jet Et",0.);
   maxRel3rdJetEt_    = config_->read<double>(cutPrefix+"Max cut on relative n+1 Jet Et",1.);
+  maxCutOnAsymmetry_    = config_->read<double>(cutPrefix+"Max cut on L2L3-corrected asymmetry",1.);
   nEvents_=0;
   nMinDeltaPhi_=0;
   nMinCutOn3rdJet_=0;
   nMaxCutOn3rdJet_=0;
+  nMaxCutOnAsymmetry_=0;
   useMinDeltaPhi_=true;
   useMinRel3rdJetEt_=true;
   useMaxRel3rdJetEt_=true;
+  useMaxCutOnAsymmetry_=true;
   //  printCutFlow();
 }
 
@@ -62,6 +65,11 @@ bool CutFlow::doAllSuppDiJetCuts(){
   else if(useMaxRel3rdJetEt_ && diJetEvent_->relPtJet3CorrL2L3() > maxRel3rdJetEt_) {
     //    std::cout << diJetEvent_->relPtJet3CorrL2L3() << " and " << maxRel3rdJetEt_ << std::endl;
     nMaxCutOn3rdJet_++;
+    eventSurvives=false;
+  }
+  else if(useMaxCutOnAsymmetry_ && 0.5*diJetEvent_->ptBalanceCorrL2L3() > maxCutOnAsymmetry_) {
+    //    std::cout << diJetEvent_->relPtJet3CorrL2L3() << " and " << maxRel3rdJetEt_ << std::endl;
+    nMaxCutOnAsymmetry_++;
     eventSurvives=false;
   }
   return eventSurvives;
@@ -97,6 +105,10 @@ void CutFlow::printCutFlow(){
   if(useMaxRel3rdJetEt_){
   std::cout << "  " << (nEvents_-=nMaxCutOn3rdJet_) << std::flush;
   std::cout << " dijet events with pt(jet3) / ptAve < " << maxRel3rdJetEt_ << "\n";
+  }
+  if(useMaxCutOnAsymmetry_){
+  std::cout << "  " << (nEvents_-=nMaxCutOnAsymmetry_) << std::flush;
+  std::cout << " dijet events with |asymmetry| < " << maxCutOnAsymmetry_ << "\n";
   }
 }
 

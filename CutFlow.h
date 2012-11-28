@@ -45,12 +45,15 @@ class CutFlow{
   int    nMinDeltaPhi_;         //!< Number of events rejected by maxDeltaPhi_ cut
   int    nMinCutOn3rdJet_;         //!< Number of events rejected by minRel3rdJetEt_ cut
   int    nMaxCutOn3rdJet_;         //!< Number of events rejected by maxRel3rdJetEt_ cut
+  int    nMaxCutOnAsymmetry_;      //!< Number of events rejected by cut on asymmetry
   double minDeltaPhi_;          //!< Minimum DeltaPhi for 0 < DeltaPhi < Pi
   double maxRel3rdJetEt_;       //!< Maximum relative pt of 3rd jet in dijet event
   double minRel3rdJetEt_;       //!< Minimum relative pt of 3rd jet in dijet event
+  double maxCutOnAsymmetry_;       //!< Maximum asymmetry to consider event
   bool useMinDeltaPhi_;         //!< Apply cut on Minimum DeltaPhi for 0 < DeltaPhi < Pi
   bool useMinRel3rdJetEt_;      //!< Apply cut on Minimum relative pt of 3rd jet in dijet event
   bool useMaxRel3rdJetEt_;      //!< Apply cut on Maximum relative pt of 3rd jet in dijet event
+  bool useMaxCutOnAsymmetry_;      //!< Apply cut on Maximum asymmetry in dijet event
 
 };
 
