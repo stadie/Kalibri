@@ -5,7 +5,7 @@
 //    Thus they are implemented directly in this class
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: DiJetEventWeighting.cc,v 1.10 2012/11/20 16:33:46 kirschen Exp $
+//    $Id: DiJetEventWeighting.cc,v 1.11 2012/11/28 11:01:02 kirschen Exp $
 //   
 #include "DiJetEventWeighting.h"
 
@@ -103,6 +103,7 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
 	(--nCountsControl_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_)))->second+=1;
       }
     }
+    else std::cout << "event with pt< threshold in control sample, should be deleted in next step" <<std::endl;
   }
   ///////////////////////////////////////////////////////
   ////count events in data sample for reweighting   /////
@@ -110,13 +111,16 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
   for(std::vector<Event*>::iterator i = data.begin() ; i != data.end() ; ++i) {
     if((*i)->type() != PtBalance) continue;
     TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>(*i);
-    std::map<double,double>::iterator it = ndata_.lower_bound(tje->ptDijetCorrL2L3());
-    assert(it != ndata_.begin());
-    --it;
-    if(tje->relPtJet3CorrL2L3()<0.2){
-      it->second += tje->weight();
-      (--nCountsData_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_)))->second+=1;
+    std::map<double,double>::iterator it = ndata_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_));
+    if(!(it == ndata_.begin())){
+      assert(it != ndata_.begin());
+      --it;
+      if(tje->relPtJet3CorrL2L3()<0.2){
+	it->second += tje->weight();
+	(--nCountsData_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_)))->second+=1;
+      }
     }
+    else std::cout << "Error: event with pt< threshold in data sample, should already have been deleted" <<std::endl;
   }
 
 
@@ -126,8 +130,8 @@ int DiJetEventWeighting::preprocess(std::vector<Event*>& data,
     std::map<double,double>::const_iterator control_it = ncontrol_.find((*it).first);
     std::map<double,int>::const_iterator CountsD_it = nCountsData_.find((*it).first);
     std::map<double,int>::const_iterator CountsC_it = nCountsControl_.find((*it).first);
-    std::cout <<std::setw(5) <<(*it).first << " => " <<std::setw(12)<< (*it).second << " => " <<std::setw(8)<< (*CountsD_it).second << " => " <<std::setw(12)<<  (*CountsD_it).second>0 ? (*it).second/(*CountsD_it).second : 0<< " => " 
-	      <<std::setw(5)<< (*control_it).first <<" => " <<std::setw(12)<< (*control_it).second  << " => " <<std::setw(8)<< (*CountsC_it).second << " => " <<std::setw(12)<<  (*CountsD_it).second > 0 ?(*control_it).second/(*CountsD_it).second : 0<<std::endl;
+    std::cout <<std::setw(5) <<(*it).first <<" => " <<std::setw(12)<< (*it).second << " => " << std::setw(8)<< (*CountsD_it).second << " => " <<std::setw(12)<< (*it).second/(*CountsD_it).second /*(*CountsD_it).second>0 ? ((*it).second/(double)(*CountsD_it).second) : 99999.*/<< " => " 
+	 << std::setw(5)<< (*control_it).first <<" => " <<std::setw(12)<< (*control_it).second  << " => " <<std::setw(8)<< (*CountsC_it).second << " => " <<std::setw(12)<<  (*control_it).second/(*CountsD_it).second /*(*CountsD_it).second > 0 ?(*control_it).second/(*CountsD_it).second : "0"*/<<std::endl;
 
   }
   std::cout << "------------------------------------------------------------------------------------------------------------" << std::endl;
@@ -164,7 +168,7 @@ bool DiJetEventWeighting::passCheckBadEventDiJetEventWeighting(Event* event)
     return true;
   }
   else {
-    std::cout << "bad event ptDijetCorrL2L3: " << tje->triggerPtVariableL2L3(useSingleJetTriggers_) << " ptDijet(): " << tje->ptDijet() << " ptDijetGen: " << tje->ptDijetGen() <<  " lowest threshold: " <<it->first << '\n';
+    std::cout << "bad event triggerPtVariableL2L3: " << tje->triggerPtVariableL2L3(useSingleJetTriggers_) << " ptDijet(): " << tje->ptDijet() << " ptDijetGen: " << tje->ptDijetGen() <<  " lowest threshold: " <<it->first << '\n';
     return false;
   }
 }
@@ -189,8 +193,12 @@ bool DiJetEventWeighting::passCheckStrangeEventDiJetEventWeighting(Event* event)
   if(!(it == ncontrol_.begin())){
     assert(it != ncontrol_.begin());
     --it;
+    return true;
   }
-  return true;
+  else {
+    std::cout << "bad control event triggerPtVariableL2L3: " << tje->triggerPtVariableL2L3(useSingleJetTriggers_) << " ptDijet(): " << tje->ptDijet() << " ptDijetGen: " << tje->ptDijetGen() <<  " lowest threshold: " <<it->first << '\n';
+    return false;
+  }
 }
  
 
