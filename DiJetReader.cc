@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.106 2012/11/20 09:30:44 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.107 2012/11/21 13:05:45 rathjd Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1574,6 +1574,10 @@ void DiJetReader::twoJetsPtBalanceSmearJetsJER()
       *MET+=*MET_alteration;
     }
   }
+
+  nJet_->Met=MET->Mod();
+  nJet_->MetPhi=MET->Phi_mpi_pi(MET->Phi());
+
   //    std::cout << "before smearing: "<< jets.at(0)->corFactors().getToL3()*jets.at(0)->pt() << " after smearing: "<< nJet_->JetCorrL1[0]*nJet_->JetCorrL2L3[0]*nJet_->JetPt[0] << " genpt: " << jets.at(0)->genPt() <<std::endl;
 
   //cleaning
