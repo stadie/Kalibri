@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.34 2012/11/21 18:50:14 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.35 2012/11/28 10:58:04 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -332,6 +332,17 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJet2Eta(const Event *evt) cons
 double ControlPlotsFunction::twoJetsPtBalanceEventJet2AbsEta(const Event *evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   return std::abs(jte->getJet2()->eta());
+}
+
+
+//!  \brief Returns absolute value of MET 
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMET(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return tjpbe->MET();
 }
 
 

@@ -330,6 +330,8 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi; 
   if( varName == "meanMoment" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment;
+  if( varName == "MET" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMET;
   if( varName == "VtxN" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventVtxN;
   if( varName == "MCNPUVtx" )

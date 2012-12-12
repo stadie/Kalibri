@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.36 2012/11/21 18:50:14 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.37 2012/11/28 10:58:04 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -804,6 +804,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "n_{PU, true}^{MC}";
   else if( varName == "VtxN")
     title = "Reconstructed vertices";
+  else if( varName == "MET")
+    title = "MET";
   else if( varName == "PF_CH_Fraction")
     title = "Charged hadrons";
   //    title = "PF charged hadron fraction";
