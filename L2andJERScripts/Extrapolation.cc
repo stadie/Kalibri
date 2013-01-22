@@ -91,7 +91,7 @@ void Extrapolation::Plot() {
       AllPlots_.at(i).at(bin_i).at(1)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
       AllPlots_.at(i).at(bin_i).at(1)->GetXaxis()->SetRangeUser(configs_.at(0)->xMin(),configs_.at(0)->xMax());
       
-      AllPlots_.at(i).at(bin_i).at(0)->Draw("same");
+      AllPlots_.at(i).at(bin_i).at(0)->Draw("p e0 hist same");
       
       AllPlots_.at(i).at(bin_i).at(1)->Draw("hist same");
       drawRunNumberLabels(AllPlots_.at(i).at(bin_i).at(1),configs_.at(i));
@@ -168,31 +168,33 @@ void Extrapolation::Plot() {
   //Save DeviationsOfRatioVsBinVar plot
   for(int conf_i=0;conf_i<configs_.size();conf_i++){
   c->SetLogx(0);
-  DeviationsOfRatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetRangeUser(0,10);
-  //  DeviationsOfRatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetRangeUser(-0.05,1.2);
+  //  AllDeviationsVsBinVarHistos_.at(conf_i).at(0)->GetYaxis()->SetRangeUser(-0.05,1.2);
 
     TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
-    DeviationsOfRatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
-    DeviationsOfRatioVsBinVarHistos_.at(conf_i)->SetFillColor(kYellow+1);
-    DeviationsOfRatioVsBinVarHistos_.at(conf_i)->SetLineColor(kYellow+1);
-    DeviationsOfRatioVsBinVarHistos_.at(conf_i)->SetMarkerColor(kYellow+1);
-    //    DeviationsOfRatioVsBinVarHistos_.at(conf_i)->Draw();
-    DeviationsOfRatioVsBinVarHistos_.at(conf_i)->Draw("hist");
-    drawCMSPrel();
-    TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.05);
-    label->AddText(jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
-    label->SetFillStyle(0);
-    label->AddText("Weighted standard deviation of " + yProfileTitle() + " ratio");
-    label->AddText((TString)"evaluated as function of " + configs_.at(0)->xTitle());
-    label->Draw("same");
-    TString outname = "ResolutionPlots_"+plotsnames_+"_DeviationsOfRatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i);
-    //  outname+=bin_i;
-    DeviationsOfRatioVsBinVarHistos_.at(conf_i)->SetName(outname);
-    outname+=".eps";
-    c->RedrawAxis();
-    c->SaveAs(outname);
-    configs_.at(0)->safelyToRootFile(DeviationsOfRatioVsBinVarHistos_.at(conf_i));
-
+    for(size_t dev_i =0; dev_i<DeviationTypes_.size();dev_i++){
+      
+      AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->GetYaxis()->SetRangeUser(0,10);
+      AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
+      AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->SetFillColor(kYellow+1);
+      AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->SetLineColor(kYellow+1);
+      AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->SetMarkerColor(kYellow+1);
+      //    AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->Draw();
+      AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->Draw("hist");
+      drawCMSPrel();
+      TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.05);
+      label->AddText(jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
+      label->SetFillStyle(0);
+      label->AddText("Weighted standard deviation of " + yProfileTitle() + DeviationTypes_.at(dev_i).second);
+      label->AddText((TString)"evaluated as function of " + configs_.at(dev_i)->xTitle());
+      label->Draw("same");
+      TString outname = "ResolutionPlots_"+plotsnames_+"_DeviationsOfRatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i)+"_"+DeviationTypes_.at(dev_i).first;
+      //  outname+=bin_i;
+      AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->SetName(outname);
+      outname+=".eps";
+      c->RedrawAxis();
+      c->SaveAs(outname);
+      configs_.at(0)->safelyToRootFile(AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i));
+    }
   }
 
 
@@ -365,12 +367,12 @@ void Extrapolation::makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos(){
       //      std::cout <<"TEST"<<std::endl;
       if((TString)MCDataRatioVsBinVarHistos_.at(i)->GetName()=="ExtrapolatedMCDataRatioVsBinVar"){
 	//	     std::cout <<"TEST2"<<std::endl;
-	fitFunctionsToRatioPlot(CollectExtrapolatedMCDataRatios_.at(bin_i));
+	fitFunctionsToPlot(CollectExtrapolatedMCDataRatios_.at(bin_i));
 	fillRatioVsBinVarPlot(MCDataRatioVsBinVarHistos_.at(i),CollectExtrapolatedMCDataRatios_.at(bin_i),bin_i,"fit_const");
       }
       else if((TString)MCDataRatioVsBinVarHistos_.at(i)->GetName()=="ExtrapolatedNormalizedMCDataRatioVsBinVar"){
 	//	     std::cout <<"TEST3"<<std::endl;
-	fitFunctionsToRatioPlot(CollectExtrapolatedNormalizedMCDataRatios_.at(bin_i));
+	fitFunctionsToPlot(CollectExtrapolatedNormalizedMCDataRatios_.at(bin_i));
 	fillRatioVsBinVarPlot(MCDataRatioVsBinVarHistos_.at(i),CollectExtrapolatedNormalizedMCDataRatios_.at(bin_i),bin_i,"fit_const");
       }
       //      else 	     std::cout <<"TEST4"<<std::endl;

@@ -37,6 +37,7 @@ const bool DEBUG=true;
 typedef std::vector<TH1D*> TH1vec_t;
 typedef std::vector<TH1vec_t > VecOfTH1vec_t;
 typedef std::vector<VecOfTH1vec_t > VecOfVecOfTH1vec_t;
+//enum DeviationType {RatioDev,MCDev,DataDev};
 
 //!  \brief Reads (PF-)fraction plots and produces stacked
 //!         histograms of the input
@@ -56,7 +57,7 @@ class BasePlotExtractor {
   BasePlotExtractor(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsShortName="DEFAULT");
   TH1D* replaceHistosWithEquiDistBins(TH1D* histo);
   void init(TString profileType="Mean");
-  void fitFunctionsToRatioPlot(TH1D* histo);
+  void fitFunctionsToPlot(TH1D* histo);
   void fillRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* HistoOfBin_i, Int_t bin_i, TString func_name="fit_const");
   void fillDeviationsOfRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* HistoOfBin_i, Int_t bin_i, TString func_name="fit_const");
   void makeRatioVsBinVarHistos();
@@ -100,13 +101,15 @@ class BasePlotExtractor {
   VecOfTH1vec_t AllRatiosDataMC_;
   VecOfTH1vec_t AllDifferencesDataMC_;
   TH1vec_t RatioVsBinVarHistos_;
-  TH1vec_t DeviationsOfRatioVsBinVarHistos_;
+  VecOfTH1vec_t AllDeviationsVsBinVarHistos_;
+  //  TH1vec_t DeviationsOfRatioVsBinVarHistos_;
   TString kalibriPlotsShortName_;
   TString kalibriPlotsPath_;
   TString pathToConfig_;
   std::vector<double> runNumbers_;
   std::vector<std::string> runNumbersLabels_;
   std::map <double, std::string> runNumbersMap_;
+  std::vector <std::pair <TString,TString > > DeviationTypes_;
   TString outputPathROOT_;
   TString plotsnames_;
   TString jetType_;

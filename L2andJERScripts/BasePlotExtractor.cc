@@ -42,6 +42,11 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsShor
   std::cout << "opening KalibriPlots.root from: " <<   kalibriPlotsPath_ << std::endl;
   config_=ConfigFile((std::string)pathToConfig_);//"/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/AllPlots_L2L3.cfg");
 
+
+  DeviationTypes_.push_back(std::make_pair("RatioDev"," MC/data ratio"));
+  DeviationTypes_.push_back(std::make_pair("MCDev"," in MC"));
+  DeviationTypes_.push_back(std::make_pair("DataDev"," in data"));
+
 }
 
 //! Manually read in extra information from
@@ -254,37 +259,51 @@ void BasePlotExtractor::refreshRatiosDataMC(){
 // ----------------------------------------------------------------   
 void BasePlotExtractor::makeRatioVsBinVarHistos(){
   TH1vec_t RatioVsBinVarHistos;
-  TH1vec_t DeviationsOfRatioVsBinVarHistos;
+
+  VecOfTH1vec_t AllDeviationsVsBinVarHistos;
+  //  TH1vec_t DeviationsOfRatioVsBinVarHistos;
   //insert deviation plots here
   for(int conf_i=0;conf_i<configs_.size();conf_i++){
     //    std::cout << names_.size() << std::endl;
     //    std::cout << names_.at(conf_i) << std::endl;
     TH1D* RatioVsBinVar = new TH1D(("RatioVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
-    TH1D* DeviationsOfRatioVsBinVar = new TH1D(("DeviationsOfRatioVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
-    //    std::cout << names_.at(conf_i) << std::endl;
     RatioVsBinVar->Sumw2();
     RatioVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
-    DeviationsOfRatioVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
     RatioVsBinVar->GetYaxis()->SetTitle("Data/MC ratio (const fit)");
-    //    DeviationsOfRatioVsBinVar->GetYaxis()->SetTitle("Sample standard deviation [%]");
-    DeviationsOfRatioVsBinVar->GetYaxis()->SetTitle("Weighted standard deviation [%]");
-    //    std::cout << "TEMPTESTING:" << RatioVsBinVar->GetXaxis()->GetXmin() << " and " << RatioVsBinVar->GetXaxis()->GetXmax() <<std::endl;
-    //    std::cout << "TEMPTESTING:" << configs_.at(conf_i)->xMin() << " and " << configs_.at(conf_i)->xMax() <<std::endl;
+
+    TH1vec_t DeviationsVsBinVarHistos;
+    for(size_t dev_i =0; dev_i<DeviationTypes_.size();dev_i++){
+      DeviationsVsBinVarHistos.push_back(new TH1D(("DeviationsOfRatioVsBinVar"+names_.at(conf_i)+"_"+DeviationTypes_.at(dev_i).first)/*.c_str()*/,(";"+configs_.at(conf_i)->binAxisTitle()+";Weighted standard deviation [%]").c_str(),configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front())));
+      //    TH1D* DeviationsOfRatioVsBinVar = new TH1D(("DeviationsOfRatioVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
+//      DeviationsVsBinVarHistos.back()->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
+//      DeviationsVsBinVarHistos.back()->GetYaxis()->SetTitle("Weighted standard deviation [%]");
+    }
+
 
     //  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
   for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
-    fitFunctionsToRatioPlot(AllRatiosDataMC_.at(conf_i).at(bin_i));
+    fitFunctionsToPlot(AllRatiosDataMC_.at(conf_i).at(bin_i));
     fillRatioVsBinVarPlot(RatioVsBinVar,AllRatiosDataMC_.at(conf_i).at(bin_i),bin_i,"fit_const");
-    fillDeviationsOfRatioVsBinVarPlot(DeviationsOfRatioVsBinVar,AllRatiosDataMC_.at(conf_i).at(bin_i),bin_i,"fit_const");
+    fitFunctionsToPlot(AllPlots_.at(conf_i).at(bin_i).at(1));
+    fitFunctionsToPlot(AllPlots_.at(conf_i).at(bin_i).at(0));
+
+    for(size_t dev_i =0; dev_i<DeviationTypes_.size();dev_i++){
+      if(DeviationTypes_.at(dev_i).first=="RatioDev")fillDeviationsOfRatioVsBinVarPlot(DeviationsVsBinVarHistos.at(dev_i),AllRatiosDataMC_.at(conf_i).at(bin_i),bin_i,"fit_const");
+      else if(DeviationTypes_.at(dev_i).first=="MCDev")fillDeviationsOfRatioVsBinVarPlot(DeviationsVsBinVarHistos.at(dev_i),AllPlots_.at(conf_i).at(bin_i).at(1),bin_i,"fit_const");
+      else if(DeviationTypes_.at(dev_i).first=="DataDev")fillDeviationsOfRatioVsBinVarPlot(DeviationsVsBinVarHistos.at(dev_i),AllPlots_.at(conf_i).at(bin_i).at(0),bin_i,"fit_const");
+      
+    }
   }
 //  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
 //    std::cout << RatioVsBinVar->GetBinContent(bin_i+1) << ", " << std::endl;
 //  }
   RatioVsBinVarHistos.push_back(RatioVsBinVar);
-  DeviationsOfRatioVsBinVarHistos.push_back(DeviationsOfRatioVsBinVar);  
+  AllDeviationsVsBinVarHistos.push_back(DeviationsVsBinVarHistos);
+  //  DeviationsOfRatioVsBinVarHistos.push_back(DeviationsOfRatioVsBinVar);  
   }
   RatioVsBinVarHistos_=RatioVsBinVarHistos;
-  DeviationsOfRatioVsBinVarHistos_=DeviationsOfRatioVsBinVarHistos;
+  AllDeviationsVsBinVarHistos_=AllDeviationsVsBinVarHistos;
+  //DeviationsOfRatioVsBinVarHistos_=DeviationsOfRatioVsBinVarHistos;
 }
 
 
@@ -294,7 +313,7 @@ void BasePlotExtractor::makeRatioVsBinVarHistos(){
 //!  \author Henning Kirschenmann
 //!  \date 2012/07/11
 // ----------------------------------------------------------------   
-void BasePlotExtractor::fitFunctionsToRatioPlot(TH1D* histo){
+void BasePlotExtractor::fitFunctionsToPlot(TH1D* histo){
   TF1 *fit_const = new TF1("fit_const","[0]",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
   fit_const->SetParameters(1,1);
   fit_const->SetParName(0,"const");
@@ -342,7 +361,7 @@ void BasePlotExtractor::fillRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* Hi
 }
 
 //! Fill DeviationsOfRatioVsBinVarPlotWith fit results
-//! Current implemenation: determine standard deviation from (constant) fit, set bin error to paerror(0) - error of constant fit parameter
+//! Current implemenation: determine weighted standard deviation from (constant) fit, set bin error to zero (was: paerror(0) - error of constant fit parameter)
 //! 
 //!  \author Henning Kirschenmann
 //!  \date 2012/07/11
@@ -352,23 +371,6 @@ void BasePlotExtractor::fillDeviationsOfRatioVsBinVarPlot(TH1D* DeviationsOfRati
 
     std::vector<Jet::JetIndex*> DeviationIndices;
 
-    for(int i=1;i<HistoOfBin_i->GetNbinsX()+1;i++){
-      if(HistoOfBin_i->GetBinContent(i)!=0){
-	DeviationIndices.push_back(new Jet::JetIndex(DeviationIndices.size(),TMath::Abs(HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0))));
-      }
-    }
-    std::sort(DeviationIndices.begin(),DeviationIndices.end(),Jet::JetIndex::ptGreaterThan);
-
-    if(DEBUG){
-      std::cout << "sorted deviationindex: " << std::endl;
-      for(unsigned int i=0;i<DeviationIndices.size();i++){
-	std::cout << DeviationIndices.at(i)->idx_ << ": " << DeviationIndices.at(i)->pt_ << std::endl;
-      }
-    }
-
-
-
-
 
     std::vector <Double_t> RatioValues;
     std::vector <Double_t> RatioErrorValues;
@@ -377,17 +379,10 @@ void BasePlotExtractor::fillDeviationsOfRatioVsBinVarPlot(TH1D* DeviationsOfRati
       if(HistoOfBin_i->GetBinContent(i)!=0){
 	RatioValues.push_back(HistoOfBin_i->GetBinContent(i));
 	RatioErrorValues.push_back(HistoOfBin_i->GetBinError(i));
-
-
-	//	DeviationsFromFit.push_back(TMath::Max(0.00001,TMath::Abs(DeviationIndices.back()->pt_-RatioErrorValues.at(DeviationIndices.back()->idx_))));
-		DeviationsFromFit.push_back(TMath::Abs(HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0)));
-	//	DeviationsFromFit.push_back(TMath::Power(100*(HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0))/HistoOfBin_i->GetFunction(func_name)->GetParameter(0),2));
-	//	DeviationsFromFit.push_back(TMath::Power((HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0)),2));
+	DeviationsFromFit.push_back(TMath::Abs(HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0)));
 		if(DEBUG)std::cout << HistoOfBin_i->GetName() << " " << HistoOfBin_i->GetBinContent(i) << "\t " <<HistoOfBin_i->GetFunction(func_name)->GetParameter(0) << "\t " <<  DeviationsFromFit.back() << std::endl;
       }
     }
-    std::sort(DeviationsFromFit.begin(),DeviationsFromFit.end());
-    std::cout << "sorted: " << std::endl;
     Double_t SumDeviations=0;
     for(int i=1;i<DeviationsFromFit.size();i++){
       if(DEBUG)std::cout << DeviationsFromFit.at(i) << std::endl;
@@ -397,23 +392,9 @@ void BasePlotExtractor::fillDeviationsOfRatioVsBinVarPlot(TH1D* DeviationsOfRati
     SumDeviations = SumDeviations/DeviationsFromFit.size();
     SumDeviations = TMath::Sqrt(SumDeviations);
     
-
-    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,DeviationsFromFit.back());
-    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,HistoOfBin_i->GetFunction(func_name)->GetParameter(0));
-    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,HistoOfBin_i->GetFunction(func_name)->GetParError(0));
-    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,SumDeviations);//DeviationsFromFit.size()>5 ? SumDeviations : 0);
-
-    //standard deviation without weights
-    //used until 14/11/12    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,getSampleStandardDeviation(RatioValues)/getSampleMean(RatioValues)*100);//DeviationsFromFit.size()>5 ? SumDeviations : 0);
-    //largest deviation from const fit, lowered by error of const
-    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,TMath::Max(0.00001,DeviationIndices.front()->pt_-HistoOfBin_i->GetFunction(func_name)->GetParError(0)/*RatioErrorValues.at(DeviationIndices.back()->idx_)*/)/HistoOfBin_i->GetFunction(func_name)->GetParameter(0)*100);//DeviationsFromFit.size()>5 ? SumDeviations : 0);
     DeviationsOfRatioVsBinVarHisto->SetBinError(bin_i+1,0);
-    //    DeviationsOfRatioVsBinVarHisto->SetBinError(bin_i+1,HistoOfBin_i->GetFunction(func_name)->GetParError(0));
-    //    std::cout <<DeviationsOfRatioVsBinVarHisto->GetBinContent(bin_i+1)<<std::endl;
-	
-	
     Double_t fitResultConst = HistoOfBin_i->GetFunction(func_name)->GetParameter(0);
-    //standard deviation without weights
+    //weighted standard deviation
     DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,getWeightedStandardDeviation(RatioValues,RatioErrorValues)/fitResultConst*100);//DeviationsFromFit.size()>5 ? SumDeviations : 0);
 	
 	for(size_t i = 0; i < DeviationIndices.size(); ++i) {
