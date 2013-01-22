@@ -1,7 +1,13 @@
+#ifndef BasePlotExtractor_cc
+#define BasePlotExtractor_cc
+
 #include "BasePlotExtractor.h"
 #include "../scripts/tdrstyle_mod.C"
 #include <string>
 #include <fstream>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
 
 //! Default constructor, reads in information about the 
 //! plots. These plots have to be defined in config_
@@ -27,8 +33,8 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsShor
 
   plotsnames_=plotsnames;
   //read in config files in kalibri-style
-  //  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/ExternalConfigs.cfg");
-  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/public/ExternalConfigs.cfg");
+  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/ExternalConfigs.cfg");
+  //  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/public/ExternalConfigs.cfg");
   readInExtraInfo();
   std::cout << "readInExtraInfo(); executed " << yProfileTitle()<< std::endl;
   std::cout << "readInExtraInfo(); executed " << binningSelection_<< std::endl;
@@ -65,6 +71,23 @@ void BasePlotExtractor::readInExtraInfo() {
 
   kalibriPlotsPath_ = ExternalConfig_.read<std::string>((std::string)kalibriPlotsShortName_+" kalibriPlotsPath","KalibriPlots.root");
   pathToConfig_ = ExternalConfig_.read<std::string>((std::string)kalibriPlotsShortName_+" pathToConfig","/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/AllPlots_L2L3.cfg");
+  makeEquiDistHistos_ = ExternalConfig_.read<bool>((std::string)kalibriPlotsShortName_+" makeEquiDistHistos",ExternalConfig_.read<bool>("Default makeEquiDistHistos",1));
+  intLumi_ = ExternalConfig_.read<double>((std::string)kalibriPlotsShortName_+" intLumi",ExternalConfig_.read<double>("Default intLumi",0));
+  sqrtS_ = ExternalConfig_.read<int>((std::string)kalibriPlotsShortName_+" SqrtS",ExternalConfig_.read<int>("Default SqrtS",7));
+
+  runNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)kalibriPlotsShortName_+" RunNumbers",ExternalConfig_.read<std::string>("TimeDependence RunNumbers","")));
+  runNumbersLabels_ = bag_of_string(ExternalConfig_.read<std::string>((std::string)kalibriPlotsShortName_+" RunNumbersLabels",ExternalConfig_.read<std::string>("TimeDependence RunNumbersLabels","")));
+
+  runNumbersMap_.clear();
+
+  for(unsigned int i=0;i<runNumbers_.size();i++){
+    std::cout << runNumbers_.size() << " and " << runNumbersLabels_.size()<<std::endl;
+    std::cout << runNumbers_.at(i) << " and " << runNumbersLabels_.at(i) <<std::endl;
+  }
+  assert(runNumbers_.size()==runNumbersLabels_.size());
+  for(unsigned int i=0;i<runNumbers_.size();i++){
+    runNumbersMap_[runNumbers_.at(i)]=runNumbersLabels_.at(i);
+  }
 
   //  binningSelection_ = ExternalConfig_.read<std::string>("binning selection","kostas");
   if(kalibriPlotsPath_.Contains("kostas"))binningSelection_ = "kostas";
@@ -123,7 +146,7 @@ void BasePlotExtractor::init(TString profileType) {
     configs.at(i) = pConfig;
     configs.at(i)->setOutDirName((std::string)outputPathROOT_);
     configs.at(i)->setOutRootFileName((std::string)("Output"+kalibriPlotsShortName()+".root"));
-    if(i==0)configs.at(i)->openRootFile() ;
+    //    if(i==0)configs.at(i)->openRootFile() ;
     // Create functions
     ControlPlotsFunction *func = new ControlPlotsFunction();
     func->setBinFunction(findTwoJetsPtBalanceEventFunction(pConfig->binVariable()));
@@ -155,7 +178,11 @@ void BasePlotExtractor::init(TString profileType) {
 	name += "_"+pConfig->binName(bin_i);
 	name += "_"+profileType;
 	//Import the profile plots (TH1D) as defined in the config (usually two, depending on number of correction types)
-	DataMCProfiles.push_back((TH1D*) inf->Get(name));
+	//Replace histos with simple equidistant binning for runnumber histograms (depending on default in ExternalConfigs.cfg)
+	if(makeEquiDistHistos_&&pConfig->xVariable()=="RunNumber")DataMCProfiles.push_back(replaceHistosWithEquiDistBins((TH1D*) inf->Get(name)));
+	else{
+	  DataMCProfiles.push_back((TH1D*) inf->Get(name));
+       	}
 	std::cout << DataMCProfiles.back()->GetName() << std::endl;
       }
       DataMCProfiles.at(0)->Sumw2();
@@ -227,14 +254,20 @@ void BasePlotExtractor::refreshRatiosDataMC(){
 // ----------------------------------------------------------------   
 void BasePlotExtractor::makeRatioVsBinVarHistos(){
   TH1vec_t RatioVsBinVarHistos;
+  TH1vec_t DeviationsOfRatioVsBinVarHistos;
+  //insert deviation plots here
   for(int conf_i=0;conf_i<configs_.size();conf_i++){
     //    std::cout << names_.size() << std::endl;
     //    std::cout << names_.at(conf_i) << std::endl;
     TH1D* RatioVsBinVar = new TH1D(("RatioVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
+    TH1D* DeviationsOfRatioVsBinVar = new TH1D(("DeviationsOfRatioVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
     //    std::cout << names_.at(conf_i) << std::endl;
     RatioVsBinVar->Sumw2();
     RatioVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
+    DeviationsOfRatioVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
     RatioVsBinVar->GetYaxis()->SetTitle("Data/MC ratio (const fit)");
+    //    DeviationsOfRatioVsBinVar->GetYaxis()->SetTitle("Sample standard deviation [%]");
+    DeviationsOfRatioVsBinVar->GetYaxis()->SetTitle("Weighted standard deviation [%]");
     //    std::cout << "TEMPTESTING:" << RatioVsBinVar->GetXaxis()->GetXmin() << " and " << RatioVsBinVar->GetXaxis()->GetXmax() <<std::endl;
     //    std::cout << "TEMPTESTING:" << configs_.at(conf_i)->xMin() << " and " << configs_.at(conf_i)->xMax() <<std::endl;
 
@@ -242,13 +275,16 @@ void BasePlotExtractor::makeRatioVsBinVarHistos(){
   for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
     fitFunctionsToRatioPlot(AllRatiosDataMC_.at(conf_i).at(bin_i));
     fillRatioVsBinVarPlot(RatioVsBinVar,AllRatiosDataMC_.at(conf_i).at(bin_i),bin_i,"fit_const");
+    fillDeviationsOfRatioVsBinVarPlot(DeviationsOfRatioVsBinVar,AllRatiosDataMC_.at(conf_i).at(bin_i),bin_i,"fit_const");
   }
 //  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
 //    std::cout << RatioVsBinVar->GetBinContent(bin_i+1) << ", " << std::endl;
 //  }
   RatioVsBinVarHistos.push_back(RatioVsBinVar);
+  DeviationsOfRatioVsBinVarHistos.push_back(DeviationsOfRatioVsBinVar);  
   }
   RatioVsBinVarHistos_=RatioVsBinVarHistos;
+  DeviationsOfRatioVsBinVarHistos_=DeviationsOfRatioVsBinVarHistos;
 }
 
 
@@ -267,7 +303,7 @@ void BasePlotExtractor::fitFunctionsToRatioPlot(TH1D* histo){
   if(!plotsnames_.Contains("Resolution")){//ignore pt-dependence of
     //    resolution ratios for my purposes... might change this to a
     //  config-file option in the future
-    if(plotsnames_.Contains("VsPt")||plotsnames_.Contains("VsMeanPt")){
+    if(plotsnames_.Contains("VsPt")||plotsnames_.Contains("VsMeanPt")||plotsnames_.Contains("VsJetLeadPt")||plotsnames_.Contains("VsJetLead2Pt")||plotsnames_.Contains("VsJet2Pt")){
       TF1 *fit_loglin = new TF1("fit_loglin","[0]+[1]*TMath::Log(x)",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
       fit_loglin->SetParameters(1,1);
       fit_loglin->SetParName(0,"const");
@@ -305,6 +341,162 @@ void BasePlotExtractor::fillRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* Hi
 
 }
 
+//! Fill DeviationsOfRatioVsBinVarPlotWith fit results
+//! Current implemenation: determine standard deviation from (constant) fit, set bin error to paerror(0) - error of constant fit parameter
+//! 
+//!  \author Henning Kirschenmann
+//!  \date 2012/07/11
+// ----------------------------------------------------------------   
+void BasePlotExtractor::fillDeviationsOfRatioVsBinVarPlot(TH1D* DeviationsOfRatioVsBinVarHisto, TH1D* HistoOfBin_i, Int_t bin_i, TString func_name){
+  if(HistoOfBin_i->GetFunction(func_name)){
+
+    std::vector<Jet::JetIndex*> DeviationIndices;
+
+    for(int i=1;i<HistoOfBin_i->GetNbinsX()+1;i++){
+      if(HistoOfBin_i->GetBinContent(i)!=0){
+	DeviationIndices.push_back(new Jet::JetIndex(DeviationIndices.size(),TMath::Abs(HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0))));
+      }
+    }
+    std::sort(DeviationIndices.begin(),DeviationIndices.end(),Jet::JetIndex::ptGreaterThan);
+
+    if(DEBUG){
+      std::cout << "sorted deviationindex: " << std::endl;
+      for(unsigned int i=0;i<DeviationIndices.size();i++){
+	std::cout << DeviationIndices.at(i)->idx_ << ": " << DeviationIndices.at(i)->pt_ << std::endl;
+      }
+    }
+
+
+
+
+
+    std::vector <Double_t> RatioValues;
+    std::vector <Double_t> RatioErrorValues;
+    std::vector <Double_t> DeviationsFromFit;
+    for(int i=1;i<HistoOfBin_i->GetNbinsX()+1;i++){
+      if(HistoOfBin_i->GetBinContent(i)!=0){
+	RatioValues.push_back(HistoOfBin_i->GetBinContent(i));
+	RatioErrorValues.push_back(HistoOfBin_i->GetBinError(i));
+
+
+	//	DeviationsFromFit.push_back(TMath::Max(0.00001,TMath::Abs(DeviationIndices.back()->pt_-RatioErrorValues.at(DeviationIndices.back()->idx_))));
+		DeviationsFromFit.push_back(TMath::Abs(HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0)));
+	//	DeviationsFromFit.push_back(TMath::Power(100*(HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0))/HistoOfBin_i->GetFunction(func_name)->GetParameter(0),2));
+	//	DeviationsFromFit.push_back(TMath::Power((HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0)),2));
+		if(DEBUG)std::cout << HistoOfBin_i->GetName() << " " << HistoOfBin_i->GetBinContent(i) << "\t " <<HistoOfBin_i->GetFunction(func_name)->GetParameter(0) << "\t " <<  DeviationsFromFit.back() << std::endl;
+      }
+    }
+    std::sort(DeviationsFromFit.begin(),DeviationsFromFit.end());
+    std::cout << "sorted: " << std::endl;
+    Double_t SumDeviations=0;
+    for(int i=1;i<DeviationsFromFit.size();i++){
+      if(DEBUG)std::cout << DeviationsFromFit.at(i) << std::endl;
+      SumDeviations+=DeviationsFromFit.at(i);
+    }
+    assert(DeviationsFromFit.size()>0);
+    SumDeviations = SumDeviations/DeviationsFromFit.size();
+    SumDeviations = TMath::Sqrt(SumDeviations);
+    
+
+    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,DeviationsFromFit.back());
+    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,HistoOfBin_i->GetFunction(func_name)->GetParameter(0));
+    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,HistoOfBin_i->GetFunction(func_name)->GetParError(0));
+    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,SumDeviations);//DeviationsFromFit.size()>5 ? SumDeviations : 0);
+
+    //standard deviation without weights
+    //used until 14/11/12    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,getSampleStandardDeviation(RatioValues)/getSampleMean(RatioValues)*100);//DeviationsFromFit.size()>5 ? SumDeviations : 0);
+    //largest deviation from const fit, lowered by error of const
+    //    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,TMath::Max(0.00001,DeviationIndices.front()->pt_-HistoOfBin_i->GetFunction(func_name)->GetParError(0)/*RatioErrorValues.at(DeviationIndices.back()->idx_)*/)/HistoOfBin_i->GetFunction(func_name)->GetParameter(0)*100);//DeviationsFromFit.size()>5 ? SumDeviations : 0);
+    DeviationsOfRatioVsBinVarHisto->SetBinError(bin_i+1,0);
+    //    DeviationsOfRatioVsBinVarHisto->SetBinError(bin_i+1,HistoOfBin_i->GetFunction(func_name)->GetParError(0));
+    //    std::cout <<DeviationsOfRatioVsBinVarHisto->GetBinContent(bin_i+1)<<std::endl;
+	
+	
+    Double_t fitResultConst = HistoOfBin_i->GetFunction(func_name)->GetParameter(0);
+    //standard deviation without weights
+    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,getWeightedStandardDeviation(RatioValues,RatioErrorValues)/fitResultConst*100);//DeviationsFromFit.size()>5 ? SumDeviations : 0);
+	
+	for(size_t i = 0; i < DeviationIndices.size(); ++i) {
+	  delete DeviationIndices[i];
+	}
+  }
+  else {
+    std::cout << DeviationsOfRatioVsBinVarHisto->GetName() << "WARNING: NO FIT FUNCTIONS ADDED... SETTING BIN TO ZERO: " << bin_i<< std::endl;
+    DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,0.);
+    DeviationsOfRatioVsBinVarHisto->SetBinError(bin_i+1,0.);
+  }
+
+  
+}
+
+Double_t BasePlotExtractor::getSampleMean(std::vector <Double_t> sampleVector){
+  Int_t size = sampleVector.size();
+  if(size>1){
+    Double_t Sum=0;
+    for(int i=0;i<size;i++){
+      Sum+=sampleVector.at(i);
+    }
+    std::cout << "sampleMean: " << Sum/size << std::endl;
+    return Sum/size;
+  }
+  else{
+    std::cout << "single or no elements for mean calculation. Quitting" <<std::endl;
+    //    assert(size>1);
+    return -1;
+  }
+  
+  
+}
+
+Double_t BasePlotExtractor::getSampleStandardDeviation(std::vector <Double_t> sampleVector){
+  Int_t size = sampleVector.size();
+  if(size>1){
+    Double_t mean = getSampleMean(sampleVector);
+    Double_t SumDiffSquared=0;
+    for(int i=0;i<size;i++){
+      SumDiffSquared+= TMath::Power(sampleVector.at(i)-mean,2);
+    }
+    std::cout << "SumDiffSquared: " << SumDiffSquared << std::endl;
+    std::cout << "size: " << size << std::endl;
+    Double_t sampleStandardDeviation=TMath::Sqrt(SumDiffSquared/(size-1));
+    std::cout << "sampleStandardDeviation: " << sampleStandardDeviation << std::endl;
+    return sampleStandardDeviation;
+    
+  }
+  else{
+    return -1;
+  }
+  
+  
+}
+
+Double_t BasePlotExtractor::getWeightedStandardDeviation(std::vector <Double_t> sampleVector, std::vector <Double_t> sampleVectorErrors){
+  Int_t size = sampleVector.size();
+  assert(sampleVector.size()==sampleVectorErrors.size());
+  if(size>1){
+    Double_t s0=0;
+    Double_t s1=0;
+    Double_t s2=0;
+    for(int i=0;i<size;i++){
+      Double_t weight = 1/sampleVectorErrors.at(i);
+      s0 += weight;
+      s1 += weight * TMath::Power(sampleVector.at(i),1);
+      s2 += weight * TMath::Power(sampleVector.at(i),2);
+    }
+
+    Double_t WeightedStandardDeviation = TMath::Sqrt(s0*s2-TMath::Power(s1,2))/s0;
+
+    return WeightedStandardDeviation;
+    
+  }
+  else{
+    return -1;
+  }
+  
+  
+}
+
+
 
 //!  Get JER values from histos
 //! 
@@ -314,10 +506,10 @@ void BasePlotExtractor::fillRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* Hi
 void BasePlotExtractor::outputTable(TString label, TH1D* histo){
 
    ofstream myfile;
-   myfile.open("JER_results_"+label+".txt");
+   myfile.open("Residual_results_"+label+".txt");
 
    for(int i = 1; i < histo->GetNbinsX()+1; i++) {
-      myfile << "Eta Bin: " << i-1 << " : " << "JER: " << histo->GetBinContent(i) << "+-" << histo->GetBinError(i) << "\n"; 
+     myfile << "Eta Bin: " <<std::setw(8)<< histo->GetXaxis()->GetBinLowEdge(i) <<std::setw(8) <<  histo->GetXaxis()->GetBinUpEdge(i) << " : " << "Residual: " << std::setw(12)<<histo->GetBinContent(i) << " +- " << std::setw(12)<<histo->GetBinError(i) << "\n"; 
    }
    myfile.close();
 
@@ -327,6 +519,13 @@ void BasePlotExtractor::outputTable(TString label, TH1D* histo){
      myfile << histo->GetXaxis()->GetBinLowEdge(i) <<"\t" <<  histo->GetXaxis()->GetBinUpEdge(i) << "\t        3              3           3500      "<< histo->GetBinContent(i) <<"\n";
    }
    myfile.close();
+
+   myfile.open("TimeDepTableFormat_"+label+".txt");
+   for(int i = 1; i < histo->GetNbinsX()+1; i++) {
+     myfile  << histo->GetXaxis()->GetBinLowEdge(i) <<"\t" <<  histo->GetXaxis()->GetBinUpEdge(i) <<":\t" << std::setw(12) << histo->GetBinContent(i) << " \t+- " << std::setw(12)<<histo->GetBinError(i)<<"\n";
+   }
+   myfile.close();
+
 
 }
 
@@ -345,10 +544,13 @@ void BasePlotExtractor::addFunctionLabelsToLegend(TH1D* histo, TLegend* leg){
   Int_t i=0;
   while ((obj = next())){
     //    obj->Print();//Draw(next.GetOption());
-    TF1* temp_tf1 = (TF1*) obj;
-    temp_tf1->SetLineColor(style.getColor(i));
-    temp_tf1->SetFillColor(style.getColor(i));
-    temp_tf1->SetFillStyle(1);
+    TF1* verytemp_tf1 = (TF1*) obj;
+    verytemp_tf1->SetLineColor(style.getColor(i));
+    verytemp_tf1->SetFillColor(style.getColor(i));
+
+    //introduced memory leak here for plotting?!
+    TF1* temp_tf1 = (TF1*) verytemp_tf1->Clone();
+    temp_tf1->SetFillStyle(1001);
 
     TFitResultPtr r = histo->Fit(temp_tf1->GetName(),"NSEMQ");
     Double_t chisquared1;
@@ -409,8 +611,8 @@ void BasePlotExtractor::drawConfidenceIntervals(TH1D* histo){
       //      hint->SetFillColor(38);
       //    }
     i++;
-    hint->Draw("e4 same");
-    //    hint->Delete();
+    hint->DrawClone("e4 same");
+    delete hint;
   }
   
 }
@@ -435,8 +637,8 @@ void BasePlotExtractor::drawConfidenceIntervals(TGraphErrors* histo){
   while ((obj = next())){
     //    obj->Print();//Draw(next.GetOption());
     TF1* temp_tf1 = (TF1*) obj;
-
-    histo->Fit(temp_tf1->GetName(),"NEMQ");
+    //    std::cout << "drawing confidence intervals" << std::endl;
+    histo->Fit(temp_tf1,"NEMQ");
     //Create a histogram to hold the confidence intervals
     TH1D *hint = new TH1D("hint","Fitted function with .95 conf.band", 100, histo->GetXaxis()->GetXmin(), histo->GetXaxis()->GetXmax());
     hint->Sumw2();
@@ -456,10 +658,103 @@ void BasePlotExtractor::drawConfidenceIntervals(TGraphErrors* histo){
       //      hint->SetFillColor(38);
       //    }
     i++;
-    hint->Draw("e4 same");
-    //    hint->Delete();
+    hint->DrawClone("e4 same");
+    delete hint;
   }
   
+}
+
+//!  \brief modify plots to have simply numbered equidistant binning
+//!
+//!  Useful e.g. for time dependence studies where the runnumbers 
+//!  
+//!  
+//!  
+// -------------------------------------------------------------
+
+void BasePlotExtractor::drawRunNumberLabels(TH1D* histo, ControlPlotsConfig* config){
+  
+  DefaultStyles style;
+  std::cout << "temp" << std::endl;
+  std::vector<double> xBinEdges = *config->xBinEdges();
+
+  TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle");
+
+  for(unsigned int i=0;i<runNumbers_.size();i++){
+    //    std::cout << runNumbers_.size() << " and " << runNumbersLabels_.size()<<std::endl;
+    if(xBinEdges.size()>i)std::cout << runNumbers_.at(i) << " and " << runNumbersLabels_.at(i) << " and " << xBinEdges.at(i)<< std::endl;
+  }
+
+  std::vector <TLine*> lines;
+  std::vector <TText*> labels;
+  std::vector <int> binNumbers;
+  binNumbers.push_back(1);
+  //  std::cout << histo->GetYaxis()->GetFirst() << " and " << histo->GetYaxis()->GetLast() << " " << histo->GetYaxis()->GetBinLowEdge(1) << " " << histo->GetYaxis()->GetBinUpEdge(1) << " " << histo->GetMinimum() << " " << histo->GetMaximum() <<std::endl;
+  for(unsigned int xbin_i=0;xbin_i<xBinEdges.size();xbin_i++){
+    //    std::cout << xBinEdges.at(xbin_i) <<std::endl;
+    if(runNumbersMap_[xBinEdges.at(xbin_i)]!=""){
+      //      std::cout << xBinEdges.at(xbin_i) << " also bin nummer " << xbin_i<< std::endl;
+      binNumbers.push_back(xbin_i);
+      lines.push_back(new TLine(histo->GetXaxis()->GetBinUpEdge(xbin_i),histo->GetMinimum(),histo->GetXaxis()->GetBinUpEdge(xbin_i),histo->GetMaximum()));
+      labels.push_back(new TText(histo->GetXaxis()->GetBinUpEdge(xbin_i),histo->GetMinimum()+0.05*(histo->GetMaximum()-histo->GetMinimum()),(runNumbersMap_[xBinEdges.at(xbin_i)]).c_str()));
+
+    }
+  }
+  for(unsigned int line_i=0;line_i<lines.size();line_i++){
+    lines.at(line_i)->SetLineColor(style.getColor(line_i));
+    lines.at(line_i)->SetLineStyle(2);
+    lines.at(line_i)->DrawClone();
+    labels.at(line_i)->SetX(histo->GetXaxis()->GetBinUpEdge(binNumbers.at(line_i)));
+    labels.at(line_i)->SetTextColor(style.getColor(line_i));
+    labels.at(line_i)->SetTextSize(  tdrStyle->GetTitleFontSize()/2);
+    labels.at(line_i)->DrawClone();
+
+  }
+
+  for(unsigned int line_i=0;line_i<lines.size();line_i++){
+    delete lines.at(line_i);
+    delete labels.at(line_i);
+  }
+}
+
+
+//!  \brief Encapsulate cmsPrelDraw from tdrstyle_mod.C
+//!
+//!  Chooses correct centre of mass energy and integrated luminosity
+//!  
+// -------------------------------------------------------------
+
+void BasePlotExtractor::drawCMSPrel(bool wide){
+
+  cmsPrel(intLumi_,wide, sqrtS_);
+
+}
+
+
+//!  \brief modify plots to have simply numbered equidistant binning
+//!
+//!  Useful e.g. for time dependence studies where the runnumbers 
+//!  are widely spread and sparse
+//!  
+//!  
+// -------------------------------------------------------------
+TH1D* BasePlotExtractor::replaceHistosWithEquiDistBins(TH1D* histo){
+
+
+  //continue here...
+
+  Int_t nbins = histo->GetNbinsX();
+  std::vector <Double_t> binEdges;
+  for(int i=0;i<nbins+1;i++){
+    binEdges.push_back(i);
+    if(i<nbins+1&&i>1&&TString(histo->GetName()).Contains("MC")){
+      histo->SetBinContent(i,histo->GetBinContent(i-1));
+      histo->SetBinError(i,histo->GetBinError(i-1));
+    }
+  }
+  histo->GetXaxis()->Set(nbins,&binEdges[0]);
+
+  return histo;
 }
 
 
@@ -473,6 +768,8 @@ void BasePlotExtractor::drawConfidenceIntervals(TGraphErrors* histo){
 ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type) const {
   if( varName == "RunNumber" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventRunNumber;
+  if( varName == "Phi" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPhi;
   if( varName == "Eta" )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
   if( varName == "AbsEta" )
@@ -493,6 +790,18 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
   if( varName == "Jet2Pt" && type == ControlPlotsConfig::L2L3Res  )
    return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3ResCorrected; 
+  if( varName == "JetLeadPt" && type == ControlPlotsConfig::Uncorrected  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPt; 
+  if( varName == "JetLeadPt" && type == ControlPlotsConfig::L2L3  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3Corrected; 
+  if( varName == "JetLeadPt" && type == ControlPlotsConfig::L2L3Res  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3ResCorrected; 
+  if( varName == "JetLead2Pt" && type == ControlPlotsConfig::Uncorrected  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLead2Pt; 
+  if( varName == "JetLead2Pt" && type == ControlPlotsConfig::L2L3  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3Corrected; 
+  if( varName == "JetLead2Pt" && type == ControlPlotsConfig::L2L3Res  )
+   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3ResCorrected;   
 //  if( varName == "MeanPt")
 //   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
 //  //    return  &ControlPlotsFunction::twoJetsPtBalanceEventMeanPt;
@@ -571,3 +880,6 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
   std::cerr << "ControlPlots: unknown variable " << varName << std::endl;
   return 0;
 }
+
+#endif 
+

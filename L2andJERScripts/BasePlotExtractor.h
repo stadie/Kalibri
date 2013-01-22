@@ -9,6 +9,7 @@
 #include "../ControlPlotsConfig.cc"
 #include "../ControlPlotsProfile.cc"
 #include "../ControlPlotsFunction.cc"
+#include "../Jet.h"
 #include "DefaultStyles.cc"
 //#include "../ControlPlots.cc"
 //#include "../Bin.cc"
@@ -26,8 +27,11 @@
 #define UTILS_AS_HEADER_FILE
 #include "util/utils.h"
 #include "util/HistOps.h"
+#include "util/FileOps.h"
 #include "util/LabelFactory.h"
 #include "util/StyleSettings.h"
+
+const bool DEBUG=true;
 
 
 typedef std::vector<TH1D*> TH1vec_t;
@@ -50,14 +54,21 @@ typedef std::vector<VecOfTH1vec_t > VecOfVecOfTH1vec_t;
 class BasePlotExtractor {
  public :
   BasePlotExtractor(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsShortName="DEFAULT");
+  TH1D* replaceHistosWithEquiDistBins(TH1D* histo);
   void init(TString profileType="Mean");
   void fitFunctionsToRatioPlot(TH1D* histo);
   void fillRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* HistoOfBin_i, Int_t bin_i, TString func_name="fit_const");
+  void fillDeviationsOfRatioVsBinVarPlot(TH1D* RatioVsBinVarHisto, TH1D* HistoOfBin_i, Int_t bin_i, TString func_name="fit_const");
   void makeRatioVsBinVarHistos();
   void refreshRatiosDataMC();
   void drawConfidenceIntervals(TH1D* histo);
   void drawConfidenceIntervals(TGraphErrors* histo);
+  void drawRunNumberLabels(TH1D* histo, ControlPlotsConfig* config);
+  void drawCMSPrel(bool wide = false);
   void addFunctionLabelsToLegend(TH1D* histo, TLegend* leg);
+  Double_t getSampleMean(std::vector <Double_t> sampleVector);
+  Double_t getSampleStandardDeviation(std::vector <Double_t> sampleVector);
+  Double_t getWeightedStandardDeviation(std::vector <Double_t> sampleVector, std::vector <Double_t> sampleVectorErrors);
   void outputTable(TString label, TH1D* histo);
   void readInExtraInfo();
   TString kalibriPlotsShortName() {return kalibriPlotsShortName_;};
@@ -89,9 +100,13 @@ class BasePlotExtractor {
   VecOfTH1vec_t AllRatiosDataMC_;
   VecOfTH1vec_t AllDifferencesDataMC_;
   TH1vec_t RatioVsBinVarHistos_;
+  TH1vec_t DeviationsOfRatioVsBinVarHistos_;
   TString kalibriPlotsShortName_;
   TString kalibriPlotsPath_;
   TString pathToConfig_;
+  std::vector<double> runNumbers_;
+  std::vector<std::string> runNumbersLabels_;
+  std::map <double, std::string> runNumbersMap_;
   TString outputPathROOT_;
   TString plotsnames_;
   TString jetType_;
@@ -105,6 +120,9 @@ class BasePlotExtractor {
   TString yRatioTitle_;
   std::vector<double> yDifferenceMinMax_;
   TString yDifferenceTitle_;
+  bool makeEquiDistHistos_;
+  double intLumi_;
+  int sqrtS_;
 };
 
 #endif 

@@ -5,7 +5,7 @@
 #include "TGraphErrors.h"
 
 typedef std::vector<TGraphErrors*> TGErrvec_t;
-typedef std::vector<TGraphErrors*> VecOfTGErrvec_t;
+typedef std::vector<TGErrvec_t> VecOfTGErrvec_t;
 
 
 //!  \brief Reads (PF-)fraction plots and produces stacked
@@ -26,12 +26,14 @@ class Extrapolation :public BasePlotExtractor{
   Extrapolation(TString plotsnames="ResolutionVsPt",TString kalibriPlotsShortName="KalibriPlots.root");
   void Plot();
   void ExportTables();
+  std::vector<std::string> cutNames_;
+  std::vector<double> cutNumbers_;
+  std::pair <float,float> determineMinMax(TGraphErrors* graph);
  private:
+  bool doPlotExtrapol_;
   void extrapolInit();
   void createPtRelExtrapol();
   void makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos();
-  std::vector<std::string> cutNames_;
-  std::vector<double> cutNumbers_;
   //  VecOfVecOfTH1vec_t AllPlots_;
   //  void doExtrapol();  
   TH1vec_t CollectExtrapolatedMCDataRatios_;
@@ -57,7 +59,6 @@ class Extrapolation :public BasePlotExtractor{
     TH1D* ExtrapolatedResData() const {return ExtrapolatedResData_;}
     TH1D* ExtrapolatedMCDataRatio() const {return ExtrapolatedMCDataRatio_;}
     TH1D* ExtrapolatedNormalizedMCDataRatio() const {return ExtrapolatedNormalizedMCDataRatio_;}
-    std::pair <float,float> determineMinMax(TGraphErrors* graph);
 
   private:
     std::vector<TH1D*> MCHistos_;
