@@ -49,8 +49,9 @@ void PFFractionPlots::Plot() {
  
     for(int conf_i=0;conf_i<configs_.size();conf_i++){
       for(int j=0;j<2;j++){
-	if(j==0){
+	if(j==1){
 	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetLineColor(style.getColor(conf_i));
+	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetMarkerColor(1);
 	}
 	else {
 	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetLineColor(1);
@@ -58,7 +59,7 @@ void PFFractionPlots::Plot() {
 	  
 	}
 	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetFillColor(style.getColor(conf_i));
-	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetFillStyle(3001);
+	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetFillStyle(1001);
 	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetMarkerStyle(style.getMarker(conf_i));
       }
       leg->AddEntry(AllPlots_.at(conf_i).at(bin_i).at(1),(configs_.at(conf_i)->yTitle()).c_str(),"FP");
@@ -70,29 +71,31 @@ void PFFractionPlots::Plot() {
     //    std::cout << (configs_.at(0)->binTitle(configs_.at(0)->binEdges()->at(bin_i),
     //					   configs_.at(0)->binEdges()->at(bin_i+1))).c_str() << std::endl;
 
-    AllPlots_.at(0).at(bin_i).at(0)->Draw();
-    //    AllPlots_.at(0).at(bin_i).at(0)->SetTitle((configs_.at(0)->xBinTitle(bin_i,20,2000)).c_str());
-    AllPlots_.at(0).at(bin_i).at(0)->GetYaxis()->SetRangeUser(0,1.1);
-    AllPlots_.at(0).at(bin_i).at(0)->GetYaxis()->SetTitle("PF energy fraction");
-    //    AllPlots_.at(0).at(bin_i).at(0)->GetYaxis()->SetTitleOffset(1.1);
+    AllPlots_.at(0).at(bin_i).at(1)->Draw();
+    //    AllPlots_.at(0).at(bin_i).at(1)->SetTitle((configs_.at(0)->xBinTitle(bin_i,20,2000)).c_str());
+    AllPlots_.at(0).at(bin_i).at(1)->GetYaxis()->SetRangeUser(0,1.1);
+    AllPlots_.at(0).at(bin_i).at(1)->GetYaxis()->SetTitle("PF energy fraction");
+    //    AllPlots_.at(0).at(bin_i).at(1)->GetYaxis()->SetTitleOffset(1.1);
     TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
-    AllPlots_.at(0).at(bin_i).at(0)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
-    AllPlots_.at(0).at(bin_i).at(0)->GetXaxis()->SetRangeUser(configs_.at(0)->xMin(),configs_.at(0)->xMax());
+    AllPlots_.at(0).at(bin_i).at(1)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
+    AllPlots_.at(0).at(bin_i).at(1)->GetXaxis()->SetRangeUser(configs_.at(0)->xMin(),configs_.at(0)->xMax());
   THStack *hs = new THStack("hs","Stacked 1D histograms MC ");
   THStack *hs2 = new THStack("hs2","Stacked 1D histograms DATA");
   for(int i=0;i<configs_.size();i++){
-  hs->Add(AllPlots_.at(i).at(bin_i).at(0));
-  hs2->Add(AllPlots_.at(i).at(bin_i).at(1));
+  hs->Add(AllPlots_.at(i).at(bin_i).at(1));
+  hs2->Add(AllPlots_.at(i).at(bin_i).at(0));
   }
   hs->Draw("histsame");
   hs2->Draw("same");
+  drawRunNumberLabels(AllPlots_.at(0).at(bin_i).at(1),configs_.at(0));
   leg->SetHeader((configs_.at(0)->binTitle(configs_.at(0)->binEdges()->at(bin_i),
 					   configs_.at(0)->binEdges()->at(bin_i+1))).c_str());
   leg->Draw();
-  cmsPrel();
+  drawCMSPrel();
   TString outname = "FractionPlots_"+plotsnames_+"_"+configs_.at(0)->binName(bin_i);
   //  outname+=bin_i;
   outname+=".eps";
+  c->RedrawAxis();
   c->SaveAs(outname);
 
   //Ratio plots 
@@ -126,11 +129,13 @@ void PFFractionPlots::Plot() {
   }
 
   //  label->Draw("same");
+  drawRunNumberLabels(AllRatiosDataMC_.at(0).at(bin_i),configs_.at(0));
   leg->Draw();
-     cmsPrel();
+     drawCMSPrel();
     outname = "FractionPlots_"+plotsnames_+"_ratio"+"_"+configs_.at(0)->binName(bin_i);
     //  outname+=bin_i;
     outname+=".eps";
+    c->RedrawAxis();
     c->SaveAs(outname);
 
 
@@ -163,11 +168,13 @@ void PFFractionPlots::Plot() {
   }
 
   //  label->Draw("same");
+  drawRunNumberLabels(AllDifferencesDataMC_.at(0).at(bin_i),configs_.at(0));
   leg->Draw();
-     cmsPrel();
+     drawCMSPrel();
     outname = "FractionPlots_"+plotsnames_+"_difference"+"_"+configs_.at(0)->binName(bin_i);
     //  outname+=bin_i;
     outname+=".eps";
+    c->RedrawAxis();
     c->SaveAs(outname);
 
 
