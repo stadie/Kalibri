@@ -1,6 +1,6 @@
 Index: JetMETObjects/Makefile
 ===================================================================
-RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/Makefile,v
+RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/Makefile,v
 retrieving revision 1.6
 diff -r1.6 Makefile
 100c100
@@ -9,7 +9,7 @@ diff -r1.6 Makefile
 > 	-c -DSTANDALONE -I$(TMPDIR) \
 Index: JetMETObjects/interface/FactorizedJetCorrector.h
 ===================================================================
-RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h,v
+RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h,v
 retrieving revision 1.11
 diff -r1.11 FactorizedJetCorrector.h
 19c19
@@ -38,9 +38,9 @@ diff -r1.11 FactorizedJetCorrector.h
 >     bool  mIsJetPhiPhiset;
 Index: JetMETObjects/interface/JetCorrectorParameters.h
 ===================================================================
-RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/interface/JetCorrectorParameters.h,v
-retrieving revision 1.14
-diff -r1.14 JetCorrectorParameters.h
+RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/interface/JetCorrectorParameters.h,v
+retrieving revision 1.17
+diff -r1.17 JetCorrectorParameters.h
 14c14,17
 < #include "FWCore/Utilities/interface/Exception.h"
 ---
@@ -50,7 +50,7 @@ diff -r1.14 JetCorrectorParameters.h
 > #endif
 Index: JetMETObjects/src/FactorizedJetCorrector.cc
 ===================================================================
-RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/src/FactorizedJetCorrector.cc,v
+RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/src/FactorizedJetCorrector.cc,v
 retrieving revision 1.19
 diff -r1.19 FactorizedJetCorrector.cc
 22,32c22,34
@@ -160,26 +160,28 @@ diff -r1.19 FactorizedJetCorrector.cc
 > //------------------------------------------------------------------------
 Index: JetMETObjects/src/JetCorrectorParameters.cc
 ===================================================================
-RCS file: /cvs_server/repositories/CMSSW/CMSSW/CondFormats/JetMETObjects/src/JetCorrectorParameters.cc,v
-retrieving revision 1.19
-diff -r1.19 JetCorrectorParameters.cc
-448a449
+RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/src/JetCorrectorParameters.cc,v
+retrieving revision 1.22
+diff -r1.22 JetCorrectorParameters.cc
+475a476
 > #ifndef STANDALONE
-449a451,454
+477a479,482
 > #else
 >   std::cerr << " cannot find key " << static_cast<int>(k) << std::endl;
 >   throw "InvalidInput";
 > #endif
-528a534
+531d535
+< 
+557a562
 > #ifndef STANDALONE
-531c537,540
+559c564,567
 < 
 ---
 > #else 
 >   std::cerr  << " Cannot find label " << label << std::endl;
 >   throw "InvalidInput";
 > #endif
-538,541c547,552
+566,569c574,579
 < #include "FWCore/Utilities/interface/typelookup.h"
 <  
 < TYPELOOKUP_DATA_REG(JetCorrectorParameters);

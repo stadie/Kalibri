@@ -42,7 +42,7 @@ SRCS=$(filter-out $(OTHERSRCS),$(wildcard *.cc))
 
 OBJS = $(SRCS:.cc=.o)
 
-.PHONY: clean bins libs plugins all
+.PHONY: clean bins libs plugins all liblbfgs
 
 all: libs bins
 
@@ -59,7 +59,7 @@ clean:
 	@cd liblbfgs-1.10 && $(MAKE) clean
 	@rm -f liblbfgs-1.10/lib/lbfgs.lo
 
-libs: lib include/lbfgs.h lib/libKalibri.so lib/liblbfgs.so
+libs: lib lib/libKalibri.so lib/liblbfgs.so lib/liblbfgs.a include/lbfgs.h
 
 bins: bin bin/junk bin/caliber
 
@@ -72,8 +72,9 @@ lib/libKalibri.so: $(OBJS) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
 
+
 include/lbfgs.h lib/liblbfgs.a lib/liblbfgs.so: liblbfgs-1.10
-	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
+	@cd liblbfgs-1.10 && $(MAKE) clean && $(MAKE) && $(MAKE) install
 	@echo '-> shared library lib/liblbfgs-1.10.so created.'
 
 liblbfgs-1.10: liblbfgs-1.10.tar.gz
@@ -112,12 +113,12 @@ lib/libJetMETObjects.so: bin lib tmp JetMETObjects
 	cd JetMETObjects && $(MAKE) STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX}' lib
 
 JetMETObjects:
-	@cvs -d :gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-02-02 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
+	@cvs -d :pserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-03-01 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 	patch -p0 < JetMETObjects.patch
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
 PUReweighting:
-	@cvs -d :gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
+	@cvs -d :pserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
 
 #rules
