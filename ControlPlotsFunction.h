@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.h,v 1.31 2012/11/28 10:58:04 kirschen Exp $
+// $Id: ControlPlotsFunction.h,v 1.32 2012/12/12 16:33:32 kirschen Exp $
 
 #ifndef CONTROLPLOTS_FUNCTION_H
 #define CONTROLPLOTS_FUNCTION_H
@@ -24,7 +24,7 @@ class Event;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsFunction.h,v 1.31 2012/11/28 10:58:04 kirschen Exp $
+//!  $Id: ControlPlotsFunction.h,v 1.32 2012/12/12 16:33:32 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsFunction {
  public:
@@ -63,6 +63,7 @@ class ControlPlotsFunction {
   void addYFunction(ControlPlotsConfig::CorrectionType type, Function func);
 
   double jetTruthEventNPU(const Event *evt) const;
+  double jetTruthEventRho(const Event *evt) const;
   double jetTruthEventJetEta(const Event *evt) const;
   double jetTruthEventJetAbsEta(const Event *evt) const;
   double jetTruthEventJetPt(const Event *evt) const;

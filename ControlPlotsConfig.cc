@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.37 2012/11/28 10:58:04 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.38 2012/12/12 16:33:32 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -824,6 +824,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "HF Em";
   else if( varName == "DeltaPhi")
     title = "#Delta #varphi_{1,2}";
+  else if( varName == "Rho")
+    title = "#rho";
   else if( varName == "RunNumber")
     title = "Run number";
   else if( varName == "MCTruthResponse")

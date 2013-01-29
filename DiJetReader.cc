@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.107 2012/11/21 13:05:45 rathjd Exp $
+//    $Id: DiJetReader.cc,v 1.108 2012/12/04 13:28:51 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -431,8 +431,8 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
   int nevent    = nJet_->fChain->GetEntries();  // Number of events in chain
 
 
-  Int_t cachesize = 10000000; //10 MBytes
-  nJet_->fChain->SetCacheSize(cachesize); 
+  //Int_t cachesize = 10000000; //10 MBytes
+  //nJet_->fChain->SetCacheSize(cachesize); 
   if((dataClass_ == 11)||(dataClass_ == 21)||(dataClass_ == 1)||(dataClass_ == 31)) { 
     nJet_->fChain->SetBranchStatus("Track*",0);
     nJet_->fChain->SetBranchStatus("Tow*",0);
@@ -951,7 +951,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       ++njets;
     } else {
       //      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],1.);
-      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],nJet_->Weight,0,nJet_->PUMCNumVtx);
+      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],nJet_->Weight,0,nJet_->PUMCNumVtx,nJet_->Rho);
       data.push_back(jte);
       ++njets;
       //add jet to constraints

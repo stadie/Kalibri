@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.90 2012/01/24 16:23:31 kirschen Exp $
+// $Id: CalibData.h,v 1.91 2012/04/27 12:34:26 kirschen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -28,7 +28,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.90 2012/01/24 16:23:31 kirschen Exp $
+//!  $Id: CalibData.h,v 1.91 2012/04/27 12:34:26 kirschen Exp $
 class Measurement
 {
 public:
@@ -67,7 +67,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.90 2012/01/24 16:23:31 kirschen Exp $
+//!  $Id: CalibData.h,v 1.91 2012/04/27 12:34:26 kirschen Exp $
 class TTrack : public Measurement
 {
 public:
@@ -124,27 +124,29 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.90 2012/01/24 16:23:31 kirschen Exp $
+//! $Id: CalibData.h,v 1.91 2012/04/27 12:34:26 kirschen Exp $
 class Event
 {
 public:
- Event(double w = 0, double pthat = 0, short npu = 0, float nputruth = 0., short nvtx=0, float met=0, float metphi=0, int runNumber=0)
-   : weight_(w),ptHat_(pthat),nPU_(npu),nPUTruth_(nputruth),nVtx_(nvtx),MET_(met),METphi_(metphi),runNumber_(runNumber) {}
+ Event(float w = 0, float pthat = 0, short npu = 0, float nputruth = 0., short nvtx=0, float met=0, float metphi=0, int runNumber=0, float rho=0)
+   : weight_(w),ptHat_(pthat),nPU_(npu),nPUTruth_(nputruth),nVtx_(nvtx),MET_(met),METphi_(metphi),runNumber_(runNumber),rho_(rho) {}
   virtual ~Event() {}
   virtual Measurement *mess() const = 0;                           //!< Get Measurement object
   virtual double truth() const = 0;                                 //!< Get truth of measurement
   virtual double parametrizedMess() const = 0;                      //!< Get corrected measurement
   virtual void setParameters(Parameters* param) = 0;                  //!< Set Parameters
   virtual DataType type() const = 0;                                //!< Get DataType
-  double weight() const { return weight_;}                          //!< Get weight
+  float weight() const { return weight_;}                          //!< Get weight
   void   setWeight(double w)  {weight_ = w;}                           //!< Set weight
-  double ptHat() const { return ptHat_; }                              //!< Get event scale
+  float ptHat() const { return ptHat_; }                              //!< Get event scale
   float nPUTruth() const { return nPUTruth_; } //! True number of PU interactions
   short nPU() const { return nPU_; } //!< Number of generated (in-time) PU interactions
   short nVtx() const { return nVtx_; } //!< Number of reconstructed vertices
   float MET() const { return MET_; } //!< Missing transverse energy
   float METphi() const { return METphi_; } //!< Azimuthal angle of missing transverse energy
   int runNumber() const { return runNumber_; } //!< Number of CMS run
+
+  float rho() const {return rho_;} //! energy density rho
 
   //!  \brief Get the normalized, squared residual \f$ z^{2} \f$ of this event
   //!
@@ -233,14 +235,15 @@ public:
 
 
  protected:
-  double weight_;
-  double ptHat_;
+  float weight_;
+  float ptHat_;
   short nPU_;
   float nPUTruth_;
   short nVtx_;
   float MET_;
   float METphi_;
   int runNumber_;
+  float rho_;
 };
 
 
