@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.108 2012/12/04 13:28:51 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.109 2013/01/29 15:30:58 stadie Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1779,10 +1779,10 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     if(useSingleJetTriggers_){
       double ptj1= jet1->pt() * jet1->corFactors().getL2L3() * jet1->corFactors().getL1(); 	 
       double ptj2= jet2->pt() * jet2->corFactors().getL2L3() * jet2->corFactors().getL1(); 	 
-      if(jet1->eta()<1.3)
+      if(std::abs(jet1->eta())<1.3)
         {
           if(ptj1>ptj2) triggerPt=ptj1; 	 
-          else if(jet2->eta()<1.3) triggerPt=ptj2;
+          else if(std::abs(jet2->eta()<1.3)) triggerPt=ptj2;
           else triggerPt=ptj1;
         }
       else triggerPt=ptj2;

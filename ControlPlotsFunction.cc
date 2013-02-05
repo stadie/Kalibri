@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.36 2012/12/12 16:33:32 kirschen Exp $
+// $Id: ControlPlotsFunction.cc,v 1.37 2013/01/29 15:30:58 stadie Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -618,10 +618,10 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3ResCorrected(cons
 //////////////////////////////////////////////////////////////////////////////////
 double ControlPlotsFunction::twoJetsPtBalanceEventJetLead2Pt(const Event *evt) const {
   const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
-  if(jte->getJet1()->eta()<1.3)
+  if(std::abs(jte->getJet1()->eta())<1.3)
    {
      if(jte->getJet1()->pt() > jte->getJet2()->pt())return jte->getJet1()->pt(); 	 
-     else if(jte->getJet2()->eta()<1.3)return jte->getJet2()->pt();
+     else if(std::abs(jte->getJet2()->eta())<1.3)return jte->getJet2()->pt();
      else return jte->getJet1()->pt();
    }
   else return jte->getJet2()->pt();
@@ -634,10 +634,10 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetLead2Pt(const Event *evt) c
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3Corrected(const Event *evt) const {
   const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
-  if(jte->getJet1()->eta()<1.3)
+  if(std::abs(jte->getJet1()->eta())<1.3)
    {
      if(jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3() > jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3())return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3(); 	 
-     else if(jte->getJet2()->eta()<1.3)return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3();
+     else if(std::abs(jte->getJet2()->eta())<1.3)return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3();
      else return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3();
    }
   else return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3();
@@ -650,11 +650,11 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3Corrected(const 
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3ResCorrected(const Event *evt) const {
   const TwoJetsPtBalanceEvent* jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
-  if(jte->getJet1()->eta()<1.3)
+  if(std::abs(jte->getJet1()->eta())<1.3)
    {
      if(jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3Res() > jte->getJet2()->pt() *
      jte->getJet2()->corFactors().getL2L3Res())return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3Res(); 	 
-     else if(jte->getJet2()->eta()<1.3)return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3Res();
+     else if(std::abs(jte->getJet2()->eta())<1.3)return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3Res();
      else return jte->getJet1()->pt() * jte->getJet1()->corFactors().getL2L3Res();
    }
   else return jte->getJet2()->pt() * jte->getJet2()->corFactors().getL2L3Res();
