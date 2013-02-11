@@ -396,6 +396,8 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1Response;
   if( varName == "MCTruthResponse" && type == ControlPlotsConfig::L2L3 )
     return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response;
+  if( varName == "MCTruthResponse" && type == ControlPlotsConfig::L2L3Res )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response;
   if( varName == "") {
     return 0;
   }
