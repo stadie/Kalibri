@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.20 2011/05/31 15:49:04 stadie Exp $
+//    $Id: JetTruthEvent.h,v 1.21 2013/01/29 15:36:15 stadie Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -15,7 +15,7 @@
 class JetTruthEvent : public Event
 {
 public:
- JetTruthEvent(Jet *j, double t, float w, float pthat = 0, short npu = 0, float rho = 0, bool binned = false) : Event(w,pthat,npu,0,0,0,0,0,rho),jet_(j),truth_(t),chi2plots_(1000.),flagged_bad_(false), binned_(binned) {}
+ JetTruthEvent(Jet *j, double t, float w, float pthat = 0, short npu = 0, float nputruth = 0, float rho = 0, bool binned = false) : Event(w,pthat,npu,nputruth,0,0,0,0,rho),jet_(j),truth_(t),chi2plots_(1000.),flagged_bad_(false), binned_(binned) {}
   ~JetTruthEvent();
 
   //interface from Event

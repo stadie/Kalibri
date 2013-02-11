@@ -9,6 +9,7 @@
 #include "ConfigFile.h"
 #include "Parameters.h"
 #include "TwoJetsPtBalanceEvent.h"
+#include "JetTruthEvent.h"
 #include "PUReweighting/LumiReweightingStandAlone.h"
 
 #include <iostream>
@@ -66,12 +67,22 @@ int PUTruthReweighting::preprocess(std::vector<Event*>& data,
   double WeightSumAfter = 0; // Sum of Weights
   double WeightSumBefore = 0; // Sum of Weights
   std::vector<Event*>::iterator evt1 = control1.begin();
+  if( (*evt1)->type() != PtBalance)std::cout << "Warning: No TwoJetsPtBalanceEvent! Take special care when e.g. analyzing JetTruthEvents"; 
   for(; evt1 != control1.end(); ++evt1, ++nProcEvts) {
     if( (*evt1)->type() == ParLimit ) continue;
     float nputruth = (*evt1)->nPUTruth();
-    if( (*evt1)->type() != PtBalance) std::cout << "Warning: No TwoJetsPtBalanceEvent! ";
+    std::map<double,int>::iterator it;
+    if( (*evt1)->type() == PtBalance){
     TwoJetsPtBalanceEvent* tje = dynamic_cast<TwoJetsPtBalanceEvent*>((*evt1));
-    std::map<double,int>::iterator it = controlTrigger_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_));
+    it = controlTrigger_.lower_bound(tje->triggerPtVariableL2L3(useSingleJetTriggers_));
+    }
+    else if((*evt1)->type() == GammaJet){ //GammaJet is the data type used for JetTruthEvents
+      JetTruthEvent * jte = dynamic_cast<JetTruthEvent*>((*evt1));
+      it = controlTrigger_.lower_bound(jte->jet()->corFactors().getL2L3() * jte->jet()->pt());//WARNING, hack: use L2L3-corrected reco pt as pt-variable for trigger thresholds for trutevents
+    }
+    else{
+      std::cout << "Warning: No TwoJetsPtBalanceEvent and no GammaJet/JetTruthEvent!"; 
+    }
    if(!(it == controlTrigger_.begin())){
      assert(it != controlTrigger_.begin());
      --it;
