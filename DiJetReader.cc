@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.109 2013/01/29 15:30:58 stadie Exp $
+//    $Id: DiJetReader.cc,v 1.110 2013/02/05 14:23:10 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -951,7 +951,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       ++njets;
     } else {
       //      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],1.);
-      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],nJet_->Weight,0,nJet_->PUMCNumVtx,nJet_->Rho);
+      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],nJet_->Weight,nJet_->GenEvtScale,nJet_->PUMCNumVtx,nJet_->PUMCNumTruth,nJet_->Rho);
       data.push_back(jte);
       ++njets;
       //add jet to constraints
