@@ -42,7 +42,7 @@ SRCS=$(filter-out $(OTHERSRCS),$(wildcard *.cc))
 
 OBJS = $(SRCS:.cc=.o)
 
-.PHONY: clean bins libs plugins all liblbfgs
+.PHONY: clean bins libs plugins all 
 
 all: libs bins
 
@@ -56,10 +56,9 @@ tmp:
 clean:
 	@rm -rf ti_files tmp lib bin share  
 	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#* 
-	@cd liblbfgs-1.10 && $(MAKE) clean
 	@rm -f liblbfgs-1.10/lib/lbfgs.lo
 
-libs: lib lib/liblbfgs.so lib/liblbfgs.a include/lbfgs.h lib/libKalibri.so
+libs: lib liblbfgs-1.10 lib/libKalibri.so
 
 bins: bin bin/junk bin/caliber
 
@@ -68,21 +67,19 @@ plugins: lib PUReweighting lib/libJetMETCor.so
 lbfgs.o: lbfgs.F
 	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
 
-lib/libKalibri.so: $(OBJS) lbfgs.o
+lib/libKalibri.so:  liblbfgs-1.10 $(OBJS) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
-
-
-include/lbfgs.h lib/liblbfgs.a lib/liblbfgs.so: liblbfgs-1.10
-	@cd liblbfgs-1.10 && $(MAKE) clean
-	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
-	@echo '-> shared library lib/liblbfgs-1.10.so created.'
 
 
 liblbfgs-1.10: | liblbfgs-1.10.tar.gz
 	@tar zxvf liblbfgs-1.10.tar.gz
 	@cd liblbfgs-1.10 && ./configure --prefix=$(KALIBRIDIR)
 	@echo '-> liblbfgs-1.10 configured.'
+	@cd liblbfgs-1.10 && $(MAKE) clean
+	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
+	@echo '-> shared library lib/liblbfgs-1.10.so created.'
+
 
 
 liblbfgs-1.10.tar.gz:
