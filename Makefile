@@ -53,12 +53,15 @@ lib:
 tmp:
 	@mkdir -p tmp
 
+include:
+	@mkdir -p include
+
 clean:
 	@rm -rf ti_files tmp lib bin share  
 	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#* 
 	@rm -f liblbfgs-1.10/lib/lbfgs.lo
 
-libs: lib lib/libKalibri.so
+libs: lib include PUReweighting include/lbfgs.h lib/libKalibri.so
 
 bins: bin bin/junk bin/caliber
 
@@ -70,6 +73,12 @@ lbfgs.o: lbfgs.F
 lib/libKalibri.so:  include/lbfgs.h $(OBJS) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
+
+Kalibri.o: include/lbfgs.h
+
+lib/liblbfgs.so lib/liblbfgs.a: include/lbfgs.h
+	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
+	@echo '-> shared library lib/liblbfgs-1.10.so created.'
 
 
 include/lbfgs.h: liblbfgs-1.10.tar.gz
@@ -123,7 +132,7 @@ PUReweighting:
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
 
 #rules
-.cc.o:
+.cc.o:  
 	$(CC) $(RCXX) -MMD -c -o $@ $<
 	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
              -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.d
