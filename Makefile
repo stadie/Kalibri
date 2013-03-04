@@ -59,7 +59,7 @@ clean:
 	@cd liblbfgs-1.10 && $(MAKE) clean
 	@rm -f liblbfgs-1.10/lib/lbfgs.lo
 
-libs: lib lib/libKalibri.so lib/liblbfgs.so lib/liblbfgs.a include/lbfgs.h
+libs: lib lib/liblbfgs.so lib/liblbfgs.a include/lbfgs.h lib/libKalibri.so
 
 bins: bin bin/junk bin/caliber
 
@@ -74,12 +74,16 @@ lib/libKalibri.so: $(OBJS) lbfgs.o
 
 
 include/lbfgs.h lib/liblbfgs.a lib/liblbfgs.so: liblbfgs-1.10
-	@cd liblbfgs-1.10 && $(MAKE) clean && $(MAKE) && $(MAKE) install
+	@cd liblbfgs-1.10 && $(MAKE) clean
+	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
 	@echo '-> shared library lib/liblbfgs-1.10.so created.'
 
-liblbfgs-1.10: liblbfgs-1.10.tar.gz
+
+liblbfgs-1.10: | liblbfgs-1.10.tar.gz
 	@tar zxvf liblbfgs-1.10.tar.gz
 	@cd liblbfgs-1.10 && ./configure --prefix=$(KALIBRIDIR)
+	@echo '-> liblbfgs-1.10 configured.'
+
 
 liblbfgs-1.10.tar.gz:
 	@wget --no-check-certificate https://github.com/downloads/chokkan/liblbfgs/liblbfgs-1.10.tar.gz
