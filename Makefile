@@ -58,7 +58,7 @@ clean:
 	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#* 
 	@rm -f liblbfgs-1.10/lib/lbfgs.lo
 
-libs: lib liblbfgs-1.10 lib/libKalibri.so
+libs: lib lib/libKalibri.so
 
 bins: bin bin/junk bin/caliber
 
@@ -67,12 +67,12 @@ plugins: lib PUReweighting lib/libJetMETCor.so
 lbfgs.o: lbfgs.F
 	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
 
-lib/libKalibri.so:  liblbfgs-1.10 $(OBJS) lbfgs.o
+lib/libKalibri.so:  include/lbfgs.h $(OBJS) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
 
 
-liblbfgs-1.10: | liblbfgs-1.10.tar.gz
+include/lbfgs.h: liblbfgs-1.10.tar.gz
 	@tar zxvf liblbfgs-1.10.tar.gz
 	@cd liblbfgs-1.10 && ./configure --prefix=$(KALIBRIDIR)
 	@echo '-> liblbfgs-1.10 configured.'
