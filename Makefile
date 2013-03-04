@@ -76,6 +76,8 @@ lib/libKalibri.so:  include/lbfgs.h $(OBJS) lbfgs.o
 
 Kalibri.o: include/lbfgs.h
 
+PUTruthReweighting.o: PUReweighting
+
 lib/liblbfgs.so lib/liblbfgs.a: include/lbfgs.h
 	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
 	@echo '-> shared library lib/liblbfgs-1.10.so created.'
