@@ -78,19 +78,22 @@ Kalibri.o: include/lbfgs.h
 
 PUTruthReweighting.o: PUReweighting
 
-lib/liblbfgs.so lib/liblbfgs.a: include/lbfgs.h
+lib/liblbfgs.so lib/liblbfgs.a: liblbfgs-1.10 include/lbfgs.h
 	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
 	@echo '-> shared library lib/liblbfgs-1.10.so created.'
 
 
+
 include/lbfgs.h: liblbfgs-1.10.tar.gz
-	@tar zxvf liblbfgs-1.10.tar.gz
-	@cd liblbfgs-1.10 && ./configure --prefix=$(KALIBRIDIR)
-	@echo '-> liblbfgs-1.10 configured.'
 	@cd liblbfgs-1.10 && $(MAKE) clean
 	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
 	@echo '-> shared library lib/liblbfgs-1.10.so created.'
 
+
+liblbfgs-1.10: liblbfgs-1.10.tar.gz
+	@tar zxvf liblbfgs-1.10.tar.gz
+	@cd liblbfgs-1.10 && ./configure --prefix=$(KALIBRIDIR)
+	@echo '-> liblbfgs-1.10 configured.'
 
 
 liblbfgs-1.10.tar.gz:
