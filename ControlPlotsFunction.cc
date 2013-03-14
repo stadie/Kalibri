@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.cc,v 1.37 2013/01/29 15:30:58 stadie Exp $
+ // $Id: ControlPlotsFunction.cc,v 1.38 2013/02/05 14:23:10 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -821,6 +821,23 @@ double ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3ResL4Corrected(co
   Jet * jet2 = jte->getJet2();
   return ( jet1->corFactors().getL2L3Res() * jet1->corFactors().getL4() * jet1->pt() - jet2->corFactors().getL2L3Res() * jet2->corFactors().getL4() * jet2->pt())/( jet1->corFactors().getL2L3Res() * jet1->corFactors().getL4() * jet1->pt()+ jet2->corFactors().getL2L3Res() * jet2->corFactors().getL4() * jet2->pt());
 }
+
+
+//!  \brief Returns the jet genasymmetry
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The genasymmetry is defined as
+//!  \f[  (p^{true}_{T,1}-p^{true}_{T,2}) / (p^{true}_{T,1}+p^{true}_{T,2})\f].
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventGenAsymmetry(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  return (jet1->genPt()-jet2->genPt())/(jet1->genPt()+jet2->genPt());
+}
+
+
 
 //!  \brief Returns the jet B
 //!
