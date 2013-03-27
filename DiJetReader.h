@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.40 2012/11/19 14:27:09 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.41 2012/11/20 09:30:44 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -85,6 +85,7 @@ class DiJetReader : public EventReader{
   int    dataClass_;            //!< Data class, see also Event
   int    nDijetEvents_;         //!< Maximum number of read dijet events
   int    prescale_;             //!< only read every nth event
+  bool   UsePhysFlavDefinition_;       //!< Use physical flavor definition instead of algorithmic
   bool   weights_eq_one_;       //!< force weight for each event to one
   bool   fire_all_dijet_triggers_;       //!< Set all trigger btis to one (branches need to be revised...)
   bool   JERReadInJ1J2SameEtaBin_;       //!< Read in events in same eta bin (not central + any eta) for JER studies; thresholds defined in JEREtaMap_

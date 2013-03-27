@@ -1,4 +1,4 @@
- // $Id: ControlPlotsFunction.cc,v 1.39 2013/03/14 13:16:03 kirschen Exp $
+ // $Id: ControlPlotsFunction.cc,v 1.40 2013/03/27 12:14:13 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -147,6 +147,21 @@ double ControlPlotsFunction::jetTruthEventJetFlavor(const Event *evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
   return jte->jet()->flavor();
 }
+
+
+//!  \brief Returns the DeltaR to the closest reco jet
+//!
+//!  The \p Event \p evt has to be of type  \p JetTruthEvent
+//!  DeltaR to closest other reco jet is returned
+//!  
+//!  
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventJetClosestJetdR(const Event * evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  return jte->jet()->closestJetdR();
+}
+
+
 
 
 //!  \brief Returns the jet response
@@ -716,16 +731,17 @@ double ControlPlotsFunction::twoJetsPtBalanceEventDeltaPhi(const Event * evt) co
   return (std::abs(TVector2::Phi_mpi_pi(jet1->phi() - jet2->phi())) );
 }
 
-//!  \brief Returns the DeltaR to the closes reco jet (of jet1)
+//!  \brief Returns the DeltaR to the closest reco jet (of jet1)
 //!
 //!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
-//!  DeltaR (of jet1) to closest reco genjet is returned
+//!  DeltaR (of jet1) to closest other reco jet is returned
 //!  
 //!  
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::twoJetsPtBalanceEventClosestJetdR(const Event * evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet1 = jte->getJet1();
+  if(jet1->closestJetdR()<0.1)std::cout << jet1->closestJetdR() << " jet1->pt() " << jet1->pt() << std::endl;
   return jet1->closestJetdR();
 }
 

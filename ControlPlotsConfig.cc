@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.39 2013/01/29 15:30:58 stadie Exp $
+// $Id: ControlPlotsConfig.cc,v 1.40 2013/03/27 12:14:13 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -644,6 +644,30 @@ void ControlPlotsConfig::init() {
   // This should become configurable via config file
   for(std::vector<int>::const_iterator samplesIt = sampleIds.begin() ;
       samplesIt != sampleIds.end() ; samplesIt++) {
+    std::cout << "sampleIds.size()" << sampleIds.size() << std::endl;
+    if(sampleIds.size()>=3){
+      int idx = samplesIt - sampleIds.begin();
+      std::cout << "idx: " << idx <<std::endl;
+      colors_[std::make_pair(*samplesIt,Uncorrected)] = kBlue+idx;
+      colors_[std::make_pair(*samplesIt,Kalibri)] = 2+idx;
+      colors_[std::make_pair(*samplesIt,L2L3)] = 1+idx;
+      colors_[std::make_pair(*samplesIt,L2L3Res)] = kBlue+2+idx;
+      colors_[std::make_pair(*samplesIt,L2L3L4)] = 8+idx;
+      colors_[std::make_pair(*samplesIt,L2L3ResL4)] = 1+idx;
+      colors_[std::make_pair(*samplesIt,L1L2L3)] = 2+idx;
+      colors_[std::make_pair(*samplesIt,L5)] = 8+idx;
+      
+      markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = 20+idx;
+      markerStyles_[std::make_pair(*samplesIt,Kalibri)] = 21+idx;
+      markerStyles_[std::make_pair(*samplesIt,L2L3)] = 24+idx;
+      markerStyles_[std::make_pair(*samplesIt,L2L3Res)] = 27+idx;
+      markerStyles_[std::make_pair(*samplesIt,L2L3L4)] = 28+idx;
+      markerStyles_[std::make_pair(*samplesIt,L2L3ResL4)] = 20+idx;
+      markerStyles_[std::make_pair(*samplesIt,L1L2L3)] = 21+idx;
+      markerStyles_[std::make_pair(*samplesIt,L5)] = 28+idx;
+    }
+    
+    else{
     colors_[std::make_pair(*samplesIt,Uncorrected)] = 1;
     colors_[std::make_pair(*samplesIt,Kalibri)] = 2;
     colors_[std::make_pair(*samplesIt,L2L3)] = kBlue;
@@ -652,7 +676,7 @@ void ControlPlotsConfig::init() {
     colors_[std::make_pair(*samplesIt,L2L3ResL4)] = 1;
     colors_[std::make_pair(*samplesIt,L1L2L3)] = 2;
     colors_[std::make_pair(*samplesIt,L5)] = 8;
-    if(samplesIt - sampleIds.begin() == 0) {
+    if(samplesIt - sampleIds.begin() == 0) { //i.e. samplesIt == sampleIds.begin (!?)
       markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = 20;
       markerStyles_[std::make_pair(*samplesIt,Kalibri)] = 21;
       markerStyles_[std::make_pair(*samplesIt,L2L3)] = 24;
@@ -663,6 +687,7 @@ void ControlPlotsConfig::init() {
       markerStyles_[std::make_pair(*samplesIt,L5)] = 28;
     } else {
       int style = -(samplesIt - sampleIds.begin());
+      //      std::cout << "int style = -(samplesIt - sampleIds.begin());" << style << std::endl;
       markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = style;
       markerStyles_[std::make_pair(*samplesIt,Kalibri)] = style;
       markerStyles_[std::make_pair(*samplesIt,L2L3)] = style;
@@ -671,6 +696,7 @@ void ControlPlotsConfig::init() {
       markerStyles_[std::make_pair(*samplesIt,L2L3ResL4)] = style;
       markerStyles_[std::make_pair(*samplesIt,L1L2L3)] = style;
       markerStyles_[std::make_pair(*samplesIt,L5)] = style;
+    }
     }
     // Define default legend labels for the different corrections
     std::string name = sampleName(*samplesIt);
@@ -780,7 +806,7 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "jet width";
   //    title = "(#sigma_{#phi#phi} + #sigma_{#eta#eta})/2";
   else if( varName == "Flavor" )
-    title = "Flavor gluon = 0, uds = 1";
+    title = "g(0),uds(1),c(2),b(3)";
   else if ( varName == "EMF" ) 
     title = "emf";
   else if( varName == "GenJetPt" )

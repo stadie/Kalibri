@@ -252,8 +252,10 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
     return &ControlPlotsFunction::jetTruthEventJetMeanMoment;
   if( varName == "Flavor" )
     return &ControlPlotsFunction::jetTruthEventJetFlavor;
+  if( varName == "ClosestJetdR" )
+    return &ControlPlotsFunction::jetTruthEventJetClosestJetdR;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::Uncorrected )
-   return &ControlPlotsFunction::jetTruthEventResponse;
+    return &ControlPlotsFunction::jetTruthEventResponse;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::Kalibri )
     return &ControlPlotsFunction::jetTruthEventResponseKalibriCorrected;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3 )

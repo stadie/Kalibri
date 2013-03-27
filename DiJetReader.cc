@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.111 2013/02/11 15:34:25 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.112 2013/03/27 12:14:13 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -56,6 +56,7 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   prescale_             = config_->read<int>("Di-Jet prescale",1);
   weightRelToNtuple_    = config_->read<double>("Di-Jet weight relative to ntuple weight",1.);
   eventWeight_          = config_->read<double>("Di-Jet weight",-1.);
+  UsePhysFlavDefinition_= config_->read<bool>("Use physical flavor definition instead of algorithmic",false);
   weights_eq_one_       = config_->read<bool>("set weights to one",false);
   fire_all_dijet_triggers_    = config_->read<bool>("fire all triggers",false);
   JERReadInJ1J2SameEtaBin_    = config_->read<bool>("JER - Assert J1J2 In Same Eta Bin",false);
@@ -913,12 +914,24 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       jet = jt;
     }
     else { 
+      //find DeltaR to closest other recojet
+      float closestJetdR =100;
+      for(int j = 0; j < nJet_->NobjJet; j++) {
+	if(deltaR(nJet_->JetEta[calJetIdx],nJet_->JetEta[j],
+		  nJet_->JetPhi[calJetIdx],nJet_->JetPhi[j])<closestJetdR&&calJetIdx!=j){
+	  closestJetdR=deltaR(nJet_->JetEta[calJetIdx],nJet_->JetEta[j],
+			      nJet_->JetPhi[calJetIdx],nJet_->JetPhi[j]);
+	  if(closestJetdR<0.1)std::cout << "calJetIdx " << calJetIdx << 	" j " << j << " closestJetdR " << closestJetdR << std::endl; 
+	}
+      }
+      //      std::cout << "TESTcalJetIdx " << calJetIdx << 	" j " << j << " closestJetdR " << closestJetdR << std::endl; 
+      
       jet = new Jet(nJet_->JetPt[calJetIdx],tower.EMF,tower.HadF,
 		    tower.OutF,nJet_->JetE[calJetIdx],
 		    nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaPhi[calJetIdx],
 		    nJet_->JetEtWeightedSigmaEta[calJetIdx],
-		    Jet::flavorFromPDG(nJet_->GenPartId_algo[calJetIdx]),
+		    UsePhysFlavDefinition_ ? Jet::flavorFromPDG(nJet_->GenPartId_phys[calJetIdx]) : Jet::flavorFromPDG(nJet_->GenPartId_algo[calJetIdx]),
 		    nJet_->JetFChargedHadrons[calJetIdx],
 		    nJet_->JetFNeutralHadrons[calJetIdx],
 		    nJet_->JetFPhotons[calJetIdx],
@@ -928,7 +941,8 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 		    nJet_->GenJetColPt[genJetIdx],drJetGenjet,
 		    createCorFactors(calJetIdx),
 		    par_->jet_function(nJet_->JetIEta[calJetIdx],nJet_->JetIPhi[calJetIdx]),
-		    jet_error_param,par_->global_jet_function());    
+		    jet_error_param,par_->global_jet_function(),
+		    closestJetdR);    
     }
     if(corFactorsFactory_) {
       jet->updateCorFactors(corFactorsFactory_->create(jet,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[calJetIdx]));
@@ -1506,7 +1520,7 @@ void DiJetReader::twoJetsPtBalanceSmearJetsJER()
 			   nJet_->JetPhi[i], 
 			   nJet_->JetEtWeightedSigmaPhi[i],
 			   nJet_->JetEtWeightedSigmaEta[i],
-			   Jet::flavorFromPDG(nJet_->GenPartId_algo[nJet_->GenJetColJetIdx[i]]),
+			   UsePhysFlavDefinition_ ? Jet::flavorFromPDG(nJet_->GenPartId_phys[nJet_->GenJetColJetIdx[i]]) : Jet::flavorFromPDG(nJet_->GenPartId_algo[nJet_->GenJetColJetIdx[i]]),
 			   //Jet::uds, take true flavor, if available...
 			   nJet_->JetFChargedHadrons[i],
 			   nJet_->JetFNeutralHadrons[i],
@@ -1673,10 +1687,15 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
                 nJet_->JetPhi[CorrJetIdx[i]],nJet_->JetPhi[j])<closestJetdR&&CorrJetIdx[i]!=j){
 	closestJetdR=deltaR(nJet_->JetEta[CorrJetIdx[i]],nJet_->JetEta[j],
 			    nJet_->JetPhi[CorrJetIdx[i]],nJet_->JetPhi[j]);
-	if(closestJetdR<0.01)std::cout << "CorrJetIdx[i] " << CorrJetIdx[i] << 	" j " << j << " closestJetdR " << closestJetdR << std::endl; 
+	if(closestJetdR<0.1)std::cout << "CorrJetIdx[i] " << CorrJetIdx[i] << 	" j " << j << " closestJetdR " << closestJetdR << std::endl; 
       }
     }
     closestJetdRs.push_back(closestJetdR);
+  }
+  assert(closestJetdRs.size()==nJets);
+  for(int i = 0; i < nJets; i++) {
+    if(closestJetdRs.at(i)<0.1) std::cout << "i " << i << " closestJetdRs.at(i) "<<  closestJetdRs.at(i) << std::endl;
+
   }
 
   // Pointer to the three jets leading in L1L2L3-corrected pt 
@@ -1705,7 +1724,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 			nJet_->JetPhi[CorrJetIdx[i]], 
 			nJet_->JetEtWeightedSigmaPhi[CorrJetIdx[i]],
 			nJet_->JetEtWeightedSigmaEta[CorrJetIdx[i]],
-			Jet::flavorFromPDG(nJet_->GenPartId_algo[nJet_->GenJetColJetIdx[CorrJetIdx[i]]]),
+			UsePhysFlavDefinition_ ? Jet::flavorFromPDG(nJet_->GenPartId_phys[nJet_->GenJetColJetIdx[CorrJetIdx[i]]]) : Jet::flavorFromPDG(nJet_->GenPartId_algo[nJet_->GenJetColJetIdx[CorrJetIdx[i]]]),
 			//Jet::uds, take true flavor, if available...
 			nJet_->JetFChargedHadrons[CorrJetIdx[i]],
 			nJet_->JetFNeutralHadrons[CorrJetIdx[i]],
