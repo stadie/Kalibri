@@ -1,4 +1,4 @@
- // $Id: ControlPlotsFunction.cc,v 1.40 2013/03/27 12:14:13 kirschen Exp $
+ // $Id: ControlPlotsFunction.cc,v 1.41 2013/03/27 17:08:24 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -158,6 +158,7 @@ double ControlPlotsFunction::jetTruthEventJetFlavor(const Event *evt) const {
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::jetTruthEventJetClosestJetdR(const Event * evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  assert(jte->jet()->closestJetdR()>0);
   return jte->jet()->closestJetdR();
 }
 
@@ -741,7 +742,8 @@ double ControlPlotsFunction::twoJetsPtBalanceEventDeltaPhi(const Event * evt) co
 double ControlPlotsFunction::twoJetsPtBalanceEventClosestJetdR(const Event * evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet1 = jte->getJet1();
-  if(jet1->closestJetdR()<0.1)std::cout << jet1->closestJetdR() << " jet1->pt() " << jet1->pt() << std::endl;
+  assert(jet1->closestJetdR()>0);
+  //DEBUG:  if(jet1->closestJetdR()<0.1)std::cout << jet1->closestJetdR() << " jet1->pt() " << jet1->pt() << std::endl;
   return jet1->closestJetdR();
 }
 
