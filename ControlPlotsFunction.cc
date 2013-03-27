@@ -1,4 +1,4 @@
- // $Id: ControlPlotsFunction.cc,v 1.38 2013/02/05 14:23:10 kirschen Exp $
+ // $Id: ControlPlotsFunction.cc,v 1.39 2013/03/14 13:16:03 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -715,6 +715,21 @@ double ControlPlotsFunction::twoJetsPtBalanceEventDeltaPhi(const Event * evt) co
   Jet * jet2 = jte->getJet2();
   return (std::abs(TVector2::Phi_mpi_pi(jet1->phi() - jet2->phi())) );
 }
+
+//!  \brief Returns the DeltaR to the closes reco jet (of jet1)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  DeltaR (of jet1) to closest reco genjet is returned
+//!  
+//!  
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventClosestJetdR(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  return jet1->closestJetdR();
+}
+
+
 
 
 

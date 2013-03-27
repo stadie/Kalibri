@@ -356,6 +356,8 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetFlavor;
   if( varName == "DeltaPhi" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventDeltaPhi;
+  if( varName == "ClosestJetdR" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventClosestJetdR;
   if( varName == "ThirdJetFraction" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction;
   if( varName == "ThirdJetFractionPlain" )

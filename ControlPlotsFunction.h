@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.h,v 1.33 2013/01/29 15:30:58 stadie Exp $
+// $Id: ControlPlotsFunction.h,v 1.34 2013/03/14 13:16:03 kirschen Exp $
 
 #ifndef CONTROLPLOTS_FUNCTION_H
 #define CONTROLPLOTS_FUNCTION_H
@@ -24,7 +24,7 @@ class Event;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsFunction.h,v 1.33 2013/01/29 15:30:58 stadie Exp $
+//!  $Id: ControlPlotsFunction.h,v 1.34 2013/03/14 13:16:03 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsFunction {
  public:
@@ -120,6 +120,7 @@ class ControlPlotsFunction {
   double twoJetsPtBalanceEventJetMomentEtaEta(const Event *evt) const; 
   double twoJetsPtBalanceEventJetMeanMoment(const Event *evt) const;
   double twoJetsPtBalanceEventDeltaPhi(const Event * evt) const;
+  double twoJetsPtBalanceEventClosestJetdR(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetry(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetryKalibriCorrected(const Event * evt) const;
   double twoJetsPtBalanceEventAsymmetryL2L3Corrected(const Event * evt) const;

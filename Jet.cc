@@ -2,7 +2,7 @@
 //    Class for basic jets 
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: Jet.cc,v 1.54 2012/04/27 12:39:39 kirschen Exp $
+//    $Id: Jet.cc,v 1.55 2012/07/23 19:41:29 kirschen Exp $
 //   
 #include "Jet.h"  
 
@@ -17,10 +17,10 @@ Jet::Jet(float Et, float EmEt, float HadEt ,float OutEt, float E,
 	 float fCH, float fNH, float fPH, float fEL, float fHFEm, float fHFHad, 
 	 float genPt, float dR, CorFactors* corFactors, const Function& f, 
 	 float (*errfunc)(const float *x, const Measurement *xorig, float err), 
-	 const Function& gf) 
+	 const Function& gf, float closestJetdR) 
   : Measurement(Et,EmEt,HadEt,OutEt,E,eta,phi,phiphi,etaeta),flavor_(flavor), 
     fCH_(fCH), fNH_(fNH), fPH_(fPH), fEL_(fEL), fHFEm_(fHFEm), fHFHad_(fHFHad),
-    genPt_(genPt),dR_(dR),corFactors_(corFactors),f_(&f),gf_(&gf),
+    genPt_(genPt),dR_(dR),closestJetdR_(closestJetdR),corFactors_(corFactors),f_(&f),gf_(&gf),
     errf_(errfunc),parameters_(0)
 {
   //std::cout << "size:" << sizeof(Jet::GslImplementation) << ", " << sizeof(Jet) << ", " << sizeof(Function) << ", " << sizeof(Measurement) << '\n';

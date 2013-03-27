@@ -4,7 +4,7 @@
 //!
 //!    \date 2008/12/14
 //!
-//!    $Id: Jet.h,v 1.49 2012/02/06 22:29:37 kirschen Exp $
+//!    $Id: Jet.h,v 1.50 2012/04/27 12:39:40 kirschen Exp $
 #ifndef JET_H
 #define JET_H
 
@@ -81,7 +81,7 @@ class Jet : public Measurement
       float fCH, float fNH, float fPH, float fEL, float fHFEm, float fHFHad, 
       float genPt, float dR, CorFactors* corFactors, const Function& f,
       float (*errfunc)(const float *x, const Measurement *xorig, float err), 
-      const Function& gf); 
+      const Function& gf, float closestJetdR=-1); 
   virtual ~Jet();
 
   float Et()     const {return Measurement::pt;}                 //!< Return transverse energy Et
@@ -106,6 +106,7 @@ class Jet : public Measurement
   Flavor flavor() const {return flavor_;}       //!< Return jet flavor
   float genPt()  const {return genPt_;}        //!< Return Pt for corresponding GenJet 
   float dR() const {return dR_;}               //!< \f$ \Delta R \f$ between jet and genjet
+  float closestJetdR() const {return closestJetdR_;} //!< \f$ \Delta R \f$ between jet and closest other recojet
   const CorFactors& corFactors() const { return *corFactors_;}
   void updateCorFactors(CorFactors *cor);  
   //! Correct measurement by \p L1
@@ -194,8 +195,11 @@ class Jet : public Measurement
   float fHFEm_;             //!< Fraction of HF em
   float fHFHad_;	    //!< Fraction of HF had
 
+
+
   float genPt_;            //!< The genjet pt
   float dR_;               //!< \f$ \Delta R \f$ between jet and genjet 
+  float closestJetdR_;	   //!< \f$ \Delta R \f$ between jet and closest other recojet
   float error_;                //!< Stores error for constant error mode
   const CorFactors* corFactors_;   //!< The correction factors
   const Function*  f_;            //!< Jet correction function

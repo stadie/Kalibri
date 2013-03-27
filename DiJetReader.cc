@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.110 2013/02/05 14:23:10 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.111 2013/02/11 15:34:25 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1664,8 +1664,20 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     return 0;
   }
 
-
-
+  std::vector<float> closestJetdRs;
+  //  size_t nJets = nJet_->NobjJet;
+  for(int i = 0; i < nJets; i++) {
+    float closestJetdR =100;
+    for(int j = 0; j < nJet_->NobjJet; j++) {
+      if(deltaR(nJet_->JetEta[CorrJetIdx[i]],nJet_->JetEta[j],
+                nJet_->JetPhi[CorrJetIdx[i]],nJet_->JetPhi[j])<closestJetdR&&CorrJetIdx[i]!=j){
+	closestJetdR=deltaR(nJet_->JetEta[CorrJetIdx[i]],nJet_->JetEta[j],
+			    nJet_->JetPhi[CorrJetIdx[i]],nJet_->JetPhi[j]);
+	if(closestJetdR<0.01)std::cout << "CorrJetIdx[i] " << CorrJetIdx[i] << 	" j " << j << " closestJetdR " << closestJetdR << std::endl; 
+      }
+    }
+    closestJetdRs.push_back(closestJetdR);
+  }
 
   // Pointer to the three jets leading in L1L2L3-corrected pt 
   Jet * jet1 = 0;
@@ -1706,7 +1718,8 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 			par_->jet_function(nJet_->JetIEta[CorrJetIdx[i]],
 					   nJet_->JetIPhi[CorrJetIdx[i]]),
 			jet_error_param,
-			par_->global_jet_function());    
+			par_->global_jet_function(),
+			closestJetdRs.at(i));    
     
     // Store jet
     if( i == 0 ) {
