@@ -167,7 +167,6 @@ void setTDRStyle() {
 
 }
 
-
 void cmsPrel(double intLumi=-1, bool wide = false) {
 
   TLatex *latex = new TLatex();
@@ -194,6 +193,10 @@ void cmsPrel(double intLumi=-1, bool wide = false) {
     latex->DrawLatex(0.15,0.96,"CMS work in progress");
   }
 } // cmsPrel
+
+void cmsFinal(double intLumi=-1, bool wide = false) {
+  cmsPrel(intLumi,wide);
+}
 
 
 
