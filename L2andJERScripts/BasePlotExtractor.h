@@ -31,12 +31,17 @@
 #include "util/LabelFactory.h"
 #include "util/StyleSettings.h"
 
-const bool DEBUG=true;
+const bool DEBUG=false;
 
 
 typedef std::vector<TH1D*> TH1vec_t;
 typedef std::vector<TH1vec_t > VecOfTH1vec_t;
 typedef std::vector<VecOfTH1vec_t > VecOfVecOfTH1vec_t;
+
+typedef std::vector<TH2D*> TH2vec_t;
+typedef std::vector<TH2vec_t > VecOfTH2vec_t;
+typedef std::vector<VecOfTH2vec_t > VecOfVecOfTH2vec_t;
+
 //enum DeviationType {RatioDev,MCDev,DataDev};
 
 //!  \brief Reads (PF-)fraction plots and produces stacked
@@ -55,6 +60,7 @@ typedef std::vector<VecOfTH1vec_t > VecOfVecOfTH1vec_t;
 class BasePlotExtractor {
  public :
   BasePlotExtractor(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsShortName="DEFAULT");
+  ~BasePlotExtractor();
   TH1D* replaceHistosWithEquiDistBins(TH1D* histo);
   void init(TString profileType="Mean");
   void fitFunctionsToPlot(TH1D* histo);
@@ -84,6 +90,9 @@ class BasePlotExtractor {
   TString yRatioTitle() {return yRatioTitle_;};
   std::vector<double> yDifferenceMinMax() {return yDifferenceMinMax_;};
   TString yDifferenceTitle() {return yDifferenceTitle_;};
+  TString dataLabel() {return dataLabel_;};
+  TString mcLabel() {return mcLabel_;};
+
 
   //  void Plot();
   // private:
@@ -98,6 +107,7 @@ class BasePlotExtractor {
   std::vector<ControlPlotsFunction*> functions_;
   std::vector<ControlPlotsProfile*> profiles_;
   VecOfVecOfTH1vec_t AllPlots_;
+  VecOfVecOfTH2vec_t AllTwoDPlots_;
   VecOfTH1vec_t AllRatiosDataMC_;
   VecOfTH1vec_t AllDifferencesDataMC_;
   TH1vec_t RatioVsBinVarHistos_;
@@ -126,6 +136,9 @@ class BasePlotExtractor {
   bool makeEquiDistHistos_;
   double intLumi_;
   int sqrtS_;
+  TString dataLabel_;
+  TString mcLabel_;
+  TFile* inf_;
 };
 
 #endif 

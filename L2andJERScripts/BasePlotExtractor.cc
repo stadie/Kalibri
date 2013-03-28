@@ -34,6 +34,7 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsShor
   plotsnames_=plotsnames;
   //read in config files in kalibri-style
   ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/ExternalConfigs.cfg");
+  //  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/ExternalConfigsFine.cfg");
   //  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/public/ExternalConfigs.cfg");
   readInExtraInfo();
   std::cout << "readInExtraInfo(); executed " << yProfileTitle()<< std::endl;
@@ -43,9 +44,9 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsShor
   config_=ConfigFile((std::string)pathToConfig_);//"/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/AllPlots_L2L3.cfg");
 
 
-  DeviationTypes_.push_back(std::make_pair("RatioDev"," MC/data ratio"));
-  DeviationTypes_.push_back(std::make_pair("MCDev"," in MC"));
-  DeviationTypes_.push_back(std::make_pair("DataDev"," in data"));
+  DeviationTypes_.push_back(std::make_pair("RatioDev"," "+mcLabel_+"/"+dataLabel_+" ratio"));
+  DeviationTypes_.push_back(std::make_pair("MCDev"," in "+mcLabel_+""));
+  DeviationTypes_.push_back(std::make_pair("DataDev"," in "+dataLabel_+""));
 
 }
 
@@ -61,17 +62,26 @@ void BasePlotExtractor::readInExtraInfo() {
   jetType_ = util::LabelFactory::jetAlgo(fileNames)+util::LabelFactory::jetType(fileNames);
   jetLabel_ = util::LabelFactory::labelJet(fileNames);
   std::cout << "import " <<(std::string)plotsnames_+" plots profile yMinMax" << std::endl;
+  dataLabel_ = ExternalConfig_.read<std::string>((std::string)kalibriPlotsShortName_+" dataLabel",ExternalConfig_.read<std::string>("Default dataLabel","Data"));
+  mcLabel_   = ExternalConfig_.read<std::string>((std::string)kalibriPlotsShortName_+" mcLabel",ExternalConfig_.read<std::string>("Default mcLabel","MC"));
+
   yProfileMinMax_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile yMinMax","0 0.5"));
   assert(yProfileMinMax_.size()==2);
   yProfileTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile yTitle","DUMMYResolution");
+  yProfileTitle_.ReplaceAll("Data",dataLabel_);
+  yProfileTitle_.ReplaceAll("MC",mcLabel_);
   yRatioMinMax_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots ratio yMinMax","0.5 1.5"));
   assert(yRatioMinMax_.size()==2);
   yMCDataRatioMinMax_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots MCData ratio yMinMax","0.5 1.5"));
   assert(yMCDataRatioMinMax_.size()==2);
   yRatioTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots ratio yTitle","DUMMY Ratio");
+  yRatioTitle_.ReplaceAll("Data",dataLabel_);
+  yRatioTitle_.ReplaceAll("MC",mcLabel_);
   yDifferenceMinMax_ = bag_of<double>(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots difference yMinMax","-15 10"));
   assert(yDifferenceMinMax_.size()==2);
   yDifferenceTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots difference yTitle","DUMMY Difference");
+  yDifferenceTitle_.ReplaceAll("Data",dataLabel_);
+  yDifferenceTitle_.ReplaceAll("MC",mcLabel_);
   profileType_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile type","Mean");
 
   kalibriPlotsPath_ = ExternalConfig_.read<std::string>((std::string)kalibriPlotsShortName_+" kalibriPlotsPath","KalibriPlots.root");
@@ -86,8 +96,8 @@ void BasePlotExtractor::readInExtraInfo() {
   runNumbersMap_.clear();
 
   for(unsigned int i=0;i<runNumbers_.size();i++){
-    std::cout << runNumbers_.size() << " and " << runNumbersLabels_.size()<<std::endl;
-    std::cout << runNumbers_.at(i) << " and " << runNumbersLabels_.at(i) <<std::endl;
+    if(DEBUG)    std::cout << runNumbers_.size() << " and " << runNumbersLabels_.size()<<std::endl;
+    if(DEBUG)    std::cout << runNumbers_.at(i) << " and " << runNumbersLabels_.at(i) <<std::endl;
   }
   assert(runNumbers_.size()==runNumbersLabels_.size());
   for(unsigned int i=0;i<runNumbers_.size();i++){
@@ -100,7 +110,41 @@ void BasePlotExtractor::readInExtraInfo() {
 
 }
 
+BasePlotExtractor::~BasePlotExtractor() {
+  std::cout << "calling the destructor of BasePlotExtractor " << kalibriPlotsShortName() << " and " << plotsnames_ << std::endl;
+  for(unsigned int i=0;i<AllPlots_.size();i++){
+    for(unsigned int j=0;j<AllPlots_.at(i).size();j++){
+      for(unsigned int k=0;k<AllPlots_.at(i).at(j).size();k++){
+	delete AllPlots_.at(i).at(j).at(k);
+	delete AllTwoDPlots_.at(i).at(j).at(k);
+      }
+    }
+  }
+  for(unsigned int i=0;i<AllRatiosDataMC_.size();i++){
+    for(unsigned int j=0;j<AllRatiosDataMC_.at(i).size();j++){
+      delete AllRatiosDataMC_.at(i).at(j);
+      delete AllDifferencesDataMC_.at(i).at(j);
+    }
+  }
+  for(unsigned int i=0;i<configs_.size();i++){
+    delete configs_.at(i);
+    delete functions_.at(i);
+    delete profiles_.at(i);
+  }
+  for(unsigned int i=0;i<RatioVsBinVarHistos_.size();i++){
+    delete RatioVsBinVarHistos_.at(i);
+  }
 
+  for(unsigned int i=0;i<AllDeviationsVsBinVarHistos_.size();i++){
+    for(unsigned int j=0;j<AllDeviationsVsBinVarHistos_.at(i).size();j++){
+      delete AllDeviationsVsBinVarHistos_.at(i).at(j);
+    }
+  }
+
+
+  delete inf_;  //  inf_->Close();
+
+}
 
 //! Read in the basic plots for the profile types
 //! and store them in class members
@@ -124,20 +168,22 @@ void BasePlotExtractor::readInExtraInfo() {
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
 void BasePlotExtractor::init(TString profileType) {
-  TFile *inf;
-  //      inf = new TFile("KalibriPlots_withOldSmear.root");
-  //       inf = new TFile("KalibriPlots_noSmear.root");
-  //    inf = new TFile("KalibriPlots.root");
-  inf = new TFile(kalibriPlotsPath());
+  //  TFile *inf_;
+  //      inf_ = new TFile("KalibriPlots_withOldSmear.root");
+  //       inf_ = new TFile("KalibriPlots_noSmear.root");
+  //    inf_ = new TFile("KalibriPlots.root");
+  inf_ = new TFile(kalibriPlotsPath());
   std::vector<std::vector<Event*>* > samples;
   setTDRStyle();
 
 
   std::vector<std::string> names;
   names = bag_of_string(ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots names",""));
+  names_	          = names;	
   std::vector<ControlPlotsConfig*> configs(names.size());
   std::vector<ControlPlotsFunction*> functions(names.size());
   std::vector<ControlPlotsProfile*> profiles(names.size());
+  VecOfVecOfTH2vec_t AllTwoDPlots;
   VecOfVecOfTH1vec_t AllPlots;
   VecOfTH1vec_t AllRatiosDataMC;
   VecOfTH1vec_t AllDifferencesDataMC;
@@ -154,6 +200,7 @@ void BasePlotExtractor::init(TString profileType) {
     //    if(i==0)configs.at(i)->openRootFile() ;
     // Create functions
     ControlPlotsFunction *func = new ControlPlotsFunction();
+    std::cout << "test" << std::endl;
     func->setBinFunction(findTwoJetsPtBalanceEventFunction(pConfig->binVariable()));
     func->setXFunction(findTwoJetsPtBalanceEventFunction(pConfig->xVariable()));
     func->setCutFunction(findTwoJetsPtBalanceEventFunction(pConfig->cutVariable()));
@@ -162,17 +209,20 @@ void BasePlotExtractor::init(TString profileType) {
       func->addYFunction(it->second,findTwoJetsPtBalanceEventFunction(pConfig->yVariable(),it->second));
     }
     functions.at(i) = func;
+    std::cout << "test2" << std::endl;
     
     // Create profile
     profiles.at(i) = new ControlPlotsProfile(pConfig,func);
     
     //    std::cout << pConfig->nBins()<< std::endl;
     VecOfTH1vec_t BinsDMCF;
+    VecOfTH2vec_t BinsTwoDDMCF;
     TH1vec_t DataMCRatios; //Vector to contain Data/MC-ratios
     TH1vec_t DataMCDifferences; //Vector to contain Data-MC differences
     for(int bin_i=0;bin_i<pConfig->nBins();bin_i++){
       //      std::cout << bin_i << " of " << pConfig->nBins() << std::endl;
       TH1vec_t DataMCProfiles;//Vector to contain Data and MC TH1
+      TH2vec_t DataMCTwoDHistos;//Vector to contain Data and MC TH2
       for(ControlPlotsConfig::InputTagsIterator i = pConfig->inputTagsBegin();
 	  i != pConfig->inputTagsEnd(); ++i) {
 	TString name = pConfig->name();
@@ -181,14 +231,16 @@ void BasePlotExtractor::init(TString profileType) {
 	name += "_"+pConfig->sampleName(i->first);
 	name += "_"+pConfig->correctionTypeName(i->second);
 	name += "_"+pConfig->binName(bin_i);
+	TString TwoDname = name;
 	name += "_"+profileType;
 	//Import the profile plots (TH1D) as defined in the config (usually two, depending on number of correction types)
 	//Replace histos with simple equidistant binning for runnumber histograms (depending on default in ExternalConfigs.cfg)
-	if(makeEquiDistHistos_&&pConfig->xVariable()=="RunNumber")DataMCProfiles.push_back(replaceHistosWithEquiDistBins((TH1D*) inf->Get(name)));
+	if(makeEquiDistHistos_&&pConfig->xVariable()=="RunNumber")DataMCProfiles.push_back(replaceHistosWithEquiDistBins((TH1D*) inf_->Get(name)));
 	else{
-	  DataMCProfiles.push_back((TH1D*) inf->Get(name));
+	  DataMCProfiles.push_back((TH1D*) inf_->Get(name));
        	}
-	std::cout << DataMCProfiles.back()->GetName() << std::endl;
+	DataMCTwoDHistos.push_back((TH2D*) inf_->Get(TwoDname));
+	if(DEBUG)	std::cout << DataMCProfiles.back()->GetName() << std::endl;
       }
       DataMCProfiles.at(0)->Sumw2();
       DataMCProfiles.at(1)->Sumw2();
@@ -205,8 +257,10 @@ void BasePlotExtractor::init(TString profileType) {
       //      DataMCProfiles.at(0)->Draw("same");
       //      c->SaveAs(DataMCProfiles.back()->GetName()+(TString)".eps");
       BinsDMCF.push_back(DataMCProfiles);
-    }// (TH1D*)inf->Get("kFSR_vs_Abseta_histo_res1");
+      BinsTwoDDMCF.push_back(DataMCTwoDHistos);
+    }// (TH1D*)inf_->Get("kFSR_vs_Abseta_histo_res1");
     AllPlots.push_back(BinsDMCF);
+    AllTwoDPlots.push_back(BinsTwoDDMCF);
     AllRatiosDataMC.push_back(DataMCRatios);
     AllDifferencesDataMC.push_back(DataMCDifferences);
   }
@@ -215,7 +269,8 @@ void BasePlotExtractor::init(TString profileType) {
   AllRatiosDataMC_        = AllRatiosDataMC;
   AllDifferencesDataMC_   = AllDifferencesDataMC;
   AllPlots_               = AllPlots;
-  names_	          = names;	
+  AllTwoDPlots_           = AllTwoDPlots;
+  //  names_	          = names;	
   configs_	          = configs;	
   functions_	          = functions;	
   profiles_               = profiles;    
@@ -269,7 +324,7 @@ void BasePlotExtractor::makeRatioVsBinVarHistos(){
     TH1D* RatioVsBinVar = new TH1D(("RatioVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
     RatioVsBinVar->Sumw2();
     RatioVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
-    RatioVsBinVar->GetYaxis()->SetTitle("Data/MC ratio (const fit)");
+    RatioVsBinVar->GetYaxis()->SetTitle(dataLabel_+"/"+mcLabel_+" ratio (const fit)");
 
     TH1vec_t DeviationsVsBinVarHistos;
     for(size_t dev_i =0; dev_i<DeviationTypes_.size();dev_i++){
@@ -380,7 +435,7 @@ void BasePlotExtractor::fillDeviationsOfRatioVsBinVarPlot(TH1D* DeviationsOfRati
 	RatioValues.push_back(HistoOfBin_i->GetBinContent(i));
 	RatioErrorValues.push_back(HistoOfBin_i->GetBinError(i));
 	DeviationsFromFit.push_back(TMath::Abs(HistoOfBin_i->GetBinContent(i)-HistoOfBin_i->GetFunction(func_name)->GetParameter(0)));
-		if(DEBUG)std::cout << HistoOfBin_i->GetName() << " " << HistoOfBin_i->GetBinContent(i) << "\t " <<HistoOfBin_i->GetFunction(func_name)->GetParameter(0) << "\t " <<  DeviationsFromFit.back() << std::endl;
+	if(DEBUG)std::cout << HistoOfBin_i->GetName() << " " << HistoOfBin_i->GetBinContent(i) << "\t " <<HistoOfBin_i->GetFunction(func_name)->GetParameter(0) << "\t " <<  DeviationsFromFit.back() << std::endl;
       }
     }
     Double_t SumDeviations=0;
@@ -388,10 +443,13 @@ void BasePlotExtractor::fillDeviationsOfRatioVsBinVarPlot(TH1D* DeviationsOfRati
       if(DEBUG)std::cout << DeviationsFromFit.at(i) << std::endl;
       SumDeviations+=DeviationsFromFit.at(i);
     }
+    if(DeviationsFromFit.size()>0){
     assert(DeviationsFromFit.size()>0);
     SumDeviations = SumDeviations/DeviationsFromFit.size();
     SumDeviations = TMath::Sqrt(SumDeviations);
-    
+    }
+    else std::cout << "WARNING: apparently no entries... something went wrong?" << std::endl;
+
     DeviationsOfRatioVsBinVarHisto->SetBinError(bin_i+1,0);
     Double_t fitResultConst = HistoOfBin_i->GetFunction(func_name)->GetParameter(0);
     //weighted standard deviation
@@ -417,7 +475,7 @@ Double_t BasePlotExtractor::getSampleMean(std::vector <Double_t> sampleVector){
     for(int i=0;i<size;i++){
       Sum+=sampleVector.at(i);
     }
-    std::cout << "sampleMean: " << Sum/size << std::endl;
+    if(DEBUG)    std::cout << "sampleMean: " << Sum/size << std::endl;
     return Sum/size;
   }
   else{
@@ -437,10 +495,10 @@ Double_t BasePlotExtractor::getSampleStandardDeviation(std::vector <Double_t> sa
     for(int i=0;i<size;i++){
       SumDiffSquared+= TMath::Power(sampleVector.at(i)-mean,2);
     }
-    std::cout << "SumDiffSquared: " << SumDiffSquared << std::endl;
-    std::cout << "size: " << size << std::endl;
+    if(DEBUG)    std::cout << "SumDiffSquared: " << SumDiffSquared << std::endl;
+    if(DEBUG)    std::cout << "size: " << size << std::endl;
     Double_t sampleStandardDeviation=TMath::Sqrt(SumDiffSquared/(size-1));
-    std::cout << "sampleStandardDeviation: " << sampleStandardDeviation << std::endl;
+    if(DEBUG)    std::cout << "sampleStandardDeviation: " << sampleStandardDeviation << std::endl;
     return sampleStandardDeviation;
     
   }
@@ -663,7 +721,7 @@ void BasePlotExtractor::drawRunNumberLabels(TH1D* histo, ControlPlotsConfig* con
 
   for(unsigned int i=0;i<runNumbers_.size();i++){
     //    std::cout << runNumbers_.size() << " and " << runNumbersLabels_.size()<<std::endl;
-    if(xBinEdges.size()>i)std::cout << runNumbers_.at(i) << " and " << runNumbersLabels_.at(i) << " and " << xBinEdges.at(i)<< std::endl;
+    if(DEBUG)    if(xBinEdges.size()>i)std::cout << runNumbers_.at(i) << " and " << runNumbersLabels_.at(i) << " and " << xBinEdges.at(i)<< std::endl;
   }
 
   std::vector <TLine*> lines;
@@ -747,113 +805,163 @@ TH1D* BasePlotExtractor::replaceHistosWithEquiDistBins(TH1D* histo){
 //!  \p type.
 // -------------------------------------------------------------
 ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunction(const std::string& varName, ControlPlotsConfig::CorrectionType type) const {
-  if( varName == "RunNumber" )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventRunNumber;
-  if( varName == "Phi" )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPhi;
-  if( varName == "Eta" )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
+  if(! TString(names_.at(0)).Contains("MCTruth")){
+    if( varName == "RunNumber" )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventRunNumber;
+    if( varName == "Phi" )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPhi;
+    if( varName == "Eta" )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEta;
+    if( varName == "AbsEta" )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta;
+    if( varName == "Jet2Eta")
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2Eta; 
+    if( varName == "Jet2AbsEta")
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2AbsEta; 
+    if( varName == "Pt" && type == ControlPlotsConfig::Uncorrected )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt; 
+    if( varName == "Pt" && type == ControlPlotsConfig::L2L3  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPtL2L3Corrected; 
+    if( varName == "Pt" && type == ControlPlotsConfig::L2L3Res  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPtL2L3ResCorrected; 
+    if( varName == "Jet2Pt" && type == ControlPlotsConfig::Uncorrected  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2Pt; 
+    if( varName == "Jet2Pt" && type == ControlPlotsConfig::L2L3  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
+    if( varName == "Jet2Pt" && type == ControlPlotsConfig::L2L3Res  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3ResCorrected; 
+    if( varName == "JetLeadPt" && type == ControlPlotsConfig::Uncorrected  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPt; 
+    if( varName == "JetLeadPt" && type == ControlPlotsConfig::L2L3  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3Corrected; 
+    if( varName == "JetLeadPt" && type == ControlPlotsConfig::L2L3Res  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3ResCorrected; 
+    if( varName == "JetLead2Pt" && type == ControlPlotsConfig::Uncorrected  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLead2Pt; 
+    if( varName == "JetLead2Pt" && type == ControlPlotsConfig::L2L3  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3Corrected; 
+    if( varName == "JetLead2Pt" && type == ControlPlotsConfig::L2L3Res  )
+     return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3ResCorrected;   
+  //  if( varName == "MeanPt")
+  //   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
+  //  //    return  &ControlPlotsFunction::twoJetsPtBalanceEventMeanPt;
+    if( varName == "MeanPt")
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventMeanPt;
+    if( varName == "EMF" )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEMF;
+    if( varName == "momentEtaEta" )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentEtaEta;
+    if( varName == "momentPhiPhi" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi; 
+    if( varName == "meanMoment" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment;
+    if( varName == "VtxN" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventVtxN;
+    if( varName == "MCNPUVtx" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventMCNPUVtx;
+    if( varName == "MCNPUTruth" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventMCNPUTruth;
+    if( varName == "PF_CH_Fraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_CH_Fraction;
+    if( varName == "PF_NH_Fraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_NH_Fraction;
+    if( varName == "PF_PH_Fraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_PH_Fraction;
+    if( varName == "PF_EL_Fraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_EL_Fraction;
+    if( varName == "PF_HFHad_Fraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFHad_Fraction;
+    if( varName == "PF_HFEm_Fraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFEm_Fraction;
+    if( varName == "Flavor" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventJetFlavor;
+    if( varName == "DeltaPhi" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventDeltaPhi;
+    if( varName == "ThirdJetFraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction;
+    if( varName == "ThirdJetFractionPlain" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFractionPlain;
+    if( varName == "ThirdJetPt" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetPt;
+    if( varName == "Asymmetry" && type == ControlPlotsConfig::Uncorrected )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetry;
+    if( varName == "Asymmetry" && type == ControlPlotsConfig::Kalibri )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryKalibriCorrected;
+    if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3 )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3Corrected;
+    if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3Res )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3ResCorrected;
+    if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3L4 )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3L4Corrected;
+    if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3ResL4 )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3ResL4Corrected;
+    if( varName == "B" && type == ControlPlotsConfig::Uncorrected )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventB;
+    if( varName == "B" && type == ControlPlotsConfig::Kalibri )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventBKalibriCorrected;
+    if( varName == "B" && type == ControlPlotsConfig::L2L3 )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3Corrected;
+    if( varName == "B" && type == ControlPlotsConfig::L2L3Res )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3ResCorrected;
+    if( varName == "B" && type == ControlPlotsConfig::L2L3L4 )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3L4Corrected;
+    if( varName == "B" && type == ControlPlotsConfig::L2L3ResL4 )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3ResL4Corrected;
+    if( varName == "MPFResponse" && type == ControlPlotsConfig::Uncorrected )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponse;
+    if( varName == "MPFResponse" && type == ControlPlotsConfig::L2L3 )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3Corrected;
+    if( varName == "MPFResponse" && type == ControlPlotsConfig::L2L3Res )
+      return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3ResCorrected;
+    if( varName == "MCTruthResponse" && type == ControlPlotsConfig::Uncorrected )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1Response;
+    if( varName == "MCTruthResponse" && type == ControlPlotsConfig::L2L3 )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response;
+    if( varName == "MCTruthResponse" && type == ControlPlotsConfig::L2L3Res )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response;
+
+  }
+
+  //add truth functions in addition for compatibility with JEC validation plots
+  if( varName == "NPU" )
+    return  &ControlPlotsFunction::jetTruthEventNPU;
+  if( varName == "Rho" )
+    return  &ControlPlotsFunction::jetTruthEventRho;
+   if( varName == "Eta" )
+    return  &ControlPlotsFunction::jetTruthEventJetEta;
   if( varName == "AbsEta" )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetAbsEta;
-  if( varName == "Jet2Eta")
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2Eta; 
-  if( varName == "Jet2AbsEta")
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2AbsEta; 
-  if( varName == "Pt" && type == ControlPlotsConfig::Uncorrected )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPt; 
-  if( varName == "Pt" && type == ControlPlotsConfig::L2L3  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPtL2L3Corrected; 
-  if( varName == "Pt" && type == ControlPlotsConfig::L2L3Res  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetPtL2L3ResCorrected; 
-  if( varName == "Jet2Pt" && type == ControlPlotsConfig::Uncorrected  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2Pt; 
-  if( varName == "Jet2Pt" && type == ControlPlotsConfig::L2L3  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
-  if( varName == "Jet2Pt" && type == ControlPlotsConfig::L2L3Res  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3ResCorrected; 
-  if( varName == "JetLeadPt" && type == ControlPlotsConfig::Uncorrected  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPt; 
-  if( varName == "JetLeadPt" && type == ControlPlotsConfig::L2L3  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3Corrected; 
-  if( varName == "JetLeadPt" && type == ControlPlotsConfig::L2L3Res  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLeadPtL2L3ResCorrected; 
-  if( varName == "JetLead2Pt" && type == ControlPlotsConfig::Uncorrected  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLead2Pt; 
-  if( varName == "JetLead2Pt" && type == ControlPlotsConfig::L2L3  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3Corrected; 
-  if( varName == "JetLead2Pt" && type == ControlPlotsConfig::L2L3Res  )
-   return  &ControlPlotsFunction::twoJetsPtBalanceEventJetLead2PtL2L3ResCorrected;   
-//  if( varName == "MeanPt")
-//   return  &ControlPlotsFunction::twoJetsPtBalanceEventJet2PtL2L3Corrected; 
-//  //    return  &ControlPlotsFunction::twoJetsPtBalanceEventMeanPt;
-  if( varName == "MeanPt")
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventMeanPt;
+    return  &ControlPlotsFunction::jetTruthEventJetAbsEta;
+  if( varName == "Pt" )
+   return  &ControlPlotsFunction::jetTruthEventJetPt;
   if( varName == "EMF" )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetEMF;
+    return  &ControlPlotsFunction::jetTruthEventJetEMF;
   if( varName == "momentEtaEta" )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentEtaEta;
+    return  &ControlPlotsFunction::jetTruthEventJetMomentEtaEta;
+  if( varName == "GenJetPt" )
+    return  &ControlPlotsFunction::jetTruthEventTruthPt;
   if( varName == "momentPhiPhi" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi; 
+    return &ControlPlotsFunction::jetTruthEventJetMomentPhiPhi; 
   if( varName == "meanMoment" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment;
-  if( varName == "VtxN" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventVtxN;
-  if( varName == "MCNPUVtx" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventMCNPUVtx;
-  if( varName == "MCNPUTruth" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventMCNPUTruth;
-  if( varName == "PF_CH_Fraction" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_CH_Fraction;
-  if( varName == "PF_NH_Fraction" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_NH_Fraction;
-  if( varName == "PF_PH_Fraction" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_PH_Fraction;
-  if( varName == "PF_EL_Fraction" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_EL_Fraction;
-  if( varName == "PF_HFHad_Fraction" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFHad_Fraction;
-  if( varName == "PF_HFEm_Fraction" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFEm_Fraction;
+    return &ControlPlotsFunction::jetTruthEventJetMeanMoment;
   if( varName == "Flavor" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventJetFlavor;
-  if( varName == "DeltaPhi" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventDeltaPhi;
-  if( varName == "ThirdJetFraction" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction;
-  if( varName == "ThirdJetFractionPlain" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFractionPlain;
-  if( varName == "ThirdJetPt" )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetPt;
-  if( varName == "Asymmetry" && type == ControlPlotsConfig::Uncorrected )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetry;
-  if( varName == "Asymmetry" && type == ControlPlotsConfig::Kalibri )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryKalibriCorrected;
-  if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3 )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3Corrected;
-  if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3Res )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3ResCorrected;
-  if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3L4 )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3L4Corrected;
-  if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3ResL4 )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3ResL4Corrected;
-  if( varName == "B" && type == ControlPlotsConfig::Uncorrected )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventB;
-  if( varName == "B" && type == ControlPlotsConfig::Kalibri )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventBKalibriCorrected;
-  if( varName == "B" && type == ControlPlotsConfig::L2L3 )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3Corrected;
-  if( varName == "B" && type == ControlPlotsConfig::L2L3Res )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3ResCorrected;
-  if( varName == "B" && type == ControlPlotsConfig::L2L3L4 )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3L4Corrected;
-  if( varName == "B" && type == ControlPlotsConfig::L2L3ResL4 )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventBL2L3ResL4Corrected;
-  if( varName == "MPFResponse" && type == ControlPlotsConfig::Uncorrected )
-    return &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponse;
-  if( varName == "MPFResponse" && type == ControlPlotsConfig::L2L3 )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3Corrected;
-  if( varName == "MPFResponse" && type == ControlPlotsConfig::L2L3Res )
-    return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3ResCorrected;
+    return &ControlPlotsFunction::jetTruthEventJetFlavor;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::Uncorrected )
+   return &ControlPlotsFunction::jetTruthEventResponse;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::Kalibri )
+    return &ControlPlotsFunction::jetTruthEventResponseKalibriCorrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3 )
+    return  &ControlPlotsFunction::jetTruthEventResponseL2L3Corrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3Res )
+    return  &ControlPlotsFunction::jetTruthEventResponseL2L3ResCorrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3L4 )
+    return  &ControlPlotsFunction::jetTruthEventResponseL2L3L4Corrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3ResL4 )
+    return  &ControlPlotsFunction::jetTruthEventResponseL2L3ResL4Corrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L1L2L3 )
+    return  &ControlPlotsFunction::jetTruthEventResponseL1L2L3Corrected;
+  if( varName == "GenJetResponse" && type == ControlPlotsConfig::L5 )
+    return  &ControlPlotsFunction::jetTruthEventResponseL5Corrected;
+
   if( varName == "") {
     return 0;
   }
