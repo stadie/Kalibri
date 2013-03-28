@@ -21,12 +21,16 @@ void DefaultStyles::init() {
    markers_.push_back(34);
 
   colors_.push_back(1);
-  colors_.push_back(2);
-  colors_.push_back(4);
+  colors_.push_back(kRed);
+  colors_.push_back(kBlue);
   colors_.push_back(3);
   colors_.push_back(46);
   colors_.push_back(9);
   colors_.push_back(12);
+  colors_.push_back(kRed-9);
+  colors_.push_back(kBlue-9);
+  colors_.push_back(kGreen-9);
+  colors_.push_back(50);
 
 }
 
@@ -48,13 +52,17 @@ void DefaultStyles::setStyle (TString stylelabel){
    markers_.push_back(28);
    markers_.push_back(34);
 
-  colors_.push_back(2);
-  colors_.push_back(4);
-  colors_.push_back(3);
+  colors_.push_back(kRed-9);
+  colors_.push_back(kBlue-9);
+  colors_.push_back(kGreen-9);
   colors_.push_back(46);
   colors_.push_back(9);
   colors_.push_back(12);
   colors_.push_back(1);
+  colors_.push_back(kRed);
+  colors_.push_back(kBlue);
+  colors_.push_back(kGreen);
+  colors_.push_back(50);
 
   }
 
