@@ -28,6 +28,8 @@ class Extrapolation :public BasePlotExtractor{
   void ExportTables();
   std::vector<std::string> cutNames_;
   std::vector<double> cutNumbers_;
+  std::string cutNamesValueToNormalize_;
+  int indexToNormalizeTo_;
   std::pair <float,float> determineMinMax(TGraphErrors* graph);
  private:
   bool doPlotExtrapol_;
@@ -38,7 +40,21 @@ class Extrapolation :public BasePlotExtractor{
   //  void doExtrapol();  
   TH1vec_t CollectExtrapolatedMCDataRatios_;
   TH1vec_t CollectExtrapolatedNormalizedMCDataRatios_;
-  VecOfTH1vec_t All_CollectExtrapolatedAllMCDataRatios_; // collection of CollectExtrapolatedMCDataRatios_ and  CollectExtrapolatedNormalizedMCDataRatios_ compatible with MCDataRatioVsBinVarHistos
+  TH1vec_t CollectExtrapolatedQuadMCDataRatios_;
+  TH1vec_t CollectExtrapolatedQuadNormalizedMCDataRatios_;
+  TH1vec_t CollectExtrapolatedLinQuadMCDataRatios_;
+  TH1vec_t CollectExtrapolatedLinQuadNormalizedMCDataRatios_;
+  VecOfTH1vec_t All_CollectExtrapolatedAllMCDataRatios_; // collection of 
+      //  TH1vec_t CollectExtrapolatedMCDataRatios_;
+      //  TH1vec_t CollectExtrapolatedNormalizedMCDataRatios_;
+      //  TH1vec_t CollectExtrapolatedQuadMCDataRatios_;
+      //  TH1vec_t CollectExtrapolatedQuadNormalizedMCDataRatios_;
+      //  TH1vec_t CollectExtrapolatedLinQuadMCDataRatios_;
+      //  TH1vec_t CollectExtrapolatedLinQuadNormalizedMCDataRatios_;
+      //
+      //  compatible with MCDataRatioVsBinVarHistos
+      //
+      //
   TH1vec_t MCDataRatioVsBinVarHistos_;//collection of VsBinVarHistos created from ExtrapolatedMCDataRatio_ and ExtrapolatedNormalizedMCDataRatio_; (size 2)
 
 
@@ -48,6 +64,7 @@ class Extrapolation :public BasePlotExtractor{
   class ExtrapolateBin {
   public:
     ExtrapolateBin(Extrapolation* Outer);
+    ~ExtrapolateBin();
     void addMCHisto(TH1D* MCHisto);
     void addDataHisto(TH1D* DataHisto);
     void calculateAndAddMCDataRatio();
@@ -59,6 +76,10 @@ class Extrapolation :public BasePlotExtractor{
     TH1D* ExtrapolatedResData() const {return ExtrapolatedResData_;}
     TH1D* ExtrapolatedMCDataRatio() const {return ExtrapolatedMCDataRatio_;}
     TH1D* ExtrapolatedNormalizedMCDataRatio() const {return ExtrapolatedNormalizedMCDataRatio_;}
+    TH1D* ExtrapolatedQuadMCDataRatio() const {return ExtrapolatedQuadMCDataRatio_;}
+    TH1D* ExtrapolatedQuadNormalizedMCDataRatio() const {return ExtrapolatedQuadNormalizedMCDataRatio_;}
+    TH1D* ExtrapolatedLinQuadMCDataRatio() const {return ExtrapolatedLinQuadMCDataRatio_;}
+    TH1D* ExtrapolatedLinQuadNormalizedMCDataRatio() const {return ExtrapolatedLinQuadNormalizedMCDataRatio_;}
 
   private:
     std::vector<TH1D*> MCHistos_;
@@ -76,6 +97,11 @@ class Extrapolation :public BasePlotExtractor{
     TH1D* ExtrapolatedResData_;
     TH1D* ExtrapolatedMCDataRatio_;
     TH1D* ExtrapolatedNormalizedMCDataRatio_;
+    TH1D* ExtrapolatedQuadMCDataRatio_              ;
+    TH1D* ExtrapolatedQuadNormalizedMCDataRatio_    ;
+    TH1D* ExtrapolatedLinQuadMCDataRatio_           ;   
+    TH1D* ExtrapolatedLinQuadNormalizedMCDataRatio_ ;
+
   };
 
 };

@@ -27,6 +27,13 @@ void Extrapolation::extrapolInit() {
   cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("TimePtDependence plots cut_list",""));
   cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("TimePtDependence plots cut_no_list",""));
   }
+  cutNamesValueToNormalize_ = ExternalConfig_.read<string>((std::string)plotsnames_+" cut_listValueToNormalize",ExternalConfig_.read<string>("Default cut_listValueToNormalize","20"));
+  indexToNormalizeTo_ = -1;
+  for(unsigned int i=0;i<cutNames_.size();i++){
+    std::cout << "cutNamesValue: " << cutNames_.at(i) << " -  " << cutNamesValueToNormalize_ << " - " << indexToNormalizeTo_ << std::endl;
+    if(cutNames_.at(i)==cutNamesValueToNormalize_)indexToNormalizeTo_=i;
+  }
+  assert(indexToNormalizeTo_>-1);
   doPlotExtrapol_ = ExternalConfig_.read<bool>((std::string)plotsnames_+" doPlotExtrapol",ExternalConfig_.read<bool>("Default doPlotExtrapol",1));
   //  yProfileTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile yTitle","DUMMYResolution");
   //  sqrtS_ = ExternalConfig_.read<int>((std::string)kalibriPlotsShortName_+" SqrtS",ExternalConfig_.read<int>("Default SqrtS",7));
@@ -76,8 +83,10 @@ void Extrapolation::Plot() {
 	AllPlots_.at(conf_i).at(bin_i).at(j)->SetMarkerStyle(style.getMarker(0));
       }
     }
-    leg->AddEntry(AllPlots_.at(0).at(bin_i).at(0),(/*configs_.at(0)->yTitle()+*/" Data")/*.c_str()*/,"P");
-    leg->AddEntry(AllPlots_.at(0).at(bin_i).at(1),(/*configs_.at(0)->yTitle()+*/" MC")/*.c_str()*/,"L");
+//    leg->AddEntry(AllPlots_.at(0).at(bin_i).at(0),(/*configs_.at(0)->yTitle()+*/" Data")/*.c_str()*/,"P");
+//    leg->AddEntry(AllPlots_.at(0).at(bin_i).at(1),(/*configs_.at(0)->yTitle()+*/" MC")/*.c_str()*/,"L");
+    leg->AddEntry(AllPlots_.at(0).at(bin_i).at(0),dataLabel()/*+" Data"*/,"P");
+    leg->AddEntry(AllPlots_.at(0).at(bin_i).at(1),mcLabel()/*+" MC"*/,"L");
     
     
 
@@ -101,7 +110,7 @@ void Extrapolation::Plot() {
       drawCMSPrel();
       TString outname = "ResolutionPlots_"+plotsnames_+"_"+cutNames_.at(i)+"_"+configs_.at(0)->binName(bin_i);
       //  outname+=bin_i;
-      outname+=".eps";
+      outname+=".pdf";
       c->RedrawAxis();
       c->SaveAs(outname);
       
@@ -130,7 +139,7 @@ void Extrapolation::Plot() {
       drawCMSPrel();
       outname = "ResolutionPlots_"+plotsnames_+"_ratio"+cutNames_.at(i)+"_"+configs_.at(0)->binName(bin_i);
       //  outname+=bin_i;
-      outname+=".eps";
+      outname+=".pdf";
       c->RedrawAxis();
       c->SaveAs(outname);
     }
@@ -157,7 +166,7 @@ void Extrapolation::Plot() {
     TString outname = "ResolutionPlots_"+plotsnames_+"_RatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i);
     //  outname+=bin_i;
     RatioVsBinVarHistos_.at(conf_i)->SetName(outname);
-    outname+=".eps";
+    outname+=".pdf";
     c->RedrawAxis();
     c->SaveAs(outname);
     configs_.at(0)->safelyToRootFile(RatioVsBinVarHistos_.at(conf_i));
@@ -190,7 +199,7 @@ void Extrapolation::Plot() {
       TString outname = "ResolutionPlots_"+plotsnames_+"_DeviationsOfRatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i)+"_"+DeviationTypes_.at(dev_i).first;
       //  outname+=bin_i;
       AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->SetName(outname);
-      outname+=".eps";
+      outname+=".pdf";
       c->RedrawAxis();
       c->SaveAs(outname);
       configs_.at(0)->safelyToRootFile(AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i));
@@ -219,7 +228,7 @@ void Extrapolation::Plot() {
     TString tempSaveHistoName = MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName();
     TString outname = (TString)"ResolutionPlots_"+plotsnames_+"_RatioVsBinVar_"+MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName();
     MCDataRatioVsBinVarHistos_.at(ratio_i)->SetName(outname);
-    outname+=".eps";
+    outname+=".pdf";
     c->RedrawAxis();
     c->SaveAs(outname);
     configs_.at(0)->safelyToRootFile(MCDataRatioVsBinVarHistos_.at(ratio_i));
@@ -253,7 +262,7 @@ void Extrapolation::Plot() {
 
       TString outname = (TString)"ResolutionPlots_"+plotsnames_+"_ExtrapolatedMCDataRatios_"+MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName()+"_"+configs_.at(0)->binName(bin_i);
       c->SetName(outname);
-      outname+=".eps";
+      outname+=".pdf";
       c->RedrawAxis();
       c->SaveAs(outname);
       configs_.at(0)->safelyToRootFile(c);
@@ -312,9 +321,17 @@ void Extrapolation::createPtRelExtrapol() {
     AllExtrapolatedRes.push_back(CollectExtrapolatedRes);
     CollectExtrapolatedMCDataRatios_.push_back(ExtrapolationBin.ExtrapolatedMCDataRatio());
     CollectExtrapolatedNormalizedMCDataRatios_.push_back(ExtrapolationBin.ExtrapolatedNormalizedMCDataRatio());
+    CollectExtrapolatedQuadMCDataRatios_.push_back(ExtrapolationBin.ExtrapolatedQuadMCDataRatio());
+    CollectExtrapolatedQuadNormalizedMCDataRatios_.push_back(ExtrapolationBin.ExtrapolatedQuadNormalizedMCDataRatio());
+    CollectExtrapolatedLinQuadMCDataRatios_.push_back(ExtrapolationBin.ExtrapolatedLinQuadMCDataRatio());
+    CollectExtrapolatedLinQuadNormalizedMCDataRatios_.push_back(ExtrapolationBin.ExtrapolatedLinQuadNormalizedMCDataRatio());
   }
   All_CollectExtrapolatedAllMCDataRatios_.push_back(CollectExtrapolatedMCDataRatios_);
   All_CollectExtrapolatedAllMCDataRatios_.push_back(CollectExtrapolatedNormalizedMCDataRatios_);
+  All_CollectExtrapolatedAllMCDataRatios_.push_back(CollectExtrapolatedQuadMCDataRatios_);
+  All_CollectExtrapolatedAllMCDataRatios_.push_back(CollectExtrapolatedQuadNormalizedMCDataRatios_);
+  All_CollectExtrapolatedAllMCDataRatios_.push_back(CollectExtrapolatedLinQuadMCDataRatios_);
+  All_CollectExtrapolatedAllMCDataRatios_.push_back(CollectExtrapolatedLinQuadNormalizedMCDataRatios_);
 
 
   // Append these extrapolated histograms as if they were read in right from the start,
@@ -352,11 +369,26 @@ void Extrapolation::createPtRelExtrapol() {
 void Extrapolation::makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos(){
   MCDataRatioVsBinVarHistos_.clear();
   MCDataRatioVsBinVarHistos_.push_back(new TH1D("ExtrapolatedMCDataRatioVsBinVar","",configs_.at(0)->nBins(),&(configs_.at(0)->binEdges()->front())));
-  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetTitle("MC/Data ratio (const fit)");
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetTitle(""+mcLabel_+"/"+dataLabel_+" ratio (const fit)");
   MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(yMCDataRatioMinMax().at(0),yMCDataRatioMinMax().at(1));
       //  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(0.5,1.1);
   MCDataRatioVsBinVarHistos_.push_back(new TH1D("ExtrapolatedNormalizedMCDataRatioVsBinVar","",configs_.at(0)->nBins(),&(configs_.at(0)->binEdges()->front())));
   MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetTitle("Radiation correction");
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(0.9,1.08);
+
+  MCDataRatioVsBinVarHistos_.push_back(new TH1D("ExtrapolatedQuadMCDataRatioVsBinVar","",configs_.at(0)->nBins(),&(configs_.at(0)->binEdges()->front())));
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetTitle(""+mcLabel_+"/"+dataLabel_+" ratio (const fit, quadr.)");
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(yMCDataRatioMinMax().at(0),yMCDataRatioMinMax().at(1));
+  MCDataRatioVsBinVarHistos_.push_back(new TH1D("ExtrapolatedQuadNormalizedMCDataRatioVsBinVar","",configs_.at(0)->nBins(),&(configs_.at(0)->binEdges()->front())));
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetTitle("Radiation correction (quadr.)");
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(0.9,1.08);
+
+
+  MCDataRatioVsBinVarHistos_.push_back(new TH1D("ExtrapolatedLinQuadMCDataRatioVsBinVar","",configs_.at(0)->nBins(),&(configs_.at(0)->binEdges()->front())));
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetTitle(""+mcLabel_+"/"+dataLabel_+" ratio (const fit, lin./quadr.)");
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(yMCDataRatioMinMax().at(0),yMCDataRatioMinMax().at(1));
+  MCDataRatioVsBinVarHistos_.push_back(new TH1D("ExtrapolatedLinQuadNormalizedMCDataRatioVsBinVar","",configs_.at(0)->nBins(),&(configs_.at(0)->binEdges()->front())));
+  MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetTitle("Radiation correction (lin./quadr.)");
   MCDataRatioVsBinVarHistos_.back()->GetYaxis()->SetRangeUser(0.9,1.08);
 
   for(unsigned int i=0;i<MCDataRatioVsBinVarHistos_.size();i++){
@@ -366,14 +398,28 @@ void Extrapolation::makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos(){
     for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
       //      std::cout <<"TEST"<<std::endl;
       if((TString)MCDataRatioVsBinVarHistos_.at(i)->GetName()=="ExtrapolatedMCDataRatioVsBinVar"){
-	//	     std::cout <<"TEST2"<<std::endl;
 	fitFunctionsToPlot(CollectExtrapolatedMCDataRatios_.at(bin_i));
 	fillRatioVsBinVarPlot(MCDataRatioVsBinVarHistos_.at(i),CollectExtrapolatedMCDataRatios_.at(bin_i),bin_i,"fit_const");
       }
       else if((TString)MCDataRatioVsBinVarHistos_.at(i)->GetName()=="ExtrapolatedNormalizedMCDataRatioVsBinVar"){
-	//	     std::cout <<"TEST3"<<std::endl;
 	fitFunctionsToPlot(CollectExtrapolatedNormalizedMCDataRatios_.at(bin_i));
 	fillRatioVsBinVarPlot(MCDataRatioVsBinVarHistos_.at(i),CollectExtrapolatedNormalizedMCDataRatios_.at(bin_i),bin_i,"fit_const");
+      }
+      else if((TString)MCDataRatioVsBinVarHistos_.at(i)->GetName()=="ExtrapolatedQuadMCDataRatioVsBinVar"){
+	fitFunctionsToPlot(CollectExtrapolatedQuadMCDataRatios_.at(bin_i));
+	fillRatioVsBinVarPlot(MCDataRatioVsBinVarHistos_.at(i),CollectExtrapolatedQuadMCDataRatios_.at(bin_i),bin_i,"fit_const");
+      }
+      else if((TString)MCDataRatioVsBinVarHistos_.at(i)->GetName()=="ExtrapolatedQuadNormalizedMCDataRatioVsBinVar"){
+	fitFunctionsToPlot(CollectExtrapolatedQuadNormalizedMCDataRatios_.at(bin_i));
+	fillRatioVsBinVarPlot(MCDataRatioVsBinVarHistos_.at(i),CollectExtrapolatedQuadNormalizedMCDataRatios_.at(bin_i),bin_i,"fit_const");
+      }
+      else if((TString)MCDataRatioVsBinVarHistos_.at(i)->GetName()=="ExtrapolatedLinQuadMCDataRatioVsBinVar"){
+	fitFunctionsToPlot(CollectExtrapolatedLinQuadMCDataRatios_.at(bin_i));
+	fillRatioVsBinVarPlot(MCDataRatioVsBinVarHistos_.at(i),CollectExtrapolatedLinQuadMCDataRatios_.at(bin_i),bin_i,"fit_const");
+      }
+      else if((TString)MCDataRatioVsBinVarHistos_.at(i)->GetName()=="ExtrapolatedLinQuadNormalizedMCDataRatioVsBinVar"){
+	fitFunctionsToPlot(CollectExtrapolatedLinQuadNormalizedMCDataRatios_.at(bin_i));
+	fillRatioVsBinVarPlot(MCDataRatioVsBinVarHistos_.at(i),CollectExtrapolatedLinQuadNormalizedMCDataRatios_.at(bin_i),bin_i,"fit_const");
       }
       //      else 	     std::cout <<"TEST4"<<std::endl;
 
@@ -442,6 +488,21 @@ Extrapolation::ExtrapolateBin::ExtrapolateBin(Extrapolation* Outer) {
 
 }
 
+ 
+ 
+Extrapolation::ExtrapolateBin::~ExtrapolateBin() {
+  for(unsigned int vec_i; vec_i< MCHistos_.size(); vec_i++)delete MCHistos_.at(vec_i);
+  for(unsigned int vec_i; vec_i< DataHistos_.size(); vec_i++)delete DataHistos_.at(vec_i);
+  for(unsigned int vec_i; vec_i< MCDataRatiosHistos_.size(); vec_i++)delete MCDataRatiosHistos_.at(vec_i);
+  for(unsigned int vec_i; vec_i< NormalizedMCDataRatiosHistos_.size(); vec_i++)delete NormalizedMCDataRatiosHistos_.at(vec_i);
+
+//  for(unsigned int vec_i; vec_i< MCExtrapols_.size(); vec_i++)delete MCExtrapols_.at(vec_i);
+//  for(unsigned int vec_i; vec_i< DataExtrapols_.size(); vec_i++)delete DataExtrapols_.at(vec_i);
+//  for(unsigned int vec_i; vec_i< MCDataRatioExtrapols_.size(); vec_i++)delete MCDataRatioExtrapols_.at(vec_i);
+//  for(unsigned int vec_i; vec_i< NormalizedMCDataRatioExtrapols_.size(); vec_i++)delete NormalizedMCDataRatioExtrapols_.at(vec_i);
+
+}
+
 
 void Extrapolation::ExtrapolateBin::addMCHisto(TH1D* MCHisto){
   MCHistos_.push_back(MCHisto);
@@ -465,8 +526,13 @@ void Extrapolation::ExtrapolateBin::calculateAndAddMCDataRatio(){
 void Extrapolation::ExtrapolateBin::calculateAndAddMCDataRatiosNormalizeToSecondCut(){
   for(int conf_i=0;conf_i<Outer_->configs_.size();conf_i++){
     TH1D* temp = (TH1D*) (MCDataRatiosHistos_.at(conf_i)->Clone());
-    //hard coded second cut
-    temp->Divide(MCDataRatiosHistos_.at(conf_i),MCDataRatiosHistos_.at(1));
+//    //hard coded second cut
+//    //    jdghjsdhghsjg change here to adapt to different third jet cut
+//      //for 0.1,0.2,0.3,0.4
+//    //    temp->Divide(MCDataRatiosHistos_.at(conf_i),MCDataRatiosHistos_.at(1));
+//   //for fine
+    //determine indextonormalize to from config file (using '(std::string)plotsnames_+" cut_listValueToNormalize"')
+    temp->Divide(MCDataRatiosHistos_.at(conf_i),MCDataRatiosHistos_.at(Outer_->indexToNormalizeTo_));
     NormalizedMCDataRatiosHistos_.push_back(temp);
   }
 
@@ -522,15 +588,27 @@ void Extrapolation::ExtrapolateBin::createExtrapolationTGraphErrors(Int_t xBin_i
   TGraphErrors *extrapol_NormalizedMCDataRatio = new TGraphErrors(Outer_->cutNumbers_.size(),&x[0],&NormalizedMCDataRatioy[0],&x_e[0],&NormalizedMCDataRatioy_e[0]);
   //  TGraphErrors *gr_res1 = new TGraphErrors(n,&x_ptthree_[0],&y_mean_ratio_res1_[0],&ex_ptthree_[0],&ey_mean_ratio_res1_[0]);
   TF1 *lin_extrapol = new TF1("lin_extrapol","[0]+[1]*x",0,Outer_->cutNumbers_.back()+0.05); //was used before...
+  TF1 *quad_extrapol = new TF1("quad_extrapol","[0]+[1]*x+[2]*x*x",0,Outer_->cutNumbers_.back()+0.05); //was used before...
   lin_extrapol->SetParameters(1,-0.1);
   lin_extrapol->SetParName(0,"ResZero");
   lin_extrapol->SetParName(1,"slope");
   
+  quad_extrapol->SetParameters(1,-0.1,0.1);
+  quad_extrapol->SetParName(0,"ResZero");
+  quad_extrapol->SetParName(1,"slope");
+  quad_extrapol->SetParName(1,"quadraticComponent");
+  
   //fit a linear extrapolation function to the TGraphErrors for data and MC
+  //and fit a quadratic extrapolation function to the TGraphErrors
   extrapol_MC->Fit("lin_extrapol","Q","same",0,Outer_->cutNumbers_.back()+0.05);
   extrapol_Data->Fit("lin_extrapol","Q","same",0,Outer_->cutNumbers_.back()+0.05);
   extrapol_MCDataRatio->Fit("lin_extrapol","Q","same",0,Outer_->cutNumbers_.back()+0.05);
   extrapol_NormalizedMCDataRatio->Fit("lin_extrapol","Q","same",0,Outer_->cutNumbers_.back()+0.05);
+
+  extrapol_MC->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
+  extrapol_Data->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
+  extrapol_MCDataRatio->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
+  extrapol_NormalizedMCDataRatio->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
 
   //collect the extrapolation TGraphErrors
   MCExtrapols_.push_back(extrapol_MC);
@@ -578,6 +656,9 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   //  std::pair <float,float> minMaxPair = std::make_pair(-0.1,0.2);
   c->DrawFrame(0,minMaxPair.first*0.5-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.2,(";cut on "+Outer_->configs_.at(0)->cutAxisTitle()+";"+Outer_->yProfileTitle()/*"#sqrt{2} #sigma"*/)/*.c_str()*/);
   MCExtrapols_.at(xBin_i)->Draw("P");
+  Outer_->drawConfidenceIntervals(MCExtrapols_.at(xBin_i));
+  Outer_->drawConfidenceIntervals(DataExtrapols_.at(xBin_i));
+  MCExtrapols_.at(xBin_i)->Draw("Psame");
   MCExtrapols_.at(xBin_i)->SetLineColor(style.getColor(0));
   MCExtrapols_.at(xBin_i)->SetMarkerColor(style.getColor(0));
   MCExtrapols_.at(xBin_i)->SetMarkerStyle(style.getMarker(0));
@@ -587,6 +668,12 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   MCTemp->SetRange(0.1,1);
   MCTemp->SetLineStyle(1);
   MCTemp->Draw("same");
+  MCExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->SetLineColor(style.getColor(0));
+  MCExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->SetLineStyle(2);
+  TF1* MCQuadTemp=(TF1*) MCExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->Clone();
+  MCQuadTemp->SetRange(0.1,1);
+  MCQuadTemp->SetLineStyle(1);
+  MCQuadTemp->Draw("same");
   //  TH1F* DrawHist = (TH1F*) MCExtrapols_.at(xBin_i)->GetHistogram();
 //  DrawHist->GetXaxis()->SetRangeUser(0.0,Outer_->cutNumbers_.back()+0.05);
 //  DrawHist->GetYaxis()->SetRangeUser(0.0,0.15);
@@ -600,6 +687,12 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   DataTemp->SetRange(0.1,1);
   DataTemp->SetLineStyle(1);
   DataTemp->Draw("same");
+  DataExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->SetLineColor(style.getColor(0));
+  DataExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->SetLineStyle(2);
+  TF1* DataQuadTemp=(TF1*) DataExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->Clone();
+  DataQuadTemp->SetRange(0.1,1);
+  DataQuadTemp->SetLineStyle(1);
+  DataQuadTemp->Draw("same");
   int nEntries =2;
 
 
@@ -608,9 +701,9 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   label->AddText((Outer_->configs_.at(0)->xBinTitle(xBin_i,Outer_->configs_.at(0)->binEdges()->at(bin_i),Outer_->configs_.at(0)->binEdges()->at(bin_i+1),0)).c_str()/*+(TString)" and "*/);
   label->Draw("same");
   TLegend* leg1 = util::LabelFactory::createLegendWithOffset(2,0.6);
-
-  leg1->AddEntry(MCExtrapols_.at(xBin_i),"Extrapolation (MC)","LP");
-  leg1->AddEntry(DataExtrapols_.at(xBin_i),"Extrapolation (data)","LP");
+ 
+  leg1->AddEntry(MCExtrapols_.at(xBin_i),"Extrapolation ("+Outer_->mcLabel_+")","LP");
+  leg1->AddEntry(DataExtrapols_.at(xBin_i),"Extrapolation ("+Outer_->dataLabel_+")","LP");
 
   leg1->Draw();
   Outer_->drawCMSPrel();
@@ -618,7 +711,7 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
 
   TString outname = "ResolutionPlots_ExtrapolPtThree_"+Outer_->plotsnames_+"_"+Outer_->configs_.at(0)->binName(bin_i)+"_"+Outer_->configs_.at(0)->xBinName(xBin_i);
   //  outname+=bin_i;
-  outname+=".eps";
+  outname+=".pdf";
   c->RedrawAxis();
   c->SaveAs(outname);
 
@@ -628,7 +721,7 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   TCanvas* c2 = new TCanvas("c2","",600,600);
   minMaxPair = Outer_->determineMinMax(MCDataRatioExtrapols_.at(xBin_i));
   //  std::pair <float,float> minMaxPair = std::make_pair(-0.1,0.2);
-  c2->DrawFrame(0,minMaxPair.first*0.85-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+Outer_->configs_.at(0)->cutAxisTitle()+";MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
+  c2->DrawFrame(0,minMaxPair.first*0.85-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+Outer_->configs_.at(0)->cutAxisTitle()+";"+Outer_->mcLabel_+"/"+Outer_->dataLabel_+" Ratio"/*"#sqrt{2} #sigma"*/));
   MCDataRatioExtrapols_.at(xBin_i)->Draw("P");
   Outer_->drawConfidenceIntervals(MCDataRatioExtrapols_.at(xBin_i));
   MCDataRatioExtrapols_.at(xBin_i)->Draw("Psame");
@@ -641,6 +734,12 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   MCDataRatioTemp->SetRange(0.1,1);
   MCDataRatioTemp->SetLineStyle(1);
   MCDataRatioTemp->Draw("same");
+  MCDataRatioExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->SetLineColor(style.getColor(0));
+  MCDataRatioExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->SetLineStyle(2);
+  TF1* MCDataRatioQuadTemp=(TF1*) MCDataRatioExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->Clone();
+  MCDataRatioQuadTemp->SetRange(0.1,1);
+  MCDataRatioQuadTemp->SetLineStyle(1);
+  MCDataRatioQuadTemp->Draw("same");
   //  TGraphErrors *GraphTemp = (TGraphErrors*)  MCDataRatioExtrapols_.at(xBin_i)->Clone();
   //  Outer_->drawConfidenceIntervals(GraphTemp);
   label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.5);
@@ -656,7 +755,7 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   outname = "ResolutionPlots_ExtrapolPtThree_MCDataRatio_"+Outer_->plotsnames_+"_"+Outer_->configs_.at(0)->binName(bin_i)+"_"+Outer_->configs_.at(0)->xBinName(xBin_i);
   //  outname+=bin_i;
   MCDataRatioExtrapols_.at(xBin_i)->SetName(outname);
-  outname+=".eps";
+  outname+=".pdf";
   c2->SaveAs(outname);
   Outer_->configs_.at(0)->safelyToRootFile(MCDataRatioExtrapols_.at(xBin_i));
 
@@ -667,7 +766,7 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   TCanvas* c3 = new TCanvas("c3","",600,600);
   minMaxPair = Outer_->determineMinMax(NormalizedMCDataRatioExtrapols_.at(xBin_i));
   //  std::pair <float,float> minMaxPair = std::make_pair(-0.1,0.2);
-  c3->DrawFrame(0,minMaxPair.first*0.85-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+Outer_->configs_.at(0)->cutAxisTitle()+";Normalized MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
+  c3->DrawFrame(0,minMaxPair.first*0.85-0.05,Outer_->cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+Outer_->configs_.at(0)->cutAxisTitle()+";Normalized "+Outer_->mcLabel_+"/"+Outer_->dataLabel_+" Ratio"/*"#sqrt{2} #sigma"*/));
   NormalizedMCDataRatioExtrapols_.at(xBin_i)->Draw("P");
   Outer_->drawConfidenceIntervals(NormalizedMCDataRatioExtrapols_.at(xBin_i));
   NormalizedMCDataRatioExtrapols_.at(xBin_i)->Draw("Psame");
@@ -680,6 +779,12 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   NormalizedMCDataRatioTemp->SetRange(0.1,1);
   NormalizedMCDataRatioTemp->SetLineStyle(1);
   NormalizedMCDataRatioTemp->Draw("same");
+  NormalizedMCDataRatioExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->SetLineColor(style.getColor(0));
+  NormalizedMCDataRatioExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->SetLineStyle(2);
+  TF1* NormalizedMCDataRatioQuadTemp=(TF1*) NormalizedMCDataRatioExtrapols_.at(xBin_i)->GetFunction("quad_extrapol")->Clone();
+  NormalizedMCDataRatioQuadTemp->SetRange(0.1,1);
+  NormalizedMCDataRatioQuadTemp->SetLineStyle(1);
+  NormalizedMCDataRatioQuadTemp->Draw("same");
 
   label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.5);
   label->AddText(Outer_->jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
@@ -693,7 +798,7 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
 
   outname = "ResolutionPlots_ExtrapolPtThree_NormalizedMCDataRatio_"+Outer_->plotsnames_+"_"+Outer_->configs_.at(0)->binName(bin_i)+"_"+Outer_->configs_.at(0)->xBinName(xBin_i);
   //  outname+=bin_i;
-  outname+=".eps";
+  outname+=".pdf";
   c3->SaveAs(outname);
 
 
@@ -716,20 +821,51 @@ void Extrapolation::ExtrapolateBin::produceExtrapolatedRes(){
   TH1D* tempExtrapolatedResData = (TH1D*) DataHistos_.at(0)->Clone();
   TH1D* tempExtrapolatedMCDataRatio = (TH1D*) MCDataRatiosHistos_.at(0)->Clone();
   TH1D* tempExtrapolatedNormalizedMCDataRatio = (TH1D*) NormalizedMCDataRatiosHistos_.at(0)->Clone();
+  TH1D* tempExtrapolatedQuadMCDataRatio = (TH1D*) MCDataRatiosHistos_.at(0)->Clone();
+  TH1D* tempExtrapolatedQuadNormalizedMCDataRatio = (TH1D*) NormalizedMCDataRatiosHistos_.at(0)->Clone();
+  TH1D* tempExtrapolatedLinQuadMCDataRatio = (TH1D*) MCDataRatiosHistos_.at(0)->Clone();
+  TH1D* tempExtrapolatedLinQuadNormalizedMCDataRatio = (TH1D*) NormalizedMCDataRatiosHistos_.at(0)->Clone();
+
 
   for(Int_t xbin_i=0;xbin_i<Outer_->configs_.at(0)->nXBins();xbin_i++){
     tempExtrapolatedResMC->SetBinContent(xbin_i+1,MCExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0)>0.01 ? MCExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0) : 0.0);
     tempExtrapolatedResData->SetBinContent(xbin_i+1,DataExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0)>0.01 ? DataExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0) : 0.0);
     tempExtrapolatedMCDataRatio->SetBinContent(xbin_i+1,MCDataRatioExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0)>0.01 ? MCDataRatioExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0) : 0.0);
     tempExtrapolatedNormalizedMCDataRatio->SetBinContent(xbin_i+1,NormalizedMCDataRatioExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0)>0.01 ? NormalizedMCDataRatioExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0) : 0.0);
+    tempExtrapolatedQuadMCDataRatio->SetBinContent(xbin_i+1,MCDataRatioExtrapols_.at(xbin_i)->GetFunction("quad_extrapol")->GetParameter(0)>0.01 ? MCDataRatioExtrapols_.at(xbin_i)->GetFunction("quad_extrapol")->GetParameter(0) : 0.0);
+    tempExtrapolatedQuadNormalizedMCDataRatio->SetBinContent(xbin_i+1,NormalizedMCDataRatioExtrapols_.at(xbin_i)->GetFunction("quad_extrapol")->GetParameter(0)>0.01 ? NormalizedMCDataRatioExtrapols_.at(xbin_i)->GetFunction("quad_extrapol")->GetParameter(0) : 0.0);
+    tempExtrapolatedLinQuadMCDataRatio->SetBinContent(xbin_i+1,(tempExtrapolatedMCDataRatio->GetBinContent(xbin_i+1)+tempExtrapolatedQuadMCDataRatio->GetBinContent(xbin_i+1))/2 );
+    tempExtrapolatedLinQuadNormalizedMCDataRatio->SetBinContent(xbin_i+1,(tempExtrapolatedNormalizedMCDataRatio->GetBinContent(xbin_i+1)+tempExtrapolatedQuadNormalizedMCDataRatio->GetBinContent(xbin_i+1))/2 );
+//    tempExtrapolatedLinQuadMCDataRatio->SetBinContent(xbin_i+1,1.02 );
+//    tempExtrapolatedLinQuadNormalizedMCDataRatio->SetBinContent(xbin_i+1,1.01 );
+
     tempExtrapolatedResMC->SetBinError(xbin_i+1,MCExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0)>0.01 ? MCExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParError(0) : 0.0);
     tempExtrapolatedResData->SetBinError(xbin_i+1,DataExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0)>0.01 ? DataExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParError(0) : 0.0);
     tempExtrapolatedMCDataRatio->SetBinError(xbin_i+1,MCDataRatioExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0)>0.01 ? MCDataRatioExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParError(0) : 0.0);
     tempExtrapolatedNormalizedMCDataRatio->SetBinError(xbin_i+1,NormalizedMCDataRatioExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParameter(0)>0.01 ? NormalizedMCDataRatioExtrapols_.at(xbin_i)->GetFunction("lin_extrapol")->GetParError(0) : 0.0);
+    tempExtrapolatedQuadMCDataRatio->SetBinError(xbin_i+1,MCDataRatioExtrapols_.at(xbin_i)->GetFunction("quad_extrapol")->GetParameter(0)>0.01 ? MCDataRatioExtrapols_.at(xbin_i)->GetFunction("quad_extrapol")->GetParError(0) : 0.0);
+    tempExtrapolatedQuadNormalizedMCDataRatio->SetBinError(xbin_i+1,NormalizedMCDataRatioExtrapols_.at(xbin_i)->GetFunction("quad_extrapol")->GetParameter(0)>0.01 ? NormalizedMCDataRatioExtrapols_.at(xbin_i)->GetFunction("quad_extrapol")->GetParError(0) : 0.0);
+
+    double LinQuadDiff = TMath::Abs(tempExtrapolatedMCDataRatio->GetBinContent(xbin_i+1)-tempExtrapolatedQuadMCDataRatio->GetBinContent(xbin_i+1));
+    double NormalizedLinQuadDiff = TMath::Abs(tempExtrapolatedNormalizedMCDataRatio->GetBinContent(xbin_i+1)-tempExtrapolatedQuadNormalizedMCDataRatio->GetBinContent(xbin_i+1));
+    double LinQuadSYS=LinQuadDiff/2;
+    double NormalizedLinQuadSYS= NormalizedLinQuadDiff/2;
+    if(tempExtrapolatedMCDataRatio->GetBinError(xbin_i+1)>LinQuadSYS)LinQuadSYS=tempExtrapolatedMCDataRatio->GetBinError(xbin_i+1);
+    if(tempExtrapolatedNormalizedMCDataRatio->GetBinError(xbin_i+1)>LinQuadSYS)LinQuadSYS=tempExtrapolatedNormalizedMCDataRatio->GetBinError(xbin_i+1);
+    if(tempExtrapolatedQuadMCDataRatio->GetBinError(xbin_i+1)>LinQuadSYS)LinQuadSYS=tempExtrapolatedQuadMCDataRatio->GetBinError(xbin_i+1);
+    if(tempExtrapolatedQuadNormalizedMCDataRatio->GetBinError(xbin_i+1)>LinQuadSYS)LinQuadSYS=tempExtrapolatedQuadNormalizedMCDataRatio->GetBinError(xbin_i+1);
+
+    tempExtrapolatedLinQuadMCDataRatio->SetBinError(xbin_i+1,LinQuadDiff);
+    tempExtrapolatedLinQuadNormalizedMCDataRatio->SetBinError(xbin_i+1,NormalizedLinQuadDiff);
+
   }
   ExtrapolatedResMC_=(TH1D*) tempExtrapolatedResMC;
   ExtrapolatedResData_=(TH1D*) tempExtrapolatedResData;
   ExtrapolatedMCDataRatio_=(TH1D*) tempExtrapolatedMCDataRatio;
   ExtrapolatedNormalizedMCDataRatio_=(TH1D*) tempExtrapolatedNormalizedMCDataRatio;
-    
+  ExtrapolatedQuadMCDataRatio_              =(TH1D*) tempExtrapolatedQuadMCDataRatio;	       
+  ExtrapolatedQuadNormalizedMCDataRatio_    = (TH1D*) tempExtrapolatedQuadNormalizedMCDataRatio;   
+  ExtrapolatedLinQuadMCDataRatio_           = (TH1D*) tempExtrapolatedLinQuadMCDataRatio;	       
+  ExtrapolatedLinQuadNormalizedMCDataRatio_ =  (TH1D*) tempExtrapolatedLinQuadNormalizedMCDataRatio;
+
 }
