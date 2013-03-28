@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: createJECValidationHtmlPage.sh,v 1.11 2011/06/23 07:55:25 stadie Exp $
+# $Id: createJECValidationHtmlPage.sh,v 1.12 2012/05/16 18:55:12 stadie Exp $
 #
 #  This script creates an html webpage listing JEC validation
 #  plots.
@@ -60,6 +60,7 @@
 #    - 'pf' for particle-flow jets
 #    - 'pfchs' for particle-flow chs jets
 #    - 'pfchsnew' for particle-flow chs new version jets
+#    - 'withnupfchs' for for particle-flow chs with neutrinos (as it was for a long time)
 #    - 'track' track jets
 #
 #   Author: Matthias Schroeder
@@ -70,7 +71,7 @@
 
 # ----- Global variables --------------------------------------
 
-# Name of produced html fil
+# Name of produced html file
 FILE_OUT="index.html"
 
 # Naming conventions for plots
@@ -79,11 +80,13 @@ ID_Eta="Eta"
 ID_NPU="NPU"
 ID_MeanWidth="MeanWidth"
 ID_Flavor="Flavor"
+ID_ClosestJetdR="ClosestJetdR"
 ID_RVs="ResponseVs"
 ID_RVsGenPt="${ID_RVs}${ID_GenPt}"
 ID_RVsEta="${ID_RVs}${ID_Eta}"
 ID_RVsMeanWidth="${ID_RVs}${ID_MeanWidth}"
 ID_RVsFlavor="RespFlavorVsGenJetPt"
+ID_RVsClosestJetdR="${ID_RVs}${ID_ClosestJetdR}"
 ID_RVPU="ResponsePU"
 ID_RSPU="ResolPU"
 ID_Response="GaussFitMean"
@@ -99,6 +102,7 @@ TITLE_ResponsePU="Response vs eta in bins of N PU"
 TITLE_ResolutionPU="Resolution vs genJetPt in bins of N PU"
 TITLE_ResponseVsMeanWidth="Response vs JetWidth in bins of genJetPt"
 TITLE_ResponseVsFlavor="Response vs genJetPt for different Flavor (top: gluon, bottom: light flavors)"
+TITLE_ResponseVsClosestJetdR="Response vs distance in DeltaR to closest other jet in bins of genJetPt (barrel)"
 
 
 # ----- Read parameters ---------------------------------------
@@ -206,6 +210,9 @@ until [[ ${CORRECT_INPUT} -eq 1 ]]; do
     elif [[ ${JET_TYPE} == "pfchs" ]]; then
 	CORRECT_INPUT=1
 	JET_TYPE="PFCHS"
+    elif [[ ${JET_TYPE} == "withnupfchs" ]]; then
+	CORRECT_INPUT=1
+	JET_TYPE="WithNuPFCHS"
     elif [[ ${JET_TYPE} == "pfchsnew" ]]; then
 	CORRECT_INPUT=1
 	JET_TYPE="PFCHSNEW"
@@ -274,7 +281,7 @@ if [[ `ls -1 *.eps 2>/dev/null | wc -l` -eq 0 ]]; then
 fi
 #remove unwanted files
 rm *_Mean_*
-rm -f *MeanWidth_GaussFitWidth_*
+#rm -f *MeanWidth_GaussFitWidth_*
 echo -n "Converting to "
 if [[ `ls -1 *.eps 2>/dev/null | wc -l` -ne 0 ]]; then
     echo -n "pdf"
@@ -442,6 +449,7 @@ HAS_PLOTS_ResponseVsMeanWidth=`ls -1 *${ID_RVsMeanWidth}*${ID_Response}*.jpg 2>/
 HAS_PLOTS_ResponsePU=`ls -1 *${ID_RVPU}*${ID_Response}*.jpg 2>/dev/null | wc -l`
 HAS_PLOTS_ResolutionPU=`ls -1 *${ID_RSPU}*${ID_Resolution}*.jpg 2>/dev/null | wc -l`
 HAS_PLOTS_ResponseVsGenPtFlavor=`ls -1 *${ID_RVsFlavor}*${ID_Response}*.jpg 2>/dev/null | wc -l`                         
+HAS_PLOTS_ResponseVsClosestJetdR=`ls -1 *${ID_RVsClosestJetdR}*${ID_Response}*.jpg 2>/dev/null | wc -l`                         
 # Write table of plots to html file
 html_newline 3
 html_comment "List of available validation plots"
@@ -466,8 +474,11 @@ fi
 if [[ ${HAS_PLOTS_ResolutionPU} -ne 0 ]]; then
     html_tag li "<a href=\"#${ID_RSPU}_${ID_Resolution}\">${TITLE_ResolutionPU}</a>"
 fi
-if [[ ${HAS_PLOTS_ResponseVsEta} -ne 0 ]]; then
+if [[ ${HAS_PLOTS_ResponseVsGenPtFlavor} -ne 0 ]]; then
     html_tag li "<a href=\"#${ID_RVsFlavor}_${ID_Response}\">${TITLE_ResponseVsFlavor}</a>"
+fi
+if [[ ${HAS_PLOTS_ResponseVsClosestJetdR} -ne 0 ]]; then
+    html_tag li "<a href=\"#${ID_RVsClosestJetdR}_${ID_Response}\">${TITLE_ResponseVsClosestJetdR}</a>"
 fi
 html_tag_end ol
 #html_line "All validation plots are also <a href=\"${PLOTS_TAR}\">archived in pdf format</a>."
@@ -493,7 +504,7 @@ function tableOfPlots {
 	    ((COUNT=${COUNT}+1))
 
 	    html_tag_start tr
-	    
+	    #for debugging: echo "${plot}"
 	    html_tag_start td
 	    html_line "<img src=\"${plot}\" style=\"border:0\">"
 	    html_tag_end td
@@ -592,6 +603,12 @@ if [[ ${HAS_PLOTS_ResponseVsGenPtFlavor} -ne 0 ]]; then
     ((COUNT_CATEGORIES=${COUNT_CATEGORIES}+1))
     html_newline
     tableOfPlots "${ID_RVsFlavor}" "${ID_Response}" "${TITLE_ResponseVsFlavor}" "${ID_Flavor}" "${COUNT_CATEGORIES}"
+fi
+# Response for distance to closest other jet
+if [[ ${HAS_PLOTS_ResponseVsClosestJetdR} -ne 0 ]]; then
+    ((COUNT_CATEGORIES=${COUNT_CATEGORIES}+1))
+    html_newline
+    tableOfPlots "${ID_RVsClosestJetdR}" "${ID_Response}" "${TITLE_ResponseVsClosestJetdR}" "${ID_GenPt}" "${COUNT_CATEGORIES}"
 fi
 
 html_tag span "<a href=\"https://twiki.cern.ch/twiki/bin/view/CMS/HamburgWikiAnalysisCalibration\">University of Hamburg calibration group</a>,  `date`" "style=\"font-size:1em\""
