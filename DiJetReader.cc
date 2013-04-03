@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.113 2013/03/27 17:08:24 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.114 2013/03/27 17:26:52 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -82,6 +82,8 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   maxRel3rdJetEt_    = config_->read<double>("Max cut on relative n+1 Jet Et",1.);
   minRelSoftJetEt_   = config_->read<double>("Min cut on relative Soft Jet Et",0.);
   maxRelSoftJetEt_   = config_->read<double>("Max cut on relative Soft Jet Et",1.);
+  minCloseJetRelPt_  = config_->read<double>("Min cut on relative closest jet pt to probe pt",0.);
+  maxCloseJetRelPt_  = config_->read<double>("Max cut on relative closest jet pt to probe pt",1.);
   minJetEta_         = config_->read<double>("Eta min cut on jet",0.0);
   maxJetEta_         = config_->read<double>("Eta max cut on jet",5.0);
   minJetHadFraction_ = config_->read<double>("Min had fraction",0.07);
@@ -918,7 +920,10 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       float closestJetdR =100;
       for(int j = 0; j < nJet_->NobjJet; j++) {
 	if(deltaR(nJet_->JetEta[calJetIdx],nJet_->JetEta[j],
-		  nJet_->JetPhi[calJetIdx],nJet_->JetPhi[j])<closestJetdR&&calJetIdx!=j){
+		  nJet_->JetPhi[calJetIdx],nJet_->JetPhi[j])<closestJetdR&&calJetIdx!=j
+	   &&nJet_->JetCorrL1[j]*nJet_->JetCorrL2L3[j]*nJet_->JetPt[j]/(nJet_->JetCorrL1[calJetIdx]*nJet_->JetCorrL2L3[calJetIdx]*nJet_->JetPt[calJetIdx])<maxCloseJetRelPt_
+	   &&nJet_->JetCorrL1[j]*nJet_->JetCorrL2L3[j]*nJet_->JetPt[j]/(nJet_->JetCorrL1[calJetIdx]*nJet_->JetCorrL2L3[calJetIdx]*nJet_->JetPt[calJetIdx])>minCloseJetRelPt_
+	   ){
 	  closestJetdR=deltaR(nJet_->JetEta[calJetIdx],nJet_->JetEta[j],
 			      nJet_->JetPhi[calJetIdx],nJet_->JetPhi[j]);
 	  if(closestJetdR<0.1)std::cout << "calJetIdx " << calJetIdx << 	" j " << j << " closestJetdR " << closestJetdR << std::endl; 
@@ -1684,7 +1689,10 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     float closestJetdR =100;
     for(unsigned int j = 0; j < static_cast<unsigned int> (nJet_->NobjJet); j++) {
       if(deltaR(nJet_->JetEta[CorrJetIdx[i]],nJet_->JetEta[j],
-                nJet_->JetPhi[CorrJetIdx[i]],nJet_->JetPhi[j])<closestJetdR&&CorrJetIdx[i]!=j){
+                nJet_->JetPhi[CorrJetIdx[i]],nJet_->JetPhi[j])<closestJetdR && CorrJetIdx[i]!=j
+	 &&nJet_->JetCorrL1[j]*nJet_->JetCorrL2L3[j]*nJet_->JetPt[j]/(nJet_->JetCorrL1[CorrJetIdx[i]]*nJet_->JetCorrL2L3[CorrJetIdx[i]]*nJet_->JetPt[CorrJetIdx[i]])<maxCloseJetRelPt_
+	 &&nJet_->JetCorrL1[j]*nJet_->JetCorrL2L3[j]*nJet_->JetPt[j]/(nJet_->JetCorrL1[CorrJetIdx[i]]*nJet_->JetCorrL2L3[CorrJetIdx[i]]*nJet_->JetPt[CorrJetIdx[i]])>minCloseJetRelPt_
+	 ){
 	closestJetdR=deltaR(nJet_->JetEta[CorrJetIdx[i]],nJet_->JetEta[j],
 			    nJet_->JetPhi[CorrJetIdx[i]],nJet_->JetPhi[j]);
 	if(closestJetdR<0.1)std::cout << "CorrJetIdx[i] " << CorrJetIdx[i] << 	" j " << j << " closestJetdR " << closestJetdR << std::endl; 

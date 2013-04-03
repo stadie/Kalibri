@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.41 2012/11/20 09:30:44 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.42 2013/03/27 17:08:24 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -103,6 +103,9 @@ class DiJetReader : public EventReader{
   double maxRel3rdJetEt_;       //!< Maximum relative pt of 3rd jet in dijet event
   double minRelSoftJetEt_;
   double maxRelSoftJetEt_;
+  double minCloseJetRelPt_;     //!< Minimum cut on relative closest jet pt to probe pt
+  double maxCloseJetRelPt_;     //!< Maximum cut on relative closest jet pt to probe pt
+
   double minDeltaPhi_;          //!< Minimum DeltaPhi for 0 < DeltaPhi < Pi
   double minJetEta_;            //!< Minimum absolute jet eta
   double maxJetEta_;            //!< Maximum absolute jet eta
