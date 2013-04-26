@@ -234,8 +234,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6PlusS7 \n"
     elif(MC_type=="Z2Star_PU1mioS610mioS7" or MC_type=="Z2Star_PU1mioS610mioS7_Smear"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6Plus10MioS7 \n"
-    elif(MC_type=="Z253" or MC_type=="Z253_Smear" or MC_type=="Z253_SmearU" or MC_type=="Z253_SmearD" or MC_type=="Z253_V11_T1" or MC_type=="Z253_V11_T1T2" or MC_type=="Z253_V11_T1T2Smear" or MC_type=="Z253_V11_T1T2SmearU" or MC_type=="Z253_V11_T1T2SmearD" or MC_type =="Hpp53"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = rathjd/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"
+    elif(MC_type=="Z253" or MC_type=="Z253_Smear" or MC_type=="Z253_SmearU" or MC_type=="Z253_SmearD" or MC_type=="Z253_V11_T1" or MC_type=="Z253_V11_T1T2" or MC_type=="Z253_V11_T1T2Smear" or MC_type=="Z253_V11_T1T2SmearU" or MC_type=="Z253_V11_T1T2SmearD" or MC_type =="Hpp53" or MC_type =="KriHpp53"):
+        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"
     else:
         print "No suitable MC-distribtuion for PU-reweighting found."
 
@@ -379,6 +379,10 @@ def determineDataDirMC(MC,MC_type):
             datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/SmearedDown_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/"
         if(MC_type=="Hpp53"):
             datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneEE3C_Flat_8TeV_herwigpp_Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
+        if(MC_type=="KriHpp53"):
+            datadirmc = "/scratch/hh/dust/naf/cms/user/kriheine/CalibNTupel/MC/EE3C_herwigpp_v3"
+            
+
 	    
     if(MC == "F11"):
         if(MC_type=="Z2wPU"):
@@ -440,7 +444,7 @@ def determineDataDirMC(MC,MC_type):
 
 
 def importDatatypesNewTrigger():
-    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","Z253","Z253_Smear","Z253_SmearU","Z253_SmearD","Z253_V11_T1","Z253_V11_T1T2","Z253_V11_T1T2Smear","Z253_V11_T1T2SmearU","Z253_V11_T1T2SmearD","Z253_V11_T1T2_DMC","Hpp53","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396","2012AB_196531","2012ABC_199011","2012ABC_199429","2012ABC_200601","2012ABC_202305","2012ABC_203002","2012ABCD_ReReco"]
+    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","Z253","Z253_Smear","Z253_SmearU","Z253_SmearD","Z253_V11_T1","Z253_V11_T1T2","Z253_V11_T1T2Smear","Z253_V11_T1T2SmearU","Z253_V11_T1T2SmearD","Z253_V11_T1T2_DMC","Hpp53","KriHpp53","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396","2012AB_196531","2012ABC_199011","2012ABC_199429","2012ABC_200601","2012ABC_202305","2012ABC_203002","2012ABCD_ReReco"]
 
 def configureJERsmearing(jettype):
     if(jettype == "ak5PF" or jettype == "ak5PFCHS"):
