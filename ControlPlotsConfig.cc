@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.40 2013/03/27 12:14:13 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.41 2013/03/27 17:08:24 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -848,6 +848,22 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "HF Hadronic";
   else if( varName == "PF_HFEm_Fraction")
     title = "HF Em";
+  else if( varName == "PF_CH_RespCorrFraction")
+    title = "Charged hadrons (rc)";
+  //    title = "PF charged hadron fraction";
+  else if( varName == "PF_NH_RespCorrFraction")
+    title = "Neutral hadrons (rc)";
+  //    title = "PF neutral hadron fraction";
+  else if( varName == "PF_PH_RespCorrFraction")
+    title = "Photons (rc)";
+  ///    title = "PF photon fraction";
+  else if( varName == "PF_EL_RespCorrFraction")
+    title = "Electrons (rc)";
+  //    title = "PF electron fraction";
+  else if( varName == "PF_HFHad_RespCorrFraction")
+    title = "HF Hadronic (rc)";
+  else if( varName == "PF_HFEm_RespCorrFraction")
+    title = "HF Em (rc)";
   else if( varName == "DeltaPhi")
     title = "#Delta #varphi_{1,2}";
   else if( varName == "ClosestJetdR")

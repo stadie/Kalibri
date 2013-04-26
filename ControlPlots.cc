@@ -354,6 +354,18 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFHad_Fraction;
   if( varName == "PF_HFEm_Fraction" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFEm_Fraction;
+  if( varName == "PF_CH_RespCorrFraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_CH_RespCorrFraction;
+  if( varName == "PF_NH_RespCorrFraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_NH_RespCorrFraction;
+  if( varName == "PF_PH_RespCorrFraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_PH_RespCorrFraction;
+  if( varName == "PF_EL_RespCorrFraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_EL_RespCorrFraction;
+  if( varName == "PF_HFHad_RespCorrFraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFHad_RespCorrFraction;
+  if( varName == "PF_HFEm_RespCorrFraction" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFEm_RespCorrFraction;
   if( varName == "Flavor" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetFlavor;
   if( varName == "DeltaPhi" )
