@@ -380,6 +380,10 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3ResL4Corrected;
   if( varName == "GenAsymmetry" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventGenAsymmetry;
+  if( varName == "GenLeadAsymmetry" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventGenLeadAsymmetry;  
+  if( varName == "GenBarrAsymmetry" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventGenBarrAsymmetry;       
   if( varName == "B" && type == ControlPlotsConfig::Uncorrected )
     return &ControlPlotsFunction::twoJetsPtBalanceEventB;
   if( varName == "B" && type == ControlPlotsConfig::Kalibri )

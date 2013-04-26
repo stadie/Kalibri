@@ -1,4 +1,4 @@
- // $Id: ControlPlotsFunction.cc,v 1.41 2013/03/27 17:08:24 kirschen Exp $
+ // $Id: ControlPlotsFunction.cc,v 1.42 2013/03/27 17:26:52 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -867,10 +867,25 @@ double ControlPlotsFunction::twoJetsPtBalanceEventGenAsymmetry(const Event * evt
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet1 = jte->getJet1();
   Jet * jet2 = jte->getJet2();
-  return (jet1->genPt()-jet2->genPt())/(jet1->genPt()+jet2->genPt());
+  return 2*(jet1->genPt()-jet2->genPt())/(jet1->genPt()+jet2->genPt());
 }
 
+double ControlPlotsFunction::twoJetsPtBalanceEventGenLeadAsymmetry(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  Jet * jetL;
+  if(jet1->genPt()>jet2->genPt()) jetL=jet1;
+  else jetL=jet2;
+  return (jet1->genPt()-jet2->genPt())/jetL->genPt();
+}
 
+double ControlPlotsFunction::twoJetsPtBalanceEventGenBarrAsymmetry(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  return (jet1->genPt()-jet2->genPt())/jet2->genPt();
+}
 
 //!  \brief Returns the jet B
 //!
