@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.42 2013/03/27 17:08:24 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.43 2013/04/03 13:29:26 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -60,6 +60,7 @@ class DiJetReader : public EventReader{
   virtual int readControlEvents(std::vector<Event*>& control, int id);
  protected:
   TwoJetsPtBalanceEvent* createTwoJetsPtBalanceEvent();
+  std::vector<Jet*> twoJetsPtBalanceUpdateJECAndMET();
   void twoJetsPtBalanceSmearJetsJER();
   Event* createDiJetResolutionEvent();
   Event* createDiJetResolutionEventRecoOrdered();
@@ -93,6 +94,7 @@ class DiJetReader : public EventReader{
   bool   HFAsReferenceRegion_;       //!< Use HF as reference region for TwoJetsPtBalanceEvent  (probe jet in eta>3 )
   bool   correctJECandScaleJER_;     //!< update JEC and scale JER in control events
   bool   readingInControlEvents_;    //!< bool to determine whether this reader is used for reading in cotrol events (default false, altered by readControlEvents(std::vector<Event*>& control, int id))
+  bool   updateIndividualJECPlusMET_;    //!< correct JEC and MET for MC only study for TwoJetsPtBalanceEvent
 
   double minJetEt_;             //!< Minimum pt of jet
   double maxJetEt_;             //!< Maximum pt of jet

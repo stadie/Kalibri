@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.114 2013/03/27 17:26:52 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.115 2013/04/03 13:29:26 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -68,6 +68,9 @@ DiJetReader::DiJetReader(const std::string& configfile, Parameters* p)
   if(correctJECandScaleJER_){
     ptResolutionForSmearing::configureSmearfactor(config_->read<std::string>("correct JEC and scale JER name","PF_Matthias"));
   }
+  updateIndividualJECPlusMET_    = config_->read<bool>("correct JEC and MET on the fly",false);
+  //  std::cout << "correct JEC and MET for MC only study for TwoJetsPtBalanceEvent set to: " << updateIndividualJECPlusMET_<<std::endl;
+
   readingInControlEvents_=false;
 
   useSingleJetTriggers_ = config_->read<bool>("Use single jet triggers",false);
@@ -487,6 +490,21 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     nJet_->fChain->SetBranchStatus("HltDiJetAve240",0);
     nJet_->fChain->SetBranchStatus("HltDiJetAve300",0);
     nJet_->fChain->SetBranchStatus("HltDiJetAve370",0);
+    nJet_->fChain->SetBranchStatus("HltDiPFJetAve40", 0);
+    nJet_->fChain->SetBranchStatus("HltDiPFJetAve80", 0);
+    nJet_->fChain->SetBranchStatus("HltDiPFJetAve140",0);
+    nJet_->fChain->SetBranchStatus("HltDiPFJetAve200",0);
+    nJet_->fChain->SetBranchStatus("HltDiPFJetAve260",0);
+    nJet_->fChain->SetBranchStatus("HltDiPFJetAve320",0);
+    nJet_->fChain->SetBranchStatus("HltDiPFJetAve400",0);
+    nJet_->fChain->SetBranchStatus("HltPFJet40",      0);
+    nJet_->fChain->SetBranchStatus("HltPFJet80",      0);
+    nJet_->fChain->SetBranchStatus("HltPFJet140",     0);
+    nJet_->fChain->SetBranchStatus("HltPFJet200",     0);
+    nJet_->fChain->SetBranchStatus("HltPFJet260",     0);
+    nJet_->fChain->SetBranchStatus("HltPFJet320",     0);
+    nJet_->fChain->SetBranchStatus("HltPFJet400",     0); 
+
     nJet_->HltDiJetAve15U=true;
     nJet_->HltDiJetAve30U=true;
     nJet_->HltDiJetAve50U=true;
@@ -504,6 +522,22 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
     nJet_->HltDiJetAve240=true;
     nJet_->HltDiJetAve300=true;
     nJet_->HltDiJetAve370=true;
+
+    nJet_->HltDiPFJetAve40  =true;
+    nJet_->HltDiPFJetAve80  =true;
+    nJet_->HltDiPFJetAve140 =true;
+    nJet_->HltDiPFJetAve200 =true;
+    nJet_->HltDiPFJetAve260 =true;
+    nJet_->HltDiPFJetAve320 =true;
+    nJet_->HltDiPFJetAve400 =true;
+    nJet_->HltPFJet40	    =true;
+    nJet_->HltPFJet80	    =true;
+    nJet_->HltPFJet140	    =true;
+    nJet_->HltPFJet200	    =true;
+    nJet_->HltPFJet260	    =true;
+    nJet_->HltPFJet320	    =true;
+    nJet_->HltPFJet400      =true;
+
   }
 
 
@@ -555,7 +589,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 	    data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
 						     td->getJet3() ? td->getJet3()->clone():0,
 						     td->ptHat(),td->weight(),td->nPU(),
-						     td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
+						     td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->METT1(),td->METT1phi(),td->METT1Res(),td->METT1Resphi(),td->runNumber(),td->PUMCHighestSumPt()));
 	    ++nGoodEvts_;
 	  }
 	  //To do: Should the combination jet2,jet1 also be read in to be symmetric?
@@ -570,7 +604,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 	    data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
 						     td->getJet3() ? td->getJet3()->clone():0,
 						     td->ptHat(),td->weight(),td->nPU(),
-						     td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
+						     td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->METT1(),td->METT1phi(),td->METT1Res(),td->METT1Resphi(),td->runNumber(),td->PUMCHighestSumPt()));
 	    ++nGoodEvts_;
 	  }
 	  if(std::abs(td->getJet2()->eta()) > 3.0) {
@@ -588,7 +622,7 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 	    data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
 						     td->getJet3() ? td->getJet3()->clone():0,
 						     td->ptHat(),td->weight(),td->nPU(),
-						     td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->runNumber()));
+						     td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->METT1(),td->METT1phi(),td->METT1Res(),td->METT1Resphi(),td->runNumber(),td->PUMCHighestSumPt()));
 	    ++nGoodEvts_;
 	  }
 	  if(std::abs(td->getJet2()->eta()) < 1.3) {
@@ -1493,14 +1527,37 @@ Event* DiJetReader::createDiJetResolutionEventFromSkim() {
 }
 
 
-//!  \brief Smear jets and MET according to JER scale factors
+//!  \brief Update JEC of jets and MET
 //!
 //!  Might be quite time-consuming...
 // ----------------------------------------------------------------   
-void DiJetReader::twoJetsPtBalanceSmearJetsJER()
+std::vector<Jet*> DiJetReader::twoJetsPtBalanceUpdateJECAndMET()
 {
   assert(corFactorsFactory_);  // want to update JEC as well
-  assert(nJet_->NobjGenJet>0); //only makes sense on MC
+
+
+  //WARNING: MET is assumed to be type-1-corrected, here
+  TVector2* METT1 = new TVector2(1,1);
+  METT1->SetMagPhi(nJet_->Met_T1,nJet_->MetPhi_T1);
+  TVector2* METT1_alteration = new TVector2(1,1); //
+  TVector2* METT1Res = new TVector2(1,1);
+  METT1Res->SetMagPhi(nJet_->Met_T1R,nJet_->MetPhi_T1R);
+  TVector2* METT1Res_alteration = new TVector2(1,1); //
+  TVector2* ptT1_oldJEC = new TVector2(1,1); 
+  TVector2* ptT1_newJEC = new TVector2(1,1); 
+  TVector2* ptT1Res_oldJEC = new TVector2(1,1); 
+  TVector2* ptT1Res_newJEC = new TVector2(1,1); 
+
+  TVector2* METT2 = new TVector2(1,1);
+  METT2->SetMagPhi(nJet_->Met_T2,nJet_->MetPhi_T2);
+  TVector2* METT2_alteration = new TVector2(1,1); //
+  TVector2* METT2Res = new TVector2(1,1);
+  METT2Res->SetMagPhi(nJet_->Met_T2R,nJet_->MetPhi_T2R);
+  TVector2* METT2Res_alteration = new TVector2(1,1); //
+  TVector2* ptT2_oldJEC = new TVector2(1,1); 
+  TVector2* ptT2_newJEC = new TVector2(1,1); 
+  TVector2* ptT2Res_oldJEC = new TVector2(1,1); 
+  TVector2* ptT2Res_newJEC = new TVector2(1,1); 
 
   // Number of jets in the event
   size_t nJets = nJet_->NobjJet;
@@ -1541,19 +1598,95 @@ void DiJetReader::twoJetsPtBalanceSmearJetsJER()
 			   par_->global_jet_function())    
 		   );
     
+    ptT1_oldJEC->SetMagPhi(jets.back()->pt()*jets.back()->corFactors().getL1()*jets.back()->corFactors().getL2()*jets.back()->corFactors().getL3(),jets.back()->phi());
+    ptT1Res_oldJEC->SetMagPhi(jets.back()->pt()*jets.back()->corFactors().getL1()*jets.back()->corFactors().getL2()*jets.back()->corFactors().getL3()*jets.back()->corFactors().getLRes(),jets.back()->phi());
     jets.back()->updateCorFactors(corFactorsFactory_->create(jets.back(),nJet_->VtxN,nJet_->Rho,nJet_->JetArea[i]));
+    ptT1_newJEC->SetMagPhi(jets.back()->pt()*jets.back()->corFactors().getL1()*jets.back()->corFactors().getL2()*jets.back()->corFactors().getL3(),jets.back()->phi());
+    ptT1Res_newJEC->SetMagPhi(jets.back()->pt()*jets.back()->corFactors().getL1()*jets.back()->corFactors().getL2()*jets.back()->corFactors().getL3()*jets.back()->corFactors().getLRes(),jets.back()->phi());
+    
+    ptT2_oldJEC->SetMagPhi(jets.back()->pt()*jets.back()->corFactors().getL1()*jets.back()->corFactors().getL2()*jets.back()->corFactors().getL3(),jets.back()->phi());
+    ptT2Res_oldJEC->SetMagPhi(jets.back()->pt()*jets.back()->corFactors().getL1()*jets.back()->corFactors().getL2()*jets.back()->corFactors().getL3()*jets.back()->corFactors().getLRes(),jets.back()->phi());
+    jets.back()->updateCorFactors(corFactorsFactory_->create(jets.back(),nJet_->VtxN,nJet_->Rho,nJet_->JetArea[i]));
+    ptT2_newJEC->SetMagPhi(jets.back()->pt()*jets.back()->corFactors().getL1()*jets.back()->corFactors().getL2()*jets.back()->corFactors().getL3(),jets.back()->phi());
+    ptT2Res_newJEC->SetMagPhi(jets.back()->pt()*jets.back()->corFactors().getL1()*jets.back()->corFactors().getL2()*jets.back()->corFactors().getL3()*jets.back()->corFactors().getLRes(),jets.back()->phi());
     
     nJet_->JetCorrL1[i]=jets.back()->corFactors().getL1();
     nJet_->JetCorrL2[i]=jets.back()->corFactors().getL2();
     nJet_->JetCorrL3[i]=jets.back()->corFactors().getL3();
     nJet_->JetCorrL2L3[i]=nJet_->JetCorrL2[i]*nJet_->JetCorrL3[i]*jets.back()->corFactors().getLRes();
-    
+   
+    *METT1_alteration= *ptT1_oldJEC-*ptT1_newJEC;
+    if(!TMath::IsNaN(METT1_alteration->Mod()))*METT1+=*METT1_alteration;
+    *METT1Res_alteration= *ptT1Res_oldJEC-*ptT1Res_newJEC;
+    if(!TMath::IsNaN(METT1Res_alteration->Mod()))*METT1Res+=*METT1Res_alteration;
+
+    *METT2_alteration= *ptT2_oldJEC-*ptT2_newJEC;
+    if(!TMath::IsNaN(METT2_alteration->Mod()))*METT2+=*METT2_alteration;
+    *METT2Res_alteration= *ptT2Res_oldJEC-*ptT2Res_newJEC;
+    if(!TMath::IsNaN(METT2Res_alteration->Mod()))*METT2Res+=*METT2Res_alteration;
   }
-  TVector2* MET = new TVector2(1,1);
-  MET->SetMagPhi(nJet_->Met,nJet_->MetPhi);
-  //    TVector2* MET_T1 = new TVector2(1,1);
-  //    MET_T1->SetMagPhi(nJet_->Met_T1,nJet_->MetPhi_T1);
-  TVector2* MET_alteration = new TVector2(1,1); //
+
+  //   std::cout << "MET before: " << nJet_->Met_T1 << " MET after: " << MET->Mod()<<std::endl;
+  //write-out corrected met
+
+  //was commented out to re-use raw pfmet
+  nJet_->Met_T1=METT1->Mod();
+  nJet_->MetPhi_T1=METT1->Phi_mpi_pi(METT1->Phi());
+
+  nJet_->Met_T1R=METT1Res->Mod();
+  nJet_->MetPhi_T1R=METT1Res->Phi_mpi_pi(METT1Res->Phi());
+
+  nJet_->Met_T2=METT2->Mod();
+  nJet_->MetPhi_T2=METT2->Phi_mpi_pi(METT2->Phi());
+
+  nJet_->Met_T2R=METT2Res->Mod();
+  nJet_->MetPhi_T2R=METT2Res->Phi_mpi_pi(METT2Res->Phi());
+
+
+  delete METT1; 
+  delete METT1_alteration;
+  delete METT1Res;
+  delete METT1Res_alteration;
+  delete ptT1_oldJEC;
+  delete ptT1_newJEC;
+  delete ptT1Res_oldJEC;
+  delete ptT1Res_newJEC;
+
+
+  delete METT2; 
+  delete METT2_alteration;
+  delete METT2Res;
+  delete METT2Res_alteration;
+  delete ptT2_oldJEC;
+  delete ptT2_newJEC;
+  delete ptT2Res_oldJEC;
+  delete ptT2Res_newJEC;
+
+  return jets;
+}
+
+//!  \brief Smear jets and MET according to JER scale factors
+//!
+//!  Might be quite time-consuming...
+// ----------------------------------------------------------------   
+void DiJetReader::twoJetsPtBalanceSmearJetsJER()
+{
+  assert(corFactorsFactory_);  // want to update JEC as well
+  assert(nJet_->NobjGenJet>0); //only makes sense on MC
+
+  // Number of jets in the event
+  size_t nJets = nJet_->NobjJet;
+
+
+  //update JEC
+  std::vector<Jet*> jets = twoJetsPtBalanceUpdateJECAndMET();
+
+  TVector2* METT1 = new TVector2(1,1);
+  METT1->SetMagPhi(nJet_->Met_T1,nJet_->MetPhi_T1);
+  TVector2* METT1_alteration = new TVector2(1,1); //
+  TVector2* METraw = new TVector2(1,1);
+  METraw->SetMagPhi(nJet_->Met,nJet_->MetPhi);
+  TVector2* METraw_alteration = new TVector2(1,1); //
   TVector2* pt_old = new TVector2(1,1); //unsmeared raw pt
   TVector2* pt_smeared = new TVector2(1,1); //smeared raw pt
   float L1L2L3corrFactor =1; //correction factor
@@ -1578,31 +1711,42 @@ void DiJetReader::twoJetsPtBalanceSmearJetsJER()
     nJet_->JetEt[id] = rawPtEtEScalingFactor * nJet_->JetEt[id];
     nJet_->JetE[id]  = rawPtEtEScalingFactor * jets.at(id)->E();
     
-
-    //apply smearing to MET
-    pt_old->SetMagPhi(jets.at(id)->pt(),jets.at(id)->phi());
+    //apply smearing to raw MET 
+    pt_old->SetMagPhi(jets.at(id)->pt(),jets.at(id)->phi()); //use pt_old/pt_smeared with raw pt
     pt_smeared->SetMagPhi(nJet_->JetPt[id],jets.at(id)->phi());
+    *METraw_alteration= *pt_old-*pt_smeared;
+    if(TMath::IsNaN(METraw_alteration->Mod()))std::cout <<"METrawalteration NaN" <<std::endl;
+    else *METraw+=*METraw_alteration;
+
+    //apply smearing to METT1 //assumes type-I corrected MET now...
+    pt_old->SetMagPhi(jets.at(id)->pt()*L1L2L3corrFactor,jets.at(id)->phi()); // reuse pt_old/pt_smeared with L1L2L3-corrections applied
+    pt_smeared->SetMagPhi(nJet_->JetPt[id]*L1L2L3corrFactor,jets.at(id)->phi());
       //      assert(nJet_->JetPt[id]!=jets.at(id)->pt());
-    *MET_alteration= *pt_old-*pt_smeared;
-    if(TMath::IsNaN(MET_alteration->Mod())){
-      std::cout <<"METalteration NaN" <<std::endl;
-      //	  count_nans_for_MET_smearing++;
-      //	  cout << "DEBUG... Ptold: " << JetPtold[id] << " JetPt: " << JetPt[id]<< " JetPhi: " << JetPhiold[id]  << " smearfactor: " << smearfactor << " JetCorrL2L3[id]: " << JetCorrL2L3[id] << " JetCorrL1[id]: " << JetCorrL1[id] << " MET-alteration failed: " << count_nans_for_MET_smearing << endl;
+    *METT1_alteration= *pt_old-*pt_smeared;
+    if(TMath::IsNaN(METT1_alteration->Mod())){
+      std::cout <<"METT1alteration NaN" <<std::endl;
+      //	  count_nans_for_METT1_smearing++;
+      //	  cout << "DEBUG... Ptold: " << JetPtold[id] << " JetPt: " << JetPt[id]<< " JetPhi: " << JetPhiold[id]  << " smearfactor: " << smearfactor << " JetCorrL2L3[id]: " << JetCorrL2L3[id] << " JetCorrL1[id]: " << JetCorrL1[id] << " METT1-alteration failed: " << count_nans_for_METT1_smearing << endl;
     }
     else{
-      *MET+=*MET_alteration;
+      *METT1+=*METT1_alteration;
     }
   }
 
-  nJet_->Met=MET->Mod();
-  nJet_->MetPhi=MET->Phi_mpi_pi(MET->Phi());
+  nJet_->Met_T1=METT1->Mod();
+  nJet_->MetPhi_T1=METT1->Phi_mpi_pi(METT1->Phi());
+
+  nJet_->Met=METraw->Mod();
+  nJet_->MetPhi=METraw->Phi_mpi_pi(METraw->Phi());
 
   //    std::cout << "before smearing: "<< jets.at(0)->corFactors().getToL3()*jets.at(0)->pt() << " after smearing: "<< nJet_->JetCorrL1[0]*nJet_->JetCorrL2L3[0]*nJet_->JetPt[0] << " genpt: " << jets.at(0)->genPt() <<std::endl;
 
   //cleaning
   for(size_t jet_i = 0; jet_i<jets.size(); jet_i++)delete jets[jet_i];
-  delete MET;
-  delete MET_alteration;
+  delete METraw;
+  delete METraw_alteration;
+  delete METT1;
+  delete METT1_alteration;
   delete pt_old;
   delete pt_smeared;
   
@@ -1620,6 +1764,17 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 
   //  std::cout << "correctJECandScaleJER: " << correctJECandScaleJER_ << " corFactorsFactory: " <<corFactorsFactory_ << " readingInControlEvents: " << readingInControlEvents_ << std::endl;
   if(correctJECandScaleJER_&&corFactorsFactory_&&readingInControlEvents_)twoJetsPtBalanceSmearJetsJER();
+  else if(correctJECandScaleJER_&&corFactorsFactory_&&!readingInControlEvents_){//update JEC and MET for data as well
+   std::vector<Jet*> jets = twoJetsPtBalanceUpdateJECAndMET();
+   for(size_t jet_i = 0; jet_i<jets.size(); jet_i++)delete jets[jet_i];
+  }
+
+
+  //update MET and JEC
+  if(corFactorsFactory_&&updateIndividualJECPlusMET_){
+   std::vector<Jet*> jets = twoJetsPtBalanceUpdateJECAndMET();
+   for(size_t jet_i = 0; jet_i<jets.size(); jet_i++)delete jets[jet_i];
+  }
 
 
   if( jetIndices_.size() != 20 ) std::cerr << "%%%%%%%%%%%% WARNING %%%%%%%%%%%%%%%%%\n";
@@ -1754,7 +1909,8 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     }
   }  // End of loop over jets 
   //  if(std::abs(jet1->eta())>2.5&&std::abs(jet1->eta())<3.5)std::cout << "beforeupdate"<< jet1->pt() << " and " <<jet1->corFactors().getL2L3() << " and " <<jet1->corFactors().getL1() << " and " << jet2->pt() << " and " <<jet2->corFactors().getL2L3() << " and " <<jet2->corFactors().getL1() <<" and " << nJet_->VtxN << " and " << nJet_->Rho << " and " << nJet_->JetArea[CorrJetIdx[0]] << std::endl;
-  if(corFactorsFactory_&&!(correctJECandScaleJER_&&readingInControlEvents_)) {//should not be updated when JER smearing is activated (and conrtrol events, which are to be smeared, are read in)
+  //  if(corFactorsFactory_&&!(correctJECandScaleJER_&&readingInControlEvents_)&&!updateIndividualJECPlusMET_) {//should not be updated when JER smearing is activated (and conrtrol events, which are to be smeared, are read in)
+  if(corFactorsFactory_&&!correctJECandScaleJER_&&!updateIndividualJECPlusMET_) {//should not be updated in case JER smearing is activated or JEC/MET is updated (JECPlusMET-update does not harm, ScaleJER would conflict with update)
     //    std::cout << "updating in data" << std::endl;
     jet1->updateCorFactors(corFactorsFactory_->create(jet1,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[CorrJetIdx[0]]));
     jet2->updateCorFactors(corFactorsFactory_->create(jet2,nJet_->VtxN,nJet_->Rho,nJet_->JetArea[CorrJetIdx[1]]));
@@ -1955,7 +2111,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 
   // Create TwoJetsInvMassEvent
   TwoJetsPtBalanceEvent * evt
-    = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight,static_cast<short int>(nJet_->PUMCNumVtx),nJet_->PUMCNumTruth,static_cast<short int>(nJet_->VtxN),nJet_->Met,nJet_->MetPhi,nJet_->RunNumber);
+    = new TwoJetsPtBalanceEvent(jet1,jet2,jet3,nJet_->GenEvtScale,nJet_->Weight,static_cast<short int>(nJet_->PUMCNumVtx),nJet_->PUMCNumTruth,static_cast<short int>(nJet_->VtxN),nJet_->Met,nJet_->MetPhi,nJet_->Met_T1,nJet_->MetPhi_T1,nJet_->Met_T1R,nJet_->MetPhi_T1R,nJet_->RunNumber,nJet_->PUMCHighestSumPt);
 
    if(evt->relPtJet3CorrL2L3() >  maxRel3rdJetEt_) {
      //     std::cout << "test "<< std::abs(evt->getJet3()->corFactors().getL2L3() * evt->getJet3()->pt()) << " and " << maxRel3rdJetEt_*evt->ptDijetCorrL2L3() << " and " << evt->relPtJet3CorrL2L3() << std::endl;

@@ -1,4 +1,4 @@
- // $Id: ControlPlotsFunction.cc,v 1.43 2013/04/26 11:47:54 rathjd Exp $
+ // $Id: ControlPlotsFunction.cc,v 1.44 2013/04/26 15:39:39 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -369,6 +369,69 @@ double ControlPlotsFunction::twoJetsPtBalanceEventJet2AbsEta(const Event *evt) c
 double ControlPlotsFunction::twoJetsPtBalanceEventMET(const Event *evt) const {
   const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   return tjpbe->MET();
+}
+
+
+//!  \brief Returns absolute value of MET (with residual corrections)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMETT1(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return tjpbe->METT1();
+}
+//!  \brief Returns absolute value of MET (with residual corrections)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMETT1Res(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return tjpbe->METT1Res();
+}
+
+//!  \brief Returns value of MET projected on second jet axis 
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMETProj(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet2 = tjpbe->getJet2();
+  return  TMath::Abs(tjpbe->MET()*cos(deltaPhi(tjpbe->METphi(), jet2->phi())));
+}
+
+//!  \brief Returns value of MET (with residual corrections) projected on second jet axis 
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMETT1Proj(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet2 = tjpbe->getJet2();
+  return  TMath::Abs(tjpbe->METT1()*cos(deltaPhi(tjpbe->METT1phi(), jet2->phi())));
+}
+
+//!  \brief Returns value of MET (with residual corrections) projected on second jet axis 
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMETT1ResProj(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet2 = tjpbe->getJet2();
+  return  TMath::Abs(tjpbe->METT1Res()*cos(deltaPhi(tjpbe->METT1Resphi(), jet2->phi())));
+}
+
+//!  \brief Returns absolute value of METPhi 
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMETPhi(const Event *evt) const {
+  const TwoJetsPtBalanceEvent * tjpbe = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  return tjpbe->METphi();
 }
 
 

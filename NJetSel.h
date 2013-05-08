@@ -63,6 +63,14 @@ public :
    Bool_t          HltPFJet260;
    Bool_t          HltPFJet320;
    Bool_t          HltPFJet400;
+   Bool_t          HltQuadJet40;
+   Bool_t          HltQuadJet45DiJet40;
+   Bool_t          HltQuadJet50DiJet40;
+   Bool_t          HltQuadJet50DiJet40L1;
+   Bool_t          HltSixJet45;
+   Bool_t          HltSixJet45L1;
+   Bool_t          PassesECALDeadCellBEFilter;
+   Bool_t          PassesECALDeadCellTPFilter;
    Int_t           VtxN;
    Int_t           VtxNTracks;
    Float_t         VtxPosX;
@@ -74,7 +82,9 @@ public :
    Int_t           PUMCNumVtx;
    Int_t           PUMCNumVtxOOT;
    Float_t         PUMCNumTruth;
+   Float_t         PUMCHighestSumPt;
    Float_t         Rho;
+   Float_t         Rho25;
    Int_t           NobjTow;
    Int_t           TowId[1000];   //[NobjTow]
    Int_t           TowId_phi[1000];   //[NobjTow]
@@ -124,6 +134,7 @@ public :
    Float_t         TrackZ0[1000];   //[NobjTrack]
    Int_t           NobjJet;
    Float_t         JetPt[100];   //[NobjJet]
+   Float_t         JetMt[100];   //[NobjJet]
    Float_t         JetPhi[100];   //[NobjJet]
    Float_t         JetEta[100];   //[NobjJet]
    Float_t         JetEt[100];   //[NobjJet]
@@ -139,6 +150,7 @@ public :
    Float_t         JetFElectrons[100];   //[NobjJet]
    Float_t         JetFHFEm[100];   //[NobjJet]
    Float_t         JetFHFHad[100];   //[NobjJet]
+   Float_t         JetLeadingCargedConstPt[100];   //[NobjJet]
    Bool_t          JetIDLoose[100];   //[NobjJet]
    Bool_t          JetIDTight[100];   //[NobjJet]
    Float_t         JetEtWeightedSigmaPhi[100];   //[NobjJet]
@@ -152,9 +164,15 @@ public :
    Float_t         JetCorrL2L3[100];   //[NobjJet]
    Float_t         JetCorrL2L3JPT[100];   //[NobjJet]
    Float_t         JetCorrL4JW[100];   //[NobjJet]
+   Float_t         JetCorrUncert[100];   //[NobjJet]
    Int_t           JetIEta[100];   //[NobjJet]
    Int_t           JetIPhi[100];   //[NobjJet]
    Int_t           JetNChargedHadrons[100];   //[NobjJet]
+   Int_t           JetNPFConstituents[100];   //[NobjJet]
+   Float_t         JetBtag[100];   //[NobjJet]
+   Float_t         JetSV3dDistance[100];   //[NobjJet]
+   Float_t         JetSVChi2[100];   //[NobjJet]
+   Float_t         JetSV3dDistanceError[100];   //[NobjJet]
    Float_t         JetGenJetDeltaR[100];   //[NobjJet]
    Float_t         GenJetPt[100];   //[NobjJet]
    Float_t         GenJetPhi[100];   //[NobjJet]
@@ -191,6 +209,18 @@ public :
    Float_t         Met;
    Float_t         MetPhi;
    Float_t         MetSum;
+   Float_t         Met_T1;
+   Float_t         MetPhi_T1;
+   Float_t         MetSum_T1;
+   Float_t         Met_T2;
+   Float_t         MetPhi_T2;
+   Float_t         MetSum_T2;
+   Float_t         Met_T1R;
+   Float_t         MetPhi_T1R;
+   Float_t         MetSum_T1R;
+   Float_t         Met_T2R;
+   Float_t         MetPhi_T2R;
+   Float_t         MetSum_T2R;
    Float_t         Weight;
    Float_t         CrossSection;
 
@@ -240,6 +270,14 @@ public :
    TBranch        *b_HltPFJet260;   //!
    TBranch        *b_HltPFJet320;   //!
    TBranch        *b_HltPFJet400;   //!
+   TBranch        *b_HltQuadJet40;   //!
+   TBranch        *b_HltQuadJet45DiJet40;   //!
+   TBranch        *b_HltQuadJet50DiJet40;   //!
+   TBranch        *b_HltQuadJet50DiJet40L1;   //!
+   TBranch        *b_HltSixJet45;   //!
+   TBranch        *b_HltSixJet45L1;   //!
+   TBranch        *b_PassesECALDeadCellBEFilter;   //!
+   TBranch        *b_PassesECALDeadCellTPFilter;   //!
    TBranch        *b_VtxN;   //!
    TBranch        *b_VtxNTracks;   //!
    TBranch        *b_VtxPosX;   //!
@@ -251,7 +289,9 @@ public :
    TBranch        *b_PUMCNumVtx;   //!
    TBranch        *b_PUMCNumVtxOOT;   //!
    TBranch        *b_PUMCNumTruth;   //!
+   TBranch        *b_PUMCHighestSumPt;   //!
    TBranch        *b_Rho;   //!
+   TBranch        *b_Rho25;   //!
    TBranch        *b_NobjTow;   //!
    TBranch        *b_TowId;   //!
    TBranch        *b_TowId_phi;   //!
@@ -301,6 +341,7 @@ public :
    TBranch        *b_TrackZ0;   //!
    TBranch        *b_NobjJet;   //!
    TBranch        *b_JetPt;   //!
+   TBranch        *b_JetMt;   //!
    TBranch        *b_JetPhi;   //!
    TBranch        *b_JetEta;   //!
    TBranch        *b_JetEt;   //!
@@ -316,6 +357,7 @@ public :
    TBranch        *b_JetFElectrons;   //!
    TBranch        *b_JetFHFEm;   //!
    TBranch        *b_JetFHFHad;   //!
+   TBranch        *b_JetLeadingCargedConstPt;   //!
    TBranch        *b_JetIDLoose;   //!
    TBranch        *b_JetIDTight;   //!   
    TBranch        *b_JetEtWeightedSigmaPhi;   //!
@@ -329,9 +371,15 @@ public :
    TBranch        *b_JetCorrL2L3;   //!
    TBranch        *b_JetCorrL2L3JPT;   //!
    TBranch        *b_JetCorrL4JW;   //!
+   TBranch        *b_JetCorrUncert;   //!
    TBranch        *b_JetIEta;   //!
    TBranch        *b_JetIPhi;   //!
    TBranch        *b_JetNChargedHadrons;   //!
+   TBranch        *b_JetNPFConstituents;   //!
+   TBranch        *b_JetBtag;   //!
+   TBranch        *b_JetSV3dDistance;   //!
+   TBranch        *b_JetSVChi2;   //!
+   TBranch        *b_JetSV3dDistanceError;   //!
    TBranch        *b_JetGenJetDeltaR;   //!
    TBranch        *b_GenJetPt;   //!
    TBranch        *b_GenJetPhi;   //!
@@ -368,6 +416,18 @@ public :
    TBranch        *b_Met;   //!
    TBranch        *b_MetPhi;   //!
    TBranch        *b_MetSum;   //!
+   TBranch        *b_Met_T1;   //!
+   TBranch        *b_MetPhi_T1;   //!
+   TBranch        *b_MetSum_T1;   //!
+   TBranch        *b_Met_T2;   //!
+   TBranch        *b_MetPhi_T2;   //!
+   TBranch        *b_MetSum_T2;   //!
+   TBranch        *b_Met_T1R;   //!
+   TBranch        *b_MetPhi_T1R;   //!
+   TBranch        *b_MetSum_T1R;   //!
+   TBranch        *b_Met_T2R;   //!
+   TBranch        *b_MetPhi_T2R;   //!
+   TBranch        *b_MetSum_T2R;   //!
    TBranch        *b_Weight;   //!
    TBranch        *b_CrossSection;   //!
 
@@ -455,6 +515,14 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("HltPFJet260", &HltPFJet260, &b_HltPFJet260);
    fChain->SetBranchAddress("HltPFJet320", &HltPFJet320, &b_HltPFJet320);
    fChain->SetBranchAddress("HltPFJet400", &HltPFJet400, &b_HltPFJet400);
+   fChain->SetBranchAddress("HltQuadJet40", &HltQuadJet40, &b_HltQuadJet40);
+   fChain->SetBranchAddress("HltQuadJet45DiJet40", &HltQuadJet45DiJet40, &b_HltQuadJet45DiJet40);
+   fChain->SetBranchAddress("HltQuadJet50DiJet40", &HltQuadJet50DiJet40, &b_HltQuadJet50DiJet40);
+   fChain->SetBranchAddress("HltQuadJet50DiJet40L1", &HltQuadJet50DiJet40L1, &b_HltQuadJet50DiJet40L1);
+   fChain->SetBranchAddress("HltSixJet45", &HltSixJet45, &b_HltSixJet45);
+   fChain->SetBranchAddress("HltSixJet45L1", &HltSixJet45L1, &b_HltSixJet45L1);
+   fChain->SetBranchAddress("PassesECALDeadCellBEFilter", &PassesECALDeadCellBEFilter, &b_PassesECALDeadCellBEFilter);
+   fChain->SetBranchAddress("PassesECALDeadCellTPFilter", &PassesECALDeadCellTPFilter, &b_PassesECALDeadCellTPFilter);
    fChain->SetBranchAddress("VtxN", &VtxN, &b_VtxN);
    fChain->SetBranchAddress("VtxNTracks", &VtxNTracks, &b_VtxNTracks);
    fChain->SetBranchAddress("VtxPosX", &VtxPosX, &b_VtxPosX);
@@ -466,7 +534,9 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("PUMCNumVtx", &PUMCNumVtx, &b_PUMCNumVtx);
    fChain->SetBranchAddress("PUMCNumVtxOOT", &PUMCNumVtxOOT, &b_PUMCNumVtxOOT);
    fChain->SetBranchAddress("PUMCNumTruth", &PUMCNumTruth, &b_PUMCNumTruth);
+   fChain->SetBranchAddress("PUMCHighestSumPt", &PUMCHighestSumPt, &b_PUMCHighestSumPt);
    fChain->SetBranchAddress("Rho", &Rho, &b_Rho);
+   fChain->SetBranchAddress("Rho25", &Rho25, &b_Rho25);
    fChain->SetBranchAddress("NobjTow", &NobjTow, &b_NobjTow);
    fChain->SetBranchAddress("TowId", TowId, &b_TowId);
    fChain->SetBranchAddress("TowId_phi", TowId_phi, &b_TowId_phi);
@@ -516,6 +586,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("TrackZ0", TrackZ0, &b_TrackZ0);
    fChain->SetBranchAddress("NobjJet", &NobjJet, &b_NobjJet);
    fChain->SetBranchAddress("JetPt", JetPt, &b_JetPt);
+   fChain->SetBranchAddress("JetMt", JetMt, &b_JetMt);
    fChain->SetBranchAddress("JetPhi", JetPhi, &b_JetPhi);
    fChain->SetBranchAddress("JetEta", JetEta, &b_JetEta);
    fChain->SetBranchAddress("JetEt", JetEt, &b_JetEt);
@@ -533,6 +604,7 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetFElectrons", JetFElectrons, &b_JetFElectrons);
    fChain->SetBranchAddress("JetFHFEm", JetFHFEm, &b_JetFHFEm);
    fChain->SetBranchAddress("JetFHFHad", JetFHFHad, &b_JetFHFHad);
+   fChain->SetBranchAddress("JetLeadingCargedConstPt", JetLeadingCargedConstPt, &b_JetLeadingCargedConstPt);
    fChain->SetBranchAddress("JetIDLoose", JetIDLoose, &b_JetIDLoose);
    fChain->SetBranchAddress("JetIDTight", JetIDTight, &b_JetIDTight);
    fChain->SetBranchAddress("JetEtWeightedSigmaPhi", JetEtWeightedSigmaPhi, &b_JetEtWeightedSigmaPhi);
@@ -546,9 +618,15 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("JetCorrL2L3", JetCorrL2L3, &b_JetCorrL2L3);
    fChain->SetBranchAddress("JetCorrL2L3JPT", JetCorrL2L3JPT, &b_JetCorrL2L3JPT);
    fChain->SetBranchAddress("JetCorrL4JW", JetCorrL4JW, &b_JetCorrL4JW);
+   fChain->SetBranchAddress("JetCorrUncert", JetCorrUncert, &b_JetCorrUncert);
    fChain->SetBranchAddress("JetIEta", JetIEta, &b_JetIEta);
    fChain->SetBranchAddress("JetIPhi", JetIPhi, &b_JetIPhi);
    fChain->SetBranchAddress("JetNChargedHadrons", JetNChargedHadrons, &b_JetNChargedHadrons);
+   fChain->SetBranchAddress("JetNPFConstituents", JetNPFConstituents, &b_JetNPFConstituents);
+   fChain->SetBranchAddress("JetBtag", JetBtag, &b_JetBtag);
+   fChain->SetBranchAddress("JetSV3dDistance", JetSV3dDistance, &b_JetSV3dDistance);
+   fChain->SetBranchAddress("JetSVChi2", JetSVChi2, &b_JetSVChi2);
+   fChain->SetBranchAddress("JetSV3dDistanceError", JetSV3dDistanceError, &b_JetSV3dDistanceError);
    fChain->SetBranchAddress("JetGenJetDeltaR", JetGenJetDeltaR, &b_JetGenJetDeltaR);
    fChain->SetBranchAddress("GenJetPt", GenJetPt, &b_GenJetPt);
    fChain->SetBranchAddress("GenJetPhi", GenJetPhi, &b_GenJetPhi);
@@ -585,6 +663,23 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("Met", &Met, &b_Met);
    fChain->SetBranchAddress("MetPhi", &MetPhi, &b_MetPhi);
    fChain->SetBranchAddress("MetSum", &MetSum, &b_MetSum);
+   fChain->SetBranchAddress("Met_T1", &Met_T1, &b_Met_T1);
+   fChain->SetBranchAddress("MetPhi_T1", &MetPhi_T1, &b_MetPhi_T1);
+   fChain->SetBranchAddress("MetSum_T1", &MetSum_T1, &b_MetSum_T1);
+   fChain->SetBranchAddress("Met_T2", &Met_T2, &b_Met_T2);
+   fChain->SetBranchAddress("MetPhi_T2", &MetPhi_T2, &b_MetPhi_T2);
+   fChain->SetBranchAddress("MetSum_T2", &MetSum_T2, &b_MetSum_T2);
+   fChain->SetBranchAddress("Met_T1R", &Met_T1R, &b_Met_T1R);
+   fChain->SetBranchAddress("MetPhi_T1R", &MetPhi_T1R, &b_MetPhi_T1R);
+   fChain->SetBranchAddress("MetSum_T1R", &MetSum_T1R, &b_MetSum_T1R);
+   fChain->SetBranchAddress("Met_T2R", &Met_T2R, &b_Met_T2R);
+   fChain->SetBranchAddress("MetPhi_T2R", &MetPhi_T2R, &b_MetPhi_T2R);
+   fChain->SetBranchAddress("MetSum_T2R", &MetSum_T2R, &b_MetSum_T2R);
+   //
+//   fChain->SetBranchAddress("Met", &Met_T2, &b_Met);
+//   fChain->SetBranchAddress("MetPhi", &MetPhi_T2, &b_MetPhi);
+//   fChain->SetBranchAddress("MetSum", &MetSum_T2, &b_MetSum);
+   //
    fChain->SetBranchAddress("Weight", &Weight, &b_Weight);
    fChain->SetBranchAddress("CrossSection", &CrossSection, &b_CrossSection);
 }

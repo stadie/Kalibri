@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.26 2012/07/13 12:10:00 kirschen Exp $
+// $Id: ControlPlotsProfile.cc,v 1.27 2012/07/23 19:39:42 kirschen Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -132,6 +132,8 @@ void ControlPlotsProfile::draw() {
       c1->RedrawAxis();      
       p1->DrawClone();
       config_->toRootFile(h);
+      config_->toRootFile(X_projections_.back());
+      config_->toRootFile(Y_projections_.back());
       fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
       fileName += (*binIt)->hist2DFileName(*it) + "." + config_->outFileType();
       if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());
@@ -144,7 +146,8 @@ void ControlPlotsProfile::draw() {
       for (unsigned int X_i=0 ; X_i < X_projections_.size(); X_i++ ){
 	//	cout << " " << *it;
 	X_projections_.at(X_i)->SetYTitle("Number of Events");
-	X_projections_.at(X_i)->GetYaxis()->SetRangeUser(0,X_projections_.at(X_i)->GetMaximum()*2);
+	if(config_->logY())X_projections_.at(X_i)->GetYaxis()->SetRangeUser(1,X_projections_.at(X_i)->GetMaximum()*2);
+	else X_projections_.at(X_i)->GetYaxis()->SetRangeUser(0,X_projections_.at(X_i)->GetMaximum()*2);
 	TH1D* h=X_projections_.at(X_i);
 	if( config_->logX() ) c1->SetLogx(1);
 
@@ -183,7 +186,8 @@ void ControlPlotsProfile::draw() {
       for (unsigned int Y_i=0 ; Y_i < Y_projections_.size(); Y_i++ ){
 	//	cout << " " << *it;
 	Y_projections_.at(Y_i)->SetYTitle("Number of Events");
-	Y_projections_.at(Y_i)->GetYaxis()->SetRangeUser(0,Y_projections_.at(Y_i)->GetMaximum()*2);
+	if(config_->logY())Y_projections_.at(Y_i)->GetYaxis()->SetRangeUser(1,Y_projections_.at(Y_i)->GetMaximum()*2);
+	else Y_projections_.at(Y_i)->GetYaxis()->SetRangeUser(0,Y_projections_.at(Y_i)->GetMaximum()*2);
 	TH1D* h=Y_projections_.at(Y_i);
 
 	if( firstHist ) {
@@ -421,8 +425,14 @@ void ControlPlotsProfile::draw() {
 	  leg->AddEntry(h,(config_->legendLabel(*tagsIt)).c_str(),
 			"PL");
 
-	  h->GetXaxis()->SetRange(0,-1);
-	  h->GetYaxis()->SetRangeUser(0,h->GetMaximum()*2);
+	  if(config_->logY()){
+	    h->GetXaxis()->SetRange(0,-1);
+	    h->GetYaxis()->SetRangeUser(1,h->GetMaximum()*2);
+	  }
+	  else{
+	    h->GetXaxis()->SetRange(0,-1);
+	    h->GetYaxis()->SetRangeUser(0,h->GetMaximum()*2);
+	  }
 
 	  //	  h->Dump();
 	  if( firstHist ) {

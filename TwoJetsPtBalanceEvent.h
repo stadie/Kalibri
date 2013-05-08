@@ -14,12 +14,12 @@
 //!
 //!  \author Matthias Schroeder
 //!  \date Mon Oct 26 21:03:43 CET 2009 
-//!  $Id: TwoJetsPtBalanceEvent.h,v 1.18 2012/05/18 18:02:53 kirschen Exp $
+//!  $Id: TwoJetsPtBalanceEvent.h,v 1.19 2012/09/10 15:44:05 kirschen Exp $
 // --------------------------------------------------
 class TwoJetsPtBalanceEvent : public Event {
  public:
- TwoJetsPtBalanceEvent(Jet *j1, Jet *j2, Jet *j3, double ptHat, double w, short npu, float nputruth, short nvtx, float met, float metphi,int runNumber)
-   : Event(w,ptHat,npu,nputruth,nvtx,met,metphi,runNumber),
+ TwoJetsPtBalanceEvent(Jet *j1, Jet *j2, Jet *j3, double ptHat, double w, short npu, float nputruth, short nvtx, float metraw, float metrawphi, float metT1, float metT1phi, float metT1res, float metT1resphi,int runNumber, float PUMCHighestSumPt)
+   : Event(w,ptHat,npu,nputruth,nvtx,metraw,metrawphi,metT1,metT1phi,metT1res,metT1resphi,runNumber,PUMCHighestSumPt),
     jet1_(j1),
     jet2_(j2),
     jet3_(j3),

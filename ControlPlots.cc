@@ -334,8 +334,20 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi; 
   if( varName == "meanMoment" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment;
+  if( varName == "METT1" && type == ControlPlotsConfig::L2L3Res )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMETT1Res;
+  if( varName == "METT1"  )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMETT1;
   if( varName == "MET" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventMET;
+  if( varName == "METT1Proj" && type == ControlPlotsConfig::L2L3Res  )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMETT1ResProj;
+  if( varName == "METT1Proj"  )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMETT1Proj;
+  if( varName == "METProj" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMETProj;
+  if( varName == "METPhi" )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMETPhi;
   if( varName == "VtxN" )
     return &ControlPlotsFunction::twoJetsPtBalanceEventVtxN;
   if( varName == "MCNPUVtx" )
