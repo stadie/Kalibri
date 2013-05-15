@@ -17,9 +17,12 @@ def BinningValues(BINNING,AbsEta):
     elif(BINNING=="JERMatt"):
         binning_values = "-5.2 -2.3 -1.7 -1.1 -0.5 0 0.5 1.1 1.7 2.3 5.2"
         abs_binning_values = "0 0.5 1.1 1.7 2.3 5.2"
+#    elif(BINNING=="JEC_Mikko"):
+#        binning_values = "-5.191 -3.2 -2.964 -2.5 -1.93 -1.305 -0.783 0 0.783 1.305 1.93 2.5 2.964 3.2 5.191"
+#        abs_binning_values = "0 0.783 1.305 1.93 2.5 2.964 3.2 5.191"
     elif(BINNING=="JEC_Mikko"):
-        binning_values = "-5.191 -3.2 -2.964 -2.5 -1.93 -1.305 -0.783 0 0.783 1.305 1.93 2.5 2.964 3.2 5.191"
-        abs_binning_values = "0 0.783 1.305 1.93 2.5 2.964 3.2 5.191"
+        binning_values = "-5.191 -3.2 -2.964 -2.5 -1.93 -1.305 0 1.305 1.93 2.5 2.964 3.2 5.191"
+        abs_binning_values = "0 1.305 1.93 2.5 2.964 3.2 5.191"
     elif(BINNING=="k_Bfix"):
         binning_values = "-5.191 -2.964 -2.853 -2.5 -2.411 -2.322 -1.93 -1.479 -1.305 0 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 5.191"
         abs_binning_values = "0 1.305 1.479 1.93 2.322 2.411 2.5 2.853 2.964 5.191"  
@@ -86,6 +89,19 @@ def TriggerNamesThresholds(DATAYEAR,USE_NEW_TRIGGERS_AND_FASTPF,SINGLEJET,jettyp
                 trigger_thresholds = "61 105 177 245 315 384 471 \n"
 	    if(jettype == "ak7PF"):
                 trigger_thresholds = "71 116 190 261 332 401 494 \n"
+	elif(DATAYEAR == "2013" and USE_NEW_TRIGGERS_AND_FASTPF==1):
+            trigger_names = "Di-Jet trigger names = HLT_DiPFJetAve40;HLT_DiPFJetAve80;HLT_DiPFJetAve140;HLT_DiPFJetAve200;HLT_DiPFJetAve260;HLT_DiPFJetAve320;HLT_DiPFJetAve400\n"
+            #Denis June 2012 on 3fb^-1 @8TeV
+            if(jettype == "ak5PF"):
+                trigger_thresholds = "60 105 174 242 311 380 468 \n"
+            if(jettype == "ak5PFCHS"):
+                trigger_thresholds = "62 107 175 242 310 379 467 \n"		
+            if(jettype == "ak5Calo"):
+                trigger_thresholds = "65 108 183 253 324 395 482 \n"
+            if(jettype == "ak5JPT"):
+                trigger_thresholds = "61 105 177 245 315 384 471 \n"
+	    if(jettype == "ak7PF"):
+                trigger_thresholds = "71 116 190 261 332 401 494 \n"	
 
 #    #TEMP FIX TO TEST LOOSE THRESHOLDS...
 #    elif(DATAYEAR == "2011" and USE_NEW_TRIGGERS_AND_FASTPF ==1 and SINGLEJET==1):
@@ -337,9 +353,12 @@ def determineDataDir(DATAYEAR,DATATYPE):
 	if(DATATYPE=="2012ABC_203002"):
             datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Fall2012_Jets_v1"
 	if(DATATYPE=="2012ABCD_ReReco"):
-            datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Winter2012ReReco_v1"
-    if(DATATYPE=="2012ABCD_ReReco_MBXS73500"):
-            datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Winter2012ReReco_v1"         
+            datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Winter2012ReReco_v1" 
+        if(DATATYPE=="2012ABCD_ReReco_MBXS73500"):
+            datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Winter2012ReReco_v1"	    
+    if(DATAYEAR == "2013"):
+        if(DATATYPE=="2013ABCD_ReReco"):
+	    datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Summer2013ReReco_v1" 	       
     if(DATAYEAR == "MC2012"):
         if(DATATYPE=="Z253_V11_T1T2_DMC"):
             datadir = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
@@ -448,7 +467,8 @@ def determineDataDirMC(MC,MC_type):
 
 
 def importDatatypesNewTrigger():
-    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","Z253","Z253_Smear","Z253_SmearU","Z253_SmearD","Z253_V11_T1","Z253_V11_T1T2","Z253_V11_T1T2Smear","Z253_V11_T1T2SmearU","Z253_V11_T1T2SmearD","Z253_V11_T1T2_DMC","Hpp53","KriHpp53","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396","2012AB_196531","2012ABC_199011","2012ABC_199429","2012ABC_200601","2012ABC_202305","2012ABC_203002","2012ABCD_ReReco","2012ABCD_ReReco_MBXS73500"]
+
+    return ["PrRe62pb","42X_corr","42X_PrRe","42X_combPrRe_ReRe","2fb_ReRe_PrRe","May10_pl_v4","Aug05_pl_v6","May10","PrReV4","Aug05","PrReV6","11BPrV1","Full2011","42XFull2011","Z2wPUsmeared_DMC","Z2wPU_DMC","Z2wPUSu11_DMC","Z253","Z253_Smear","Z253_SmearU","Z253_SmearD","Z253_V11_T1","Z253_V11_T1T2","Z253_V11_T1T2Smear","Z253_V11_T1T2SmearU","Z253_V11_T1T2SmearD","Z253_V11_T1T2_DMC","Hpp53","KriHpp53","11AReRe","11BReRe","TEST","2012_193336","2012A_194076","2012AB_194076","2012AB_194479","2012AB_195396","2012AB_196531","2012ABC_199011","2012ABC_199429","2012ABC_200601","2012ABC_202305","2012ABC_203002","2012ABCD_ReReco","2012ABCD_ReReco_MBXS73500","2013ABCD_ReReco"]
 
 def configureJERsmearing(jettype):
     if(jettype == "ak5PF" or jettype == "ak5PFCHS"):
