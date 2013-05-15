@@ -236,6 +236,8 @@ def PUWeightingInfo(DATATYPE,MC_type):
         PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-208686 \n"
     elif(DATATYPE=="2012ABCD_ReReco_MBXS73500"):
         PU_weighting_info = "PU TruthWeighting = kheine/PUDistributions/Cert_2012_190456-208686_MBXS73500 \n"
+    elif(DATATYPE=="2013ABCD_ReReco"):
+        PU_weighting_info = "PU TruthWeighting = kheine/PUDistributions/Cert_2012_190456-208686_ReReco \n"
     elif(DATATYPE=="Z253_V11_T1T2_DMC"):
         PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-203002 \n"	
     else:
