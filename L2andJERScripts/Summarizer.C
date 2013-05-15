@@ -53,12 +53,15 @@ void Summarizer() //type 0: ptave; 1: leadpt; 2: barrelpt
 	  */
 	  //if(type==0)f=TFile::Open("../20122012ABC_202305_CORR2012SQLV7_AK5_MC_Su12Z253_Smear_kostas_MPF_2012ABC-SJ-53S-FullwLR/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
 	  //else if(type==1)f=TFile::Open("../20122012ABC_202305_CORR2012SQLV7_AK5_MC_Su12Z253_Smear_kostas_MPF_2012ABC-SJ-53S-FullwLR/dijetsFall10_TuneZ2_AK5PFCHS_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
-	  if(type==0)f=TFile::Open("../20122012ABC_203002_CORR2012FallV1_AK5_MC_Su12Z253_Smear_kostas_12-1fb-DJ-Fall2012V1/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
-	  else if(type==1)f=TFile::Open("../20122012ABC_203002_CORR2012FallV1_AK5_MC_Su12Z253_Smear_kostas_12-1fb-DJ-Fall2012V1/dijetsFall10_TuneZ2_AK5PFCHS_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");	  
+	  //if(type==0)f=TFile::Open("../20122012ABC_203002_CORR2012FallV1_AK5_MC_Su12Z253_Smear_kostas_12-1fb-DJ-Fall2012V1/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
+	  //else if(type==1)f=TFile::Open("../20122012ABC_203002_CORR2012FallV1_AK5_MC_Su12Z253_Smear_kostas_12-1fb-DJ-Fall2012V1/dijetsFall10_TuneZ2_AK5PFCHS_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");	  
+	  	 
+          if(type==0)f=TFile::Open("../20122012ABCD_ReReco_CORR2012FallV5_AK5_MC_Su12Z253_V11_T1T2_kostas_SJ-ABCD-ReReco/dijetsFall10_TuneZ2_AK5PF_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");
+	  else if(type==1)f=TFile::Open("../20122012ABCD_ReReco_CORR2012FallV5_AK5_MC_Su12Z253_V11_T1T2_kostas_SJ-ABCD-ReReco/dijetsFall10_TuneZ2_AK5PFCHS_weighted_residuals_JEC_Mikko/plots/KalibriPlots.root");	
 	  if(verbose)std::cout<<"generate/update Summary.root"<<endl;   
 	  //define write-target
-	  if(type==0 && choice==0)save=new TFile("Fall12V1_DJ.root", "recreate", "plots", 1);
-	  if(type>0 || choice>0)save=new TFile("Fall12V1_DJ.root", "update", "plots", 1);
+	  if(type==0 && choice==0)save=new TFile("Winter12V1_SJ.root", "recreate", "plots", 1);
+	  if(type>0 || choice>0)save=new TFile("Winter12V1_SJ.root", "update", "plots", 1);
 	  //loop over RR/MPF method
 	  for(int method=0; method<2; method++)
 	    {
