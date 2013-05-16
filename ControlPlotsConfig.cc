@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.41 2013/03/27 17:08:24 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.42 2013/04/26 15:39:39 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -817,7 +817,9 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     //    title = "(p_{T,1} - p_{T,2})/(p_{T,1} + p_{T,2})";
     title = "Asymmetry";
   else if( varName == "MPFResponse") 
-    title = "MPF response";
+    title = "MPF response (MET_{raw})";
+  else if( varName == "MPFMETT1Response") 
+    title = "MPF response (MET_{T1})";
   else if( varName == "ThirdJetFraction") 
     title = "p_{3}^{proj.}/#bar p_{T}";
   else if( varName == "ThirdJetFractionPlain") 

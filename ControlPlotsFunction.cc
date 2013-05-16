@@ -1,4 +1,4 @@
- // $Id: ControlPlotsFunction.cc,v 1.44 2013/04/26 15:39:39 kirschen Exp $
+ // $Id: ControlPlotsFunction.cc,v 1.45 2013/05/08 14:38:27 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -1198,6 +1198,53 @@ double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponseL2L3ResCorrected(co
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet2 = jte->getJet2();
   return (1 + jte->MET()*cos(deltaPhi<double>(jte->METphi(), jet2->phi())) / (jet2->corFactors().getL2L3Res() *jet2->pt()));
+}
+
+
+
+//!  \brief Returns the jet MPFMETT1 response (with type-1 corrected MET)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The MPFMETT1 response is defined as 
+//!  \f[ mpf = 1 + met*cos(delta_phi(metphi, jtphi[iref])) / p^{jet'}_{T} \f].
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMPFMETT1Response(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet2 = jte->getJet2();
+  return (1 + jte->METT1()*cos(deltaPhi<double>(jte->METT1phi(), jet2->phi())) / jet2->pt());
+}
+
+
+
+//!  \brief Returns the corrected jet MPFMETT1 response (with type-1 corrected MET)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The MPFMETT1 response is defined as
+//!  \f[ mpf = 1 + met*cos(delta_phi(metphi, jtphi[iref])) / p^{jet'}_{T}\f],
+//!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
+//!  the JetMET L2L3 JEC.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMPFMETT1ResponseL2L3Corrected(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet2 = jte->getJet2();
+  return (1 + jte->METT1()*cos(deltaPhi<double>(jte->METT1phi(), jet2->phi())) / (jet2->corFactors().getL2L3() *jet2->pt()));
+}
+
+//!  \brief Returns the corrected jet MPFMETT1 response (with type-1 corrected MET)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  The MPFMETT1 response is defined as
+//!  \f[ mpf = 1 + met*cos(delta_phi(metphi, jtphi[iref])) / p^{jet'}_{T}\f],
+//!  where \f$ p^{jet'}_{T} \f$ is the jet's pt corrected by
+//!  the JetMET L2L3Res JEC.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMPFMETT1ResponseL2L3ResCorrected(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet2 = jte->getJet2();
+  return (1 + jte->METT1Res()*cos(deltaPhi<double>(jte->METT1Resphi(), jet2->phi())) / (jet2->corFactors().getL2L3Res() *jet2->pt()));
 }
 
 
