@@ -61,6 +61,9 @@ public :
 
   std::vector <Double_t> JEC_Mikko_eta_binning;
   Int_t  JEC_Mikko_no_eta, JEC_Mikko_zero_eta;
+  
+  std::vector <Double_t> Fine_eta_binning;
+  Int_t  Fine_no_eta, Fine_zero_eta;  
 
   std::vector <Double_t> eta_binning;
   Int_t  no_eta, zero_eta;
@@ -100,11 +103,17 @@ void do_flex_extrapol::import_plots(){
 
       //use corresponding PF kFSR
             inf = new TFile("../"+corr_generation+"/kostas_use_easy_mean_TuneZ2_TuneZ2_PF_kFSR_histos.root","OPEN");}
+    else if(fine_coarse.Contains("Fine")){
+
+      //use corresponding PF kFSR
+            inf = new TFile("../"+corr_generation+"/Fine_use_easy_mean_TuneZ2_TuneZ2_PF_kFSR_histos.root","OPEN");}	    
     else if(fine_coarse.Contains("JEC_Mikko")){
 
       //use corresponding PF kFSR
-            inf = new TFile("../"+corr_generation+"/JEC_Mikko_use_easy_mean_TuneZ2_TuneZ2_PF_kFSR_histos.root","OPEN");    
+            inf = new TFile("../"+corr_generation+"/JEC_Mikko_use_easy_mean_TuneZ2_TuneZ2_PF_kFSR_histos.root","OPEN");}
+	        
 
+	    
       //use individual kRad for each algorithm
       //      inf = new TFile("../"+corr_generation+"/kostas_use_easy_mean_TuneZ2_TuneZ2_"+ jet_type +"_kFSR_histos.root","OPEN");
 
@@ -123,6 +132,7 @@ void do_flex_extrapol::import_plots(){
       //      inf = new TFile("kostas_use_easy_mean_TuneZ2_TuneZ2_"+ jet_type+"_kFSR_histos.root,"OPEN");
 
     }
+    
     else inf = new TFile("coarse_use_easy_mean_TuneZ2_TuneZ2_"+ jet_type+"_kFSR_histos.root","OPEN");
     if (inf->IsZombie()) {
        cout << "Error opening file" << endl;
@@ -174,7 +184,26 @@ void     do_flex_extrapol::define_cosmetics_and_cuts(){
   line_styles_.push_back(1);
   line_styles_.push_back(1);
 
+if(fine_coarse.Contains("JEC_Mikko")){
+  //  ptthreecuts.push_back("05");
+    ptthreecuts.push_back("10");
+    ptthreecuts.push_back("15");
+    ptthreecuts.push_back("20");
+  //  ptthreecuts.push_back("25");
+    ptthreecuts.push_back("30");
+  //  ptthreecuts.push_back("35");
+  //ptthreecuts.push_back("40");
 
+  //  ptthreecuts_Double_.push_back(0.05);
+    ptthreecuts_Double_.push_back(0.10);
+    ptthreecuts_Double_.push_back(0.15);
+    ptthreecuts_Double_.push_back(0.20);
+  //  ptthreecuts_Double_.push_back(0.25);
+    ptthreecuts_Double_.push_back(0.30);
+  //  ptthreecuts_Double_.push_back(0.35);
+  //ptthreecuts_Double_.push_back(0.40);
+}
+else{
   //  ptthreecuts.push_back("05");
     ptthreecuts.push_back("10");
   //  ptthreecuts.push_back("15");
@@ -192,7 +221,7 @@ void     do_flex_extrapol::define_cosmetics_and_cuts(){
     ptthreecuts_Double_.push_back(0.30);
   //  ptthreecuts_Double_.push_back(0.35);
   ptthreecuts_Double_.push_back(0.40);
-
+}
 
 }
 
@@ -222,13 +251,21 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
   k_HFfix_no_eta =28;
   k_HFfix_zero_eta =14;
 
-  Double_t JEC_Mikko_eta_binning_[]={-5.191,-3.2,-2.964,-2.5,-1.93,-1.305,-0.783,0.0,0.783,1.305,1.93,2.5,2.964,3.2,5.191};
+  Double_t JEC_Mikko_eta_binning_[]={-5.191,-3.2,-2.964,-2.5,-1.93,-1.305,0.0,1.305,1.93,2.5,2.964,3.2,5.191};
   //
   int size_JM = sizeof(JEC_Mikko_eta_binning_)/sizeof(JEC_Mikko_eta_binning_[0]);
   vector<Double_t> vec_JM(JEC_Mikko_eta_binning_, &JEC_Mikko_eta_binning_[ size_JM] );
   JEC_Mikko_eta_binning = vec_JM;
   JEC_Mikko_no_eta =12;
   JEC_Mikko_zero_eta =6;
+
+  Double_t Fine_eta_binning_[]={-5.191,-3.489,-3.139,-2.964,-2.853,-2.5,-2.322,-2.172,-2.043,-1.930,-1.830,-1.740,-1.653,-1.566,-1.479,-1.392,-1.305,-1.218,-1.131,-1.044,-0.957,-0.879,-0.783,-0.696,-0.609,-0.522,-0.435,-0.348,-0.261,-0.174,-0.087,0.000,0.087,0.174,0.261,0.348,0.435,0.522,0.609,0.696,0.783,0.879,0.957,1.044,1.131,1.218,1.305,1.392,1.479,1.566,1.653,1.740,1.830,1.930,2.043,2.172,2.322,2.5,2.853,2.964,3.139,3.489,5.191};
+  //
+  int size_F = sizeof(Fine_eta_binning_)/sizeof(Fine_eta_binning_[0]);
+  vector<Double_t> vec_F(Fine_eta_binning_, &Fine_eta_binning_[ size_F] );
+  Fine_eta_binning = vec_F;
+  Fine_no_eta =62;
+  Fine_zero_eta =31;
 
   Double_t eta_binning_[]={-6.0,-4.0,-3.5,-3.2,-3.0,-2.8,-2.6,-2.4,-2.2,-2.0,-1.8,-1.5,-1.4,-1.3,-1.2,-1.1,-0.9,-0.6,-0.3,0.0,0.3,0.6,0.9,1.1,1.2,1.3,1.4,1.5,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.5,4.0,6.0};
   //39
@@ -285,6 +322,14 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
     cout << eta_binning[eta_i] << " ";
   }
   }
+  else if(fine_coarse.Contains("Fine")){
+    no_eta=Fine_no_eta;
+    zero_eta=Fine_zero_eta;
+  for(Int_t eta_i=0;eta_i<=no_eta;eta_i++){
+    eta_binning[eta_i]=Fine_eta_binning[eta_i];
+    cout << eta_binning[eta_i] << " ";
+  }
+  }  
   for(Int_t eta_i=0;eta_i<no_eta;eta_i++){
     char buffer [50];
     char buffer2 [50];
