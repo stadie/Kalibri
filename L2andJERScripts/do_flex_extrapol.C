@@ -150,7 +150,7 @@ MPF_or_rel_response   =  MPF_or_rel_response_   ;
 
 
   do_flex_extrapol::define_eta_bins_and_labels();
-
+cout << "labels defined" << endl;
   TString XVsPt, XVsPtType;
   if(MPF_or_rel_response.Contains("rel_response")){
     ratio_of_mean_or_GM="_RatioOf"+ ratio_of_mean_or_GM+"s";
@@ -162,9 +162,11 @@ MPF_or_rel_response   =  MPF_or_rel_response_   ;
     XVsPt = "MPFVsPt";
     XVsPtType = "MPFResponseVsJet2Pt";
   }
-
+cout << "open one" << endl;
   TFile* fone = TFile::Open(Residual_plots_one);
+cout << "open two" << endl;
   TFile* ftwo = TFile::Open(Residual_plots_two);
+cout << "Zombie 1" << endl;
     if (fone->IsZombie()) {
        cout << "Error opening file" << endl;
        exit(-1);

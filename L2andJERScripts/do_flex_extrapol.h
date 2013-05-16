@@ -110,7 +110,7 @@ void do_flex_extrapol::import_plots(){
     else if(fine_coarse.Contains("JEC_Mikko")){
 
       //use corresponding PF kFSR
-            inf = new TFile("../"+corr_generation+"/JEC_Mikko_use_easy_mean_TuneZ2_TuneZ2_PF_kFSR_histos.root","OPEN");}
+            inf = new TFile("../"+corr_generation+"/JEC_Mikko_use_easy_mean_TuneZ2_TuneZ2_PF_kFSR_histos.root","OPEN");
 	        
 
 	    
@@ -131,7 +131,7 @@ void do_flex_extrapol::import_plots(){
 
       //      inf = new TFile("kostas_use_easy_mean_TuneZ2_TuneZ2_"+ jet_type+"_kFSR_histos.root,"OPEN");
 
-    
+}    
     
     else inf = new TFile("coarse_use_easy_mean_TuneZ2_TuneZ2_"+ jet_type+"_kFSR_histos.root","OPEN");
     if (inf->IsZombie()) {
@@ -184,7 +184,7 @@ void     do_flex_extrapol::define_cosmetics_and_cuts(){
   line_styles_.push_back(1);
   line_styles_.push_back(1);
 
-if(fine_coarse.Contains("JEC_Mikko")){
+/*if(fine_coarse.Contains("JEC_Mikko")){
   //  ptthreecuts.push_back("05");
     ptthreecuts.push_back("10");
     ptthreecuts.push_back("15");
@@ -203,7 +203,7 @@ if(fine_coarse.Contains("JEC_Mikko")){
   //  ptthreecuts_Double_.push_back(0.35);
   //ptthreecuts_Double_.push_back(0.40);
 }
-else{
+else{*/
   //  ptthreecuts.push_back("05");
     ptthreecuts.push_back("10");
   //  ptthreecuts.push_back("15");
@@ -211,8 +211,8 @@ else{
   //  ptthreecuts.push_back("25");
     ptthreecuts.push_back("30");
   //  ptthreecuts.push_back("35");
-  ptthreecuts.push_back("40");
-
+    ptthreecuts.push_back("40");
+  
   //  ptthreecuts_Double_.push_back(0.05);
     ptthreecuts_Double_.push_back(0.10);
    // ptthreecuts_Double_.push_back(0.15);
@@ -220,8 +220,8 @@ else{
   //  ptthreecuts_Double_.push_back(0.25);
     ptthreecuts_Double_.push_back(0.30);
   //  ptthreecuts_Double_.push_back(0.35);
-  ptthreecuts_Double_.push_back(0.40);
-}
+    ptthreecuts_Double_.push_back(0.40);
+//}
 
 }
 
@@ -329,10 +329,11 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
     eta_binning[eta_i]=Fine_eta_binning[eta_i];
     cout << eta_binning[eta_i] << " ";
   }
+  cout<< "further" << endl;
   }  
   for(Int_t eta_i=0;eta_i<no_eta;eta_i++){
-    char buffer [50];
-    char buffer2 [50];
+    char buffer [70];
+    char buffer2 [70];
     sprintf (buffer, "%.1f", eta_binning[eta_i]);
     
         cout << buffer;
@@ -351,8 +352,8 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
 
   }
   for(Int_t eta_i=0;eta_i< trad_no_eta;eta_i++){
-    char buffer [50];
-    char buffer2 [50];
+    char buffer [70];
+    char buffer2 [70];
     sprintf (buffer, "%.1f",  trad_eta_binning[eta_i]);
     
     //        cout << buffer;
@@ -371,7 +372,7 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
 
   }
 
-
+cout << "size check" << endl;
   eta_bins=eta_bins_.size();
   no_eta_bins= eta_bins_.size();
   no_Abseta_bins= Abseta_bins_.size();
@@ -379,12 +380,11 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
   //  Int_t trad_no_eta_bins= trad_eta_bins_.size();
   trad_no_Abseta_bins= trad_Abseta_bins_.size();
 
-
+cout << "done in principle" << endl;
 
 
 
 }
-
 
 
 #endif 
