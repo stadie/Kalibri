@@ -5,6 +5,7 @@
 #include "EventProcessor.h"
 #include "TwoJetsPtBalanceEvent.h"
 #include "CalibData.h"
+#include "PUReweighting/LumiReweightingStandAlone.h"
 
 #include <map>
 
@@ -27,6 +28,9 @@ protected:
 			  std::vector<Event*>& control2) { return data.size();}
   
  private:
+  std::vector <reweight::LumiReWeighting> LumiWeightsPerTrigger_;
+  int reweightEventVector(std::vector<Event*>& evtVector);
+  bool useMCReweightAll_;
   std::string TruthWeightingDir_;
   std::string TruthWeightingMCDistribution_;
   std::map<double,int> controlTrigger_;

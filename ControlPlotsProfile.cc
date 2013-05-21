@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.27 2012/07/23 19:39:42 kirschen Exp $
+// $Id: ControlPlotsProfile.cc,v 1.28 2013/05/08 14:38:27 kirschen Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -132,8 +132,10 @@ void ControlPlotsProfile::draw() {
       c1->RedrawAxis();      
       p1->DrawClone();
       config_->toRootFile(h);
-      config_->toRootFile(X_projections_.back());
-      config_->toRootFile(Y_projections_.back());
+      if(export_XY_projections){
+	config_->toRootFile(X_projections_.back());
+	config_->toRootFile(Y_projections_.back());
+      }
       fileName = config_->outDirName() + "/" + config_->outPlotSuffix() + "_";
       fileName += (*binIt)->hist2DFileName(*it) + "." + config_->outFileType();
       if(!only_to_root)c1->SaveAs(fileName.c_str(),(config_->outFileType()).c_str());

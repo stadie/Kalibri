@@ -1,4 +1,4 @@
- // $Id: ControlPlotsFunction.cc,v 1.45 2013/05/08 14:38:27 kirschen Exp $
+ // $Id: ControlPlotsFunction.cc,v 1.46 2013/05/16 09:13:58 kirschen Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -43,6 +43,17 @@ void ControlPlotsFunction::addYFunction(ControlPlotsConfig::CorrectionType type,
 double ControlPlotsFunction::jetTruthEventNPU(const Event *evt) const {
   const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
   return jte->nPU();
+}
+
+
+//!  \brief Returns the number of truth PU events 
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventNPUTruth(const Event *evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  return jte->nPUTruth();
 }
 
 //!  \brief Returns the number of PU events 

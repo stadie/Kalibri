@@ -10,7 +10,6 @@
 #include "Parameters.h"
 #include "TwoJetsPtBalanceEvent.h"
 #include "JetTruthEvent.h"
-#include "PUReweighting/LumiReweightingStandAlone.h"
 
 #include <iostream>
 
@@ -21,6 +20,7 @@ PUTruthReweighting::PUTruthReweighting(const std::string& configfile, Parameters
     
   trignames_ = bag_of_string(config.read<std::string>("Di-Jet trigger names",""));
   trigthresholds_ = bag_of<double>(config.read<std::string>("Di-Jet trigger thresholds",""));
+  useMCReweightAll_ = config.read<bool>("PU TruthWeighting Reweight all eventvectors (for MC validation)",false);
   TruthWeightingDir_ = config.read<std::string>("PU TruthWeighting","Cert_2012_190456-191859");
   TruthWeightingMCDistribution_ = config.read<std::string>("PU TruthWeighting MC distribution","TrueSummer12");
   if(trignames_.size() != trigthresholds_.size()) {
@@ -37,6 +37,15 @@ PUTruthReweighting::PUTruthReweighting(const std::string& configfile, Parameters
 
     controlTrigger_[trigthresholds_[i]] = i;
   }
+
+  //initializing
+  std::cout <<"initialize reweight::LumiReWeighting LumiWeights_" << std::endl;
+  for(int i = 0, l = trigthresholds_.size() ; i < l ; ++i) {
+    LumiWeightsPerTrigger_.push_back(reweight::LumiReWeighting(("/scratch/hh/current/cms/user/"+TruthWeightingMCDistribution_+"_TrueMCPUDistributions.root").c_str(),("/scratch/hh/current/cms/user/"+TruthWeightingDir_+"/MyDataPileupHistogram"+(TString)trignames_.at(i)+".root").Data(), "pileup", "pileup"));
+    std::cout <<"initialized reweight::LumiReWeighting LumiWeights_ successfully..." << i <<std::endl;
+    
+  }
+
 }
  
 PUTruthReweighting::~PUTruthReweighting()
@@ -44,31 +53,20 @@ PUTruthReweighting::~PUTruthReweighting()
 }
   
 
-int PUTruthReweighting::preprocess(std::vector<Event*>& data,
-			     std::vector<Event*>& control1,
-			     std::vector<Event*>& control2)
-{
-
-  std::cout << "start PUTruthReweighting with:" << std::endl;
-  std::cout << "  " << data.size() << " events in data" << std::endl;
-  std::cout << "  " << control1.size() << " events in control1" << std::endl;
-
-  //initializing
-  std::cout <<"initialize reweight::LumiReWeighting LumiWeights_" << std::endl;
-  std::vector <reweight::LumiReWeighting> LumiWeightsPerTrigger;
-  for(int i = 0, l = trigthresholds_.size() ; i < l ; ++i) {
-    LumiWeightsPerTrigger.push_back(reweight::LumiReWeighting(("/scratch/hh/current/cms/user/"+TruthWeightingMCDistribution_+"_TrueMCPUDistributions.root").c_str(),("/scratch/hh/current/cms/user/"+TruthWeightingDir_+"/MyDataPileupHistogram"+(TString)trignames_.at(i)+".root").Data(), "pileup", "pileup"));
-    std::cout <<"initialized reweight::LumiReWeighting LumiWeights_ successfully..." << i <<std::endl;
-
+int PUTruthReweighting::reweightEventVector(std::vector<Event*>& evtVector){
+  
+  if(evtVector.size()==0){
+    std::cout << "WARNING: evtVector empty" <<std::endl;
+    return 0;
   }
 
- 
   int nProcEvts = 0; // Number of processed events
   double WeightSumAfter = 0; // Sum of Weights
   double WeightSumBefore = 0; // Sum of Weights
-  std::vector<Event*>::iterator evt1 = control1.begin();
+
+  std::vector<Event*>::iterator evt1 = evtVector.begin();
   if( (*evt1)->type() != PtBalance)std::cout << "Warning: No TwoJetsPtBalanceEvent! Take special care when e.g. analyzing JetTruthEvents"; 
-  for(; evt1 != control1.end(); ++evt1, ++nProcEvts) {
+  for(; evt1 != evtVector.end(); ++evt1, ++nProcEvts) {
     if( (*evt1)->type() == ParLimit ) continue;
     float nputruth = (*evt1)->nPUTruth();
     std::map<double,int>::iterator it;
@@ -89,7 +87,7 @@ int PUTruthReweighting::preprocess(std::vector<Event*>& data,
    }
    //    std::cout << (*it).second <<" pt: " <<tje->triggerPtVariableL2L3(useSingleJetTriggers_)<< std::endl;
     //    std::cout << (*controlTrigger_.lower_bound(600.)).second <<" pt: " <<"600"<< std::endl;
-   double MyWeight = LumiWeightsPerTrigger.at((*it).second).ITweight3BX( nputruth );
+   double MyWeight = LumiWeightsPerTrigger_.at((*it).second).ITweight3BX( nputruth );
     //    double MyWeight = LumiWeights_.ITweight3BX( nputruth );
     //    int nputruth = (*evt1)->nPU();
     //    double MyWeight = LumiWeights_.ITweight( nputruth );
@@ -102,12 +100,53 @@ int PUTruthReweighting::preprocess(std::vector<Event*>& data,
     }
   }
 
-  std::cout << "  Applied weights for " << nProcEvts << " events in control1 and control2. \n";
-  std::cout << "  Average weight was " << WeightSumAfter/WeightSumBefore << "\n";
+    std::cout << "  Applied weights for " << nProcEvts << " events in evtVector. \n";
+    std::cout << "  Average weight was " << WeightSumAfter/WeightSumBefore << "\n";
+
+    return nProcEvts;
+}
+
+
+
+int PUTruthReweighting::preprocess(std::vector<Event*>& data,
+			     std::vector<Event*>& control1,
+			     std::vector<Event*>& control2)
+{
+  int nProcEvts=0;
+
+  std::cout << "start PUTruthReweighting with:" << std::endl;
+  std::cout << "  " << data.size() << " events in data" << std::endl;
+  std::cout << "  " << control1.size() << " events in control1" << std::endl;
+  std::cout << "  " << control2.size() << " events in control2" << std::endl;
+
+
+  if(useMCReweightAll_){
+    std::cout << "reweighting all event vectors (data,control1, control2) with the same PU-histogram definition:" << std::endl;
+    std::cout << "    TruthWeightingDir (target):   " << TruthWeightingDir_ << std::endl;
+    std::cout << "    TruthWeightingMCDistribution: " << TruthWeightingMCDistribution_ << std::endl;
+    
+    if((*data.begin())->type() == GammaJet)nProcEvts += reweightEventVector(data);
+    else std::cout << "WARNING: data is not of type 'GammaJet' which corresponds to JetTruthEvents. No reweighting will be applied!" << std::endl;
+    if((*control1.begin())->type() == GammaJet)nProcEvts += reweightEventVector(control1);
+    else std::cout << "WARNING: control1 is not of type 'GammaJet' which corresponds to JetTruthEvents. No reweighting will be applied!" << std::endl;
+    if((*control2.begin())->type() == GammaJet)nProcEvts += reweightEventVector(control2);
+    else std::cout << "WARNING: control2 is not of type 'GammaJet' which corresponds to JetTruthEvents. No reweighting will be applied!" << std::endl;
+  }
+
+
+  else{//default: only reweigh control (MC) accordingly
+    nProcEvts +=  reweightEventVector(control1);
+    nProcEvts +=  reweightEventVector(control2);
+  }
   
+
+
+
   std::cout << "end PUTruthReweighting with:" << std::endl;
   std::cout << "  " << data.size() << " events in data" << std::endl;
   std::cout << "  " << control1.size() << " events in control1" << std::endl;
+  std::cout << "  " << control2.size() << " events in control2" << std::endl;
+  
 
 
   return nProcEvts;

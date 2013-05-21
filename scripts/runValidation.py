@@ -78,8 +78,9 @@ Gamma-Jet tree         = GammaJetTree
 Z-Jet tree             = ZJetTree
 Track-Tower tree       = TrackTowerTree
 Track-Cluster tree     = TrackClusterTree
-Di-Jet tree            = TopTree
-Di-Jet Control1 tree   = TopTree
+Di-Jet tree            = DiJetTree
+Di-Jet Control1 tree   = DiJetTree
+Di-Jet Control2 tree   = DiJetTree
 Tri-Jet tree           = TriJetTree
 Top tree               = TopTree
 
@@ -93,8 +94,9 @@ Top tree               = TopTree
 use Gamma-Jet events       = 0
 use Track-Tower events     = 0
 use Track-Cluster events   = 0
-use Di-Jet events          = 10000
-use Di-Jet Control1 events = 10000
+use Di-Jet events          = 100000
+use Di-Jet Control1 events = 100000
+use Di-Jet Control2 events = 100000
 use Tri-Jet events         = 0
 use Z-Jet events           = 0
 use Top events             = 0
@@ -109,11 +111,13 @@ Top data class       = 1
 #   Event processor setup
 #---------------------------------------------------------------------------------
 
-PUTruthReweighting = true
-Di-Jet trigger names = HLT_PFJet40
-Di-Jet trigger thresholds = 68
-PU TruthWeighting = kirschen/PUDistributions/TTJetDists
-PU TruthWeighting MC distribution = kirschen/PUDistributions/TTJetDists/FullSimTTJets
+PUTruthReweighting = false
+
+PU TruthWeighting Reweight all eventvectors (for MC validation) = true
+PU TruthWeighting = kheine/PUDistributions/Cert_2012_190456-208686_ReReco
+PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S10CMSSW53
+Di-Jet trigger names = HLT_PFJet400 ## will reweight to PUTruth distribution of unprescaled PF400-trigger as determined by Kristin
+Di-Jet trigger thresholds = 5 ## set threshold low so all JetTruthEvents should pass
 
 
 
@@ -129,7 +133,23 @@ create plots                     = true
 # JetTruthEvent plots
 create JetTruthEvent plots    =  true
 
-JetTruthEvent plots names =  MCTruthResponseVsGenJetPt; MCTruthResponseVsEta; MCTruthResponsePU; MCTruthResolPU#; MCTruthRespFlavorVsGenJetPt
+JetTruthEvent plots names =  MCTruthResponseVsNPUTruth; MCTruthResponseVsGenJetPt; MCTruthResponseVsEta; MCTruthResponsePU; MCTruthResolPU#; MCTruthRespFlavorVsGenJetPt
+MCTruthResponseVsNPUTruth x variable        =  NPUTruth
+MCTruthResponseVsNPUTruth x edges           =  50 0 50
+MCTruthResponseVsNPUTruth y variable        =  GenJetResponse
+MCTruthResponseVsNPUTruth y edges           =  51 0 2.0 0.9 1.1 0.0 0.5
+MCTruthResponseVsNPUTruth bin variable      =  Eta
+MCTruthResponseVsNPUTruth bin edges         =  -5.0 5.0
+MCTruthResponseVsNPUTruth correction types  =  Uncorrected; L2L3
+#; L2L3L4
+MCTruthResponseVsNPUTruth profile types     =  GaussFitMean; GaussFitWidth
+MCTruthResponseVsNPUTruth legend label      =  L2L3:CMS L1L2L3
+#; L2L3L4:CMS L2L3 + L4JW
+MCTruthResponseVsNPUTruth input samples     =  0:Z2star; 1:Z2; 2:Herwig
+
+
+
+
 MCTruthResponseVsGenJetPt x variable        =  GenJetPt;  log
 MCTruthResponseVsGenJetPt x edges           =  50 10 3000
 MCTruthResponseVsGenJetPt y variable        =  GenJetResponse
@@ -141,7 +161,7 @@ MCTruthResponseVsGenJetPt correction types  =  Uncorrected; L2L3
 MCTruthResponseVsGenJetPt profile types     =  GaussFitMean; GaussFitWidth
 MCTruthResponseVsGenJetPt legend label      =  L2L3:CMS L1L2L3
 #; L2L3L4:CMS L2L3 + L4JW
-MCTruthResponseVsGenJetPt input samples     =  0:FastSim; 1:FullSim
+MCTruthResponseVsGenJetPt input samples     =  0:Z2star; 1:Z2; 2:Herwig
 
 MCTruthResponseVsEta x variable         =  Eta
 MCTruthResponseVsEta x edges            =  40 -5 5
@@ -154,7 +174,7 @@ MCTruthResponseVsEta correction types   =  Uncorrected; L2L3
 MCTruthResponseVsEta profile types      =  GaussFitMean
 MCTruthResponseVsEta legend label       =  L2L3:CMS L1L2L3
 #; L2L3L4:CMS L2L3 + L4JW
-MCTruthResponseVsEta input samples     =  0:FastSim; 1:FullSim
+MCTruthResponseVsEta input samples     =  0:Z2star; 1:Z2; 2:Herwig
 
 MCTruthResponsePU x variable         =  Eta
 MCTruthResponsePU x edges            =  40 -5 5
@@ -169,7 +189,7 @@ MCTruthResponsePU correction types   =  Uncorrected; L2L3
 MCTruthResponsePU profile types      =  GaussFitMean
 MCTruthResponsePU legend label       =  L2L3:CMS L1L2L3
 #; L2L3L4:CMS L2L3 + L4JW
-MCTruthResponsePU input samples     =  0:FastSim; 1:FullSim
+MCTruthResponsePU input samples     =  0:Z2star; 1:Z2; 2:Herwig
 
 MCTruthResolPU x variable        =  GenJetPt;  log
 MCTruthResolPU x edges           =  25 10 3000
@@ -184,7 +204,7 @@ MCTruthResolPU correction types  =  Uncorrected; L2L3
 MCTruthResolPU profile types     =  GaussFitWidth
 MCTruthResolPU legend label      =  L2L3:CMS L1L2L3
 #; L2L3L4:CMS L2L3 + L4JW
-MCTruthResolPU input samples     =  0:FastSim; 1:FullSim
+MCTruthResolPU input samples     =  0:Z2star; 1:Z2; 2:Herwig
 
 MCTruthResolVsGenJetPt x variable        =  GenJetPt;  log
 MCTruthResolVsGenJetPt x edges           =  50 10 3000
@@ -197,18 +217,18 @@ MCTruthResolVsGenJetPt correction types  =  Uncorrected; L2L3
 MCTruthResolVsGenJetPt profile types     =  GaussFitWidth
 MCTruthResolVsGenJetPt legend label      =  L2L3:CMS L1L2L3
 #; L2L3L4:CMS L2L3 + L4JW
-MCTruthResolVsGenJetPt input samples     =  0:FastSim; 1:FullSim
+MCTruthResolVsGenJetPt input samples     =  0:Z2star; 1:Z2; 2:Herwig
 
 MCTruthRespFlavorVsGenJetPt x variable        =  GenJetPt;  log
 MCTruthRespFlavorVsGenJetPt x edges           =  50 10 3000
 MCTruthRespFlavorVsGenJetPt y variable        =  GenJetResponse
 MCTruthRespFlavorVsGenJetPt y edges           =  51 0 2 0.9 1.1 0.9 1.1
 MCTruthRespFlavorVsGenJetPt bin variable      =  Flavor
-MCTruthRespFlavorVsGenJetPt bin edges         =  -0.5 0.5 1.5
+MCTruthRespFlavorVsGenJetPt bin edges         =  -0.5 0.5 1.5 2.5 3.5
 MCTruthRespFlavorVsGenJetPt correction types  =  Uncorrected; L2L3
 MCTruthRespFlavorVsGenJetPt profile types     =  Mean; GaussFitMean
 MCTruthRespFlavorVsGenJetPt legend label      =  L2L3:CMS L1L2L3
-MCTruthRespFlavorVsGenJetPt input samples     =  0:FastSim; 1:FullSim
+MCTruthRespFlavorVsGenJetPt input samples     =  0:Z2star; 1:Z2; 2:Herwig
 
 MCTruthResponseVsMeanWidth x variable         =  meanMoment
 MCTruthResponseVsMeanWidth x edges            =  30 0 0.5
@@ -219,18 +239,19 @@ MCTruthResponseVsMeanWidth bin edges          =  10 30 50 80 120 300 600 2000
 MCTruthResponseVsMeanWidth correction types   =  Uncorrected; L2L3
 MCTruthResponseVsMeanWidth profile types      =  Mean; GaussFitMean; GaussFitWidth
 MCTruthResponseVsMeanWidth legend label       =  L2L3:CMS L1L2L3
-MCTruthResponseVsMeanWidth input samples     =  0:FastSim; 1:FullSim
+MCTruthResponseVsMeanWidth input samples     =  0:Z2star; 1:Z2; 2:Herwig
 
 """
 
 jettypes = ["ak5FastPF"]#, "ak5PFCHS"]
-datadir = "/scratch/hh/dust/naf/cms/user/mseidel/calibtreemaker/Summer12_TTJets1725_FSIM" #fast?!
-datadirmc = "/scratch/hh/dust/naf/cms/user/mseidel/calibtreemaker/Summer12_TTJets1725" #full?!
-jecname = "Dec12"
-datasetname="TTJets_FullSimPU_S10___VS___TTJets_FastSimPU_S7"
+datadir = "/scratch/hh/dust/naf/cms/user/kriheine/CalibNTupel/MC/Z2star_pythia_v3" #Z2star
+datadirmc = "/scratch/hh/dust/naf/cms/user/kriheine/CalibNTupel/MC/Z2_pythia_v3" #Z2
+datadir2mc = "/scratch/hh/dust/naf/cms/user/kriheine/CalibNTupel/MC/EE3C_herwigpp_v3" #Herwig
+jecname = "Dec12_Z2star_Z2_Hpp"
+datasetname="Z2star_Herwig_Comparison_TEST"
 
 correctJets=False
-CutAwayPU=True
+CutAwayPU=False
 
 
 for jettype in jettypes:
@@ -238,11 +259,16 @@ for jettype in jettypes:
     if os.path.exists("tempdijetlist"):
         os.remove("tempdijetlist")
         os.remove("mcdijetlist")
+##        os.remove("mc2dijetlist")
     if os.path.exists("tempplots"):
         os.system("rm tempplots/*")
 
     os.system("ls "+datadir+"/*_"+jettype+"*.root > tempdijetlist");
     os.system("ls "+datadirmc+"/*_"+jettype+"*.root > mcdijetlist");
+    os.system("ls "+datadir2mc+"/*_"+jettype+"*.root > mc2dijetlist");
+#    os.system("ls "+datadir+"*_"+jettype+"*.root > tempdijetlist");
+#    os.system("ls "+datadirmc+"*_"+jettype+"*.root > mcdijetlist");
+#    os.system("ls "+datadir2mc+"*_"+jettype+"*.root > mc2dijetlist");
     fcfg = open("valid.cfg", "w")
     #change labels
     if CutAwayPU:
@@ -252,6 +278,7 @@ for jettype in jettypes:
     fcfg.write("plots output directory = tempplots\n")
     fcfg.write("Di-Jet input file = tempdijetlist\n")
     fcfg.write("Di-Jet Control1 input file = mcdijetlist\n")
+    fcfg.write("Di-Jet Control2 input file = mc2dijetlist\n")
     jetalgo = jettype[0:3]
     
     if correctJets:
