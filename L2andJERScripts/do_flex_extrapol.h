@@ -184,7 +184,7 @@ void     do_flex_extrapol::define_cosmetics_and_cuts(){
   line_styles_.push_back(1);
   line_styles_.push_back(1);
 
-/*if(fine_coarse.Contains("JEC_Mikko")){
+if(fine_coarse.Contains("JEC_Mikko")){
   //  ptthreecuts.push_back("05");
     ptthreecuts.push_back("10");
     ptthreecuts.push_back("15");
@@ -203,7 +203,7 @@ void     do_flex_extrapol::define_cosmetics_and_cuts(){
   //  ptthreecuts_Double_.push_back(0.35);
   //ptthreecuts_Double_.push_back(0.40);
 }
-else{*/
+else{
   //  ptthreecuts.push_back("05");
     ptthreecuts.push_back("10");
   //  ptthreecuts.push_back("15");
@@ -221,7 +221,7 @@ else{*/
     ptthreecuts_Double_.push_back(0.30);
   //  ptthreecuts_Double_.push_back(0.35);
     ptthreecuts_Double_.push_back(0.40);
-//}
+}
 
 }
 
@@ -257,28 +257,31 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
   vector<Double_t> vec_JM(JEC_Mikko_eta_binning_, &JEC_Mikko_eta_binning_[ size_JM] );
   JEC_Mikko_eta_binning = vec_JM;
   JEC_Mikko_no_eta =12;
-  JEC_Mikko_zero_eta =6;
+  JEC_Mikko_zero_eta =6;  
+ 
+  //fine eta binning
+  //old version//Double_t array[32] = {-5.191,-3.489,-3.139,-2.964,-2.853,-2.5,-2.322,-2.172,-2.043,-1.930,-1.830,-1.740,-1.653,-1.566,-1.479,-1.392,-1.305,-1.218,-1.131,-1.044,-0.957,-0.879,-0.783,-0.696,-0.609,-0.522,-0.435,-0.348,-0.261,-0.174,-0.087,0.000};
+  //old version//Double_t array2[31] = {0.087,0.174,0.261,0.348,0.435,0.522,0.609,0.696,0.783,0.879,0.957,1.044,1.131,1.218,1.305,1.392,1.479,1.566,1.653,1.740,1.830,1.930,2.043,2.172,2.322,2.5,2.853,2.964,3.139,3.489,5.191};
+  Double_t array[31] = {-5.191,-3.139,-2.964,-2.853,-2.5,-2.322,-2.172,-2.043,-1.930,-1.830,-1.740,-1.653,-1.566,-1.479,-1.392,-1.305,-1.218,-1.131,-1.044,-0.957,-0.879,-0.783,-0.696,-0.609,-0.522,-0.435,-0.348,-0.261,-0.174,-0.087,0.000};
+  Double_t array2[30] = {0.087,0.174,0.261,0.348,0.435,0.522,0.609,0.696,0.783,0.879,0.957,1.044,1.131,1.218,1.305,1.392,1.479,1.566,1.653,1.740,1.830,1.930,2.043,2.172,2.322,2.5,2.853,2.964,3.139,5.191};
+  Fine_no_eta=60;
+  Fine_zero_eta=Fine_no_eta/2;
+  for(int i=0; i<=Fine_no_eta; i++){if(i<31) Fine_eta_binning.push_back(array[i]); else Fine_eta_binning.push_back(array2[i-31]);};
+  no_eta=Fine_no_eta;
+  zero_eta=Fine_zero_eta;
 
-  Double_t Fine_eta_binning_[]={-5.191,-3.489,-3.139,-2.964,-2.853,-2.5,-2.322,-2.172,-2.043,-1.930,-1.830,-1.740,-1.653,-1.566,-1.479,-1.392,-1.305,-1.218,-1.131,-1.044,-0.957,-0.879,-0.783,-0.696,-0.609,-0.522,-0.435,-0.348,-0.261,-0.174,-0.087,0.000,0.087,0.174,0.261,0.348,0.435,0.522,0.609,0.696,0.783,0.879,0.957,1.044,1.131,1.218,1.305,1.392,1.479,1.566,1.653,1.740,1.830,1.930,2.043,2.172,2.322,2.5,2.853,2.964,3.139,3.489,5.191};
-  //
-  int size_F = sizeof(Fine_eta_binning_)/sizeof(Fine_eta_binning_[0]);
-  vector<Double_t> vec_F(Fine_eta_binning_, &Fine_eta_binning_[ size_F] );
-  Fine_eta_binning = vec_F;
-  Fine_no_eta =62;
-  Fine_zero_eta =31;
-
-  Double_t eta_binning_[]={-6.0,-4.0,-3.5,-3.2,-3.0,-2.8,-2.6,-2.4,-2.2,-2.0,-1.8,-1.5,-1.4,-1.3,-1.2,-1.1,-0.9,-0.6,-0.3,0.0,0.3,0.6,0.9,1.1,1.2,1.3,1.4,1.5,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.5,4.0,6.0};
+  /*Double_t eta_binning_[]={-6.0,-4.0,-3.5,-3.2,-3.0,-2.8,-2.6,-2.4,-2.2,-2.0,-1.8,-1.5,-1.4,-1.3,-1.2,-1.1,-0.9,-0.6,-0.3,0.0,0.3,0.6,0.9,1.1,1.2,1.3,1.4,1.5,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.5,4.0,6.0};
   //39
   int size = sizeof(eta_binning_)/sizeof(eta_binning_[0]);
   vector<Double_t> vec(eta_binning_, &eta_binning_[ size] );
-  eta_binning = vec;
+  eta_binning = vec;*/
   no_eta =38;
   zero_eta =19;
 
-  Double_t trad_eta_binning_[]={-6.0,-4.0,-3.5,-3.0,-2.7,-2.4,-2.1,-1.8,-1.5,-1.3,-1.1,-0.9,-0.6,-0.3,0.0,0.3,0.6,0.9,1.1,1.3,1.5,1.8,2.1,2.4,2.7,3.0,3.5,4.0,6.0};
+  /*Double_t trad_eta_binning_[]={-6.0,-4.0,-3.5,-3.0,-2.7,-2.4,-2.1,-1.8,-1.5,-1.3,-1.1,-0.9,-0.6,-0.3,0.0,0.3,0.6,0.9,1.1,1.3,1.5,1.8,2.1,2.4,2.7,3.0,3.5,4.0,6.0};
   int size_tra = sizeof(trad_eta_binning_)/sizeof(trad_eta_binning_[0]);
   vector<Double_t> vec_tra(trad_eta_binning_, &trad_eta_binning_[ size_tra] );
-  trad_eta_binning = vec_tra;
+  trad_eta_binning = vec_tra;*/
   //29
   trad_no_eta =28;
   trad_zero_eta =14;
@@ -302,7 +305,7 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
     no_eta=kostas_no_eta;
     zero_eta=kostas_zero_eta;
   for(Int_t eta_i=0;eta_i<=no_eta;eta_i++){
-    eta_binning[eta_i]=kostas_eta_binning[eta_i];
+    eta_binning.push_back(kostas_eta_binning[eta_i]);
     cout << eta_binning[eta_i] << " ";
   }
   }
@@ -310,7 +313,7 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
     no_eta=k_HFfix_no_eta;
     zero_eta=k_HFfix_zero_eta;
   for(Int_t eta_i=0;eta_i<=no_eta;eta_i++){
-    eta_binning[eta_i]=k_HFfix_eta_binning[eta_i];
+    eta_binning.push_back(k_HFfix_eta_binning[eta_i]);
     cout << eta_binning[eta_i] << " ";
   }
   }
@@ -318,7 +321,7 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
     no_eta=JEC_Mikko_no_eta;
     zero_eta=JEC_Mikko_zero_eta;
   for(Int_t eta_i=0;eta_i<=no_eta;eta_i++){
-    eta_binning[eta_i]=JEC_Mikko_eta_binning[eta_i];
+    eta_binning.push_back(JEC_Mikko_eta_binning[eta_i]);
     cout << eta_binning[eta_i] << " ";
   }
   }
@@ -326,19 +329,19 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
     no_eta=Fine_no_eta;
     zero_eta=Fine_zero_eta;
   for(Int_t eta_i=0;eta_i<=no_eta;eta_i++){
-    eta_binning[eta_i]=Fine_eta_binning[eta_i];
+    eta_binning.push_back(Fine_eta_binning[eta_i]);
     cout << eta_binning[eta_i] << " ";
   }
   cout<< "further" << endl;
   }  
   for(Int_t eta_i=0;eta_i<no_eta;eta_i++){
-    char buffer [70];
-    char buffer2 [70];
-    sprintf (buffer, "%.1f", eta_binning[eta_i]);
+    char buffer [210];
+    char buffer2 [210];
+    sprintf (buffer, "%.3f", eta_binning[eta_i]);
     
         cout << buffer;
     
-    sprintf (buffer2, "%.1f", eta_binning[eta_i+1]);
+    sprintf (buffer2, "%.3f", eta_binning[eta_i+1]);
     
         cout << ", " << buffer2 << endl;
     
@@ -351,14 +354,14 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
     }
 
   }
-  for(Int_t eta_i=0;eta_i< trad_no_eta;eta_i++){
-    char buffer [70];
-    char buffer2 [70];
-    sprintf (buffer, "%.1f",  trad_eta_binning[eta_i]);
+  /*for(Int_t eta_i=0;eta_i< trad_no_eta;eta_i++){
+    char buffer [210];
+    char buffer2 [210];
+    sprintf (buffer, "%.3f",  trad_eta_binning[eta_i]);
     
     //        cout << buffer;
     
-    sprintf (buffer2, "%.1f",  trad_eta_binning[eta_i+1]);
+    sprintf (buffer2, "%.3f",  trad_eta_binning[eta_i+1]);
     
     //        cout << ", " << buffer2 << endl;
     
@@ -370,7 +373,7 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
     //        cout << "ABS:" << buffer<< ", " << buffer2 << endl;
     }
 
-  }
+  }*/
 
 cout << "size check" << endl;
   eta_bins=eta_bins_.size();
