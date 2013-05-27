@@ -211,16 +211,16 @@ public :
    Float_t         MetSum;
    Float_t         Met_T1;
    Float_t         MetPhi_T1;
-   Float_t         MetSum_T1;
-   Float_t         Met_T2;
-   Float_t         MetPhi_T2;
-   Float_t         MetSum_T2;
+   Float_t         MetSum_T1;   
    Float_t         Met_T1R;
    Float_t         MetPhi_T1R;
-   Float_t         MetSum_T1R;
+   Float_t         MetSum_T1R;   
+   Float_t         Met_T2;
+   Float_t         MetPhi_T2;
+   Float_t         MetSum_T2;   
    Float_t         Met_T2R;
    Float_t         MetPhi_T2R;
-   Float_t         MetSum_T2R;
+   Float_t         MetSum_T2R;   
    Float_t         Weight;
    Float_t         CrossSection;
 
@@ -418,16 +418,16 @@ public :
    TBranch        *b_MetSum;   //!
    TBranch        *b_Met_T1;   //!
    TBranch        *b_MetPhi_T1;   //!
-   TBranch        *b_MetSum_T1;   //!
-   TBranch        *b_Met_T2;   //!
-   TBranch        *b_MetPhi_T2;   //!
-   TBranch        *b_MetSum_T2;   //!
+   TBranch        *b_MetSum_T1;   //!   
    TBranch        *b_Met_T1R;   //!
    TBranch        *b_MetPhi_T1R;   //!
-   TBranch        *b_MetSum_T1R;   //!
+   TBranch        *b_MetSum_T1R;   //!   
+   TBranch        *b_Met_T2;   //!
+   TBranch        *b_MetPhi_T2;   //!
+   TBranch        *b_MetSum_T2;   //!   
    TBranch        *b_Met_T2R;   //!
    TBranch        *b_MetPhi_T2R;   //!
-   TBranch        *b_MetSum_T2R;   //!
+   TBranch        *b_MetSum_T2R;   //!   
    TBranch        *b_Weight;   //!
    TBranch        *b_CrossSection;   //!
 
@@ -665,21 +665,16 @@ void NJetSel::Init(TTree *tree)
    fChain->SetBranchAddress("MetSum", &MetSum, &b_MetSum);
    fChain->SetBranchAddress("Met_T1", &Met_T1, &b_Met_T1);
    fChain->SetBranchAddress("MetPhi_T1", &MetPhi_T1, &b_MetPhi_T1);
-   fChain->SetBranchAddress("MetSum_T1", &MetSum_T1, &b_MetSum_T1);
-   fChain->SetBranchAddress("Met_T2", &Met_T2, &b_Met_T2);
-   fChain->SetBranchAddress("MetPhi_T2", &MetPhi_T2, &b_MetPhi_T2);
-   fChain->SetBranchAddress("MetSum_T2", &MetSum_T2, &b_MetSum_T2);
+   fChain->SetBranchAddress("MetSum_T1", &MetSum_T1, &b_MetSum_T1);   
    fChain->SetBranchAddress("Met_T1R", &Met_T1R, &b_Met_T1R);
    fChain->SetBranchAddress("MetPhi_T1R", &MetPhi_T1R, &b_MetPhi_T1R);
-   fChain->SetBranchAddress("MetSum_T1R", &MetSum_T1R, &b_MetSum_T1R);
+   fChain->SetBranchAddress("MetSum_T1R", &MetSum_T1R, &b_MetSum_T1R);   
+   fChain->SetBranchAddress("Met_T2", &Met_T2, &b_Met_T2);
+   fChain->SetBranchAddress("MetPhi_T2", &MetPhi_T2, &b_MetPhi_T2);
+   fChain->SetBranchAddress("MetSum_T2", &MetSum_T2, &b_MetSum_T2);   
    fChain->SetBranchAddress("Met_T2R", &Met_T2R, &b_Met_T2R);
    fChain->SetBranchAddress("MetPhi_T2R", &MetPhi_T2R, &b_MetPhi_T2R);
-   fChain->SetBranchAddress("MetSum_T2R", &MetSum_T2R, &b_MetSum_T2R);
-   //
-//   fChain->SetBranchAddress("Met", &Met_T2, &b_Met);
-//   fChain->SetBranchAddress("MetPhi", &MetPhi_T2, &b_MetPhi);
-//   fChain->SetBranchAddress("MetSum", &MetSum_T2, &b_MetSum);
-   //
+   fChain->SetBranchAddress("MetSum_T2R", &MetSum_T2R, &b_MetSum_T2R);   
    fChain->SetBranchAddress("Weight", &Weight, &b_Weight);
    fChain->SetBranchAddress("CrossSection", &CrossSection, &b_CrossSection);
 }
