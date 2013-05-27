@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.115 2013/04/03 13:29:26 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.116 2013/05/08 14:38:27 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -1958,14 +1958,30 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     hltPFjetc260incl_ = hltPFjetc200incl_ || nJet_->HltPFJet260;
     hltPFjetc320incl_ = hltPFjetc260incl_ || nJet_->HltPFJet320;
     hltPFjetc400incl_ = hltPFjetc320incl_ || nJet_->HltPFJet400;
-    hltdiPFjetc40incl_ = nJet_->HltDiPFJetAve40;
+    //inclusive binning
+/*    hltdiPFjetc40incl_ = nJet_->HltDiPFJetAve40;
     hltdiPFjetc80incl_ = hltdiPFjetc40incl_ || nJet_->HltDiPFJetAve80;
     hltdiPFjetc140incl_ = hltdiPFjetc80incl_ || nJet_->HltDiPFJetAve140;
     hltdiPFjetc200incl_ = hltdiPFjetc140incl_ || nJet_->HltDiPFJetAve200;
     hltdiPFjetc260incl_ = hltdiPFjetc200incl_ || nJet_->HltDiPFJetAve260;
     hltdiPFjetc320incl_ = hltdiPFjetc260incl_ || nJet_->HltDiPFJetAve320;
-    hltdiPFjetc400incl_ = hltdiPFjetc320incl_ || nJet_->HltDiPFJetAve400;
-
+    hltdiPFjetc400incl_ = hltdiPFjetc320incl_ || nJet_->HltDiPFJetAve400;*/
+    //totally exclusive binning
+    /*hltdiPFjetc40incl_ = nJet_->HltDiPFJetAve40 && !(nJet_->HltDiPFJetAve80) && !(nJet_->HltDiPFJetAve140) && !(nJet_->HltDiPFJetAve200) && !(nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400);
+    hltdiPFjetc80incl_ = !(nJet_->HltDiPFJetAve40) && (nJet_->HltDiPFJetAve80) && !(nJet_->HltDiPFJetAve140) && !(nJet_->HltDiPFJetAve200) && !(nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400);
+    hltdiPFjetc140incl_ =!(nJet_->HltDiPFJetAve40) && !(nJet_->HltDiPFJetAve80) && (nJet_->HltDiPFJetAve140) && !(nJet_->HltDiPFJetAve200) && !(nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400); 
+    hltdiPFjetc200incl_ =!(nJet_->HltDiPFJetAve40) && !(nJet_->HltDiPFJetAve80) && !(nJet_->HltDiPFJetAve140) && (nJet_->HltDiPFJetAve200) && !(nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400); 
+    hltdiPFjetc260incl_ =!(nJet_->HltDiPFJetAve40) && !(nJet_->HltDiPFJetAve80) && !(nJet_->HltDiPFJetAve140) && !(nJet_->HltDiPFJetAve200) && (nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400); 
+    hltdiPFjetc320incl_ =!(nJet_->HltDiPFJetAve40) && !(nJet_->HltDiPFJetAve80) && !(nJet_->HltDiPFJetAve140) && !(nJet_->HltDiPFJetAve200) && !(nJet_->HltDiPFJetAve260) && (nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400); 
+    hltdiPFjetc400incl_ =!(nJet_->HltDiPFJetAve40) && !(nJet_->HltDiPFJetAve80) && !(nJet_->HltDiPFJetAve140) && !(nJet_->HltDiPFJetAve200) && !(nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && (nJet_->HltDiPFJetAve400); */
+    //reasonable binning
+    hltdiPFjetc40incl_ = nJet_->HltDiPFJetAve40 && !(nJet_->HltDiPFJetAve80) && !(nJet_->HltDiPFJetAve140) && !(nJet_->HltDiPFJetAve200) && !(nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400);
+    hltdiPFjetc80incl_ = nJet_->HltDiPFJetAve80 && !(nJet_->HltDiPFJetAve140) && !(nJet_->HltDiPFJetAve200) && !(nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400);
+    hltdiPFjetc140incl_=nJet_->HltDiPFJetAve140 && !(nJet_->HltDiPFJetAve200) && !(nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400); 
+    hltdiPFjetc200incl_=nJet_->HltDiPFJetAve200 && !(nJet_->HltDiPFJetAve260) && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400); 
+    hltdiPFjetc260incl_=nJet_->HltDiPFJetAve260 && !(nJet_->HltDiPFJetAve320) && !(nJet_->HltDiPFJetAve400); 
+    hltdiPFjetc320incl_=nJet_->HltDiPFJetAve320 && !(nJet_->HltDiPFJetAve400); 
+    hltdiPFjetc400incl_=nJet_->HltDiPFJetAve400; 
 
     double triggerPt = diJetPtAve;
     if(useSingleJetTriggers_){

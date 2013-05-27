@@ -434,6 +434,12 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFMETT1ResponseL2L3Corrected;
   if( varName == "MPFMETT1Response" && type == ControlPlotsConfig::L2L3Res )
     return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFMETT1ResponseL2L3ResCorrected;
+  if( varName == "MPFMETT2Response" && type == ControlPlotsConfig::Uncorrected )
+    return &ControlPlotsFunction::twoJetsPtBalanceEventMPFMETT2Response;
+  if( varName == "MPFMETT2Response" && type == ControlPlotsConfig::L2L3 )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFMETT2ResponseL2L3Corrected;
+  if( varName == "MPFMETT2Response" && type == ControlPlotsConfig::L2L3Res )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFMETT2ResponseL2L3ResCorrected;    
   if( varName == "MCTruthResponse" && type == ControlPlotsConfig::Uncorrected )
     return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1Response;
   if( varName == "MCTruthResponse" && type == ControlPlotsConfig::L2L3 )
