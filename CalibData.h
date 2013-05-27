@@ -1,5 +1,5 @@
 //
-// $Id: CalibData.h,v 1.92 2013/01/29 15:30:58 stadie Exp $
+// $Id: CalibData.h,v 1.93 2013/05/08 14:38:26 kirschen Exp $
 //
 #ifndef CalibData_h
 #define CalibData_h
@@ -28,7 +28,7 @@ enum DataType {Default, TrackTower, GammaJet, TrackCluster, MessMess, PtBalance,
 //!  \sa Jet, Tower, Track, JetWithTowers, JetWithTracks
 //!
 //!  \author Christian Autermann, Hartmut Stadie
-//!  $Id: CalibData.h,v 1.92 2013/01/29 15:30:58 stadie Exp $
+//!  $Id: CalibData.h,v 1.93 2013/05/08 14:38:26 kirschen Exp $
 class Measurement
 {
 public:
@@ -67,7 +67,7 @@ public:
 //!  \todo Document members
 //!
 //!  \author Jan Thomsen
-//!  $Id: CalibData.h,v 1.92 2013/01/29 15:30:58 stadie Exp $
+//!  $Id: CalibData.h,v 1.93 2013/05/08 14:38:26 kirschen Exp $
 class TTrack : public Measurement
 {
 public:
@@ -124,12 +124,14 @@ public:
 //!     The available data types are:
 //!  \author Christian Autermann
 //!  \date Wed Jul 18 13:54:50 CEST 2007
-//! $Id: CalibData.h,v 1.92 2013/01/29 15:30:58 stadie Exp $
+//! $Id: CalibData.h,v 1.93 2013/05/08 14:38:26 kirschen Exp $
 class Event
 {
 public:
-  Event(float w = 0, float pthat = 0, short npu = 0, float nputruth = 0., short nvtx=0, float metraw=0, float metrawphi=0, float metT1=0, float metT1phi=0, float metT1res=0, float metT1resphi=0, int runNumber=0, float PUMCHighestSumPt =0, float rho=0)
-   : weight_(w),ptHat_(pthat),nPU_(npu),nPUTruth_(nputruth),nVtx_(nvtx),MET_(metraw),METphi_(metrawphi),METT1_(metT1),METT1phi_(metT1phi),METT1Res_(metT1res),METT1Resphi_(metT1phi),runNumber_(runNumber), PUMCHighestSumPt_(PUMCHighestSumPt),rho_(rho) {}
+  Event(float w = 0, float pthat = 0, short npu = 0, float nputruth = 0., short nvtx=0, float metraw=0, float metrawphi=0, float metT1=0, float metT1phi=0, float metT1res=0, float metT1resphi=0, float metT2=0, float metT2phi=0, float metT2res=0, float metT2resphi=0, int runNumber=0, float PUMCHighestSumPt =0, float rho=0)
+   :
+  weight_(w),ptHat_(pthat),nPU_(npu),nPUTruth_(nputruth),nVtx_(nvtx),MET_(metraw),METphi_(metrawphi),METT1_(metT1),METT1phi_(metT1phi),METT1Res_(metT1res),METT1Resphi_(metT1phi),METT2_(metT2),METT2phi_(metT2phi),METT2Res_(metT2res),METT2Resphi_(metT2phi),runNumber_(runNumber), PUMCHighestSumPt_(PUMCHighestSumPt),rho_(rho) {}
+
   virtual ~Event() {}
   virtual Measurement *mess() const = 0;                           //!< Get Measurement object
   virtual double truth() const = 0;                                 //!< Get truth of measurement
@@ -148,6 +150,10 @@ public:
   float METT1phi() const { return METT1phi_; } //!< Azimuthal angle of missing transverse energy
   float METT1Res() const { return METT1Res_; } //!< Missing transverse energy //residual corrected
   float METT1Resphi() const { return METT1Resphi_; } //!< Azimuthal angle of missing transverse energy //residual corrected
+  float METT2() const { return METT2_; } //!< Missing transverse energy
+  float METT2phi() const { return METT2phi_; } //!< Azimuthal angle of missing transverse energy
+  float METT2Res() const { return METT2Res_; } //!< Missing transverse energy //residual corrected
+  float METT2Resphi() const { return METT2Resphi_; } //!< Missing transverse energy //residual corrected  
   int runNumber() const { return runNumber_; } //!< Number of CMS run
   float PUMCHighestSumPt() const { return PUMCHighestSumPt_; } //!< Highest SumPt (of SimTracks) from mixed-in PU events
   float rho() const {return rho_;} //! energy density rho
@@ -250,6 +256,10 @@ public:
   float METT1phi_;
   float METT1Res_;
   float METT1Resphi_;
+  float METT2_;
+  float METT2phi_;
+  float METT2Res_;
+  float METT2Resphi_;  
   int runNumber_;
   float PUMCHighestSumPt_;
   float rho_;
