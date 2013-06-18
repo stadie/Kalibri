@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.116 2013/05/08 14:38:27 kirschen Exp $
+//    $Id: DiJetReader.cc,v 1.117 2013/05/27 14:31:12 rathjd Exp $
 //   
 #include "DiJetReader.h"
 
@@ -712,6 +712,8 @@ void DiJetReader::printCutFlow()
     std::cout << " jet-truth events with hadronic fraction > " << minJetHadFraction_ << "\n";
     std::cout << "    " << (nReadEvts_-=nJetIDCut_) << std::flush;
     std::cout << " jet-truth events with hadronic fraction < " << maxJetHadFraction_ << "\n";
+    std::cout << "    " << (nReadEvts_-=nCutOn3rdJet_) << std::flush;
+    std::cout << " jet-truth events with " << minRel3rdJetEt_ << " < pt(jet3) / diJetPtAve < " << maxRel3rdJetEt_ << "\n";
   } else if( dataClass_ == 5 ) {
     std::cout << "  " << (nReadEvts_-=nDiJetCut_) << std::flush;
     std::cout << " events with 2 or more jets\n";
@@ -880,6 +882,18 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       nJetIDCut_++;
       continue;
     }
+
+    if(!(nJet_->NobjJet <= nJet_->GenJetColJetIdx[0] && nJet_->NobjJet <= nJet_->GenJetColJetIdx[1] && nJet_->NobjJet <= nJet_->GenJetColJetIdx[2]   )){
+      double jet1recopt = nJet_->JetPt[nJet_->GenJetColJetIdx[0]]*nJet_->JetCorrL1[nJet_->GenJetColJetIdx[0]]*nJet_->JetCorrL2L3[nJet_->GenJetColJetIdx[0]];
+      double jet2recopt = nJet_->JetPt[nJet_->GenJetColJetIdx[1]]*nJet_->JetCorrL1[nJet_->GenJetColJetIdx[1]]*nJet_->JetCorrL2L3[nJet_->GenJetColJetIdx[1]];
+      double jet3recopt = nJet_->JetPt[nJet_->GenJetColJetIdx[2]]*nJet_->JetCorrL1[nJet_->GenJetColJetIdx[2]]*nJet_->JetCorrL2L3[nJet_->GenJetColJetIdx[2]];
+      if(jet3recopt/(jet1recopt+jet2recopt) >  maxRel3rdJetEt_) {
+	nCutOn3rdJet_++;
+	continue;
+      }
+    }
+
+
     tower.pt      = nJet_->JetPt[calJetIdx];
     tower.EMF     = tower.pt * nJet_->JetEMF[calJetIdx];
     tower.HadF    = tower.pt * (1.0 - nJet_->JetEMF[calJetIdx]);
