@@ -63,6 +63,7 @@ Max had fraction           = 9999    #Default: 0.95
 Et genJet min              = 0.0
 Et genJet max              = 7000.0
 DeltaR cut on jet matching = 0.25
+Max cut on relative n+1 Jet Et = 0.2 ## to get more dijet-like events
 
 #---------------------------------------------------------------------------------
 #   Input / Output
