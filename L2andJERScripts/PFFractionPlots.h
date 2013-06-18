@@ -20,6 +20,9 @@ class PFFractionPlots : public BasePlotExtractor{
  public :
   PFFractionPlots(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsShortName="KalibriPlots.root");
   void Plot();
+  void PlotDifferencesWithResponseCorrection();
+
+  TString drawResponseCorrected_;
 
 };
 

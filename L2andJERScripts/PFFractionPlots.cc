@@ -1,4 +1,5 @@
 #include "PFFractionPlots.h"
+#include "Extrapolation.h"
 
 //Default constructor, see BasePlotExtractor constructor
 //! for more information and initialization.
@@ -6,7 +7,7 @@
 //!  \author Henning Kirschenmann
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
-PFFractionPlots::PFFractionPlots(TString plotsnames,TString kalibriPlotsShortName) : BasePlotExtractor(plotsnames,kalibriPlotsShortName){
+PFFractionPlots::PFFractionPlots(TString plotsnames,TString kalibriPlotsShortName) : BasePlotExtractor(plotsnames,kalibriPlotsShortName), drawResponseCorrected_("0"){
   //init config_file;
   //  config_=ConfigFile("L2L3.cfg");
   //  plotsnames_=plotsnames;
@@ -31,6 +32,20 @@ void PFFractionPlots::Plot() {
     chdir("PFComp"); 
   } 
 
+  TString PFFractionTitle= "PF energy fraction";
+  if(drawResponseCorrected_.Contains("MPF")){
+    PFFractionTitle = "PF energy fraction (MPF corr.)";
+    yRatioTitle_.ReplaceAll("fractions","fractions (MPF corr.)");
+    yDifferenceTitle_.ReplaceAll("fractions","fractions (MPF corr.)");
+  }
+  if(drawResponseCorrected_.Contains("RR")){
+    PFFractionTitle = "PF energy fraction (RR corr.)";
+    yRatioTitle_.ReplaceAll("fractions","fractions (RR corr.)");
+    yDifferenceTitle_.ReplaceAll("fractions","fractions (RR corr.)");
+    yRatioTitle_.ReplaceAll("(MPF corr.)","");
+    yDifferenceTitle_.ReplaceAll("(MPF corr.)","");
+  }
+
 //
 //  for(int i=0;i<names_.size();i++){
 //    std::cout << names_.at(i) << std::endl;
@@ -46,7 +61,7 @@ void PFFractionPlots::Plot() {
   leg->SetTextFont(42);
   leg->SetTextSize(0.04);
   leg->SetNColumns(2);
- 
+
     for(int conf_i=0;conf_i<configs_.size();conf_i++){
       for(int j=0;j<2;j++){
 	if(j==1){
@@ -61,6 +76,8 @@ void PFFractionPlots::Plot() {
 	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetFillColor(style.getColor(conf_i));
 	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetFillStyle(1001);
 	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetMarkerStyle(style.getMarker(conf_i));
+	  AllPlots_.at(conf_i).at(bin_i).at(j)->GetListOfFunctions()->Delete();
+
       }
       leg->AddEntry(AllPlots_.at(conf_i).at(bin_i).at(1),(configs_.at(conf_i)->yTitle()).c_str(),"FP");
     }
@@ -74,7 +91,7 @@ void PFFractionPlots::Plot() {
     AllPlots_.at(0).at(bin_i).at(1)->Draw();
     //    AllPlots_.at(0).at(bin_i).at(1)->SetTitle((configs_.at(0)->xBinTitle(bin_i,20,2000)).c_str());
     AllPlots_.at(0).at(bin_i).at(1)->GetYaxis()->SetRangeUser(0,1.1);
-    AllPlots_.at(0).at(bin_i).at(1)->GetYaxis()->SetTitle("PF energy fraction");
+    AllPlots_.at(0).at(bin_i).at(1)->GetYaxis()->SetTitle(PFFractionTitle);
     //    AllPlots_.at(0).at(bin_i).at(1)->GetYaxis()->SetTitleOffset(1.1);
     TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
     AllPlots_.at(0).at(bin_i).at(1)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
@@ -93,8 +110,9 @@ void PFFractionPlots::Plot() {
   leg->Draw();
   drawCMSPrel();
   TString outname = "FractionPlots_"+plotsnames_+"_"+configs_.at(0)->binName(bin_i);
-  //  outname+=bin_i;
-  outname+=".eps";
+  outname+="RespCorr";
+  outname+=drawResponseCorrected_;
+  outname+=".pdf";
   c->RedrawAxis();
   c->SaveAs(outname);
 
@@ -109,7 +127,7 @@ void PFFractionPlots::Plot() {
     TList *lfits = AllRatiosDataMC_.at(conf_i).at(bin_i)->GetListOfFunctions();
     lfits->Delete();
     //Draw DataMC-ratios
-    std::cout << AllRatiosDataMC_.size() << " and " << std::endl;
+    if(DEBUG)std::cout << AllRatiosDataMC_.size() << " and " << std::endl;
     AllRatiosDataMC_.at(conf_i).at(bin_i)->Draw("same");
     drawConfidenceIntervals(AllRatiosDataMC_.at(conf_i).at(bin_i));
     AllRatiosDataMC_.at(conf_i).at(bin_i)->Draw("same");
@@ -133,8 +151,9 @@ void PFFractionPlots::Plot() {
   leg->Draw();
      drawCMSPrel();
     outname = "FractionPlots_"+plotsnames_+"_ratio"+"_"+configs_.at(0)->binName(bin_i);
-    //  outname+=bin_i;
-    outname+=".eps";
+    outname+="RespCorr";
+  outname+=drawResponseCorrected_;
+    outname+=".pdf";
     c->RedrawAxis();
     c->SaveAs(outname);
 
@@ -150,7 +169,7 @@ void PFFractionPlots::Plot() {
     TList *lfits = AllDifferencesDataMC_.at(conf_i).at(bin_i)->GetListOfFunctions();
     lfits->Delete();
     //Draw DataMC-differences
-    std::cout << AllDifferencesDataMC_.size() << " and " << std::endl;
+    if(DEBUG)std::cout << AllDifferencesDataMC_.size() << " and " << std::endl;
     AllDifferencesDataMC_.at(conf_i).at(bin_i)->Draw("same");
     drawConfidenceIntervals(AllDifferencesDataMC_.at(conf_i).at(bin_i));
     AllDifferencesDataMC_.at(conf_i).at(bin_i)->Draw("same");
@@ -172,8 +191,9 @@ void PFFractionPlots::Plot() {
   leg->Draw();
      drawCMSPrel();
     outname = "FractionPlots_"+plotsnames_+"_difference"+"_"+configs_.at(0)->binName(bin_i);
-    //  outname+=bin_i;
-    outname+=".eps";
+    outname+="RespCorr";
+    outname+=drawResponseCorrected_;
+    outname+=".pdf";
     c->RedrawAxis();
     c->SaveAs(outname);
 
@@ -191,3 +211,63 @@ void PFFractionPlots::Plot() {
 
 }
 
+
+void PFFractionPlots::PlotDifferencesWithResponseCorrection() {
+
+
+
+  Extrapolation* MPFResponseResults = new Extrapolation("MPFResponseVsRunNumber",kalibriPlotsShortName());
+  chdir(outputPathROOT()+"/"+kalibriPlotsShortName_+"/"+plotsnames_);
+  std::cout << "indexToNormalizeTo_ " << MPFResponseResults->indexToNormalizeTo_  << std::endl;
+  for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
+    for(int conf_i=0;conf_i<configs_.size();conf_i++){
+      for(int j=0;j<2;j++){
+	for(int xbin_i=0;xbin_i<AllPlots_.at(conf_i).at(bin_i).at(j)->GetNbinsX();xbin_i++){
+	  Double_t FractionValue = AllPlots_.at(conf_i).at(bin_i).at(j)->GetBinContent(xbin_i);
+	  Double_t FractionError = AllPlots_.at(conf_i).at(bin_i).at(j)->GetBinError(xbin_i);
+	  Double_t ResponseValue = MPFResponseResults->AllPlots_.at(MPFResponseResults->indexToNormalizeTo_).at(bin_i).at(j)->GetBinContent(xbin_i);
+	  Double_t ResponseError = MPFResponseResults->AllPlots_.at(MPFResponseResults->indexToNormalizeTo_).at(bin_i).at(j)->GetBinError(xbin_i);
+	  if(DEBUGALL)std::cout << "conf_i " << conf_i << " bin_i " << bin_i << " j " << j << " xbin_i " << xbin_i << " AllPlots_.at(conf_i).at(bin_i).at(j)->GetBinContent(xbin_i) " << FractionValue << " MPFResponseResults->AllPlots_.at(MPFResponseResults->indexToNormalizeTo_).at(bin_i).at(j)->GetBinContent(xbin_i) " << ResponseValue << std::endl;
+	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetBinContent(xbin_i,FractionValue*ResponseValue);
+	  // plain f(x) = u * v gaussian error propagation:
+	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetBinError(xbin_i,TMath::Sqrt(TMath::Power(FractionValue*ResponseError,2)+TMath::Power(ResponseValue*FractionError,2)));
+	}
+      }
+    }
+  }
+  refreshRatiosDataMC();
+  drawResponseCorrected_="MPF";
+  Plot();
+
+
+
+  Extrapolation* RRResponseResults = new Extrapolation("RelResponseVsRunNumber",kalibriPlotsShortName());
+  chdir(outputPathROOT()+"/"+kalibriPlotsShortName_+"/"+plotsnames_);
+  std::cout << "indexToNormalizeTo_ " << RRResponseResults->indexToNormalizeTo_  << std::endl;
+  for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
+    for(int conf_i=0;conf_i<configs_.size();conf_i++){
+      for(int j=0;j<2;j++){
+	for(int xbin_i=0;xbin_i<AllPlots_.at(conf_i).at(bin_i).at(j)->GetNbinsX();xbin_i++){
+	  Double_t FractionValue = AllPlots_.at(conf_i).at(bin_i).at(j)->GetBinContent(xbin_i);
+	  Double_t FractionError = AllPlots_.at(conf_i).at(bin_i).at(j)->GetBinError(xbin_i);
+	  Double_t ResponseValue = RRResponseResults->AllPlots_.at(RRResponseResults->indexToNormalizeTo_).at(bin_i).at(j)->GetBinContent(xbin_i);
+	  Double_t ResponseError = RRResponseResults->AllPlots_.at(RRResponseResults->indexToNormalizeTo_).at(bin_i).at(j)->GetBinError(xbin_i);
+	  if(DEBUGALL)std::cout << "conf_i " << conf_i << " bin_i " << bin_i << " j " << j << " xbin_i " << xbin_i << " AllPlots_.at(conf_i).at(bin_i).at(j)->GetBinContent(xbin_i) " << FractionValue << " RRResponseResults->AllPlots_.at(RRResponseResults->indexToNormalizeTo_).at(bin_i).at(j)->GetBinContent(xbin_i) " << ResponseValue << std::endl;
+	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetBinContent(xbin_i,FractionValue*ResponseValue);
+	  // plain f(x) = u * v gaussian error propagation:
+	  AllPlots_.at(conf_i).at(bin_i).at(j)->SetBinError(xbin_i,TMath::Sqrt(TMath::Power(FractionValue*ResponseError,2)+TMath::Power(ResponseValue*FractionError,2)));
+	}
+      }
+    }
+  }
+  refreshRatiosDataMC();
+  drawResponseCorrected_="RR";
+  Plot();
+
+//  // somehow RR/MPFResponseResults seems to interfer with the PFFRactionPlots instance, deleting ResponseResults crashes destructor of PFFractionPlots instance. Any reason for this?
+//  // keep memory leak as a workaround (as this is just a plotting macro)
+//  // might be linked to BasePlotExtractor::refreshRatiosDataMC() ?
+//  delete MPFResponseResults;
+//  delete RRResponseResults;
+
+}
