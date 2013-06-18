@@ -16,6 +16,7 @@ void OverlayPlainProfileAnd2DPlots::addPlots(TString plotsnames,TString kalibriP
   std::cout << "bla " << std::endl;
   BasePlotExtractors_.push_back(new BasePlotExtractor(plotsnames,kalibriPlotsShortName));
   BasePlotExtractors_.back()->init();
+  std::cout << "bla " << std::endl;
   SpecificPlotNames_.push_back(specificPlotName);
   SpecificSampleNames_.push_back(specificSampleName);
   BinNumbers_.push_back(BinNumber);
@@ -27,6 +28,7 @@ int OverlayPlainProfileAnd2DPlots::IndexOfSpecificPlot(BasePlotExtractor* BPExtr
   for(int n_i=0;n_i<BPExtractor->names_.size();n_i++){
     if(specificPlotName==BPExtractor->names_.at(n_i))return n_i;
   }
+  std::cout << "warning: something wron.. no specific plot match" << std::endl;
   return -1;
 }
 
@@ -40,21 +42,22 @@ int OverlayPlainProfileAnd2DPlots::IndexOfSpecificSample(BasePlotExtractor* BPEx
     if(pConfig->sampleName(i->first)==specificSampleName)return idx;
     idx++;
   }
-
+  std::cout << "warning: something wron.. no specific sample match" << std::endl;
   return -1;
 }
 
 void OverlayPlainProfileAnd2DPlots::Init() {
+  if(DEBUG)std::cout << " runing OverlayPlainProfileAnd2DPlots::Init() for nExtrapols_" << nExtrapols_ << std::endl;
   //organizational stuff to select the correct plots (i.e. match specificPlotName to entries in list defined by plotsnames)
   for(unsigned int e_i=0;e_i<nExtrapols_;e_i++){
-    SpecificPlotIndices_.push_back(IndexOfSpecificPlot(BasePlotExtractors_.at(e_i),SpecificPlotNames_.at(e_i)));
-    //    std::cout << SpecificPlotIndices_.at(e_i) << std::endl;
-    assert (SpecificPlotIndices_.back()>-1);
-    SpecificSampleIndices_.push_back(IndexOfSpecificSample(BasePlotExtractors_.at(e_i),SpecificSampleNames_.at(e_i)));
-    std::cout << SpecificSampleIndices_.back() << std::endl;
-    assert (SpecificSampleIndices_.back()>-1);
+//    SpecificPlotIndices_.push_back(IndexOfSpecificPlot(BasePlotExtractors_.at(e_i),SpecificPlotNames_.at(e_i)));
+//    //    std::cout << SpecificPlotIndices_.at(e_i) << std::endl;
+//    assert (SpecificPlotIndices_.back()>-1);
+//    SpecificSampleIndices_.push_back(IndexOfSpecificSample(BasePlotExtractors_.at(e_i),SpecificSampleNames_.at(e_i)));
+//    std::cout << SpecificSampleIndices_.back() << std::endl;
+//    assert (SpecificSampleIndices_.back()>-1);
     //    BasePlotExtractors_.at(e_i)->configs_.at(SpecificPlotIndices_.at(e_i))
-
+    std::cout << "importing from BasePlotExtractor now" << std::endl;
     collectOneDPlots_.push_back((TH1D*)BasePlotExtractors_.at(e_i)->AllPlots_.at(SpecificPlotIndices_.at(e_i)).at(BinNumbers_.at(e_i)).at(SpecificSampleIndices_.at(e_i))->Clone());
     collectTwoDPlots_.push_back((TH2D*)BasePlotExtractors_.at(e_i)->AllTwoDPlots_.at(SpecificPlotIndices_.at(e_i)).at(BinNumbers_.at(e_i)).at(SpecificSampleIndices_.at(e_i))->Clone());
     collectOneDPlots_.back()->UseCurrentStyle();
@@ -87,14 +90,27 @@ void OverlayPlainProfileAnd2DPlots::Init() {
 }
 
 void OverlayPlainProfileAnd2DPlots::checkConsistency() {
-  std::cout << "checking consistency now..." << std::endl;
-  nBins_=BasePlotExtractors_.at(0)->configs_.at(0)->nBins();
-  nXBins_=BasePlotExtractors_.at(0)->configs_.at(0)->nXBins();
   nExtrapols_=BasePlotExtractors_.size();
+  for(unsigned int e_i=0;e_i<nExtrapols_;e_i++){
+    SpecificPlotIndices_.push_back(IndexOfSpecificPlot(BasePlotExtractors_.at(e_i),SpecificPlotNames_.at(e_i)));
+    //    std::cout << SpecificPlotIndices_.at(e_i) << std::endl;
+    assert (SpecificPlotIndices_.back()>-1);
+    SpecificSampleIndices_.push_back(IndexOfSpecificSample(BasePlotExtractors_.at(e_i),SpecificSampleNames_.at(e_i)));
+    std::cout << SpecificSampleIndices_.back() << std::endl;
+    assert (SpecificSampleIndices_.back()>-1);
+    //    BasePlotExtractors_.at(e_i)->configs_.at(SpecificPlotIndices_.at(e_i))
+  }
+
+
+  std::cout << "checking consistency now..." << std::endl;
+  std::cout << SpecificPlotIndices_.at(0) << std::endl;
+  nBins_=BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->nBins();
+  nXBins_=BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->nXBins();
 
   for(unsigned int e_i=0;e_i<nExtrapols_;e_i++){
-    assert(BasePlotExtractors_.at(e_i)->configs_.at(0)->nBins()==nBins_);
-    assert(BasePlotExtractors_.at(e_i)->configs_.at(0)->nXBins()==nXBins_);
+    std::cout << SpecificPlotIndices_.at(e_i) << std::endl;
+    //    assert(BasePlotExtractors_.at(e_i)->configs_.at(SpecificPlotIndices_.at(e_i))->nBins()==nBins_);
+    assert(BasePlotExtractors_.at(e_i)->configs_.at(SpecificPlotIndices_.at(e_i))->nXBins()==nXBins_);
   }
 
 //  for(int bin_i=0;bin_i<nBins_;bin_i++){
@@ -121,8 +137,11 @@ void OverlayPlainProfileAnd2DPlots::plotNormalizedComboOverlays() {
   DefaultStyles style;
 
   TCanvas* c2 = new TCanvas("c2","",600,600);
-  if( BasePlotExtractors_.at(0)->configs_.at(0)->logX() ) c2->SetLogx(1);
-  if( BasePlotExtractors_.at(0)->configs_.at(0)->logY() ) c2->SetLogy(1);
+  if( BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->logX() ) c2->SetLogx(1);
+  if( BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->logY() ) c2->SetLogy(1);
+  TLine *hLine2 = new TLine(BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->xMin(),1.0,BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->xMax(),1.0);
+  hLine2->SetLineStyle(2);
+  hLine2->SetLineColor(1);
 
   std::cout << "nExtrapols_ " << nExtrapols_ << " nExtrapols_%2: " << nExtrapols_%2 << " !nExtrapols_%2: " << !nExtrapols_%2<< std::endl;
 
@@ -185,6 +204,10 @@ void OverlayPlainProfileAnd2DPlots::plotNormalizedComboOverlays() {
     collectNormalizedComboRatios.at(e_i)->SetMarkerStyle(style.getMarker(e_i));
     collectNormalizedComboRatios.at(e_i)->GetListOfFunctions()->Delete();
     collectNormalizedComboRatios.at(e_i)->SetTitle("");
+       collectNormalizedComboRatios.at(e_i)->GetXaxis()->SetRangeUser(30,500);
+       hLine2->SetX1(30);
+       hLine2->SetX2(500);
+
   }
 
 
@@ -193,7 +216,7 @@ void OverlayPlainProfileAnd2DPlots::plotNormalizedComboOverlays() {
   if(ymaxrange_!=-1)  collectNormalizedComboRatios.at(0)->GetYaxis()->SetRangeUser(yminrange_,ymaxrange_);
   else  collectNormalizedComboRatios.at(0)->GetYaxis()->SetRangeUser(BasePlotExtractors_.at(0)->yProfileMinMax().at(0),BasePlotExtractors_.at(0)->yProfileMinMax().at(1));
   collectNormalizedComboRatios.at(0)->Draw();
-  
+  hLine2->Draw("same");
   for(unsigned int e_i=0;e_i<nExtrapols_/2;e_i++){
     std::cout << "plotting " << collectNormalizedComboRatios.at(e_i)->GetName() << std::endl;
     collectNormalizedComboRatios.at(e_i)->Draw("same");
@@ -207,10 +230,13 @@ void OverlayPlainProfileAnd2DPlots::plotNormalizedComboOverlays() {
 
   leg1->Draw();
   BasePlotExtractors_.at(0)->drawCMSPrel();
-  TString outname = "OneDNormalizedComboRatios_"+ util::cleanStringMore(titleLabel_)+".eps";
+  TString outname = "OneDNormalizedComboRatios_"+ util::cleanStringMore(titleLabel_);
   c2->RedrawAxis();
-  c2->SaveAs(outname);
+  c2->SaveAs(outname+".eps");
 
+  TFile file("collectPlots.root","UPDATE");
+  for(unsigned int e_i=0;e_i<nExtrapols_/2;e_i++)util::FileOps::toFiles(collectNormalizedComboRatios.at(e_i), &file, outname+"_"+LegendEntries_.at(e_i*2));
+  file.Close();
 
   chdir(".."); 
   
@@ -237,7 +263,14 @@ void OverlayPlainProfileAnd2DPlots::plotNormalizedDoubleComboOverlays() {
   DefaultStyles style;
 
   TCanvas* c2 = new TCanvas("c2","",600,600);
-  if( BasePlotExtractors_.at(0)->configs_.at(0)->logX() ) c2->SetLogx(1);
+  //  SpecificPlotIndices_.at(e_i)
+  std::cout << "BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->logX(): " << BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->logX() << std::endl;
+  std::cout << "BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->logX(): " << BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->logX() << std::endl;
+  if( BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->logX() ) c2->SetLogx(1);
+  TLine *hLine2 = new TLine(BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->xMin(),1.0,BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->xMax(),1.0);
+  hLine2->SetLineStyle(2);
+  hLine2->SetLineColor(1);
+
 
   std::cout << "nExtrapols_ " << nExtrapols_ << " nExtrapols_%4: " << nExtrapols_%4 << " !nExtrapols_%4: " << !nExtrapols_%4<< std::endl;
 
@@ -265,6 +298,10 @@ void OverlayPlainProfileAnd2DPlots::plotNormalizedDoubleComboOverlays() {
     collectNormalizedDoubleComboRatios.at(e_i)->SetMarkerStyle(style.getMarker(e_i));
     collectNormalizedDoubleComboRatios.at(e_i)->GetListOfFunctions()->Delete();
     collectNormalizedDoubleComboRatios.at(e_i)->SetTitle("");
+    //  for summaryplot: 
+       collectNormalizedDoubleComboRatios.at(e_i)->GetXaxis()->SetRangeUser(30,500);
+       hLine2->SetX1(30);
+       hLine2->SetX2(500);
   }
 
 
@@ -272,8 +309,9 @@ void OverlayPlainProfileAnd2DPlots::plotNormalizedDoubleComboOverlays() {
   if(yAxisLabel_!="")collectNormalizedDoubleComboRatios.at(0)->GetYaxis()->SetTitle(yAxisLabel_);
   if(ymaxrange_!=-1)  collectNormalizedDoubleComboRatios.at(0)->GetYaxis()->SetRangeUser(yminrange_,ymaxrange_);
   else  collectNormalizedDoubleComboRatios.at(0)->GetYaxis()->SetRangeUser(BasePlotExtractors_.at(0)->yProfileMinMax().at(0),BasePlotExtractors_.at(0)->yProfileMinMax().at(1));
+
   collectNormalizedDoubleComboRatios.at(0)->Draw();
-  
+  hLine2->Draw();
   for(unsigned int e_i=0;e_i<nDoubleRatios;e_i++){
     std::cout << "plotting " << collectNormalizedDoubleComboRatios.at(e_i)->GetName() << std::endl;
     collectNormalizedDoubleComboRatios.at(e_i)->Draw("same");
@@ -287,10 +325,13 @@ void OverlayPlainProfileAnd2DPlots::plotNormalizedDoubleComboOverlays() {
 
   leg1->Draw();
   BasePlotExtractors_.at(0)->drawCMSPrel();
-  TString outname = "OneDNormalizedDoubleComboRatios_"+ util::cleanStringMore(titleLabel_)+".eps";
+  TString outname = "OneDNormalizedDoubleComboRatios_"+ util::cleanStringMore(titleLabel_);
   c2->RedrawAxis();
-  c2->SaveAs(outname);
+  c2->SaveAs(outname+".eps");
 
+  TFile file("collectPlots.root","UPDATE");
+  for(unsigned int e_i=0;e_i<nDoubleRatios;e_i++)util::FileOps::toFiles(collectNormalizedDoubleComboRatios.at(e_i), &file, outname+"_"+LegendEntries_.at(e_i*4));
+  file.Close();
 
   chdir(".."); 
   
@@ -313,9 +354,16 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
   DefaultStyles PFFractionStyle;
   PFFractionStyle.setStyle("PFComp");
   TCanvas* c2 = new TCanvas("c2","",600,600);
-  if( BasePlotExtractors_.at(0)->configs_.at(0)->logX() ) c2->SetLogx(1);
-  if( BasePlotExtractors_.at(0)->configs_.at(0)->logY() ) c2->SetLogy(1);
+  if( BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->logX() ) c2->SetLogx(1);
+  if( BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->logY() ) c2->SetLogy(1);
 
+  TLine *hLine2 = new TLine(BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->xMin(),1.0,BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->xMax(),1.0);
+  hLine2->SetLineStyle(2);
+  hLine2->SetLineColor(1);
+
+  TLine *hLineZero = new TLine(BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->xMin(),0.0,BasePlotExtractors_.at(0)->configs_.at(SpecificPlotIndices_.at(0))->xMax(),0.0);
+  hLineZero->SetLineStyle(2);
+  hLineZero->SetLineColor(1);
 
 
   for(unsigned int e_i=0;e_i<nExtrapols_;e_i++){
@@ -342,8 +390,10 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
   if(yAxisLabel_!="")collectOneDPlots_.at(0)->GetYaxis()->SetTitle(yAxisLabel_);
   if(ymaxrange_!=-1)  collectOneDPlots_.at(0)->GetYaxis()->SetRangeUser(yminrange_,ymaxrange_);
   else collectOneDPlots_.at(0)->GetYaxis()->SetRangeUser(BasePlotExtractors_.at(0)->yProfileMinMax().at(0),BasePlotExtractors_.at(0)->yProfileMinMax().at(1));
+
+
   collectOneDPlots_.at(0)->Draw();
-  
+  hLine2->Draw("same");
   for(unsigned int e_i=0;e_i<nExtrapols_;e_i++){
     std::cout << "plotting " << collectOneDPlots_.at(e_i)->GetName() << std::endl;
     collectOneDPlots_.at(e_i)->Draw("same");
@@ -362,9 +412,15 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
 
   leg1->Draw();
   BasePlotExtractors_.at(0)->drawCMSPrel();
-  TString outname = "OneD_"+ util::cleanStringMore(titleLabel_)+".eps";
+  TString outname = "OneD_"+ util::cleanStringMore(titleLabel_);
   c2->RedrawAxis();
-  c2->SaveAs(outname);
+  c2->SaveAs(outname+".eps");
+
+  TFile file("collectPlots.root","UPDATE");
+  for(unsigned int e_i=0;e_i<nExtrapols_;e_i++)util::FileOps::toFiles(collectOneDPlots_.at(e_i), &file, outname+"_"+LegendEntries_.at(e_i));
+  file.Close();
+
+
 
   std::cout << "test " << nExtrapols_ << std::endl;
   for(unsigned int e_i=1;e_i<nExtrapols_;e_i++){
@@ -383,6 +439,7 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
  
   std::cout << "about to export ratios as well" <<std::endl;
   collectRatios_.at(0)->Draw("");
+  hLineZero->Draw("same");
   collectRatios_.at(0)->GetYaxis()->SetRangeUser(-10,15);
   for(unsigned int i=0;i<collectRatios_.size();i++){
     collectRatios_.at(i)->Draw("same");
@@ -515,7 +572,7 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
 //	if(tempMinMaxPair.first<minMaxPair.first)minMaxPair.first=tempMinMaxPair.first;
 //	if(tempMinMaxPair.second<minMaxPair.second)minMaxPair.second=tempMinMaxPair.second;
 //      }
-//      c2->DrawFrame(0,minMaxPair.first*0.85-0.05,BasePlotExtractors_.at(0).cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+BasePlotExtractors_.at(0).configs_.at(0)->cutAxisTitle()+";MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
+//      c2->DrawFrame(0,minMaxPair.first*0.85-0.05,BasePlotExtractors_.at(0).cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+BasePlotExtractors_.at(0).configs_.at(SpecificPlotIndices_.at(0))->cutAxisTitle()+";MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
 //      
 //      //    collectGraphs.at(0)->Draw("P");
 //      for(unsigned int e_i=0;e_i<nExtrapols_;e_i++){
@@ -536,7 +593,7 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
 //      
 //      TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.65-nExtrapols_*util::LabelFactory::lineHeight());
 //      label->AddText(BasePlotExtractors_.at(0).jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
-//      label->AddText((BasePlotExtractors_.at(0).configs_.at(0)->xBinTitle(xBin_i,BasePlotExtractors_.at(0).configs_.at(0)->binEdges()->at(bin_i),BasePlotExtractors_.at(0).configs_.at(0)->binEdges()->at(bin_i+1),0)).c_str()/*+(TString)" and "*/);
+//      label->AddText((BasePlotExtractors_.at(0).configs_.at(SpecificPlotIndices_.at(0))->xBinTitle(xBin_i,BasePlotExtractors_.at(0).configs_.at(SpecificPlotIndices_.at(0))->binEdges()->at(bin_i),BasePlotExtractors_.at(0).configs_.at(SpecificPlotIndices_.at(0))->binEdges()->at(bin_i+1),0)).c_str()/*+(TString)" and "*/);
 //      label->Draw("same");
 //      TLegend* leg1 = util::LabelFactory::createLegendWithOffset(nExtrapols_,0.75-nExtrapols_*util::LabelFactory::lineHeight());
 //      for(unsigned int e_i=0;e_i<nExtrapols_;e_i++){
@@ -549,7 +606,7 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
 //      for(unsigned int e_i=1;e_i<nExtrapols_;e_i++){
 //	outname+="_"+BasePlotExtractors_.at(e_i).kalibriPlotsShortName()+BasePlotExtractors_.at(e_i).plotsnames_;
 //      }
-//      outname+="_ExtrapolPtThree_MCDataRatio_"+BasePlotExtractors_.at(0).configs_.at(0)->binName(bin_i)+"_"+BasePlotExtractors_.at(0).configs_.at(0)->xBinName(xBin_i);
+//      outname+="_ExtrapolPtThree_MCDataRatio_"+BasePlotExtractors_.at(0).configs_.at(SpecificPlotIndices_.at(0))->binName(bin_i)+"_"+BasePlotExtractors_.at(0).configs_.at(SpecificPlotIndices_.at(0))->xBinName(xBin_i);
 //      outname+=".eps";
 //      c2->SaveAs(outname);
 //    }//end plotting in xbins
@@ -565,7 +622,7 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
 //  	if(tempMinMaxPair.second<minMaxPair.second)minMaxPair.second=tempMinMaxPair.second;
 //        }
 //	//        std::cout << "works here" << std::endl;
-//        c2->DrawFrame(0,minMaxPair.first*0.85-0.05,BasePlotExtractors_.at(e_i).cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+BasePlotExtractors_.at(e_i).configs_.at(0)->cutAxisTitle()+";MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
+//        c2->DrawFrame(0,minMaxPair.first*0.85-0.05,BasePlotExtractors_.at(e_i).cutNumbers_.back()+0.05,minMaxPair.second*1.1,(";cut on "+BasePlotExtractors_.at(e_i).configs_.at(SpecificPlotIndices_.at(0))->cutAxisTitle()+";MC/Data Ratio"/*"#sqrt{2} #sigma"*/).c_str());
 //        for(Int_t xBin_i=0;xBin_i<nXBins_;xBin_i++){
 //  	BasePlotExtractors_.at(e_i).drawConfidenceIntervals(allCollectedGraphsXBins_.at(xBin_i).at(bin_i).at(e_i));
 //        }
@@ -585,7 +642,7 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
 //	//        std::cout << "works here2" << std::endl;
 //        TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.6-(nXBins_/3)*util::LabelFactory::lineHeight());
 //        label->AddText(BasePlotExtractors_.at(e_i).jetLabel_+"; "+ BasePlotExtractors_.at(e_i).yProfileTitle()+" - " + BasePlotExtractors_.at(e_i).kalibriPlotsShortName());//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
-//        label->AddText((TString)"0/1 below #equiv 0#leq" + (BasePlotExtractors_.at(e_i).configs_.at(0)->xTitle()).c_str() + (TString) "<1" );
+//        label->AddText((TString)"0/1 below #equiv 0#leq" + (BasePlotExtractors_.at(e_i).configs_.at(SpecificPlotIndices_.at(0))->xTitle()).c_str() + (TString) "<1" );
 //        label->Draw("same");
 //        TLegend* leg1 = util::LabelFactory::createLegendWithOffset(nExtrapols_,0.68-(nXBins_/3)*util::LabelFactory::lineHeight());
 //        leg1->SetNColumns(3);
@@ -593,16 +650,16 @@ void OverlayPlainProfileAnd2DPlots::plotOverlays() {
 //        for(Int_t xBin_i=0;xBin_i<nXBins_;xBin_i++){
 //  	//	for(unsigned int e_i=0;e_i<nExtrapols_;e_i++){
 //  	TString temp="";
-//  	temp+=(BasePlotExtractors_.at(e_i).configs_.at(0)->xBinEdges()->at(xBin_i));
+//  	temp+=(BasePlotExtractors_.at(e_i).configs_.at(SpecificPlotIndices_.at(0))->xBinEdges()->at(xBin_i));
 //  	temp+="/";
-//  	temp+=(BasePlotExtractors_.at(e_i).configs_.at(0)->xBinEdges()->at(xBin_i+1));
+//  	temp+=(BasePlotExtractors_.at(e_i).configs_.at(SpecificPlotIndices_.at(0))->xBinEdges()->at(xBin_i+1));
 //  	leg1->AddEntry(allCollectedGraphsXBins_.at(xBin_i).at(bin_i).at(e_i),temp ,"LP");
 //        }
 //        leg1->Draw();
 //        BasePlotExtractors_.at(e_i).drawCMSPrel();
 //        
 //        TString outname = BasePlotExtractors_.at(e_i).kalibriPlotsShortName()+BasePlotExtractors_.at(e_i).plotsnames_;
-//        outname+="_ExtrapolPtThree_XBins_MCDataRatio_"+BasePlotExtractors_.at(e_i).configs_.at(0)->binName(bin_i)+"_"+BasePlotExtractors_.at(e_i).configs_.at(0)->xBinName(0);
+//        outname+="_ExtrapolPtThree_XBins_MCDataRatio_"+BasePlotExtractors_.at(e_i).configs_.at(SpecificPlotIndices_.at(0))->binName(bin_i)+"_"+BasePlotExtractors_.at(e_i).configs_.at(SpecificPlotIndices_.at(0))->xBinName(0);
 //        outname+=".eps";
 //        c2->SaveAs(outname);
 //      }//end plotting in BasePlotExtractors
