@@ -32,6 +32,7 @@
 #include "util/StyleSettings.h"
 
 const bool DEBUG=false;
+const bool DEBUGALL=false;
 
 
 typedef std::vector<TH1D*> TH1vec_t;
@@ -111,6 +112,8 @@ class BasePlotExtractor {
   VecOfTH1vec_t AllRatiosDataMC_;
   VecOfTH1vec_t AllDifferencesDataMC_;
   TH1vec_t RatioVsBinVarHistos_;
+  TH1vec_t MCVsBinVarHistos_;
+  TH1vec_t DataVsBinVarHistos_;
   VecOfTH1vec_t AllDeviationsVsBinVarHistos_;
   //  TH1vec_t DeviationsOfRatioVsBinVarHistos_;
   TString kalibriPlotsShortName_;

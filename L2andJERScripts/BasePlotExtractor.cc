@@ -112,35 +112,61 @@ void BasePlotExtractor::readInExtraInfo() {
 
 BasePlotExtractor::~BasePlotExtractor() {
   std::cout << "calling the destructor of BasePlotExtractor " << kalibriPlotsShortName() << " and " << plotsnames_ << std::endl;
+  //  assert(AllPlots_.size()==AllTwoDPlots_.size());
   for(unsigned int i=0;i<AllPlots_.size();i++){
+    //    assert(AllPlots_.at(i).size()==AllTwoDPlots_.at(i).size());
     for(unsigned int j=0;j<AllPlots_.at(i).size();j++){
       for(unsigned int k=0;k<AllPlots_.at(i).at(j).size();k++){
+	if(DEBUG)	std::cout << "trying to delete i "  << i << " j " << j << " k " << k << std::endl;
 	delete AllPlots_.at(i).at(j).at(k);
+      }
+    }
+  }
+  std::cout << "deleted allplots vector" << std::endl;
+
+  for(unsigned int i=0;i<AllTwoDPlots_.size();i++){
+    for(unsigned int j=0;j<AllTwoDPlots_.at(i).size();j++){
+      for(unsigned int k=0;k<AllTwoDPlots_.at(i).at(j).size();k++){
 	delete AllTwoDPlots_.at(i).at(j).at(k);
       }
     }
   }
+  std::cout << "deleted alltwodplots vector" << std::endl;
+
+  std::cout << "AllRatiosDataMC_.size() " << AllRatiosDataMC_.size() << " AllDifferencesDataMC_.size() " << AllDifferencesDataMC_.size() << std::endl;
+  assert(AllRatiosDataMC_.size()==AllDifferencesDataMC_.size());
+  std::cout << "deleting AllRatiosDataMC_ and AllDifferencesDataMC_ now" << std::endl;
   for(unsigned int i=0;i<AllRatiosDataMC_.size();i++){
     for(unsigned int j=0;j<AllRatiosDataMC_.at(i).size();j++){
+      //      std::cout << "deleting AllRatiosDataMC_ and AllDifferencesDataMC_ now" << std::endl;
       delete AllRatiosDataMC_.at(i).at(j);
       delete AllDifferencesDataMC_.at(i).at(j);
     }
   }
+  std::cout << "configs_.size() " << configs_.size() << " functions_.size() " << functions_.size() << " profiles_.size() " << profiles_.size() << std::endl;
+  std::cout << "deleted AllRatiosDataMC and AllDifferencesDataMC vector" << std::endl;
+
+  assert (configs_.size()==functions_.size());
+  assert (configs_.size()==profiles_.size());
   for(unsigned int i=0;i<configs_.size();i++){
     delete configs_.at(i);
     delete functions_.at(i);
     delete profiles_.at(i);
   }
+  std::cout << "deleted configs functions profiles vector" << std::endl;
   for(unsigned int i=0;i<RatioVsBinVarHistos_.size();i++){
     delete RatioVsBinVarHistos_.at(i);
+    delete MCVsBinVarHistos_.at(i);
+    delete DataVsBinVarHistos_.at(i);
   }
+  std::cout << "deleted RatioVsBinVarHistos vector" << std::endl;
 
   for(unsigned int i=0;i<AllDeviationsVsBinVarHistos_.size();i++){
     for(unsigned int j=0;j<AllDeviationsVsBinVarHistos_.at(i).size();j++){
       delete AllDeviationsVsBinVarHistos_.at(i).at(j);
     }
   }
-
+  std::cout << "deleted AllDeviationsVsBinVarHistos vector" << std::endl;
 
   delete inf_;  //  inf_->Close();
 
@@ -287,21 +313,47 @@ void BasePlotExtractor::init(TString profileType) {
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
 void BasePlotExtractor::refreshRatiosDataMC(){
+  //delete old stuff
+  std::cout << "AllRatiosDataMC_.size() " << AllRatiosDataMC_.size() << " AllDifferencesDataMC_.size() " << AllDifferencesDataMC_.size() << std::endl;
+  assert(AllRatiosDataMC_.size()==AllDifferencesDataMC_.size());
+  std::cout << "deleting AllRatiosDataMC_ and AllDifferencesDataMC_ now" << std::endl;
+  for(unsigned int i=0;i<AllRatiosDataMC_.size();i++){
+    for(unsigned int j=0;j<AllRatiosDataMC_.at(i).size();j++){
+      //      std::cout << "deleting AllRatiosDataMC_ and AllDifferencesDataMC_ now" << std::endl;
+      delete AllRatiosDataMC_.at(i).at(j);
+      delete AllDifferencesDataMC_.at(i).at(j);
+    }
+  }
+  std::cout << "configs_.size() " << configs_.size() << " functions_.size() " << functions_.size() << " profiles_.size() " << profiles_.size() << std::endl;
+  std::cout << "deleted AllRatiosDataMC and AllDifferencesDataMC vector" << std::endl;
+
+
+
+
   VecOfTH1vec_t AllRatiosDataMC;
+  VecOfTH1vec_t AllDifferencesDataMC;
 
   // Read different control plot names
   for(size_t i = 0; i < names_.size(); i++) {
     TH1vec_t DataMCRatios; //Vector to contain Data/MC-ratios
+    TH1vec_t DataMCDifferences; //Vector to contain Data-MC differences
     for(int bin_i=0;bin_i<configs_.at(i)->nBins();bin_i++){
+      // Do ratios of first and second (0 should be Data, 1 should be MC, can be checked in output above)
       TH1D* ratio = (TH1D*) AllPlots_.at(i).at(bin_i).at(0)->Clone();
       ratio->Sumw2();
       ratio->Divide(AllPlots_.at(i).at(bin_i).at(0),AllPlots_.at(i).at(bin_i).at(1));
       DataMCRatios.push_back(ratio);
+      TH1D* difference = (TH1D*) AllPlots_.at(i).at(bin_i).at(0)->Clone();
+      difference->Sumw2();
+      difference->Add(difference, AllPlots_.at(i).at(bin_i).at(1), 100, -100);
+      DataMCDifferences.push_back(difference);
     }
     AllRatiosDataMC.push_back(DataMCRatios);
+    AllDifferencesDataMC.push_back(DataMCDifferences);
   }
   //save to class instance
   AllRatiosDataMC_ = AllRatiosDataMC;
+  AllDifferencesDataMC_   = AllDifferencesDataMC;
   std::cout << "done with refreshing ratio-plots" <<std::endl;
 }
 
@@ -314,6 +366,8 @@ void BasePlotExtractor::refreshRatiosDataMC(){
 // ----------------------------------------------------------------   
 void BasePlotExtractor::makeRatioVsBinVarHistos(){
   TH1vec_t RatioVsBinVarHistos;
+  TH1vec_t MCVsBinVarHistos;
+  TH1vec_t DataVsBinVarHistos;
 
   VecOfTH1vec_t AllDeviationsVsBinVarHistos;
   //  TH1vec_t DeviationsOfRatioVsBinVarHistos;
@@ -326,6 +380,16 @@ void BasePlotExtractor::makeRatioVsBinVarHistos(){
     RatioVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
     RatioVsBinVar->GetYaxis()->SetTitle(dataLabel_+"/"+mcLabel_+" ratio (const fit)");
 
+    TH1D* MCVsBinVar = new TH1D(("MCVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
+    MCVsBinVar->Sumw2();
+    MCVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
+    MCVsBinVar->GetYaxis()->SetTitle(mcLabel_+" resp.estimator (const fit)");
+
+    TH1D* DataVsBinVar = new TH1D(("DataVsBinVar"+names_.at(conf_i)).c_str(),"",configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front()));
+    DataVsBinVar->Sumw2();
+    DataVsBinVar->GetXaxis()->SetTitle(configs_.at(conf_i)->binAxisTitle().c_str());
+    DataVsBinVar->GetYaxis()->SetTitle(dataLabel_ + " resp. estimator (const fit)");
+
     TH1vec_t DeviationsVsBinVarHistos;
     for(size_t dev_i =0; dev_i<DeviationTypes_.size();dev_i++){
       DeviationsVsBinVarHistos.push_back(new TH1D(("DeviationsOfRatioVsBinVar"+names_.at(conf_i)+"_"+DeviationTypes_.at(dev_i).first)/*.c_str()*/,(";"+configs_.at(conf_i)->binAxisTitle()+";Weighted standard deviation [%]").c_str(),configs_.at(conf_i)->nBins(),&(configs_.at(conf_i)->binEdges()->front())));
@@ -336,11 +400,14 @@ void BasePlotExtractor::makeRatioVsBinVarHistos(){
 
 
     //  for(int bin_i=0;bin_i<configs_.at(0)->nBins()-1;bin_i++){
-  for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
+  for(int bin_i=0;bin_i<configs_.at(conf_i)->nBins();bin_i++){
     fitFunctionsToPlot(AllRatiosDataMC_.at(conf_i).at(bin_i));
     fillRatioVsBinVarPlot(RatioVsBinVar,AllRatiosDataMC_.at(conf_i).at(bin_i),bin_i,"fit_const");
-    fitFunctionsToPlot(AllPlots_.at(conf_i).at(bin_i).at(1));
-    fitFunctionsToPlot(AllPlots_.at(conf_i).at(bin_i).at(0));
+    fitFunctionsToPlot(AllPlots_.at(conf_i).at(bin_i).at(1)); //mc
+    fitFunctionsToPlot(AllPlots_.at(conf_i).at(bin_i).at(0)); //data
+
+    fillRatioVsBinVarPlot(MCVsBinVar,  AllPlots_.at(conf_i).at(bin_i).at(1),bin_i,"fit_const");
+    fillRatioVsBinVarPlot(DataVsBinVar,AllPlots_.at(conf_i).at(bin_i).at(0),bin_i,"fit_const");
 
     for(size_t dev_i =0; dev_i<DeviationTypes_.size();dev_i++){
       if(DeviationTypes_.at(dev_i).first=="RatioDev")fillDeviationsOfRatioVsBinVarPlot(DeviationsVsBinVarHistos.at(dev_i),AllRatiosDataMC_.at(conf_i).at(bin_i),bin_i,"fit_const");
@@ -353,10 +420,16 @@ void BasePlotExtractor::makeRatioVsBinVarHistos(){
 //    std::cout << RatioVsBinVar->GetBinContent(bin_i+1) << ", " << std::endl;
 //  }
   RatioVsBinVarHistos.push_back(RatioVsBinVar);
+  MCVsBinVarHistos  .push_back(MCVsBinVar  );
+  DataVsBinVarHistos.push_back(DataVsBinVar);
+
+
   AllDeviationsVsBinVarHistos.push_back(DeviationsVsBinVarHistos);
   //  DeviationsOfRatioVsBinVarHistos.push_back(DeviationsOfRatioVsBinVar);  
   }
   RatioVsBinVarHistos_=RatioVsBinVarHistos;
+  MCVsBinVarHistos_=MCVsBinVarHistos;
+  DataVsBinVarHistos_=DataVsBinVarHistos;
   AllDeviationsVsBinVarHistos_=AllDeviationsVsBinVarHistos;
   //DeviationsOfRatioVsBinVarHistos_=DeviationsOfRatioVsBinVarHistos;
 }
@@ -440,7 +513,7 @@ void BasePlotExtractor::fillDeviationsOfRatioVsBinVarPlot(TH1D* DeviationsOfRati
     }
     Double_t SumDeviations=0;
     for(int i=1;i<DeviationsFromFit.size();i++){
-      if(DEBUG)std::cout << DeviationsFromFit.at(i) << std::endl;
+      if(DEBUG)std::cout << "DeviationsFromFit.at(i): " << DeviationsFromFit.at(i) << std::endl;
       SumDeviations+=DeviationsFromFit.at(i);
     }
     if(DeviationsFromFit.size()>0){
@@ -450,14 +523,18 @@ void BasePlotExtractor::fillDeviationsOfRatioVsBinVarPlot(TH1D* DeviationsOfRati
     }
     else std::cout << "WARNING: apparently no entries... something went wrong?" << std::endl;
 
+    if(DEBUG)std::cout << "about to set bincontent for bin_i " << bin_i << std::endl;
     DeviationsOfRatioVsBinVarHisto->SetBinError(bin_i+1,0);
     Double_t fitResultConst = HistoOfBin_i->GetFunction(func_name)->GetParameter(0);
     //weighted standard deviation
     DeviationsOfRatioVsBinVarHisto->SetBinContent(bin_i+1,getWeightedStandardDeviation(RatioValues,RatioErrorValues)/fitResultConst*100);//DeviationsFromFit.size()>5 ? SumDeviations : 0);
+    if(DEBUG)std::cout << "set bincontent for bin_i " << bin_i << std::endl;
 	
 	for(size_t i = 0; i < DeviationIndices.size(); ++i) {
 	  delete DeviationIndices[i];
 	}
+    if(DEBUG)std::cout << "deleted DeviationIndices" << std::endl;
+    
   }
   else {
     std::cout << DeviationsOfRatioVsBinVarHisto->GetName() << "WARNING: NO FIT FUNCTIONS ADDED... SETTING BIN TO ZERO: " << bin_i<< std::endl;
@@ -855,6 +932,8 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
       return &ControlPlotsFunction::twoJetsPtBalanceEventJetMomentPhiPhi; 
     if( varName == "meanMoment" )
       return &ControlPlotsFunction::twoJetsPtBalanceEventJetMeanMoment;
+    if( varName == "MET" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventMET;
     if( varName == "VtxN" )
       return &ControlPlotsFunction::twoJetsPtBalanceEventVtxN;
     if( varName == "MCNPUVtx" )
@@ -873,10 +952,24 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
       return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFHad_Fraction;
     if( varName == "PF_HFEm_Fraction" )
       return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFEm_Fraction;
+    if( varName == "PF_CH_RespCorrFraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_CH_RespCorrFraction;
+    if( varName == "PF_NH_RespCorrFraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_NH_RespCorrFraction;
+    if( varName == "PF_PH_RespCorrFraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_PH_RespCorrFraction;
+    if( varName == "PF_EL_RespCorrFraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_EL_RespCorrFraction;
+    if( varName == "PF_HFHad_RespCorrFraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFHad_RespCorrFraction;
+    if( varName == "PF_HFEm_RespCorrFraction" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventPF_HFEm_RespCorrFraction;
     if( varName == "Flavor" )
       return &ControlPlotsFunction::twoJetsPtBalanceEventJetFlavor;
     if( varName == "DeltaPhi" )
       return &ControlPlotsFunction::twoJetsPtBalanceEventDeltaPhi;
+    if( varName == "ClosestJetdR" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventClosestJetdR;
     if( varName == "ThirdJetFraction" )
       return &ControlPlotsFunction::twoJetsPtBalanceEventThirdJetFraction;
     if( varName == "ThirdJetFractionPlain" )
@@ -895,6 +988,12 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
       return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3L4Corrected;
     if( varName == "Asymmetry" && type == ControlPlotsConfig::L2L3ResL4 )
       return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetryL2L3ResL4Corrected;
+    if( varName == "GenAsymmetry" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventGenAsymmetry;
+    if( varName == "GenLeadAsymmetry" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventGenLeadAsymmetry;  
+    if( varName == "GenBarrAsymmetry" )
+      return &ControlPlotsFunction::twoJetsPtBalanceEventGenBarrAsymmetry;       
     if( varName == "B" && type == ControlPlotsConfig::Uncorrected )
       return &ControlPlotsFunction::twoJetsPtBalanceEventB;
     if( varName == "B" && type == ControlPlotsConfig::Kalibri )
@@ -919,7 +1018,6 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
       return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response;
     if( varName == "MCTruthResponse" && type == ControlPlotsConfig::L2L3Res )
       return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response;
-
   }
 
   //add truth functions in addition for compatibility with JEC validation plots
@@ -945,8 +1043,10 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
     return &ControlPlotsFunction::jetTruthEventJetMeanMoment;
   if( varName == "Flavor" )
     return &ControlPlotsFunction::jetTruthEventJetFlavor;
+  if( varName == "ClosestJetdR" )
+    return &ControlPlotsFunction::jetTruthEventJetClosestJetdR;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::Uncorrected )
-   return &ControlPlotsFunction::jetTruthEventResponse;
+    return &ControlPlotsFunction::jetTruthEventResponse;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::Kalibri )
     return &ControlPlotsFunction::jetTruthEventResponseKalibriCorrected;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L2L3 )
@@ -961,7 +1061,6 @@ ControlPlotsFunction::Function BasePlotExtractor::findTwoJetsPtBalanceEventFunct
     return  &ControlPlotsFunction::jetTruthEventResponseL1L2L3Corrected;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L5 )
     return  &ControlPlotsFunction::jetTruthEventResponseL5Corrected;
-
   if( varName == "") {
     return 0;
   }
