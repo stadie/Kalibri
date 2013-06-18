@@ -17,7 +17,7 @@
 //!  \author Henning Kirschenmann
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
-BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsShortName) {
+BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsShortName, TString ExternalConfigPath) {
   kalibriPlotsShortName_=kalibriPlotsShortName;
   outputPathROOT_=gSystem->pwd()+(TString)"/"+MakeDateDir();//+"/Output_"+plotsnames+".root";
   std::cout << outputPathROOT_ << std::endl;
@@ -33,7 +33,8 @@ BasePlotExtractor::BasePlotExtractor(TString plotsnames,TString kalibriPlotsShor
 
   plotsnames_=plotsnames;
   //read in config files in kalibri-style
-  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/ExternalConfigs.cfg");
+  ExternalConfig_=ConfigFile(ExternalConfigPath.Data());
+  //  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/ExternalConfigs.cfg");
   //  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/scratch/2012_05_L2L3ResidualsFinal/L2andJERScripts/ExternalConfigsFine.cfg");
   //  ExternalConfig_=ConfigFile("/afs/naf.desy.de/user/k/kirschen/public/ExternalConfigs.cfg");
   readInExtraInfo();

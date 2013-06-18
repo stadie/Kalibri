@@ -60,7 +60,7 @@ typedef std::vector<VecOfTH2vec_t > VecOfVecOfTH2vec_t;
 // ----------------------------------------------------------------   
 class BasePlotExtractor {
  public :
-  BasePlotExtractor(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsShortName="DEFAULT");
+  BasePlotExtractor(TString plotsnames="AbsPFFractionVsPt",TString kalibriPlotsShortName="DEFAULT", TString ExternalConfigPath="/afs/naf.desy.de/user/k/kirschen/public/ExternalConfigs.cfg");
   ~BasePlotExtractor();
   TH1D* replaceHistosWithEquiDistBins(TH1D* histo);
   void init(TString profileType="Mean");
