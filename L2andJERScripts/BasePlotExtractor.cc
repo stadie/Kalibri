@@ -231,6 +231,7 @@ void BasePlotExtractor::init(TString profileType) {
     func->setBinFunction(findTwoJetsPtBalanceEventFunction(pConfig->binVariable()));
     func->setXFunction(findTwoJetsPtBalanceEventFunction(pConfig->xVariable()));
     func->setCutFunction(findTwoJetsPtBalanceEventFunction(pConfig->cutVariable()));
+    func->setCut2Function(findTwoJetsPtBalanceEventFunction(pConfig->cut2Variable()));
     for(ControlPlotsConfig::InputTagsIterator it = pConfig->inputTagsBegin() ; 
 	it != pConfig->inputTagsEnd(); ++it) {
       func->addYFunction(it->second,findTwoJetsPtBalanceEventFunction(pConfig->yVariable(),it->second));
