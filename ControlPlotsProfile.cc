@@ -1,4 +1,4 @@
-// $Id: ControlPlotsProfile.cc,v 1.28 2013/05/08 14:38:27 kirschen Exp $
+// $Id: ControlPlotsProfile.cc,v 1.29 2013/05/21 13:49:38 kirschen Exp $
 
 #include "ControlPlotsProfile.h"
 
@@ -507,8 +507,10 @@ void ControlPlotsProfile::draw() {
 // ----------------------------------------------------------------   
 void ControlPlotsProfile::fill(const Event * evt, int id) {
   double cutv = function_->cutValue(evt);
+  double cut2v = function_->cut2Value(evt);
   
   if((config_->cutMax() != config_->cutMin()) && ((cutv < config_->cutMin()) || (cutv >= config_->cutMax()))) return;
+  if((config_->cut2Max() != config_->cut2Min()) && ((cut2v < config_->cut2Min()) || (cut2v >= config_->cut2Max()))) return;
   
   double x = function_->xValue(evt);
   hXSpectrum_[id]->Fill(x,evt->weight());

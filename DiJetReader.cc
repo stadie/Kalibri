@@ -1,6 +1,6 @@
 //
 //    first version: Hartmut Stadie 2008/12/12
-//    $Id: DiJetReader.cc,v 1.117 2013/05/27 14:31:12 rathjd Exp $
+//    $Id: DiJetReader.cc,v 1.118 2013/06/18 14:53:34 kirschen Exp $
 //   
 #include "DiJetReader.h"
 
@@ -809,6 +809,10 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
   int     njets = 0;   // Number of stored JetTruthEvents; 0 or 2
   double * terr = new double[nJet_->NobjTow];
 
+//  //update JEC of first 10 jets to have proper thirdjet fraction
+//  std::vector<Jet*> jets = twoJetsPtBalanceUpdateJECAndMET(10);
+//  for(size_t jet_i = 0; jet_i<jets.size(); jet_i++)delete jets[jet_i];
+
 
   // Loop over two jets with highest genjet Et
   for(int genJetIdx = 0; genJetIdx < 2; genJetIdx++) {
@@ -883,11 +887,13 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       continue;
     }
 
+    double thirdjetfractionplain = -1;
     if(!(nJet_->NobjJet <= nJet_->GenJetColJetIdx[0] && nJet_->NobjJet <= nJet_->GenJetColJetIdx[1] && nJet_->NobjJet <= nJet_->GenJetColJetIdx[2]   )){
       double jet1recopt = nJet_->JetPt[nJet_->GenJetColJetIdx[0]]*nJet_->JetCorrL1[nJet_->GenJetColJetIdx[0]]*nJet_->JetCorrL2L3[nJet_->GenJetColJetIdx[0]];
       double jet2recopt = nJet_->JetPt[nJet_->GenJetColJetIdx[1]]*nJet_->JetCorrL1[nJet_->GenJetColJetIdx[1]]*nJet_->JetCorrL2L3[nJet_->GenJetColJetIdx[1]];
       double jet3recopt = nJet_->JetPt[nJet_->GenJetColJetIdx[2]]*nJet_->JetCorrL1[nJet_->GenJetColJetIdx[2]]*nJet_->JetCorrL2L3[nJet_->GenJetColJetIdx[2]];
-      if(jet3recopt/(jet1recopt+jet2recopt) >  maxRel3rdJetEt_) {
+      thirdjetfractionplain = jet3recopt/(jet1recopt+jet2recopt);
+      if(thirdjetfractionplain >  maxRel3rdJetEt_) {
 	nCutOn3rdJet_++;
 	continue;
       }
@@ -1018,7 +1024,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
       ++njets;
     } else {
       //      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],1.);
-      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],nJet_->Weight,nJet_->GenEvtScale,nJet_->PUMCNumVtx,nJet_->PUMCNumTruth,nJet_->Rho);
+      JetTruthEvent* jte = new JetTruthEvent(jet,nJet_->GenJetColPt[genJetIdx],nJet_->Weight,nJet_->GenEvtScale,nJet_->PUMCNumVtx,nJet_->PUMCNumTruth,nJet_->Rho,thirdjetfractionplain);
       data.push_back(jte);
       ++njets;
       //add jet to constraints
@@ -1545,7 +1551,7 @@ Event* DiJetReader::createDiJetResolutionEventFromSkim() {
 //!
 //!  Might be quite time-consuming...
 // ----------------------------------------------------------------   
-std::vector<Jet*> DiJetReader::twoJetsPtBalanceUpdateJECAndMET()
+std::vector<Jet*> DiJetReader::twoJetsPtBalanceUpdateJECAndMET(int nmaxjets)
 {
   assert(corFactorsFactory_);  // want to update JEC as well
 
@@ -1575,7 +1581,7 @@ std::vector<Jet*> DiJetReader::twoJetsPtBalanceUpdateJECAndMET()
 
   // Number of jets in the event
   size_t nJets = nJet_->NobjJet;
-
+  if(nmaxjets>-1)nJets=nmaxjets;
 
   //update JEC
   std::vector<Jet*> jets;

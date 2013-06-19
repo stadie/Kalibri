@@ -75,6 +75,7 @@ void ControlPlots::createJetTruthEventPlots() const {
     func->setBinFunction(findJetTruthEventFunction(pConfig->binVariable()));
     func->setXFunction(findJetTruthEventFunction(pConfig->xVariable()));
     func->setCutFunction(findJetTruthEventFunction(pConfig->cutVariable()));
+    func->setCut2Function(findJetTruthEventFunction(pConfig->cut2Variable()));
     for(ControlPlotsConfig::InputTagsIterator it = pConfig->inputTagsBegin() ; 
 	it != pConfig->inputTagsEnd(); ++it) {
       func->addYFunction(it->second,findJetTruthEventFunction(pConfig->yVariable(),it->second));
@@ -169,6 +170,7 @@ void ControlPlots::createTwoJetsPtBalanceEventPlots() const {
     func->setBinFunction(findTwoJetsPtBalanceEventFunction(pConfig->binVariable()));
     func->setXFunction(findTwoJetsPtBalanceEventFunction(pConfig->xVariable()));
     func->setCutFunction(findTwoJetsPtBalanceEventFunction(pConfig->cutVariable()));
+    func->setCut2Function(findTwoJetsPtBalanceEventFunction(pConfig->cut2Variable()));
     for(ControlPlotsConfig::InputTagsIterator it = pConfig->inputTagsBegin() ; 
 	it != pConfig->inputTagsEnd(); ++it) {
       func->addYFunction(it->second,findTwoJetsPtBalanceEventFunction(pConfig->yVariable(),it->second));
@@ -272,6 +274,8 @@ ControlPlotsFunction::Function ControlPlots::findJetTruthEventFunction(const std
     return  &ControlPlotsFunction::jetTruthEventResponseL1L2L3Corrected;
   if( varName == "GenJetResponse" && type == ControlPlotsConfig::L5 )
     return  &ControlPlotsFunction::jetTruthEventResponseL5Corrected;
+  if( varName == "ThirdJetFractionPlain" )
+    return &ControlPlotsFunction::jetTruthEventThirdJetFractionPlain;
   if( varName == "") {
     return 0;
   }

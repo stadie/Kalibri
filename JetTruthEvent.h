@@ -2,7 +2,7 @@
 //    Class for all events with one jet and truth informatio
 //
 //    first version: Hartmut Stadie 2008/12/14
-//    $Id: JetTruthEvent.h,v 1.22 2013/02/11 15:38:06 kirschen Exp $
+//    $Id: JetTruthEvent.h,v 1.23 2013/05/08 14:38:27 kirschen Exp $
 //   
 #ifndef JETTRUTHEVENT_H
 #define JETTRUTHEVENT_H
@@ -15,12 +15,13 @@
 class JetTruthEvent : public Event
 {
 public:
-  JetTruthEvent(Jet *j, double t, float w, float pthat = 0, short npu = 0, float nputruth = 0, float rho = 0, bool binned = false) : Event(w,pthat,npu,nputruth,0,0,0,0,0,0,0,0,0,rho),jet_(j),truth_(t),chi2plots_(1000.),flagged_bad_(false), binned_(binned) {}
+  JetTruthEvent(Jet *j, double t, float w, float pthat = 0, short npu = 0, float nputruth = 0, float rho = 0, double thirdjetfractionplain =0, bool binned = false) : Event(w,pthat,npu,nputruth,0,0,0,0,0,0,0,0,0,rho),jet_(j),truth_(t),chi2plots_(1000.),flagged_bad_(false), thirdjetfractionplain_(thirdjetfractionplain), binned_(binned) {}
   ~JetTruthEvent();
 
   //interface from Event
   Measurement *mess() const {return jet_;}
   double truth() const { return truth_;}
+  double ThirdJetFractionPlain() const { return thirdjetfractionplain_;}
   double parametrizedMess() const { return jet_->correctedEt(jet_->Et());}
 
   void setParameters(Parameters* param) { jet_->setParameters(param);}
@@ -53,7 +54,9 @@ public:
   double truth_;
   mutable double chi2plots_;   //!< Store chi2 value from last iteration for plots
   mutable bool flagged_bad_;
+  double thirdjetfractionplain_;
   bool binned_;
+
   static int nflagged_;
 };
 

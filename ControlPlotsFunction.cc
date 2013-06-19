@@ -1,4 +1,4 @@
- // $Id: ControlPlotsFunction.cc,v 1.47 2013/05/21 13:49:37 kirschen Exp $
+ // $Id: ControlPlotsFunction.cc,v 1.48 2013/05/27 14:46:35 rathjd Exp $
 
 #include "ControlPlotsFunction.h"
 
@@ -308,6 +308,21 @@ double ControlPlotsFunction::jetTruthEventResponseL5Corrected(const Event * evt)
   //  std::cout << "L1:" << jet->corFactors().getL1() << " l2l3:" << jet->corFactors().getL2L3() << " l2:" << jet->corFactors().getL2() << " l3:" << jet->corFactors().getL3() << " L5:" << jet->corFactors().getL5() << std::endl;
   return jet->corFactors().getL5() * jet->pt() / jte->truth();
 }
+
+
+
+//!  \brief Returns fraction of momentum of third jet and average dijet momentum  
+//!
+//!  The \p Event \p evt has to be of type \p JetTruthEvent.
+//!  Implements \p Function.
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::jetTruthEventThirdJetFractionPlain(const Event *evt) const {
+  const JetTruthEvent * jte = static_cast<const JetTruthEvent*>(evt);
+  return jte->ThirdJetFractionPlain();
+}
+
+
+
 
 
 //!  \brief Returns run number uf the Event

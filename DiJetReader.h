@@ -28,7 +28,7 @@
 //!
 //!  \author Hartmut Stadie
 //!  \date 2008/12/12
-//!  $Id: DiJetReader.h,v 1.43 2013/04/03 13:29:26 kirschen Exp $
+//!  $Id: DiJetReader.h,v 1.44 2013/05/08 14:38:27 kirschen Exp $
 // ----------------------------------------------------------------   
 
 
@@ -60,7 +60,7 @@ class DiJetReader : public EventReader{
   virtual int readControlEvents(std::vector<Event*>& control, int id);
  protected:
   TwoJetsPtBalanceEvent* createTwoJetsPtBalanceEvent();
-  std::vector<Jet*> twoJetsPtBalanceUpdateJECAndMET();
+  std::vector<Jet*> twoJetsPtBalanceUpdateJECAndMET(int nmaxjets=-1);
   void twoJetsPtBalanceSmearJetsJER();
   Event* createDiJetResolutionEvent();
   Event* createDiJetResolutionEventRecoOrdered();

@@ -1,4 +1,4 @@
-// $Id: ControlPlotsFunction.h,v 1.41 2013/05/21 13:49:37 kirschen Exp $
+// $Id: ControlPlotsFunction.h,v 1.42 2013/05/27 14:32:44 rathjd Exp $
 
 #ifndef CONTROLPLOTS_FUNCTION_H
 #define CONTROLPLOTS_FUNCTION_H
@@ -24,7 +24,7 @@ class Event;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsFunction.h,v 1.41 2013/05/21 13:49:37 kirschen Exp $
+//!  $Id: ControlPlotsFunction.h,v 1.42 2013/05/27 14:32:44 rathjd Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsFunction {
  public:
@@ -33,7 +33,7 @@ class ControlPlotsFunction {
 
   //! Constructor
   ControlPlotsFunction()
-    : binFunc_(0), xFunc_(0), cutFunc_(0) {};
+    : binFunc_(0), xFunc_(0), cutFunc_(0), cut2Func_(0) {};
 
   //! Check if all functions are initialised
   bool isInit() const { return binFunc_ && xFunc_ && yFuncs_.size(); }
@@ -49,6 +49,8 @@ class ControlPlotsFunction {
   double xValue(const Event * evt) const { return (this->*xFunc_)(evt); }  
   //! Interface to the profile: return the value of the cut quantity from \p evt
   double cutValue(const Event * evt) const { return cutFunc_ ? (this->*cutFunc_)(evt) : 0; }
+  //! Interface to the profile: return the value of the cut2 quantity from \p evt
+  double cut2Value(const Event * evt) const { return cut2Func_ ? (this->*cut2Func_)(evt) : 0; }
   //! Interface to the profile: return the value of the y quantity from \p evt for the correction type \p type
   double yValue(const Event * evt, ControlPlotsConfig::CorrectionType type) const {
     return (this->*(yFuncs_.find(type)->second))(evt);
@@ -59,6 +61,8 @@ class ControlPlotsFunction {
   void setXFunction(Function func) { xFunc_ = func; } 
   //! Set the function returning the cut value from an event
   void setCutFunction(Function func) { cutFunc_ = func; }
+  //! Set the function returning the cut2 value from an event
+  void setCut2Function(Function func) { cut2Func_ = func; }
   //! Set the functions returning the y value for different corrections from an event
   void addYFunction(ControlPlotsConfig::CorrectionType type, Function func);
 
@@ -83,6 +87,8 @@ class ControlPlotsFunction {
   double jetTruthEventResponseL2L3ResL4Corrected(const Event * evt) const;
   double jetTruthEventResponseL1L2L3Corrected(const Event * evt) const;
   double jetTruthEventResponseL5Corrected(const Event * evt) const;
+  double jetTruthEventThirdJetFractionPlain(const Event *evt) const;
+
 
   double twoJetsPtBalanceEventRunNumber(const Event *evt) const; 
   double twoJetsPtBalanceEventJetPhi(const Event *evt) const; 
@@ -175,6 +181,8 @@ class ControlPlotsFunction {
   Function xFunc_; 
   //! The cut value function
   Function cutFunc_;
+  //! The cut2 value function
+  Function cut2Func_;
   //! The y value functions for the different correction types
   std::map<ControlPlotsConfig::CorrectionType,Function> yFuncs_;    
 };

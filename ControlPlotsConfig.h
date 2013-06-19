@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.h,v 1.17 2012/07/18 14:45:45 kirschen Exp $
+// $Id: ControlPlotsConfig.h,v 1.18 2012/11/21 18:50:14 kirschen Exp $
 
 #ifndef CONTROLPLOTS_CONFIG_H
 #define CONTROLPLOTS_CONFIG_H
@@ -57,7 +57,7 @@ class ConfigFile;
 //!
 //!  \author Matthias Schroeder
 //!  \date 2009/12/18
-//!  $Id: ControlPlotsConfig.h,v 1.17 2012/07/18 14:45:45 kirschen Exp $
+//!  $Id: ControlPlotsConfig.h,v 1.18 2012/11/21 18:50:14 kirschen Exp $
 // ----------------------------------------------------------------   
 class ControlPlotsConfig {
  public:
@@ -116,6 +116,13 @@ class ControlPlotsConfig {
   void setCutMax(double newCutMax) { cutEdges_.second=newCutMax; }
   //! Returns the title of the cut used for axis
   std::string cutAxisTitle() const { return axisTitle(cutVariable()); }
+
+  //! Returns the name of the cut2 variable
+  std::string cut2Variable() const { return cut2Var_; }
+  //! Returns the minimum of the cut2 range
+  double cut2Min() const { return cut2Edges_.first; }
+  //! Returns the maximum of the cut2 range
+  double cut2Max() const { return cut2Edges_.second; }
   
   //! Returns the bin edges of the x variable
   const std::vector<double> *xBinEdges() const { return &xBinEdges_; }
@@ -244,6 +251,9 @@ class ControlPlotsConfig {
 
   std::string cutVar_;
   std::pair<double,double> cutEdges_;
+
+  std::string cut2Var_;
+  std::pair<double,double> cut2Edges_;
 
   std::string yVar_;
   std::vector<double> yBinEdges_;

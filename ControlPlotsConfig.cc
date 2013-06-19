@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.42 2013/04/26 15:39:39 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.43 2013/05/16 09:13:58 kirschen Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -62,6 +62,18 @@ std::string ControlPlotsConfig::binTitle(double min, double max, bool showCut) c
       title += " < ";
       title += toString(cutMax());
       std::string unit = unitTitle(cutVariable());
+      if( unit != "" ) {
+	title += " " + unit;
+      }
+    }
+    if(cut2Variable() != "") {
+      title += "  and  ";
+      title += toString(cut2Min());
+      title += " #leq ";
+      title += varTitle(cut2Variable());
+      title += " < ";
+      title += toString(cut2Max());
+      std::string unit = unitTitle(cut2Variable());
       if( unit != "" ) {
 	title += " " + unit;
       }
@@ -514,6 +526,16 @@ void ControlPlotsConfig::init() {
      std::cerr << "WARNING: Wrong number of arguments in config line '" << name_ << " cut edges'\n";
      cutEdges_ = std::make_pair(0.0,0.0);
   }
+
+  cut2Var_ = config_->read<std::string>(name_+" cut2 variable","");
+  var = bag_of<double>(config_->read<std::string>(name_+" cut2 edges","0 0"));
+  if( var.size() == 2 ) {
+    cut2Edges_ = std::make_pair(var[0],var[1]);
+  } else {
+     std::cerr << "WARNING: Wrong number of arguments in config line '" << name_ << " cut2 edges'\n";
+     cut2Edges_ = std::make_pair(0.0,0.0);
+  }
+
   
   // Store which profile types are to be drawn
   std::vector<std::string> profTypesStr = bag_of_string(config_->read<std::string>(name_+" profile types","Uncorrected"));
