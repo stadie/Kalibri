@@ -40,13 +40,6 @@ class Extrapolation :public BasePlotExtractor{
   bool saveVsXVariablePlotsAndRatios_;
   bool saveVsBinVarPlots_;
   bool saveExtrapolPlots_;
-  bool exportOnlyLinearExtrapolation_;
-
-  std::string plotToRootFileSetup_;
-  bool saveDeviationPlots_;
-  bool saveVsXVariablePlotsAndRatios_;
-  bool saveVsBinVarPlots_;
-  bool saveExtrapolPlots_;
   void extrapolInit();
   void createPtRelExtrapol();
   void makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos();

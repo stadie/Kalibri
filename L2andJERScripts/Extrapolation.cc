@@ -14,9 +14,6 @@ Extrapolation::Extrapolation(TString plotsnames,TString kalibriPlotsShortName) :
   std::cout << "creating extrapolation plots" <<std::endl;
   createPtRelExtrapol();
 
-  std::cout << "creating extrapolation plots" <<std::endl;
-  createPtRelExtrapol();
-
 }
 
 //! Reads in extra information for extrapolation
@@ -30,10 +27,6 @@ void Extrapolation::extrapolInit() {
   cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("TwoJetsPtBalanceEvent plots cut_list",""));
   cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("TwoJetsPtBalanceEvent plots cut_no_list",""));
   if(kalibriPlotsShortName_.Contains("TimePtDependence")){
-  if(plotsnames_.Contains("VsClosestJetdRPtCut")){//2012PFCHSPtDependence")){
-  cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("2012PFCHSPtDependence plots cut_list",""));
-  cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("2012PFCHSPtDependence plots cut_no_list",""));
-  }
   cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("TimePtDependence plots cut_list",""));
   cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("TimePtDependence plots cut_no_list",""));
   }
@@ -42,34 +35,10 @@ void Extrapolation::extrapolInit() {
   cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("2012PFCHSPtDependence plots cut_no_list",""));
   }
   cutNamesValueToNormalize_ = ExternalConfig_.read<string>((std::string)plotsnames_+" cut_listValueToNormalize",ExternalConfig_.read<string>("Default cut_listValueToNormalize","20"));
-  exportOnlyLinearExtrapolation_ = ExternalConfig_.read<bool>((std::string)kalibriPlotsShortName_+" ExportOnlyLinearExtrapolation",ExternalConfig_.read<bool>("Default ExportOnlyLinearExtrapolation",true));
-
   indexToNormalizeTo_ = -1;
   for(unsigned int i=0;i<cutNames_.size();i++){
     std::cout << "cutNamesValue: " << cutNames_.at(i) << " -  " << cutNamesValueToNormalize_ << " - " << indexToNormalizeTo_ << std::endl;
     if(cutNames_.at(i)==cutNamesValueToNormalize_)indexToNormalizeTo_=i;
-
-
-  plotToRootFileSetup_ = ExternalConfig_.read<string>((std::string)plotsnames_+" plotToRootFileSetup",ExternalConfig_.read<string>("Default plotToRootFileSetup","default"));
-
-  if(plotToRootFileSetup_=="default"){
-    saveDeviationPlots_=true;
-    saveVsXVariablePlotsAndRatios_=true;
-    saveVsBinVarPlots_=true;
-    saveExtrapolPlots_=true;
-
-  }
-  else if(plotToRootFileSetup_=="MinimalFlavor"){
-    saveDeviationPlots_=false;
-    saveVsXVariablePlotsAndRatios_=true;
-    saveVsBinVarPlots_=false;
-    saveExtrapolPlots_=false;
-  }
-  else std::cerr << "No valid plot to root setup chosen" << std::endl;
-     
-
-
-
   }
   assert(indexToNormalizeTo_>-1);
   doPlotExtrapol_ = ExternalConfig_.read<bool>((std::string)plotsnames_+" doPlotExtrapol",ExternalConfig_.read<bool>("Default doPlotExtrapol",1));
@@ -274,9 +243,6 @@ void Extrapolation::Plot() {
       //      outname+=".pdf";
       c->RedrawAxis();
       c->SaveAs(outname+".pdf");
-      //      if(exportOnlyLinearExtrapolation_){
-      if(saveVsXVariablePlotsAndRatios_)configs_.at(0)->safelyToRootFile(AllRatiosDataMC_.at(i).at(bin_i),outname+"_hist");
-
       if(saveVsBinVarPlots_)configs_.at(0)->safelyToRootFile(Ratio_Data_MC_histos.at(histo_i));
       
     }
@@ -310,7 +276,7 @@ void Extrapolation::Plot() {
       TString outname = "ResolutionPlots_"+plotsnames_+"_DeviationsOfRatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i)+"_"+DeviationTypes_.at(dev_i).first;
       //  outname+=bin_i;
       AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->SetName(outname);
-      //      outname+=".pdf";
+      outname+=".pdf";
       c->RedrawAxis();
       c->SaveAs(outname);
       if(saveDeviationPlots_)configs_.at(0)->safelyToRootFile(AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i));

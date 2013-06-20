@@ -452,7 +452,7 @@ void BasePlotExtractor::fitFunctionsToPlot(TH1D* histo){
   if(!plotsnames_.Contains("Resolution")){//ignore pt-dependence of
     //    resolution ratios for my purposes... might change this to a
     //  config-file option in the future
-    if(plotsnames_.Contains("VsPt")||plotsnames_.Contains("VsMeanPt")||plotsnames_.Contains("VsJetLeadPt")||plotsnames_.Contains("VsJetLead2Pt")||plotsnames_.Contains("VsJet2Pt")){
+    if(plotsnames_.Contains("VsPt")||plotsnames_.Contains("VsMeanPt")||plotsnames_.Contains("VsJetLeadPt")||plotsnames_.Contains("VsJetLead2Pt")||plotsnames_.Contains("VsJet2Pt")||plotsnames_.Contains("VsGenJetPt")){
       TF1 *fit_loglin = new TF1("fit_loglin","[0]+[1]*TMath::Log(x)",histo->GetXaxis()->GetXmin(),histo->GetXaxis()->GetXmax()); //was used before...
       fit_loglin->SetParameters(1,1);
       fit_loglin->SetParName(0,"const");
