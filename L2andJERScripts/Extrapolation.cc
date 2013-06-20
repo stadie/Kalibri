@@ -11,6 +11,12 @@ Extrapolation::Extrapolation(TString plotsnames,TString kalibriPlotsShortName) :
   init(profileType_); //baseplotextracotr method to read in plots
   std::cout << "still initializing..." <<std::endl;
   extrapolInit();
+  std::cout << "creating extrapolation plots" <<std::endl;
+  createPtRelExtrapol();
+
+  std::cout << "creating extrapolation plots" <<std::endl;
+  createPtRelExtrapol();
+
 }
 
 //! Reads in extra information for extrapolation
@@ -24,21 +30,77 @@ void Extrapolation::extrapolInit() {
   cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("TwoJetsPtBalanceEvent plots cut_list",""));
   cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("TwoJetsPtBalanceEvent plots cut_no_list",""));
   if(kalibriPlotsShortName_.Contains("TimePtDependence")){
+  if(plotsnames_.Contains("VsClosestJetdRPtCut")){//2012PFCHSPtDependence")){
+  cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("2012PFCHSPtDependence plots cut_list",""));
+  cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("2012PFCHSPtDependence plots cut_no_list",""));
+  }
   cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("TimePtDependence plots cut_list",""));
   cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("TimePtDependence plots cut_no_list",""));
   }
+  if(plotsnames_.Contains("VsClosestJetdRPtCut")){//2012PFCHSPtDependence")){
+  cutNames_ = bag_of_string(ExternalConfig_.read<std::string>("2012PFCHSPtDependence plots cut_list",""));
+  cutNumbers_ = bag_of<double>(ExternalConfig_.read<std::string>("2012PFCHSPtDependence plots cut_no_list",""));
+  }
   cutNamesValueToNormalize_ = ExternalConfig_.read<string>((std::string)plotsnames_+" cut_listValueToNormalize",ExternalConfig_.read<string>("Default cut_listValueToNormalize","20"));
+  exportOnlyLinearExtrapolation_ = ExternalConfig_.read<bool>((std::string)kalibriPlotsShortName_+" ExportOnlyLinearExtrapolation",ExternalConfig_.read<bool>("Default ExportOnlyLinearExtrapolation",true));
+
   indexToNormalizeTo_ = -1;
   for(unsigned int i=0;i<cutNames_.size();i++){
     std::cout << "cutNamesValue: " << cutNames_.at(i) << " -  " << cutNamesValueToNormalize_ << " - " << indexToNormalizeTo_ << std::endl;
     if(cutNames_.at(i)==cutNamesValueToNormalize_)indexToNormalizeTo_=i;
+
+
+  plotToRootFileSetup_ = ExternalConfig_.read<string>((std::string)plotsnames_+" plotToRootFileSetup",ExternalConfig_.read<string>("Default plotToRootFileSetup","default"));
+
+  if(plotToRootFileSetup_=="default"){
+    saveDeviationPlots_=true;
+    saveVsXVariablePlotsAndRatios_=true;
+    saveVsBinVarPlots_=true;
+    saveExtrapolPlots_=true;
+
+  }
+  else if(plotToRootFileSetup_=="MinimalFlavor"){
+    saveDeviationPlots_=false;
+    saveVsXVariablePlotsAndRatios_=true;
+    saveVsBinVarPlots_=false;
+    saveExtrapolPlots_=false;
+  }
+  else std::cerr << "No valid plot to root setup chosen" << std::endl;
+     
+
+
+
   }
   assert(indexToNormalizeTo_>-1);
   doPlotExtrapol_ = ExternalConfig_.read<bool>((std::string)plotsnames_+" doPlotExtrapol",ExternalConfig_.read<bool>("Default doPlotExtrapol",1));
+  exportOnlyLinearExtrapolation_ = ExternalConfig_.read<bool>((std::string)kalibriPlotsShortName_+" ExportOnlyLinearExtrapolation",ExternalConfig_.read<bool>("Default ExportOnlyLinearExtrapolation",true));
+
   //  yProfileTitle_ = ExternalConfig_.read<std::string>((std::string)plotsnames_+" plots profile yTitle","DUMMYResolution");
   //  sqrtS_ = ExternalConfig_.read<int>((std::string)kalibriPlotsShortName_+" SqrtS",ExternalConfig_.read<int>("Default SqrtS",7));
   std::cout << "doPlotExtrapol: " << doPlotExtrapol_ <<std::endl;
   if(kalibriPlotsShortName_.Contains("PhiDependence"))doPlotExtrapol_=false;
+
+
+  plotToRootFileSetup_ = ExternalConfig_.read<string>((std::string)plotsnames_+" plotToRootFileSetup",ExternalConfig_.read<string>("Default plotToRootFileSetup","default"));
+
+  if(plotToRootFileSetup_=="default"){
+    saveDeviationPlots_=true;
+    saveVsXVariablePlotsAndRatios_=true;
+    saveVsBinVarPlots_=true;
+    saveExtrapolPlots_=true;
+
+  }
+  else if(plotToRootFileSetup_=="MinimalFlavor"){
+    saveDeviationPlots_=false;
+    saveVsXVariablePlotsAndRatios_=true;
+    saveVsBinVarPlots_=false;
+    saveExtrapolPlots_=false;
+  }
+  else std::cerr << "No valid plot to root setup chosen" << std::endl;
+     
+
+
+
 }
 
 
@@ -55,8 +117,6 @@ void Extrapolation::Plot() {
     chdir("Extrapol"); 
   } 
 
-  std::cout << "creating extrapolation plots" <<std::endl;
-  createPtRelExtrapol();
 
 
   setTDRStyle();
@@ -109,11 +169,13 @@ void Extrapolation::Plot() {
       leg->Draw();
       drawCMSPrel();
       TString outname = "ResolutionPlots_"+plotsnames_+"_"+cutNames_.at(i)+"_"+configs_.at(0)->binName(bin_i);
-      //  outname+=bin_i;
-      outname+=".pdf";
       c->RedrawAxis();
-      c->SaveAs(outname);
-      
+      c->SaveAs(outname+".pdf");
+      if(saveVsXVariablePlotsAndRatios_){
+	configs_.at(0)->safelyToRootFile(AllPlots_.at(i).at(bin_i).at(0),outname+"_"+dataLabel()+"_hist");
+	configs_.at(0)->safelyToRootFile(AllPlots_.at(i).at(bin_i).at(1),outname+"_"+mcLabel()+"_hist");
+      }
+     
       //Draw DataMC-ratios
       std::cout << AllRatiosDataMC_.size() << " and " << std::endl;
       AllRatiosDataMC_.at(i).at(bin_i)->Draw();
@@ -139,40 +201,89 @@ void Extrapolation::Plot() {
       drawCMSPrel();
       outname = "ResolutionPlots_"+plotsnames_+"_ratio"+cutNames_.at(i)+"_"+configs_.at(0)->binName(bin_i);
       //  outname+=bin_i;
-      outname+=".pdf";
+      //      outname+=".pdf";
       c->RedrawAxis();
-      c->SaveAs(outname);
+      c->SaveAs(outname+".pdf");
+      //      if(exportOnlyLinearExtrapolation_){
+      if(saveVsXVariablePlotsAndRatios_)configs_.at(0)->safelyToRootFile(AllRatiosDataMC_.at(i).at(bin_i),outname+"_hist");
+
     }
   }
   
-  //Save RatioVsBinVar plots
+//  //Save RatioVsBinVar plots
+//  for(int conf_i=0;conf_i<configs_.size();conf_i++){
+//  c->SetLogx(0);
+//  //  RatioVsBinVarHistos_.at(conf_i)
+//  //    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetRangeUser(0.7,1.3);
+//    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetRangeUser(yRatioMinMax().at(0),yRatioMinMax().at(1));
+//
+//    //    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetTitle("Resolution ratio");
+//    TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
+//    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
+//    RatioVsBinVarHistos_.at(conf_i)->Draw();
+//    RatioVsBinVarHistos_.at(conf_i)->Draw("histsame");
+//    drawCMSPrel();
+//    TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.5);
+//    label->AddText(jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
+//    label->SetFillStyle(0);
+//    label->AddText(yProfileTitle()/*plotsnames_*/);
+//    label->Draw("same");
+//    TString outname = "ResolutionPlots_"+plotsnames_+"_RatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i);
+//    //  outname+=bin_i;
+//    RatioVsBinVarHistos_.at(conf_i)->SetName(outname);
+//    outname+=".pdf";
+//    c->RedrawAxis();
+//    c->SaveAs(outname);
+//    configs_.at(0)->safelyToRootFile(RatioVsBinVarHistos_.at(conf_i));
+//
+//
+//  }
+//
+
+
+  //Save Ratio/Data/MCVsBinVar plots
   for(int conf_i=0;conf_i<configs_.size();conf_i++){
-  c->SetLogx(0);
-  //  RatioVsBinVarHistos_.at(conf_i)
-  //    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetRangeUser(0.7,1.3);
-    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetRangeUser(yRatioMinMax().at(0),yRatioMinMax().at(1));
+    c->SetLogx(0);
+    TH1vec_t Ratio_Data_MC_histos;
+    std::vector <TString> Ratio_Data_MC_labels;
+    
+    Ratio_Data_MC_histos.push_back(RatioVsBinVarHistos_.at(conf_i));
+    Ratio_Data_MC_labels.push_back("Ratio");
+    Ratio_Data_MC_histos.push_back(MCVsBinVarHistos_.at(conf_i));
+    Ratio_Data_MC_labels.push_back("MC");
+    Ratio_Data_MC_histos.push_back(DataVsBinVarHistos_.at(conf_i));
+    Ratio_Data_MC_labels.push_back("Data");
+    assert(Ratio_Data_MC_histos.size()==Ratio_Data_MC_labels.size());
+    
+    for(int histo_i=0;histo_i<Ratio_Data_MC_histos.size();histo_i++){
+      if(Ratio_Data_MC_labels.at(histo_i).Contains("Ratio"))Ratio_Data_MC_histos.at(histo_i)->GetYaxis()->SetRangeUser(yRatioMinMax().at(0),yRatioMinMax().at(1));
+      else Ratio_Data_MC_histos.at(histo_i)->GetYaxis()->SetRangeUser(yProfileMinMax().at(0),yProfileMinMax().at(1));
+      TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
+      Ratio_Data_MC_histos.at(histo_i)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
+      Ratio_Data_MC_histos.at(histo_i)->Draw();
+      Ratio_Data_MC_histos.at(histo_i)->Draw("histsame");
+      drawCMSPrel();
+      TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.5);
+      label->AddText(jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
+      label->SetFillStyle(0);
+      label->AddText(yProfileTitle()/*plotsnames_*/);
+      label->Draw("same");
+      TString outname = "ResolutionPlots_"+plotsnames_+"_"+Ratio_Data_MC_labels.at(histo_i)+"VsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i);
+      //  outname+=bin_i;
+      Ratio_Data_MC_histos.at(histo_i)->SetName(outname);
+      //      outname+=".pdf";
+      c->RedrawAxis();
+      c->SaveAs(outname+".pdf");
+      //      if(exportOnlyLinearExtrapolation_){
+      if(saveVsXVariablePlotsAndRatios_)configs_.at(0)->safelyToRootFile(AllRatiosDataMC_.at(i).at(bin_i),outname+"_hist");
 
-    //    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetTitle("Resolution ratio");
-    TStyle *tdrStyle = (TStyle*)gROOT->FindObject("tdrStyle"); 
-    RatioVsBinVarHistos_.at(conf_i)->GetYaxis()->SetTitleOffset(tdrStyle->GetTitleYOffset());
-    RatioVsBinVarHistos_.at(conf_i)->Draw();
-    RatioVsBinVarHistos_.at(conf_i)->Draw("histsame");
-    drawCMSPrel();
-    TPaveText *label = util::LabelFactory::createPaveTextWithOffset(2,1.0,0.5);
-    label->AddText(jetLabel_);//+  |#eta_{1,2}| > "+util::toTString(1.4)+",  L = "+util::StyleSettings::luminosity(4.6));
-    label->SetFillStyle(0);
-    label->AddText(yProfileTitle()/*plotsnames_*/);
-    label->Draw("same");
-    TString outname = "ResolutionPlots_"+plotsnames_+"_RatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i);
-    //  outname+=bin_i;
-    RatioVsBinVarHistos_.at(conf_i)->SetName(outname);
-    outname+=".pdf";
-    c->RedrawAxis();
-    c->SaveAs(outname);
-    configs_.at(0)->safelyToRootFile(RatioVsBinVarHistos_.at(conf_i));
-
-
+      if(saveVsBinVarPlots_)configs_.at(0)->safelyToRootFile(Ratio_Data_MC_histos.at(histo_i));
+      
+    }
   }
+
+
+
 
   //Save DeviationsOfRatioVsBinVar plot
   for(int conf_i=0;conf_i<configs_.size();conf_i++){
@@ -199,15 +310,15 @@ void Extrapolation::Plot() {
       TString outname = "ResolutionPlots_"+plotsnames_+"_DeviationsOfRatioVsBinVar"+cutNames_.at(conf_i)+"_"+names_.at(conf_i)+"_"+DeviationTypes_.at(dev_i).first;
       //  outname+=bin_i;
       AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i)->SetName(outname);
-      outname+=".pdf";
+      //      outname+=".pdf";
       c->RedrawAxis();
       c->SaveAs(outname);
-      configs_.at(0)->safelyToRootFile(AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i));
+      if(saveDeviationPlots_)configs_.at(0)->safelyToRootFile(AllDeviationsVsBinVarHistos_.at(conf_i).at(dev_i));
     }
   }
 
-
-
+  if(DEBUG)std::cout << "configs_.at(0)->nBins()" <<std::endl;
+  if(DEBUG)std::cout << "configs_.at(0)->nBins()" << configs_.at(0)->nBins() << std::endl;
   //Save RatioVsBinVar plots for MCDataRatioVsBinVarHistos_
   for(size_t ratio_i=0;ratio_i<MCDataRatioVsBinVarHistos_.size();ratio_i++){
     c->SetLogx(0);
@@ -230,8 +341,10 @@ void Extrapolation::Plot() {
     MCDataRatioVsBinVarHistos_.at(ratio_i)->SetName(outname);
     outname+=".pdf";
     c->RedrawAxis();
-    c->SaveAs(outname);
-    configs_.at(0)->safelyToRootFile(MCDataRatioVsBinVarHistos_.at(ratio_i));
+    if(!(TString(MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName()).Contains("Quad")&&exportOnlyLinearExtrapolation_)){
+      c->SaveAs(outname);
+      if(saveVsBinVarPlots_)configs_.at(0)->safelyToRootFile(MCDataRatioVsBinVarHistos_.at(ratio_i));
+    }
     MCDataRatioVsBinVarHistos_.at(ratio_i)->SetName(tempSaveHistoName);
 
   }
@@ -262,10 +375,15 @@ void Extrapolation::Plot() {
 
       TString outname = (TString)"ResolutionPlots_"+plotsnames_+"_ExtrapolatedMCDataRatios_"+MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName()+"_"+configs_.at(0)->binName(bin_i);
       c->SetName(outname);
-      outname+=".pdf";
+      //      outname+=".pdf";
       c->RedrawAxis();
-      c->SaveAs(outname);
-      configs_.at(0)->safelyToRootFile(c);
+      if(!(TString(MCDataRatioVsBinVarHistos_.at(ratio_i)->GetName()).Contains("Quad")&&exportOnlyLinearExtrapolation_)){
+	c->SaveAs(outname+".pdf");
+	if(saveVsBinVarPlots_){
+	  configs_.at(0)->safelyToRootFile(c);
+	  configs_.at(0)->safelyToRootFile(All_CollectExtrapolatedAllMCDataRatios_.at(ratio_i).at(bin_i),outname+"_hist");
+	}
+      }
     }
   }      
 
@@ -282,8 +400,8 @@ void Extrapolation::Plot() {
 //!  \date 2012/03/07
 // ----------------------------------------------------------------   
 void Extrapolation::createPtRelExtrapol() {
-
-
+  if(DEBUG)std::cout << "configs_.at(0)->nBins()" <<std::endl;
+  if(DEBUG)std::cout << "configs_.at(0)->nBins()" << configs_.at(0)->nBins() << std::endl;
   VecOfTH1vec_t AllExtrapolatedRes;
   //loop over all bins (e.g. eta)
   for(int bin_i=0;bin_i<configs_.at(0)->nBins();bin_i++){
@@ -343,7 +461,8 @@ void Extrapolation::createPtRelExtrapol() {
   configs_.push_back(new ControlPlotsConfig(*configs_.at(0)));
   configs_.back()->setCutMax(cutNumbers_.back());
   functions_.push_back(new ControlPlotsFunction(*functions_.at(0)));
-  profiles_.push_back(new ControlPlotsProfile(*profiles_.at(0)));
+  //  profiles_.push_back(new ControlPlotsProfile(*profiles_.at(0)));
+  profiles_.push_back(new ControlPlotsProfile(configs_.back(),functions_.back()));
   names_.push_back((((TString)names_.at(0)).ReplaceAll((TString)cutNames_.at(0),(TString)cutNames_.back())/*+"_Extrapol"*/).Data());
   //redo the calculation of data/MC-ratios to propagate the additional extrapolated histograms (defined in BasePlotExtractor)
   refreshRatiosDataMC();
@@ -505,12 +624,12 @@ Extrapolation::ExtrapolateBin::~ExtrapolateBin() {
 
 
 void Extrapolation::ExtrapolateBin::addMCHisto(TH1D* MCHisto){
-  MCHistos_.push_back(MCHisto);
+  MCHistos_.push_back((TH1D*)MCHisto->Clone());
 }
 
 
 void Extrapolation::ExtrapolateBin::addDataHisto(TH1D* DataHisto){
-  DataHistos_.push_back(DataHisto);
+  DataHistos_.push_back((TH1D*)DataHisto->Clone());
 }
 
 void Extrapolation::ExtrapolateBin::calculateAndAddMCDataRatio(){
@@ -593,7 +712,7 @@ void Extrapolation::ExtrapolateBin::createExtrapolationTGraphErrors(Int_t xBin_i
   lin_extrapol->SetParName(0,"ResZero");
   lin_extrapol->SetParName(1,"slope");
   
-  quad_extrapol->SetParameters(1,-0.1,0.1);
+  quad_extrapol->SetParameters(100,-0.1,0.1);
   quad_extrapol->SetParName(0,"ResZero");
   quad_extrapol->SetParName(1,"slope");
   quad_extrapol->SetParName(1,"quadraticComponent");
@@ -605,10 +724,20 @@ void Extrapolation::ExtrapolateBin::createExtrapolationTGraphErrors(Int_t xBin_i
   extrapol_MCDataRatio->Fit("lin_extrapol","Q","same",0,Outer_->cutNumbers_.back()+0.05);
   extrapol_NormalizedMCDataRatio->Fit("lin_extrapol","Q","same",0,Outer_->cutNumbers_.back()+0.05);
 
-  extrapol_MC->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
-  extrapol_Data->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
-  extrapol_MCDataRatio->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
-  extrapol_NormalizedMCDataRatio->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
+  if(Outer_->exportOnlyLinearExtrapolation_){
+    extrapol_MC->GetListOfFunctions()->Add(quad_extrapol);
+    extrapol_Data->GetListOfFunctions()->Add(quad_extrapol);
+    extrapol_MCDataRatio->GetListOfFunctions()->Add(quad_extrapol);
+    extrapol_NormalizedMCDataRatio->GetListOfFunctions()->Add(quad_extrapol);
+    //    h->GetListOfFunctions()->Add(func);
+  }
+  else{
+    extrapol_MC->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
+    extrapol_Data->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
+    extrapol_MCDataRatio->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
+    extrapol_NormalizedMCDataRatio->Fit("quad_extrapol","Q+","same",0,Outer_->cutNumbers_.back()+0.05);
+  }
+
 
   //collect the extrapolation TGraphErrors
   MCExtrapols_.push_back(extrapol_MC);
@@ -757,7 +886,7 @@ void Extrapolation::ExtrapolateBin::plotExtrapol(Int_t xBin_i, Int_t bin_i){
   MCDataRatioExtrapols_.at(xBin_i)->SetName(outname);
   outname+=".pdf";
   c2->SaveAs(outname);
-  Outer_->configs_.at(0)->safelyToRootFile(MCDataRatioExtrapols_.at(xBin_i));
+  if(Outer_->saveExtrapolPlots_)Outer_->configs_.at(0)->safelyToRootFile(MCDataRatioExtrapols_.at(xBin_i));
 
 
 

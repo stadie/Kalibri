@@ -194,6 +194,8 @@ plots output directory           = plots
 #plots format                      = pdf
 plots only to root-file = true
 export all XY projections = true
+HF - Use HF as reference region for TwoJetsPtBalanceEvent = false
+HF - Use HF as reference region for TwoJetsPtBalanceEvent = false
 #plots only to root-file = true
 #export all XY projections = false
 
@@ -212,17 +214,14 @@ create TwoJetsPtBalanceEvent plots = true
     abs_binning_values=BinningValues(BINNING,True)
 
 
-    plot_list=['AsymmetryVsPt','AbsAsymmetryVsPt','OneBinAsymmetryVsPt','OneBinAbsAsymmetryVsPt','MPFVsPt','AbsMPFVsPt','OneBinMPFVsPt','OneBinAbsMPFVsPt']
-   # if(BINNING=="JEC_Mikko")
-    #  {
-    #cut_list=['30','20','15','10']
-    #cut_no_list=['.30','.20','.15','.10']
-     # }
-    #else
-    #  {
-    cut_list=['40','30','20','10']
-    cut_no_list=['.40','.30','.20','.10']
-    #  }
+    plot_list=['AsymmetryVsPt','AbsAsymmetryVsPt','OneBinAsymmetryVsPt','OneBinAbsAsymmetryVsPt','MPFVsPt','AbsMPFVsPt','OneBinMPFVsPt','OneBinAbsMPFVsPt','AbsAsymmetryVsVBarrPt','AbsAsymmetryVsLeadPt','AbsMPFVsPtAve','AbsMPFVsLeadPt','AbsGenAsymmetryVsMeanPt','AbsGenLeadAsymmetryVsLeadPt','AbsGenBarrAsymmetryVsBarrPt','MPFT1VsPt','AbsMPFT1VsPt','OneBinMPFVsPtAve','OneBinAbsMPFVsPtAve','MPFVsPtAve','GenAsymmetryVsMeanPt','GenLeadAsymmetryVsLeadPt','GenBarrAsymmetryVsBarrPt','AbsFlavorVsPtAve','AbsMPFVsPtAveFlavor']
+    if(BINNING=="JEC_Mikko"):
+        cut_list=['30','20','15','10']
+        cut_no_list=['.30','.20','.15','.10']
+    else:
+        cut_list=['40','30','20','10']
+        cut_no_list=['.40','.30','.20','.10']
+    cut_flav_list=['-0.5','0.5','1.5','2.5','3.5']
 #    cut_list=['40','35','30','25','20','15','10','05']
 #    cut_no_list=['.40','.35','.30','.25','.20','.15','.10','.05']
 
@@ -340,7 +339,245 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[6] + cut + " 1 correction types  =  L2L3\n")
         fcfg.write(plot_list[6] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
         fcfg.write(plot_list[6] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+	#crosscheck plots
+	fcfg.write(plot_list[8] + cut + " x variable        =  Jet2Pt; log\n")
+        fcfg.write(plot_list[8] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[8] + cut + " y variable        =  Asymmetry\n")
+        fcfg.write(plot_list[8] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[8] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[8] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[8] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[8] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[8] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[8] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[8] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[8] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+	fcfg.write(plot_list[9] + cut + " x variable        =  JetLeadPt; log\n")
+        fcfg.write(plot_list[9] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[9] + cut + " y variable        =  Asymmetry\n")
+        fcfg.write(plot_list[9] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[9] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[9] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[9] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[9] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[9] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[9] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[9] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[9] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+        fcfg.write(plot_list[10] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[10] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[10] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[10] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[10] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[10] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[10] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[10] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[10] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[10] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[10] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[10] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+        fcfg.write(plot_list[11] + cut + " x variable        =  JetLeadPt; log\n")
+        fcfg.write(plot_list[11] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[11] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[11] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[11] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[11] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[11] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[11] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[11] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[11] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[11] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[11] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+	#_________________________________________________________
+	
+	fcfg.write(plot_list[12] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[12] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[12] + cut + " y variable        =  GenAsymmetry\n")
+        fcfg.write(plot_list[12] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[12] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[12] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[12] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[12] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[12] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[12] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[12] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[12] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[12] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[12] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+	fcfg.write(plot_list[13] + cut + " x variable        =  JetLeadPt; log\n")
+        fcfg.write(plot_list[13] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[13] + cut + " y variable        =  GenLeadAsymmetry\n")
+        fcfg.write(plot_list[13] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[13] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[13] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[13] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[13] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[13] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[13] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[13] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[13] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[13] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[13] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+	fcfg.write(plot_list[14] + cut + " x variable        =  Jet2Pt; log\n")
+        fcfg.write(plot_list[14] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[14] + cut + " y variable        =  GenBarrAsymmetry\n")
+        fcfg.write(plot_list[14] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[14] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[14] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[14] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[14] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[14] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[14] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[14] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[14] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[14] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[14] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+        fcfg.write(plot_list[15] + cut + " x variable        =   Jet2Pt; log\n")
+        fcfg.write(plot_list[15] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[15] + cut + " y variable        =  MPFMETT1Response\n")
+        fcfg.write(plot_list[15] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[15] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[15] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[15] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[15] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[15] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[15] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[15] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[15] + cut + " input samples     =  0:data;1:MC\n\n")
 
+        fcfg.write(plot_list[16] + cut + " x variable        =   Jet2Pt; log\n")
+        fcfg.write(plot_list[16] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[16] + cut + " y variable        =  MPFMETT1Response\n")
+        fcfg.write(plot_list[16] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[16] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[16] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[16] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[16] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[16] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[16] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[16] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[16] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+        fcfg.write(plot_list[17] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[17] + cut + " x edges           =  1 20 2000\n")
+        fcfg.write(plot_list[17] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[17] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[17] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[17] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[17] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[17] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[17] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[17] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[17] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[17] + cut + " input samples     =  0:data;1:MC\n\n")
+
+        fcfg.write(plot_list[18] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[18] + cut + " x edges           =  1 20 2000\n")
+        fcfg.write(plot_list[18] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[18] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[18] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[18] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[18] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[18] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[18] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[18] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[18] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[18] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+        fcfg.write(plot_list[19] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[19] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[19] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[19] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[19] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[19] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[19] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[19] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[19] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[19] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[19] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[19] + cut + " input samples     =  0:data;1:MC\n\n")	
+
+        #______________________________________________________________________________________________________________
+	
+	fcfg.write(plot_list[20] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[20] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[20] + cut + " y variable        =  GenAsymmetry\n")
+        fcfg.write(plot_list[20] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[20] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[20] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[20] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[20] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[20] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[20] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[20] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[20] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[20] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[20] + cut + " input samples     =  0:data;1:MC\n\n")
+
+	fcfg.write(plot_list[21] + cut + " x variable        =  JetLeadPt; log\n")
+        fcfg.write(plot_list[21] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[21] + cut + " y variable        =  GenLeadAsymmetry\n")
+        fcfg.write(plot_list[21] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[21] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[21] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[21] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[21] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[21] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[21] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[21] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[21] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[21] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[21] + cut + " input samples     =  0:data;1:MC\n\n")
+
+	fcfg.write(plot_list[22] + cut + " x variable        =  Jet2Pt; log\n")
+        fcfg.write(plot_list[22] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[22] + cut + " y variable        =  GenBarrAsymmetry\n")
+        fcfg.write(plot_list[22] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[22] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[22] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[22] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[22] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[22] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[22] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[22] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[22] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[22] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[22] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+        fcfg.write(plot_list[23] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[23] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[23] + cut + " y variable        =  Flavor\n")
+        fcfg.write(plot_list[23] + cut + " y edges           =  5 -1.5 3.5 -1.5 3.5 -1.5 3.5 -1.5 3.5\n")
+        fcfg.write(plot_list[23] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[23] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[23] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[23] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[23] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[23] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[23] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")		
+        fcfg.write(plot_list[23] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+        fcfg.write(plot_list[24] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[24] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[24] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[24] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[24] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[24] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[24] + cut + " cut variable      =  Flavor\n")
+        fcfg.write(plot_list[24] + cut + " cut edges         =  "+ cut_flav_list[index_cut]+cut_flav_list[index_cut+1]+ "\n")
+        fcfg.write(plot_list[24] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[24] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[24] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")		
+        fcfg.write(plot_list[24] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
         fcfg.write(plot_list[7] + cut + " x variable        =   Jet2Pt; log\n")
         fcfg.write(plot_list[7] + cut + " x edges           =  1 20 2000\n")
         fcfg.write(plot_list[7] + cut + " y variable        =  MPFResponse\n")
@@ -353,7 +590,245 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[7] + cut + " 1 correction types  =  L2L3\n")
         fcfg.write(plot_list[7] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
         fcfg.write(plot_list[7] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+	#crosscheck plots
+	fcfg.write(plot_list[8] + cut + " x variable        =  Jet2Pt; log\n")
+        fcfg.write(plot_list[8] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[8] + cut + " y variable        =  Asymmetry\n")
+        fcfg.write(plot_list[8] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[8] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[8] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[8] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[8] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[8] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[8] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[8] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[8] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+	fcfg.write(plot_list[9] + cut + " x variable        =  JetLeadPt; log\n")
+        fcfg.write(plot_list[9] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[9] + cut + " y variable        =  Asymmetry\n")
+        fcfg.write(plot_list[9] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[9] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[9] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[9] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[9] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[9] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[9] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[9] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[9] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+        fcfg.write(plot_list[10] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[10] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[10] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[10] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[10] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[10] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[10] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[10] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[10] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[10] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[10] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[10] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+        fcfg.write(plot_list[11] + cut + " x variable        =  JetLeadPt; log\n")
+        fcfg.write(plot_list[11] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[11] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[11] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[11] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[11] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[11] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[11] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[11] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[11] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[11] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[11] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+	#_________________________________________________________
+	
+	fcfg.write(plot_list[12] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[12] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[12] + cut + " y variable        =  GenAsymmetry\n")
+        fcfg.write(plot_list[12] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[12] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[12] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[12] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[12] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[12] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[12] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[12] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[12] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[12] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[12] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+	fcfg.write(plot_list[13] + cut + " x variable        =  JetLeadPt; log\n")
+        fcfg.write(plot_list[13] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[13] + cut + " y variable        =  GenLeadAsymmetry\n")
+        fcfg.write(plot_list[13] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[13] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[13] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[13] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[13] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[13] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[13] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[13] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[13] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[13] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[13] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+	fcfg.write(plot_list[14] + cut + " x variable        =  Jet2Pt; log\n")
+        fcfg.write(plot_list[14] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[14] + cut + " y variable        =  GenBarrAsymmetry\n")
+        fcfg.write(plot_list[14] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[14] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[14] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[14] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[14] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[14] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[14] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[14] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[14] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[14] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[14] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+        fcfg.write(plot_list[15] + cut + " x variable        =   Jet2Pt; log\n")
+        fcfg.write(plot_list[15] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[15] + cut + " y variable        =  MPFMETT1Response\n")
+        fcfg.write(plot_list[15] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[15] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[15] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[15] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[15] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[15] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[15] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[15] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[15] + cut + " input samples     =  0:data;1:MC\n\n")
 
+        fcfg.write(plot_list[16] + cut + " x variable        =   Jet2Pt; log\n")
+        fcfg.write(plot_list[16] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[16] + cut + " y variable        =  MPFMETT1Response\n")
+        fcfg.write(plot_list[16] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[16] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[16] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[16] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[16] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[16] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[16] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[16] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[16] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+        fcfg.write(plot_list[17] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[17] + cut + " x edges           =  1 20 2000\n")
+        fcfg.write(plot_list[17] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[17] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[17] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[17] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[17] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[17] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[17] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[17] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[17] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[17] + cut + " input samples     =  0:data;1:MC\n\n")
+
+        fcfg.write(plot_list[18] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[18] + cut + " x edges           =  1 20 2000\n")
+        fcfg.write(plot_list[18] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[18] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[18] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[18] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[18] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[18] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[18] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[18] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[18] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[18] + cut + " input samples     =  0:data;1:MC\n\n")
+	
+        fcfg.write(plot_list[19] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[19] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[19] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[19] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[19] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[19] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[19] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[19] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[19] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[19] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[19] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")
+        fcfg.write(plot_list[19] + cut + " input samples     =  0:data;1:MC\n\n")	
+
+        #______________________________________________________________________________________________________________
+	
+	fcfg.write(plot_list[20] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[20] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[20] + cut + " y variable        =  GenAsymmetry\n")
+        fcfg.write(plot_list[20] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[20] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[20] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[20] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[20] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[20] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[20] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[20] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[20] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[20] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[20] + cut + " input samples     =  0:data;1:MC\n\n")
+
+	fcfg.write(plot_list[21] + cut + " x variable        =  JetLeadPt; log\n")
+        fcfg.write(plot_list[21] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[21] + cut + " y variable        =  GenLeadAsymmetry\n")
+        fcfg.write(plot_list[21] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[21] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[21] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[21] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[21] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[21] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[21] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[21] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[21] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[21] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[21] + cut + " input samples     =  0:data;1:MC\n\n")
+
+	fcfg.write(plot_list[22] + cut + " x variable        =  Jet2Pt; log\n")
+        fcfg.write(plot_list[22] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[22] + cut + " y variable        =  GenBarrAsymmetry\n")
+        fcfg.write(plot_list[22] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
+        fcfg.write(plot_list[22] + cut + " bin variable      =  Eta\n")
+        fcfg.write(plot_list[22] + cut + " bin edges         =  " + binning_values + "\n")
+        fcfg.write(plot_list[22] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[22] + cut + " cut edges         =  0.0 " + cut_no_list[index_cut]+ "\n")
+	fcfg.write(plot_list[22] + cut + " distributions     =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[22] + cut + " 1 distributions   =  L2L3\n")
+        fcfg.write(plot_list[22] + cut + " correction types  =  L2L3; L2L3Res\n")
+	fcfg.write(plot_list[22] + cut + " 1 correction types=  L2L3\n")
+        fcfg.write(plot_list[22] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; IQMean; RatioOfIQMeans\n")
+        fcfg.write(plot_list[22] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+        fcfg.write(plot_list[23] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[23] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[23] + cut + " y variable        =  Flavor\n")
+        fcfg.write(plot_list[23] + cut + " y edges           =  5 -1.5 3.5 -1.5 3.5 -1.5 3.5 -1.5 3.5\n")
+        fcfg.write(plot_list[23] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[23] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[23] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[23] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+        fcfg.write(plot_list[23] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[23] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[23] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")		
+        fcfg.write(plot_list[23] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
+        fcfg.write(plot_list[24] + cut + " x variable        =  MeanPt; log\n")
+        fcfg.write(plot_list[24] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[24] + cut + " y variable        =  MPFResponse\n")
+        fcfg.write(plot_list[24] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
+        fcfg.write(plot_list[24] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[24] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[24] + cut + " cut variable      =  Flavor\n")
+        fcfg.write(plot_list[24] + cut + " cut edges         =  "+ cut_flav_list[index_cut]+cut_flav_list[index_cut+1]+ "\n")
+        fcfg.write(plot_list[24] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[24] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[24] + cut + " profile types     =  Mean; GaussFitMean; IQMean\n")		
+        fcfg.write(plot_list[24] + cut + " input samples     =  0:data;1:MC\n\n")	
+	
 #    fcfg.write("\n")
 #    config_2="""
         config_2="""
@@ -687,11 +1162,10 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ##################################
 ##################################
-
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="TestAK5"
+DIR_JETALGO="SummerV3-flavorNoPU-algo"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
@@ -703,7 +1177,7 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2012SQLV7_AK5"
+CORRECTION="2013SummerV1_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -715,15 +1189,15 @@ SMEAR_JER="true"
 ##################################
 ## DATAYEAR variable used to determine trigger thresholds, datasets, ...
 ##################################
-DATAYEAR = "2012"
+DATAYEAR = "2013"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
-DATATYPE = "2012AB_194076"
+DATATYPE = "2013ABCD_ReReco"
 ##################################
 ## choose binning in eta, currently only "kostas" and "k_HFfix" are properly defined here
 ##################################
-BINNING="kostas"
+BINNING="JEC_Mikko"
 ##################################
 ## Use single jet triggers if =1 (influences trigger thresholds and trigger pt variables in runtime, look for useSingleJetTriggers_ in code)
 ##################################
@@ -735,15 +1209,15 @@ MC = "Su12"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-MC_type="Z253_Smear"
+MC_type="Hpp53"#"Z253_V11_T1T2"#_PUS6S7"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
-MinRunNumber=-1
+MinRunNumber=1#193117
 ##################################
 ## Choose maximum run number
 ##################################
-MaxRunNumber=1000000000
+MaxRunNumber=300000
 ##################################
 ## Use with care - was used to compare MC with MC that had inconsistent weights, sets weights of "data" equal to 1 if set to true
 ##################################
@@ -855,12 +1329,12 @@ if (len(sys.argv) > 6):
 
 
 
-nthreads = 1
-niothreads = 1
-nevents =  -1
+nthreads = 21
+niothreads = 7
+nevents = 10000000
 #nthreads = 1
 #niothreads = 1
-MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/KalibriTEST/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+MAIN_dirname = "/afs/naf.desy.de/user/d/draeger/scratch/kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
@@ -941,5 +1415,4 @@ else:
         kalibricmd = "cd "+dirname+"; ./junk L2L3b.cfg; cd -";
         print "running "+kalibricmd
         os.system(kalibricmd)
-
 

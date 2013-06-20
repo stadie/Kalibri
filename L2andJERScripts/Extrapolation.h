@@ -33,6 +33,20 @@ class Extrapolation :public BasePlotExtractor{
   std::pair <float,float> determineMinMax(TGraphErrors* graph);
  private:
   bool doPlotExtrapol_;
+  bool exportOnlyLinearExtrapolation_;
+
+  std::string plotToRootFileSetup_;
+  bool saveDeviationPlots_;
+  bool saveVsXVariablePlotsAndRatios_;
+  bool saveVsBinVarPlots_;
+  bool saveExtrapolPlots_;
+  bool exportOnlyLinearExtrapolation_;
+
+  std::string plotToRootFileSetup_;
+  bool saveDeviationPlots_;
+  bool saveVsXVariablePlotsAndRatios_;
+  bool saveVsBinVarPlots_;
+  bool saveExtrapolPlots_;
   void extrapolInit();
   void createPtRelExtrapol();
   void makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos();

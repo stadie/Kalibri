@@ -230,9 +230,9 @@ class ControlPlotsConfig {
   //! Close ROOT file for writing
   void closeRootFile();
   //! Writes a \p obj to ROOT file 
-  void toRootFile(TObject *obj) const;
+  void toRootFile(TObject *obj, const char* name = 0) const;
   //! Writes a \p obj to ROOT file, can be called without calling open/closeRootFile()-functions beforehand
-  void safelyToRootFile(TObject *obj) const;
+  void safelyToRootFile(TObject *obj, const char* name = 0) const;
 
 
  private:

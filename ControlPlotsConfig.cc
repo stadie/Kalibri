@@ -412,7 +412,7 @@ void ControlPlotsConfig::closeRootFile() {
 //!  \p obj is written into the directory \p outFile_:/name().
 //!  If it does not exist, it is created first.
 //---------------------------------------------------------------
-void ControlPlotsConfig::toRootFile(TObject *obj) const {
+void ControlPlotsConfig::toRootFile(TObject *obj, const char* newName) const {
   TDirectory* old_directory = gDirectory;
   std::string directory = outFile_->GetName();
   directory += ":";
@@ -423,7 +423,7 @@ void ControlPlotsConfig::toRootFile(TObject *obj) const {
     gDirectory->mkdir(name().c_str());
   }
   gDirectory->cd(directory.c_str());
-  if( !(gDirectory->WriteTObject(obj)) ) {
+  if( !(gDirectory->WriteTObject(obj,newName)) ) {
     std::cerr << "ERROR writing object '" << obj->GetName() << "' to ROOT file." << std::endl;
   }
   old_directory->cd();
@@ -437,7 +437,7 @@ void ControlPlotsConfig::toRootFile(TObject *obj) const {
 //!  Can be used at any place but has low performance due to 
 //!  multiple file-operations (open/close for each object)
 //---------------------------------------------------------------
-void ControlPlotsConfig::safelyToRootFile(TObject *obj) const {
+void ControlPlotsConfig::safelyToRootFile(TObject *obj, const char* newName) const {
   // Create / open ROOT file for output
   TFile *outFile = new TFile((outDirName()+"/"+outRootFileName_).c_str()
 			     ,"UPDATE","Kalibri control plots");
@@ -451,7 +451,7 @@ void ControlPlotsConfig::safelyToRootFile(TObject *obj) const {
     gDirectory->mkdir(name().c_str());
   }
   gDirectory->cd(directory.c_str());
-  if( !(gDirectory->WriteTObject(obj)) ) {
+  if( !(gDirectory->WriteTObject(obj,newName)) ) {
     std::cerr << "ERROR writing object '" << obj->GetName() << "' to ROOT file." << std::endl;
   }
 
