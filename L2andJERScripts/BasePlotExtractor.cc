@@ -12,7 +12,9 @@
 //! Default constructor, reads in information about the 
 //! plots. These plots have to be defined in config_
 //! and ExternalConfig_ read in here
-//!
+//! ExternalConfig_ is defined in constructor, config_ is
+//! read in from ExternalConfig_ matching definition in 
+//! kalibriPlotsShortName
 //!
 //!  \author Henning Kirschenmann
 //!  \date 2012/03/07
