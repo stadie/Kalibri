@@ -107,7 +107,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
   Jet *jets[2] = {0,0};
   double* terr = new double[top_->NobjTow];
   for(int i = 0; i < 3; ++i) {
-    if((Jet::Flavor)top_->JetFlavor[i] != Jet::uds) continue;
+    if((Jet::Flavor)top_->JetFlavor[i] != Jet::unknown) continue;
     
     double em = 0;
     double had = 0;
@@ -181,7 +181,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
 			  top_->JetEta[i], top_->JetPhi[i],
 			  tower.phiphi,
 			  tower.etaeta,
-			  Jet::uds, 
+			  Jet::unknown, 
 			  0,0,0,0,0,0,//PF-fractions not implemented, yet
 			  top_->GenJetPt[i], 0.,
 			  corFactors,
@@ -207,7 +207,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
 		     top_->JetE[i],
 		     top_->JetEta[i], top_->JetPhi[i],
 		     tower.phiphi,tower.etaeta,
-		     Jet::uds, 
+		     Jet::unknown, 
 		     0,0,0,0,0,0,//PF-fractions not implemented, yet
 		     top_->GenJetPt[i], 0.,
 		     corFactors,
@@ -224,7 +224,7 @@ Event* TopReader::createTwoJetsInvMassEvents()
   if(createGenWHist_) {
     TLorentzVector genW, genJet;
     for(int i = 0; i < 3; ++i) {
-      if((Jet::Flavor)top_->JetFlavor[i] != Jet::uds) continue;
+      if((Jet::Flavor)top_->JetFlavor[i] != Jet::unknown) continue;
       genJet.SetPtEtaPhiE(top_->GenJetPt[i],top_->GenJetEta[i],top_->GenJetPhi[i],top_->GenJetE[i]);
       if(i==0) genW = genJet;
       else genW += genJet;

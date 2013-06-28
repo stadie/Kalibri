@@ -59,17 +59,20 @@ class Jet : public Measurement
   //!
   //!  The possible flavors are
   //!  - 0: Gluon
-  //!  - 1: u, d, or s quark
+  //!  - 1: u, d //deprecated, was s quark as well
   //!  - 2: c quark
   //!  - 3: b quark
-  enum Flavor{ unknown = -1, gluon=0, uds=1, c=2, b=3 };
+  //!  - 4: s quark
+  //!  WARNING: should be revised after flavor response/compisition rush
+  enum Flavor{ unknown = -1, gluon=0, ud=1, c=2, b=3, s=4 };
 
   //! return flavor for pdg id
   static Flavor flavorFromPDG(int pdg) {
     if(pdg == 21) return gluon;
     if(pdg == 0) return unknown;
     unsigned int id = std::abs(pdg);
-    if(id < 4) return uds;
+    if(id < 3) return ud;
+    if(id == 3) return s;
     if(id == 4) return c;
     if(id == 5) return b;
     return unknown;

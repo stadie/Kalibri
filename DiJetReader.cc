@@ -946,7 +946,7 @@ int DiJetReader::createJetTruthEvents(std::vector<Event*>& data)
 			  tower.OutF,nJet_->JetE[calJetIdx],
 			  nJet_->JetEta[calJetIdx],nJet_->JetPhi[calJetIdx],
 			  nJet_->JetEtWeightedSigmaPhi[calJetIdx],
-			  nJet_->JetEtWeightedSigmaEta[calJetIdx], Jet::uds,
+			  nJet_->JetEtWeightedSigmaEta[calJetIdx], Jet::unknown,
 			  nJet_->JetFChargedHadrons[calJetIdx],
 			  nJet_->JetFNeutralHadrons[calJetIdx],
 			  nJet_->JetFPhotons[calJetIdx],
@@ -1181,7 +1181,7 @@ Event* DiJetReader::createDiJetResolutionEventRecoOrdered()
 			       nJet_->JetPhi[jetIndices_[i]->idx_],
 			       nJet_->JetEtWeightedSigmaPhi[jetIndices_[i]->idx_],
 			       nJet_->JetEtWeightedSigmaEta[jetIndices_[i]->idx_],
-			       Jet::uds,
+			       Jet::unknown,
 			       nJet_->JetFChargedHadrons[jetIndices_[i]->idx_],
 			       nJet_->JetFNeutralHadrons[jetIndices_[i]->idx_],
 			       nJet_->JetFPhotons[jetIndices_[i]->idx_],
@@ -1344,7 +1344,7 @@ Event* DiJetReader::createDiJetResolutionEventGenOrdered() {
  			       nJet_->JetPhi[nJet_->GenJetColJetIdx[i]],
  			       nJet_->JetEtWeightedSigmaPhi[nJet_->GenJetColJetIdx[i]],
  			       nJet_->JetEtWeightedSigmaEta[nJet_->GenJetColJetIdx[i]],
- 			       Jet::uds,
+ 			       Jet::unknown,
  			       nJet_->JetFChargedHadrons[nJet_->GenJetColJetIdx[i]],
 			       nJet_->JetFNeutralHadrons[nJet_->GenJetColJetIdx[i]],
 			       nJet_->JetFPhotons[nJet_->GenJetColJetIdx[i]],
@@ -1491,7 +1491,7 @@ Event* DiJetReader::createDiJetResolutionEventFromSkim() {
  			     nJet_->JetPhi[idx],
  			     nJet_->JetEtWeightedSigmaPhi[idx],
  			     nJet_->JetEtWeightedSigmaEta[idx],
- 			     Jet::uds,
+ 			     Jet::unknown,
 			     nJet_->JetFChargedHadrons[idx],
 			     nJet_->JetFNeutralHadrons[idx],
 			     nJet_->JetFPhotons[idx],
@@ -1603,7 +1603,7 @@ std::vector<Jet*> DiJetReader::twoJetsPtBalanceUpdateJECAndMET(int nmaxjets)
 			   nJet_->JetEtWeightedSigmaPhi[i],
 			   nJet_->JetEtWeightedSigmaEta[i],
 			   UsePhysFlavDefinition_ ? Jet::flavorFromPDG(nJet_->GenPartId_phys[nJet_->GenJetColJetIdx[i]]) : Jet::flavorFromPDG(nJet_->GenPartId_algo[nJet_->GenJetColJetIdx[i]]),
-			   //Jet::uds, take true flavor, if available...
+			   //Jet::unknown, take true flavor, if available...
 			   nJet_->JetFChargedHadrons[i],
 			   nJet_->JetFNeutralHadrons[i],
 			   nJet_->JetFPhotons[i],
@@ -1904,7 +1904,7 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
 			nJet_->JetEtWeightedSigmaPhi[CorrJetIdx[i]],
 			nJet_->JetEtWeightedSigmaEta[CorrJetIdx[i]],
 			UsePhysFlavDefinition_ ? Jet::flavorFromPDG(nJet_->GenPartId_phys[nJet_->GenJetColJetIdx[CorrJetIdx[i]]]) : Jet::flavorFromPDG(nJet_->GenPartId_algo[nJet_->GenJetColJetIdx[CorrJetIdx[i]]]),
-			//Jet::uds, take true flavor, if available...
+			//Jet::unknown, take true flavor, if available...
 			nJet_->JetFChargedHadrons[CorrJetIdx[i]],
 			nJet_->JetFNeutralHadrons[CorrJetIdx[i]],
 			nJet_->JetFPhotons[CorrJetIdx[i]],

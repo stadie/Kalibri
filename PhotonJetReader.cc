@@ -255,7 +255,7 @@ Event* PhotonJetReader::createJetTruthEvent()
     JetWithTowers *jt = 
       new JetWithTowers(gammaJet_->JetCalEt,em * factor,had * factor,
 			out * factor,gammaJet_->JetCalE,gammaJet_->JetCalEta,
-			gammaJet_->JetCalPhi,phiphi,etaeta,Jet::uds,
+			gammaJet_->JetCalPhi,phiphi,etaeta,Jet::unknown,
 			0,0,0,0,0,0,//PF-fractions not implemented, yet
 			gammaJet_->JetGenEt,
 			LJet.DeltaR(LGenJet),createCorFactors(0),
@@ -275,7 +275,7 @@ Event* PhotonJetReader::createJetTruthEvent()
   else { 
     j = new Jet(gammaJet_->JetCalEt,em * factor,had * factor,out * factor,
 		gammaJet_->JetCalE,gammaJet_->JetCalEta,gammaJet_->JetCalPhi,
-		phiphi,etaeta,Jet::uds,
+		phiphi,etaeta,Jet::unknown,
 		0,0,0,0,0,0,//PF-fractions not implemented, yet
 		gammaJet_->JetGenEt,LJet.DeltaR(LGenJet),
 		createCorFactors(0),
