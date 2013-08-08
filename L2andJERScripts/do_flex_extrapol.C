@@ -159,8 +159,8 @@ cout << "labels defined" << endl;
   }
   else if(MPF_or_rel_response.Contains("MPF")){
     ratio_of_mean_or_GM="_"+ ratio_of_mean_or_GM;
-    XVsPt = "MPFVsPt";
-    XVsPtType = "MPFResponseVsJet2Pt";
+    XVsPt = "MPFVsPtAve";
+    XVsPtType = "MPFResponseVsMeanPt";
   }
 cout << "open one" << endl;
   TFile* fone = TFile::Open(Residual_plots_one);
@@ -1771,7 +1771,7 @@ std::cout << "cut_i: " << cut_i << "abseta_i" << Abseta_i << std::endl;
   Residual_Abseta_correction_existing->SetName("Residual_Abseta_correction_existing");
   TGraphErrorsstyle(Residual_Abseta_correction_existing,line_styles_, colours_, markers_, 2,2,2,"bla");
 
-
+  std::cout<<"it should die right here"<<std::endl;
   TH1D* Residual_Abseta_correction_histo_existing=new TH1D("Residual_Abseta_correction_histo_existing", "Residual_Abseta_correction_histo_existing", trad_zero_eta , &trad_eta_binning[trad_zero_eta]);
 
       //      Residual_Abseta_correction_histo_existing->Print("all");
@@ -1791,7 +1791,7 @@ std::cout << "cut_i: " << cut_i << "abseta_i" << Abseta_i << std::endl;
        mkdir(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type, S_IRWXU|S_IRWXG|S_IRWXO); 
        chdir(fine_coarse+"_"+ generatorone+"_"+generatortwo+"_"+jet_type); 
      } 
-
+  std::cout<<"sanity"<<std::endl;
 
 
   pm_eta_TGraph_draw(c, Residual_eta_correction_val1, Residual_Abseta_correction_val1, line_styles_, colours_, markers_);
