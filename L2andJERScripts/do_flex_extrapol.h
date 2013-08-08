@@ -278,10 +278,10 @@ void     do_flex_extrapol::define_eta_bins_and_labels(){
   no_eta =38;
   zero_eta =19;
 
-  /*Double_t trad_eta_binning_[]={-6.0,-4.0,-3.5,-3.0,-2.7,-2.4,-2.1,-1.8,-1.5,-1.3,-1.1,-0.9,-0.6,-0.3,0.0,0.3,0.6,0.9,1.1,1.3,1.5,1.8,2.1,2.4,2.7,3.0,3.5,4.0,6.0};
+  Double_t trad_eta_binning_[]={-6.0,-4.0,-3.5,-3.0,-2.7,-2.4,-2.1,-1.8,-1.5,-1.3,-1.1,-0.9,-0.6,-0.3,0.0,0.3,0.6,0.9,1.1,1.3,1.5,1.8,2.1,2.4,2.7,3.0,3.5,4.0,6.0};
   int size_tra = sizeof(trad_eta_binning_)/sizeof(trad_eta_binning_[0]);
   vector<Double_t> vec_tra(trad_eta_binning_, &trad_eta_binning_[ size_tra] );
-  trad_eta_binning = vec_tra;*/
+  trad_eta_binning = vec_tra;
   //29
   trad_no_eta =28;
   trad_zero_eta =14;
