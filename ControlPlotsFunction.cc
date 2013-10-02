@@ -8,6 +8,7 @@
 #include "JetTruthEvent.h"
 #include "TwoJetsPtBalanceEvent.h"
 #include "TVector2.h"
+#include "TMinuit.h"
 
 /*
 //!  Will return 0 if \p type does not exist in \p types_
@@ -1073,7 +1074,7 @@ double ControlPlotsFunction::twoJetsPtBalanceEventGenAsymmetry(const Event * evt
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet1 = jte->getJet1();
   Jet * jet2 = jte->getJet2();
-  return 2*(jet1->genPt()-jet2->genPt())/(jet1->genPt()+jet2->genPt());
+  return (jet1->genPt()-jet2->genPt())/(jet1->genPt()+jet2->genPt());
 }
 
 double ControlPlotsFunction::twoJetsPtBalanceEventGenLeadAsymmetry(const Event * evt) const {

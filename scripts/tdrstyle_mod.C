@@ -1,6 +1,7 @@
 #include "TStyle.h"
 #include "TROOT.h"
 #include "TLatex.h"
+#include "TPad.h"
 
 #ifndef tdrstyle_mod_h
 #define tdrstyle_mod_h
@@ -98,6 +99,7 @@ void setTDRStyle() {
   tdrStyle->SetPadBottomMargin(0.15);//0.13);
   tdrStyle->SetPadLeftMargin(0.15);//0.16);
   tdrStyle->SetPadRightMargin(0.05);//0.02);
+  //tdrStyle->SetPadRightMargin(0.15);//0.02);
 
 // For the Global title:
 
@@ -188,7 +190,7 @@ void cmsPrel(double intLumi=-1, bool wide = false, long int sqrtS = 7) {
   }
   else if (intLumi==0) { // simulation
     latex->SetTextAlign(11); // align left
-    latex->DrawLatex(wide ? 0.06 : wideLeftOffset, 0.96, "CMS simulation (Su12 QCD)");
+    latex->DrawLatex(wide ? 0.06 : wideLeftOffset, 0.96, "CMS simulation");
   }
   else {
     latex->SetTextAlign(11); // align left

@@ -433,6 +433,8 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
   nHlt_               = 0;
   nVtx_               = 0;
 
+  static TRandom3 rand(0);
+
   //Run jet-Jet stuff  
   int nevent    = nJet_->fChain->GetEntries();  // Number of events in chain
 
@@ -584,13 +586,29 @@ int DiJetReader::readEventsFromTree(std::vector<Event*>& data)
 	  itjet1=JEREtaMap_.lower_bound(std::abs(td->getJet1()->eta()));
 	  itjet2=JEREtaMap_.lower_bound(std::abs(td->getJet2()->eta()));
 	  if(itjet1==itjet2){
-	    data.push_back(td); 
-	    ++nGoodEvts_;
-	    data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
-						     td->getJet3() ? td->getJet3()->clone():0,
-						     td->ptHat(),td->weight(),td->nPU(),
-						     td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->METT1(),td->METT1phi(),td->METT1Res(),td->METT1Resphi(),td->runNumber(),td->PUMCHighestSumPt()));
-	    ++nGoodEvts_;
+      //   if(td->getJet3() ) {
+//            float delta_phi_1 = td->getJet1()->phi() - td->getJet3()->phi();
+//            float delta_phi_2 = td->getJet2()->phi() - td->getJet3()->phi();
+//            if( delta_phi_2 < delta_phi_1 ) data.push_back(td); 
+//            else { 
+//               data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
+//                                                        td->getJet3() ? td->getJet3()->clone():0,
+//                                                        td->ptHat(),td->weight(),td->nPU(),
+//                                                        td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->METT1(),td->METT1phi(),td->METT1Res(),td->METT1Resphi(),td->runNumber(),td->PUMCHighestSumPt()));
+//            }
+//         }
+//         else {
+        if (rand.Rndm()<0.5){
+           data.push_back(td); 
+           //++nGoodEvts_;
+        } else {
+           data.push_back(new TwoJetsPtBalanceEvent(td->getJet2()->clone(),td->getJet1()->clone(),
+                                                    td->getJet3() ? td->getJet3()->clone():0,
+                                                    td->ptHat(),td->weight(),td->nPU(),
+                                                    td->nPUTruth(),td->nVtx(),td->MET(),td->METphi(),td->METT1(),td->METT1phi(),td->METT1Res(),td->METT1Resphi(),td->runNumber(),td->PUMCHighestSumPt()));
+        }
+           //}
+        ++nGoodEvts_;
 	  }
 	  //To do: Should the combination jet2,jet1 also be read in to be symmetric?
 	  //Would correspond to previous readin-definition (see following "else")...

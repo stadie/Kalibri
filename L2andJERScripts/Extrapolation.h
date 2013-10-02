@@ -3,10 +3,10 @@
 
 #include "BasePlotExtractor.cc"
 #include "TGraphErrors.h"
+#include "TMinuit.h"
 
 typedef std::vector<TGraphErrors*> TGErrvec_t;
 typedef std::vector<TGErrvec_t> VecOfTGErrvec_t;
-
 
 //!  \brief Reads (PF-)fraction plots and produces stacked
 //!         histograms of the input
@@ -28,18 +28,9 @@ class Extrapolation :public BasePlotExtractor{
   void ExportTables();
   std::vector<std::string> cutNames_;
   std::vector<double> cutNumbers_;
-  std::string cutNamesValueToNormalize_;
-  int indexToNormalizeTo_;
   std::pair <float,float> determineMinMax(TGraphErrors* graph);
  private:
   bool doPlotExtrapol_;
-  bool exportOnlyLinearExtrapolation_;
-
-  std::string plotToRootFileSetup_;
-  bool saveDeviationPlots_;
-  bool saveVsXVariablePlotsAndRatios_;
-  bool saveVsBinVarPlots_;
-  bool saveExtrapolPlots_;
   void extrapolInit();
   void createPtRelExtrapol();
   void makeMCDataRatioAndNormalizedMCDataRatioVsBinVarHistos();
@@ -47,21 +38,7 @@ class Extrapolation :public BasePlotExtractor{
   //  void doExtrapol();  
   TH1vec_t CollectExtrapolatedMCDataRatios_;
   TH1vec_t CollectExtrapolatedNormalizedMCDataRatios_;
-  TH1vec_t CollectExtrapolatedQuadMCDataRatios_;
-  TH1vec_t CollectExtrapolatedQuadNormalizedMCDataRatios_;
-  TH1vec_t CollectExtrapolatedLinQuadMCDataRatios_;
-  TH1vec_t CollectExtrapolatedLinQuadNormalizedMCDataRatios_;
-  VecOfTH1vec_t All_CollectExtrapolatedAllMCDataRatios_; // collection of 
-      //  TH1vec_t CollectExtrapolatedMCDataRatios_;
-      //  TH1vec_t CollectExtrapolatedNormalizedMCDataRatios_;
-      //  TH1vec_t CollectExtrapolatedQuadMCDataRatios_;
-      //  TH1vec_t CollectExtrapolatedQuadNormalizedMCDataRatios_;
-      //  TH1vec_t CollectExtrapolatedLinQuadMCDataRatios_;
-      //  TH1vec_t CollectExtrapolatedLinQuadNormalizedMCDataRatios_;
-      //
-      //  compatible with MCDataRatioVsBinVarHistos
-      //
-      //
+  VecOfTH1vec_t All_CollectExtrapolatedAllMCDataRatios_; // collection of CollectExtrapolatedMCDataRatios_ and  CollectExtrapolatedNormalizedMCDataRatios_ compatible with MCDataRatioVsBinVarHistos
   TH1vec_t MCDataRatioVsBinVarHistos_;//collection of VsBinVarHistos created from ExtrapolatedMCDataRatio_ and ExtrapolatedNormalizedMCDataRatio_; (size 2)
 
 
@@ -71,24 +48,20 @@ class Extrapolation :public BasePlotExtractor{
   class ExtrapolateBin {
   public:
     ExtrapolateBin(Extrapolation* Outer);
-    ~ExtrapolateBin();
     void addMCHisto(TH1D* MCHisto);
     void addDataHisto(TH1D* DataHisto);
     void calculateAndAddMCDataRatio();
     void calculateAndAddMCDataRatiosNormalizeToSecondCut();
-    void createExtrapolationTGraphErrors(Int_t xBin_i);
+    void createExtrapolationTGraphErrors(Int_t xBin_i, Int_t bin_i);
     void plotExtrapol(Int_t xBin_i, Int_t bin_i);
     void produceExtrapolatedRes();
     TH1D* ExtrapolatedResMC() const {return ExtrapolatedResMC_;}
     TH1D* ExtrapolatedResData() const {return ExtrapolatedResData_;}
     TH1D* ExtrapolatedMCDataRatio() const {return ExtrapolatedMCDataRatio_;}
     TH1D* ExtrapolatedNormalizedMCDataRatio() const {return ExtrapolatedNormalizedMCDataRatio_;}
-    TH1D* ExtrapolatedQuadMCDataRatio() const {return ExtrapolatedQuadMCDataRatio_;}
-    TH1D* ExtrapolatedQuadNormalizedMCDataRatio() const {return ExtrapolatedQuadNormalizedMCDataRatio_;}
-    TH1D* ExtrapolatedLinQuadMCDataRatio() const {return ExtrapolatedLinQuadMCDataRatio_;}
-    TH1D* ExtrapolatedLinQuadNormalizedMCDataRatio() const {return ExtrapolatedLinQuadNormalizedMCDataRatio_;}
 
   private:
+    bool doLinExtrapol_;
     std::vector<TH1D*> MCHistos_;
     std::vector<TH1D*> DataHistos_;
     std::vector<TH1D*> MCDataRatiosHistos_;
@@ -104,11 +77,10 @@ class Extrapolation :public BasePlotExtractor{
     TH1D* ExtrapolatedResData_;
     TH1D* ExtrapolatedMCDataRatio_;
     TH1D* ExtrapolatedNormalizedMCDataRatio_;
-    TH1D* ExtrapolatedQuadMCDataRatio_              ;
-    TH1D* ExtrapolatedQuadNormalizedMCDataRatio_    ;
-    TH1D* ExtrapolatedLinQuadMCDataRatio_           ;   
-    TH1D* ExtrapolatedLinQuadNormalizedMCDataRatio_ ;
-
+    std::vector<Double_t> getMeanAlphaMC(Int_t xBin_i, Int_t bin_i);
+    std::vector<Double_t> getMeanAlphaMCErr(Int_t xBin_i, Int_t bin_i);
+    std::vector<Double_t> getMeanAlphaData(Int_t xBin_i, Int_t bin_i);
+    std::vector<Double_t> getMeanAlphaDataErr(Int_t xBin_i, Int_t bin_i);
   };
 
 };

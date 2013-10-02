@@ -1,4 +1,4 @@
-// $Id: ControlPlotsConfig.cc,v 1.43 2013/05/16 09:13:58 kirschen Exp $
+// $Id: ControlPlotsConfig.cc,v 1.39 2013/01/29 15:30:58 stadie Exp $
 
 #include "ControlPlotsConfig.h"
 
@@ -9,6 +9,7 @@
 
 #include "TFile.h"
 #include "TSystem.h"
+#include "TMinuit.h"
 
 #include "ConfigFile.h"
 
@@ -67,16 +68,16 @@ std::string ControlPlotsConfig::binTitle(double min, double max, bool showCut) c
       }
     }
     if(cut2Variable() != "") {
-      title += "  and  ";
-      title += toString(cut2Min());
-      title += " #leq ";
-      title += varTitle(cut2Variable());
-      title += " < ";
-      title += toString(cut2Max());
-      std::string unit = unitTitle(cut2Variable());
-      if( unit != "" ) {
-	title += " " + unit;
-      }
+       title += " and ";
+       title += toString(cut2Min());
+       title += " #leq ";
+       title += varTitle(cut2Variable());
+       title += " < ";
+       title += toString(cut2Max());
+       std::string unit = unitTitle(cut2Variable());
+       if( unit != "" ) {
+          title += " " + unit;
+       }
     }
   }
   
@@ -142,10 +143,14 @@ std::string ControlPlotsConfig::yProfileTitle(ProfileType type) const {
     else 
       title = "GaussFit #sigma( " + yTitle() + ")";
   }
+  else if( type == DoubleGaussFitWidth )
+    title = "DoubleGaussFit #sigma( " + yTitle() + ")";
   else if( type == Median )
     title = "Median " + yTitle();
   else if( type == IQMean )
     title = "IQ Mean " + yTitle();
+  else if( type == IQWidth )
+    title = "IQ Width " + yTitle();
   else if( type == Chi2 )
     title = "#chi^{2} / ndof " + yTitle();
   else if( type == Probability )
@@ -295,6 +300,7 @@ std::string  ControlPlotsConfig::sampleName(int sample) const
 //! - "GaussFitWidth": \p ProfileType::GaussFitWidth
 //! - "Median": \p ProfileType::Median
 //! - "IQMean": \p ProfileType::IQMean - Interquartile mean
+//! - "IQWidth": \p ProfileType::IQWidth - truncated RMS 
 //! - "Chi2": \p ProfileType::Chi2
 //! - "Probability": \p ProfileType::Probability
 //! - "Quantiles": \p ProfileType::Quantiles
@@ -312,10 +318,14 @@ ControlPlotsConfig::ProfileType ControlPlotsConfig::profileType(const std::strin
     type = GaussFitMean;
   else if( typeName == "GaussFitWidth" )
     type = GaussFitWidth;
+  else if( typeName == "DoubleGaussFitWidth")
+    type = DoubleGaussFitWidth;
   else if( typeName == "Median" )
     type = Median;
   else if( typeName == "IQMean" )
     type = IQMean;
+  else if( typeName == "IQWidth" )
+    type = IQWidth;
   else if( typeName == "Chi2" )
     type = Chi2;
   else if( typeName == "Probability" )
@@ -341,8 +351,10 @@ ControlPlotsConfig::ProfileType ControlPlotsConfig::profileType(const std::strin
 //! - \p ProfileType::StandardDeviation: "StandardDeviation" 
 //! - \p ProfileType::GaussFitMean: "GaussFitMean" 
 //! - \p ProfileType::GaussFitWidth: "GaussFitWidth" 
+//! - \p ProfileType::DoubleGaussFitWidth: "DoubleGaussFitWidth"
 //! - \p ProfileType::Median: "Median" 
 //! - \p ProfileType::IQMean: "IQMean" Interquartile mean 
+//! - \p ProfileType::IQWidth - truncated RMS 
 //! - \p ProfileType::Chi2: "Chi2" 
 //! - \p ProfileType::Probability: "Probability" 
 //! - \p ProfileType::Quantiles: "Quantiles" 
@@ -361,10 +373,14 @@ std::string ControlPlotsConfig::profileTypeName(ProfileType profType) const {
     name = "GaussFitMean";
   else if( profType == GaussFitWidth )
     name = "GaussFitWidth";
+  else if (profType == DoubleGaussFitWidth )
+    name = "DoubleGaussFitWidth";
   else if( profType == Median )
     name = "Median";
   else if( profType == IQMean )
     name = "IQMean";
+  else if( profType == IQWidth )
+    name = "IQWidth";
   else if( profType == Chi2 )
     name = "Chi2";
   else if( profType == Probability )
@@ -412,7 +428,7 @@ void ControlPlotsConfig::closeRootFile() {
 //!  \p obj is written into the directory \p outFile_:/name().
 //!  If it does not exist, it is created first.
 //---------------------------------------------------------------
-void ControlPlotsConfig::toRootFile(TObject *obj, const char* newName) const {
+void ControlPlotsConfig::toRootFile(TObject *obj) const {
   TDirectory* old_directory = gDirectory;
   std::string directory = outFile_->GetName();
   directory += ":";
@@ -423,7 +439,7 @@ void ControlPlotsConfig::toRootFile(TObject *obj, const char* newName) const {
     gDirectory->mkdir(name().c_str());
   }
   gDirectory->cd(directory.c_str());
-  if( !(gDirectory->WriteTObject(obj,newName)) ) {
+  if( !(gDirectory->WriteTObject(obj)) ) {
     std::cerr << "ERROR writing object '" << obj->GetName() << "' to ROOT file." << std::endl;
   }
   old_directory->cd();
@@ -437,7 +453,7 @@ void ControlPlotsConfig::toRootFile(TObject *obj, const char* newName) const {
 //!  Can be used at any place but has low performance due to 
 //!  multiple file-operations (open/close for each object)
 //---------------------------------------------------------------
-void ControlPlotsConfig::safelyToRootFile(TObject *obj, const char* newName) const {
+void ControlPlotsConfig::safelyToRootFile(TObject *obj) const {
   // Create / open ROOT file for output
   TFile *outFile = new TFile((outDirName()+"/"+outRootFileName_).c_str()
 			     ,"UPDATE","Kalibri control plots");
@@ -451,7 +467,7 @@ void ControlPlotsConfig::safelyToRootFile(TObject *obj, const char* newName) con
     gDirectory->mkdir(name().c_str());
   }
   gDirectory->cd(directory.c_str());
-  if( !(gDirectory->WriteTObject(obj,newName)) ) {
+  if( !(gDirectory->WriteTObject(obj)) ) {
     std::cerr << "ERROR writing object '" << obj->GetName() << "' to ROOT file." << std::endl;
   }
 
@@ -526,16 +542,6 @@ void ControlPlotsConfig::init() {
      std::cerr << "WARNING: Wrong number of arguments in config line '" << name_ << " cut edges'\n";
      cutEdges_ = std::make_pair(0.0,0.0);
   }
-
-  cut2Var_ = config_->read<std::string>(name_+" cut2 variable","");
-  var = bag_of<double>(config_->read<std::string>(name_+" cut2 edges","0 0"));
-  if( var.size() == 2 ) {
-    cut2Edges_ = std::make_pair(var[0],var[1]);
-  } else {
-     std::cerr << "WARNING: Wrong number of arguments in config line '" << name_ << " cut2 edges'\n";
-     cut2Edges_ = std::make_pair(0.0,0.0);
-  }
-
   
   // Store which profile types are to be drawn
   std::vector<std::string> profTypesStr = bag_of_string(config_->read<std::string>(name_+" profile types","Uncorrected"));
@@ -666,30 +672,6 @@ void ControlPlotsConfig::init() {
   // This should become configurable via config file
   for(std::vector<int>::const_iterator samplesIt = sampleIds.begin() ;
       samplesIt != sampleIds.end() ; samplesIt++) {
-    std::cout << "sampleIds.size()" << sampleIds.size() << std::endl;
-    if(sampleIds.size()>=3){
-      int idx = samplesIt - sampleIds.begin();
-      std::cout << "idx: " << idx <<std::endl;
-      colors_[std::make_pair(*samplesIt,Uncorrected)] = kBlue+idx;
-      colors_[std::make_pair(*samplesIt,Kalibri)] = 2+idx;
-      colors_[std::make_pair(*samplesIt,L2L3)] = 1+idx;
-      colors_[std::make_pair(*samplesIt,L2L3Res)] = kBlue+2+idx;
-      colors_[std::make_pair(*samplesIt,L2L3L4)] = 8+idx;
-      colors_[std::make_pair(*samplesIt,L2L3ResL4)] = 1+idx;
-      colors_[std::make_pair(*samplesIt,L1L2L3)] = 2+idx;
-      colors_[std::make_pair(*samplesIt,L5)] = 8+idx;
-      
-      markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = 20+idx;
-      markerStyles_[std::make_pair(*samplesIt,Kalibri)] = 21+idx;
-      markerStyles_[std::make_pair(*samplesIt,L2L3)] = 24+idx;
-      markerStyles_[std::make_pair(*samplesIt,L2L3Res)] = 27+idx;
-      markerStyles_[std::make_pair(*samplesIt,L2L3L4)] = 28+idx;
-      markerStyles_[std::make_pair(*samplesIt,L2L3ResL4)] = 20+idx;
-      markerStyles_[std::make_pair(*samplesIt,L1L2L3)] = 21+idx;
-      markerStyles_[std::make_pair(*samplesIt,L5)] = 28+idx;
-    }
-    
-    else{
     colors_[std::make_pair(*samplesIt,Uncorrected)] = 1;
     colors_[std::make_pair(*samplesIt,Kalibri)] = 2;
     colors_[std::make_pair(*samplesIt,L2L3)] = kBlue;
@@ -698,7 +680,7 @@ void ControlPlotsConfig::init() {
     colors_[std::make_pair(*samplesIt,L2L3ResL4)] = 1;
     colors_[std::make_pair(*samplesIt,L1L2L3)] = 2;
     colors_[std::make_pair(*samplesIt,L5)] = 8;
-    if(samplesIt - sampleIds.begin() == 0) { //i.e. samplesIt == sampleIds.begin (!?)
+    if(samplesIt - sampleIds.begin() == 0) {
       markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = 20;
       markerStyles_[std::make_pair(*samplesIt,Kalibri)] = 21;
       markerStyles_[std::make_pair(*samplesIt,L2L3)] = 24;
@@ -709,7 +691,6 @@ void ControlPlotsConfig::init() {
       markerStyles_[std::make_pair(*samplesIt,L5)] = 28;
     } else {
       int style = -(samplesIt - sampleIds.begin());
-      //      std::cout << "int style = -(samplesIt - sampleIds.begin());" << style << std::endl;
       markerStyles_[std::make_pair(*samplesIt,Uncorrected)] = style;
       markerStyles_[std::make_pair(*samplesIt,Kalibri)] = style;
       markerStyles_[std::make_pair(*samplesIt,L2L3)] = style;
@@ -718,7 +699,6 @@ void ControlPlotsConfig::init() {
       markerStyles_[std::make_pair(*samplesIt,L2L3ResL4)] = style;
       markerStyles_[std::make_pair(*samplesIt,L1L2L3)] = style;
       markerStyles_[std::make_pair(*samplesIt,L5)] = style;
-    }
     }
     // Define default legend labels for the different corrections
     std::string name = sampleName(*samplesIt);
@@ -828,7 +808,7 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "jet width";
   //    title = "(#sigma_{#phi#phi} + #sigma_{#eta#eta})/2";
   else if( varName == "Flavor" )
-    title = "g(0),uds(1),c(2),b(3)";
+    title = "Flavor gluon = 0, uds = 1";
   else if ( varName == "EMF" ) 
     title = "emf";
   else if( varName == "GenJetPt" )
@@ -839,9 +819,7 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     //    title = "(p_{T,1} - p_{T,2})/(p_{T,1} + p_{T,2})";
     title = "Asymmetry";
   else if( varName == "MPFResponse") 
-    title = "MPF response (MET_{raw})";
-  else if( varName == "MPFMETT1Response") 
-    title = "MPF response (MET_{T1})";
+    title = "MPF response";
   else if( varName == "ThirdJetFraction") 
     title = "p_{3}^{proj.}/#bar p_{T}";
   else if( varName == "ThirdJetFractionPlain") 
@@ -872,26 +850,8 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "HF Hadronic";
   else if( varName == "PF_HFEm_Fraction")
     title = "HF Em";
-  else if( varName == "PF_CH_RespCorrFraction")
-    title = "Charged hadrons (rc)";
-  //    title = "PF charged hadron fraction";
-  else if( varName == "PF_NH_RespCorrFraction")
-    title = "Neutral hadrons (rc)";
-  //    title = "PF neutral hadron fraction";
-  else if( varName == "PF_PH_RespCorrFraction")
-    title = "Photons (rc)";
-  ///    title = "PF photon fraction";
-  else if( varName == "PF_EL_RespCorrFraction")
-    title = "Electrons (rc)";
-  //    title = "PF electron fraction";
-  else if( varName == "PF_HFHad_RespCorrFraction")
-    title = "HF Hadronic (rc)";
-  else if( varName == "PF_HFEm_RespCorrFraction")
-    title = "HF Em (rc)";
   else if( varName == "DeltaPhi")
     title = "#Delta #varphi_{1,2}";
-  else if( varName == "ClosestJetdR")
-    title = "#Delta R_{closest other jet}";
   else if( varName == "Rho")
     title = "#rho";
   else if( varName == "RunNumber")

@@ -23,36 +23,36 @@ class CorFactors;
 
 class Jet : public Measurement
 {
- public:
-  class JetIndex {
-  public:
-    JetIndex(unsigned int idx, float pt) : idx_(idx), pt_(pt) {};
-    const unsigned int idx_;
-    const float pt_;
-    // For sorting jets in pt
-    static bool ptGreaterThan(const JetIndex *idx1, const JetIndex *idx2) {
-      // check for 0
-      if(idx1 == 0) {
-	return idx2 != 0;
-      } else if (idx2 == 0) {
-	return false;
-      } else {
-	return idx1->pt_ > idx2->pt_;
+public:
+   class JetIndex {
+   public:
+      JetIndex(unsigned int idx, float pt) : idx_(idx), pt_(pt) {};
+      const unsigned int idx_;
+      const float pt_;
+      // For sorting jets in pt
+      static bool ptGreaterThan(const JetIndex *idx1, const JetIndex *idx2) {
+         // check for 0
+         if(idx1 == 0) {
+            return idx2 != 0;
+         } else if (idx2 == 0) {
+            return false;
+         } else {
+            return idx1->pt_ > idx2->pt_;
+         }
       }
-    }
-  };
+   };
 
-  //! For sorting jets in calo pt
-  static bool caloPtGreaterThan(const Jet *j1, const Jet *j2) {
-    // check for 0
-    if (j1 == 0) {
-      return j2 != 0;
-    } else if (j2 == 0) {
-      return false;
-    } else {
-      return j1->pt() > j2->pt();
-    }
-  }
+   //! For sorting jets in calo pt
+   static bool caloPtGreaterThan(const Jet *j1, const Jet *j2) {
+      // check for 0
+      if (j1 == 0) {
+         return j2 != 0;
+      } else if (j2 == 0) {
+         return false;
+      } else {
+         return j1->pt() > j2->pt();
+      }
+   }
 
 
   //!  \brief Jet flavor

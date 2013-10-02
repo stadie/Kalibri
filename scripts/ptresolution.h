@@ -28,7 +28,8 @@ int find_ieta(float eta){
 }
 
 //// k-scale for PFJets from Matthias, July 14, Hamburg Calib
-float _pscale_ak5pf_M[] = {1.052, 1.057, 1.096, 1.134, 1.288};
+//float _pscale_ak5pf_M[] = {1.052, 1.057, 1.096, 1.134, 1.288};
+float _pscale_ak5pf_M[] = {1.1, 1.1, 1.1, 1.1, 1.1};
 
 // downward fluctuation values
 float _pscale_ak5pf_M_d[] =

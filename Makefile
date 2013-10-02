@@ -14,7 +14,7 @@ endif
 SPECIALFLAGS= -fpic -g -Wall -O2 #-O1 #-pg# -O2
 ROOTAUXCFLAGS=$(shell root-config --auxcflags)
 ROOTCFLAGS=$(shell root-config --cflags)
-ROOTLIBS=$(shell root-config --libs) -lMinuit2
+ROOTLIBS=$(shell root-config --libs) -lMinuit2 -lMinuit
 LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS) -lgsl -lgslcblas -lm
 BOOSTLINKFLAGS=-lboost_thread -lpthread
 # change path for MacPort or fink@MacOS

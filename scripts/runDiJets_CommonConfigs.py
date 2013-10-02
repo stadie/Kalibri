@@ -243,7 +243,9 @@ def PUWeightingInfo(DATATYPE,MC_type):
     elif(DATATYPE=="2013ABCD_ReReco"):
         PU_weighting_info = "PU TruthWeighting = kheine/PUDistributions/Cert_2012_190456-208686_ReReco \n"
     elif(DATATYPE=="Z253_V11_T1T2_DMC"):
-        PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-203002 \n"	
+        PU_weighting_info = "PU TruthWeighting = rathjd/PUDistributions/Cert_2012_190456-203002 \n"
+    elif(DATATYPE=="Z253"):
+        PU_weighting_info = "PU TruthWeighting = kheine/PUDistributions/Cert_2012_190456-208686_ReReco \n"
     else:
         print "Defining PU reweighting paths failed"
         PU_weighting_info = "PU weighting era = Flat10\n PU weighting histogram = /afs/naf.desy.de/user/k/kirschen/scratch/2011_06_L2L3_Residuals_42X/PUDist_Cert_160404-163869_7TeV_May10ReReco.root \n"
@@ -368,6 +370,8 @@ def determineDataDir(DATAYEAR,DATATYPE):
     if(DATAYEAR == "MC2012"):
         if(DATATYPE=="Z253_V11_T1T2_DMC"):
             datadir = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
+        if(DATATYPE=="Z253"):
+            datadir = "/scratch/hh/current/cms/user/rathjd/Calibration/MCSummer12S10DX53"	  
         
     return datadir
 

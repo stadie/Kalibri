@@ -215,9 +215,20 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
     abs_binning_values=BinningValues(BINNING,True)
 
 
-    plot_list=['AbsAsymmetryVsPt']#,'NPVVsPt']
-    cut_list=['40','30','20','10']
-    cut_no_list=['.40','.30','.20','.10']
+    plot_list=['AbsAsymmetryVsPt', 'AbsGenAsymmetryVsPt', 'ThirdJetFractionPlainVsPt', 'MCTruthResponseVsPt']#,'NPVVsPt']
+#    cut_list=['40','30','20','10']
+#    cut_list=['25','20','15','10']
+    cut_list=['25', '22.5', '20', '17.5', '15', '12.5', '10']
+#    cut_list=['10','20','30','40']
+#    cut_list=['10','15','20','25']
+#    cut_list=['10','12.5','15','17.5','20','22.5','25']
+#    cut_no_list=['.40','.30','.20','.10','.00']
+#    cut_no_list=['.25','.20','.15','.10','.00']
+    cut_no_list=['.25', '.225', '.20', '.175', '.15', '.125', '.10']
+#    cut_no_list=['.00','.10','.20','.30','.40']
+#    cut_no_list=['.00','.10','.15','.20','.25']
+#    cut_no_list=['.00','.10','0.125','.15','0.175','.20','0.225','.25']
+#    cut_no_list=['.40','.30','.20','.10']
 #    cut_list=['40','35','30','25','20','15','10','05']
 #    cut_no_list=['.40','.35','.30','.25','.20','.15','.10','.05']
 
@@ -257,17 +268,72 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
         fcfg.write(plot_list[0] + cut + " x variable        =   MeanPt; log\n")
         fcfg.write(plot_list[0] + cut + " x edges           =  15 20 2000\n")
         fcfg.write(plot_list[0] + cut + " y variable        =  Asymmetry\n")
-        fcfg.write(plot_list[0] + cut + " y edges           =  251 -1.00 1.00 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 0.0 0.5 0.0 0.5\n")
+        fcfg.write(plot_list[0] + cut + " y edges           =  451 -1.00 1.00 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 0.0 0.5 0.0 0.5 0.0 0.5\n")
         fcfg.write(plot_list[0] + cut + " bin variable      =  AbsEta\n")
         fcfg.write(plot_list[0] + cut + " bin edges         =  " + abs_binning_values + "\n")
         fcfg.write(plot_list[0] + cut + " cut variable      =  ThirdJetFractionPlain\n")
         fcfg.write(plot_list[0] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+#        fcfg.write(plot_list[0] + cut + " cut edges         = " + cut_no_list[index_cut] + " " + cut_no_list[index_cut+1]+ "\n")
         fcfg.write(plot_list[0] + cut + " distributions     =  L2L3; L2L3Res\n")
         fcfg.write(plot_list[0] + cut + " 1 distributions     =  L2L3\n")
         fcfg.write(plot_list[0] + cut + " correction types  =  L2L3; L2L3Res\n")
         fcfg.write(plot_list[0] + cut + " 1 correction types  =  L2L3\n")
-        fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; StandardDeviation; GaussFitWidth\n")
+        fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; StandardDeviation; GaussFitWidth; IQWidth; DoubleGaussFitWidth\n")
+  #      fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; StandardDeviation; GaussFitWidth; IQWidth\n")
         fcfg.write(plot_list[0] + cut + " input samples     =  0:data;1:MC\n\n")
+        
+
+        fcfg.write(plot_list[1] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[1] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[1] + cut + " y variable        =  GenAsymmetry\n")
+        fcfg.write(plot_list[1] + cut + " y edges           =  451 -0.98 0.98 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 0.0 0.5 0.0 0.5 0.0 0.5\n")
+        fcfg.write(plot_list[1] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[1] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[1] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[1] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+#        fcfg.write(plot_list[1] + cut + " cut edges         = " + cut_no_list[index_cut] + " " + cut_no_list[index_cut+1]+ "\n")
+        fcfg.write(plot_list[1] + cut + " distributions     =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[1] + cut + " 1 distributions     =  L2L3\n")
+        fcfg.write(plot_list[1] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[1] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[1] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; StandardDeviation; GaussFitWidth; IQWidth; DoubleGaussFitWidth\n")
+  #      fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; StandardDeviation; GaussFitWidth; IQWidth\n")
+        fcfg.write(plot_list[1] + cut + " input samples     =  0:data;1:MC\n\n")
+
+
+        fcfg.write(plot_list[2] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[2] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[2] + cut + " y variable        =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[2] + cut + " y edges           =  451 -1.00 1.00 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 0.0 0.5 0.0 0.5 0.0 0.5\n")
+        fcfg.write(plot_list[2] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[2] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[2] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[2] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+#        fcfg.write(plot_list[2] + cut + " cut edges         = " + cut_no_list[index_cut] + " " + cut_no_list[index_cut+1]+ "\n")
+        fcfg.write(plot_list[2] + cut + " distributions     =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[2] + cut + " 1 distributions     =  L2L3\n")
+        fcfg.write(plot_list[2] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[2] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[2] + cut + " profile types     =  Mean\n")
+        fcfg.write(plot_list[2] + cut + " input samples     =  0:data;1:MC\n\n")
+
+
+        fcfg.write(plot_list[3] + cut + " x variable        =   MeanPt; log\n")
+        fcfg.write(plot_list[3] + cut + " x edges           =  15 20 2000\n")
+        fcfg.write(plot_list[3] + cut + " y variable        =  MCTruthResponse\n")
+        fcfg.write(plot_list[3] + cut + " y edges           =  250 0.00 2.00 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 0.0 0.5 0.0 0.5 0.0 0.5\n")
+        fcfg.write(plot_list[3] + cut + " bin variable      =  AbsEta\n")
+        fcfg.write(plot_list[3] + cut + " bin edges         =  " + abs_binning_values + "\n")
+        fcfg.write(plot_list[3] + cut + " cut variable      =  ThirdJetFractionPlain\n")
+        fcfg.write(plot_list[3] + cut + " cut edges         = 0.0 " + cut_no_list[index_cut]+ "\n")
+#        fcfg.write(plot_list[3] + cut + " cut edges         = " + cut_no_list[index_cut] + " " + cut_no_list[index_cut+1]+ "\n")
+        fcfg.write(plot_list[3] + cut + " distributions     =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[3] + cut + " 1 distributions     =  L2L3\n")
+        fcfg.write(plot_list[3] + cut + " correction types  =  L2L3; L2L3Res\n")
+        fcfg.write(plot_list[3] + cut + " 1 correction types  =  L2L3\n")
+        fcfg.write(plot_list[3] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; StandardDeviation; GaussFitWidth; IQWidth; DoubleGaussFitWidth\n")
+#        fcfg.write(plot_list[0] + cut + " profile types     =  Mean; GaussFitMean; RatioOfMeans; RatioOfGaussFitMeans; StandardDeviation; GaussFitWidth; IQWidth\n")
+        fcfg.write(plot_list[3] + cut + " input samples     =  0:data;1:MC\n\n")
 
 #        fcfg.write(plot_list[1] + cut + " x variable        =   MeanPt; log\n")
 #        fcfg.write(plot_list[1] + cut + " x edges           =  100 20 2000\n")
@@ -388,7 +454,8 @@ create TwoJetsPtBalanceEvent PUTruthReweighting plots = true
     fcfg.write("EventWeightProcessor = true\n");
     fcfg.write("EventBinning = false\n");
     fcfg.write("DiJetEventWeighting = true\n");
-    fcfg.write("PUTruthReweighting = true\n");
+#    fcfg.write("PUTruthReweighting = true\n");
+    fcfg.write("PUTruthReweighting = false\n");
     fcfg.write("PU weighting = false   \n");
 
     PU_weighting_info = PUWeightingInfo(DATATYPE,MC_type)
@@ -433,7 +500,7 @@ if len(sys.argv) > 3:
 
 #MC                     = config.get(SECTIONTOREAD, 'MC')
 #DO_MC_ONLY_STUDY       = config.get(MAINSECTIONTOREAD, 'DO_MC_ONLY_STUDY')
-DO_MC_ONLY_STUDY       = "true"
+DO_MC_ONLY_STUDY       = "false"
 #PF_CALO_JPT       = config.get(EXTRAMAINSECTIONTOREAD, 'PF_CALO_JPT')
 ##################################
 ## end of dummy part as suggestion
@@ -457,11 +524,18 @@ DO_MC_ONLY_STUDY       = "true"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="DefaultTestTEstTest"
+#DIR_JETALGO="ChangeAlphaRangeMoreFitPoints_ThirdJetFraction_v1"
+#DIR_JETALGO="DefaultValuesAlphaExclusive"
+#DIR_JETALGO="ChangeAlphaRangeAlphaExclusive_v19"
+#DIR_JETALGO="ChangeAlphaRangeAlphaExclusive_ThirdJetFraction_v1"
+#DIR_JETALGO="TesT"
+DIR_JETALGO="RatioClosure_test"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
+#PF_CALO_JPT="PFCHS"
 PF_CALO_JPT="PF"
+#PF_CALO_JPT="Calo"
 ##################################
 ## chooses the jet algorithm - used to pick the corresponding n-tupel .root-files (ak5 is default)
 ##################################
@@ -469,7 +543,9 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2012FallV4_AK5"
+#CORRECTION="ntuple"
+#CORRECTION="2012FallV5_AK5"
+CORRECTION="2013SummerV1_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -477,16 +553,24 @@ CORRECT_JETS_L1="true"
 ##################################
 ## Switch to decide whether JER should be smeared in control events (MC)
 ##################################
+#SMEAR_JER="false"
 SMEAR_JER="true"
 ##################################
 ## DATAYEAR variable used to determine trigger thresholds, datasets, ...
 ##################################
-DATAYEAR = "MC2012"
+#DATAYEAR ="2013"
+DATAYEAR ="MC2012"
 ##################################
 ## Detailled datasample, similar influence as above
 ##################################
 #DATATYPE = "2012ABC_203002"
-DATATYPE = "Z253_V11_T1T2_DMC"
+#DATATYPE = "Z253_V11_T1T2_DMC"
+#DATATYPE = "2012ABCD_208686"
+#DATATYPE = "2012ABCD_ReReco"
+#DATATYPE = "2012ABCD_ReReco_MBXS73500"
+#DATATYPE = "2013ABCD_ReReco"
+#DATATYPE = "Z253_pythia"
+DATATYPE = "Z253"
 ##################################
 ## choose binning in eta, currently only "JER" is properly defined here
 ##################################
@@ -502,8 +586,10 @@ MC = "Su12"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-#MC_type="Z253_V11_T1T2Smear"
-MC_type="Z253_V11_T1T2"
+MC_type="Z253"
+#MC_type="Z253_pythia"
+#MC_type="Z2star53_pythia"
+#MC_type="EE3C53_herwigpp"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
@@ -630,8 +716,9 @@ niothreads = 4
 #nevents =  -1
 #nthreads = 1
 #niothreads = 1
-nevents =  -1
-MAIN_dirname = "/afs/naf.desy.de/user/k/kirschen/scratch/KalibriTEST/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+#nevents =  -1
+nevents =  10000
+MAIN_dirname = "/afs/naf.desy.de/user/k/kriheine/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False

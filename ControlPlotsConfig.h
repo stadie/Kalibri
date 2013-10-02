@@ -10,6 +10,7 @@
 
 #include "TObject.h"
 #include "TFile.h"
+#include "TMinuit.h"
 
 class ConfigFile;
 
@@ -47,8 +48,10 @@ class ConfigFile;
 //!  - StandardDeviation
 //!  - GaussFitMean
 //!  - GaussFitWidth
+//!  - DoubleGaussFitWidth
 //!  - Median
 //!  - IQMean
+//!  - IQWidth
 //!  - Chi2
 //!  - Probability
 //!  - Quantiles
@@ -68,9 +71,9 @@ class ControlPlotsConfig {
   typedef std::vector<InputTag>::const_iterator InputTagsIterator;  
 
   //! Number of defined profile types
-  static const int nProfileTypes = 12;
+  static const int nProfileTypes = 14;
   //! Different types of profile histograms
-  enum ProfileType { Mean=0, StandardDeviation, GaussFitMean, GaussFitWidth, Median, IQMean, Chi2, Probability, Quantiles, RatioOfMeans, RatioOfGaussFitMeans, RatioOfIQMeans};
+   enum ProfileType { Mean=0, StandardDeviation, GaussFitMean, GaussFitWidth, DoubleGaussFitWidth, Median, IQMean, IQWidth, Chi2, Probability, Quantiles, RatioOfMeans, RatioOfGaussFitMeans, RatioOfIQMeans};
   typedef std::vector<ProfileType>::const_iterator ProfileTypeIt;
 
   ControlPlotsConfig(const ConfigFile *configFile, const std::string &name);
@@ -230,9 +233,9 @@ class ControlPlotsConfig {
   //! Close ROOT file for writing
   void closeRootFile();
   //! Writes a \p obj to ROOT file 
-  void toRootFile(TObject *obj, const char* name = 0) const;
+  void toRootFile(TObject *obj) const;
   //! Writes a \p obj to ROOT file, can be called without calling open/closeRootFile()-functions beforehand
-  void safelyToRootFile(TObject *obj, const char* name = 0) const;
+  void safelyToRootFile(TObject *obj) const;
 
 
  private:

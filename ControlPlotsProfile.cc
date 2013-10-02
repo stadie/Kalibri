@@ -10,11 +10,18 @@
 #include "TImage.h"
 #include "TStyle.h"
 #include "TGraph.h"
+#include "TMath.h"
+#include "TMinuit.h"
 
 #include "CalibData.h"
 #include "ControlPlotsFunction.h"
 
 #include <cstdlib>
+
+struct fitdata{
+    TH1D * dhisto;
+} fdata;
+
 
 //! \param config Configuration file
 //! \param function The functions which return the x, y, and binning
@@ -433,7 +440,7 @@ void ControlPlotsProfile::draw() {
 	  }
 	  else{
 	    h->GetXaxis()->SetRange(0,-1);
-	    h->GetYaxis()->SetRangeUser(0,h->GetMaximum()*2);
+	    h->GetYaxis()->SetRangeUser(0.1,h->GetMaximum()*2);
 	  }
 
 	  //	  h->Dump();
@@ -687,8 +694,10 @@ int ControlPlotsProfile::Bin::fill(double x, double y, double w,const ControlPlo
 //!  - StandardDeviation
 //!  - GaussFitMean
 //!  - GaussFitWidth
+//!  - DoubleGaussFitWidth
 //!  - Median
 //!  - IQMean  - Interquartile Mean
+//!  - IQWidth - Truncated RMS
 //!  - Chi2
 //!  - Probability
 //!  - Quantiles
@@ -696,6 +705,61 @@ int ControlPlotsProfile::Bin::fill(double x, double y, double w,const ControlPlo
 //!  - RatioOfGaussFitMeans
 //!  - RatioOfIQMeans
 //---------------------------------------------------------------
+double tgauss_ll(double * p){
+   double xmax = fdata.dhisto->GetXaxis()->GetXmax();
+   double xmin = -fdata.dhisto->GetXaxis()->GetXmax();
+   int nbins = fdata.dhisto->GetNbinsX();
+   // min and max range in sigma from the mean:
+   double xmax_s = (xmax - p[0]) / p[1];
+   double xmin_s = (xmin - p[0]) / p[1];
+   //if(xmin_s < -5.0) xmin_s = -5.0;
+   //if(xmax_s > 5.0) xmax_s = 5.0;
+   // norm of the noirmal distribution from xmin to xmax:
+   double norm = TMath::Erf(xmax_s/M_SQRT2) - TMath::Erf(xmin_s / M_SQRT2);
+   double res = 0.0;
+   for(int ibin=1; ibin <= nbins; ++ibin){
+      double c = fdata.dhisto->GetBinContent(ibin);
+      // if(c == 0) continue;
+      // in bin ibin, get the fraction according to the pdf:
+      xmax_s = (fdata.dhisto->GetXaxis()->GetBinUpEdge(ibin) - p[0]) / p[1];
+      xmin_s = (fdata.dhisto->GetXaxis()->GetBinLowEdge(ibin) - p[0]) / p[1];
+      //if(xmin_s < -5.0 || xmax_s > 5.0) continue;
+      double prob = (TMath::Erf(xmax_s/M_SQRT2) - TMath::Erf(xmin_s / M_SQRT2)) / norm;
+      xmax_s = (-fdata.dhisto->GetXaxis()->GetBinLowEdge(ibin) - p[0]) / p[1];
+      xmin_s = (-fdata.dhisto->GetXaxis()->GetBinUpEdge(ibin) - p[0]) / p[1];
+      //if(xmin_s < -5.0 || xmax_s > 5.0) continue;
+      prob += (TMath::Erf(xmax_s/M_SQRT2) - TMath::Erf(xmin_s / M_SQRT2)) / norm;
+      //cout << p << endl;
+      res -= log(prob) * c;
+      //cout << fval << endl;
+      //if(isinf(fval)) exit(1);
+   }
+   //cout << "f(mu=" << p[0] << "; sigma=" << p[1] << ") = " << fval << endl;
+   return res;
+}
+
+
+void tgauss_ll_minuit(Int_t& npar, Double_t* grad, Double_t& fval, Double_t* p, Int_t status){
+    fval = tgauss_ll(p);
+}
+
+void make_fit(double & mu, double & d_mu, double & sigma, double & d_sigma){
+    TMinuit min(3);
+    min.SetPrintLevel(-1);
+    min.SetErrorDef(0.5);
+    // int err = min.DefineParameter(0, "mu", 0.1, 0.01, 0.0, 1);
+    int err = min.DefineParameter(0, "mu", mu, d_mu, 0.0, 0.5);
+    assert(err==0);
+    // err = min.DefineParameter(1, "sigma", 0.1, 0.01, 0.05, 1);
+    err = min.DefineParameter(1, "sigma", sigma, d_sigma, 0.02, 0.3);
+    assert(err==0);
+    min.SetFCN(tgauss_ll_minuit);
+    min.mnmigr();
+    //min.mnmnos();
+    min.GetParameter(0, mu, d_mu);
+    min.GetParameter(1, sigma, d_sigma);
+}
+
 int ControlPlotsProfile::Bin::fitProfiles() {
   std::cout << "Fitting profiles for " << config_->name() << std::endl;
   nCallsFitProfiles_++;
@@ -765,6 +829,9 @@ int ControlPlotsProfile::Bin::fitProfiles() {
     double yq_IQM[2],xq_IQM[2];
     xq_IQM[0] = 0.25;
     xq_IQM[1] = 0.75;
+    double yq_IQW[2],xq_IQW[2];
+    xq_IQW[0] = 0.015;
+    xq_IQW[1] = 0.985;
     // Loop over x bins
     for(int xBin = 1; xBin <= corrIt->second->GetNbinsX(); xBin++) {
       htemp->Reset();
@@ -789,6 +856,7 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	double mean = htemp->GetMean(); 
 	double meanerror = htemp->GetMeanError();
 	double width = htemp->GetRMS();
+   double widtherror = htemp->GetRMSError();
 	if(width < 0.1) width = 0.1;
 	if(htemp->GetSumOfWeights() <= 0) {
 	  continue; 
@@ -821,6 +889,49 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Chi2]->SetBinError(xBin, 0.01);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Probability]->SetBinContent(xBin, f->GetProb());
 	  hXProfile_[corrIt->first][ControlPlotsConfig::Probability]->SetBinError(xBin, 0.01);
+
+     // fit truncated double gaussian
+     htemp->ComputeIntegral();
+     htemp->GetQuantiles(nq,yq,xq);
+     width = htemp->GetRMS();
+     int i_BinLow = htemp->GetXaxis()->FindBin(0.0);
+     int i_BinHigh = htemp->GetXaxis()->FindBin(3*width);
+     fdata.dhisto = new TH1D("temp", "temp", i_BinHigh-i_BinLow+1, 0, htemp->GetXaxis()->GetBinUpEdge(i_BinHigh));
+     for (int i=i_BinLow; i <= i_BinHigh; i++) {
+        double c = htemp->GetBinContent(i)+htemp->GetBinContent(i_BinLow - (i - i_BinLow) - 1);
+        double c_e = TMath::Sqrt(htemp->GetBinError(i)*
+                                 htemp->GetBinError(i) + 
+                                 htemp->GetBinError(i_BinLow - (i - i_BinLow) - 1)*
+                                 htemp->GetBinError(i_BinLow - (i - i_BinLow) - 1));
+        fdata.dhisto->SetBinContent(i - i_BinLow+1,c);
+        fdata.dhisto->SetBinError(i - i_BinLow+1, c_e);
+        mean = yq[0]; 
+        meanerror = 0.01;
+        width = 0.06; 
+        widtherror = 0.01;
+
+     }
+     make_fit(mean, meanerror, width, widtherror);
+     delete fdata.dhisto; 
+     i_BinHigh = htemp->GetXaxis()->FindBin(2*width);
+     fdata.dhisto = new TH1D("temp", "temp", i_BinHigh - i_BinLow+1, 0,  
+                             htemp->GetXaxis()->GetBinUpEdge(i_BinHigh));
+     for (int j = i_BinLow; j <= i_BinHigh; j++) {
+        double c =  htemp->GetBinContent(j) + 
+           htemp->GetBinContent(i_BinLow - (j - i_BinLow) - 1);
+        double c_e = TMath::Sqrt(htemp->GetBinError(j)*
+                                 htemp->GetBinError(j) + 
+                                 htemp->GetBinError(i_BinLow - (j - i_BinLow) - 1)*
+                                 htemp->GetBinError(i_BinLow - (j - i_BinLow) - 1));
+        fdata.dhisto->SetBinContent(j - i_BinLow+1, c);
+        fdata.dhisto->SetBinError(j - i_BinLow+1, c_e);
+        
+     }
+     make_fit(mean, meanerror, width, widtherror);
+     delete fdata.dhisto;
+     hXProfile_[corrIt->first][ControlPlotsConfig::DoubleGaussFitWidth]->SetBinContent(xBin,width);
+     hXProfile_[corrIt->first][ControlPlotsConfig::DoubleGaussFitWidth]->SetBinError(xBin,widtherror);
+
 	  mean = htemp->GetMean();
 	  meanerror = htemp->GetMeanError();
 	  width = htemp->GetRMS();
@@ -853,6 +964,15 @@ int ControlPlotsProfile::Bin::fitProfiles() {
 	  hXProfile_[corrIt->first][ControlPlotsConfig::IQMean]->SetBinError(xBin,meanerror);
 	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfIQMeans]->SetBinContent(xBin,(1+mean)/(1-mean));
 	  hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfIQMeans]->SetBinError(xBin,2 /((1-mean)*(1-mean))*meanerror);
+     htemp->GetXaxis()->SetRange(0,-1);
+     htemp->GetQuantiles(nq,yq_IQW,xq_IQW);
+	  Int_t IQW_low_bin_i = htemp->FindBin(yq_IQW[0]);
+	  Int_t IQW_hig_bin_i = htemp->FindBin(yq_IQW[1]);
+	  htemp->GetXaxis()->SetRange(IQW_low_bin_i,IQW_hig_bin_i);
+	  width = htemp->GetRMS();
+	  hXProfile_[corrIt->first][ControlPlotsConfig::IQWidth]->SetBinContent(xBin,width);
+	  hXProfile_[corrIt->first][ControlPlotsConfig::IQWidth]->SetBinError(xBin,htemp->GetRMSError());
+
 	  //	  std::cout << "Mean, Error, GaussMean, GaussError, IQMean, IQError: " << std::endl;
 	  //	  std::cout << hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->GetBinContent(xBin) << ", " << hXProfile_[corrIt->first][ControlPlotsConfig::Mean]->GetBinError(xBin) << ", " 
 	  //	       << hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->GetBinContent(xBin) << ", " << hXProfile_[corrIt->first][ControlPlotsConfig::GaussFitMean]->GetBinError(xBin) << ", " 
@@ -879,6 +999,7 @@ int ControlPlotsProfile::Bin::fitProfiles() {
     hXProfile_[corrIt->first][ControlPlotsConfig::Median]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::Median]->GetEffectiveEntries());
     hXProfile_[corrIt->first][ControlPlotsConfig::IQMean]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::IQMean]->GetEffectiveEntries());
     hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfIQMeans]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::RatioOfIQMeans]->GetEffectiveEntries());
+    hXProfile_[corrIt->first][ControlPlotsConfig::IQWidth]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::IQWidth]->GetEffectiveEntries());
     hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->SetEntries(hXProfile_[corrIt->first][ControlPlotsConfig::Quantiles]->GetEffectiveEntries());
 
   } // End of loop over CorrectionTypes
