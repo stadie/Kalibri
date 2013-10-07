@@ -533,8 +533,8 @@ DIR_JETALGO="RatioClosure_test"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
-#PF_CALO_JPT="PFCHS"
-PF_CALO_JPT="PF"
+PF_CALO_JPT="PFCHS"
+#PF_CALO_JPT="PF"
 #PF_CALO_JPT="Calo"
 ##################################
 ## chooses the jet algorithm - used to pick the corresponding n-tupel .root-files (ak5 is default)
@@ -670,7 +670,7 @@ if (len(sys.argv) > 8):
     MC=sys.argv[3]
     MC_type=sys.argv[4]
     BINNING=sys.argv[5]
-    DATATYPE=sys.argv[7]
+    DATATYPE=sys.rgv[7]
     CORRECT_JETS_L1=sys.argv[8]
     SINGLEJET=int(sys.argv[9])
     print "DIR_JETALGO="+ DIR_JETALGO + " PF_CALO_JPT="+PF_CALO_JPT+ " MC="+MC+" MC-type=" + MC_type+" BINNING="+BINNING+" DATATYPE="+DATATYPE+" CORRECT_JETS_L1="+CORRECT_JETS_L1+" SINGLEJET="+str(SINGLEJET)
@@ -718,7 +718,7 @@ niothreads = 4
 #niothreads = 1
 #nevents =  -1
 nevents =  10000
-MAIN_dirname = "/afs/naf.desy.de/user/k/kriheine/scratch/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+MAIN_dirname = "/nfs/dust/test/cms/user/kheine/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
