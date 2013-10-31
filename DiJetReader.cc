@@ -1995,6 +1995,16 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
     hltdiPFjetc320incl_=nJet_->HltDiPFJetAve320 && !(nJet_->HltDiPFJetAve400); 
     hltdiPFjetc400incl_=nJet_->HltDiPFJetAve400; */
     
+
+    hltdiPFjetc40incl_ = nJet_->HltDiPFJetAve40;
+    hltdiPFjetc80incl_ = nJet_->HltDiPFJetAve80;
+    hltdiPFjetc140incl_= nJet_->HltDiPFJetAve140; 
+    hltdiPFjetc200incl_= nJet_->HltDiPFJetAve200; 
+    hltdiPFjetc260incl_= nJet_->HltDiPFJetAve260; 
+    hltdiPFjetc320incl_= nJet_->HltDiPFJetAve320; 
+    hltdiPFjetc400incl_= nJet_->HltDiPFJetAve400;    
+
+  
     double triggerPt = diJetPtAve;
     if(useSingleJetTriggers_){
       double ptj1= jet1->pt() * jet1->corFactors().getL2L3() * jet1->corFactors().getL1(); 	 
@@ -2007,16 +2017,6 @@ TwoJetsPtBalanceEvent* DiJetReader::createTwoJetsPtBalanceEvent()
         }
       else triggerPt=ptj2;
     }
-    hltdiPFjetc40incl_ = triggerPt<trigtresholds[1] ? nJet_->HltDiPFJetAve40 : false;
-    hltdiPFjetc80incl_ = triggerPt<trigtresholds[2] ? nJet_->HltDiPFJetAve80 : false;
-    hltdiPFjetc140incl_= triggerPt<trigtresholds[3] ? nJet_->HltDiPFJetAve140 : false; 
-    hltdiPFjetc200incl_= triggerPt<trigtresholds[4] ? nJet_->HltDiPFJetAve200 : false; 
-    hltdiPFjetc260incl_= triggerPt<trigtresholds[5] ? nJet_->HltDiPFJetAve260 : false; 
-    hltdiPFjetc320incl_= triggerPt<trigtresholds[6] ? nJet_->HltDiPFJetAve320 : false; 
-    hltdiPFjetc400incl_=nJet_->HltDiPFJetAve400;    
-
-  
-
     std::map<double,bool*>::iterator it = trigmap_.lower_bound(triggerPt);
     if(it == trigmap_.begin()) {
 //            std::cout << "below all trigger thresholds:" << triggerPt  << " ptj1:" << jet1->pt() << " ptj2:" <<jet2->pt() << '\n';
