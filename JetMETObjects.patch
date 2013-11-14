@@ -1,13 +1,45 @@
-Index: JetMETObjects/Makefile
+Index: Makefile
 ===================================================================
 RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/Makefile,v
 retrieving revision 1.6
 diff -r1.6 Makefile
-100c100
+47a48,51
+> 	       $(TMPDIR)/JetCorrectionUncertainty.o \
+> 	       $(TMPDIR)/SimpleJetCorrectionUncertainty.o \
+>                $(TMPDIR)/JetResolution.o \
+> 	       $(TMPDIR)/Utilities.o \
+87a92,109
+> $(TMPDIR)/JetCorrectionUncertainty.o: interface/JetCorrectionUncertainty.h \
+> 				    src/JetCorrectionUncertainty.cc
+> 	$(CXX) $(CXXFLAGS) -c src/JetCorrectionUncertainty.cc \
+> 	-o $(TMPDIR)/JetCorrectionUncertainty.o 
+> 
+> $(TMPDIR)/SimpleJetCorrectionUncertainty.o: interface/SimpleJetCorrectionUncertainty.h \
+> 				    src/SimpleJetCorrectionUncertainty.cc
+> 	$(CXX) $(CXXFLAGS) -c src/SimpleJetCorrectionUncertainty.cc \
+> 	-o $(TMPDIR)/SimpleJetCorrectionUncertainty.o 
+> 
+> $(TMPDIR)/JetResolution.o: interface/JetResolution.h \
+> 				    src/JetResolution.cc
+> 	$(CXX) $(CXXFLAGS) -c src/JetResolution.cc \
+> 	-o $(TMPDIR)/JetResolution.o 
+> 
+> $(TMPDIR)/Utilities.o: src/Utilities.cc
+> 	$(CXX) $(CXXFLAGS) -c src/Utilities.cc \
+> 	-o $(TMPDIR)/Utilities.o 
+95a118,120
+>                                  interface/JetCorrectionUncertainty.h \
+>                                  interface/SimpleJetCorrectionUncertainty.h \
+>                                  interface/JetResolution.h \
+100c125
 < 	-c -I$(TMPDIR) \
 ---
 > 	-c -DSTANDALONE -I$(TMPDIR) \
-Index: JetMETObjects/interface/FactorizedJetCorrector.h
+103a129,131
+> 	interface/JetCorrectionUncertainty.h \
+>         interface/SimpleJetCorrectionUncertainty.h \
+>         interface/JetResolution.h \
+Index: interface/FactorizedJetCorrector.h
 ===================================================================
 RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h,v
 retrieving revision 1.11
@@ -36,24 +68,30 @@ diff -r1.11 FactorizedJetCorrector.h
 >     bool  mIsJetEMFset;
 >     bool  mIsJetEtaEtaset;
 >     bool  mIsJetPhiPhiset;
-Index: JetMETObjects/interface/JetCorrectorParameters.h
+Index: interface/JetCorrectorParameters.h
 ===================================================================
 RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/interface/JetCorrectorParameters.h,v
 retrieving revision 1.17
 diff -r1.17 JetCorrectorParameters.h
-14c14,17
+14c14
 < #include "FWCore/Utilities/interface/Exception.h"
 ---
 > 
-> #ifndef STANDALONE
->   #include "FWCore/Utilities/interface/Exception.h"
-> #endif
-Index: JetMETObjects/src/FactorizedJetCorrector.cc
+Index: src/FactorizedJetCorrector.cc
 ===================================================================
 RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/src/FactorizedJetCorrector.cc,v
 retrieving revision 1.19
 diff -r1.19 FactorizedJetCorrector.cc
-22,32c22,34
+9c9,10
+< #include "CondFormats/JetMETObjects/src/Utilities.cc"
+---
+> 
+> 
+16a18,20
+> 
+> void handleError(const std::string& fClass, const std::string& fMessage);
+> 
+22,32c26,38
 <   mJetEta  = -9999;
 <   mJetPt   = -9999;
 <   mJetPhi  = -9999;
@@ -79,72 +117,72 @@ diff -r1.19 FactorizedJetCorrector.cc
 >   mLepPy  = -9999;
 >   mLepPz  = -9999;
 >   mNPV    = -9999; 
-37a40
+37a44
 > 
-40a44,45
+40a48,49
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-46a52,53
+46a56,57
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-65a73,74
+65a77,78
 >   mJetEtaEta = -9999;
 >   mJetPhiPhi = -9999;
-81c90,92
+81c94,96
 <   mIsJetEMFset      = false;
 ---
 >   mIsJetEMFset      = false;  
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-83a95,96
+83a99,100
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false; 
-103c116,118
+103c120,122
 <   mRho    = -9999;
 ---
 >   mRho    = -9999; 
 >   mJetEtaEta = -9999;
 >   mJetPhiPhi = -9999;
-119c134,136
+119c138,140
 <   mIsJetEMFset      = false;
 ---
 >   mIsJetEMFset      = false;  
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-121a139,140
+121a143,144
 >   mIsJetEtaEtaset   = false;
 >   mIsJetPhiPhiset   = false;
-127a147
+127a151
 > 
-138a159,160
+138a163,164
 >       mLevels.push_back(kL4); 
 >     else if (ss == "L4JW")
-168a191
+168a195
 > 
-179c202,204
+179c206,208
 <       mLevels.push_back(kL4);
 ---
 >       mLevels.push_back(kL4);  
 >     else if (tmp[i] == "L4JW")
 >         mLevels.push_back(kL4);
-227a253
+227a257
 > 
-241c267,269
+241c271,273
 <       result.push_back(kRelLepPt);
 ---
 >       result.push_back(kRelLepPt); 
 >     else if (ss=="JetWidth")
 >       result.push_back(kJW);
-417a446
+417a450
 > 
-448a478,483
+448a482,487
 >     else if (fVarTypes[i] == kJW) 
 >       {
 > 	if (!mIsJetEtaEtaset || !mIsJetPhiPhiset) 
 > 	  handleError("FactorizedJetCorrector","jet phiphi- or etaetamoments are not set");
 > 	result.push_back(0.5*(mJetEtaEta+mJetPhiPhi));
 >       }
-559a595,607
+559a599,611
 > //------------------------------------------------------------------------
 > void FactorizedJetCorrector::setJetEtaEtaMoment(float fEtaEta)
 > {
@@ -158,30 +196,89 @@ diff -r1.19 FactorizedJetCorrector.cc
 >   mIsJetPhiPhiset = true;
 > }
 > //------------------------------------------------------------------------
-Index: JetMETObjects/src/JetCorrectorParameters.cc
+Index: src/JetCorrectionUncertainty.cc
+===================================================================
+RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/src/JetCorrectionUncertainty.cc,v
+retrieving revision 1.4
+diff -r1.4 JetCorrectionUncertainty.cc
+4d3
+< #include "FWCore/Utilities/interface/Exception.h"
+10a10
+> void handleError(const std::string& fClass, const std::string& fMessage);
+118c118
+<             throw cms::Exception("JetCorrectionUncertainty::")<<" jet eta is not set";
+---
+>             handleError("JetCorrectionUncertainty"," jet eta is not set");
+124c124
+<             throw cms::Exception("JetCorrectionUncertainty::")<<" jet pt is not set";  
+---
+>             handleError("JetCorrectionUncertainty"," jet pt is not set");  
+130c130
+<             throw cms::Exception("JetCorrectionUncertainty::")<<" jet phi is not set";  
+---
+>             handleError("JetCorrectionUncertainty"," jet phi is not set");  
+136c136
+<             throw cms::Exception("JetCorrectionUncertainty::")<<" jet energy is not set";
+---
+>             handleError("JetCorrectionUncertainty"," jet energy is not set");
+142c142
+<             throw cms::Exception("JetCorrectionUncertainty::")<<" jet emf is not set";
+---
+> 	    handleError("JetCorrectionUncertainty::"," jet emf is not set");
+148c148
+<             throw cms::Exception("JetCorrectionUncertainty::")<<" lepton px is not set";  
+---
+>             handleError("JetCorrectionUncertainty"," lepton px is not set");  
+154c154
+<             throw cms::Exception("JetCorrectionUncertainty::")<<" lepton py is not set";  
+---
+> 	    handleError("JetCorrectionUncertainty"," lepton py is not set");  
+160c160
+<             throw cms::Exception("JetCorrectionUncertainty::")<<" lepton pz is not set";  
+---
+>             handleError("JetCorrectionUncertainty"," lepton pz is not set");  
+164c164
+<         throw cms::Exception("JetCorrectionUncertainty::")<<" unknown parameter "<<fNames[i];
+---
+>         handleError("JetCorrectionUncertainty"," unknown parameter ");
+188c188
+<     throw cms::Exception("JetCorrectionUncertainty")<<" not positive lepton-jet momentum: "<<lj2;
+---
+>     handleError("JetCorrectionUncertainty"," not positive lepton-jet momentum");
+Index: src/JetCorrectorParameters.cc
 ===================================================================
 RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/src/JetCorrectorParameters.cc,v
 retrieving revision 1.22
 diff -r1.22 JetCorrectorParameters.cc
-475a476
+8d7
+< #include "CondFormats/JetMETObjects/src/Utilities.cc"
+17a17,23
+> void handleError(const std::string& fClass, const std::string& fMessage);
+> float getFloat(const std::string& token); 
+> unsigned getUnsigned(const std::string& token); 
+> std::string getSection(const std::string& token); 
+> std::vector<std::string> getTokens(const std::string& fLine);
+> std::string getDefinitions(const std::string& token);
+> float quadraticInterpolation(float fZ, const float fX[3], const float fY[3]);
+475a482
 > #ifndef STANDALONE
-477a479,482
+477a485,488
 > #else
 >   std::cerr << " cannot find key " << static_cast<int>(k) << std::endl;
 >   throw "InvalidInput";
 > #endif
-531d535
+531d541
 < 
-557a562
+557a568
 > #ifndef STANDALONE
-559c564,567
+559c570,573
 < 
 ---
 > #else 
 >   std::cerr  << " Cannot find label " << label << std::endl;
 >   throw "InvalidInput";
 > #endif
-566,569c574,579
+566,569c580,585
 < #include "FWCore/Utilities/interface/typelookup.h"
 <  
 < TYPELOOKUP_DATA_REG(JetCorrectorParameters);
@@ -193,3 +290,269 @@ diff -r1.22 JetCorrectorParameters.cc
 >   TYPELOOKUP_DATA_REG(JetCorrectorParameters);
 >   TYPELOOKUP_DATA_REG(JetCorrectorParametersCollection);
 > #endif
+Index: src/SimpleJetCorrectionUncertainty.cc
+===================================================================
+RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/src/SimpleJetCorrectionUncertainty.cc,v
+retrieving revision 1.2
+diff -r1.2 SimpleJetCorrectionUncertainty.cc
+3d2
+< #include "FWCore/Utilities/interface/Exception.h"
+6a6
+> void handleError(const std::string& fClass, const std::string& fMessage);
+33c33
+<     throw cms::Exception("SimpleJetCorrectionUncertainty")<<" bin variables out of range";
+---
+>     handleError("SimpleJetCorrectionUncertainty"," bin variables out of range");
+41c41
+<     throw cms::Exception("SimpleJetCorrectionUncertainty")<<" wrong bin: "<<fBin<<": only "<<mParameters->size()<<" are available";
+---
+>     handleError("SimpleJetCorrectionUncertainty"," wrong bin, only  are available");
+44c44
+<     throw cms::Exception ("SimpleJetCorrectionUncertainty")<<"wrong # of parameters: multiple of 3 expected, "<<p.size()<< " got";
+---
+>     handleError("SimpleJetCorrectionUncertainty","wrong # of parameters: multiple of 3 expected");
+85c85
+<         throw cms::Exception("SimpleJetCorrectionUncertainty")<<" interpolation error";
+---
+>         handleError("SimpleJetCorrectionUncertainty"," interpolation error");
+Index: src/SimpleJetCorrector.cc
+===================================================================
+RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/src/SimpleJetCorrector.cc,v
+retrieving revision 1.8
+diff -r1.8 SimpleJetCorrector.cc
+3d2
+< #include "CondFormats/JetMETObjects/src/Utilities.cc"
+7a7,14
+> void handleError(const std::string& fClass, const std::string& fMessage);
+> float getFloat(const std::string& token); 
+> unsigned getUnsigned(const std::string& token); 
+> std::string getSection(const std::string& token); 
+> std::vector<std::string> getTokens(const std::string& fLine);
+> std::string getDefinitions(const std::string& token);
+> float quadraticInterpolation(float fZ, const float fX[3], const float fY[3]);
+> 
+Index: src/Utilities.cc
+===================================================================
+RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/src/Utilities.cc,v
+retrieving revision 1.3
+diff -r1.3 Utilities.cc
+1,3d0
+< #ifndef UTIL_H
+< #define UTIL_H
+< 
+10d6
+< 
+17c13,84
+< namespace 
+---
+> void handleError(const std::string& fClass, const std::string& fMessage);
+> 
+> 
+> //----------------------------------------------------------------------
+> float getFloat(const std::string& token) 
+> {
+>   char* endptr;
+>   float result = strtod (token.c_str(), &endptr);
+>   if (endptr == token.c_str()) 
+>     {
+>       std::stringstream sserr; 
+>       sserr<<"can't convert token "<<token<<" to float value";
+>       handleError("getFloat",sserr.str());
+>     }
+>   return result;
+> } 
+> //----------------------------------------------------------------------
+> unsigned getUnsigned(const std::string& token) 
+> {
+>   char* endptr;
+>   unsigned result = strtoul (token.c_str(), &endptr, 0);
+>   if (endptr == token.c_str()) 
+>     {
+>       std::stringstream sserr; 
+>       sserr<<"can't convert token "<<token<<" to unsigned value";
+>       handleError("getUnsigned",sserr.str());
+>     }
+>   return result;
+> }
+> //----------------------------------------------------------------------
+> std::string getSection(const std::string& token) 
+> {
+>   size_t iFirst = token.find ('[');
+>   size_t iLast = token.find (']');
+>   if (iFirst != std::string::npos && iLast != std::string::npos && iFirst < iLast)
+>     return std::string (token, iFirst+1, iLast-iFirst-1); 
+>   return "";
+> }
+> //----------------------------------------------------------------------
+> std::vector<std::string> getTokens(const std::string& fLine)
+> {
+>   std::vector<std::string> tokens;
+>   std::string currentToken;
+>   for (unsigned ipos = 0; ipos < fLine.length (); ++ipos) 
+>     {
+>       char c = fLine[ipos];
+>       if (c == '#') break; // ignore comments
+>       else if (c == ' ') 
+> 	{ // flush current token if any
+> 	  if (!currentToken.empty()) 
+> 	    {
+> 	      tokens.push_back(currentToken);
+> 	      currentToken.clear();
+> 	    }
+> 	}
+>       else
+> 	currentToken += c;
+>     }
+>   if (!currentToken.empty()) tokens.push_back(currentToken); // flush end 
+>   return tokens;
+> }
+> //---------------------------------------------------------------------- 
+> std::string getDefinitions(const std::string& token) 
+> {
+>   size_t iFirst = token.find ('{');
+>   size_t iLast = token.find ('}');
+>   if (iFirst != std::string::npos && iLast != std::string::npos && iFirst < iLast)
+>     return std::string (token, iFirst+1, iLast-iFirst-1); 
+>   return "";
+> }
+> //------------------------------------------------------------------------ 
+> void handleError(const std::string& fClass, const std::string& fMessage)
+19,89d85
+<   void handleError(const std::string& fClass, const std::string& fMessage);
+<   //----------------------------------------------------------------------
+<   float getFloat(const std::string& token) 
+<   {
+<     char* endptr;
+<     float result = strtod (token.c_str(), &endptr);
+<     if (endptr == token.c_str()) 
+<       {
+<         std::stringstream sserr; 
+<         sserr<<"can't convert token "<<token<<" to float value";
+< 	handleError("getFloat",sserr.str());
+<       }
+<     return result;
+<   } 
+<   //----------------------------------------------------------------------
+<   unsigned getUnsigned(const std::string& token) 
+<   {
+<     char* endptr;
+<     unsigned result = strtoul (token.c_str(), &endptr, 0);
+<     if (endptr == token.c_str()) 
+<       {
+<         std::stringstream sserr; 
+<         sserr<<"can't convert token "<<token<<" to unsigned value";
+< 	handleError("getUnsigned",sserr.str());
+<       }
+<     return result;
+<   }
+<   //----------------------------------------------------------------------
+<   std::string getSection(const std::string& token) 
+<   {
+<     size_t iFirst = token.find ('[');
+<     size_t iLast = token.find (']');
+<     if (iFirst != std::string::npos && iLast != std::string::npos && iFirst < iLast)
+<       return std::string (token, iFirst+1, iLast-iFirst-1); 
+<     return "";
+<   }
+<   //----------------------------------------------------------------------
+<   std::vector<std::string> getTokens(const std::string& fLine)
+<   {
+<     std::vector<std::string> tokens;
+<     std::string currentToken;
+<     for (unsigned ipos = 0; ipos < fLine.length (); ++ipos) 
+<       {
+<         char c = fLine[ipos];
+<         if (c == '#') break; // ignore comments
+<         else if (c == ' ') 
+<           { // flush current token if any
+<             if (!currentToken.empty()) 
+<               {
+< 	        tokens.push_back(currentToken);
+< 	        currentToken.clear();
+<               }
+<           }
+<         else
+<           currentToken += c;
+<       }
+<     if (!currentToken.empty()) tokens.push_back(currentToken); // flush end 
+<     return tokens;
+<   }
+<   //---------------------------------------------------------------------- 
+<   std::string getDefinitions(const std::string& token) 
+<   {
+<     size_t iFirst = token.find ('{');
+<     size_t iLast = token.find ('}');
+<     if (iFirst != std::string::npos && iLast != std::string::npos && iFirst < iLast)
+<       return std::string (token, iFirst+1, iLast-iFirst-1); 
+<     return "";
+<   }
+<   //------------------------------------------------------------------------ 
+<   void handleError(const std::string& fClass, const std::string& fMessage)
+<   {
+91,93c87,89
+<     std::stringstream sserr;
+<     sserr<<fClass<<" ERROR: "<<fMessage;
+<     throw std::runtime_error(sserr.str());
+---
+>   std::stringstream sserr;
+>   sserr<<fClass<<" ERROR: "<<fMessage;
+>   throw std::runtime_error(sserr.str());
+95c91
+<     throw cms::Exception(fClass)<<fMessage;
+---
+>   throw cms::Exception(fClass)<<fMessage;
+97,122d92
+<   }
+<   //------------------------------------------------------------------------ 
+<   float quadraticInterpolation(float fZ, const float fX[3], const float fY[3])
+<   {
+<     // Quadratic interpolation through the points (x[i],y[i]). First find the parabola that
+<     // is defined by the points and then calculate the y(z).
+<     float D[4],a[3];
+<     D[0] = fX[0]*fX[1]*(fX[0]-fX[1])+fX[1]*fX[2]*(fX[1]-fX[2])+fX[2]*fX[0]*(fX[2]-fX[0]);
+<     D[3] = fY[0]*(fX[1]-fX[2])+fY[1]*(fX[2]-fX[0])+fY[2]*(fX[0]-fX[1]);
+<     D[2] = fY[0]*(pow(fX[2],2)-pow(fX[1],2))+fY[1]*(pow(fX[0],2)-pow(fX[2],2))+fY[2]*(pow(fX[1],2)-pow(fX[0],2));
+<     D[1] = fY[0]*fX[1]*fX[2]*(fX[1]-fX[2])+fY[1]*fX[0]*fX[2]*(fX[2]-fX[0])+fY[2]*fX[0]*fX[1]*(fX[0]-fX[1]);
+<     if (D[0] != 0)
+<       {
+<         a[0] = D[1]/D[0];
+<         a[1] = D[2]/D[0];
+<         a[2] = D[3]/D[0];
+<       }
+<     else
+<       {
+<         a[0] = 0.0;
+<         a[1] = 0.0;
+<         a[2] = 0.0;
+<       }
+<     float r = a[0]+fZ*(a[1]+fZ*a[2]);
+<     return r;
+<   }
+124c94,118
+< #endif
+---
+> //------------------------------------------------------------------------ 
+> float quadraticInterpolation(float fZ, const float fX[3], const float fY[3])
+> {
+>   // Quadratic interpolation through the points (x[i],y[i]). First find the parabola that
+>   // is defined by the points and then calculate the y(z).
+>   float D[4],a[3];
+>   D[0] = fX[0]*fX[1]*(fX[0]-fX[1])+fX[1]*fX[2]*(fX[1]-fX[2])+fX[2]*fX[0]*(fX[2]-fX[0]);
+>   D[3] = fY[0]*(fX[1]-fX[2])+fY[1]*(fX[2]-fX[0])+fY[2]*(fX[0]-fX[1]);
+>   D[2] = fY[0]*(pow(fX[2],2)-pow(fX[1],2))+fY[1]*(pow(fX[0],2)-pow(fX[2],2))+fY[2]*(pow(fX[1],2)-pow(fX[0],2));
+>   D[1] = fY[0]*fX[1]*fX[2]*(fX[1]-fX[2])+fY[1]*fX[0]*fX[2]*(fX[2]-fX[0])+fY[2]*fX[0]*fX[1]*(fX[0]-fX[1]);
+>   if (D[0] != 0)
+>     {
+>       a[0] = D[1]/D[0];
+>       a[1] = D[2]/D[0];
+>       a[2] = D[3]/D[0];
+>     }
+>   else
+>     {
+>       a[0] = 0.0;
+>       a[1] = 0.0;
+>       a[2] = 0.0;
+>     }
+>   float r = a[0]+fZ*(a[1]+fZ*a[2]);
+>   return r;
+> }

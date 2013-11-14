@@ -6,6 +6,7 @@
 #include "Jet.h"
 
 #include "JetMETObjects/interface/FactorizedJetCorrector.h"
+#include "JetMETObjects/interface/JetCorrectionUncertainty.h"
 #include "JetMETObjects/interface/JetCorrectorParameters.h"
 
 #include <iostream>
@@ -15,10 +16,18 @@
 boost::mutex JetMETCorFactorsFactory::mutex_;
 
 JetMETCorFactorsFactory::JetMETCorFactorsFactory(const std::string& name,
-						 const std::string& files,
+						 std::string files,
 						 Levels type)
-  : CorFactorsFactory(name), type_(type)
-{
+  : CorFactorsFactory(name), cor_(0), corunc_(0), type_(type)
+{ 
+  // for jec uncertainty remove last file from files list and create
+  // JetCorrectionUncertainty object
+  if(type == L1L2L3UP || type == L1L2L3DOWN) {
+    unsigned int found = files.rfind(':');
+    std::string uncfile = files.substr(found+1,files.length());
+    files.erase(found,files.length());
+    corunc_ = new JetCorrectionUncertainty(uncfile);
+  }
   //split files by ":"
   std::stringstream ss(files);
   std::string file;
@@ -33,6 +42,7 @@ JetMETCorFactorsFactory::JetMETCorFactorsFactory(const std::string& name,
 JetMETCorFactorsFactory::~JetMETCorFactorsFactory()
 {
   //delete cor_;
+  //delete corunc_;
 }
 
 
@@ -57,6 +67,19 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j,int nPV, double rho, do
   //std::cout << levels[0] << ", " << levels[1];
   //if(levels.size() == 3) std::cout << ", "<< levels[2] << '\n';
   //else std::cout << '\n';
+
+  //for JEC uncertainty: get uncertainty and modifle L3 accordingly 
+  if(type_ == L1L2L3UP || type_ == L1L2L3DOWN) {
+    corunc_->setJetEta(j->eta());
+    corunc_->setJetPt(j->pt()); 
+    corunc_->setJetE(j->E());
+    corunc_->setJetPhi(j->phi());
+    corunc_->setJetEMF(j->EmEt()/(j->EmEt() + j->HadEt())); 
+    float uncertainty =  corunc_->getUncertainty(false);
+    if(type_ == L1L2L3UP) levels[2] *= 1.0+uncertainty;
+    if(type_ == L1L2L3DOWN) levels[2] *= 1.0-uncertainty;    
+  }
+
   switch(type_) {
   case L2L3:
     return new CorFactors(1.0,
@@ -64,6 +87,8 @@ CorFactors* JetMETCorFactorsFactory::create(const Jet* j,int nPV, double rho, do
 			  levels[1]/levels[0],
 			  1.0,1.0,1.0,0.0,0.0);			
   case L1L2L3:
+  case L1L2L3UP:
+  case L1L2L3DOWN:
     return new CorFactors(levels[0],
 			  levels[1]/levels[0],
 			  levels[2]/levels[1],
@@ -290,7 +315,15 @@ create("2012V8_AK5PFCHS_MC","/scratch/hh/current/cms/user/kirschen/JECTextFiles/
   create("2013SummerV1_AK5FastPFCHS_MC","/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_MC_txts_fromDB/Summer13_V1_MC_L1FastJet_AK5PFchs.txt:/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_MC_txts_fromDB/Summer13_V1_MC_L2Relative_AK5PFchs.txt:/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_MC_txts_fromDB/Summer13_V1_MC_L3Absolute_AK5PFchs.txt",L1L2L3);    
   
   create("2013SummerV1_AK7PF","/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_DATA_txts_fromDB/Summer13_V1_DATA_L1FastJet_AK7PF.txt:/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_DATA_txts_fromDB/Summer13_V1_DATA_L2Relative_AK7PF.txt:/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_DATA_txts_fromDB/Summer13_V1_DATA_L3Absolute_AK7PF.txt:/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_DATA_txts_fromDB/Summer13_V1_DATA_L2L3Residual_AK7PF.txt",L1L2L3res); 
-  create("2013SummerV1_AK7PF_MC","/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_MC_txts_fromDB/Summer13_V1_MC_L1FastJet_AK7PF.txt:/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_MC_txts_fromDB/Summer13_V1_MC_L2Relative_AK7PF.txt:/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_MC_txts_fromDB/Summer13_V1_MC_L3Absolute_AK7PF.txt",L1L2L3);    
+  create("2013SummerV1_AK7PF_MC","/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_MC_txts_fromDB/Summer13_V1_MC_L1FastJet_AK7PF.txt:/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_MC_txts_fromDB/Summer13_V1_MC_L2Relative_AK7PF.txt:/nfs/dust/test/cms/user/rathjd/Summer13_V1/Summer13_V1_MC_txts_fromDB/Summer13_V1_MC_L3Absolute_AK7PF.txt",L1L2L3);
+
+
+  // Summer13_V4
+  create("START53_V27_AK5PFCHS","/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_L1FastJet_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_L2Relative_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_L3Absolute_AK5PFchs.txt",L1L2L3);
+  create("START53_V27_AK5PFCHS_UP","/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_L1FastJet_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_L2Relative_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_L3Absolute_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_Uncertainty_AK5PFchs.txt",L1L2L3UP);
+  create("START53_V27_AK5PFCHS_DOWN","/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_L1FastJet_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_L2Relative_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_L3Absolute_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/START53_V27_Uncertainty_AK5PFchs.txt",L1L2L3DOWN);
+  create("FT_53_V21_AN5_AK5PFCHS","/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/FT_53_V21_AN5_L1FastJet_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/FT_53_V21_AN5_L2Relative_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/FT_53_V21_AN5_L3Absolute_AK5PFchs.txt:/afs/desy.de/user/s/stadie/xxl/Kalibri/JetMETObjects/data/FT_53_V21_AN5_L2L3Residual_AK5PFchs.txt",L1L2L3res);
+  
 }
 
 JetMETCorFactorsFactory* JetMETCorFactorsFactory::Register::create(const std::string& name, const std::string& files, Levels type) const

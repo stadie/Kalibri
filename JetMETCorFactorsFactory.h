@@ -10,13 +10,14 @@
 #include <vector>
 
 class FactorizedJetCorrector;
+class JetCorrectionUncertainty;
 class JetCorrectorParameters;
 
 class JetMETCorFactorsFactory : public CorFactorsFactory
 {  
  public:
-  enum Levels {L1L2L3,L2L3,L2L3res,L2L3L4,L1L2L3resL4,L1L2L3res};
-  JetMETCorFactorsFactory(const std::string& name, const std::string& files,Levels type);
+  enum Levels {L1L2L3,L2L3,L2L3res,L2L3L4,L1L2L3resL4,L1L2L3res,L1L2L3UP,L1L2L3DOWN};
+  JetMETCorFactorsFactory(const std::string& name, std::string files,Levels type);
   ~JetMETCorFactorsFactory();
 
   CorFactors* create(const Jet* j, int nPV = 1, double rho=-9999., double jetA=0.);
@@ -24,7 +25,8 @@ class JetMETCorFactorsFactory : public CorFactorsFactory
     return new JetMETCorFactorsFactory(*this);
   }
  private:
-  FactorizedJetCorrector* cor_;
+  FactorizedJetCorrector* cor_; 
+  JetCorrectionUncertainty* corunc_; 
   std::vector<JetCorrectorParameters> vParam_;
   Levels type_;
 

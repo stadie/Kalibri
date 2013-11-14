@@ -26,6 +26,8 @@ else ifeq (exists, $(shell [ -d /sw/include/boost ] && echo exists))
  BOOSTFLAGS=-I/sw/include/boost -I/sw/include
  SPECIALFLAGS += -arch i386
  LFLAGS += -L/sw/lib
+else ifneq ($(wildcard /usr/lib64/libboost_thread-mt.so),)
+ BOOSTLINKFLAGS=-lboost_thread-mt -lpthread
 else
  BOOSTFLAGS=-I/usr/include/boost
 endif 
@@ -84,7 +86,7 @@ lib/liblbfgs.so lib/liblbfgs.a: liblbfgs-1.10 include/lbfgs.h
 
 
 
-include/lbfgs.h: liblbfgs-1.10.tar.gz
+include/lbfgs.h: liblbfgs-1.10
 	@cd liblbfgs-1.10 && $(MAKE) clean
 	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
 	@echo '-> shared library lib/liblbfgs-1.10.so created.'
@@ -128,12 +130,12 @@ lib/libJetMETObjects.so: bin lib tmp JetMETObjects
 	cd JetMETObjects && $(MAKE) STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX}' lib
 
 JetMETObjects:
-	@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-03-01 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
+	@cvs -d :pserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-03-01 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 	patch -p0 < JetMETObjects.patch
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
 PUReweighting:
-	@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
+	@cvs -d :pserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
 
 #rules
