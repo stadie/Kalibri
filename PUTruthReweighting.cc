@@ -16,8 +16,11 @@
 PUTruthReweighting::PUTruthReweighting(const std::string& configfile, Parameters* param)
   : EventProcessor("PUTruthReweighting",configfile,param)
 {  
+  if(! isActive()) return;
+
   ConfigFile config(configfile.c_str()); 
     
+
   trignames_ = bag_of_string(config.read<std::string>("Di-Jet trigger names",""));
   trigthresholds_ = bag_of<double>(config.read<std::string>("Di-Jet trigger thresholds",""));
   useMCReweightAll_ = config.read<bool>("PU TruthWeighting Reweight all eventvectors (for MC validation)",false);

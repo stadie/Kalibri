@@ -32,6 +32,7 @@ class EventProcessor
   }
   const std::string& name() const { return name_;}
   const std::string& configName() const { return configName_;}
+  const bool isActive() const { return active_;}
   void produceControlPlots(const std::vector<std::vector<Event*>* >& samples);
   
 protected:
