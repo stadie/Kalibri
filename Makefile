@@ -131,7 +131,7 @@ lib/libJetMETObjects.so: bin lib tmp JetMETObjects
 
 JetMETObjects:
 	@cvs -d :pserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-03-01 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
-	cd JetMETObjects && patch -p0 < JetMETObjects.patch
+	cd JetMETObjects && patch -p0 < ../JetMETObjects.patch
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
 PUReweighting:
