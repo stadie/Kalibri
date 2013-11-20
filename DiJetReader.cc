@@ -1730,7 +1730,10 @@ void DiJetReader::twoJetsPtBalanceSmearJetsJER()
     rawPtEtEScalingFactor =  nJet_->JetPt[id] /  jets.at(id)->pt();
     nJet_->JetEt[id] = rawPtEtEScalingFactor * nJet_->JetEt[id];
     nJet_->JetE[id]  = rawPtEtEScalingFactor * jets.at(id)->E();
-    
+    //use currently not used L4-correction factor to save smearing factor
+    nJet_->JetCorrL4JW[id]=rawPtEtEScalingFactor;
+    //    std::cout << "rawPtEtEScalingFactor " << rawPtEtEScalingFactor << " id " << id << std::endl;
+
     //apply smearing to raw MET 
     pt_old->SetMagPhi(jets.at(id)->pt(),jets.at(id)->phi()); //use pt_old/pt_smeared with raw pt
     pt_smeared->SetMagPhi(nJet_->JetPt[id],jets.at(id)->phi());
