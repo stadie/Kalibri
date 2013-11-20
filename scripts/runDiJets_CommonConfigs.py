@@ -259,7 +259,7 @@ def PUWeightingInfo(DATATYPE,MC_type):
     elif(MC_type=="Z2Star_PU1mioS610mioS7" or MC_type=="Z2Star_PU1mioS610mioS7_Smear"):
         PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S6Plus10MioS7 \n"
     elif(MC_type=="Z253" or MC_type=="Z253_Smear" or MC_type=="Z253_SmearU" or MC_type=="Z253_SmearD" or MC_type=="Z253_V11_T1" or MC_type=="Z253_V11_T1T2" or MC_type=="Z253_V11_T1T2Smear" or MC_type=="Z253_V11_T1T2SmearU" or MC_type=="Z253_V11_T1T2SmearD" or MC_type =="Hpp53" or MC_type =="KriHpp53"):
-        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kirschen/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"
+        PU_weighting_info = PU_weighting_info + "PU TruthWeighting MC distribution = kheine/PUDistributions/TrueDistributions/Summer12S10CMSSW53 \n"
     else:
         print "No suitable MC-distribtuion for PU-reweighting found."
 
@@ -364,7 +364,8 @@ def determineDataDir(DATAYEAR,DATATYPE):
             datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Winter2012ReReco_v1"	    
     if(DATAYEAR == "2013"):
         if(DATATYPE=="2013ABCD_ReReco"):
-	    datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Summer2013ReReco_v1" 	       
+#NAF1.0	    datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Summer2013ReReco_v1" 	       
+	    datadir = "/nfs/dust/test/cms/user/rathjd/Calibration/Summer2013ReReco_v1/Summer2013ReReco_v1"
     if(DATAYEAR == "MC2012"):
         if(DATATYPE=="Z253_V11_T1T2_DMC"):
             datadir = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
@@ -399,7 +400,8 @@ def determineDataDirMC(MC,MC_type):
         if(MC_type=="Z253_V11_T1"):
             datadirmc = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/MCSummer12S10DX53V11_typeI"
         if(MC_type=="Z253_V11_T1T2"):
-            datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
+#NAF 1.0            datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
+            datadirmc = "/nfs/dust/test/cms/user/rathjd/Calibration/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
         if(MC_type=="Z253_V11_T1T2Smear"): #fastpf, pfchs, calo, jpt
             datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/SmearedNom_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/"
         if(MC_type=="Z253_V11_T1T2SmearU"): #fastpf, pfchs
