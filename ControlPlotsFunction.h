@@ -171,6 +171,9 @@ class ControlPlotsFunction {
   double twoJetsPtBalanceEventMPFMETT2ResponseL2L3ResCorrected(const Event * evt) const;  
   double twoJetsPtBalanceEventMCTruthJet1Response(const Event * evt) const;
   double twoJetsPtBalanceEventMCTruthJet1L2L3Response(const Event * evt) const;
+  double twoJetsPtBalanceEventMPFResponse_JERScaled_Min_UnscaledL2L3(const Event * evt) const;
+  double twoJetsPtBalanceEventAsymmetry_JERScaled_Min_UnscaledL2L3(const Event * evt) const;
+  double twoJetsPtBalanceEventSERelResponse_JERScaled_Min_UnscaledL2L3(const Event * evt) const;
 
  private:
   //! The different correction types of the y quantity

@@ -1355,4 +1355,55 @@ double ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response(const 
   return jet1->corFactors().getL2L3()*jet1->pt() / jet1->genPt();
 }
 
+//!  \brief Returns difference of JER-scaled/nominal MPF response
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Definition has to be kept synhronous to MPFResponseL2L3Corrected
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponse_JERScaled_Min_UnscaledL2L3(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet2 = jte->getJet2();
+  double MPFScaled = (1 + jte->MET()*cos(deltaPhi<double>(jte->METphi(), jet2->phi())) / (jet2->corFactors().getL2L3() *jet2->pt()));
+  //useL4-correction factor which contains smearing factor as determined in DiJetReader::twoJetsPtBalanceSmearJetsJER()
+  //  std::cout << "jet2->corFactors().getL4() " << jet2->corFactors().getL4() << std::endl;
+  double MPFUnScaled = (1 + jte->MET()*cos(deltaPhi<double>(jte->METphi(), jet2->phi())) / (jet2->corFactors().getL2L3() * (1/jet2->corFactors().getL4()) *jet2->pt()));
+  //  std::cout << "MPFScaled-MPFUnScaled " << MPFScaled-MPFUnScaled << std::endl;
+  return (MPFScaled-MPFUnScaled);
+
+}
+
+//!  \brief Returns difference of JER-scaled/nominal asymmetry
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Definition has to be kept synhronous to AsymmetryL2L3Corrected
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventAsymmetry_JERScaled_Min_UnscaledL2L3(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  double AsymmScaled = (jet1->corFactors().getL2L3() * jet1->pt() - jet2->corFactors().getL2L3() * jet2->pt())/(jet1->corFactors().getL2L3() * jet1->pt()+jet2->corFactors().getL2L3() * jet2->pt());
+  //useL4-correction factor which contains smearing factor as determined in DiJetReader::twoJetsPtBalanceSmearJetsJER()
+  double AsymmUnScaled = (jet1->corFactors().getL2L3() * (1/jet1->corFactors().getL4())* jet1->pt() - jet2->corFactors().getL2L3() * (1/jet2->corFactors().getL4())* jet2->pt())/(jet1->corFactors().getL2L3() * (1/jet1->corFactors().getL4())* jet1->pt()+jet2->corFactors().getL2L3() * (1/jet2->corFactors().getL4())* jet2->pt());
+  //  std::cout << "AsymmScaled-AsymmUnScaled " << AsymmScaled-AsymmUnScaled << std::endl;
+  return (AsymmScaled-AsymmUnScaled);
+}
+
+
+//!  \brief Returns difference of JER-scaled/nominal "single event" relative response (i.e. ptprobe/pttag)
+//!
+//!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
+//!  Definition has to be kept synhronous to AsymmetryL2L3Corrected
+// ----------------------------------------------------------------   
+double ControlPlotsFunction::twoJetsPtBalanceEventSERelResponse_JERScaled_Min_UnscaledL2L3(const Event * evt) const {
+  const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
+  Jet * jet1 = jte->getJet1();
+  Jet * jet2 = jte->getJet2();
+  double SE_RelResponseScaled = (jet1->corFactors().getL2L3() * jet1->pt())/(jet2->corFactors().getL2L3() * jet2->pt());
+  //useL4-correction factor which contains smearing factor as determined in DiJetReader::twoJetsPtBalanceSmearJetsJER()
+  double SE_RelResponseUnScaled = (jet1->corFactors().getL2L3() * (1/jet1->corFactors().getL4())* jet1->pt()) / (jet2->corFactors().getL2L3() * (1/jet2->corFactors().getL4())* jet2->pt());
+  //  std::cout << "SE_RelResponseScaled-SE_RelResponseUnScaled " << SE_RelResponseScaled-SE_RelResponseUnScaled << std::endl;
+  return (SE_RelResponseScaled-SE_RelResponseUnScaled);
+}
+
+
 

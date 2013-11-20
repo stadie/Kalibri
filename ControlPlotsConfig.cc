@@ -898,6 +898,14 @@ std::string ControlPlotsConfig::varTitle(const std::string &varName) const {
     title = "Run number";
   else if( varName == "MCTruthResponse")
     title = "MC Response";
+  else if( varName == "MPFResponse_JERScaled_Min_UnscaledL2L3" )
+    title = "MPF_{JER-scaled}-MPF_{unscaled}";
+  else if( varName == "Asymmetry_JERScaled_Min_UnscaledL2L3" )
+    title = "A_{JER-scaled}-A_{unscaled}";
+  else if( varName == "SERelResponse_JERScaled_Min_UnscaledL2L3" )
+    title = "(p_T^{probe}/p_T^{tag})_{JER-scaled}-(p_T^{probe}/p_T^{tag})_{unscaled}";
+
+
 
   return title;
 }

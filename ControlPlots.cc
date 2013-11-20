@@ -450,6 +450,12 @@ ControlPlotsFunction::Function ControlPlots::findTwoJetsPtBalanceEventFunction(c
     return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response;
   if( varName == "MCTruthResponse" && type == ControlPlotsConfig::L2L3Res )
     return &ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response;
+  if( varName == "MPFResponse_JERScaled_Min_UnscaledL2L3" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventMPFResponse_JERScaled_Min_UnscaledL2L3;
+  if( varName == "Asymmetry_JERScaled_Min_UnscaledL2L3" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventAsymmetry_JERScaled_Min_UnscaledL2L3;
+  if( varName == "SERelResponse_JERScaled_Min_UnscaledL2L3" )
+    return  &ControlPlotsFunction::twoJetsPtBalanceEventSERelResponse_JERScaled_Min_UnscaledL2L3;
   if( varName == "") {
     return 0;
   }
