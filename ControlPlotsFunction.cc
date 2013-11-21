@@ -1359,6 +1359,8 @@ double ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response(const 
 //!
 //!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
 //!  Definition has to be kept synhronous to MPFResponseL2L3Corrected
+//!  TODO: MET is currently set to raw MET and uses the scaled MET in both cases.
+//!  TODO: This is inconsistent and needs to be fixed!
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponse_JERScaled_Min_UnscaledL2L3(const Event * evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
