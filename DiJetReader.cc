@@ -1756,6 +1756,10 @@ void DiJetReader::twoJetsPtBalanceSmearJetsJER()
     }
   }
 
+  //use (for MC unused) MET Type1 Res to save unsmeared MET
+  nJet_->Met_T1R=nJet_->Met;
+  nJet_->MetPhi_T1R=nJet_->MetPhi;
+
   nJet_->Met_T1=METT1->Mod();
   nJet_->MetPhi_T1=METT1->Phi_mpi_pi(METT1->Phi());
 

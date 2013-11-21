@@ -1359,16 +1359,13 @@ double ControlPlotsFunction::twoJetsPtBalanceEventMCTruthJet1L2L3Response(const 
 //!
 //!  The \p Event \p evt has to be of type \p TwoJetsPtBalanceEvent.
 //!  Definition has to be kept synhronous to MPFResponseL2L3Corrected
-//!  TODO: MET is currently set to raw MET and uses the scaled MET in both cases.
-//!  TODO: This is inconsistent and needs to be fixed!
 // ----------------------------------------------------------------   
 double ControlPlotsFunction::twoJetsPtBalanceEventMPFResponse_JERScaled_Min_UnscaledL2L3(const Event * evt) const {
   const TwoJetsPtBalanceEvent * jte = static_cast<const TwoJetsPtBalanceEvent*>(evt);
   Jet * jet2 = jte->getJet2();
   double MPFScaled = (1 + jte->MET()*cos(deltaPhi<double>(jte->METphi(), jet2->phi())) / (jet2->corFactors().getL2L3() *jet2->pt()));
-  //useL4-correction factor which contains smearing factor as determined in DiJetReader::twoJetsPtBalanceSmearJetsJER()
-  //  std::cout << "jet2->corFactors().getL4() " << jet2->corFactors().getL4() << std::endl;
-  double MPFUnScaled = (1 + jte->MET()*cos(deltaPhi<double>(jte->METphi(), jet2->phi())) / (jet2->corFactors().getL2L3() * (1/jet2->corFactors().getL4()) *jet2->pt()));
+  //useL4-correction factor which contains smearing factor as determined in DiJetReader::twoJetsPtBalanceSmearJetsJER(), use METT1Res info as this contains the unsmeared MC values (in case JER-smearing is applied)
+  double MPFUnScaled = (1 + jte->METT1Res()*cos(deltaPhi<double>(jte->METT1Resphi(), jet2->phi())) / (jet2->corFactors().getL2L3() * (1/jet2->corFactors().getL4()) *jet2->pt()));
   //  std::cout << "MPFScaled-MPFUnScaled " << MPFScaled-MPFUnScaled << std::endl;
   return (MPFScaled-MPFUnScaled);
 
