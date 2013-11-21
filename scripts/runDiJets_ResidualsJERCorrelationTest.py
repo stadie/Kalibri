@@ -275,7 +275,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[2] + cut + " x variable        =  Asymmetry_JERScaled_Min_UnscaledL2L3\n")
         fcfg.write(plot_list[2] + cut + " x edges           =  50 -0.03 0.03\n")
         fcfg.write(plot_list[2] + cut + " y variable        =  MPFResponse_JERScaled_Min_UnscaledL2L3\n")
-        fcfg.write(plot_list[2] + cut + " y edges           =  201 -0.01 0.01 -0.01 0.01 -0.01 0.01 -0.01 0.01\n")
+        fcfg.write(plot_list[2] + cut + " y edges           =  201 -0.2 0.2 -0.2 0.2 -0.2 0.2 -0.2 0.2\n")
         fcfg.write(plot_list[2] + cut + " bin variable      =  AbsEta\n")
         fcfg.write(plot_list[2] + cut + " bin edges         =  " + abs_binning_values + "\n")
         fcfg.write(plot_list[2] + cut + " cut variable      =  ThirdJetFractionPlain\n")
@@ -289,7 +289,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[3] + cut + " x variable        =  SERelResponse_JERScaled_Min_UnscaledL2L3\n")
         fcfg.write(plot_list[3] + cut + " x edges           =  50 -0.03 0.03\n")
         fcfg.write(plot_list[3] + cut + " y variable        =  MPFResponse_JERScaled_Min_UnscaledL2L3\n")
-        fcfg.write(plot_list[3] + cut + " y edges           =  201 -0.01 0.01 -0.01 0.01 -0.01 0.01 -0.01 0.01\n")
+        fcfg.write(plot_list[3] + cut + " y edges           =  201 -0.2 0.2 -0.2 0.2 -0.2 0.2 -0.2 0.2\n")
         fcfg.write(plot_list[3] + cut + " bin variable      =  AbsEta\n")
         fcfg.write(plot_list[3] + cut + " bin edges         =  " + abs_binning_values + "\n")
         fcfg.write(plot_list[3] + cut + " cut variable      =  ThirdJetFractionPlain\n")
@@ -602,7 +602,7 @@ if (len(sys.argv) > 6):
 
 nthreads = 8
 niothreads = 8
-nevents = 100
+nevents = 10000
 #nthreads = 1
 #niothreads = 1
 MAIN_dirname = "/afs/desy.de/user/k/kirschen/xxl/JES_Paper/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
