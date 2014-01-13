@@ -365,7 +365,7 @@ def determineDataDir(DATAYEAR,DATATYPE):
     if(DATAYEAR == "2013"):
         if(DATATYPE=="2013ABCD_ReReco"):
 #NAF1.0	    datadir = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/Summer2013ReReco_v1" 	       
-	    datadir = "/nfs/dust/test/cms/user/rathjd/Calibration/Summer2013ReReco_v1/Summer2013ReReco_v1"
+	    datadir = "/nfs/dust/cms/user/rathjd/Calibration/Summer2013ReReco_v1"
     if(DATAYEAR == "MC2012"):
         if(DATATYPE=="Z253_V11_T1T2_DMC"):
             datadir = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
@@ -398,7 +398,7 @@ def determineDataDirMC(MC,MC_type):
         if(MC_type=="Z253_SmearD"):
             datadirmc = "/scratch/hh/current/cms/user/kirschen/2012_Jets_v6/MCSummer12S10DX53_Smeared_d"	  
         if(MC_type=="Z253_V11_T1"):
-            datadirmc = "/scratch/hh/dust/naf/cms/user/rathjd/Calibration/MCSummer12S10DX53V11_typeI"
+            datadirmc = "/nfs/dust/cms/user/rathjd/Calibration/MCSummer12S10DX53V11_typeI"
         if(MC_type=="Z253_V11_T1T2"):
 #NAF 1.0            datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
             datadirmc = "/nfs/dust/test/cms/user/rathjd/Calibration/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
