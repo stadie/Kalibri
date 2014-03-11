@@ -1165,11 +1165,11 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="SummerV3-flavorNoPU-algo"
+DIR_JETALGO="SummerRunDependent-TEST"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
-PF_CALO_JPT="PF"
+PF_CALO_JPT="PFCHS"
 ##################################
 ## chooses the jet algorithm - used to pick the corresponding n-tupel .root-files (ak5 is default)
 ##################################
@@ -1177,7 +1177,7 @@ jetalgo="ak5"
 ##################################
 ## Override JEC from text files as defined in JetMETCorFactorsFactory.cc; set to "ntuple" to use n-tuple corrections
 ##################################
-CORRECTION="2013SummerV1_AK5"
+CORRECTION="2013Winter14V1_AK5"
 ##################################
 ## Switch to decide whether L1 corrections should be applied or not (default definitely "true" in 2012 ;) )
 ##################################
@@ -1197,7 +1197,7 @@ DATATYPE = "2013ABCD_ReReco"
 ##################################
 ## choose binning in eta, currently only "kostas" and "k_HFfix" are properly defined here
 ##################################
-BINNING="JEC_Mikko"
+BINNING="Fine"
 ##################################
 ## Use single jet triggers if =1 (influences trigger thresholds and trigger pt variables in runtime, look for useSingleJetTriggers_ in code)
 ##################################
@@ -1209,7 +1209,7 @@ MC = "Su12"
 ##################################
 ## Choose specific MC-type, determines where to look for n-tupels to read in
 ##################################
-MC_type="Hpp53"#"Z253_V11_T1T2"#_PUS6S7"
+MC_type="Z253_RunDependent"#"Z253_V11_T1T2"#_PUS6S7"
 ##################################
 ## Choose minimum run number to read in, important for 2011 dataset, where MinRunNumber=163337 in order to get debugged corrected pt dijetave-triggers
 ##################################
@@ -1331,10 +1331,10 @@ if (len(sys.argv) > 6):
 
 nthreads = 21
 niothreads = 7
-nevents = 10000000
+nevents = 1000
 #nthreads = 1
 #niothreads = 1
-MAIN_dirname = "/afs/naf.desy.de/user/d/draeger/scratch/kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
+MAIN_dirname = "/nfs/dust/test/cms/user/rathjd/KalibriNew/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
 dirname = MAIN_dirname + "/dijetsFall10_TuneZ2_AK5"+PF_CALO_JPT+"_weighted_residuals_"+BINNING
 useconstraint = False
 batch = False
