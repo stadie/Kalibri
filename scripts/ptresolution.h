@@ -48,6 +48,15 @@ float _pscale_ak5pf_M_u[] =
 1.134+TMath::Sqrt(pow(0.035,2)+pow(0.085,2)), 
 1.288+TMath::Sqrt(pow(0.127,2)+pow(0.153,2))};
 
+//k-scale for PFjets from Kristin, April 14 2014
+float _pscale_ak5pf_K[] = {1.077, 1.100, 1.119, 1.205, 1.191};
+
+//downward variation values
+float _pscale_ak5pf_K_d[] = {1.077-0.026, 1.100-0.028, 1.119-0.029, 1.205-0.045, 1.191-0.079};
+
+//upward variation values
+float _pscale_ak5pf_K_u[] = {1.077+0.026, 1.100+0.028, 1.119+0.029, 1.205+0.045, 1.191+0.079};
+
 
   //according to JINST paper/JER twiki
 float _pscale_ak5calo_M_JME[] ={ 1.088, 1.139, 1.082, 1.065};//Calo
@@ -61,6 +70,10 @@ void configureSmearfactor(TString chooseScaleFactors) {
     pointerToEtaBins=Matthias_eta_bins;
     _nres=6;
   }
+  else if(chooseScaleFactors.Contains("Kristin")){
+    pointerToEtaBins=Matthias_eta_bins;
+    _nres=6;
+  }
   else if(chooseScaleFactors.Contains("JME")){
     pointerToEtaBins=JME_eta_bins;
     _nres=5;
@@ -68,6 +81,10 @@ void configureSmearfactor(TString chooseScaleFactors) {
   if(chooseScaleFactors=="PF_Matthias")pointerToScaleFactors=_pscale_ak5pf_M;
   if(chooseScaleFactors=="PF_Matthias_u")pointerToScaleFactors=_pscale_ak5pf_M_u;
   if(chooseScaleFactors=="PF_Matthias_d")pointerToScaleFactors=_pscale_ak5pf_M_d;
+  
+  if(chooseScaleFactors=="PF_Kristin")pointerToScaleFactors=_pscale_ak5pf_K;
+  if(chooseScaleFactors=="PF_Kristin_u")pointerToScaleFactors=_pscale_ak5pf_K_u;
+  if(chooseScaleFactors=="PF_Kristin_d")pointerToScaleFactors=_pscale_ak5pf_K_d;
 
   if(chooseScaleFactors=="Calo_JME")pointerToScaleFactors=_pscale_ak5calo_M_JME;
   if(chooseScaleFactors=="JPT_JME")pointerToScaleFactors=_pscale_ak5calo_M_JME;
