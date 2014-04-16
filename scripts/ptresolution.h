@@ -64,8 +64,10 @@ float _pscale_ak5jpt_M_JME[] ={ 1.087, 1.213, 1.018, 1.068};//JPT
 
 
 void configureSmearfactor(TString chooseScaleFactors) {
-  
+  pointerToScaleFactors=0;
+  pointerToEtaBins=0;
 
+  //choose eta-binning
   if(chooseScaleFactors.Contains("Matthias")){
     pointerToEtaBins=Matthias_eta_bins;
     _nres=6;
@@ -76,18 +78,23 @@ void configureSmearfactor(TString chooseScaleFactors) {
   }
   else if(chooseScaleFactors.Contains("JME")){
     pointerToEtaBins=JME_eta_bins;
-    _nres=5;
+    _nres=5; 
   }
-  if(chooseScaleFactors=="PF_Matthias")pointerToScaleFactors=_pscale_ak5pf_M;
-  if(chooseScaleFactors=="PF_Matthias_u")pointerToScaleFactors=_pscale_ak5pf_M_u;
-  if(chooseScaleFactors=="PF_Matthias_d")pointerToScaleFactors=_pscale_ak5pf_M_d;
   
-  if(chooseScaleFactors=="PF_Kristin")pointerToScaleFactors=_pscale_ak5pf_K;
-  if(chooseScaleFactors=="PF_Kristin_u")pointerToScaleFactors=_pscale_ak5pf_K_u;
-  if(chooseScaleFactors=="PF_Kristin_d")pointerToScaleFactors=_pscale_ak5pf_K_d;
+  //choose scale-factors
+  if(chooseScaleFactors=="PF_Matthias")pointerToScaleFactors=_pscale_ak5pf_M;
+  else if(chooseScaleFactors=="PF_Matthias_u")pointerToScaleFactors=_pscale_ak5pf_M_u;
+  else if(chooseScaleFactors=="PF_Matthias_d")pointerToScaleFactors=_pscale_ak5pf_M_d;
 
-  if(chooseScaleFactors=="Calo_JME")pointerToScaleFactors=_pscale_ak5calo_M_JME;
-  if(chooseScaleFactors=="JPT_JME")pointerToScaleFactors=_pscale_ak5calo_M_JME;
+  else if(chooseScaleFactors=="PF_Kristin")pointerToScaleFactors=_pscale_ak5pf_K;
+  else if(chooseScaleFactors=="PF_Kristin_u")pointerToScaleFactors=_pscale_ak5pf_K_u;
+  else if(chooseScaleFactors=="PF_Kristin_d")pointerToScaleFactors=_pscale_ak5pf_K_d;
+
+  else if(chooseScaleFactors=="Calo_JME")pointerToScaleFactors=_pscale_ak5calo_M_JME;
+  else if(chooseScaleFactors=="JPT_JME")pointerToScaleFactors=_pscale_ak5calo_M_JME;
+  else std::cout << "scale factors not properly defined... this will definitely fail" << std::endl;
+
+  if(pointerToEtaBins==0 || pointerToScaleFactors ==0) std::cout << "Pointers should not be null-pointers by now. This will fail!" << std::endl;
 
   std::cout << "Using " << _nres-1 << " bins configured via " << chooseScaleFactors << " for smearing."<< std::endl;
   std::cout << "Scalefactors: "<< std::endl;

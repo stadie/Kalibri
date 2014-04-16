@@ -484,7 +484,8 @@ def importDatatypesNewTrigger():
 
 def configureJERsmearing(jettype):
     if(jettype == "ak5PF" or jettype == "ak5PFCHS"):
-        return "PF_Matthias"#_u#_d
+#        return "PF_Matthias"#_u#_d
+        return "PF_Kristin"#_u#_d
     if(jettype == "ak5Calo"):
         return "Calo_JME"
     if(jettype == "ak5JPT"):
