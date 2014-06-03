@@ -403,7 +403,7 @@ def determineDataDirMC(MC,MC_type):
             datadirmc = "/nfs/dust/cms/user/rathjd/Calibration/MCSummer12S10DX53V11_typeI"
         if(MC_type=="Z253_V11_T1T2"):
 #NAF 1.0            datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
-            datadirmc = "/nfs/dust/test/cms/user/rathjd/Calibration/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
+            datadirmc = "/nfs/dust/cms/user/rathjd/Calibration/QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/merged"
         if(MC_type=="Z253_V11_T1T2Smear"): #fastpf, pfchs, calo, jpt
             datadirmc = "/scratch/hh/dust/naf/cms/user/kirschen/2012_JetsN_v3/SmearedNom_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/"
         if(MC_type=="Z253_V11_T1T2SmearU"): #fastpf, pfchs
@@ -415,7 +415,7 @@ def determineDataDirMC(MC,MC_type):
         if(MC_type=="KriHpp53"):
             datadirmc = "/scratch/hh/dust/naf/cms/user/kriheine/CalibNTupel/MC/EE3C_herwigpp_v3"
 	if(MC_type=="Z253_RunDependent"):
-	    datadirmc = "/nfs/dust/test/cms/user/dmarconi/workdir/calibtreemaker/20012014DijetsMC_53V27/merged"
+	    datadirmc = "/nfs/dust/cms/user/dmarconi/workdir/calibtreemaker/20012014DijetsMC_53V27/merged"
             
 
 	    
