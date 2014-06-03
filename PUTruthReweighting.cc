@@ -44,7 +44,7 @@ PUTruthReweighting::PUTruthReweighting(const std::string& configfile, Parameters
   //initializing
   std::cout <<"initialize reweight::LumiReWeighting LumiWeights_" << std::endl;
   for(int i = 0, l = trigthresholds_.size() ; i < l ; ++i) {
-    LumiWeightsPerTrigger_.push_back(reweight::LumiReWeighting(("/nfs/dust/test/cms/user/"+TruthWeightingMCDistribution_+"_TrueMCPUDistributions.root").c_str(),("/nfs/dust/test/cms/user/"+TruthWeightingDir_+"/MyDataPileupHistogram"+(TString)trignames_.at(i)+".root").Data(), "pileup", "pileup"));
+    LumiWeightsPerTrigger_.push_back(reweight::LumiReWeighting(("/nfs/dust/cms/user/"+TruthWeightingMCDistribution_+"_TrueMCPUDistributions.root").c_str(),("/nfs/dust/cms/user/"+TruthWeightingDir_+"/MyDataPileupHistogram"+(TString)trignames_.at(i)+".root").Data(), "pileup", "pileup"));
     std::cout <<"initialized reweight::LumiReWeighting LumiWeights_ successfully..." << i <<std::endl;
     
   }
