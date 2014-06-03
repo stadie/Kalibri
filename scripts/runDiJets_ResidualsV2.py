@@ -250,7 +250,7 @@ create TwoJetsPtBalanceEvent plots = true
 	
 	##### Asymmetry #####
         fcfg.write(plot_list[0] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[0] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[0] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[0] + cut + " y variable        =  Asymmetry\n")
         fcfg.write(plot_list[0] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[0] + cut + " bin variable      =  Eta\n")
@@ -263,7 +263,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[0] + cut + " input samples     =  0:data;1:MC\n\n")
 
         fcfg.write(plot_list[1] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[1] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[1] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[1] + cut + " y variable        =  Asymmetry\n")
         fcfg.write(plot_list[1] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3 0.0 0.5 0.0 0.5\n")
         fcfg.write(plot_list[1] + cut + " bin variable      =  AbsEta\n")
@@ -303,7 +303,7 @@ create TwoJetsPtBalanceEvent plots = true
 	
 	##### MPF raw #####
         fcfg.write(plot_list[4] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[4] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[4] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[4] + cut + " y variable        =  MPFResponse\n")
         fcfg.write(plot_list[4] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
         fcfg.write(plot_list[4] + cut + " bin variable      =  Eta\n")
@@ -316,7 +316,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[4] + cut + " input samples     =  0:data;1:MC\n\n")
 
         fcfg.write(plot_list[5] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[5] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[5] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[5] + cut + " y variable        =  MPFResponse\n")
         fcfg.write(plot_list[5] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
         fcfg.write(plot_list[5] + cut + " bin variable      =  AbsEta\n")
@@ -356,7 +356,7 @@ create TwoJetsPtBalanceEvent plots = true
 	
 	##### MPF T1 #####
         fcfg.write(plot_list[8] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[8] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[8] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[8] + cut + " y variable        =  MPFMETT1Response\n")
         fcfg.write(plot_list[8] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
         fcfg.write(plot_list[8] + cut + " bin variable      =  Eta\n")
@@ -369,7 +369,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[8] + cut + " input samples     =  0:data;1:MC\n\n")
 
         fcfg.write(plot_list[9] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[9] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[9] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[9] + cut + " y variable        =  MPFMETT1Response\n")
         fcfg.write(plot_list[9] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
         fcfg.write(plot_list[9] + cut + " bin variable      =  AbsEta\n")
@@ -410,7 +410,7 @@ create TwoJetsPtBalanceEvent plots = true
 	
 	##### Generator reference plots #####
 	fcfg.write(plot_list[12] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[12] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[12] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[12] + cut + " y variable        =  GenAsymmetry\n")
         fcfg.write(plot_list[12] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[12] + cut + " bin variable      =  Eta\n")
@@ -425,7 +425,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[12] + cut + " input samples     =  0:data;1:MC\n\n")
 	
 	fcfg.write(plot_list[13] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[13] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[13] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[13] + cut + " y variable        =  GenAsymmetry\n")
         fcfg.write(plot_list[13] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[13] + cut + " bin variable      =  AbsEta\n")
@@ -440,7 +440,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[13] + cut + " input samples     =  0:data;1:MC\n\n")
 
 	fcfg.write(plot_list[14] + cut + " x variable        =  JetLeadPt; log\n")
-        fcfg.write(plot_list[14] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[14] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[14] + cut + " y variable        =  GenLeadAsymmetry\n")
         fcfg.write(plot_list[14] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[14] + cut + " bin variable      =  Eta\n")
@@ -455,7 +455,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[14] + cut + " input samples     =  0:data;1:MC\n\n")
 	
 	fcfg.write(plot_list[15] + cut + " x variable        =  JetLeadPt; log\n")
-        fcfg.write(plot_list[15] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[15] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[15] + cut + " y variable        =  GenLeadAsymmetry\n")
         fcfg.write(plot_list[15] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[15] + cut + " bin variable      =  AbsEta\n")
@@ -470,7 +470,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[15] + cut + " input samples     =  0:data;1:MC\n\n")
 
 	fcfg.write(plot_list[16] + cut + " x variable        =  Jet2Pt; log\n")
-        fcfg.write(plot_list[16] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[16] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[16] + cut + " y variable        =  GenBarrAsymmetry\n")
         fcfg.write(plot_list[16] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[16] + cut + " bin variable      =  Eta\n")
@@ -485,7 +485,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[16] + cut + " input samples     =  0:data;1:MC\n\n")
 	
 	fcfg.write(plot_list[17] + cut + " x variable        =  Jet2Pt; log\n")
-        fcfg.write(plot_list[17] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[17] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[17] + cut + " y variable        =  GenBarrAsymmetry\n")
         fcfg.write(plot_list[17] + cut + " y edges           =  31 -0.70 0.70 -0.5 0.5 -0.5 0.5 0.7 1.3 0.7 1.3 -0.70 0.70 0.7 1.3\n")
         fcfg.write(plot_list[17] + cut + " bin variable      =  AbsEta\n")
@@ -502,7 +502,7 @@ create TwoJetsPtBalanceEvent plots = true
 	##### Flavour plots #####
 	
         fcfg.write(plot_list[18] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[18] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[18] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[18] + cut + " y variable        =  Flavor\n")
         fcfg.write(plot_list[18] + cut + " y edges           =  5 -1.5 4.5 -1.5 4.5 -1.5 4.5 -1.5 4.5\n")
         fcfg.write(plot_list[18] + cut + " bin variable      =  AbsEta\n")
@@ -515,7 +515,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[18] + cut + " input samples     =  0:data;1:MC\n\n")	
 	
         fcfg.write(plot_list[19] + cut + " x variable        =  MeanPt; log\n")
-        fcfg.write(plot_list[19] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
+        fcfg.write(plot_list[19] + cut + " x edges           =  20 " + RawTrigger_thresholds + "2000\n")
         fcfg.write(plot_list[19] + cut + " y variable        =  MPFResponse\n")
         fcfg.write(plot_list[19] + cut + " y edges           =  31 0.50 1.50 0.5 1.5 0.5 1.5 0.5 1.5\n")
         fcfg.write(plot_list[19] + cut + " bin variable      =  AbsEta\n")
