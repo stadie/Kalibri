@@ -82,13 +82,13 @@ void configureSmearfactor(TString chooseScaleFactors) {
     pointerToEtaBins=Matthias_eta_bins;
     _nres=6;
   }
-  else if(chooseScaleFactors.Contains("Kristin")){
-    pointerToEtaBins=Matthias_eta_bins;
-    _nres=6;
-  }
   else if(chooseScaleFactors.Contains("KristinFE")){
     pointerToEtaBins=Kristin_eta_bins;
     _nres=8;
+  }
+  else if(chooseScaleFactors.Contains("Kristin")){
+    pointerToEtaBins=Matthias_eta_bins;
+    _nres=6;
   }
   else if(chooseScaleFactors.Contains("JME")){
     pointerToEtaBins=JME_eta_bins;
