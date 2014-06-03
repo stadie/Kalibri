@@ -221,7 +221,7 @@ create TwoJetsPtBalanceEvent plots = true
     else:
         cut_list=['40','30','20','10']
         cut_no_list=['.40','.30','.20','.10']
-    cut_flav_list=['-0.5','0.5','1.5','2.5','3.5']
+    cut_flav_list=['-0.5','0.5','1.5','2.5','3.5','4.5']
 #    cut_list=['40','35','30','25','20','15','10','05']
 #    cut_no_list=['.40','.35','.30','.25','.20','.15','.10','.05']
 
@@ -504,7 +504,7 @@ create TwoJetsPtBalanceEvent plots = true
         fcfg.write(plot_list[18] + cut + " x variable        =  MeanPt; log\n")
         fcfg.write(plot_list[18] + cut + " x edges           =  " + RawTrigger_thresholds + "\n")
         fcfg.write(plot_list[18] + cut + " y variable        =  Flavor\n")
-        fcfg.write(plot_list[18] + cut + " y edges           =  5 -1.5 3.5 -1.5 3.5 -1.5 3.5 -1.5 3.5\n")
+        fcfg.write(plot_list[18] + cut + " y edges           =  5 -1.5 4.5 -1.5 4.5 -1.5 4.5 -1.5 4.5\n")
         fcfg.write(plot_list[18] + cut + " bin variable      =  AbsEta\n")
         fcfg.write(plot_list[18] + cut + " bin edges         =  " + abs_binning_values + "\n")
         fcfg.write(plot_list[18] + cut + " cut variable      =  ThirdJetFractionPlain\n")
