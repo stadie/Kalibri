@@ -72,18 +72,18 @@ def wait():
 #####needed config part begins here######
 #########################################
 
-reference_samples_all = ['2012TEST_CORRFinal2011_AK5_MC_Su12Z2Star_kostas_TrueReweighting_MPF_AK5']
-nice_labels_reference_samples_all = ['2012']
+reference_samples_all = ['20132013ABCD_ReReco_CORR2013Winter14V1_AK5_MC_Su12Z253_RunDependent_kostas_MPF_RD-V4-FullRun-central']
+nice_labels_reference_samples_all = ['WinterV4']
 
-samples_all = ['2012TEST_CORRFinal2011_AK5_MC_Su12Z2Star_kostas_TrueReweighting_MPF_AK5','2012TEST_CORRFinal2011_AK5_MC_Su12Z2Star_kostas_TrueReweighting_AK5']
-nice_labels_samples_all = ['2012','2012_RR']
+samples_all = ['20132013ABCD_ReReco_CORR2013Winter14V1_AK5_MC_Su12Z253_RunDependent_kostas_MPF_RD-V4-FullRun-central','20132013ABCD_ReReco_CORR2013Winter14V1_AK5_MC_Su12Z253_RunDependent_kostas_RD-V4-FullRun-central','20132013ABCD_ReReco_CORR2013Winter14V1_AK5_MC_Su12Z253_RunDependent_kostas_MPF_RD-V4-FullRun-JERup','20132013ABCD_ReReco_CORR2013Winter14V1_AK5_MC_Su12Z253_RunDependent_kostas_RD-V4-FullRun-JERup','20132013ABCD_ReReco_CORR2013Winter14V1_AK5_MC_Su12Z253_RunDependent_kostas_MPF_RD-V4-FullRun-JERdown','20132013ABCD_ReReco_CORR2013Winter14V1_AK5_MC_Su12Z253_RunDependent_kostas_RD-V4-FullRun-JERdown']
+nice_labels_samples_all = ['WinterV4','WinterV4_RR','JERup','JERup_RR','JERdown','JERdown_RR']
 
 
 delete_folders=0
-rerun_do_flex=0
+rerun_do_flex=1
 
-choose_binning="kostas"
-algo_types_all = ['PF']#,'Calo','JPT']
+choose_binning="Fine"
+algo_types_all = ['PFCHS']#,'Calo','JPT']
 
 MEAN_or_GAUSSFITMEAN="Mean"
 ##MPF_or_rel_response is automatically determined later in the script depending upon whether the name in the samples_list contains MPF or not. If it doesn't, 
