@@ -865,11 +865,11 @@ DO_MC_ONLY_STUDY       = "false"
 ##################################
 ## is a suffix to the output folder name (can be used for extra information)
 ##################################
-DIR_JETALGO="RD-V2-TESTING"
+DIR_JETALGO="RD-V4-FullRun-central"
 ##################################
 ## chooses the jet type (for PF, akFastPF-files are read in, see below - does not make a difference when JEC is overridden)
 ##################################
-PF_CALO_JPT="PFCHS"
+PF_CALO_JPT="PF"
 ##################################
 ## chooses the jet algorithm - used to pick the corresponding n-tupel .root-files (ak5 is default)
 ##################################
@@ -897,7 +897,7 @@ DATATYPE = "2013ABCD_ReReco"
 ##################################
 ## choose binning in eta, currently only "kostas" and "k_HFfix" are properly defined here
 ##################################
-BINNING="Fine"
+BINNING="JEC_Mikko"
 ##################################
 ## Use single jet triggers if =1 (influences trigger thresholds and trigger pt variables in runtime, look for useSingleJetTriggers_ in code)
 ##################################
@@ -1031,7 +1031,7 @@ if (len(sys.argv) > 6):
 
 nthreads = 21
 niothreads = 7
-nevents = 10000
+nevents = -1
 #nthreads = 1
 #niothreads = 1
 MAIN_dirname = "/nfs/dust/cms/user/rathjd/KalibriNew/Kalibri/"+DATAYEAR+DATATYPE+"_CORR" + CORRECTION +"_MC_"+MC+MC_type+"_kostas_"+ DIR_JETALGO
