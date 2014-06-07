@@ -9,7 +9,7 @@
 namespace ptResolutionForSmearing {
 
 // Hauke's resolutions
-int _nres = 6;
+int _nres = 8;
 
 float Matthias_eta_bins [] =  {0, 0.5, 1.1, 1.7, 2.3, 5.2};
 float JME_eta_bins [] =  {0, 1.1, 1.7, 2.3, 5.2}; //jinst
@@ -94,7 +94,7 @@ void configureSmearfactor(TString chooseScaleFactors) {
     pointerToEtaBins=JME_eta_bins;
     _nres=5; 
   }
-  
+  std::cout<<_nres<<std::endl;
   //choose scale-factors
   if(chooseScaleFactors=="PF_Matthias")pointerToScaleFactors=_pscale_ak5pf_M;
   else if(chooseScaleFactors=="PF_Matthias_u")pointerToScaleFactors=_pscale_ak5pf_M_u;
@@ -114,7 +114,7 @@ void configureSmearfactor(TString chooseScaleFactors) {
 
   if(pointerToEtaBins==0 || pointerToScaleFactors ==0) std::cout << "Pointers should not be null-pointers by now. This will fail!" << std::endl;
 
-  std::cout << "Using " << _nres-1 << " bins configured via " << chooseScaleFactors << " for smearing."<< std::endl;
+  std::cout << "!!!!!Using " << _nres-1 << " bins configured via " << chooseScaleFactors << " for smearing."<< std::endl;
   std::cout << "Scalefactors: "<< std::endl;
   for(int i =0;i<_nres-1;i++)std::cout << pointerToEtaBins[i] <<"<"<<pointerToEtaBins[i+1] <<": \t" << pointerToScaleFactors[i] <<std::endl;
 }
