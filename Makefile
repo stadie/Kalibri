@@ -18,7 +18,7 @@ ROOTLIBS=$(shell root-config --libs) -lMinuit2
 LFLAGS= $(SPECIALFLAGS) -lz $(F77LDFLAGS) -lgsl -lgslcblas -lm
 BOOSTLINKFLAGS=-lboost_thread -lpthread
 # change path for MacPort or fink@MacOS
- ifeq (exists, $(shell [ -d /opt/local/include/boost ] && echo exists)) 
+ifeq (exists, $(shell [ -d /opt/local/include/boost ] && echo exists)) 
  BOOSTFLAGS=-I/opt/local/include/boost -I/opt/local/include
  LFLAGS += -L/opt/local/lib
  BOOSTLINKFLAGS=-lboost_thread-mt -lpthread
@@ -27,7 +27,8 @@ else ifeq (exists, $(shell [ -d /sw/include/boost ] && echo exists))
  SPECIALFLAGS += -arch i386
  LFLAGS += -L/sw/lib
 else ifneq ($(wildcard /usr/lib64/libboost_thread-mt.so),)
- BOOSTLINKFLAGS=-lboost_thread-mt -lpthread
+ BOOSTLINKFLAGS=-lboost_thread-mt 
+#-lpthread
 else
  BOOSTFLAGS=-I/usr/include/boost
 endif 
@@ -130,12 +131,12 @@ lib/libJetMETObjects.so: bin lib tmp JetMETObjects
 	cd JetMETObjects && $(MAKE) STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX}' lib
 
 JetMETObjects:
-	@cvs -d :pserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-03-01 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
+	@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-03-01 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 	cd JetMETObjects && patch -p0 < ../JetMETObjects.patch
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
 PUReweighting:
-	@cvs -d :pserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
+	@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
 
 #rules

@@ -33,7 +33,7 @@
 #include <sstream>
 #include <iterator>
 
-#include <boost/thread/thread.hpp>
+#include <boost/thread.hpp>
 
 
 //!  \brief Constructor
@@ -1692,7 +1692,7 @@ std::vector<Jet*> DiJetReader::twoJetsPtBalanceUpdateJECAndMET(int nmaxjets)
 void DiJetReader::twoJetsPtBalanceSmearJetsJER()
 {
   assert(corFactorsFactory_);  // want to update JEC as well
-  assert(nJet_->NobjGenJet>0); //only makes sense on MC
+  //assert(nJet_->NobjGenJet>0); //only makes sense on MC
 
   // Number of jets in the event
   size_t nJets = nJet_->NobjJet;
