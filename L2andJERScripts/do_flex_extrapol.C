@@ -159,8 +159,8 @@ cout << "labels defined" << endl;
   }
   else if(MPF_or_rel_response.Contains("MPF")){
     ratio_of_mean_or_GM="_"+ ratio_of_mean_or_GM;
-    XVsPt = "MPFVsPtAve";
-    XVsPtType = "MPFResponseVsMeanPt";
+    XVsPt = "MPFT1VsPtAve";
+    XVsPtType = "MPFMETT1ResponseVsMeanPt";
   }
 cout << "open one" << endl;
   TFile* fone = TFile::Open(Residual_plots_one);
