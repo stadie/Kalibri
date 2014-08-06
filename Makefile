@@ -62,7 +62,7 @@ include:
 clean:
 	@rm -rf ti_files tmp lib bin share  
 	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#* 
-	@rm -f liblbfgs-1.10/lib/lbfgs.lo
+
 
 libs: lib include PUReweighting include/lbfgs.h lib/libKalibri.so
 
@@ -81,26 +81,26 @@ Kalibri.o: include/lbfgs.h
 
 PUTruthReweighting.o: PUReweighting
 
-lib/liblbfgs.so lib/liblbfgs.a: liblbfgs-1.10 include/lbfgs.h
-	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
-	@echo '-> shared library lib/liblbfgs-1.10.so created.'
+
+liblbfgs/configure: liblbfgs/configure.in
+	@cd liblbfgs &&  autoconf
+
+liblbfgs/Makefile: liblbfgs/configure
+	@cd liblbfgs && ./configure --enable-sse2 --prefix=$(KALIBRIDIR)
+	@echo '-> liblbfgs configured.'
+
+liblbfgs/configure.in:
+	@git submodule init
+	@git submodule update
+	@cd liblbfgs && libtoolize --force
+	@cd liblbfgs && aclocal
+	@cd liblbfgs && autoheader
+	@cd liblbfgs && automake --force-missing --add-missing
 
 
-
-include/lbfgs.h: liblbfgs-1.10
-	@cd liblbfgs-1.10 && $(MAKE) clean
-	@cd liblbfgs-1.10 && $(MAKE) && $(MAKE) install
-	@echo '-> shared library lib/liblbfgs-1.10.so created.'
-
-
-liblbfgs-1.10: liblbfgs-1.10.tar.gz
-	@tar zxvf liblbfgs-1.10.tar.gz
-	@cd liblbfgs-1.10 && ./configure --prefix=$(KALIBRIDIR)
-	@echo '-> liblbfgs-1.10 configured.'
-
-
-liblbfgs-1.10.tar.gz:
-	@wget --no-check-certificate https://github.com/downloads/chokkan/liblbfgs/liblbfgs-1.10.tar.gz
+include/lbfgs.h lib/liblbfgs.so lib/liblbfgs.a: liblbfgs/Makefile
+	@cd liblbfgs && $(MAKE) && $(MAKE) install
+	@echo '-> shared library lib/liblbfgs.so created.'
 
 
 bin/junk: $(OBJS) lbfgs.o caliber.o lib/liblbfgs.a
@@ -131,12 +131,16 @@ lib/libJetMETObjects.so: bin lib tmp JetMETObjects
 	cd JetMETObjects && $(MAKE) STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX}' lib
 
 JetMETObjects:
-	@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-03-01 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
+	#@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-03-01 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
+	cp -r /afs/cern.ch/cms/slc5_amd64_gcc462/cms/cmssw/CMSSW_5_3_20/src/CondFormats/JetMETObjects .
 	cd JetMETObjects && patch -p0 < ../JetMETObjects.patch
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
+
 PUReweighting:
-	@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
+	#@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
+	mkdir PUReweighting
+	cp /afs/cern.ch/cms/slc5_amd64_gcc462/cms/cmssw/CMSSW_5_3_20/src/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h PUReweighting/. 
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
 
 #rules
