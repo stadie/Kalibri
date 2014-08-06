@@ -131,14 +131,12 @@ lib/libJetMETObjects.so: bin lib tmp JetMETObjects
 	cd JetMETObjects && $(MAKE) STANDALONE_DIR=${PWD} ROOTSYS=${ROOTSYS}  CXXFLAGS='${RCXX}' lib
 
 JetMETObjects:
-	#@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -r V03-03-01 -d JetMETObjects CMSSW/CondFormats/JetMETObjects
 	cp -r /afs/cern.ch/cms/slc5_amd64_gcc462/cms/cmssw/CMSSW_5_3_20/src/CondFormats/JetMETObjects .
 	cd JetMETObjects && patch -p0 < ../JetMETObjects.patch
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
 
 PUReweighting:
-	#@cvs -d :gserver:anonymous@cmssw.cvs.cern.ch:/local/reps/CMSSW co -d PUReweighting CMSSW/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h
 	mkdir PUReweighting
 	cp /afs/cern.ch/cms/slc5_amd64_gcc462/cms/cmssw/CMSSW_5_3_20/src/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h PUReweighting/. 
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
