@@ -810,11 +810,11 @@ class TrackParametrization : public Parametrization {
 
     //double ehECAL = 1.6 ;//* par[1]; 
     double TrackEMF = 0;
-    bool LS = false;
+    //bool LS = false;
     
     TTrack* temp = (TTrack*)(x);
     
-    if(temp->EM1 < 1.2) LS = true;   //late showering particle
+    //if(temp->EM1 < 1.2) LS = true;   //late showering particle
     
     //this is Groom's Parametrization:
     TrackEMF = temp->EM1 / (temp->Had1 + temp->EM1);  //bei 1X1 EMF ueberschaetzt, da shower schmaler, bei 3X3 zu viele andere Tracks
@@ -1030,11 +1030,11 @@ public:
 
     //double ehECAL = 1.6 ;//* par[1]; 
     double TrackEMF = 0;
-    bool LS = false;
+    //bool LS = false;
     
     TTrack* temp = (TTrack*)(x);
     
-    if(temp->EM1 < 1.2) LS = true;   //late showering particle
+    //if(temp->EM1 < 1.2) LS = true;   //late showering particle
     
     //this is Groom's Parametrization:
     TrackEMF = temp->EM1 / (temp->Had1 + temp->EM1);  //bei 1X1 EMF ueberschaetzt, da shower schmaler, bei 3X3 zu viele andere Tracks
