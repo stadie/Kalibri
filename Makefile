@@ -143,6 +143,7 @@ PUReweighting/LumiReweightingStandAlone.h:
 
 
 Kalibri.o: include/lbfgs.h
+caliber.o: include/lbfgs.h
 
 #rules
 .cc.o:
