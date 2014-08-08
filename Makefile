@@ -82,9 +82,6 @@ lib/libKalibri.so:  include/lbfgs.h $(OBJS) lbfgs.o
 	$(LD) $(RCXX) -shared $^ $(RLXX) -o lib/libKalibri.so
 	@echo '-> Kalibri library created.'
 
-Kalibri.o: include/lbfgs.h
-
-
 liblbfgs/configure: liblbfgs/configure.in
 	@cd liblbfgs &&  autoconf
 
@@ -145,7 +142,7 @@ PUReweighting/LumiReweightingStandAlone.h:
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
 
 #rules
-.cc.o:  
+.cc.o:  include/lbfgs.h 
 	$(CC) $(RCXX) -MMD -c -o $@ $<
 	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
              -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.d
