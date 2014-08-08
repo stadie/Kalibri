@@ -141,8 +141,11 @@ PUReweighting/LumiReweightingStandAlone.h:
 	cp /afs/cern.ch/cms/slc5_amd64_gcc462/cms/cmssw/CMSSW_5_3_20/src/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h PUReweighting/. 
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
 
+
+Kalibri.o: include/lbfgs.h
+
 #rules
-.cc.o:  include/lbfgs.h 
+.cc.o:
 	$(CC) $(RCXX) -MMD -c -o $@ $<
 	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
              -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.d
