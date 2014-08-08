@@ -260,36 +260,34 @@ diff -r1.22 JetCorrectorParameters.cc
 > std::vector<std::string> getTokens(const std::string& fLine);
 > std::string getDefinitions(const std::string& token);
 > float quadraticInterpolation(float fZ, const float fX[3], const float fY[3]);
-475a482
+464a471
 > #ifndef STANDALONE
-477a485,488
+466a474,477
 > #else
 >   std::cerr << " cannot find key " << static_cast<int>(k) << std::endl;
 >   throw "InvalidInput";
 > #endif
 531d541
 < 
-557a568
+546a557
 > #ifndef STANDALONE
-559c570,573
-< 
----
+547a559,562
 > #else 
->   std::cerr  << " Cannot find label " << label << std::endl;
->   throw "InvalidInput";
+>    std::cerr  << " Cannot find label " << label << std::endl;
+>    throw "InvalidInput";
 > #endif
-566,569c580,585
+555,558c570,575
 < #include "FWCore/Utilities/interface/typelookup.h"
 <  
 < TYPELOOKUP_DATA_REG(JetCorrectorParameters);
 < TYPELOOKUP_DATA_REG(JetCorrectorParametersCollection);
 ---
-> 
 > #ifndef STANDALONE
->   #include "FWCore/Utilities/interface/typelookup.h"
->   TYPELOOKUP_DATA_REG(JetCorrectorParameters);
->   TYPELOOKUP_DATA_REG(JetCorrectorParametersCollection);
+>    #include "FWCore/Utilities/interface/typelookup.h"
+>    TYPELOOKUP_DATA_REG(JetCorrectorParameters);
+>    TYPELOOKUP_DATA_REG(JetCorrectorParametersCollection);
 > #endif
+> 
 Index: src/SimpleJetCorrectionUncertainty.cc
 ===================================================================
 RCS file: /local/reps/CMSSW/CMSSW/CondFormats/JetMETObjects/src/SimpleJetCorrectionUncertainty.cc,v
