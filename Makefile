@@ -47,7 +47,7 @@ OBJS = $(SRCS:.cc=.o)
 
 .PHONY: clean bins libs plugins all PUreweighting lbfgs
 
-all: libs bins
+all: include libs plugins bins
 
 bin:
 	@mkdir -p bin
@@ -64,18 +64,16 @@ clean:
 	@rm -f *~ *.o *# *.d *.bkp junk caliber libKalibri.so *.cfi fort.* .#* 
 
 
-libs: lib include PUReweighting include/lbfgs.h lib/libKalibri.so
+libs: include lib 
 
-bins: bin bin/junk bin/caliber
+bins: plugins bin bin/junk bin/caliber
 
-plugins: PUreweighting lbfgs lib 
+plugins: PUreweighting lbfgs lib lib/libJetMETCor.so 
 
 PUreweighting: PUReweighting/LumiReweightingStandAlone.h
 
 
-
-
-lbfgs:  include/lbfgs.h lib/libJetMETCor.so 
+lbfgs:  include/lbfgs.h lib/liblbfgs.so
 
 lbfgs.o: lbfgs.F
 	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
