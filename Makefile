@@ -45,7 +45,7 @@ SRCS=$(filter-out $(OTHERSRCS),$(wildcard *.cc))
 
 OBJS = $(SRCS:.cc=.o)
 
-.PHONY: clean bins libs plugins all 
+.PHONY: clean bins libs plugins all PUreweighting lbfgs
 
 all: libs bins
 
@@ -68,7 +68,14 @@ libs: lib include PUReweighting include/lbfgs.h lib/libKalibri.so
 
 bins: bin bin/junk bin/caliber
 
-plugins: lib PUReweighting lib/libJetMETCor.so 
+plugins: PUreweighting lbfgs lib 
+
+PUreweighting: PUReweighting/LumiReweightingStandAlone.h
+
+
+
+
+lbfgs:  include/lbfgs.h lib/libJetMETCor.so 
 
 lbfgs.o: lbfgs.F
 	$(F77) $(RCXX) -fno-automatic -fno-backslash -O -c lbfgs.F
@@ -78,8 +85,6 @@ lib/libKalibri.so:  include/lbfgs.h $(OBJS) lbfgs.o
 	@echo '-> Kalibri library created.'
 
 Kalibri.o: include/lbfgs.h
-
-PUTruthReweighting.o: PUReweighting
 
 
 liblbfgs/configure: liblbfgs/configure.in
@@ -136,7 +141,7 @@ JetMETObjects:
 	rm -f JetMETObjects/CondFormats; ln -sf ../ JetMETObjects/CondFormats
 
 
-PUReweighting:
+PUReweighting/LumiReweightingStandAlone.h:
 	mkdir PUReweighting
 	cp /afs/cern.ch/cms/slc5_amd64_gcc462/cms/cmssw/CMSSW_5_3_20/src/PhysicsTools/Utilities/interface/LumiReweightingStandAlone.h PUReweighting/. 
 	cd PUReweighting && patch LumiReweightingStandAlone.h ../LumiReweightingStandAlone.patch
